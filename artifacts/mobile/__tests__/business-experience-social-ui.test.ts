@@ -102,14 +102,15 @@ describe("Expo social video choices", () => {
     expect(detail).toContain("Share your visit");
   });
 
-  it("keeps the official website near listing identity and consolidates community media actions", () => {
+  it("keeps the official website near listing identity and opens community posts directly", () => {
     const detail = source("../app/business/[id].tsx");
     expect(detail).toContain("safeOfficialWebsite");
     expect(detail).toContain("Official website");
     expect(detail).toContain("Community posts");
     expect(detail).toContain("Watch community posts");
     expect(detail).toContain("Share your visit");
-    expect(detail).toContain("communityMediaYRef.current");
+    expect(detail).toContain('pathname: "/business-vibes"');
+    expect(detail).not.toContain("communityMediaYRef.current");
     expect(detail).not.toContain("Show Me the Vibe");
   });
 

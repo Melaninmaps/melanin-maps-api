@@ -25,15 +25,18 @@ describe("web Kinfolk conversation-first visuals", () => {
     expect(travelPageSource).not.toContain('>Or try asking:</div>');
   });
 
-  it("keeps history, all four delivery modes, and explicit privacy controls available", () => {
+  it("keeps history and explicit privacy controls available without an inline voice picker", () => {
     expect(travelPageSource).toContain("Past conversations");
     expect(travelPageSource).toContain("setShowHistory(v => !v)");
     expect(travelPageSource).toContain("showComposerControls");
     expect(travelPageSource).toContain('id="kinfolk-composer-controls"');
-    expect(travelPageSource).toContain("Just Big Cousin");
-    expect(travelPageSource).toContain("Professor");
-    expect(travelPageSource).toContain("Business Manager");
-    expect(travelPageSource).toContain("Best Friend");
+    expect(travelPageSource).toContain("Memory & privacy");
+    const composerControls = travelPageSource.slice(
+      travelPageSource.indexOf('id="kinfolk-composer-controls"'),
+      travelPageSource.indexOf("{voiceInputStatus ?"),
+    );
+    expect(composerControls).not.toContain('data-testid={`kinfolk-mode-${id}`}');
+    expect(composerControls).not.toContain("Reply style");
     expect(travelPageSource).toContain('data-testid="kinfolk-community-perspective-opt-in"');
     expect(travelPageSource).toContain("Manage private Kinfolk memory");
   });

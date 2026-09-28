@@ -24,10 +24,16 @@ describe("Kinfolk mobile conversation modes", () => {
     expect(preferencesSource).toContain('personalityMode: "community"');
   });
 
-  it("saves a chat-mode change and restores the saved default", () => {
-    expect(travelSource).toContain("updatePreferences({ personalityMode: v.id })");
+  it("restores the saved mode without exposing an inline selector in the composer", () => {
     expect(travelSource).toContain("const savedVoiceMode = preferences?.personalityMode");
     expect(travelSource).toContain("setVoiceMode(savedVoiceMode as typeof voiceMode)");
+    const composerControls = travelSource.slice(
+      travelSource.indexOf("{showComposerControls && <>"),
+      travelSource.indexOf("{voiceInputStatus ?"),
+    );
+    expect(travelSource).toContain("Memory & privacy");
+    expect(composerControls).not.toContain("Kinfolk Voices™");
+    expect(composerControls).not.toContain("updatePreferences({ personalityMode: v.id })");
   });
 
   it("uses server-supported preference values rather than silently rejected aliases", () => {

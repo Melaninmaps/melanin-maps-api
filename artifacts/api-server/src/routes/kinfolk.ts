@@ -1576,6 +1576,66 @@ WEATHER ADVICE RULES:
   }
 }
 
+type DestinationTimeZoneCacheEntry = Readonly<{
+  label: string;
+  timeZone: string;
+  expiresAt: number;
+}>;
+
+const destinationTimeZoneCache = new Map<string, DestinationTimeZoneCacheEntry>();
+
+/**
+ * Location-aware answers use the place's clock, never the server, browser, or
+ * device clock. The lookup is deliberately source-neutral and stores only a
+ * public city/time-zone pair briefly; it never stores a member's exact origin.
+ */
+async function resolveDestinationLocalTimeContext(
+  destination: string | null | undefined,
+): Promise<string | null> {
+  const query = destination?.trim();
+  if (!query) return null;
+  const cacheKey = query.toLocaleLowerCase("en-US");
+  let entry = destinationTimeZoneCache.get(cacheKey);
+
+  try {
+    if (!entry || entry.expiresAt <= Date.now()) {
+      const response = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=1&language=en&format=json`,
+        { signal: AbortSignal.timeout(4_000) },
+      );
+      if (!response.ok) return null;
+      const payload = (await response.json()) as {
+        results?: Array<{ name?: string; admin1?: string; timezone?: string }>;
+      };
+      const place = payload.results?.[0];
+      if (!place?.timezone || !place.name) return null;
+      entry = {
+        label: `${place.name}${place.admin1 ? `, ${place.admin1}` : ""}`,
+        timeZone: place.timezone,
+        expiresAt: Date.now() + 6 * 60 * 60 * 1000,
+      };
+      destinationTimeZoneCache.set(cacheKey, entry);
+    }
+
+    const localTime = new Intl.DateTimeFormat("en-US", {
+      timeZone: entry.timeZone,
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZoneName: "short",
+    }).format(new Date());
+    return [
+      "SERVER-RESOLVED LOCAL TIME — AUTHORITATIVE FOR LOCATION FEATURES:",
+      `At response generation, it is ${localTime} in ${entry.label} (${entry.timeZone}).`,
+      "Use this destination-local clock for arrival, event, reminder, open/close, and time-sensitive guidance. Never substitute the server, browser, or device clock.",
+    ].join("\n");
+  } catch {
+    return null;
+  }
+}
+
 function extractLocationFromMessage(
   msg: string,
   fallbacks: (string | null | undefined)[],
@@ -3941,6 +4001,7 @@ function buildSystemPrompt(opts: {
   } | null;
   crossCityBridge?: CrossCityMatch[] | null;
   weatherContext?: string | null;
+  destinationLocalTimeContext?: string | null;
   tier?: string | null;
   twinRecs?: Array<{
     businessName: string;
@@ -4163,6 +4224,9 @@ CRITICAL INSTRUCTION: Don't wait for them to ask. Proactively say something like
 
   const weatherSection = opts.weatherContext
     ? `\n${opts.weatherContext}\n`
+    : "";
+  const destinationLocalTimeSection = opts.destinationLocalTimeContext
+    ? `\n${opts.destinationLocalTimeContext}\n`
     : "";
 
   // ── Cultural Phrases (MWM Community Language Taxonomy) ───────────────────
@@ -4460,6 +4524,10 @@ YOU ARE NEVER: Condescending. Robotic. Overly flirtatious. Preachy. Performative
 
 LANGUAGE RULES: Say the finding first. One follow-up question at a time. Match the user's formality. Mirror their cultural vocabulary only when they open the door — never project a dialect they didn't bring. Community-reported info: say so clearly.
 
+CURRENT-TURN PRIORITY — NON-NEGOTIABLE: Answer the member's newest message and its explicit task first. Prior conversation, a saved destination, a trip plan, a journey, or a directory result is context only; never return a previous itinerary, restaurant plan, or local recommendation when the newest request is unrelated (for example, a text, email, raise, relationship, or general question).
+
+ON-SCREEN FORMAT: Return plain text, never Markdown heading syntax such as #, ##, or ###. Use a short opening sentence, blank lines between distinct ideas, and • bullets only where bullets improve scanning. Do not create decorative section headings.
+
 PROFANITY RULE — NON-NEGOTIABLE: Use no profanity at any AAVE or regional-language level, even if the member does.
 
 SPOKEN RESPONSE DESIGN — Your text will sometimes be read aloud via voice:
@@ -4473,7 +4541,7 @@ ${voiceInstructions}
 
 ${buildKinfolkEmotionalCheckInContract(normalizedConversationMode)}
 
-${naturalConversationContract}${
+${naturalConversationContract}${destinationLocalTimeSection}${
     languagePersonalization
       ? `
 
@@ -9844,23 +9912,38 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         message,
         history: existingMessages,
       });
+    // A remembered destination is useful only while the member is actually
+    // asking a location-aware question. Do not let an earlier work trip make a
+    // later email, raise, relationship, or general-chat request look local.
+    const currentRequestUsesLocation = Boolean(
+      turnGeography?.currentTurn ||
+      earlyDecision.route === "business_discovery" ||
+      earlyDecision.route === "travel_planning" ||
+      contextualPlan?.taskMode === "city_briefing" ||
+      isWeatherQuery(message),
+    );
+    const promptDestination = currentRequestUsesLocation ? destination : null;
+    const destinationLocalTimeContext = promptDestination
+      ? await resolveDestinationLocalTimeContext(promptDestination)
+      : null;
     const baseSystemPrompt =
       buildSystemPrompt({
         prefs,
         likedSpots,
         dislikedSpots,
         savedPlaces,
-        destination,
+        destination: promptDestination,
         voiceMode: conversationVoiceMode,
         aaveLevel: prefs?.aaveLevel ?? 0,
         businessCatalog,
-        activeJourney,
-        crossCityBridge,
+        activeJourney: currentRequestUsesLocation ? activeJourney : null,
+        crossCityBridge: currentRequestUsesLocation ? crossCityBridge : null,
         weatherContext,
+        destinationLocalTimeContext,
         tier: userTier,
         twinRecs,
         topUserVibes,
-        cityContext,
+        cityContext: currentRequestUsesLocation ? cityContext : null,
         culturalPhrases,
         communityLanguageTerms,
         knowledgeGraphContext: kgContext,
@@ -10728,7 +10811,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       intentClass,
       allowBusinessCards: decisionPlan.allowBusinessCards,
     });
-    reply = enforced.reply;
+    reply = enforced.reply
+      // The model's reply is already plain text. This narrowly converts any
+      // accidental Markdown heading into the requested readable bullet style
+      // without parsing or rendering untrusted HTML.
+      .replace(/^\s{0,3}#{1,6}\s+(.+?)\s*#*\s*$/gm, "• $1")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
     if (isKinfolkFormalDocumentRequest(message)) {
       reply = normalizeKinfolkFormalDocumentReply(reply);
     }

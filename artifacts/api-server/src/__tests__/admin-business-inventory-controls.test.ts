@@ -290,7 +290,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Existing legacy/imported values remain reviewable");
   });
 
-  it("lets an administrator preview and explicitly publish only the Minneapolis source-backed proof cohort in retry-safe batches", () => {
+  it("lets an administrator preview and explicitly publish the statewide Minnesota source cohort in retry-safe batches", () => {
     expect(adminRoute).toContain('router.post("/admin/directory-intake/source-backed"');
     expect(adminRoute).toContain("requestedBatch");
     expect(adminRoute).toContain("Unknown source-backed intake batch.");
@@ -306,8 +306,10 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("dedupe_key = ANY($2::text[])");
     expect(adminScreen).toContain("Founder source directory intake");
     expect(adminScreen).toContain("api/admin/directory-intake/source-backed");
-    expect(adminScreen).toContain("MINNEAPOLIS_SOURCE_INTAKE_BATCH");
-    expect(adminScreen).toContain("Publish Minneapolis");
+    expect(adminRoute).toContain("mnblackStatewideSourceBackedDirectoryCandidates");
+    expect(adminScreen).toContain("MINNESOTA_SOURCE_INTAKE_BATCH");
+    expect(adminScreen).toContain("mn_black_business_directory_statewide_2026_09_28");
+    expect(adminScreen).toContain("Publish Minnesota");
     expect(adminScreen).toContain("searchable, unclaimed MWM profile");
   });
 

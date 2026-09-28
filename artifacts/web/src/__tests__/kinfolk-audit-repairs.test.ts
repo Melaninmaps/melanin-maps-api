@@ -9,12 +9,12 @@ describe("Kinfolk audit repairs on web", () => {
     expect(travel).toContain("setKinfolkMode(normalizeSavedKinfolkMode(hydratedPrefs.personalityMode))");
   });
 
-  it("renders and persists each of the current four delivery modes", () => {
+  it("keeps the four saved delivery modes available without exposing an inline picker", () => {
     for (const mode of ["community", "professor", "business_manager", "best_friend"]) {
       expect(travel).toContain(`id: "${mode}"`);
-      expect(travel).toContain("data-testid={`kinfolk-mode-${id}`}");
     }
-    expect(travel).toContain("selectKinfolkMode(id)");
+    expect(travel).not.toContain("data-testid={`kinfolk-mode-${id}`}");
+    expect(travel).toContain("const selectKinfolkMode");
     expect(travel).toContain("JSON.stringify({ personalityMode: nextMode })");
     expect(travel).toContain("Mode was not saved; your previous mode was restored.");
   });

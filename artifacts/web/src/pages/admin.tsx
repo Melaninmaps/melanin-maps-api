@@ -149,7 +149,7 @@ type SourceBackedDirectoryIntakePreview = {
   addressEligibleForGeocodingCount: number;
   maplessProfileCount: number;
 };
-const MINNEAPOLIS_SOURCE_INTAKE_BATCH = "mn_black_business_directory_minneapolis_2026_09_28";
+const MINNESOTA_SOURCE_INTAKE_BATCH = "mn_black_business_directory_statewide_2026_09_28";
 /**
  * The Business inventory groups city spelling/case variants into objects, while
  * the older Waitlist contract returns strings. Keep all response parsing here
@@ -1383,7 +1383,7 @@ export default function Admin() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           apply: false,
-          batch: MINNEAPOLIS_SOURCE_INTAKE_BATCH,
+          batch: MINNESOTA_SOURCE_INTAKE_BATCH,
           batchSize: 100,
         }),
       });
@@ -1397,11 +1397,11 @@ export default function Admin() {
     }
   }, [fetch]);
 
-  const publishMinneapolisSourceBackedDirectory = useCallback(async () => {
+  const publishMinnesotaSourceBackedDirectory = useCallback(async () => {
     const preview = sourceDirectoryIntakePreview;
     if (!preview || preview.createCount <= 0) return;
     if (!window.confirm(
-      `Add ${preview.createCount.toLocaleString()} Minneapolis source-backed business profiles now? Exact duplicates will be enriched when source details are missing; potential duplicates go to the Duplicate vault for review. This adds searchable, unclaimed profiles; only supplied street addresses may receive a map pin.`,
+      `Add ${preview.createCount.toLocaleString()} Minnesota source-backed business profiles now? Exact duplicates will be enriched when source details are missing; potential duplicates go to the Duplicate vault for review. This adds searchable, unclaimed profiles; only supplied street addresses may receive a map pin.`,
     )) return;
 
     setSourceDirectoryIntakeApplying(true);
@@ -1418,7 +1418,7 @@ export default function Admin() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             apply: true,
-            batch: MINNEAPOLIS_SOURCE_INTAKE_BATCH,
+            batch: MINNESOTA_SOURCE_INTAKE_BATCH,
             batchSize: 100,
           }),
         });
@@ -1437,7 +1437,7 @@ export default function Admin() {
           throw new Error("The source directory intake made no progress; no additional records were added.");
         }
       }
-      setSourceDirectoryIntakeResult(`Reconciled ${created.toLocaleString()} Minneapolis source-backed profiles. Exact matches were enriched only with missing source details; potential duplicates remain in the Duplicate vault; mapless profiles remain searchable without a fabricated pin.`);
+      setSourceDirectoryIntakeResult(`Reconciled ${created.toLocaleString()} Minnesota source-backed profiles. Exact matches were enriched only with missing source details; potential duplicates remain in the Duplicate vault; mapless profiles remain searchable without a fabricated pin.`);
       await Promise.all([loadBusinesses(), loadSourceBackedDirectoryIntakePreview()]);
     } catch (error) {
       setSourceDirectoryIntakeResult(error instanceof Error ? error.message : "The source directory intake stopped before completion.");
@@ -4627,30 +4627,30 @@ Selected: ${summary}`,
             <section className="mb-4 rounded-2xl border border-[#CA922B]/30 bg-[#FFF9EF] p-4" aria-label="Founder source directory intake">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#8D5C17]">Minneapolis proof-of-concept intake</p>
-                  <h3 className="mt-1 font-serif text-xl font-bold text-[#3A1F0E]">Publish the received Minneapolis source-backed directory</h3>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#8D5C17]">Minnesota source-directory intake</p>
+                  <h3 className="mt-1 font-serif text-xl font-bold text-[#3A1F0E]">Publish the received Minnesota source-backed directory</h3>
                   <p className="mt-1 max-w-3xl text-sm leading-6 text-[#3A1F0E]/65">
                     Exact same-place records retain their canonical profile and receive only missing source-backed details. Potential same-name records go to the Duplicate vault for review. Every other source listing becomes a searchable, unclaimed MWM profile; only a supplied street address can be used for a map pin.
                   </p>
                 </div>
                 <button
                   type="button"
-                  onClick={() => void publishMinneapolisSourceBackedDirectory()}
+                  onClick={() => void publishMinnesotaSourceBackedDirectory()}
                   disabled={sourceDirectoryIntakeLoading || sourceDirectoryIntakeApplying || !sourceDirectoryIntakePreview || sourceDirectoryIntakePreview.createCount === 0}
                   className="shrink-0 rounded-xl bg-[#CA922B] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#B38024] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {sourceDirectoryIntakeApplying
-                    ? "Publishing Minneapolis records…"
+                    ? "Publishing Minnesota records…"
                     : sourceDirectoryIntakePreview?.createCount
-                      ? `Publish Minneapolis (${sourceDirectoryIntakePreview.createCount.toLocaleString()})`
-                      : "No remaining Minneapolis listings"}
+                      ? `Publish Minnesota (${sourceDirectoryIntakePreview.createCount.toLocaleString()})`
+                      : "No remaining Minnesota listings"}
                 </button>
               </div>
               {sourceDirectoryIntakeLoading ? (
                 <p className="mt-3 text-sm text-[#3A1F0E]/60">Checking the protected duplicate plan…</p>
               ) : sourceDirectoryIntakePreview ? (
                 <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-6">
-                  <div><dt className="text-[#3A1F0E]/55">Received Minneapolis source records</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.sourceCandidateCount.toLocaleString()}</dd></div>
+                  <div><dt className="text-[#3A1F0E]/55">Received Minnesota source records</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.sourceCandidateCount.toLocaleString()}</dd></div>
                   <div><dt className="text-[#3A1F0E]/55">Remaining to reconcile</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.createCount.toLocaleString()}</dd></div>
                   <div><dt className="text-[#3A1F0E]/55">Exact records reconciled</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.exactDuplicateCount.toLocaleString()}</dd></div>
                   <div><dt className="text-[#3A1F0E]/55">Potential duplicates to review</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.potentialDuplicateReviewCount.toLocaleString()}</dd></div>

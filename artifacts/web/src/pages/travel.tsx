@@ -2831,21 +2831,14 @@ function TravelPage() {
                     className="inline-flex items-center gap-2 rounded-full border border-[#3A1F0E]/10 bg-[#FAF6EF] px-3 py-1.5 text-[11px] font-semibold text-[#3A1F0E]/65 transition-colors hover:border-[#CA922B]/35 hover:text-[#8D5C17]"
                   >
                     <Settings size={12} className="text-[#CA922B]" />
-                    <span>{({ community: "Just Big Cousin", professor: "Professor", business_manager: "Business Manager", best_friend: "Best Friend" } as const)[kinfolkMode]}</span>
-                    <span className="text-[#3A1F0E]/35">· Voice & privacy</span>
+                    <span>Memory & privacy</span>
                     <ChevronRight size={12} className={`transition-transform ${showComposerControls ? "rotate-90" : ""}`} />
                   </button>
                   <span className="hidden text-[10px] text-[#3A1F0E]/38 sm:block">Review, edit, or turn off memory anytime.</span>
                 </div>
                 {showComposerControls && (
                   <div id="kinfolk-composer-controls" className="mx-auto mb-3 max-w-3xl rounded-2xl border border-[#3A1F0E]/8 bg-[#FAF6EF] p-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="mr-1 text-[10px] font-bold uppercase tracking-[0.14em] text-[#3A1F0E]/38">Reply style</span>
-                      {PERSONALITY_MODES.map(({ id, label }) => (
-                        <button key={id} data-testid={`kinfolk-mode-${id}`} onClick={() => void selectKinfolkMode(id)} className={`rounded-full px-3 py-1.5 text-[11px] font-bold transition-colors ${kinfolkMode === id ? "bg-[#2B1507] text-white" : "border border-[#3A1F0E]/10 bg-white text-[#3A1F0E]/55 hover:border-[#CA922B]/35 hover:text-[#8D5C17]"}`}>{label}</button>
-                      ))}
-                    </div>
-                    <div className="mt-3 grid gap-2 border-t border-[#3A1F0E]/8 pt-3 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
+                    <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
                       <label className="flex items-start gap-2 text-[11px] leading-5 text-[#3A1F0E]/60" title="Save this message as a specific private note. After you choose memory, Kinfolk can also retain useful non-sensitive preferences, plans, and goals when you share them.">
                         <input type="checkbox" checked={rememberThis} onChange={(event) => setRememberThis(event.target.checked)} className="mt-0.5" />
                         Save this as a specific note

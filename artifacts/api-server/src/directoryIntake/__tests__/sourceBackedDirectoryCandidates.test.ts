@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { sourceBackedDirectoryCandidates } from "../sourceBackedDirectoryCandidates";
 import { minneapolisSourceBackedDirectoryCandidates } from "../minneapolisSourceBackedDirectoryCandidates";
+import { mnblackStatewideSourceBackedDirectoryCandidates } from "../mnblackStatewideSourceBackedDirectoryCandidates";
 
 describe("source-backed directory candidate manifest", () => {
   it("preserves the complete community-sourced Philadelphia Black restaurant sheet", () => {
@@ -50,5 +51,21 @@ describe("source-backed directory candidate manifest", () => {
     expect(minneapolisSourceBackedDirectoryCandidates.filter((candidate) => (
       !candidate.officialUrl && !candidate.socialLinks
     ))).toHaveLength(2);
+  });
+
+  it("keeps the complete statewide Minnesota receipt separate from the Minneapolis proof batch", () => {
+    expect(mnblackStatewideSourceBackedDirectoryCandidates).toHaveLength(357);
+    expect(mnblackStatewideSourceBackedDirectoryCandidates.every((candidate) => (
+      candidate.state === "MN"
+      && candidate.batch === "mn_black_business_directory_statewide_2026_09_28"
+      && candidate.ownershipDesignations.includes("Black / African American-Owned")
+      && candidate.sourceListingUrl?.startsWith("https://mnblackbusiness.com/businesses/")
+    ))).toBe(true);
+    expect(mnblackStatewideSourceBackedDirectoryCandidates.filter((candidate) => (
+      Boolean(candidate.officialUrl || candidate.socialLinks)
+    ))).toHaveLength(339);
+    expect(mnblackStatewideSourceBackedDirectoryCandidates.filter((candidate) => (
+      !candidate.officialUrl && !candidate.socialLinks
+    ))).toHaveLength(18);
   });
 });

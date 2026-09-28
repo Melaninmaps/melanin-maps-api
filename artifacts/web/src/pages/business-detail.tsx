@@ -382,7 +382,6 @@ export default function BusinessDetail() {
   const [communityVibes, setCommunityVibes] = useState<any[]>([]);
   const [showFullAbout, setShowFullAbout] = useState(false);
   const [businessTab, setBusinessTab] = useState("overview");
-  const communityVideosRef = useRef<HTMLElement | null>(null);
   const visibleCommunityVibes = communityVibes.filter((contribution) => {
     const platform = detectSocialVideoPlatform(contribution.source_url ?? "");
     // A creator can always find their own submitted post after switching
@@ -407,10 +406,7 @@ export default function BusinessDetail() {
   }, [id]);
 
   const openCommunityPosts = useCallback(() => {
-    setBusinessTab("overview");
-    requestAnimationFrame(() => {
-      communityVideosRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    setBusinessTab("community");
   }, []);
 
   function closeContributionModal() {
@@ -1125,6 +1121,7 @@ export default function BusinessDetail() {
               <TabsList className="w-full justify-start bg-[#1A1209] border-b border-white/10 rounded-none h-14 p-0 space-x-8 mb-8">
                 <TabsTrigger value="overview" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#CA922B] rounded-none px-0 h-14 font-serif text-lg text-white/50 data-[state=active]:text-white">Overview</TabsTrigger>
                 <TabsTrigger value="reviews" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#CA922B] rounded-none px-0 h-14 font-serif text-lg text-white/50 data-[state=active]:text-white">Reviews</TabsTrigger>
+                <TabsTrigger value="community" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#CA922B] rounded-none px-0 h-14 font-serif text-lg text-white/50 data-[state=active]:text-white">Community posts</TabsTrigger>
                 {stories.length > 0 && (
                   <TabsTrigger value="stories" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-[#CA922B] rounded-none px-0 h-14 font-serif text-lg text-white/50 data-[state=active]:text-white">
                     <BookOpen size={16} className="mr-1.5" />Stories
@@ -1181,44 +1178,6 @@ export default function BusinessDetail() {
                   );
                 })()}
 
-                {/* Approved public posts are shared across web and native. A
-                    contributor can also see their own moderation status without
-                    exposing an unreviewed post to anyone else. */}
-                <section ref={communityVideosRef} id="community-videos" className="rounded-2xl border border-white/10 bg-[#1E1510] p-5 space-y-3 scroll-mt-8" aria-labelledby="community-experiences-heading">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h3 id="community-experiences-heading" className="font-serif font-bold text-xl text-white">Watch community posts</h3>
-                      <p className="mt-1 text-xs leading-relaxed text-white/55">Approved public posts shared by members. Your Video Sources choices decide which platforms appear; each opens on its original creator platform.</p>
-                    </div>
-                    <button onClick={() => setShowContribModal(true)} className="inline-flex items-center gap-1.5 rounded-full border border-[#CA922B]/35 px-3 py-1.5 text-xs font-bold text-[#CA922B] hover:border-[#CA922B] hover:bg-[#CA922B]/10 transition-colors">
-                      <Camera className="h-3.5 w-3.5" /> Share your visit
-                    </button>
-                  </div>
-                  {visibleCommunityVibes.length > 0 ? (
-                    <div className="grid gap-2 sm:grid-cols-2">
-                      {visibleCommunityVibes.slice(0, 3).map((contribution: any) => {
-                        const platform = detectSocialVideoPlatform(contribution.source_url ?? "");
-                        const href = platform ? safeExternalProfileUrl(contribution.source_url, platform) : null;
-                        if (!platform || !href) return null;
-                        return (
-                          <a key={contribution.id} href={href} target="_blank" rel="noopener noreferrer" className="group rounded-xl border border-white/10 bg-[#241810] p-3 hover:border-[#CA922B]/45 transition-colors">
-                            <div className="flex items-start gap-2">
-                              <span className="rounded-full bg-[#CA922B]/10 px-2 py-0.5 text-[10px] font-bold text-[#CA922B]">{platform}</span>
-                              {contribution.is_own === true && contribution.status !== "approved" ? <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-white/65">Awaiting review · only you can see this</span> : null}
-                              <ExternalLink className="ml-auto h-3.5 w-3.5 shrink-0 text-white/35 group-hover:text-[#CA922B]" />
-                            </div>
-                            <p className="mt-2 text-sm leading-relaxed text-white/80 line-clamp-2">{contribution.caption || `View this community-shared ${platform} post`}</p>
-                            {(contribution.attribution || contribution.contributor_name) ? <p className="mt-1 text-[10px] text-white/45">Shared by {contribution.attribution || contribution.contributor_name}</p> : null}
-                          </a>
-                        );
-                      })}
-                    </div>
-                  ) : communityVibes.length > 0 ? (
-                    <p className="rounded-xl border border-dashed border-white/15 bg-[#241810] px-4 py-3 text-sm text-white/55">Approved videos are available, but none match your current Video Sources choices. <Link className="font-semibold text-[#CA922B] hover:underline" href="/profile">Choose video sources</Link>.</p>
-                  ) : (
-                    <p className="rounded-xl border border-dashed border-white/15 bg-[#241810] px-4 py-3 text-sm text-white/55">No approved community videos yet. You can share an original public post for review.</p>
-                  )}
-                </section>
 
                 <div className="prose prose-lg text-white/80 font-light leading-relaxed prose-invert">
                   <p>{(business.description?.replace(/^\[DEMO\]\s*/i, "") || "Discover this exceptional business. They provide quality service and a welcoming environment for the community.")}</p>
@@ -1305,6 +1264,47 @@ export default function BusinessDetail() {
                     </div>
                   </div>
                 )}
+              </TabsContent>
+
+              <TabsContent value="community" className="space-y-6 animate-in fade-in">
+                {/* Approved public posts are shared across web and native. A
+                    contributor can also see their own moderation status without
+                    exposing an unreviewed post to anyone else. */}
+                <section id="community-videos" className="rounded-2xl border border-white/10 bg-[#1E1510] p-5 space-y-3 scroll-mt-8" aria-labelledby="community-experiences-heading">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 id="community-experiences-heading" className="font-serif font-bold text-xl text-white">Watch community posts</h3>
+                      <p className="mt-1 text-xs leading-relaxed text-white/55">Approved public posts shared by members. Your Video Sources choices decide which platforms appear; each opens on its original creator platform.</p>
+                    </div>
+                    <button onClick={() => setShowContribModal(true)} className="inline-flex items-center gap-1.5 rounded-full border border-[#CA922B]/35 px-3 py-1.5 text-xs font-bold text-[#CA922B] hover:border-[#CA922B] hover:bg-[#CA922B]/10 transition-colors">
+                      <Camera className="h-3.5 w-3.5" /> Share your visit
+                    </button>
+                  </div>
+                  {visibleCommunityVibes.length > 0 ? (
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {visibleCommunityVibes.slice(0, 3).map((contribution: any) => {
+                        const platform = detectSocialVideoPlatform(contribution.source_url ?? "");
+                        const href = platform ? safeExternalProfileUrl(contribution.source_url, platform) : null;
+                        if (!platform || !href) return null;
+                        return (
+                          <a key={contribution.id} href={href} target="_blank" rel="noopener noreferrer" className="group rounded-xl border border-white/10 bg-[#241810] p-3 hover:border-[#CA922B]/45 transition-colors">
+                            <div className="flex items-start gap-2">
+                              <span className="rounded-full bg-[#CA922B]/10 px-2 py-0.5 text-[10px] font-bold text-[#CA922B]">{platform}</span>
+                              {contribution.is_own === true && contribution.status !== "approved" ? <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-white/65">Awaiting review · only you can see this</span> : null}
+                              <ExternalLink className="ml-auto h-3.5 w-3.5 shrink-0 text-white/35 group-hover:text-[#CA922B]" />
+                            </div>
+                            <p className="mt-2 text-sm leading-relaxed text-white/80 line-clamp-2">{contribution.caption || `View this community-shared ${platform} post`}</p>
+                            {(contribution.attribution || contribution.contributor_name) ? <p className="mt-1 text-[10px] text-white/45">Shared by {contribution.attribution || contribution.contributor_name}</p> : null}
+                          </a>
+                        );
+                      })}
+                    </div>
+                  ) : communityVibes.length > 0 ? (
+                    <p className="rounded-xl border border-dashed border-white/15 bg-[#241810] px-4 py-3 text-sm text-white/55">Approved videos are available, but none match your current Video Sources choices. <Link className="font-semibold text-[#CA922B] hover:underline" href="/profile">Choose video sources</Link>.</p>
+                  ) : (
+                    <p className="rounded-xl border border-dashed border-white/15 bg-[#241810] px-4 py-3 text-sm text-white/55">No approved community videos yet. You can share an original public post for review.</p>
+                  )}
+                </section>
               </TabsContent>
 
               {/* Stories tab content */}

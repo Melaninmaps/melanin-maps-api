@@ -153,8 +153,6 @@ export default function BusinessDetailScreen() {
   const [passThePlateOpen, setPassThePlateOpen] = useState(false);
   const [platePassCount, setPlatePassCount] = useState(0);
   const [showSafetySurvey, setShowSafetySurvey] = useState(false);
-  const mainScrollRef = useRef<ScrollView>(null);
-  const communityMediaYRef = useRef(0);
   const [circleSheetOpen, setCircleSheetOpen] = useState(false);
   const [userCircles, setUserCircles] = useState<{ id: number; name: string; city: string | null; state: string | null; memberCount: number }[]>([]);
   const [circlesLoading, setCirclesLoading] = useState(false);
@@ -760,7 +758,6 @@ export default function BusinessDetailScreen() {
       </View>
 
       <ScrollView
-        ref={mainScrollRef}
         keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: bottomPad + 100 }}>
         {claimedCover ? (
           <Image source={{ uri: claimedCover }} style={styles.hero} contentFit="cover" />
@@ -879,13 +876,7 @@ export default function BusinessDetailScreen() {
           </View>
           <View style={styles.creatorMediaTopActions}>
             <TouchableOpacity
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                mainScrollRef.current?.scrollTo({
-                  y: Math.max(0, communityMediaYRef.current - 18),
-                  animated: true,
-                });
-              }}
+              onPress={() => router.push({ pathname: "/business-vibes", params: { businessId: id, businessName: business.name } } as never)}
               style={[styles.creatorMediaTopAction, styles.creatorMediaTopActionPrimary, { backgroundColor: colors.primary }]}
               accessibilityRole="button"
               accessibilityLabel={`Watch community posts about ${business.name}`}
@@ -1286,10 +1277,7 @@ export default function BusinessDetailScreen() {
             })()}
           </View>
 
-          <View
-            onLayout={(event) => { communityMediaYRef.current = event.nativeEvent.layout.y; }}
-            style={[styles.communityMediaCard, { backgroundColor: colors.card, borderColor: colors.border }]}
-          >
+          <View style={[styles.communityMediaCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.communityMediaHeader}>
                 <Feather name="play-circle" size={17} color={colors.primary} />
                 <Text style={[styles.sectionTitle, { color: colors.foreground, marginBottom: 0 }]}>Community posts</Text>

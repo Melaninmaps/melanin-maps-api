@@ -41,6 +41,7 @@ import {
   type SourceBackedDirectoryCandidate,
 } from "../directoryIntake/sourceBackedDirectoryCandidates";
 import { minneapolisSourceBackedDirectoryCandidates } from "../directoryIntake/minneapolisSourceBackedDirectoryCandidates";
+import { mnblackStatewideSourceBackedDirectoryCandidates } from "../directoryIntake/mnblackStatewideSourceBackedDirectoryCandidates";
 import {
   buildSourceBackedDirectoryIntakePlan,
   normalizeDirectoryIdentity,
@@ -50,11 +51,13 @@ import { CITY_SAFETY_SOURCE_REGISTRY } from "../kinfolk/city-safety-briefing-v1"
 
 const router: IRouter = Router();
 
-// Additive source receipt set. The historical founder manifest remains
-// untouched; the Minneapolis proof-of-concept is isolated by its own batch.
+// Additive source receipt set. Historical and Minnesota directory manifests stay
+// isolated by receipt batch so reconciliation never expands an admin request to
+// an unrelated source cohort.
 const protectedSourceDirectoryCandidates: readonly SourceBackedDirectoryCandidate[] = [
   ...sourceBackedDirectoryCandidates,
   ...minneapolisSourceBackedDirectoryCandidates,
+  ...mnblackStatewideSourceBackedDirectoryCandidates,
 ];
 
 type SourceDirectoryExistingBusiness = Readonly<{

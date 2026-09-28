@@ -367,6 +367,18 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("currentTurnCorrectionInstruction");
   });
 
+  it("keeps a remembered destination out of unrelated current-turn answers and uses destination-local time", () => {
+    expect(routeSource).toContain("async function resolveDestinationLocalTimeContext");
+    expect(routeSource).toContain("SERVER-RESOLVED LOCAL TIME — AUTHORITATIVE FOR LOCATION FEATURES:");
+    expect(routeSource).toContain("currentRequestUsesLocation");
+    expect(chatRoute).toContain("const promptDestination = currentRequestUsesLocation ? destination : null");
+    expect(chatRoute).toContain("await resolveDestinationLocalTimeContext(promptDestination)");
+    expect(chatRoute).toContain("destination: promptDestination");
+    expect(chatRoute).toContain("destinationLocalTimeContext");
+    expect(routeSource).toContain("CURRENT-TURN PRIORITY — NON-NEGOTIABLE");
+    expect(routeSource).toContain("ON-SCREEN FORMAT: Return plain text");
+  });
+
   it("uses the shared natural-conversation contract in the full Kinfolk prompt", () => {
     expect(routeSource).toContain("buildKinfolkNaturalConversationContract,");
     expect(routeSource).toContain("const naturalConversationContract = buildKinfolkNaturalConversationContract();");

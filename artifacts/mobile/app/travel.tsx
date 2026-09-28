@@ -2807,53 +2807,19 @@ export default function TravelScreen() {
           style={[styles.composerSettingsRow, { backgroundColor: colors.card, borderTopColor: colors.border }]}
           accessibilityRole="button"
           accessibilityState={{ expanded: showComposerControls }}
-          accessibilityLabel="Open Kinfolk voice and privacy controls"
+          accessibilityLabel="Open Kinfolk memory and privacy controls"
         >
           <View style={styles.composerSettingsLeading}>
             <Ionicons name="options-outline" size={16} color={colors.primary} />
-            <Text style={[styles.composerSettingsTitle, { color: colors.foreground }]}>
-              {KINFOLK_VOICES.find((voice) => voice.id === voiceMode)?.label ?? "Big Cousin"}
-            </Text>
+            <Text style={[styles.composerSettingsTitle, { color: colors.foreground }]}>Memory & privacy</Text>
             <Text style={[styles.composerSettingsSummary, { color: colors.mutedForeground }]}>
-              Voice &amp; privacy
+              Review or turn off memory anytime
             </Text>
           </View>
           <Ionicons name={showComposerControls ? "chevron-up" : "chevron-down"} size={17} color={colors.mutedForeground} />
         </TouchableOpacity>
 
         {showComposerControls && <>
-        {/* Kinfolk Voices™ mode selector */}
-        <View style={[styles.voicesBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-          <Text style={[styles.voicesBarLabel, { color: colors.mutedForeground }]}>Kinfolk Voices™</Text>
-          <ScrollView
-        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.voicesPills}>
-            {KINFOLK_VOICES.map((v) => {
-              const isActive = voiceMode === v.id;
-              const locked = v.requiresPaid && (!isAuthenticated || !subscription);
-              return (
-                <TouchableOpacity
-                  key={v.id}
-                  style={[
-                    styles.voicePill,
-                    { backgroundColor: isActive ? colors.primary : colors.background, borderColor: isActive ? colors.primary : colors.border },
-                    locked && { opacity: 0.55 },
-                  ]}
-                  onPress={() => {
-                    if (locked) { setShowUpgrade(true); return; }
-                    setVoiceMode(v.id);
-                    void updatePreferences({ personalityMode: v.id });
-                  }}
-                  activeOpacity={0.75}
-                >
-                  <Text style={styles.voicePillIcon}>{v.icon}</Text>
-                  <Text style={[styles.voicePillLabel, { color: isActive ? "#fff" : colors.text }]}>{v.label}</Text>
-                  {locked && <Ionicons name="lock-closed" size={9} color={isActive ? "#ffffff99" : colors.mutedForeground} />}
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-
         <View style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, gap: 7 }}>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
             <TouchableOpacity activeOpacity={0.8} onPress={() => setRememberThis((value) => !value)} style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }} accessibilityRole="checkbox" accessibilityState={{ checked: rememberThis }} accessibilityLabel="Save this to my private Kinfolk memory">
