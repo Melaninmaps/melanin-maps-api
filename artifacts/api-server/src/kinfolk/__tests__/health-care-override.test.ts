@@ -1,8 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { buildHealthCareOverride } from "../health-care-override";
-import { extractHealthTopic } from "../health-retrieval";
+import { extractHealthTopic, normalizeMedlinePlusText } from "../health-retrieval";
 
 describe("qualified care override", () => {
+  it("renders MedlinePlus search highlighting as plain source text", () => {
+    expect(normalizeMedlinePlusText('&lt;span class="qt0"&gt;Anemia&lt;/span&gt;')).toBe("Anemia");
+  });
+
   it("does not let a breast-change care request be blocked by an ownership-scoped directory", () => {
     const override = buildHealthCareOverride({
       message:

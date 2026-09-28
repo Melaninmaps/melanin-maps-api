@@ -13,6 +13,19 @@ const NIH_MEDLINEPLUS_API = "https://wsearch.nlm.nih.gov/ws/query";
 const HEALTH_RETRIEVAL_TIMEOUT_MS = 6000;
 const MAX_RESULTS = 3;
 
+/** Turns the MedlinePlus XML search markup into safe, human-readable link text. */
+export function normalizeMedlinePlusText(value: string): string {
+  return value
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/<[^>]*>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 const EXCLUDE_FROM_RETRIEVAL = new Set([
   "suicide", "self-harm", "overdose", "abortion",
   "divorce", "bankruptcy", "immigration status",
@@ -102,12 +115,8 @@ async function fetchNIHHealthTopics(topic: string): Promise<NIHHealthResult[] | 
     while ((match = docRegex.exec(xml)) !== null && documents.length < MAX_RESULTS) {
       const url = match[1] ?? "";
       const inner = match[2] ?? "";
-      const title = inner.match(titleRegex)?.[1]?.trim() ?? "";
-      const snippet = inner.match(snippetRegex)?.[1]
-        ?.replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .trim() ?? "";
+      const title = normalizeMedlinePlusText(inner.match(titleRegex)?.[1] ?? "");
+      const snippet = normalizeMedlinePlusText(inner.match(snippetRegex)?.[1] ?? "");
       if (title && url) documents.push({ title, url, snippet, source: "NIH MedlinePlus" });
     }
 
