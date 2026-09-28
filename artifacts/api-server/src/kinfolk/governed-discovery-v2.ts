@@ -32,5 +32,18 @@ export function requestsExactRadius(message: string): boolean {
   return /\b(?:within|under|inside|less than|no more than|up to)\s+\d{1,3}\s*(?:mi|miles?)\b|\b\d{1,3}[ -]?mile\s+radius\b/i.test(message);
 }
 
+/**
+ * A strict directory response has evidence for its cards—not automatically for
+ * a changing local safety claim. Preserve the requested safety concern without
+ * manufacturing a city-specific alert or reusing a source from another city.
+ */
+export function requestsCurrentLocalSafetyContext(message: string): boolean {
+  return /\b(?:safety|safe(?:ty)?|unsafe|crime|danger|travel advis(?:ory|ories))\b/i.test(message);
+}
+
+export function governedDirectorySafetyLimit(city: string): string {
+  return `Safety note: I could not verify a current ${city}-specific safety alert from the source-backed directory records used for these listings, so I will not make a current local-safety claim. Before you go, check official local alerts and your transportation provider; for immediate danger, contact local emergency services.`;
+}
+
 export const GOVERNED_DISCOVERY_V2_RADIUS_REPLY =
   "I can keep the documented ownership and exact service filters, but I do not yet have a verified geocoded starting point to prove a numeric radius. I will not label city-wide results as within that distance. You can open the governed listing details and map pin to verify proximity, or give a geocodable public starting point once that option is available.";

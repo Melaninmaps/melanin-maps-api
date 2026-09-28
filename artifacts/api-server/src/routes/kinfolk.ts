@@ -83,8 +83,10 @@ import {
 } from "../kinfolk/decision-retrieval-plan";
 import {
   GOVERNED_DISCOVERY_V2_RADIUS_REPLY,
+  governedDirectorySafetyLimit,
   isGovernedDiscoveryV2Enabled,
   isStrictDocumentedOwnershipDiscoveryRequest,
+  requestsCurrentLocalSafetyContext,
   requestsExactRadius,
 } from "../kinfolk/governed-discovery-v2";
 import {
@@ -6762,6 +6764,10 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const externalCount = discoveryResult.discovery.webFindings.length;
   const relatedPlaceCount = discoveryResult.discovery.mapPlaces.length;
   const designationSummary = joinMemberFacingDesignations(discoveryDesignationIds);
+  const strictSafetyLimit =
+    strictSourceBackedDiscovery && requestsCurrentLocalSafetyContext(input.message)
+      ? governedDirectorySafetyLimit(scope.city)
+      : "";
   const requestedSubjectLabel = [
     subject.dietaryRequirement?.label,
     subject.documentedServiceRequirement?.label,
@@ -6772,7 +6778,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const proximityCaveat = requiresDocumentedProximityCaveat(input.message)
     ? DOCUMENTED_PROXIMITY_CAVEAT
     : "";
-  const conciseReply =
+  const conciseDirectoryReply =
     discoveryDesignationIds.length > 0 && platformCount === 0
       ? strictSourceBackedDiscovery
         ? `I found no source-backed MWM ${designationSummary} ${requestedSubjectLabel} match for every designation you selected in ${scope.city}. I will not substitute an untagged listing or infer ownership. You can keep your exact focus, revise one selection, or—only if you choose it—search all public places.`
@@ -6786,6 +6792,9 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
         : externalCount > 0
           ? `I didn't find a matching MWM public listing for ${requestedSubjectLabel} in ${scope.city}. I did find current external sources below; they are not MWM-verified business listings.`
           : `I didn't find a matching ${designationSummary} place for ${requestedSubjectLabel} in ${scope.city}. I can widen the area, try a nearby city, or—only if you choose it—search all public places.`;
+  const conciseReply = [strictSafetyLimit, conciseDirectoryReply]
+    .filter(Boolean)
+    .join("\n\n");
   const deterministicFollowUps = [
     resultView.followUp,
     ...(planningFollowUp ? [planningFollowUp] : []),

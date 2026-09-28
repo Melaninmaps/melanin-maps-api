@@ -237,6 +237,16 @@ describe("Kinfolk chat static wiring", () => {
     expect(helper).toContain("I will not substitute an untagged listing or infer ownership.");
   });
 
+  it("does not omit a requested current-safety concern from a strict directory reply", () => {
+    const helperStart = routeSource.indexOf("async function tryAnswerDeterministicBusinessDiscovery");
+    const helperEnd = routeSource.indexOf('router.post("/kinfolk/chat"', helperStart);
+    const helper = routeSource.slice(helperStart, helperEnd);
+
+    expect(helper).toContain("requestsCurrentLocalSafetyContext(input.message)");
+    expect(helper).toContain("governedDirectorySafetyLimit(scope.city)");
+    expect(helper).toContain("strictSafetyLimit");
+  });
+
   it("keeps city briefing sources out of prior-city resolver context", () => {
     expect(chatRoute).toContain("!isCurrentCityBriefing");
     expect(chatRoute).toContain("contextResolution.sources.map((source) => source.url)");
