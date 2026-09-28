@@ -44,5 +44,11 @@ describe("source-backed directory candidate manifest", () => {
     ))).toHaveLength(123);
     expect(minneapolisSourceBackedDirectoryCandidates.some((candidate) => candidate.socialLinks?.instagram)).toBe(true);
     expect(minneapolisSourceBackedDirectoryCandidates.some((candidate) => !candidate.address && candidate.officialUrl)).toBe(true);
+    expect(minneapolisSourceBackedDirectoryCandidates.filter((candidate) => (
+      Boolean(candidate.officialUrl || candidate.socialLinks)
+    ))).toHaveLength(127);
+    expect(minneapolisSourceBackedDirectoryCandidates.filter((candidate) => (
+      !candidate.officialUrl && !candidate.socialLinks
+    ))).toHaveLength(2);
   });
 });

@@ -141,10 +141,12 @@ export function buildSourceBackedDirectoryIntakePlan(
   // the exact same-place rules while avoiding repeated full-list scans in the
   // admin preview and in every bounded publication retry.
   const existingByReceipt = new Map<string, ExistingDirectoryBusiness>();
+  const existingByListingReceipt = new Map<string, ExistingDirectoryBusiness>();
   const existingByAddress = new Map<string, ExistingDirectoryBusiness>();
   const existingByOfficialDestination = new Map<string, ExistingDirectoryBusiness>();
   for (const existing of existingBusinesses) {
     if (existing.dedupeKey) existingByReceipt.set(existing.dedupeKey, existing);
+    if (existing.sourceUrl) existingByListingReceipt.set(existing.sourceUrl, existing);
     const addressKey = exactAddressKey(existing);
     if (addressKey) existingByAddress.set(addressKey, existing);
     const destinationKey = officialDestinationKey(existing);
@@ -155,7 +157,12 @@ export function buildSourceBackedDirectoryIntakePlan(
   const createdByOfficialDestination = new Map<string, SourceBackedDirectoryCandidate>();
 
   for (const candidate of candidates) {
-    const sourceReceiptMatch = existingByReceipt.get(candidate.sourceRecordKey);
+    // Directory rows with street addresses use a canonical place key for
+    // deduplication, so their sourceRecordKey is retained as the exact
+    // source-listing URL rather than overwriting the place key. Either exact
+    // persisted receipt proves this is a retry, including a review-vault row.
+    const sourceReceiptMatch = existingByReceipt.get(candidate.sourceRecordKey)
+      ?? existingByListingReceipt.get(candidate.sourceListingUrl ?? candidate.sourceUrl);
     if (sourceReceiptMatch) {
       duplicateMatches.push({
         candidate,

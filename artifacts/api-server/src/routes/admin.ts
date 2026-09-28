@@ -100,6 +100,9 @@ async function sourceDirectoryExistingBusinessCandidates(
   const sourceReceiptKeys = sourceCandidates.map(
     (candidate) => candidate.sourceRecordKey,
   );
+  const sourceListingUrls = sourceCandidates.map(
+    (candidate) => candidate.sourceListingUrl ?? candidate.sourceUrl,
+  );
   const result = await pool.query<SourceDirectoryExistingBusiness>(
     `SELECT id, name, city, state, address, website, description, phone,
             facebook, instagram, tiktok, twitter, youtube, pinterest,
@@ -111,12 +114,15 @@ async function sourceDirectoryExistingBusinessCandidates(
             intake_batch_reference AS "intakeBatchReference",
             COALESCE(is_duplicate, false) AS "isDuplicate"
        FROM businesses
-      WHERE COALESCE(is_duplicate, false) = false
-        AND (
-          REGEXP_REPLACE(LOWER(COALESCE(name, '')), '[^a-z0-9]+', '', 'g') = ANY($1::text[])
-          OR dedupe_key = ANY($2::text[])
-        )`,
-    [sourceNames, sourceReceiptKeys],
+      WHERE (
+          COALESCE(is_duplicate, false) = false
+          AND (
+            REGEXP_REPLACE(LOWER(COALESCE(name, '')), '[^a-z0-9]+', '', 'g') = ANY($1::text[])
+            OR dedupe_key = ANY($2::text[])
+          )
+        ) OR source_url = ANY($3::text[])
+        `,
+    [sourceNames, sourceReceiptKeys, sourceListingUrls],
   );
   return result.rows;
 }
@@ -691,9 +697,13 @@ async function compileAdminBusinessInventoryFilters(
   } else if (link === "website_missing") {
     filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL");
   } else if (link === "social_present") {
-    filters.push("NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(twitter, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(youtube, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(pinterest, '')), '') IS NOT NULL");
+    // Keep the social-platform alternatives grouped. Without these parentheses a
+    // preceding city, ownership, cohort, or archive predicate applied only to
+    // Instagram, and a Facebook/TikTok/etc. row from another city leaked into
+    // an otherwise city-scoped Administrator review.
+    filters.push("(NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(twitter, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(youtube, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(pinterest, '')), '') IS NOT NULL)");
   } else if (link === "no_public_link") {
-    filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(twitter, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(youtube, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(pinterest, '')), '') IS NULL");
+    filters.push("(NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(twitter, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(youtube, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(pinterest, '')), '') IS NULL)");
   }
   if (/^\d{4}-\d{2}-\d{2}$/.test(addedFrom)) {
     addFilter("created_at >= ?::date", addedFrom);

@@ -70,6 +70,10 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("toggleBusinessInventoryCity");
     expect(adminScreen).toContain('params.append("city", city)');
     expect(adminScreen).toContain("The inventory response did not confirm the city filter");
+    expect(adminScreen).toContain("cityScopedBusinesses");
+    expect(adminScreen).toContain("outside the selected city scope, so those rows were withheld");
+    expect(adminRoute).toContain("Keep the social-platform alternatives grouped");
+    expect(adminRoute).toContain("filters.push(\"(NULLIF(BTRIM(COALESCE(instagram");
   });
 
   it("keeps same-name duplicate review together with a safe server-side A–Z order", () => {

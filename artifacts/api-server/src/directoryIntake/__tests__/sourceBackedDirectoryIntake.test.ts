@@ -94,6 +94,22 @@ describe("source-backed directory reconciliation", () => {
     expect(plan.duplicateMatches[0]?.existingBusinessId).toBe("previous-source-intake");
   });
 
+  it("skips a prior review-vault retry by its exact retained source listing URL", () => {
+    const plan = buildSourceBackedDirectoryIntakePlan([candidate()], [{
+      id: "previous-source-review",
+      name: "Amina's Kitchen",
+      city: "Philadelphia",
+      state: "PA",
+      address: "A different source-rendered address",
+      website: null,
+      sourceUrl: "https://example.test/listing/ammina",
+      dedupeKey: null,
+    }]);
+
+    expect(plan.toCreate).toHaveLength(0);
+    expect(plan.duplicateMatches[0]?.existingBusinessId).toBe("previous-source-review");
+  });
+
   it("publishes one exact same-place record when distinct source receipts arrive together", () => {
     const secondReceipt = candidate({
       sourceRecordKey: "source-receipt:ammina-secondary-directory",

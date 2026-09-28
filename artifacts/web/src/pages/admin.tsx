@@ -1294,8 +1294,23 @@ export default function Admin() {
           setBusinessInventoryFilterError("The inventory response did not confirm the city filter, so no mismatched businesses were shown. Refresh and try the filter again.");
           return;
         }
+        const responseBusinesses: AdminBusiness[] = Array.isArray(data.businesses)
+          ? data.businesses as AdminBusiness[]
+          : [];
+        const cityScopedBusinesses = expectedCities.length === 0
+          ? responseBusinesses
+          : responseBusinesses.filter((business) => expectedCities.includes(
+              normalizedCityFilterValues([business?.city])[0] ?? "",
+            ));
+        if (cityScopedBusinesses.length !== responseBusinesses.length) {
+          setBusinesses(cityScopedBusinesses);
+          setBusinessInventoryFilteredTotal(cityScopedBusinesses.length);
+          setBusinessInventoryTotalPages(1);
+          setBusinessInventoryFilterError("The inventory response contained businesses outside the selected city scope, so those rows were withheld. Refresh after the filter repair finishes.");
+          return;
+        }
         setBusinessInventoryFilterError(null);
-        setBusinesses(data.businesses ?? []);
+        setBusinesses(responseBusinesses);
         setBusinessInventoryIsTruncated(Boolean(data.inventoryIsTruncated));
         setBusinessInventoryTotal(
           typeof data.inventoryTotal === "number" ? data.inventoryTotal : 0,
