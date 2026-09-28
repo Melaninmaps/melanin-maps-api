@@ -52,4 +52,23 @@ describe("Kinfolk member-facing source relevance", () => {
       },
     ], populationQuestion).map((source) => source.id)).toEqual(["census-population"]);
   });
+
+  it("keeps direct NIH medication discussion guidance when the medicine name is absent from its title", () => {
+    const result = filterMemberFacingSources([
+      {
+        id: "medlineplus-medication-questions",
+        label: "NIH MedlinePlus",
+        title: "MedlinePlus: Taking medicines — what to ask your provider",
+        url: "https://medlineplus.gov/ency/patientinstructions/000535.htm",
+      },
+      {
+        id: "unrelated-local-business",
+        label: "library",
+        title: "Philadelphia business licensing",
+        url: "https://www.phila.gov/services/business-self-employment/",
+      },
+    ], "My doctor prescribed ferrous sulfate for anemia. What should I ask about side effects and food interactions?");
+
+    expect(result.map((source) => source.id)).toEqual(["medlineplus-medication-questions"]);
+  });
 });
