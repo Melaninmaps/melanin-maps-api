@@ -90,7 +90,9 @@ import {
   requestsExactRadius,
 } from "../kinfolk/governed-discovery-v2";
 import {
+  extractCurrentTurnPublicOrigin,
   isVerifiedRadiusV1Enabled,
+  redactCurrentTurnPublicOrigin,
   requestedRadiusMiles,
   resolveVerifiedPublicOrigin,
   VERIFIED_RADIUS_ORIGIN_REQUIRED_REPLY,
@@ -6856,10 +6858,22 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     strictSourceBackedDiscovery && requestsExactRadius(input.message)
       ? requestedRadiusMiles(input.message)
       : null;
+  // A separate Exact-radius field is still supported. When a member instead
+  // naturally names a public hotel/venue in this one request, use that bounded
+  // public origin only for this calculation and redact it before persistence.
+  const naturalPublicOrigin =
+    radiusMiles !== null && !input.publicOrigin
+      ? extractCurrentTurnPublicOrigin(input.message)
+      : null;
+  const verifiedPublicOrigin = input.publicOrigin ?? naturalPublicOrigin;
+  const messageForPersistence = redactCurrentTurnPublicOrigin(
+    input.message,
+    naturalPublicOrigin,
+  );
   const verifiedRadius =
     radiusMiles !== null && isVerifiedRadiusV1Enabled()
       ? await resolveVerifiedPublicOrigin({
-          publicOrigin: input.publicOrigin,
+          publicOrigin: verifiedPublicOrigin,
           city: scope.city,
           stateCode: scope.stateCode,
           radiusMiles,
@@ -6873,7 +6887,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       userId: input.req.user!.id,
       memoryEnabled: input.memoryEnabled,
       sessionId: input.sessionId,
-      message: input.message,
+      message: messageForPersistence,
       reply: radiusReply,
       recommendations: null,
       resultView: null,
@@ -6914,7 +6928,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       educationalStatus: "limited",
       discovery: null,
       needsClarification: false,
-      originalQuery: input.message,
+      originalQuery: messageForPersistence,
       location: {
         city: location.city,
         state: location.state,
@@ -7051,7 +7065,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     userId: input.req.user!.id,
     memoryEnabled: input.memoryEnabled,
     sessionId: input.sessionId,
-    message: input.message,
+    message: messageForPersistence,
     reply: conciseReply,
     recommendations: discoveryResult.recommendations as Record<
       string,
@@ -7103,7 +7117,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     educationalStatus: discoveryResult.educationalStatus,
     discovery: discoveryResult.discovery,
     needsClarification: false,
-    originalQuery: input.message,
+    originalQuery: messageForPersistence,
     location: {
       city: location.city,
       state: location.state,

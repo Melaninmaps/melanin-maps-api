@@ -80,6 +80,9 @@ export function AdminAccessLedger() {
   } | null>(null);
   const [previewing, setPreviewing] = useState(false);
   const [granting, setGranting] = useState(false);
+  const [inviteName, setInviteName] = useState("");
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviting, setInviting] = useState(false);
   const [bulkEmails, setBulkEmails] = useState("");
   const [bulkSource, setBulkSource] = useState<
     "testflight" | "android_test" | "admin_invite" | "website_test"
@@ -225,6 +228,49 @@ export function AdminAccessLedger() {
       );
     } finally {
       setGranting(false);
+    }
+  };
+
+  const grantNamedTester = async () => {
+    const email = inviteEmail.trim().toLowerCase();
+    if (!email.includes("@") || !email.includes(".")) {
+      setMessage("Enter a valid email address before granting tester access.");
+      return;
+    }
+    const nameParts = inviteName.trim().split(/\s+/).filter(Boolean);
+    const firstName = nameParts[0] ?? null;
+    const lastName = nameParts.slice(1).join(" ") || null;
+    setInviting(true);
+    setMessage(null);
+    try {
+      const response = await fetch(`${BASE}api/admin/testers/apply`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          emails: [email],
+          accessSource: "admin_invite",
+          waitlistProfiles: [{ email, firstName, lastName }],
+        }),
+      });
+      const payload = (await response.json()) as {
+        updated?: number;
+        pendingAdded?: number;
+        error?: string;
+      };
+      if (!response.ok) throw new Error(payload.error ?? "Could not grant tester access.");
+      setInviteName("");
+      setInviteEmail("");
+      setMessage(
+        payload.updated
+          ? "Full tester access is active now. The existing account and its password, profile, saves, and Community activity were preserved."
+          : "The name and email are pre-approved now. Full tester access will attach automatically when this person registers; no account or password was created.",
+      );
+      await load();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Could not grant tester access.");
+    } finally {
+      setInviting(false);
     }
   };
 
@@ -453,6 +499,47 @@ export function AdminAccessLedger() {
             </button>
           </div>
         )}
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-[#0F766E]/25 bg-[#0F766E]/[0.04] p-5">
+        <div className="flex items-start gap-3">
+          <CheckCircle className="mt-0.5 h-5 w-5 shrink-0 text-[#0F766E]" />
+          <div>
+            <h3 className="font-semibold text-[#3A1F0E]">
+              Add one tester with full access
+            </h3>
+            <p className="mt-1 text-sm leading-6 text-[#3A1F0E]/65">
+              Add a name and email once. An existing account receives unlimited tester access immediately; otherwise the person is approved and tester access attaches automatically on registration. No password is created or replaced.
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+          <input
+            value={inviteName}
+            onChange={(event) => setInviteName(event.target.value.slice(0, 201))}
+            placeholder="Full name (optional)"
+            maxLength={201}
+            className="rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm text-[#3A1F0E] outline-none focus:border-[#0F766E]"
+            aria-label="Tester full name"
+          />
+          <input
+            value={inviteEmail}
+            onChange={(event) => setInviteEmail(event.target.value.slice(0, 255))}
+            type="email"
+            placeholder="tester@example.com"
+            maxLength={255}
+            className="rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm text-[#3A1F0E] outline-none focus:border-[#0F766E]"
+            aria-label="Tester email"
+          />
+          <button
+            type="button"
+            onClick={() => void grantNamedTester()}
+            disabled={inviting || !inviteEmail.trim()}
+            className="rounded-xl bg-[#0F766E] px-4 py-2 text-sm font-bold text-white hover:bg-[#0B5F59] disabled:opacity-50"
+          >
+            {inviting ? "Granting…" : "Grant full access"}
+          </button>
+        </div>
       </section>
 
       <section className="mt-6 rounded-2xl border border-[#CA922B]/30 bg-[#CA922B]/[0.06] p-5">

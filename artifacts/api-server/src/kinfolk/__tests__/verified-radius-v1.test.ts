@@ -1,7 +1,9 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   clearVerifiedRadiusOriginCacheForTest,
+  extractCurrentTurnPublicOrigin,
   isVerifiedRadiusV1Enabled,
+  redactCurrentTurnPublicOrigin,
   requestedRadiusMiles,
   resolveVerifiedPublicOrigin,
   VERIFIED_RADIUS_ORIGIN_REQUIRED_REPLY,
@@ -25,6 +27,19 @@ describe("verified radius v1", () => {
     expect(requestedRadiusMiles("Black-owned lunch nearby")).toBeNull();
     expect(requestedRadiusMiles("within 120 miles")).toBeNull();
     expect(VERIFIED_RADIUS_ORIGIN_REQUIRED_REPLY).toMatch(/not save it to your Kinfolk memory/i);
+  });
+
+  it("recognizes a naturally named public hotel and redacts it before persistence", () => {
+    const message = "I am staying at the Royal Sonesta Minneapolis Downtown and need Black-owned dinner within 10 miles.";
+    const origin = extractCurrentTurnPublicOrigin(message);
+    expect(origin).toBe("the Royal Sonesta Minneapolis Downtown");
+    expect(redactCurrentTurnPublicOrigin(message, origin)).toBe(
+      "I am staying at your hotel and need Black-owned dinner within 10 miles.",
+    );
+    expect(
+      extractCurrentTurnPublicOrigin("Find Black-owned dinner within 10 miles of the Royal Sonesta Minneapolis Downtown."),
+    ).toBe("the Royal Sonesta Minneapolis Downtown");
+    expect(extractCurrentTurnPublicOrigin("Find dinner within 10 miles of my hotel.")).toBeNull();
   });
 
   it("accepts only a geocoded public origin in the requested city and state", async () => {

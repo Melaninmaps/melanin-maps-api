@@ -100,6 +100,10 @@ describe("unified waitlist and recovery contract", () => {
     expect(waitlistRoute).toContain("pendingTesterAccess: pendingTesterEmails.has(email)");
     expect(waitlistRoute).toContain("pending_tester_emails");
     expect(testerRoute).toContain('router.post("/admin/testers/apply"');
+    expect(testerRoute).toContain("waitlistProfiles");
+    expect(testerRoute).toContain("first_name = COALESCE");
+    expect(testerRoute).toContain("last_name = COALESCE");
+    expect(testerRoute).toContain("UNION SELECT $4");
     expect(testerRoute).toContain('router.delete("/admin/testers/:email"');
   });
 

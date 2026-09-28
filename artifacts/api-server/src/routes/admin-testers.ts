@@ -104,16 +104,20 @@ function waitlistSourceForTesterAccess(
 async function upsertApprovedTesterWaitlistRecord(input: {
   email: string;
   accessSource: (typeof VALID_TESTER_ACCESS_SOURCES)[number];
+  firstName?: string | null;
+  lastName?: string | null;
 }): Promise<void> {
   const signupSource = waitlistSourceForTesterAccess(input.accessSource);
   await pool.query(
-    `INSERT INTO waitlist_signups (email, status, approved_at, signup_sources)
-       VALUES ($1, 'approved', NOW(), $2)
+    `INSERT INTO waitlist_signups (email, first_name, last_name, status, approved_at, signup_sources)
+       VALUES ($1, $2, $3, 'approved', NOW(), $4)
      ON CONFLICT (email) DO UPDATE
        SET status = CASE
              WHEN waitlist_signups.status IN ('rejected', 'archived') THEN waitlist_signups.status
              ELSE 'approved'
            END,
+           first_name = COALESCE(NULLIF(waitlist_signups.first_name, ''), EXCLUDED.first_name),
+           last_name = COALESCE(NULLIF(waitlist_signups.last_name, ''), EXCLUDED.last_name),
            approved_at = CASE
              WHEN waitlist_signups.status IN ('rejected', 'archived') THEN waitlist_signups.approved_at
              ELSE COALESCE(waitlist_signups.approved_at, NOW())
@@ -124,12 +128,12 @@ async function upsertApprovedTesterWaitlistRecord(input: {
                SELECT DISTINCT source
                 FROM unnest(string_to_array(COALESCE(waitlist_signups.signup_sources, ''), ',')) AS source
                  WHERE source IN ('web', 'ios', 'android')
-                 UNION SELECT $2
+                 UNION SELECT $4
                ),
                ','
              )
-           )`,
-    [input.email, signupSource],
+          )`,
+    [input.email, input.firstName ?? null, input.lastName ?? null, signupSource],
   );
 }
 
@@ -642,10 +646,16 @@ router.post("/admin/testers/apply", async (req: Request, res: Response) => {
     emails,
     accessSource = "admin_invite",
     entitlementEndsAt,
+    waitlistProfiles = [],
   } = req.body as {
     emails?: string[];
     accessSource?: string;
     entitlementEndsAt?: string;
+    waitlistProfiles?: Array<{
+      email?: unknown;
+      firstName?: unknown;
+      lastName?: unknown;
+    }>;
   };
 
   if (!Array.isArray(emails) || emails.length === 0) {
@@ -671,6 +681,18 @@ router.post("/admin/testers/apply", async (req: Request, res: Response) => {
         error: "A bulk tester import may contain at most 500 emails.",
       });
     }
+    const profileByEmail = new Map<string, { firstName: string | null; lastName: string | null }>();
+    for (const profile of Array.isArray(waitlistProfiles) ? waitlistProfiles : []) {
+      const email = typeof profile.email === "string" ? normalizeEmail(profile.email) : "";
+      if (!unique.includes(email)) continue;
+      const firstName = typeof profile.firstName === "string"
+        ? profile.firstName.trim().slice(0, 100) || null
+        : null;
+      const lastName = typeof profile.lastName === "string"
+        ? profile.lastName.trim().slice(0, 100) || null
+        : null;
+      profileByEmail.set(email, { firstName, lastName });
+    }
 
     // Find existing users
     const existingUsers = await pool.query<{ id: string; email: string }>(
@@ -687,6 +709,7 @@ router.post("/admin/testers/apply", async (req: Request, res: Response) => {
 
     for (const email of unique) {
       const user = userMap.get(email);
+      const profile = profileByEmail.get(email);
       if (user) {
         // Grant/refresh entitlement on existing account
         await pool.query(
@@ -705,6 +728,8 @@ router.post("/admin/testers/apply", async (req: Request, res: Response) => {
         await upsertApprovedTesterWaitlistRecord({
           email,
           accessSource: accessSource as (typeof VALID_TESTER_ACCESS_SOURCES)[number],
+          firstName: profile?.firstName,
+          lastName: profile?.lastName,
         });
         // Also upsert into pending_tester_emails (mark as already applied)
         await pool.query(
@@ -730,6 +755,8 @@ router.post("/admin/testers/apply", async (req: Request, res: Response) => {
           await upsertApprovedTesterWaitlistRecord({
             email,
             accessSource: accessSource as (typeof VALID_TESTER_ACCESS_SOURCES)[number],
+            firstName: profile?.firstName,
+            lastName: profile?.lastName,
           });
           await pool.query(
             `INSERT INTO pending_tester_emails (email, tester_access_source, granted_by, granted_at, entitlement_ends_at)

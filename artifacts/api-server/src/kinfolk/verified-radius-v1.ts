@@ -61,6 +61,41 @@ function boundedPublicOrigin(value: unknown): string | null {
   return trimmed;
 }
 
+/**
+ * Finds an explicitly named public lodging/venue origin in the current request.
+ * This is deliberately narrow: a city by itself, a private address, or an
+ * ambiguous "my place" never becomes an exact-radius origin. The caller uses the
+ * returned public venue only for the one response and redacts it before any
+ * conversation persistence.
+ */
+export function extractCurrentTurnPublicOrigin(message: unknown): string | null {
+  if (typeof message !== "string") return null;
+  const patterns = [
+    /\b(?:within|under|inside|less than|no more than|up to)\s+\d{1,3}\s*(?:mi|miles?)\s+(?:of|from)\s+(?<origin>[^,.!?;]{3,160}?)(?=\s*(?:,|\.|!|\?|;|\b(?:in|for|and|but|so|with)\b|$))/i,
+    /\b(?:i(?:'m| am)|we(?:'re| are))?\s*(?:staying|stay|booked)\s+(?:at\s+)?(?<origin>[^,.!?;]{3,160}?)(?=\s*(?:,|\.|!|\?|;|\b(?:in|for|and|but|so|with|within)\b|$))/i,
+    /\b(?:my|our)\s+(?:hotel|venue|station)\s+(?:is|will be)\s+(?<origin>[^,.!?;]{3,160}?)(?=\s*(?:,|\.|!|\?|;|\b(?:in|for|and|but|so|with|within)\b|$))/i,
+  ];
+  const match = patterns
+    .map((pattern) => pattern.exec(message)?.groups?.origin)
+    .find((candidate): candidate is string => Boolean(candidate));
+  const candidate = boundedPublicOrigin(match);
+  if (!candidate) return null;
+  const normalizedCandidate = normalized(candidate.replace(/^the\s+/i, ""));
+  const hasPublicVenueSignal = /\b(?:hotel|inn|suites|resort|sonesta|marriott|hilton|hyatt|sheraton|westin|radisson|loews|doubletree|holiday\s+inn|motel|hostel|station|venue)\b/i.test(candidate);
+  if (!hasPublicVenueSignal || /^(?:my|our|a|an|the)?\s*(?:hotel|place|home|house|address)$/i.test(normalizedCandidate)) {
+    return null;
+  }
+  return candidate;
+}
+
+/** Replaces only the supplied public-origin substring for persisted chat text. */
+export function redactCurrentTurnPublicOrigin(message: string, publicOrigin: string | null): string {
+  if (!publicOrigin) return message;
+  const originStart = message.toLocaleLowerCase("en-US").indexOf(publicOrigin.toLocaleLowerCase("en-US"));
+  if (originStart < 0) return message;
+  return `${message.slice(0, originStart)}your hotel${message.slice(originStart + publicOrigin.length)}`;
+}
+
 export function requestedRadiusMiles(message: string): number | null {
   const match = message.match(
     /\b(?:within|under|inside|less than|no more than|up to)\s+(\d{1,3})\s*(?:mi|miles?)\b|\b(\d{1,3})[ -]?mile\s+radius\b/i,
