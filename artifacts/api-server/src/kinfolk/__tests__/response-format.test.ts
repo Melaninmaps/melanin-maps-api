@@ -11,4 +11,9 @@ describe("Kinfolk member response formatting", () => {
     expect(normalizeKinfolkMemberReply("Your **first stop** should be the front desk."))
       .toBe("Your first stop should be the front desk.");
   });
+
+  it("removes a dangling emphasis marker from a model response", () => {
+    expect(normalizeKinfolkMemberReply("**What should I do if I have severe side effects?"))
+      .toBe("What should I do if I have severe side effects?");
+  });
 });

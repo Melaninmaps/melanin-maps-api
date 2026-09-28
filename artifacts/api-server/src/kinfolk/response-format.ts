@@ -17,6 +17,9 @@ export function normalizeKinfolkMemberReply(value: string): string {
     .replace(/^[ \t]*[-*+][ \t]+(.+)$/gm, "• $1")
     .replace(/\*\*([^*\n]+)\*\*/g, "$1")
     .replace(/__([^_\n]+)__/g, "$1")
+    // A model can occasionally start emphasis without closing it. The markers
+    // are decorative in this interface, so omit the remaining literal tokens.
+    .replace(/\*\*|__/g, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
