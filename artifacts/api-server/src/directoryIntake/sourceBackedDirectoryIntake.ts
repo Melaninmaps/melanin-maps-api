@@ -13,6 +13,7 @@ export type ExistingDirectoryBusiness = Readonly<{
 
 export type SourceBackedDirectoryIntakePlan = Readonly<{
   toCreate: readonly SourceBackedDirectoryCandidate[];
+  heldForDescription: readonly SourceBackedDirectoryCandidate[];
   duplicateMatches: readonly Readonly<{
     candidate: SourceBackedDirectoryCandidate;
     existingBusinessId: string | null;
@@ -23,6 +24,19 @@ export type SourceBackedDirectoryIntakePlan = Readonly<{
 
 export function normalizeDirectoryIdentity(value: string | null | undefined): string {
   return (value ?? "").toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+/** A directory or category sentence is provenance, not member-facing copy. */
+export function hasBusinessSpecificSourceDescription(
+  candidate: SourceBackedDirectoryCandidate,
+): boolean {
+  const description = candidate.sourceDescription?.replace(/\s+/g, " ").trim() ?? "";
+  if (description.length < 30) return false;
+  const category = candidate.category.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return !new RegExp(
+    `(?:source-backed directory|business directory|current .* listing|${category} listing in)`,
+    "i",
+  ).test(description);
 }
 
 /**
@@ -59,13 +73,11 @@ export function sourceBackedDirectoryPublicationFields(candidate: SourceBackedDi
       candidate.subcategory,
       ...candidate.serviceTerms,
     ])],
-    // When the source published actual descriptive copy, lead with that copy.
-    // A repeated category/city/source sentence made otherwise distinct public
-    // cards look identical and could consume the visible card excerpt. Keep a
-    // compact fallback only for source listings that genuinely have no detail.
+    // The intake plan prevents records without business-specific description
+    // evidence from creating a public card. This formatter must never invent a
+    // generic category/city sentence as a member-facing description.
     description: [
-      candidate.sourceDescription?.trim()
-        || `${candidate.category} listing in ${candidate.city}.`,
+      candidate.sourceDescription?.trim() || null,
       sourceListedContact ? `Source-listed contact: ${sourceListedContact}.` : null,
     ].filter(Boolean).join(" "),
   };
@@ -134,6 +146,7 @@ export function buildSourceBackedDirectoryIntakePlan(
   existingBusinesses: readonly ExistingDirectoryBusiness[],
 ): SourceBackedDirectoryIntakePlan {
   const toCreate: SourceBackedDirectoryCandidate[] = [];
+  const heldForDescription: SourceBackedDirectoryCandidate[] = [];
   const duplicateMatches: Array<{
     candidate: SourceBackedDirectoryCandidate;
     existingBusinessId: string | null;
@@ -161,6 +174,10 @@ export function buildSourceBackedDirectoryIntakePlan(
   const createdByOfficialDestination = new Map<string, SourceBackedDirectoryCandidate>();
 
   for (const candidate of candidates) {
+    if (!hasBusinessSpecificSourceDescription(candidate)) {
+      heldForDescription.push(candidate);
+      continue;
+    }
     // Directory rows with street addresses use a canonical place key for
     // deduplication, so their sourceRecordKey is retained as the exact
     // source-listing URL rather than overwriting the place key. Either exact
@@ -226,5 +243,5 @@ export function buildSourceBackedDirectoryIntakePlan(
     if (destinationKey) createdByOfficialDestination.set(destinationKey, candidate);
   }
 
-  return { toCreate, duplicateMatches };
+  return { toCreate, heldForDescription, duplicateMatches };
 }

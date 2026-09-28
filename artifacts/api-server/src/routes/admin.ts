@@ -361,6 +361,7 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
         batch: requestedBatch || "all_source_backed_batches",
         sourceCandidateCount: intakeCandidates.length,
         createCount: plan.toCreate.length,
+        heldForDescriptionCount: plan.heldForDescription.length,
         nextBatchCreateCount: publicNextBatch.length,
         potentialDuplicateReviewCount: possibleDuplicateCanonicalByReceipt.size,
         batchSize,

@@ -298,6 +298,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("requiresExplicitApply");
     expect(adminRoute).toContain("remainingCreateCount");
     expect(adminRoute).toContain("duplicateReviewCreatedCount");
+    expect(adminRoute).toContain("heldForDescriptionCount");
     expect(adminRoute).toContain("transaction.insert(businessesTable).values(nextBatch.map");
     expect(adminRoute).toContain("all-or-nothing publication");
     expect(migrations).toContain("ALTER COLUMN duplicate_of_id TYPE text USING duplicate_of_id::text");

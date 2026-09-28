@@ -24,6 +24,7 @@ const candidate = (overrides: Partial<SourceBackedDirectoryCandidate> = {}): Sou
   sourceRecordKey: "source-receipt:ammina",
   ownershipEvidence: "Named Black-owned directory listing.",
   batch: "directory_sources_2026_09_27",
+  sourceDescription: "A neighborhood restaurant serving homestyle dishes and weekend brunch.",
   ...overrides,
 });
 
@@ -76,6 +77,19 @@ describe("source-backed directory reconciliation", () => {
     }]);
     expect(plan.duplicateMatches).toHaveLength(0);
     expect(plan.toCreate).toEqual([candidate()]);
+  });
+
+  it("holds a source receipt with generic or absent copy out of public creation", () => {
+    const incomplete = candidate({ sourceDescription: null });
+    const generic = candidate({
+      sourceRecordKey: "source-receipt:generic-card",
+      sourceDescription: "Restaurant listing in Philadelphia.",
+    });
+    const plan = buildSourceBackedDirectoryIntakePlan([incomplete, generic], []);
+
+    expect(plan.toCreate).toEqual([]);
+    expect(plan.heldForDescription).toEqual([incomplete, generic]);
+    expect(plan.duplicateMatches).toEqual([]);
   });
 
   it("skips a prior intake retry by its exact retained source receipt key", () => {
