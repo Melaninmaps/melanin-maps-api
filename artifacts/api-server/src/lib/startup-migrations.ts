@@ -6543,6 +6543,10 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
       "kinfolk city safety evidence v1",
       () => ensureKinfolkCitySafetyEvidenceSchema(log, warn),
     ],
+    // ── Kinfolk reminder delivery ─────────────────────────────────────────
+    // Adds only delivery bookkeeping; it never changes task text, memory,
+    // membership, or existing notification preferences.
+    ["kinfolk reminder delivery v1", () => ensureKinfolkReminderDeliverySchema(log, warn)],
     // ── Completed cohort directory-only discovery audit ────────────────────
     // Allows receipt-backed records without verified coordinates to be searched
     // as public listings. The table records every idempotent activation without
@@ -17745,6 +17749,29 @@ async function ensureKinfolkCitySafetyEvidenceSchema(
       CREATE INDEX IF NOT EXISTS kinfolk_city_safety_audit_source_created_idx
         ON kinfolk_city_safety_retrieval_audit_events (city_id, source_id, created_at DESC)
     `);
+    // Earlier releases seeded three reviewed cities. Expand the check safely
+    // before inserting the reviewed 45-city roster; no member data is touched.
+    const supportedCityIds = CITY_SAFETY_SOURCE_REGISTRY
+      .map((source) => source.cityId)
+      .filter((cityId, index, sourceIds) => sourceIds.indexOf(cityId) === index)
+      .map((cityId) => `'${cityId.replace(/'/g, "''")}'`)
+      .join(", ");
+    await pool.query(`
+      ALTER TABLE kinfolk_city_safety_sources
+        DROP CONSTRAINT IF EXISTS kinfolk_city_safety_sources_city_id_check;
+      ALTER TABLE kinfolk_city_safety_sources
+        ADD CONSTRAINT kinfolk_city_safety_sources_city_id_check
+        CHECK (city_id IN (${supportedCityIds})) NOT VALID;
+      ALTER TABLE kinfolk_city_safety_sources
+        VALIDATE CONSTRAINT kinfolk_city_safety_sources_city_id_check;
+      ALTER TABLE kinfolk_city_safety_retrieval_audit_events
+        DROP CONSTRAINT IF EXISTS kinfolk_city_safety_retrieval_audit_events_city_id_check;
+      ALTER TABLE kinfolk_city_safety_retrieval_audit_events
+        ADD CONSTRAINT kinfolk_city_safety_retrieval_audit_events_city_id_check
+        CHECK (city_id IN (${supportedCityIds})) NOT VALID;
+      ALTER TABLE kinfolk_city_safety_retrieval_audit_events
+        VALIDATE CONSTRAINT kinfolk_city_safety_retrieval_audit_events_city_id_check;
+    `);
     for (const source of CITY_SAFETY_SOURCE_REGISTRY) {
       await pool.query(
         `INSERT INTO kinfolk_city_safety_sources
@@ -17768,6 +17795,33 @@ async function ensureKinfolkCitySafetyEvidenceSchema(
     log("ensureKinfolkCitySafetyEvidenceSchema: source registry and minimized audit ready");
   } catch (err: unknown) {
     warn(`ensureKinfolkCitySafetyEvidenceSchema failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+}
+
+// ── Kinfolk reminder delivery ───────────────────────────────────────────────
+// The reminder itself remains the member's task. This single timestamp prevents
+// duplicate alerts when the protected cron job is retried. No reminder content
+// is copied into telemetry or any shared profile.
+async function ensureKinfolkReminderDeliverySchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      ALTER TABLE kinfolk_tasks
+        ADD COLUMN IF NOT EXISTS reminder_sent_at TIMESTAMPTZ;
+      ALTER TABLE user_settings
+        ADD COLUMN IF NOT EXISTS notif_reminders BOOLEAN NOT NULL DEFAULT true,
+        ADD COLUMN IF NOT EXISTS arrival_awareness_enabled BOOLEAN NOT NULL DEFAULT false;
+      CREATE INDEX IF NOT EXISTS kinfolk_tasks_due_reminder_idx
+        ON kinfolk_tasks (due_at)
+        WHERE due_at IS NOT NULL
+          AND is_completed = false
+          AND reminder_sent_at IS NULL;
+    `);
+    log("ensureKinfolkReminderDeliverySchema: reminder delivery bookkeeping ready");
+  } catch (err: unknown) {
+    warn(`ensureKinfolkReminderDeliverySchema failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

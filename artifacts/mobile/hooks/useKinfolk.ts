@@ -87,6 +87,8 @@ export type SmartPromotion = {
 export type TaskActionTask = {
   title: string;
   notes?: string | null;
+  /** ISO timestamp only when the member supplied an explicit date and time. */
+  dueAt?: string | null;
   dueTimeLabel?: string | null;
   category?: string;
 };
@@ -597,7 +599,7 @@ export function useKinfolk() {
         await fetch(`${apiBase}/api/kinfolk/tasks`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ title: t.title, notes: t.notes, dueTimeLabel: t.dueTimeLabel, category: t.category ?? "other" }),
+          body: JSON.stringify({ title: t.title, notes: t.notes, dueAt: t.dueAt, dueTimeLabel: t.dueTimeLabel, category: t.category ?? "other" }),
         });
       } else if (action.type === "add_tasks") {
         await fetch(`${apiBase}/api/kinfolk/tasks/bulk`, {

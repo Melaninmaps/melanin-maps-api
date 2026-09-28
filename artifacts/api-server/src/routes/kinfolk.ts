@@ -96,6 +96,7 @@ import {
   VERIFIED_RADIUS_ORIGIN_REQUIRED_REPLY,
 } from "../kinfolk/verified-radius-v1";
 import {
+  CITY_SAFETY_CITY_CENTERS,
   citySafetyCityId,
   citySafetySourcesForResponse,
   currentCitySafetyBriefing,
@@ -4480,7 +4481,7 @@ ${languagePersonalization}`
       : ""
   }${kbygInstructions}
 
-TASK & LIST MANAGEMENT: Detect task/reminder/list intent in natural language ("remind me to...", "make me a grocery list", "add to my list", "don't let me forget"). Create it immediately — no clarifying questions for tasks. Use "taskAction" field: type "create_list" (list + tasks[]), "create_task" (single), "add_tasks". Categories: grocery|errand|reminder|order|appointment|other.
+TASK & LIST MANAGEMENT: Detect task/reminder/list intent in natural language ("remind me to...", "make me a grocery list", "add to my list", "don't let me forget"). Create it immediately — no clarifying questions for tasks. Use "taskAction" field: type "create_list" (list + tasks[]), "create_task" (single), "add_tasks". Categories: grocery|errand|reminder|order|appointment|other. For an explicit date and time, include that task's "dueAt" as an ISO-8601 timestamp and preserve "dueTimeLabel"; never invent a date/time. For a birthday or anniversary with no exact date/time, create the task without "dueAt" and warmly ask for the date afterward.
 
 WHEN GIVING STRUCTURED RECOMMENDATIONS:
 Return EXACTLY this JSON format (no markdown, no extra text — pure valid JSON):
@@ -7054,6 +7055,56 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   });
   return true;
 }
+
+// ─── POST /api/kinfolk/arrival-awareness ───────────────────────────────────
+// Called only after a member opts in on-device. Coordinates are used for this
+// request to match a reviewed city center and are neither persisted nor logged.
+// The reply contains current official evidence or official links — never an
+// inferred neighborhood-risk score or a recommendation based on identity.
+router.post("/kinfolk/arrival-awareness", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required", code: "AUTH_REQUIRED" });
+    return;
+  }
+  if (!isCitySafetyBriefingV1Enabled()) {
+    res.status(503).json({ error: "Arrival awareness is not enabled." });
+    return;
+  }
+  const latitude = Number(req.body?.latitude);
+  const longitude = Number(req.body?.longitude);
+  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
+    res.status(400).json({ error: "A valid current location is required." });
+    return;
+  }
+  const milesBetween = (latA: number, lngA: number, latB: number, lngB: number) => {
+    const radians = (degrees: number) => degrees * Math.PI / 180;
+    const a = Math.sin(radians(latB - latA) / 2) ** 2
+      + Math.cos(radians(latA)) * Math.cos(radians(latB)) * Math.sin(radians(lngB - lngA) / 2) ** 2;
+    return 3958.7613 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+  const nearby = CITY_SAFETY_CITY_CENTERS
+    .map((city) => ({ city, distanceMiles: milesBetween(latitude, longitude, city.latitude, city.longitude) }))
+    .sort((left, right) => left.distanceMiles - right.distanceMiles)[0];
+  // City-center matching is intentionally coarse; it does not treat a nearby
+  // suburb as a city arrival and it never records device coordinates.
+  if (!nearby || nearby.distanceMiles > 25) {
+    res.json({ matched: false, notices: [], officialLinks: [] });
+    return;
+  }
+  const briefing = await currentCitySafetyBriefing({ cityId: nearby.city.cityId, auditPool: pool });
+  const notices = briefing.evidence
+    .filter((evidence) => evidence.activeOfficialAlert)
+    .map((evidence) => ({ title: evidence.title, summary: evidence.summary, url: evidence.url, expiresAt: evidence.expiresAt }));
+  res.json({
+    matched: true,
+    city: nearby.city.city,
+    stateCode: nearby.city.stateCode,
+    cityId: nearby.city.cityId,
+    notices,
+    officialLinks: briefing.officialLinks,
+    unavailable: briefing.unavailable,
+  });
+});
 
 router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   // Authentication is required — unauthenticated probes previously triggered

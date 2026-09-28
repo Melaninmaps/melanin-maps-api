@@ -419,7 +419,7 @@ function citySafetySourceRecord(value: Record<string, unknown>): CitySafetySourc
   const freshnessMinutes = Number(value.freshness_minutes);
   if (
     !id || !displayName || !url.startsWith("https://") ||
-    !["minneapolis-mn", "philadelphia-pa", "houston-tx"].includes(String(cityId)) ||
+    !CITY_SAFETY_CITY_CENTERS.some((city) => city.cityId === String(cityId)) ||
     !["official_alert", "transit", "weather", "road", "event_advisory"].includes(String(topic)) ||
     !["official_city", "official_transit", "official_weather", "official_emergency"].includes(String(publisherClass)) ||
     !["nws_alerts", "oem_activation", "none"].includes(String(normalizer)) ||

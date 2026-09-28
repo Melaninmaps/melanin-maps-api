@@ -34,6 +34,7 @@ import { useMembership } from "@/hooks/useMembership";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import * as SecureStore from "expo-secure-store";
 import * as FileSystem from "expo-file-system";
+import * as Clipboard from "expo-clipboard";
 import {
   RecordingPresets,
   requestRecordingPermissionsAsync,
@@ -691,7 +692,16 @@ function AiMessageBubble({
       <View style={aiStyles.contentCol}>
         {/* Reply text */}
         <View style={[aiStyles.bubble, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text style={[aiStyles.bubbleText, { color: colors.text }]}>{msg.content}</Text>
+          <Text selectable style={[aiStyles.bubbleText, { color: colors.text }]}>{msg.content}</Text>
+          <TouchableOpacity
+            style={aiStyles.copyBtn}
+            onPress={() => void Clipboard.setStringAsync(msg.content)}
+            accessibilityLabel="Copy this Kinfolk answer"
+            activeOpacity={0.7}
+          >
+            <Ionicons name="copy-outline" size={14} color={colors.mutedForeground} />
+            <Text style={[aiStyles.copyLabel, { color: colors.mutedForeground }]}>Copy</Text>
+          </TouchableOpacity>
           {Platform.OS !== "web" ? (
             <TouchableOpacity
               style={aiStyles.speakBtn}
@@ -1014,6 +1024,8 @@ const aiStyles = StyleSheet.create({
   contentCol: { flex: 1 },
   bubble: { borderRadius: 16, borderTopLeftRadius: 4, padding: 12, borderWidth: 1, marginBottom: 8 },
   bubbleText: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 20, flexShrink: 1 },
+  copyBtn: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 4, marginTop: 8, paddingVertical: 3, paddingHorizontal: 2 },
+  copyLabel: { fontFamily: "Inter_500Medium", fontSize: 11 },
   speakBtn: { alignSelf: "flex-end", marginTop: 6, padding: 4 },
   recsContainer: { marginBottom: 8 },
   destBar: { flexDirection: "row", alignItems: "flex-start", gap: 6, borderRadius: 12, borderWidth: 1, padding: 10, marginBottom: 8, flexWrap: "wrap" },

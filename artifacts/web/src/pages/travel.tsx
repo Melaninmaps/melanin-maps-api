@@ -129,6 +129,11 @@ interface LibraryAction {
   subject?: string;
   category?: string;
 }
+interface KinfolkTaskAction {
+  type: "create_list" | "create_task" | "add_tasks";
+  list?: { name: string; icon?: string };
+  tasks: Array<{ title: string; notes?: string | null; dueAt?: string | null; dueTimeLabel?: string | null; category?: string }>;
+}
 interface KinfolkSource { title: string; url: string }
 interface KinfolkLibraryEntry { url: string; readMoreLabel: string }
 interface CommunityPerspective {
@@ -167,6 +172,8 @@ interface Message {
   followUpSuggestions?: string[]; timestamp: string;
   cultureAction?: CultureAction | null;
   libraryAction?: LibraryAction | null;
+  taskAction?: KinfolkTaskAction | null;
+  taskActionDone?: boolean;
   intentClass?: string | null;
   provenanceNote?: string | null;
   sourceNote?: string | null;
@@ -1856,6 +1863,7 @@ function TravelPage() {
         followUpSuggestions?: string[];
         cultureAction?: CultureAction | null;
         libraryAction?: LibraryAction | null;
+        taskAction?: KinfolkTaskAction | null;
         intentClass?: string | null;
         provenanceNote?: string | null;
         sourceNote?: string | null;
@@ -1920,6 +1928,7 @@ function TravelPage() {
         followUpSuggestions: data.followUpSuggestions ?? [], timestamp: new Date().toISOString(),
         cultureAction: data.cultureAction ?? null,
         libraryAction: data.libraryAction ?? null,
+        taskAction: data.taskAction ?? null,
         intentClass: data.intentClass ?? null,
         provenanceNote: data.provenanceNote ?? null,
         sourceNote: data.sourceNote ?? null,
@@ -2115,6 +2124,57 @@ function TravelPage() {
       `\nPowered by KinfolkAI™ at mappingwithmelanin.com`,
     ].filter(Boolean).join("\n");
     navigator.clipboard.writeText(lines).then(() => { setCopyToast("Copied to clipboard!"); setTimeout(() => setCopyToast(null), 2500); });
+  };
+
+  // Every Kinfolk answer is explicitly copyable. The control copies only the
+  // rendered answer — never session metadata, private-memory context, or a
+  // member's location input.
+  const copyAnswer = (content: string) => {
+    if (!content.trim()) return;
+    navigator.clipboard.writeText(content).then(
+      () => { setCopyToast("Answer copied to clipboard"); setTimeout(() => setCopyToast(null), 2500); },
+      () => { setCopyToast("Copy was unavailable — select the answer text instead."); setTimeout(() => setCopyToast(null), 3500); },
+    );
+  };
+
+  const saveTaskAction = async (message: Message) => {
+    const action = message.taskAction;
+    if (!action || !isLoggedIn) return;
+    try {
+      const headers = kinfolkAuthHeaders({ "Content-Type": "application/json" });
+      if (action.type === "create_task" && action.tasks[0]) {
+        const task = action.tasks[0];
+        const response = await fetch(`${BASE}api/kinfolk/tasks`, {
+          method: "POST", credentials: "include", headers,
+          body: JSON.stringify(task),
+        });
+        if (!response.ok) throw new Error("Task was not saved");
+      } else if (action.type === "create_list" && action.list) {
+        const listResponse = await fetch(`${BASE}api/kinfolk/lists`, {
+          method: "POST", credentials: "include", headers,
+          body: JSON.stringify(action.list),
+        });
+        const listPayload = await listResponse.json() as { list?: { id?: string } };
+        if (!listResponse.ok || !listPayload.list?.id) throw new Error("List was not saved");
+        const taskResponse = await fetch(`${BASE}api/kinfolk/tasks/bulk`, {
+          method: "POST", credentials: "include", headers,
+          body: JSON.stringify({ tasks: action.tasks, listId: listPayload.list.id }),
+        });
+        if (!taskResponse.ok) throw new Error("Tasks were not saved");
+      } else {
+        const response = await fetch(`${BASE}api/kinfolk/tasks/bulk`, {
+          method: "POST", credentials: "include", headers,
+          body: JSON.stringify({ tasks: action.tasks }),
+        });
+        if (!response.ok) throw new Error("Tasks were not saved");
+      }
+      setMessages((current) => current.map((item) => item.id === message.id ? { ...item, taskActionDone: true } : item));
+      setCopyToast("Saved to KinfolkAI™ reminders");
+      setTimeout(() => setCopyToast(null), 2500);
+    } catch {
+      setCopyToast("Could not save that yet. Please try again.");
+      setTimeout(() => setCopyToast(null), 3500);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -2427,6 +2487,14 @@ function TravelPage() {
                       {msg.role === "assistant" && isLoggedIn && msg.content.trim() && (
                         <div className="mt-1 flex items-center gap-2">
                           <button
+                            type="button"
+                            onClick={() => copyAnswer(msg.content)}
+                            className="flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium text-[#3A1F0E]/45 transition-colors hover:bg-[#CA922B]/5 hover:text-[#CA922B]"
+                            aria-label="Copy this Kinfolk answer"
+                          >
+                            <Copy size={10} /> Copy
+                          </button>
+                          <button
                             onClick={() => playMessage(msg.id, msg.content)}
                             className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-colors ${
                               playingId === msg.id
@@ -2438,6 +2506,24 @@ function TravelPage() {
                             {playingId === msg.id ? "Stop" : "Listen"}
                           </button>
                           {voiceStatus[msg.id] && <span aria-live="polite" className="text-[10px] text-[#3A1F0E]/40">{voiceStatus[msg.id]}</span>}
+                        </div>
+                      )}
+                      {msg.role === "assistant" && isLoggedIn && msg.content.trim() && msg.taskAction && (
+                        <div className="mt-3 rounded-xl border border-[#CA922B]/25 bg-[#CA922B]/5 p-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                              <p className="text-xs font-semibold text-[#3A1F0E]">KinfolkAI™ reminder</p>
+                              <p className="text-[11px] text-[#3A1F0E]/55">Review and save this reminder to your private Kinfolk task list.</p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => void saveTaskAction(msg)}
+                              disabled={msg.taskActionDone}
+                              className="rounded-full bg-[#2B1507] px-3 py-1.5 text-[11px] font-semibold text-white disabled:opacity-60"
+                            >
+                              {msg.taskActionDone ? "Saved" : "Save reminder"}
+                            </button>
+                            </div>
                         </div>
                       )}
                       {msg.role === "assistant" && isLoggedIn && msg.content.trim() && (

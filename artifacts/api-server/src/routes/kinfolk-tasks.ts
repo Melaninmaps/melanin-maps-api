@@ -85,13 +85,17 @@ router.post("/kinfolk/tasks", async (req: Request, res: Response) => {
     dueAt?: string; dueTimeLabel?: string; category?: string;
   };
   if (!title?.trim()) { res.status(400).json({ error: "Task title required" }); return; }
+  const parsedDueAt = dueAt ? new Date(dueAt) : null;
+  if (dueAt && (!parsedDueAt || Number.isNaN(parsedDueAt.getTime()))) {
+    res.status(400).json({ error: "A reminder date must be valid" }); return;
+  }
   try {
     const [task] = await db.insert(kinfolkTasksTable).values({
       userId: req.user.id,
       title: title.trim(),
       notes: notes?.trim() ?? null,
       listId: listId ?? null,
-      dueAt: dueAt ? new Date(dueAt) : null,
+      dueAt: parsedDueAt,
       dueTimeLabel: dueTimeLabel?.trim() ?? null,
       category: category ?? "other",
     }).returning();
@@ -105,11 +109,14 @@ router.post("/kinfolk/tasks", async (req: Request, res: Response) => {
 router.post("/kinfolk/tasks/bulk", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   const { tasks, listId } = req.body as {
-    tasks: Array<{ title: string; notes?: string; dueTimeLabel?: string; category?: string }>;
+    tasks: Array<{ title: string; notes?: string; dueAt?: string; dueTimeLabel?: string; category?: string }>;
     listId?: string;
   };
   if (!Array.isArray(tasks) || tasks.length === 0) {
     res.status(400).json({ error: "Tasks array required" }); return;
+  }
+  if (tasks.some((task) => task.dueAt && Number.isNaN(new Date(task.dueAt).getTime()))) {
+    res.status(400).json({ error: "Each reminder date must be valid" }); return;
   }
   try {
     const inserted = await db.insert(kinfolkTasksTable).values(
@@ -118,6 +125,7 @@ router.post("/kinfolk/tasks/bulk", async (req: Request, res: Response) => {
         listId: listId ?? null,
         title: t.title.trim(),
         notes: t.notes?.trim() ?? null,
+        dueAt: t.dueAt ? new Date(t.dueAt) : null,
         dueTimeLabel: t.dueTimeLabel?.trim() ?? null,
         category: t.category ?? "other",
       }))

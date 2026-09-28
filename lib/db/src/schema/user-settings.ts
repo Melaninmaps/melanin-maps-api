@@ -14,6 +14,12 @@ export const userSettingsTable = pgTable("user_settings", {
   notifPromotions: boolean("notif_promotions").notNull().default(false),
   notifDigest: boolean("notif_digest").notNull().default(true),
   notifTips: boolean("notif_tips").notNull().default(false),
+  // A member's own reminders are opt-in at the delivery layer. Creating a
+  // reminder never silently enrolls anyone in a new promotional category.
+  notifReminders: boolean("notif_reminders").notNull().default(true),
+  // Separate from discovery location. Arrival awareness requires an explicit
+  // affirmative choice and uses current coordinates only in memory.
+  arrivalAwarenessEnabled: boolean("arrival_awareness_enabled").notNull().default(false),
   notifPostNudges: boolean("notif_post_nudges").notNull().default(true),
   // These optional official-source alerts default to off. They are unrelated
   // to community safety alerts and never imply health profiling or consent.

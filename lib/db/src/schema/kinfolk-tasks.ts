@@ -12,6 +12,9 @@ export const kinfolkTasksTable = pgTable("kinfolk_tasks", {
   category: varchar("category", { length: 50 }),
   isCompleted: boolean("is_completed").notNull().default(false),
   completedAt: timestamp("completed_at"),
+  // Set only by the protected reminder delivery job after the member's own
+  // in-app notification has been persisted. It makes retries idempotent.
+  reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

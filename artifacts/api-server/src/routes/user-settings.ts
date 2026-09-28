@@ -22,6 +22,8 @@ const DEFAULT_SETTINGS = {
   notifPromotions: false,
   notifDigest: true,
   notifTips: false,
+  notifReminders: true,
+  arrivalAwarenessEnabled: false,
   notifPostNudges: true,
   // Official-source public alerts are explicitly opt-in. Keep them separate
   // from existing community safety behavior and Kinfolk preference memory.
@@ -71,7 +73,7 @@ router.get("/users/settings", async (req: Request, res: Response) => {
 type SettingsPatch = Partial<{
   notifEvents: boolean; notifBusiness: boolean; notifMessages: boolean;
   notifReviews: boolean; notifCommunity: boolean; notifPromotions: boolean;
-  notifDigest: boolean; notifTips: boolean; notifPostNudges: boolean;
+  notifDigest: boolean; notifTips: boolean; notifReminders: boolean; arrivalAwarenessEnabled: boolean; notifPostNudges: boolean;
   notifProductRecalls: boolean; notifPublicHealthAlerts: boolean;
   quietHoursEnabled: boolean; quietHoursFrom: string; quietHoursUntil: string;
   profileVisibility: "public" | "community" | "private";
@@ -86,7 +88,7 @@ function parseSettingsPatch(body: unknown): { ok: true; data: SettingsPatch } | 
   const b = body as Record<string, unknown>;
   const BOOLS = [
     "notifEvents", "notifBusiness", "notifMessages", "notifReviews", "notifCommunity",
-    "notifPromotions", "notifDigest", "notifTips", "notifPostNudges", "quietHoursEnabled",
+    "notifPromotions", "notifDigest", "notifTips", "notifReminders", "arrivalAwarenessEnabled", "notifPostNudges", "quietHoursEnabled",
     "notifProductRecalls", "notifPublicHealthAlerts",
     "showLocation", "activityStatus", "usageAnalytics", "personalisedSuggestions",
     "kinfolkMemoryEnabled", "profileViewTrackingEnabled", "postNudgesEnabled",

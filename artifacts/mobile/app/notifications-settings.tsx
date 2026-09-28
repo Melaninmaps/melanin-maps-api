@@ -36,6 +36,8 @@ interface UserSettings {
   notifPromotions: boolean;
   notifDigest: boolean;
   notifTips: boolean;
+  notifReminders: boolean;
+  arrivalAwarenessEnabled: boolean;
   notifPostNudges: boolean;
   notifProductRecalls: boolean;
   notifPublicHealthAlerts: boolean;
@@ -53,6 +55,8 @@ const DEFAULTS: UserSettings = {
   notifPromotions: false,
   notifDigest: true,
   notifTips: false,
+  notifReminders: true,
+  arrivalAwarenessEnabled: false,
   notifPostNudges: true,
   notifProductRecalls: false,
   notifPublicHealthAlerts: false,
@@ -126,6 +130,21 @@ export default function NotificationsSettingsScreen() {
     });
   };
 
+  const handleCategoryToggle = async (id: keyof UserSettings) => {
+    const next = !settings[id];
+    // Location is never requested by browsing or by another notification
+    // category. It is requested only after this explicit opt-in.
+    if (id === "arrivalAwarenessEnabled" && next && Platform.OS !== "web") {
+      const Location = await import("expo-location").catch(() => null);
+      const permission = await Location?.requestForegroundPermissionsAsync();
+      if (!permission || permission.status !== "granted") {
+        Alert.alert("Location permission needed", "Arrival Awareness uses your current location only while the app is active to check for current official city alerts.");
+        return;
+      }
+    }
+    update({ [id]: next });
+  };
+
   const handlePushToggle = async () => {
     if (pushLoading) return;
     if (Platform.OS !== "web") Haptics.selectionAsync();
@@ -178,6 +197,8 @@ export default function NotificationsSettingsScreen() {
     { id: "notifPromotions", icon: "tag", label: "Promotions & Offers", sub: "Deals from verified businesses" },
     { id: "notifDigest", icon: "mail", label: "Weekly Digest Email", sub: "Top picks and community highlights" },
     { id: "notifTips", icon: "info", label: "Tips & Features", sub: "How to get the most from the app" },
+    { id: "notifReminders", icon: "bell", label: "KinfolkAI™ Reminders", sub: "Birthdays, anniversaries, and reminders you ask Kinfolk to save" },
+    { id: "arrivalAwarenessEnabled", icon: "map-pin", label: "Arrival Awareness", sub: "When the app is active, notify me only about current official alerts in a reviewed city" },
     { id: "notifPostNudges", icon: "zap", label: "KinfolkAI™ Post Nudges", sub: "Smart prompts when your customers are active (business owners)" },
     { id: "notifProductRecalls", icon: "package", label: "Official Product Recalls", sub: "Optional official notices for affected products and foods" },
     { id: "notifPublicHealthAlerts", icon: "heart", label: "Official Health Alerts", sub: "Optional public-health notices; not medical advice" },
@@ -271,7 +292,7 @@ export default function NotificationsSettingsScreen() {
                   <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>{t.sub}</Text>
                 </View>
                 <TouchableOpacity
-                  onPress={() => update({ [t.id]: !settings[t.id] })}
+                  onPress={() => void handleCategoryToggle(t.id)}
                   activeOpacity={0.75}
                 >
                   <View style={[styles.toggle, { backgroundColor: settings[t.id] ? colors.primary : colors.border }]}>

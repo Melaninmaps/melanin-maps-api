@@ -395,6 +395,63 @@ router.post("/cron/official-public-alerts", async (req, res): Promise<void> => {
   }
 });
 
+// ─── POST /cron/kinfolk-reminders ────────────────────────────────────────────
+// Runs through the existing CRON_SECRET scheduler. A reminder is opt-in at
+// notification delivery, never shared, and is marked sent before a push attempt
+// so a retry cannot duplicate the member's alert.
+router.post("/cron/kinfolk-reminders", async (req, res): Promise<void> => {
+  if (!verifyCronSecret(req, res)) return;
+  try {
+    const due = await pool.query<{ id: string; user_id: string; title: string }>(`
+      SELECT task.id, task.user_id, task.title
+      FROM kinfolk_tasks AS task
+      LEFT JOIN user_settings AS settings ON settings.user_id = task.user_id
+      WHERE task.due_at IS NOT NULL
+        AND task.due_at <= NOW()
+        AND task.due_at > NOW() - INTERVAL '24 hours'
+        AND COALESCE(task.is_completed, false) = false
+        AND task.reminder_sent_at IS NULL
+        AND COALESCE(settings.notif_reminders, true) = true
+      ORDER BY task.due_at ASC
+      LIMIT 100
+    `);
+
+    let delivered = 0;
+    for (const task of due.rows) {
+      const marked = await pool.query<{ id: string }>(`
+        UPDATE kinfolk_tasks
+        SET reminder_sent_at = NOW()
+        WHERE id = $1 AND reminder_sent_at IS NULL AND COALESCE(is_completed, false) = false
+        RETURNING id
+      `, [task.id]);
+      if (marked.rows.length === 0) continue;
+
+      const title = "KinfolkAI™ reminder";
+      const body = task.title;
+      await db.insert(notificationsTable).values({
+        userId: task.user_id,
+        type: "system",
+        title,
+        body,
+        entityId: task.id,
+        entityType: "kinfolk_task",
+        data: { screen: "kinfolk-tasks", taskId: task.id, type: "kinfolk_reminder" },
+      });
+      await sendPushToUser(task.user_id, {
+        title,
+        body,
+        data: { screen: "kinfolk-tasks", taskId: task.id, type: "kinfolk_reminder" },
+      });
+      delivered += 1;
+    }
+    logger.info({ candidates: due.rows.length, delivered }, "Kinfolk reminder cron completed");
+    res.json({ ok: true, candidates: due.rows.length, delivered });
+  } catch (err) {
+    logger.error({ err }, "Kinfolk reminder cron failed");
+    res.status(500).json({ error: "Kinfolk reminder delivery failed" });
+  }
+});
+
 router.post("/cron/weekly-digest", async (req, res): Promise<void> => {
   if (!verifyCronSecret(req, res)) return;
 

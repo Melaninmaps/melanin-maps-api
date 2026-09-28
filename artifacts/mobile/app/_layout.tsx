@@ -119,6 +119,74 @@ function PushNotificationRegistrar() {
   return null;
 }
 
+/**
+ * Checks a member's current city only after they enable Arrival Awareness in
+ * Notifications. The device coordinate is sent once to the bounded arrival
+ * endpoint and is not saved locally, in a profile, or in Kinfolk memory.
+ *
+ * This is deliberately foreground-only until an explicit background-location
+ * consent and physical-device validation are approved for a future build.
+ */
+function ArrivalAwarenessWatcher() {
+  const { isAuthenticated } = useAuth();
+  const lastCheckAt = useRef(0);
+
+  useEffect(() => {
+    if (!isAuthenticated || Platform.OS === "web") return;
+    const checkArrival = async () => {
+      if (Date.now() - lastCheckAt.current < 5 * 60_000) return;
+      lastCheckAt.current = Date.now();
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        if (!token || !apiBase) return;
+        const settings = await fetch(`${apiBase}/api/users/settings`, {
+          headers: { Authorization: `Bearer ${token}` },
+        }).then((response) => response.ok ? response.json() as Promise<{ arrivalAwarenessEnabled?: boolean }> : null);
+        if (!settings?.arrivalAwarenessEnabled) return;
+        const Location = await import("expo-location");
+        const permission = await Location.getForegroundPermissionsAsync();
+        if (permission.status !== "granted") return;
+        const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        const response = await fetch(`${apiBase}/api/kinfolk/arrival-awareness`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ latitude: position.coords.latitude, longitude: position.coords.longitude }),
+        });
+        if (!response.ok) return;
+        const awareness = await response.json() as {
+          matched?: boolean;
+          cityId?: string;
+          city?: string;
+          notices?: Array<{ title: string; summary: string }>;
+        };
+        const notice = awareness.matched ? awareness.notices?.[0] : null;
+        if (!notice || !awareness.cityId) return;
+        const dayKey = new Date().toISOString().slice(0, 10);
+        const dedupeKey = `mwm-arrival-awareness:${awareness.cityId}:${dayKey}`;
+        if (await AsyncStorage.getItem(dedupeKey)) return;
+        const Notifications = await import("expo-notifications").catch(() => null);
+        if (!Notifications) return;
+        await Notifications.scheduleNotificationAsync({
+          content: { title: `${awareness.city ?? "City"}: ${notice.title}`, body: notice.summary, data: { type: "arrival_awareness", cityId: awareness.cityId } },
+          trigger: null,
+        });
+        await AsyncStorage.setItem(dedupeKey, "sent");
+      } catch {
+        // Arrival awareness is supplemental. Permission, network, or source
+        // failures leave every existing route and notification path intact.
+      }
+    };
+    void checkArrival();
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") void checkArrival();
+    });
+    return () => subscription.remove();
+  }, [isAuthenticated]);
+
+  return null;
+}
+
 function BrandedLoader() {
   const [pulse] = useState(() => new Animated.Value(1));
 
@@ -1194,6 +1262,7 @@ function RootLayout() {
                     <SessionExpiryWatcher />
                     <BiometricEnrollmentPrompt />
                     <PushNotificationRegistrar />
+                    <ArrivalAwarenessWatcher />
                     <CrashLoggerSetup />
                     <KeyboardEscapeGuard />
                     <RootLayoutNav />
