@@ -17,6 +17,7 @@ import {
   Check, AlertTriangle, ChevronLeft, ChevronRight
 } from "lucide-react";
 import { AdminBusinessMediaStep } from "./AdminBusinessMediaStep";
+import { OwnershipDesignationCombobox } from "./OwnershipDesignationCombobox";
 import {
   BUSINESS_CATEGORY_TAXONOMY,
   VIBES_BY_CATEGORY,
@@ -191,11 +192,6 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
     }
   }
 
-  function toggleOwnership(d: string) {
-    setOwnershipDesignations(prev =>
-      prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]
-    );
-  }
 
   function toggleVibe(v: string) {
     setSelectedVibes(prev =>
@@ -373,27 +369,13 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
                       </select>
                     </div>
                   )}
-                  <div>
-                    <label className={labelCls}>Ownership Designations</label>
-                    <p className="text-xs text-[#3A1F0E]/40 mb-3">Select all that apply</p>
-                    <div className="flex flex-wrap gap-2 max-h-80 overflow-y-auto pr-1">
-                      {OWNERSHIP_DESIGNATIONS.map(d => (
-                        <button
-                          key={d}
-                          type="button"
-                          onClick={() => toggleOwnership(d)}
-                          className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
-                            ownershipDesignations.includes(d)
-                              ? "bg-[#2B1507] text-[#F5EBD8] border-[#2B1507]"
-                              : "bg-white text-[#3A1F0E]/60 border-[#2B1507]/15 hover:border-[#CA922B]/50"
-                          }`}
-                        >
-                          {ownershipDesignations.includes(d) && <Check className="w-3 h-3 inline mr-1" />}
-                          {d}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                  <OwnershipDesignationCombobox
+                    id="admin-edit-ownership-designations"
+                    options={OWNERSHIP_DESIGNATIONS.map((label) => ({ value: label, label }))}
+                    values={ownershipDesignations}
+                    onChange={setOwnershipDesignations}
+                    helperText="Type Black, Hispanic, Ethiopian, or another documented designation. Only selected approved labels are saved."
+                  />
                 </div>
               )}
 

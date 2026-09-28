@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import DiasporaFlagPicker from "@/components/DiasporaFlagPicker";
+import { OwnershipDesignationPicker } from "@/components/OwnershipDesignationPicker";
 import { OWNERSHIP_DESIGNATIONS } from "@workspace/constants";
 
 function getApiBase(): string {
@@ -215,13 +216,7 @@ export default function BusinessIdentityScreen() {
   const [form, setForm] = useState<Identity>(EMPTY);
   const [vibeOptions, setVibeOptions] = useState<VibeOption[]>([]);
   const [ownedBusiness, setOwnedBusiness] = useState<OwnedBusiness | null>(null);
-  const [ownershipQuery, setOwnershipQuery] = useState("");
 
-  const visibleOwnershipBadges = useMemo(() => {
-    const query = ownershipQuery.trim().toLocaleLowerCase();
-    if (!query) return [...OWNERSHIP_DESIGNATIONS];
-    return OWNERSHIP_DESIGNATIONS.filter((designation) => designation.toLocaleLowerCase().includes(query));
-  }, [ownershipQuery]);
   const availableVibes = useMemo(
     () => vibeOptions.filter((option) => option.categories.includes(ownedBusiness?.category ?? "")),
     [ownedBusiness?.category, vibeOptions],
@@ -353,16 +348,13 @@ export default function BusinessIdentityScreen() {
 
         {/* Section 2: Ownership */}
         <SectionHeader title="2. Ownership" subtitle="Optional self-identification. These profile labels are separate from MWM verification." />
-        <TextInput
-          style={[styles.searchInput, { color: colors.foreground, backgroundColor: colors.card, borderColor: colors.border }]}
-          value={ownershipQuery}
-          onChangeText={setOwnershipQuery}
-          placeholder="Search ownership labels"
-          placeholderTextColor={colors.mutedForeground}
-          autoCapitalize="none"
-          autoCorrect={false}
+        <OwnershipDesignationPicker
+          options={OWNERSHIP_DESIGNATIONS.map((label) => ({ id: label, label }))}
+          selectedIds={form.ownershipBadges}
+          onChange={(ownershipBadges) => set("ownershipBadges", ownershipBadges)}
+          label="Ownership designations"
+          helperText="Type Black, HIS, Ethiopian, or another documented designation, then select the approved label. These labels are separate from MWM verification."
         />
-        <ChipGrid options={visibleOwnershipBadges} selected={form.ownershipBadges} onToggle={v => toggle("ownershipBadges", v)} max={10} />
 
         {form.ownershipBadges.some((designation) => /African|Caribbean|Latino|Hispanic|Asian|Arab|MENA|Indigenous|Multicultural/i.test(designation)) && (
           <View style={styles.diasporaWrap}>

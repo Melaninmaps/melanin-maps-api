@@ -94,22 +94,25 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Current Kinfolk catalog");
     expect(adminScreen).toContain("Archived in separate vault");
     expect(adminScreen).toContain("status: \"active\"");
-    expect(adminScreen).toContain("Restore public listing");
+    expect(adminScreen).toContain("Unhide / restore public listing");
   });
 
-  it("keeps confirmed duplicates in their own all-status vault without exposing delete or ordinary restore controls", () => {
+  it("keeps confirmed duplicates in their own all-status vault with guarded deletion only", () => {
     expect(adminRoute).toContain('status === "duplicates"');
     expect(adminRoute).toContain('const duplicateInventoryWhere = "COALESCE(is_duplicate, false) = true"');
     expect(adminRoute).toContain("duplicateInventoryTotal");
     expect(adminRoute).toContain("COALESCE(is_duplicate, false) = false");
     expect(adminScreen).toContain("Duplicate vault");
     expect(adminScreen).toContain("Duplicates &amp; review");
-    expect(adminScreen).toContain("Duplicate records remain unchanged unless an audited merge is restored.");
-    expect(adminScreen).toContain('disabled={bizStatusFilter === "duplicates"}');
+    expect(adminScreen).toContain("Permanently delete selected");
     expect(adminScreen).toContain("Outreach unavailable for retained duplicates");
     expect(adminScreen).toContain('tab !== "reviews" && tab !== "biz-review"');
     expect(adminScreen).toContain("<AdminBusinessReview embedded />");
-    expect(adminRoute).not.toMatch(/DELETE\s+FROM\s+(?:public\.)?businesses\b/i);
+    expect(adminRoute).toContain('router.delete("/admin/businesses/permanent"');
+    expect(adminRoute).toContain("business_permanent_deletion_audit_events");
+    expect(adminRoute).toContain("row.listing_status !== \"archived\" && !row.is_duplicate");
+    expect(adminRoute).toContain("permanentDeletionConfirmation");
+    expect(adminRoute).toContain("Deliberately no CASCADE");
   });
 
   it("shows administrators website and social links and can isolate missing websites", () => {
@@ -183,12 +186,17 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(mobileBusinessHook).toContain("/api/businesses/${id}");
   });
 
-  it("keeps a bulk removal reversible and auditable rather than deleting businesses", () => {
+  it("keeps ordinary bulk removal reversible while permanent deletion is vault-only and audited", () => {
     expect(adminRoute).toContain("Select between 1 and 500 businesses.");
     expect(adminRoute).toContain("business_listing_status_audit_events");
     expect(adminRoute).toContain("remove_public_discovery");
     expect(adminScreen).toContain("research, source, or Kinfolk context");
-    expect(adminRoute).not.toMatch(/DELETE\s+FROM\s+(?:public\.)?businesses\b/i);
+    expect(adminRoute).toContain("Select between 1 and 100 archived or duplicate businesses.");
+    expect(adminRoute).toContain("Permanent deletion is allowed only for records already in Archive vault or Duplicate vault.");
+    expect(adminRoute).toContain("business_permanent_deletion_audit_events");
+    expect(adminRoute).toContain('DELETE FROM businesses WHERE id = ANY($1::text[])');
+    expect(adminRoute).not.toContain("DELETE FROM businesses CASCADE");
+    expect(migrations).toContain("ensureBusinessPermanentDeletionAuditSchema");
   });
 
   it("exports the exact filtered inventory, Archive vault, or deliberate all-inventory scope", () => {
@@ -205,7 +213,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
   it("restores only selected Archive vault records and leaves the remainder hidden", () => {
     expect(adminScreen).toContain("const restorableFilteredBiz");
     expect(adminScreen).toContain("const restoreSelectedBusinesses");
-    expect(adminScreen).toContain("Restore selected (");
+    expect(adminScreen).toContain("Unhide / restore selected (");
     expect(adminScreen).toContain("All other Archive vault records remain hidden.");
     expect(adminRoute).toContain("Bulk restore accepts only selected records from the Archive vault");
     expect(adminRoute).toContain('row.listing_status !== "archived"');
@@ -247,13 +255,24 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("manus_created_discovery_receipt.outcome = 'created'");
     expect(adminRoute).toContain("Manus-created research/imports (direct provenance)");
     expect(adminRoute).toContain("Manus-created direct provenance");
-    expect(adminRoute).toContain("const manusCreatedVisibleReviewPredicate");
-    expect(adminRoute).toContain("COALESCE(permanently_hidden, false) = false");
-    expect(adminRoute).toContain("a prior archive, duplicate merge, or hide decision always wins");
+    expect(adminRoute).toContain("const isManusCreatedCohort");
+    expect(adminRoute).toContain("Provenance narrows the selected inventory scope");
+    expect(adminRoute).toContain("if (status === \"duplicates\")");
+    expect(adminRoute).toContain("listing_status = 'archived' AND COALESCE(is_duplicate, false) = false");
     expect(adminScreen).toContain("Manus-created review");
     expect(adminScreen).toContain("Direct Manus research/import provenance");
     expect(adminScreen).toContain("Anything you already archived, hid, or retained as a duplicate is excluded here");
     expect(adminScreen).toContain("manus_created");
+  });
+
+  it("keeps archive, duplicate, and live status boundaries independent from each intake cohort", () => {
+    expect(adminRoute).toContain("Provenance narrows the selected inventory scope");
+    expect(adminRoute).toContain("listing_status = 'archived' AND COALESCE(is_duplicate, false) = false");
+    expect(adminRoute).toContain("COALESCE(is_duplicate, false) = true");
+    expect(adminScreen).toContain("status: next.status ?? bizStatusFilter");
+    expect(adminScreen).toContain("Archive vault + a cohort shows only archived records from that cohort");
+    expect(adminScreen).toContain("BUSINESS_CATEGORY_TAXONOMY.flatMap");
+    expect(adminScreen).toContain("Existing legacy/imported values remain reviewable");
   });
 
   it("lets an administrator preview and explicitly publish the protected source-backed directory in retry-safe batches", () => {

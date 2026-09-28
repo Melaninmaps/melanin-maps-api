@@ -24,7 +24,7 @@ interface MemberSubmission {
 
 const STATUS = {
   pending_review: {
-    label: "Software hold",
+    label: "Review in progress",
     detail: "Not public · Check the reason below",
     className: "bg-amber-50 text-amber-800 border-amber-200",
     icon: Clock,
@@ -133,9 +133,9 @@ export default function MyBusinessSubmissions() {
                       Update and resubmit
                     </Link>
                   )}
-                  {submission.status === "published" && submission.matched_business_id && (
+                  {submission.matched_business_id && (
                     <Link href={`/business/${encodeURIComponent(submission.matched_business_id)}`} className="rounded-lg border border-[#CA922B] px-4 py-2 text-sm font-semibold text-[#CA922B] hover:bg-[#CA922B]/5">
-                      View community listing
+                      {submission.status === "published" ? "View community listing" : "View existing listing"}
                     </Link>
                   )}
                   <span className="text-xs text-[#3A1F0E]/40">Submission ID: {submission.id}</span>

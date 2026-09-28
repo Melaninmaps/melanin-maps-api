@@ -9,6 +9,7 @@ import {
   Loader2, ExternalLink, Store
 } from "lucide-react";
 import { AdminBusinessMediaStep } from "./AdminBusinessMediaStep";
+import { OwnershipDesignationCombobox } from "./OwnershipDesignationCombobox";
 import {
   BUSINESS_CATEGORY_TAXONOMY,
   VIBES_BY_CATEGORY,
@@ -138,11 +139,6 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
 
   const STEPS = FORM_STEPS;
 
-  function toggleOwnership(d: string) {
-    setOwnershipDesignations(prev =>
-      prev.includes(d) ? prev.filter(x => x !== d) : [...prev, d]
-    );
-  }
   function toggleVibe(v: string) {
     setSelectedVibes(prev =>
       prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]
@@ -471,26 +467,13 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
                 <strong>Important:</strong> Select only designations the owner has confirmed or documented. All designations are self-identified. "Added by admin" does not mean "verified."
               </div>
 
-              <div>
-                <label className={labelCls}>Ownership Designations</label>
-                <p className="text-xs text-[#3A1F0E]/50 mb-3">Select all that apply. These are shown as informational badges — not auto-verified.</p>
-                <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto pr-1">
-                  {OWNERSHIP_DESIGNATIONS.map(d => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => toggleOwnership(d)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
-                        ownershipDesignations.includes(d)
-                          ? "bg-[#2B1507] text-[#F5EBD8] border-[#2B1507]"
-                          : "border-[#2B1507]/20 text-[#3A1F0E]/70 hover:border-[#CA922B]/50"
-                      }`}
-                    >
-                      {d}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              <OwnershipDesignationCombobox
+                id="admin-add-ownership-designations"
+                options={OWNERSHIP_DESIGNATIONS.map((label) => ({ value: label, label }))}
+                values={ownershipDesignations}
+                onChange={setOwnershipDesignations}
+                helperText="Type Black, Hispanic, or another documented designation, then select the approved label. These remain informational and are not auto-verified."
+              />
 
               <div>
                 <label className={labelCls}>Source &amp; Provenance <span className="font-normal normal-case text-[#3A1F0E]/35">(internal — never shown publicly)</span></label>

@@ -1,9 +1,14 @@
 import { Router, type Request, type Response } from "express";
-import { db, businessNominationsTable } from "@workspace/db";
+import { db, pool, businessNominationsTable } from "@workspace/db";
 import { eq, desc } from "drizzle-orm";
 import { requireApprovedMember } from "../middlewares/requireAuth";
 import { SubmissionRepository } from "../businessIntake/submissionRepository";
 import { validateSubmission } from "../businessIntake/types";
+import {
+  notifyAdministratorsOfPossibleDuplicate,
+  POSSIBLE_DUPLICATE_MEMBER_MESSAGE,
+  queuePublishedDuplicateForReview,
+} from "../businessIntake/duplicateReviewWorkflow";
 
 const communitySubmissionRepository = new SubmissionRepository();
 
@@ -41,12 +46,37 @@ router.post("/business-nominations", requireApprovedMember, async (req: Request,
 
     const existing = await communitySubmissionRepository.findPublishedDuplicate(input);
     if (existing) {
-      res.status(409).json({
+      const client = await pool.connect();
+      let queued;
+      try {
+        await client.query("BEGIN");
+        queued = await queuePublishedDuplicateForReview({
+          repository: communitySubmissionRepository,
+          input,
+          submittedById: userId,
+          canonicalBusiness: existing,
+          database: client,
+        });
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        client.release();
+      }
+      void notifyAdministratorsOfPossibleDuplicate({
+        reviewItemId: queued.reviewItemId,
+        canonicalBusiness: existing,
+        submittedBusinessName: input.name,
+      });
+      res.status(queued.created ? 201 : 200).json({
         isDuplicate: true,
         type: "already_listed",
         businessId: existing.id,
-        code: "BUSINESS_ALREADY_LISTED",
-        message: "This business is already in the Mapping With Melanin directory.",
+        submissionId: queued.submission.id,
+        status: queued.submission.status,
+        code: "POSSIBLE_BUSINESS_DUPLICATE",
+        message: POSSIBLE_DUPLICATE_MEMBER_MESSAGE,
       });
       return;
     }

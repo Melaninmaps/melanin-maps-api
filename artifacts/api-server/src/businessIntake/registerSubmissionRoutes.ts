@@ -17,6 +17,11 @@ import {
   type Submission,
 } from "./submissionRepository";
 import {
+  notifyAdministratorsOfPossibleDuplicate,
+  POSSIBLE_DUPLICATE_MEMBER_MESSAGE,
+  queuePublishedDuplicateForReview,
+} from "./duplicateReviewWorkflow";
+import {
   assessCommunityPublication,
   automaticPublicationReviewNote,
   isValidPinCoordinates,
@@ -105,6 +110,7 @@ function sendIdempotentSubmission(
     return;
   }
   const published = submission.status === "published";
+  const possibleDuplicate = !published && Boolean(submission.matched_business_id);
   res.status(200).json({
     ok: true,
     submissionId: submission.id,
@@ -113,9 +119,12 @@ function sendIdempotentSubmission(
     publicationOutcome: published ? "published" : submission.status,
     mapPin: published,
     duplicateRetry: true,
+    isDuplicate: possibleDuplicate,
     message: published
       ? "This submission already published as a community-listed, unclaimed, not verified map listing."
-      : submission.review_note ?? "This submission is already saved. It was not submitted twice.",
+      : possibleDuplicate
+        ? POSSIBLE_DUPLICATE_MEMBER_MESSAGE
+        : submission.review_note ?? "This submission is already saved. It was not submitted twice.",
   });
 }
 
@@ -537,10 +546,32 @@ export function registerSubmissionRoutes(
 
         const publishedDuplicate = await repository.findPublishedDuplicate(input);
         if (publishedDuplicate) {
-          res.status(409).json({
-            error: "This business is already listed in the directory.",
-            code: "BUSINESS_ALREADY_LISTED",
+          client = await transactionPool.connect();
+          await client.query("BEGIN");
+          const queued = await queuePublishedDuplicateForReview({
+            repository,
+            input,
+            submittedById: user.id,
+            canonicalBusiness: publishedDuplicate,
+            database: client,
+          });
+          await client.query("COMMIT");
+          void notifyAdministratorsOfPossibleDuplicate({
+            reviewItemId: queued.reviewItemId,
+            canonicalBusiness: publishedDuplicate,
+            submittedBusinessName: input.name,
+          });
+          res.status(queued.created ? 201 : 200).json({
+            ok: true,
+            isDuplicate: true,
+            code: "POSSIBLE_BUSINESS_DUPLICATE",
+            submissionId: queued.submission.id,
             businessId: publishedDuplicate.id,
+            status: queued.submission.status,
+            publicationOutcome: "possible_duplicate_review",
+            mapPin: false,
+            duplicateRetry: !queued.created,
+            message: POSSIBLE_DUPLICATE_MEMBER_MESSAGE,
           });
           return;
         }
@@ -688,10 +719,32 @@ export function registerSubmissionRoutes(
         });
         const publishedDuplicate = await repository.findPublishedDuplicate(input);
         if (publishedDuplicate) {
-          res.status(409).json({
-            error: "This business is already listed in the directory.",
-            code: "BUSINESS_ALREADY_LISTED",
+          client = await transactionPool.connect();
+          await client.query("BEGIN");
+          const queued = await queuePublishedDuplicateForReview({
+            repository,
+            input,
+            submittedById: user.id,
+            canonicalBusiness: publishedDuplicate,
+            database: client,
+          });
+          await client.query("COMMIT");
+          void notifyAdministratorsOfPossibleDuplicate({
+            reviewItemId: queued.reviewItemId,
+            canonicalBusiness: publishedDuplicate,
+            submittedBusinessName: input.name,
+          });
+          res.status(queued.created ? 201 : 200).json({
+            ok: true,
+            isDuplicate: true,
+            code: "POSSIBLE_BUSINESS_DUPLICATE",
+            submissionId: queued.submission.id,
             businessId: publishedDuplicate.id,
+            status: queued.submission.status,
+            publicationOutcome: "possible_duplicate_review",
+            mapPin: false,
+            duplicateRetry: !queued.created,
+            message: POSSIBLE_DUPLICATE_MEMBER_MESSAGE,
           });
           return;
         }

@@ -351,16 +351,6 @@ async function compileAdminBusinessInventoryFilters(
     )`);
   }
   const manusCreatedPredicate = `(${manusCreatedPredicateParts.join(" OR ")})`;
-  // The founder's Manus-created review list is intentionally a clean worklist:
-  // a prior archive, duplicate merge, or hide decision always wins. The exact
-  // records remain in their existing Archive/Duplicate audit vaults, but never
-  // reappear here and force the founder to review them twice.
-  const manusCreatedVisibleReviewPredicate = `(
-    COALESCE(listing_status, 'live_unclaimed') <> 'archived'
-    AND COALESCE(is_duplicate, false) = false
-    AND COALESCE(permanently_hidden, false) = false
-    AND COALESCE(status, '') NOT IN ('duplicate', 'permanently_hidden', 'removed', 'deleted')
-  )`;
   const filters: string[] = [];
   const filterParams: unknown[] = [];
   const addFilter = (clause: string, value: string) => {
@@ -382,10 +372,11 @@ async function compileAdminBusinessInventoryFilters(
   }
   if (category) addFilter("category = ?", category);
   if (subcategory) addFilter("subcategory = ?", subcategory);
-  const isManusCreatedReview = intakeCohort === "manus_created";
-  if (isManusCreatedReview) {
+  const isManusCreatedCohort = intakeCohort === "manus_created";
+  if (isManusCreatedCohort) {
+    // Provenance narrows the selected inventory scope; it must not make an
+    // archived or duplicate record appear in the live Manus-created worklist.
     filters.push(manusCreatedPredicate);
-    filters.push(manusCreatedVisibleReviewPredicate);
   } else if (intakeCohort === "protected_historical_cohort") {
     filters.push(completedCohortPredicate);
   } else if (intakeCohort === "user_national_master") {
@@ -393,10 +384,7 @@ async function compileAdminBusinessInventoryFilters(
   } else if (intakeCohort === "other_inventory") {
     filters.push(`NOT (${completedCohortPredicate} OR ${nationalMasterPredicate})`);
   }
-  if (isManusCreatedReview) {
-    // Do not permit URL parameters or an older browser tab to reopen a hidden
-    // record inside this clean review list.
-  } else if (status === "duplicates") {
+  if (status === "duplicates") {
     // Confirmed duplicate records are retained for evidence and reversible
     // merge restoration, but review them in their own all-status vault rather
     // than mixing them into ordinary or Archive-vault inventory.
@@ -518,6 +506,34 @@ async function recordListingStatusAudit(
       JSON.stringify(input.afterState),
     ],
   );
+}
+
+
+/**
+ * A permanent deletion is intentionally limited to records already isolated in
+ * Archive or Duplicate vaults. This audit has no foreign key so a factual
+ * deletion receipt survives the row. No cascade is used: linked community,
+ * owner, review, or media data blocks deletion instead of being silently lost.
+ */
+async function ensureBusinessPermanentDeletionAuditSchema(client: ListingAuditQueryClient): Promise<void> {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS business_permanent_deletion_audit_events (
+      id            UUID PRIMARY KEY,
+      business_id   TEXT NOT NULL,
+      actor_user_id TEXT,
+      reason        TEXT NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 1000),
+      snapshot      JSONB NOT NULL,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await client.query(`
+    CREATE INDEX IF NOT EXISTS business_permanent_deletion_audit_business_created_idx
+      ON business_permanent_deletion_audit_events(business_id, created_at DESC)
+  `);
+}
+
+function permanentDeletionConfirmation(count: number): string {
+  return `DELETE ${count} ${count === 1 ? "BUSINESS" : "BUSINESSES"}`;
 }
 
 // ── GET /admin/check — capability probe (always returns 200) ─────────────────
@@ -1176,6 +1192,90 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
     await client.query("ROLLBACK").catch(() => undefined);
     req.log?.error({ err }, "Failed to bulk update business listing_status");
     res.status(500).json({ error: "Failed to update selected businesses." });
+  } finally {
+    client.release();
+  }
+});
+
+// DELETE /admin/businesses/permanent — audited, non-cascading deletion from Archive/Duplicate vaults only.
+router.delete("/admin/businesses/permanent", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const ids = Array.isArray(req.body?.ids)
+    ? [...new Set(req.body.ids.filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0))]
+    : [];
+  const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
+  if (ids.length === 0 || ids.length > 100) {
+    res.status(400).json({ error: "Select between 1 and 100 archived or duplicate businesses." });
+    return;
+  }
+  if (reason.length < 3 || reason.length > 1_000) {
+    res.status(400).json({ error: "A 3–1,000 character administrator deletion reason is required." });
+    return;
+  }
+  if (req.body?.confirmation !== permanentDeletionConfirmation(ids.length)) {
+    res.status(400).json({ error: `Type ${permanentDeletionConfirmation(ids.length)} to confirm permanent deletion.` });
+    return;
+  }
+
+  const client = await pool.connect();
+  try {
+    await ensureBusinessPermanentDeletionAuditSchema(client);
+    await client.query("BEGIN");
+    const current = await client.query<{
+      id: string;
+      name: string;
+      listing_status: string | null;
+      is_duplicate: boolean;
+      snapshot: Record<string, unknown>;
+    }>(
+      `SELECT id, name, listing_status, COALESCE(is_duplicate, false) AS is_duplicate,
+              to_jsonb(businesses) AS snapshot
+         FROM businesses
+        WHERE id = ANY($1::text[])
+        FOR UPDATE`,
+      [ids],
+    );
+    if (current.rows.length !== ids.length) {
+      await client.query("ROLLBACK");
+      res.status(404).json({ error: "One or more selected businesses were not found." });
+      return;
+    }
+    const blocked = current.rows.filter((row) => row.listing_status !== "archived" && !row.is_duplicate);
+    if (blocked.length > 0) {
+      await client.query("ROLLBACK");
+      res.status(409).json({
+        error: "Permanent deletion is allowed only for records already in Archive vault or Duplicate vault. Archive any live record first.",
+      });
+      return;
+    }
+
+    for (const row of current.rows) {
+      await client.query(
+        `INSERT INTO business_permanent_deletion_audit_events
+           (id, business_id, actor_user_id, reason, snapshot)
+         VALUES ($1, $2, $3, $4, $5::jsonb)`,
+        [randomUUID(), row.id, req.user?.id ?? null, reason, JSON.stringify(row.snapshot)],
+      );
+    }
+    // Deliberately no CASCADE. If this record has linked data protected by a
+    // foreign key, PostgreSQL rejects the transaction and preserves everything.
+    await client.query("DELETE FROM businesses WHERE id = ANY($1::text[])", [ids]);
+    await client.query("COMMIT");
+    req.log?.info({ selectedCount: ids.length, by: req.user?.id }, "Admin permanently deleted archived/duplicate businesses with audit snapshots");
+    res.json({ ok: true, deletedCount: ids.length });
+  } catch (err: unknown) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    const code = typeof err === "object" && err !== null && "code" in err ? String((err as { code?: unknown }).code) : "";
+    if (code === "23503") {
+      res.status(409).json({ error: "This business has linked records and cannot be permanently deleted. It remains safely in its vault; archive or retain it instead." });
+      return;
+    }
+    req.log?.error({ err }, "Failed to permanently delete selected businesses");
+    res.status(500).json({ error: "Permanent deletion failed; no selected business was deleted." });
   } finally {
     client.release();
   }
@@ -7129,6 +7229,7 @@ router.patch(
       "approve",
       "reject",
       "merge",
+      "confirm_existing",
       "keep_both",
       "needs_research",
     ];
@@ -7149,7 +7250,7 @@ router.patch(
               candidate_city, candidate_state, candidate_website, candidate_phone,
               candidate_latitude, candidate_longitude, candidate_category,
               candidate_source_provider, candidate_source_url, matched_business_id,
-              resolved_by, resolved_at
+              evidence, resolved_by, resolved_at
          FROM business_review_items
         WHERE id = $1
         FOR UPDATE`,
@@ -7170,6 +7271,68 @@ router.patch(
       }
 
       const adminId = req.user?.id ?? null;
+
+      // A community submission that matches a public listing does not create a
+      // second business row. Confirming it closes the queue item and keeps the
+      // member's contribution linked to the existing listing; it must never
+      // enter Duplicate vault because no duplicate profile was created.
+      if (action === "confirm_existing") {
+        if (
+          item.review_type !== "possible_duplicate" ||
+          item.candidate_source_provider !== "community_submission" ||
+          !item.matched_business_id
+        ) {
+          await client.query("ROLLBACK");
+          res.status(422).json({ error: "This action is only available for a member report matched to an existing listing" });
+          return;
+        }
+        const submissionId = typeof item.evidence?.submissionId === "string"
+          ? item.evidence.submissionId
+          : null;
+        if (!submissionId) {
+          await client.query("ROLLBACK");
+          res.status(422).json({ error: "The member submission reference is missing; no record was changed" });
+          return;
+        }
+
+        await client.query(
+          `UPDATE community_business_submissions
+              SET status = 'declined', reviewed_by_id = $1,
+                  review_note = 'Confirmed as an existing directory listing; no second listing created.',
+                  matched_business_id = $2, updated_at = NOW()
+            WHERE id = $3`,
+          [adminId, item.matched_business_id, submissionId],
+        );
+        await client.query(
+          `UPDATE business_review_items
+              SET status = 'confirmed_existing', resolved_by = $1,
+                  resolved_at = NOW(), updated_at = NOW()
+            WHERE id = $2`,
+          [adminId, id],
+        );
+        await client.query("COMMIT");
+        res.json({ ok: true, status: "confirmed_existing", canonicalId: item.matched_business_id });
+        return;
+      }
+
+      // A possible match from a member did not create a second business row.
+      // It therefore cannot be merged or approved as though it were an
+      // independently staged profile. An administrator can confirm the
+      // existing listing, keep researching, or reject the report; if it proves
+      // to be a distinct place, the administrator creates that new listing
+      // through the explicit business-add workflow with its own evidence.
+      if (
+        item.review_type === "possible_duplicate" &&
+        item.candidate_source_provider === "community_submission" &&
+        item.matched_business_id &&
+        (action === "approve" || action === "keep_both" || action === "merge")
+      ) {
+        await client.query("ROLLBACK");
+        res.status(422).json({
+          error: "This member report has no second business profile to merge or approve. Confirm the existing listing, continue research, or add a distinct business through the evidence-backed business workflow.",
+        });
+        return;
+      }
 
       // ── Merge ──────────────────────────────────────────────────────────────────
       if (action === "merge") {

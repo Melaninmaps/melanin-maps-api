@@ -443,6 +443,28 @@ export class SubmissionRepository {
     return result.rows[0] ?? null;
   }
 
+  /**
+   * A member-reported possible duplicate remains a private, auditable
+   * submission. This records the existing public listing shown to the member;
+   * it does not mark either business as a confirmed duplicate.
+   */
+  async markPossibleDuplicate(
+    id: string,
+    matchedBusinessId: string,
+    reviewNote: string,
+    database: Queryable = this.database,
+  ): Promise<Submission | null> {
+    const result = await database.query<Submission>(
+      `UPDATE community_business_submissions
+       SET status = 'pending_review', review_note = $3,
+           matched_business_id = $2, updated_at = NOW()
+       WHERE id = $1 AND status IN ('pending_review', 'needs_info')
+       RETURNING ${SUBMISSION_COLUMNS}`,
+      [id, matchedBusinessId, reviewNote],
+    );
+    return result.rows[0] ?? null;
+  }
+
   async finalizeAutomaticPublication(
     id: string,
     matchedBusinessId: string,

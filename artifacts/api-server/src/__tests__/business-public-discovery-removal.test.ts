@@ -28,10 +28,13 @@ describe("administrator public-discovery removal governance", () => {
     expect(adminRoute).toContain("featured: false");
   });
 
-  it("persists an additive audit table and never destructively deletes a business", () => {
+  it("keeps ordinary removal reversible and allows only audited vault deletion", () => {
     expect(startupMigrations).toContain("ensureBusinessListingStatusAuditSchema");
     expect(startupMigrations).toContain("business_listing_status_audit_events");
-    expect(adminRoute).not.toMatch(/DELETE\s+FROM\s+(?:public\.)?businesses\b/i);
+    expect(adminRoute).toContain("business_permanent_deletion_audit_events");
+    expect(adminRoute).toContain("Permanent deletion is allowed only for records already in Archive vault or Duplicate vault.");
+    expect(adminRoute).toContain('DELETE FROM businesses WHERE id = ANY($1::text[])');
+    expect(adminRoute).toContain("Deliberately no CASCADE");
   });
 
   it("makes the required audit schema available before either reversible archive path runs", () => {

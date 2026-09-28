@@ -33,7 +33,7 @@ interface MemberSubmission {
 }
 
 const STATUS: Record<SubmissionStatus, { label: string; detail: string; icon: keyof typeof Feather.glyphMap; color: string }> = {
-  pending_review: { label: "Software hold", detail: "Not public · Check the reason below", icon: "clock", color: "#B7791F" },
+  pending_review: { label: "Review in progress", detail: "Not public · Check the reason below", icon: "clock", color: "#B7791F" },
   needs_info: { label: "More information needed", detail: "Not public", icon: "alert-circle", color: "#2563EB" },
   declined: { label: "Not published", detail: "Not public", icon: "x-circle", color: "#DC2626" },
   published: { label: "Published", detail: "Community-listed · Unclaimed · Not verified", icon: "check-circle", color: "#16803A" },
@@ -133,9 +133,9 @@ export default function MyBusinessSubmissionsScreen() {
                 {item.status === "needs_info" ? (
                   <Text style={[styles.helpText, { color: colors.mutedForeground }]}>Update this submission from the Mapping With Melanin website. Your existing record and review history will be preserved.</Text>
                 ) : null}
-                {item.status === "published" && item.matched_business_id ? (
+                {item.matched_business_id ? (
                   <TouchableOpacity style={[styles.outlineButton, { borderColor: colors.primary }]} onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.matched_business_id! } } as never)}>
-                    <Text style={{ color: colors.primary, fontWeight: "700" }}>View Community Listing</Text>
+                    <Text style={{ color: colors.primary, fontWeight: "700" }}>{item.status === "published" ? "View Community Listing" : "View Existing Listing"}</Text>
                   </TouchableOpacity>
                 ) : null}
                 <Text selectable style={[styles.id, { color: colors.mutedForeground }]}>Submission ID: {item.id}</Text>

@@ -6523,6 +6523,10 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
       "business public-discovery removal audit v1",
       () => ensureBusinessListingStatusAuditSchema(log, warn),
     ],
+    [
+      "business permanent-deletion audit v1",
+      () => ensureBusinessPermanentDeletionAuditSchema(log, warn),
+    ],
     // ── Admin intake provenance and full-inventory filters ─────────────────
     // A source/batch/rationale survives an archive so duplicate cleanup is
     // reversible without re-researching a business.
@@ -17623,6 +17627,35 @@ async function ensureBusinessListingStatusAuditSchema(
     warn(
       `ensureBusinessListingStatusAuditSchema failed: ${err instanceof Error ? err.message : String(err)}`,
     );
+  }
+}
+
+// ── Administrator permanent-deletion audit ───────────────────────────────────
+// Snapshot receipts remain after an administrator permanently deletes only a
+// record previously isolated in Archive/Duplicate vaults. This migration does
+// not delete or alter any business row.
+async function ensureBusinessPermanentDeletionAuditSchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS business_permanent_deletion_audit_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        business_id TEXT NOT NULL,
+        actor_user_id TEXT,
+        reason TEXT NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 1000),
+        snapshot JSONB NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS business_permanent_deletion_audit_business_created_idx
+        ON business_permanent_deletion_audit_events(business_id, created_at DESC)
+    `);
+    log("ensureBusinessPermanentDeletionAuditSchema: table ready");
+  } catch (err: unknown) {
+    warn(`ensureBusinessPermanentDeletionAuditSchema failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

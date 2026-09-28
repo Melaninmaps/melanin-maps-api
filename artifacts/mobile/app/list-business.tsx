@@ -19,7 +19,8 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { CATEGORY_GROUPS, getCategoryGroup, isLiveCategory, type CategoryGroup } from "@/constants/categories";
-import { OWNERSHIP_CHIPS } from "@/config/chips";
+import { OWNERSHIP_DESIGNATIONS } from "@workspace/constants";
+import { OwnershipDesignationPicker } from "@/components/OwnershipDesignationPicker";
 import { useAuth } from "@/lib/auth";
 
 const PRICE_RANGES = ["$", "$$", "$$$", "$$$$"];
@@ -43,6 +44,7 @@ interface SubmissionOutcome {
   message: string;
   businessId?: string;
   mapPin: boolean;
+  isDuplicate?: boolean;
 }
 
 interface DuplicateCandidate {
@@ -511,6 +513,7 @@ export default function ListBusinessScreen() {
         status?: string;
         publicationOutcome?: string;
         mapPin?: boolean;
+        isDuplicate?: boolean;
         message?: string;
       };
       setSubmissionId(data.submissionId ?? "");
@@ -520,6 +523,7 @@ export default function ListBusinessScreen() {
         message: data.message ?? "Your business submission was saved.",
         businessId: data.businessId,
         mapPin: data.mapPin === true,
+        isDuplicate: data.isDuplicate === true,
       });
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       animateToStep(TOTAL_STEPS);
@@ -554,7 +558,7 @@ export default function ListBusinessScreen() {
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>
-          {isSuccess ? (submissionOutcome?.status === "published" ? (isOwnerIntent ? "Business Page Live" : "Live on the Map") : "Submission Saved") : isOwnerIntent ? "Add My Business" : "Share a Business"}
+          {isSuccess ? (submissionOutcome?.isDuplicate ? "Existing Listing Found" : submissionOutcome?.status === "published" ? (isOwnerIntent ? "Business Page Live" : "Live on the Map") : "Submission Saved") : isOwnerIntent ? "Add My Business" : "Share a Business"}
         </Text>
         <View style={{ width: 22 }} />
       </View>
@@ -579,7 +583,7 @@ export default function ListBusinessScreen() {
               </View>
             </View>
             <Text style={[styles.successTitle, { color: colors.foreground }]}>
-              {submissionOutcome?.status === "published" ? (isOwnerIntent ? "Your business page is live" : "This business is live") : "This submission is saved"}
+              {submissionOutcome?.isDuplicate ? "We found the existing listing" : submissionOutcome?.status === "published" ? (isOwnerIntent ? "Your business page is live" : "This business is live") : "This submission is saved"}
             </Text>
             <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
               <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{form.name || "Your business"}</Text>
@@ -592,8 +596,8 @@ export default function ListBusinessScreen() {
 
             <View style={[styles.successCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {[
-                { icon: "check-circle", label: "Status", value: submissionOutcome?.status === "published" ? "Published immediately" : "Software hold", color: "#22C55E" },
-                { icon: submissionOutcome?.mapPin ? "map-pin" : "eye", label: "Directory", value: submissionOutcome?.status === "published" ? (submissionOutcome?.mapPin ? "Searchable with a precise pin" : "Searchable without a map pin") : "Not public yet", color: colors.primary },
+                { icon: "check-circle", label: "Status", value: submissionOutcome?.isDuplicate ? "Possible duplicate queued for review" : submissionOutcome?.status === "published" ? "Published immediately" : "Software hold", color: "#22C55E" },
+                { icon: submissionOutcome?.mapPin ? "map-pin" : "eye", label: "Directory", value: submissionOutcome?.isDuplicate ? "Existing listing available now" : submissionOutcome?.status === "published" ? (submissionOutcome?.mapPin ? "Searchable with a precise pin" : "Searchable without a map pin") : "Not public yet", color: colors.primary },
                 { icon: "shield", label: "Verification", value: "Not verified", color: colors.accent },
                 { icon: isOwnerIntent ? "briefcase" : "user-x", label: "Owner", value: isOwnerIntent ? "Profile-linked manager" : "Unclaimed", color: colors.primary },
               ].map((item) => (
@@ -613,13 +617,13 @@ export default function ListBusinessScreen() {
               <Text style={[styles.successBtnText, { color: colors.primaryForeground }]}>{isOwnerIntent ? "View My Business Submissions" : "View My Submissions"}</Text>
               <Feather name="arrow-right" size={16} color={colors.primaryForeground} />
             </TouchableOpacity>
-            {submissionOutcome?.status === "published" && submissionOutcome.businessId ? (
+            {(submissionOutcome?.status === "published" || submissionOutcome?.isDuplicate) && submissionOutcome.businessId ? (
               <TouchableOpacity
                 style={[styles.successBtn, { backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.primary }]}
                 onPress={() => router.push({ pathname: "/business/[id]", params: { id: submissionOutcome.businessId } } as never)}
                 activeOpacity={0.85}
               >
-                <Text style={[styles.successBtnText, { color: colors.primary }]}>{isOwnerIntent ? "View My Business Page" : "View Community Listing"}</Text>
+                <Text style={[styles.successBtnText, { color: colors.primary }]}>{submissionOutcome?.isDuplicate ? "View Existing Listing" : isOwnerIntent ? "View My Business Page" : "View Community Listing"}</Text>
                 <Feather name="map-pin" size={16} color={colors.primary} />
               </TouchableOpacity>
             ) : null}
@@ -868,25 +872,17 @@ export default function ListBusinessScreen() {
                       colors={colors}
                     />
                     {form.communityReportedOwnership === "minority_owned" ? (
-                      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
-                        {OWNERSHIP_CHIPS.map((option) => {
-                          const selected = form.ownershipDesignations.includes(option.id);
-                          return (
-                            <TouchableOpacity
-                              key={option.id}
-                              onPress={() => setForm((current) => ({
-                                ...current,
-                                ownershipDesignations: selected
-                                  ? current.ownershipDesignations.filter((value) => value !== option.id)
-                                  : [...current.ownershipDesignations, option.id],
-                              }))}
-                              style={[chipStyles.chip, { backgroundColor: selected ? colors.primary : colors.card, borderColor: selected ? colors.primary : colors.border }]}
-                            >
-                              <Text style={[chipStyles.chipText, { color: selected ? colors.primaryForeground : colors.foreground }]}>{option.label}</Text>
-                            </TouchableOpacity>
-                          );
-                        })}
-                      </View>
+                      <OwnershipDesignationPicker
+                        options={OWNERSHIP_DESIGNATIONS.map((label) => ({ id: label, label }))}
+                        selectedIds={form.ownershipDesignations}
+                        onChange={(ownershipDesignations) => setForm((current) => ({
+                          ...current,
+                          communityReportedOwnership: "minority_owned",
+                          ownershipDesignations,
+                        }))}
+                        label="Community-reported designation"
+                        helperText="Type Black, HIS, Ethiopian, or another documented designation, then select it. This report is never owner verification."
+                      />
                     ) : null}
                   </View>
                 </View>

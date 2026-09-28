@@ -27,9 +27,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { PlacesAutocompleteInput, type PlaceResult } from "@/components/PlacesAutocompleteInput";
-import { ChipGrid } from "@/components/ChipGrid";
 import { VoiceTextField } from "@/components/VoiceTextField";
-import { OWNERSHIP_CHIPS } from "@/config/chips";
+import { OWNERSHIP_DESIGNATIONS } from "@workspace/constants";
+import { OwnershipDesignationPicker } from "@/components/OwnershipDesignationPicker";
 import { getApiBase } from "@/lib/api";
 
 const API_BASE = getApiBase();
@@ -301,11 +301,12 @@ export default function NominateBusinessScreen() {
             </View>
             {communityReportedOwnership === "minority_owned" ? (
               <View style={{ marginTop: 14 }}>
-                <ChipGrid
-                  chips={OWNERSHIP_CHIPS}
+                <OwnershipDesignationPicker
+                  options={OWNERSHIP_DESIGNATIONS.map((label) => ({ id: label, label }))}
                   selectedIds={ownershipDesignations}
-                  onSelect={(values) => { setOwnershipDesignations(values); setCommunityReportedOwnership("minority_owned"); }}
-                  multiSelect
+                  onChange={(values) => { setOwnershipDesignations(values); setCommunityReportedOwnership("minority_owned"); }}
+                  label="Community-reported designation"
+                  helperText="Type Black, HIS, Ethiopian, or another documented designation, then select it. This is never owner verification."
                 />
               </View>
             ) : null}

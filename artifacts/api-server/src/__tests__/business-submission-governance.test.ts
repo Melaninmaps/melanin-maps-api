@@ -104,6 +104,7 @@ function repositoryMock(overrides: Record<string, unknown> = {}) {
     getByIdForUpdate: vi.fn().mockResolvedValue(submission()),
     finalizeAutomaticPublication: vi.fn().mockResolvedValue(submission({ status: "published", matched_business_id: "published-business" })),
     decide: vi.fn().mockResolvedValue(submission({ status: "published", matched_business_id: "published-business" })),
+    markPossibleDuplicate: vi.fn().mockResolvedValue(submission({ matched_business_id: "existing-business" })),
     ...overrides,
   };
 }
@@ -872,7 +873,7 @@ describe("POST /api/community/business-submissions", () => {
     expect(tx.pool.connect).not.toHaveBeenCalled();
   });
 
-  it("rejects a known public duplicate before opening a transaction", async () => {
+  it("retains a known public duplicate for administrator review while returning the existing listing", async () => {
     const repository = repositoryMock({
       findPublishedDuplicate: vi.fn().mockResolvedValue({ id: "existing-business", name: "Community Books" }),
     });
@@ -880,9 +881,22 @@ describe("POST /api/community/business-submissions", () => {
     const response = await request(appWith(repository, "approved", tx.pool))
       .post("/api/community/business-submissions")
       .send(completeBody());
-    expect(response.status).toBe(409);
-    expect(response.body).toMatchObject({ code: "BUSINESS_ALREADY_LISTED", businessId: "existing-business" });
-    expect(tx.pool.connect).not.toHaveBeenCalled();
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({
+      code: "POSSIBLE_BUSINESS_DUPLICATE",
+      isDuplicate: true,
+      businessId: "existing-business",
+      publicationOutcome: "possible_duplicate_review",
+      mapPin: false,
+    });
+    expect(tx.pool.connect).toHaveBeenCalledOnce();
+    expect(repository.create).toHaveBeenCalledOnce();
+    expect(repository.markPossibleDuplicate).toHaveBeenCalledWith(
+      expect.any(String),
+      "existing-business",
+      expect.stringContaining("Possible duplicate"),
+      expect.anything(),
+    );
   });
 });
 
@@ -1118,7 +1132,7 @@ describe("source contracts", () => {
     ]) expect(communityPublicViewDefinitionIsSafe(unsafeView)).toBe(false);
   });
 
-  it("retains canonical duplicate locking, truthful pin indexing, and no direct notification side effect", () => {
+  it("retains canonical duplicate locking, truthful pin indexing, and audited administrator duplicate alerts", () => {
     const route = source("../businessIntake/registerSubmissionRoutes.ts");
     const repository = source("../businessIntake/submissionRepository.ts");
     const media = source("../media/registerMediaRoutes.ts");
@@ -1133,7 +1147,9 @@ describe("source contracts", () => {
     expect(route).toContain('if (hasPreciseLocation && coordinates)');
     expect(route).not.toContain("ownershipClaimValue(submission)");
     expect(route).not.toContain('return { lat: "0", lng: "0" }');
-    expect(route).not.toMatch(/send[A-Za-z]+Notif/);
+    expect(route).toContain("notifyAdministratorsOfPossibleDuplicate");
+    expect(route).toContain("queuePublishedDuplicateForReview");
+    expect(repository).toContain("markPossibleDuplicate");
     expect(repository).toContain("request_payload_hash");
     expect(route.indexOf("findByClientRequest")).toBeLessThan(route.indexOf("findPublishedDuplicate"));
     expect(media).toContain('purpose === "kinfolk_question" || purpose === "business_submission"');

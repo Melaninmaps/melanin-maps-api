@@ -127,7 +127,8 @@ describe("community-fed business publication governance", () => {
     expect(listBusiness).toContain('submissionIntent: isOwnerIntent ? "owner" : "community"');
     expect(listBusiness).toContain('ownerAttestation: form.ownerAttestation');
     expect(listBusiness).toContain('This is a community recommendation. It will not be connected to your profile as an owner.');
-    expect(listBusiness).toContain('dashboard access begins only after your ownership-control claim is approved');
+    expect(listBusiness).toContain('This creates a business page tied to your profile.');
+    expect(listBusiness).toContain('Your claim is reviewed separately from the public listing and does not create a verification badge.');
     expect(profile).toContain('params: { intent: "owner" }');
     expect(settings).toContain('label: "Add My Business"');
     expect(settings).toContain('label: "Share Another Business"');

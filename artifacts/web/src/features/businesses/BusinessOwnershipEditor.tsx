@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
-import { Check, Loader2, Search, ShieldCheck } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Loader2, ShieldCheck } from "lucide-react";
 import { OWNERSHIP_DESIGNATIONS } from "@workspace/constants";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
+import { OwnershipDesignationCombobox } from "@/components/OwnershipDesignationCombobox";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -14,7 +15,6 @@ type IdentityResponse = {
 
 export function BusinessOwnershipEditor({ businessId }: { businessId: string }) {
   const [selected, setSelected] = useState<string[]>([]);
-  const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -35,24 +35,6 @@ export function BusinessOwnershipEditor({ businessId }: { businessId: string }) 
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [businessId]);
-
-  const choices = useMemo(() => {
-    const normalized = query.trim().toLocaleLowerCase();
-    if (!normalized) return OWNERSHIP_DESIGNATIONS;
-    return OWNERSHIP_DESIGNATIONS.filter((label) => label.toLocaleLowerCase().includes(normalized));
-  }, [query]);
-
-  function toggle(label: string) {
-    setMessage(null);
-    setSelected((current) => {
-      if (current.includes(label)) return current.filter((value) => value !== label);
-      if (current.length >= 10) {
-        setMessage("Choose up to 10 labels that directly apply to this business.");
-        return current;
-      }
-      return [...current, label];
-    });
-  }
 
   async function save() {
     setSaving(true);
@@ -91,47 +73,21 @@ export function BusinessOwnershipEditor({ businessId }: { businessId: string }) 
         </div>
       </div>
 
-      <label className="relative mb-3 block">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#3A1F0E]/50" />
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search ownership labels"
-          className="w-full rounded-xl border border-[#3A1F0E]/20 bg-white py-2.5 pl-10 pr-3 text-sm text-[#2B1507] placeholder:text-[#3A1F0E]/45 focus:border-[#CA922B] focus:outline-none focus:ring-2 focus:ring-[#CA922B]/20"
-        />
-      </label>
-
       {loading ? (
         <div className="flex items-center gap-2 py-4 text-sm text-[#3A1F0E]/55">
           <Loader2 className="h-4 w-4 animate-spin" /> Loading labels…
         </div>
       ) : (
-        <div className="max-h-64 overflow-y-auto rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] p-3">
-          <div className="flex flex-wrap gap-2">
-            {choices.map((label) => {
-              const active = selected.includes(label);
-              return (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => toggle(label)}
-                  aria-pressed={active}
-                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-semibold transition-colors ${active
-                    ? "border-[#CA922B] bg-[#CA922B] text-white"
-                    : "border-[#3A1F0E]/20 bg-white text-[#2B1507] hover:border-[#CA922B]/60"
-                  }`}
-                >
-                  {active && <Check className="h-3 w-3" />}
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <OwnershipDesignationCombobox
+          id="owner-ownership-designations"
+          options={OWNERSHIP_DESIGNATIONS.map((label) => ({ value: label, label }))}
+          values={selected}
+          onChange={setSelected}
+          helperText="Type Black, Hispanic, Ethiopian, or another designation. Only selected approved labels are shown publicly."
+        />
       )}
 
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-xs font-semibold text-[#3A1F0E]/55">{selected.length}/10 selected</p>
         <button
           type="button"
           onClick={() => void save()}

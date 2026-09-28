@@ -64,6 +64,11 @@ export {
 } from "./ownership-designations";
 export type { OwnershipDesignation } from "./ownership-designations";
 export type { SupportLensMode } from "./ownership-designations";
+export {
+  matchesOwnershipDesignationSearch,
+  filterOwnershipDesignationSearchOptions,
+} from "./ownership-designation-search";
+export type { OwnershipDesignationSearchOption } from "./ownership-designation-search";
 
 // ── Vibe labels ────────────────────────────────────────────────────────────
 export {

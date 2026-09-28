@@ -11,7 +11,7 @@ const BASE = import.meta.env.BASE_URL;
 type ReviewItem = {
   id: string;
   reviewType: "possible_duplicate" | "ownership_unverified" | "insufficient_evidence";
-  status: "pending" | "approved" | "rejected" | "merged" | "keep_both" | "needs_research";
+  status: "pending" | "approved" | "rejected" | "merged" | "confirmed_existing" | "keep_both" | "needs_research";
   candidateName: string;
   candidateAddress: string;
   candidateCity: string;
@@ -44,6 +44,7 @@ const ACTION_LABELS: Record<string, string> = {
   approve: "Approve & Add",
   reject: "Reject",
   merge: "Merge into existing",
+  confirm_existing: "Confirm existing listing",
   keep_both: "Keep both",
   needs_research: "Needs more research",
 };
@@ -53,6 +54,7 @@ const STATUS_COLORS: Record<string, string> = {
   approved: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800",
   merged: "bg-blue-100 text-blue-800",
+  confirmed_existing: "bg-blue-100 text-blue-800",
   keep_both: "bg-purple-100 text-purple-800",
   needs_research: "bg-gray-100 text-gray-700",
 };
@@ -319,39 +321,56 @@ export default function AdminBusinessReview({ embedded }: { embedded?: boolean }
               {/* Actions */}
               {item.status === "pending" && (
                 <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t">
-                  <Button
-                    size="sm"
-                    variant="default"
-                    className="bg-green-600 hover:bg-green-700 text-white"
-                    disabled={!!acting}
-                    onClick={() => act(item.id, "approve")}
-                  >
-                    <Check className="w-3.5 h-3.5 mr-1" />
-                    {acting === item.id + "approve" ? "…" : "Approve & Add"}
-                  </Button>
+                  {item.candidateSourceProvider !== "community_submission" && (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      className="bg-green-600 hover:bg-green-700 text-white"
+                      disabled={!!acting}
+                      onClick={() => act(item.id, "approve")}
+                    >
+                      <Check className="w-3.5 h-3.5 mr-1" />
+                      {acting === item.id + "approve" ? "…" : "Approve & Add"}
+                    </Button>
+                  )}
 
                   {item.reviewType === "possible_duplicate" && item.matchedBusinessId && (
                     <>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-blue-300 text-blue-700"
-                        disabled={!!acting}
-                        onClick={() => act(item.id, "merge")}
-                      >
-                        <GitMerge className="w-3.5 h-3.5 mr-1" />
-                        {acting === item.id + "merge" ? "…" : "Merge into existing"}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="border-purple-300 text-purple-700"
-                        disabled={!!acting}
-                        onClick={() => act(item.id, "keep_both")}
-                      >
-                        <Copy className="w-3.5 h-3.5 mr-1" />
-                        {acting === item.id + "keep_both" ? "…" : "Keep both"}
-                      </Button>
+                      {item.candidateSourceProvider === "community_submission" ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-blue-300 text-blue-700"
+                          disabled={!!acting}
+                          onClick={() => act(item.id, "confirm_existing")}
+                        >
+                          <Check className="w-3.5 h-3.5 mr-1" />
+                          {acting === item.id + "confirm_existing" ? "…" : "Confirm existing listing"}
+                        </Button>
+                      ) : (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-blue-300 text-blue-700"
+                          disabled={!!acting}
+                          onClick={() => act(item.id, "merge")}
+                        >
+                          <GitMerge className="w-3.5 h-3.5 mr-1" />
+                          {acting === item.id + "merge" ? "…" : "Merge into existing"}
+                        </Button>
+                      )}
+                      {item.candidateSourceProvider !== "community_submission" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-purple-300 text-purple-700"
+                          disabled={!!acting}
+                          onClick={() => act(item.id, "keep_both")}
+                        >
+                          <Copy className="w-3.5 h-3.5 mr-1" />
+                          {acting === item.id + "keep_both" ? "…" : "Keep both"}
+                        </Button>
+                      )}
                     </>
                   )}
 

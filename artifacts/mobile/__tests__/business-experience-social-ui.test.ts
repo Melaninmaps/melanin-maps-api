@@ -30,11 +30,27 @@ describe("Expo business experience", () => {
     expect(card).toContain("accessibilityState={{ expanded: isExpanded }}");
   });
 
+  it("uses compact searchable designation suggestions in every native business-entry flow", () => {
+    const identity = source("../app/business-owner/identity.tsx");
+    const listBusiness = source("../app/list-business.tsx");
+    const nomination = source("../app/nominate-business.tsx");
+    const picker = source("../components/OwnershipDesignationPicker.tsx");
+    for (const screen of [identity, listBusiness, nomination]) {
+      expect(screen).toContain("OwnershipDesignationPicker");
+      expect(screen).toContain("OWNERSHIP_DESIGNATIONS.map");
+      expect(screen).toContain("Type Black, HIS");
+    }
+    expect(picker).toContain("filterOwnershipDesignationSearchOptions");
+    expect(picker).toContain("No approved designation matches that text.");
+    expect(picker).toContain("onChange([...selectedIds, id])");
+    expect(picker).not.toContain("onChange([...selectedIds, query])");
+  });
+
   it("lets claimed owners select governed ownership labels and two relevant profile tags", () => {
     const identity = source("../app/business-owner/identity.tsx");
     const tags = source("../app/business-owner/vibe-tags.tsx");
     expect(identity).toContain("OWNERSHIP_DESIGNATIONS");
-    expect(identity).toContain("Search ownership labels");
+    expect(identity).toContain("OwnershipDesignationPicker");
     expect(tags).toContain("getBusinessExperiencePolicy");
     expect(tags).toContain('Alert.alert("Choose up to 2"');
     expect(tags).toContain("priceChoices");

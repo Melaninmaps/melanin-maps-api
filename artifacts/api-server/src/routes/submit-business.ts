@@ -1,7 +1,13 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import { pool } from "@workspace/db";
 import { requireApprovedMember } from "../middlewares/requireAuth";
 import { SubmissionRepository } from "../businessIntake/submissionRepository";
 import { validateSubmission } from "../businessIntake/types";
+import {
+  notifyAdministratorsOfPossibleDuplicate,
+  POSSIBLE_DUPLICATE_MEMBER_MESSAGE,
+  queuePublishedDuplicateForReview,
+} from "../businessIntake/duplicateReviewWorkflow";
 
 const router: IRouter = Router();
 const communitySubmissionRepository = new SubmissionRepository();
@@ -21,11 +27,37 @@ router.post("/submit-business", requireApprovedMember, async (req: Request, res:
 
     const existing = await communitySubmissionRepository.findPublishedDuplicate(input);
     if (existing) {
-      res.status(409).json({
-        success: false,
-        error: "This business is already listed in the directory.",
-        code: "BUSINESS_ALREADY_LISTED",
+      const client = await pool.connect();
+      let queued;
+      try {
+        await client.query("BEGIN");
+        queued = await queuePublishedDuplicateForReview({
+          repository: communitySubmissionRepository,
+          input,
+          submittedById: req.user!.id,
+          canonicalBusiness: existing,
+          database: client,
+        });
+        await client.query("COMMIT");
+      } catch (error) {
+        await client.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        client.release();
+      }
+      void notifyAdministratorsOfPossibleDuplicate({
+        reviewItemId: queued.reviewItemId,
+        canonicalBusiness: existing,
+        submittedBusinessName: input.name,
+      });
+      res.status(queued.created ? 201 : 200).json({
+        success: true,
+        isDuplicate: true,
+        submissionId: queued.submission.id,
         businessId: existing.id,
+        status: queued.submission.status,
+        code: "POSSIBLE_BUSINESS_DUPLICATE",
+        message: POSSIBLE_DUPLICATE_MEMBER_MESSAGE,
       });
       return;
     }

@@ -3,6 +3,8 @@ import { Link } from "wouter";
 import { Layout } from "@/components/layout";
 import { MediaUploader, getMediaAssetIds } from "@/components/MediaUploader";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
+import { OwnershipDesignationCombobox } from "@/components/OwnershipDesignationCombobox";
+import { OWNERSHIP_DESIGNATIONS } from "@workspace/constants";
 import {
   MapPin, Store, Globe, Phone, Heart, ChevronDown, CheckCircle2, ArrowLeft,
 } from "lucide-react";
@@ -18,40 +20,28 @@ interface SubmissionOutcome {
   message: string;
   businessId?: string;
   mapPin: boolean;
+  isDuplicate?: boolean;
 }
 
-const OWNERSHIP_OPTIONS = [
-  { value: "black-owned", label: "Black-owned" },
-  { value: "hispanic-owned", label: "Hispanic/Latino-owned" },
-  { value: "ethiopian-owned", label: "Ethiopian-owned" },
-  { value: "caribbean-owned", label: "Caribbean-owned" },
-  { value: "brazilian-owned", label: "Brazilian-owned" },
-  { value: "woman-owned", label: "Woman-owned" },
-  { value: "lgbtq-owned", label: "LGBTQ+-owned" },
-  { value: "minority-owned", label: "Minority-owned" },
-  { value: "indigenous-owned", label: "Indigenous-owned" },
-  { value: "asian-owned", label: "Asian-owned" },
-  { value: "african-owned", label: "African-owned" },
-  { value: "immigrant-owned", label: "Immigrant-owned" },
-  { value: "veteran-owned", label: "Veteran-owned" },
-  { value: "family-owned", label: "Family-owned" },
-];
+const OWNERSHIP_OPTIONS = OWNERSHIP_DESIGNATIONS.map((label) => ({ value: label, label }));
 
-const OWNERSHIP_TO_FORM: Record<string, string> = {
-  "Black / African American-Owned": "black-owned",
-  "Latino / Hispanic-Owned": "hispanic-owned",
-  "Ethiopian-Owned": "ethiopian-owned",
-  "Caribbean / West Indian-Owned": "caribbean-owned",
-  "Brazilian-Owned": "brazilian-owned",
-  "Woman-Owned": "woman-owned",
-  "LGBTQIA+-Owned": "lgbtq-owned",
-  "Minority-Owned (general / legacy)": "minority-owned",
-  "Indigenous / Native-Owned": "indigenous-owned",
-  "Asian American-Owned": "asian-owned",
-  "African-Owned": "african-owned",
-  "Immigrant-Owned": "immigrant-owned",
-  "Veteran-Owned": "veteran-owned",
-  "Family-Owned": "family-owned",
+const LEGACY_OWNERSHIP_TO_CANONICAL: Record<string, string> = {
+  "black-owned": "Black / African American-Owned",
+  "african-american-owned": "Black / African American-Owned",
+  "hispanic-owned": "Latino / Hispanic-Owned",
+  "latino-owned": "Latino / Hispanic-Owned",
+  "ethiopian-owned": "Ethiopian-Owned",
+  "caribbean-owned": "Caribbean / West Indian-Owned",
+  "brazilian-owned": "Brazilian-Owned",
+  "woman-owned": "Woman-Owned",
+  "lgbtq-owned": "LGBTQIA+-Owned",
+  "minority-owned": "Minority-Owned (general / legacy)",
+  "indigenous-owned": "Indigenous / Native-Owned",
+  "asian-owned": "Asian American-Owned",
+  "african-owned": "African-Owned",
+  "immigrant-owned": "Immigrant-Owned",
+  "veteran-owned": "Veteran-Owned",
+  "family-owned": "Family-Owned",
 };
 
 const CATEGORIES = [
@@ -108,15 +98,6 @@ export default function SubmitBusiness() {
   const set = (field: keyof typeof form, value: string) =>
     setForm((f) => ({ ...f, [field]: value }));
 
-  const toggleOwnership = (val: string) =>
-    setForm((f) => ({
-      ...f,
-      communityReportedOwnership: "minority_owned",
-      ownershipDesignations: f.ownershipDesignations.includes(val)
-        ? f.ownershipDesignations.filter((v) => v !== val)
-        : [...f.ownershipDesignations, val],
-    }));
-
   useEffect(() => {
     if (!amendId) return;
     let active = true;
@@ -150,7 +131,7 @@ export default function SubmitBusiness() {
             ? item.community_reported_ownership
             : "not_sure",
           ownershipDesignations: Array.isArray(item.ownership_designations)
-            ? item.ownership_designations.map(String).map((value) => OWNERSHIP_TO_FORM[value] ?? value)
+            ? item.ownership_designations.map(String).map((value) => LEGACY_OWNERSHIP_TO_CANONICAL[value] ?? value)
             : [],
           submitterNote: String(item.submitter_note ?? ""),
           ownerName: String(item.owner_name ?? ""),
@@ -245,6 +226,7 @@ export default function SubmitBusiness() {
         status?: string;
         publicationOutcome?: string;
         mapPin?: boolean;
+        isDuplicate?: boolean;
         message?: string;
         error?: string;
       };
@@ -261,6 +243,7 @@ export default function SubmitBusiness() {
         message: data.message ?? "Your business submission was saved.",
         businessId: data.businessId,
         mapPin: data.mapPin === true,
+        isDuplicate: data.isDuplicate === true,
       });
       setStep("success");
     } catch {
@@ -280,7 +263,9 @@ export default function SubmitBusiness() {
             </div>
             <div>
               <h1 className="font-serif text-3xl font-bold text-[#FFF8EB] mb-3">
-                {outcome?.status === "published"
+                {outcome?.isDuplicate
+                  ? "We found the existing listing"
+                  : outcome?.status === "published"
                   ? isOwnerIntent
                     ? "Your business page is live"
                     : "This business is live on the map"
@@ -299,7 +284,13 @@ export default function SubmitBusiness() {
               <p className="text-xs font-semibold text-[#CA922B] uppercase tracking-wide">
                 What happens next
               </p>
-              {outcome?.status === "published" ? (
+              {outcome?.isDuplicate ? (
+                <ul className="text-sm text-[#3A1F0E]/70 space-y-1 mt-2">
+                  <li>• You can use the existing public listing now</li>
+                  <li>• Your report is saved in the administrator duplicate-review queue</li>
+                  <li>• No second public listing or map pin was created</li>
+                </ul>
+              ) : outcome?.status === "published" ? (
                 <ul className="text-sm text-[#3A1F0E]/70 space-y-1 mt-2">
                   {isOwnerIntent ? (
                     <>
@@ -326,10 +317,10 @@ export default function SubmitBusiness() {
               )}
             </div>
             <div className="flex gap-3 justify-center">
-              {outcome?.status === "published" && outcome.businessId && (
+              {(outcome?.status === "published" || outcome?.isDuplicate) && outcome.businessId && (
                 <Link href={`/business/${encodeURIComponent(outcome.businessId)}`}>
                   <button className="px-6 py-3 border border-[#CA922B] text-[#CA922B] font-semibold rounded-2xl hover:bg-[#CA922B]/5 transition-colors text-sm">
-                    {isOwnerIntent ? "View my business page" : "View listing"}
+                    {outcome?.isDuplicate ? "View existing listing" : isOwnerIntent ? "View my business page" : "View listing"}
                   </button>
                 </Link>
               )}
@@ -595,25 +586,20 @@ export default function SubmitBusiness() {
             {form.communityReportedOwnership === "minority_owned" && (
               <p className="text-xs font-medium text-[#F5EBD8]/90 pt-1">Optional: select any community-reported designations that apply.</p>
             )}
-            <div className="flex flex-wrap gap-2">
-              {form.communityReportedOwnership === "minority_owned" && OWNERSHIP_OPTIONS.map((opt) => {
-                const selected = form.ownershipDesignations.includes(opt.value);
-                return (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => toggleOwnership(opt.value)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                      selected
-                        ? "bg-[#CA922B] text-white border-[#CA922B]"
-                        : "bg-white text-[#3A1F0E]/70 border-[#3A1F0E]/15 hover:border-[#CA922B]/40 hover:text-[#CA922B]"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
-            </div>
+            {form.communityReportedOwnership === "minority_owned" && (
+              <OwnershipDesignationCombobox
+                id="community-reported-ownership-designations"
+                options={OWNERSHIP_OPTIONS}
+                values={form.ownershipDesignations}
+                onChange={(ownershipDesignations) => setForm((current) => ({
+                  ...current,
+                  communityReportedOwnership: "minority_owned",
+                  ownershipDesignations,
+                }))}
+                label="Community-reported designation"
+                helperText="Type Black, HIS, Ethiopian, or another available designation, then select it. This is community-reported and never a verification claim."
+              />
+            )}
           </div>
 
           {isOwnerIntent && (

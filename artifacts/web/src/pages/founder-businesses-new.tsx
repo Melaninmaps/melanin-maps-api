@@ -3,6 +3,8 @@ import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Link, Redirect, useLocation } from "wouter";
 import { Layout } from "@/components/layout";
 import { MediaUploader, getMediaUrls } from "@/components/MediaUploader";
+import { OwnershipDesignationCombobox } from "@/components/OwnershipDesignationCombobox";
+import { OWNERSHIP_DESIGNATIONS } from "@workspace/constants";
 import {
   Store, MapPin, Globe, Phone, Heart, ChevronDown,
   CheckCircle2, ArrowLeft, Zap,
@@ -19,14 +21,6 @@ const CATEGORIES = [
   "Tech & Digital", "Legal Services", "Financial Services",
   "Real Estate", "Cleaning & Home Services", "Auto Services",
   "Travel & Hospitality", "Non-profit / Community Org", "Other",
-];
-
-const OWNERSHIP_OPTIONS = [
-  { value: "black-owned", label: "Black-owned" },
-  { value: "woman-owned", label: "Woman-owned" },
-  { value: "lgbtq-owned", label: "LGBTQ+-owned" },
-  { value: "minority-owned", label: "Minority-owned" },
-  { value: "indigenous-owned", label: "Indigenous-owned" },
 ];
 
 export default function FounderBusinessesNew() {
@@ -59,18 +53,6 @@ export default function FounderBusinessesNew() {
 
   const set = (field: keyof typeof form, value: string | boolean) =>
     setForm((f) => ({ ...f, [field]: value }));
-
-  const toggleOwnership = (val: string) => {
-    setForm((f) => ({
-      ...f,
-      ownershipDesignations: f.ownershipDesignations.includes(val)
-        ? f.ownershipDesignations.filter((v) => v !== val)
-        : [...f.ownershipDesignations, val],
-      blackOwned: val === "black-owned"
-        ? !f.ownershipDesignations.includes(val)
-        : f.blackOwned,
-    }));
-  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -299,29 +281,21 @@ export default function FounderBusinessesNew() {
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-[#3A1F0E] flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-[#3A1F0E]">
               <Heart className="w-3.5 h-3.5 text-[#CA922B]" />
               Ownership designations
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {OWNERSHIP_OPTIONS.map((opt) => {
-                const selected = form.ownershipDesignations.includes(opt.value);
-                return (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => toggleOwnership(opt.value)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                      selected
-                        ? "bg-[#CA922B] text-white border-[#CA922B]"
-                        : "bg-white text-[#3A1F0E]/70 border-[#3A1F0E]/15 hover:border-[#CA922B]/40 hover:text-[#CA922B]"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                );
-              })}
             </div>
+            <OwnershipDesignationCombobox
+              id="founder-add-ownership-designations"
+              options={OWNERSHIP_DESIGNATIONS.map((label) => ({ value: label, label }))}
+              values={form.ownershipDesignations}
+              onChange={(ownershipDesignations) => setForm((current) => ({
+                ...current,
+                ownershipDesignations,
+                blackOwned: ownershipDesignations.includes("Black / African American-Owned"),
+              }))}
+              helperText="Type Black, HIS, or another documented designation and choose the approved label."
+            />
           </div>
 
           <div className="space-y-1.5">

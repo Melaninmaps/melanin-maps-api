@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { getWebToken, syncTokenToCookie } from "@/lib/webAuth";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
+import { BUSINESS_CATEGORY_TAXONOMY } from "@workspace/constants";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -2271,7 +2272,18 @@ export default function Admin() {
     );
   });
   const inventoryServices = Array.from(
-    new Map(businessServiceOptions.map((service) => [service.value, service])).values(),
+    new Map([
+      ...BUSINESS_CATEGORY_TAXONOMY.flatMap((category) => [
+        { value: `category:${category.name}`, label: `${category.name} — category` },
+        ...category.subcategories.map((subcategory) => ({
+          value: `subcategory:${subcategory}`,
+          label: `${subcategory} — service`,
+        })),
+      ]),
+      // Existing legacy/imported values remain reviewable even if they predate
+      // the canonical category catalogue.
+      ...businessServiceOptions,
+    ].map((service) => [service.value, service])).values(),
   ).sort((a, b) => a.label.localeCompare(b.label));
   const archivableFilteredBiz = filteredBiz.filter(
     (b) => b.listingStatus !== "archived",
@@ -2318,13 +2330,10 @@ export default function Admin() {
       page: 1,
       pageSize: next.pageSize ?? businessInventoryPageSize,
       search: next.search ?? bizSearch,
-      // The Manus-created review list intentionally excludes records that have
-      // already been archived, hidden, or retained as duplicates. Resetting
-      // its status tab also prevents a stale Archive/Duplicate selection from
-      // making a founder re-review the same record.
-      status: requestedIntakeCohort === "manus_created"
-        ? "active" as const
-        : next.status ?? bizStatusFilter,
+      // Status and intake cohort are independent boundaries. For example,
+      // Archive vault + Manus-created contains only archived records with direct
+      // Manus provenance; it never falls back to the active review list.
+      status: next.status ?? bizStatusFilter,
       cities: next.cities ?? bizCityFilters,
       category: next.category ?? bizCategoryFilter,
       intakeCohort: requestedIntakeCohort,
@@ -2401,10 +2410,10 @@ export default function Admin() {
 
   const selectAllVisibleBusinessListings = () => {
     const selectable = bizStatusFilter === "duplicates"
-      ? []
+      ? filteredBiz
       : bizStatusFilter === "archived"
-      ? restorableFilteredBiz
-      : archivableFilteredBiz;
+        ? restorableFilteredBiz
+        : archivableFilteredBiz;
     setSelectedBusinessIds(new Set(selectable.map((business) => business.id)));
   };
 
@@ -2459,6 +2468,51 @@ export default function Admin() {
 
   const restoreSelectedBusinesses = () =>
     updateSelectedBusinessListingStatus("live_unclaimed");
+
+
+  const permanentlyDeleteBusinesses = async (ids: string[], names: string[]) => {
+    if (ids.length === 0 || ids.length > 100) return;
+    if (bizStatusFilter !== "archived" && bizStatusFilter !== "duplicates") {
+      window.alert("Permanent deletion is available only from Archive vault or Duplicate vault.");
+      return;
+    }
+    const summary = names.slice(0, 3).join(", ") + (names.length > 3 ? ` and ${names.length - 3} more` : "");
+    const reason = window.prompt(
+      `Why should ${ids.length} selected record${ids.length === 1 ? "" : "s"} be permanently deleted? This removes the business row. A private audit snapshot remains; linked records block deletion rather than being removed.
+
+Selected: ${summary}`,
+    )?.trim();
+    if (!reason) return;
+    const requiredConfirmation = `DELETE ${ids.length} ${ids.length === 1 ? "BUSINESS" : "BUSINESSES"}`;
+    const confirmation = window.prompt(`This cannot be undone. Type exactly ${requiredConfirmation} to permanently delete only the selected Archive/Duplicate vault record${ids.length === 1 ? "" : "s"}.`);
+    if (confirmation !== requiredConfirmation) return;
+    if (!window.confirm(`Permanently delete ${ids.length} selected business record${ids.length === 1 ? "" : "s"}? This cannot be undone.`)) return;
+    setBulkBusinessUpdating(true);
+    try {
+      const response = await fetch(`${BASE}api/admin/businesses/permanent`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, reason, confirmation }),
+      });
+      const body = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) {
+        window.alert(body.error ?? "No selected business was permanently deleted.");
+        return;
+      }
+      setSelectedBusinessIds(new Set());
+      await loadBusinesses();
+    } catch {
+      window.alert("No selected business was permanently deleted. Please try again.");
+    } finally {
+      setBulkBusinessUpdating(false);
+    }
+  };
+
+  const permanentlyDeleteSelectedBusinesses = () => {
+    const selectedRows = filteredBiz.filter((business) => selectedBusinessIds.has(business.id));
+    void permanentlyDeleteBusinesses(selectedRows.map((business) => business.id), selectedRows.map((business) => business.name));
+  };
 
   // ── Waitlist analytics (all computed client-side) ─────────────────────────
   const referralCounts: Record<string, number> = {};
@@ -4791,7 +4845,7 @@ export default function Admin() {
             </div>
 
             <p className="-mt-2 mb-5 text-xs text-[#3A1F0E]/50">
-              Filters combine: select one or more cities, then add business type, documented ownership tag, source cohort, website/social, date, and name/key-phrase filters to narrow the same review list. Ownership filters use only recorded labels; they never infer identity. Put one phrase in quotes to require those words together, for example “full wash and detangle”.
+              Filters combine within the selected inventory tab: select one or more cities, then add business type, documented ownership tag, source cohort, website/social, date, and name/key-phrase filters. Archive vault + a cohort shows only archived records from that cohort; Live inventory + the same cohort shows only live records. Ownership filters use only recorded labels; they never infer identity. Put one phrase in quotes to require those words together, for example “full wash and detangle”.
             </p>
 
             {bizStatusFilter === "permanently_closed" && (
@@ -4815,9 +4869,9 @@ export default function Admin() {
               <div>
                 <strong className="text-[#3A1F0E]">{businessInventoryFilteredTotal.toLocaleString()} filtered results.</strong>{" "}
                 {bizStatusFilter === "duplicates"
-                  ? "These are confirmed duplicate records retained from all historical states. They are excluded from public discovery and cannot be archived, restored, or permanently deleted from this list. Open Duplicates & review to restore an audited merge."
+                  ? "These are confirmed duplicate records retained from all historical states. They are excluded from public discovery. Select one or more to permanently delete only after the required typed confirmation, or open Duplicates & review to restore an audited merge."
                   : bizStatusFilter === "archived"
-                  ? "These are separated from routine city and business-name review. Use Restore public listing only after confirming the record should return to normal discovery."
+                  ? "These are separated from routine city and business-name review. Use Unhide / restore public listing only after confirming the record should return to normal discovery, or permanently delete selected records with the typed confirmation."
                   : "Archive removes a selected profile from public Directory search, Kinfolk recommendations, and map pins while retaining the full MWM record and intake evidence for restoration."}
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
@@ -4834,13 +4888,32 @@ export default function Admin() {
                   </select>
                 </label>
                 {bizStatusFilter === "duplicates" ? (
-                  <button
-                    type="button"
-                    onClick={() => setTab("biz-review")}
-                    className="rounded-lg border border-[#CA922B]/40 bg-white px-3 py-1.5 text-xs font-bold text-[#8A5B13] transition-colors hover:bg-[#CA922B]/10"
-                  >
-                    Open Duplicates &amp; review
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={selectAllVisibleBusinessListings}
+                      disabled={filteredBiz.length === 0}
+                      className="rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-1.5 text-xs font-bold text-[#3A1F0E]/70 transition-colors hover:border-[#CA922B]/50 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Select this page ({filteredBiz.length.toLocaleString()})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={permanentlyDeleteSelectedBusinesses}
+                      disabled={bulkBusinessUpdating || selectedVisibleBusinessCount === 0}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      {bulkBusinessUpdating ? "Deleting…" : `Permanently delete selected (${selectedVisibleBusinessCount})`}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTab("biz-review")}
+                      className="rounded-lg border border-[#CA922B]/40 bg-white px-3 py-1.5 text-xs font-bold text-[#8A5B13] transition-colors hover:bg-[#CA922B]/10"
+                    >
+                      Open Duplicates &amp; review
+                    </button>
+                  </>
                 ) : bizStatusFilter !== "archived" ? (
                   <>
                     <button
@@ -4882,7 +4955,16 @@ export default function Admin() {
                       <RotateCcw className="h-3.5 w-3.5" />
                       {bulkBusinessUpdating
                         ? "Restoring…"
-                        : `Restore selected (${selectedVisibleBusinessCount})`}
+                        : `Unhide / restore selected (${selectedVisibleBusinessCount})`}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={permanentlyDeleteSelectedBusinesses}
+                      disabled={bulkBusinessUpdating || selectedVisibleBusinessCount === 0}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      {bulkBusinessUpdating ? "Deleting…" : `Permanently delete selected (${selectedVisibleBusinessCount})`}
                     </button>
                   </>
                 )}
@@ -4913,26 +4995,27 @@ export default function Admin() {
                         <input
                           type="checkbox"
                           aria-label={bizStatusFilter === "duplicates"
-                            ? "Duplicate vault entries cannot be selected for lifecycle changes"
+                            ? "Select all visible duplicate listings for permanent deletion"
                             : bizStatusFilter === "archived"
                               ? "Select all visible archived listings"
                               : "Select all visible live listings"}
-                          disabled={bizStatusFilter === "duplicates"}
                           checked={
-                            bizStatusFilter !== "duplicates" &&
-                            (bizStatusFilter === "archived"
-                              ? restorableFilteredBiz
-                              : archivableFilteredBiz).length > 0 &&
-                            (bizStatusFilter === "archived"
-                              ? restorableFilteredBiz
-                              : archivableFilteredBiz).every((business) => selectedBusinessIds.has(business.id))
+                            (bizStatusFilter === "duplicates"
+                              ? filteredBiz
+                              : bizStatusFilter === "archived"
+                                ? restorableFilteredBiz
+                                : archivableFilteredBiz).length > 0 &&
+                            (bizStatusFilter === "duplicates"
+                              ? filteredBiz
+                              : bizStatusFilter === "archived"
+                                ? restorableFilteredBiz
+                                : archivableFilteredBiz).every((business) => selectedBusinessIds.has(business.id))
                           }
                           onChange={(event) => {
-                            if (bizStatusFilter === "duplicates") return;
                             if (event.target.checked) selectAllVisibleBusinessListings();
                             else setSelectedBusinessIds(new Set());
                           }}
-                          className="h-4 w-4 accent-[#CA922B] disabled:cursor-not-allowed disabled:opacity-40"
+                          className="h-4 w-4 accent-[#CA922B]"
                         />
                       </th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
@@ -4968,12 +5051,9 @@ export default function Admin() {
                           <input
                             type="checkbox"
                             aria-label={`Select ${biz.name}`}
-                            disabled={bizStatusFilter === "duplicates"}
                             checked={selectedBusinessIds.has(biz.id)}
-                            onChange={() => {
-                              if (bizStatusFilter !== "duplicates") toggleBusinessSelection(biz.id);
-                            }}
-                            className="h-4 w-4 accent-[#CA922B] disabled:cursor-not-allowed disabled:opacity-40"
+                            onChange={() => toggleBusinessSelection(biz.id)}
+                            className="h-4 w-4 accent-[#CA922B]"
                           />
                         </td>
                         <td className="px-4 py-3">
@@ -5113,9 +5193,18 @@ export default function Admin() {
                               Edit profile
                             </button>
                             {bizStatusFilter === "duplicates" ? (
-                              <span className="max-w-48 text-xs leading-5 text-[#3A1F0E]/55">
-                                Retained duplicate. Use Duplicates &amp; review for the audited restore action.
-                              </span>
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => void permanentlyDeleteBusinesses([biz.id], [biz.name])}
+                                  className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-800 border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" /> Permanently delete
+                                </button>
+                                <span className="max-w-48 text-xs leading-5 text-[#3A1F0E]/55">
+                                  Or use Duplicates &amp; review for the audited restore action.
+                                </span>
+                              </>
                             ) : biz.listingStatus !== "archived" ? (
                               <button
                                 onClick={async () => {
@@ -5157,7 +5246,8 @@ export default function Admin() {
                                 Archive from public discovery
                               </button>
                             ) : (
-                              <button
+                              <>
+                                <button
                                 onClick={async () => {
                                   const reason = window.prompt(
                                     `Why should "${biz.name}" be restored to public discovery? This will be recorded with the restoration.`,
@@ -5188,8 +5278,16 @@ export default function Admin() {
                                 className="flex items-center gap-1 text-xs font-bold text-green-600 hover:text-green-800 border border-green-200 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                               >
                                 <RotateCcw className="h-3.5 w-3.5" />
-                                Restore public listing
+                                Unhide / restore public listing
                               </button>
+                              <button
+                                type="button"
+                                onClick={() => void permanentlyDeleteBusinesses([biz.id], [biz.name])}
+                                className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-800 border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" /> Permanently delete
+                              </button>
+                              </>
                             )}
                           </div>
                         </td>
