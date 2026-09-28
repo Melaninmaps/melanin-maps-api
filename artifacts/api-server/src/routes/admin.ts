@@ -454,7 +454,13 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
     });
   } catch (error) {
     req.log.error({ error }, "Failed to publish source-backed directory intake");
-    res.status(500).json({ error: "Failed to publish source-backed directory intake." });
+    const databaseCode = typeof error === "object" && error !== null && "code" in error
+      ? String((error as { code?: unknown }).code ?? "unknown")
+      : "unknown";
+    res.status(500).json({
+      error: "Failed to publish source-backed directory intake.",
+      diagnosticCode: databaseCode,
+    });
   }
 });
 
