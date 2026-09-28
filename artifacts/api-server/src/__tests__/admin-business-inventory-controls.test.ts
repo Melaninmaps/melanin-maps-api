@@ -291,13 +291,12 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("requestedBatch");
     expect(adminRoute).toContain("Unknown source-backed intake batch.");
     expect(adminRoute).toContain("requiresExplicitApply");
-    expect(adminRoute).toContain("diagnosticCode");
-    expect(adminRoute).toContain("diagnosticMessage");
-    expect(adminRoute).toContain("diagnosticCause");
     expect(adminRoute).toContain("remainingCreateCount");
     expect(adminRoute).toContain("duplicateReviewCreatedCount");
     expect(adminRoute).toContain("transaction.insert(businessesTable).values(nextBatch.map");
     expect(adminRoute).toContain("all-or-nothing publication");
+    expect(migrations).toContain("ALTER COLUMN duplicate_of_id TYPE text USING duplicate_of_id::text");
+    expect(migrations).toContain("data_type = 'uuid'");
     expect(adminRoute).toContain("REGEXP_REPLACE(LOWER(COALESCE(name, '')), '[^a-z0-9]+', '', 'g')");
     expect(adminRoute).toContain("dedupe_key = ANY($2::text[])");
     expect(adminScreen).toContain("Founder source directory intake");

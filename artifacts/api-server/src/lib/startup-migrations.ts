@@ -15749,6 +15749,29 @@ async function ensureBusinessDedupSchema(
         ADD COLUMN IF NOT EXISTS evidence           jsonb
     `);
 
+    // `businesses.id` accepts legacy non-UUID identifiers. The original
+    // duplicate reference was UUID-only, preventing a retained review record
+    // from pointing to an otherwise valid legacy canonical profile. Converting
+    // preserves every UUID value as text and makes the review relation usable
+    // across the complete inventory.
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1
+          FROM information_schema.columns
+          WHERE table_schema = current_schema()
+            AND table_name = 'businesses'
+            AND column_name = 'duplicate_of_id'
+            AND data_type = 'uuid'
+        ) THEN
+          ALTER TABLE businesses
+            ALTER COLUMN duplicate_of_id TYPE text USING duplicate_of_id::text;
+        END IF;
+      END
+      $$;
+    `);
+
     // Partial unique index: one active canonical row per dedupe_key.
     // ON CONFLICT suppressed — index may already exist.
     await pool.query(`
