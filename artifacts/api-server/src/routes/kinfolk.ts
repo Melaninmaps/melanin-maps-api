@@ -7068,10 +7068,10 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   // accommodate an allergy or prevent cross-contact. Keep an explicit allergy
   // request in practical discovery, but never turn a listing into dietary-safety
   // evidence or a medical assurance.
-  const allergySafetyCaveat = /\b(?:shellfish|seafood|peanut|tree[- ]?nut|dairy|milk|egg|wheat|gluten|soy|sesame)\b[\s\S]{0,80}\b(?:allerg(?:y|ic)?|avoid|sensitive)\b|\b(?:allerg(?:y|ic)?|avoid|sensitive)\b[\s\S]{0,80}\b(?:shellfish|seafood|peanut|tree[- ]?nut|dairy|milk|egg|wheat|gluten|soy|sesame)\b/i.test(
+  const allergySafetyCaveat = /\b(?:shellfish|seafood|peanut|tree[- ]?nut|dairy|milk|egg|wheat|gluten|soy|sesame)\b[\s\S]{0,80}\b(?:allerg(?:y|ic)?|avoid|sensitive|safe)\b|\b(?:allerg(?:y|ic)?|avoid|sensitive|safe)\b[\s\S]{0,80}\b(?:shellfish|seafood|peanut|tree[- ]?nut|dairy|milk|egg|wheat|gluten|soy|sesame)\b/i.test(
     input.message,
   )
-    ? "Food-allergy note: MWM listing details cannot verify allergen handling or cross-contact. Before ordering, call the business directly and tell them about the allergy."
+    ? "Food-safety note: MWM listing details cannot verify allergen handling or cross-contact. Before ordering, call the business directly and explain the shellfish or allergy need."
     : "";
   const proximityCaveat = requiresDocumentedProximityCaveat(input.message)
     ? DOCUMENTED_PROXIMITY_CAVEAT

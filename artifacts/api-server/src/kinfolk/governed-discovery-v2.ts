@@ -38,6 +38,13 @@ export function requestsExactRadius(message: string): boolean {
  * manufacturing a city-specific alert or reusing a source from another city.
  */
 export function requestsCurrentLocalSafetyContext(message: string): boolean {
+  // A phrase such as "shellfish-safe dinner" is a food-service constraint, not
+  // a request for a city-wide crime or travel-safety assessment. It must remain
+  // on the governed discovery path, which adds the direct-confirmation caveat.
+  const dietaryVenueRequest =
+    /\b(?:shellfish|allerg(?:y|ic)|gluten(?:-free)?|vegan|vegetarian|halal|kosher)\b/i.test(message) &&
+    /\b(?:restaurant|dinner|lunch|breakfast|food|eat|dining|cafe|bakery)\b/i.test(message);
+  if (dietaryVenueRequest) return false;
   return /\b(?:safety|safe(?:ty)?|unsafe|crime|danger|travel advis(?:ory|ories))\b/i.test(message);
 }
 

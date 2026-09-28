@@ -298,6 +298,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(helper).toContain("allergySafetyCaveat");
     expect(helper).toContain("cannot verify allergen handling or cross-contact");
     expect(helper).toContain("call the business directly");
+    expect(helper).toContain("shellfish or allergy need");
   });
 
   it("keeps staff audit isolation server-authorized and independent of New Chat", () => {

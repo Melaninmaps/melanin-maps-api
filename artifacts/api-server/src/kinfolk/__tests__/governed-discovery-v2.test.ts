@@ -49,6 +49,9 @@ describe("governed discovery v2 release gate", () => {
     expect(requestsCurrentLocalSafetyContext(
       "Show documented Black-owned lunch restaurants in Houston",
     )).toBe(false);
+    expect(requestsCurrentLocalSafetyContext(
+      "Show a shellfish-safe Black-owned dinner in Minneapolis",
+    )).toBe(false);
     expect(governedDirectorySafetyLimit("Houston")).toMatch(/could not verify a current Houston-specific safety alert/i);
     expect(governedDirectorySafetyLimit("Houston")).toMatch(/will not make a current local-safety claim/i);
   });
