@@ -25,6 +25,20 @@ describe("Kinfolk evidence runtime", () => {
     })).toBe(TRUTHFUL_MEDICAL_EVIDENCE_UNAVAILABLE_REPLY);
   });
 
+  it("turns an unavailable medication retrieval into a safe clinician discussion guide", () => {
+    const reply = evidenceFailureReply({
+      route: routeEvidence("I'm a Black woman and my doctor prescribed metformin. What should I ask?"),
+      medicalContextBlock: "AUTHORITATIVE RETRIEVAL INCOMPLETE",
+      hasLiveWebEvidence: false,
+      message: "I'm a Black woman and my doctor prescribed metformin. What should I ask?",
+    });
+
+    expect(reply).toContain("questions you can take to your doctor or pharmacist");
+    expect(reply).toContain("Do not start, stop, skip, or change");
+    expect(reply).toContain("Group-level research cannot diagnose you");
+    expect(reply).not.toMatch(/you should stop|stop taking/i);
+  });
+
   it("uses explicit current-turn Black woman context only as group-level, non-diagnostic wording", () => {
     const message = "I'm a Black woman. What should I know about blood pressure?";
     const route = routeEvidence(message);

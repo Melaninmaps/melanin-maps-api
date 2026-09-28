@@ -33,6 +33,11 @@ export interface HealthRetrievalResult {
 }
 
 const CONDITION_PATTERNS: Array<[RegExp, string]> = [
+  [/\b(?:anemia|anaemia|iron(?:[-\s]+deficien(?:t|cy))?)\b/i, "anemia iron deficiency"],
+  [/\b(?:menopause|perimenopause)\b/i, "menopause"],
+  [/\b(?:fertility|infertil(?:ity|e)|ivf)\b/i, "fertility infertility"],
+  [/\b(?:fibroids?|uterine fibroids?)\b/i, "uterine fibroids"],
+  [/\b(?:endometriosis|pcos|polycystic ovary)\b/i, "reproductive health"],
   [/(?:breast\s+(?:lump|mass|change|changes|pain|discharge)|lump\s+(?:in|on)\s+(?:my\s+)?breast|nipple\s+(?:change|changes|discharge))/i, "breast change or lump"],
   [/prostate\s+cancer/i, "prostate cancer"],
   [/breast\s+cancer/i, "breast cancer"],
@@ -168,6 +173,10 @@ REQUIRED RESPONSE STRUCTURE:
 3. PRACTICAL NEXT STEPS — Explain when to contact a licensed clinician and when urgent care is appropriate.
 4. SOURCES — Name the authoritative source supporting each material medical or statistical claim.
 ${population ? "5. POPULATION CONTEXT, IF MATERIAL — Frame explicitly requested population research as group-level, non-diagnostic evidence; do not attribute a group difference to biology without strong direct evidence." : ""}
+
+MEDICATION-SPECIFIC RULE:
+• When the member names a medicine, summarize only what the retrieved authority says about that medicine or its stated use. Clearly separate general information from individualized care.
+• Never tell a member to start, stop, skip, or change a medicine or dose. Encourage questions for the prescriber or pharmacist about purpose, timing, side effects, interactions, missed doses, diet/supplements, and follow-up.
 
 SOURCE RULES:
 • Use public-health agencies, peer-reviewed research, and recognized clinical bodies.

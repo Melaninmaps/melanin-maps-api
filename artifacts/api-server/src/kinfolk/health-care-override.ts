@@ -118,6 +118,7 @@ ${explicitBlackWomanContext ? "- The member explicitly raised Black-woman contex
     ? `
 MEDICATION-QUESTION RULE:
 - Do not prescribe, recommend a dose, tell the member to start/stop a medicine, or decide whether a drug interaction is safe.
+- When a medicine is named, summarize only the retrieved authoritative material that actually concerns that medicine; do not substitute a similar medicine or fill gaps from memory.
 - Offer a concise question list for a clinician or pharmacist: purpose, how and when to take it, expected effects, side effects, interactions with prescription/over-the-counter medicines and supplements, missed-dose instructions, and what to do before stopping.
 - If the member reports a severe reaction or immediate danger, direct them to urgent local care or emergency services.`
     : "";

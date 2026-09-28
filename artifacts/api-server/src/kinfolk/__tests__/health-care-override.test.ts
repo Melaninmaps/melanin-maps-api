@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildHealthCareOverride } from "../health-care-override";
+import { extractHealthTopic } from "../health-retrieval";
 
 describe("qualified care override", () => {
   it("does not let a breast-change care request be blocked by an ownership-scoped directory", () => {
@@ -57,6 +58,13 @@ describe("qualified care override", () => {
     );
     expect(override.promptBlock).toContain("Do not prescribe");
     expect(override.promptBlock).toContain("missed-dose instructions");
+    expect(override.promptBlock).toContain("summarize only the retrieved authoritative material");
+  });
+
+  it("uses condition-first authoritative searches for common Black-women's health questions", () => {
+    expect(extractHealthTopic("I am a Black woman. What should I ask my doctor about anemia?")).toBe("anemia iron deficiency Black woman");
+    expect(extractHealthTopic("What should I know about menopause?")).toBe("menopause");
+    expect(extractHealthTopic("Could I have uterine fibroids?")).toBe("uterine fibroids");
   });
 
   it("does not alter ordinary non-health discovery or general conversation", () => {

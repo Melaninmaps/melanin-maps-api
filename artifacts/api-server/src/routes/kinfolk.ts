@@ -9124,6 +9124,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       route: evidenceRoute,
       medicalContextBlock: healthEvidenceBlock,
       hasLiveWebEvidence,
+      message,
       requestedArticleEvidenceAvailable: hasRequestedArticleEvidence(
         requestedArticleUrl,
         articleEvidenceSources,
@@ -9140,7 +9141,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         taskAction: null,
         libraryAction: null,
         intentClass,
-        sources: [],
+        sources: intentClass === "medical_health"
+          ? healthRetrievalSources.map((source) => ({
+              id: source.url,
+              title: source.title,
+              url: source.url,
+              label: source.source,
+            }))
+          : [],
         needsClarification: false,
         originalQuery: message,
         sourceNote: webResearchSourceNote ?? undefined,

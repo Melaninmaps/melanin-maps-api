@@ -1,5 +1,6 @@
 import type { EvidenceRoute } from "./evidence-route";
 import type { PermittedIdentityContext } from "./permitted-identity-context";
+import { buildMedicalDiscussionGuide } from "./medical-discussion-guide";
 
 export const TRUTHFUL_EVIDENCE_UNAVAILABLE_REPLY =
   "I can’t verify claim-relevant, current evidence for that right now, so I won’t guess. Please try again when live sources are available or check an authoritative source directly.";
@@ -24,12 +25,15 @@ export function evidenceFailureReply(input: {
   medicalContextBlock: string;
   hasLiveWebEvidence: boolean;
   requestedArticleEvidenceAvailable?: boolean;
+  message?: string;
 }): string | null {
   if (
     input.route.domain === "medical_health"
     && !hasRetrievedMedicalEvidence(input.medicalContextBlock)
   ) {
-    return TRUTHFUL_MEDICAL_EVIDENCE_UNAVAILABLE_REPLY;
+    return input.message
+      ? buildMedicalDiscussionGuide(input.message)
+      : TRUTHFUL_MEDICAL_EVIDENCE_UNAVAILABLE_REPLY;
   }
   if (
     input.route.retrievalRequirement === "web_required"
