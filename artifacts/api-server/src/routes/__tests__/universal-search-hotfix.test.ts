@@ -152,9 +152,9 @@ describe("GET /api/search/universal privacy-safe hotfix", () => {
     const artStudio = {
       ...publicBusiness(),
       id: "legacy-zoma",
-      name: "ZOMA House",
-      category: "Events & Culture",
-      subcategory: "Community art studio",
+      name: "Hayat Beauty Salon",
+      category: "Barber shops & hair salons",
+      subcategory: "Barber shops & hair salons",
       city: "Minneapolis",
       state: "MN",
       description: "Black/African American business ecosystem Current Minneapolis listing in the Minnesota Black-Owned Business Directory.",

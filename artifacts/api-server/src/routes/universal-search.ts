@@ -98,8 +98,8 @@ const CONCEPT_TO_CATEGORY: Record<string, string[]> = {
   caribbean:     ["Food"],
   jamaican:      ["Food"],
   african:       ["Food"],
-  restaurant:    ["Food", "Restaurant", "Cafe", "Bakery", "Bar"],
-  restaurants:   ["Food", "Restaurant", "Cafe", "Bakery", "Bar"],
+  restaurant:    ["Restaurant", "Cafe", "Bakery", "Bar"],
+  restaurants:   ["Restaurant", "Cafe", "Bakery", "Bar"],
   food:          ["Food"],
   catering:      ["Food"],
   pancake:       ["Food"],
@@ -519,6 +519,22 @@ function extractConcepts(q: string): {
     searchTokens: [...new Set(searchTokens)],
     mappedCategories: [...mappedCategories],
   };
+}
+
+function categoryContainsMappedConcept(category: unknown, concept: string): boolean {
+  const normalizedCategory = String(category ?? "").toLowerCase();
+  const normalizedConcept = concept.toLowerCase().trim();
+  if (!normalizedCategory || !normalizedConcept) return false;
+  const pluralVariants = new Set([normalizedConcept]);
+  if (!normalizedConcept.endsWith("s")) pluralVariants.add(`${normalizedConcept}s`);
+  if (normalizedConcept.endsWith("y")) {
+    pluralVariants.add(`${normalizedConcept.slice(0, -1)}ies`);
+  }
+  return [...pluralVariants].some((variant) => {
+    const escapedVariant = variant.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`(?:^|[^a-z0-9])${escapedVariant}(?:$|[^a-z0-9])`, "i")
+      .test(normalizedCategory);
+  });
 }
 
 /**
@@ -2067,15 +2083,15 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       businesses = businesses.filter((business) =>
         !["city_exact", "related_category", "nearby_alternative"].includes(business.matchTier)
         || mappedCategories.some((category) => {
-          const categoryText = `${business.category ?? ""} ${business.subcategory ?? ""}`.toLowerCase();
-          return categoryText.includes(category.toLowerCase());
+          const categoryText = `${business.category ?? ""} ${business.subcategory ?? ""}`;
+          return categoryContainsMappedConcept(categoryText, category);
         }),
       );
       businesses = businesses.filter(
         (b) =>
           b.matchTier !== "nearby_alternative" ||
           mappedCategories.some((cat) =>
-            b.category?.toLowerCase().includes(cat.toLowerCase()),
+            categoryContainsMappedConcept(b.category, cat),
           ),
       );
     } else {
