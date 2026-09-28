@@ -18,6 +18,7 @@ import {
   type NormalizedBusinessSubject,
 } from "./business-subject";
 import { canonicalizeContextualUrl } from "./contextual-url";
+import { matchesDocumentedSourceTaxonomyTag } from "./directory-taxonomy-v2";
 import {
   normalizeOwnershipDesignationFilterIds,
   ownershipDesignationStorageValues,
@@ -371,6 +372,7 @@ function preferenceSearchTokens(values: readonly string[]): string[] {
 function subjectMatchReasons(
   business: GovernedKinfolkBusiness,
   subject: NormalizedBusinessSubject,
+  allowSourceBackedTagEvidence = false,
 ): string[] {
   if (
     subject.dietaryRequirement &&
@@ -432,6 +434,10 @@ function subjectMatchReasons(
     ...business.specialties.flatMap((specialty) =>
       fieldMatches(specialty, "specialty"),
     ),
+    ...(allowSourceBackedTagEvidence &&
+    matchesDocumentedSourceTaxonomyTag(business, subject)
+      ? ["source-backed service tag"]
+      : []),
   ];
   return [
     ...reasons,
@@ -561,6 +567,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       limit = 12,
       requiredDesignationIds: readonly string[] = [],
       allowAllPublicPlaces = false,
+      allowSourceBackedTagEvidence = false,
     ): Promise<GovernedKinfolkBusiness[]> {
       const location = validateKinfolkCityScope(scope);
       const resultLimit = boundedLimit(limit);
@@ -577,12 +584,30 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
         subject.contextualEvidenceTerms,
       );
       const vibeKeys = subject.vibeKeys ?? [];
+      const sourceTaxonomyTerms = allowSourceBackedTagEvidence
+        ? [...new Set(subject.searchTerms.flatMap((term) => {
+            const normalized = term.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+            return normalized ? [normalized, `${normalized}s`] : [];
+          }))]
+        : [];
+      const sourceTaxonomyPredicate = allowSourceBackedTagEvidence
+        ? `
+            OR (
+              $11::boolean
+              AND NULLIF(BTRIM(b.research_source_url), '') ~ '^https://'
+              AND EXISTS (
+                SELECT 1
+                FROM jsonb_array_elements_text(COALESCE(b.tags, '[]'::jsonb)) AS source_tag(value)
+                WHERE LOWER(REGEXP_REPLACE(BTRIM(source_tag.value), '[^a-z0-9]+', ' ', 'g')) = ANY($10::text[])
+              )
+            )`
+        : "";
       if (!patterns.length) return [];
       const designationIds = normalizeOwnershipDesignationFilterIds(requiredDesignationIds);
       const designationValueGroups = designationIds.map((id) => ownershipDesignationStorageValues(id).values);
       const designationClauses = designationValueGroups
         .map((_, index) => {
-          const parameter = 10 + index;
+          const parameter = (allowSourceBackedTagEvidence ? 12 : 10) + index;
           return `AND ${buildDesignationPredicateSql(designationIds[index], "b.ownership_designations", parameter)}`;
         })
         .join("");
@@ -615,6 +640,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
               WHERE specialty.business_id::text = b.id::text
                 AND LOWER(BTRIM(specialty.specialty_slug)) ~ ANY($3::text[])
             )
+            ${sourceTaxonomyPredicate}
           )
           AND NOT (
             $5::text = 'hvac'
@@ -728,6 +754,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           dietaryPatterns,
           documentedServicePatterns,
           contextualEvidencePatterns,
+          ...(allowSourceBackedTagEvidence ? [sourceTaxonomyTerms, true] : []),
           ...designationValueGroups,
         ],
       );
@@ -736,7 +763,11 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           .map(mapBusiness)
           .map((business) => ({
             ...business,
-            matchReasons: subjectMatchReasons(business, subject),
+            matchReasons: subjectMatchReasons(
+              business,
+              subject,
+              allowSourceBackedTagEvidence,
+            ),
           }))
           // Defense in depth if a legacy DB collation differs from JS/regex.
           .filter((business) => business.matchReasons.length > 0),

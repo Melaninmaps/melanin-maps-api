@@ -29,6 +29,7 @@ import {
   type ConversationalBusinessResultView,
 } from "./business-result-view";
 import { isMwmDiasporaPromotionEnabled } from "../businesses/mwmCoreDiscoveryPolicy";
+import { mayUseSourceBackedTagEvidence } from "./directory-taxonomy-v2";
 
 export type BusinessDiscoverySignalRepository = Readonly<{
   recordCoverageGap(input: {
@@ -441,6 +442,8 @@ export async function discoverLocalBusinesses(input: {
   requiredDesignationIds?: readonly string[];
   /** Strict documented-ownership cards require a stored source receipt. */
   strictEvidenceRequired?: boolean;
+  /** Enables only exact source-tag service evidence behind DIRECTORY_TAXONOMY_V2. */
+  documentedSourceTaxonomy?: boolean;
   /** Member explicitly consented to leave the Diaspora Promotion Catalog. */
   allowAllPublicPlaces?: boolean;
 }): Promise<DeterministicBusinessDiscoveryResponse> {
@@ -452,6 +455,11 @@ export async function discoverLocalBusinesses(input: {
     (value): value is string =>
       typeof value === "string" && value.trim().length > 0,
   );
+  const sourceBackedTagEvidence = Boolean(input.documentedSourceTaxonomy)
+    && mayUseSourceBackedTagEvidence({
+      subject: input.subject,
+      strictOwnershipEvidence: input.strictEvidenceRequired === true,
+    });
   const subjectBusinessRead = input.allowAllPublicPlaces
     ? input.repository.findBySubject(
         input.scope,
@@ -459,12 +467,14 @@ export async function discoverLocalBusinesses(input: {
         input.personalization ? 50 : 12,
         input.requiredDesignationIds,
         true,
+        ...(sourceBackedTagEvidence ? [true] : []),
       )
     : input.repository.findBySubject(
         input.scope,
         input.subject,
         input.personalization ? 50 : 12,
         input.requiredDesignationIds,
+        ...(sourceBackedTagEvidence ? [false, true] : []),
       );
   const businessRead =
     input.subject.key === "activity" && preferenceTerms.length > 0

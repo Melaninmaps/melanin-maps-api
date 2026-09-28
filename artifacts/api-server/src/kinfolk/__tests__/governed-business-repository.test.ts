@@ -291,7 +291,8 @@ describe("governed Kinfolk business repository", () => {
       sql.indexOf("-- Service matching intentionally"),
       sql.indexOf("ORDER BY"),
     );
-    expect(serviceMatchSection).not.toContain("jsonb_array_elements_text");
+    expect(serviceMatchSection).not.toContain("source_tag");
+    expect(serviceMatchSection).not.toContain("b.research_source_url");
     expect(sql).toContain("b.ownership_designations");
     expect(sql).toContain("jsonb_array_elements_text");
     // Identity/story fields remain selected for a governed card, but are never
@@ -318,6 +319,30 @@ describe("governed Kinfolk business repository", () => {
       [],
       [],
     ]);
+  });
+
+  it("uses an imported source tag only through the explicit documentary taxonomy gate", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [] }) };
+    const repository = createGovernedKinfolkBusinessRepository(pool);
+    const subject = deriveBusinessSubject("Find coffee shops in Minneapolis")!;
+
+    await repository.findBySubject(
+      { city: "Minneapolis", stateCode: "MN" },
+      subject,
+      12,
+      ["black-african-american"],
+      false,
+      true,
+    );
+
+    const [sql, params] = pool.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("NULLIF(BTRIM(b.research_source_url), '') ~ '^https://'");
+    expect(sql).toContain("jsonb_array_elements_text(COALESCE(b.tags, '[]'::jsonb)) AS source_tag");
+    expect(sql).toContain("LOWER(REGEXP_REPLACE(BTRIM(source_tag.value), '[^a-z0-9]+', ' ', 'g')) = ANY($10::text[])");
+    expect(sql).toContain("$11::boolean");
+    expect(params[9]).toEqual(expect.arrayContaining(["coffee shop", "coffee shops"]));
+    expect(params[10]).toBe(true);
+    expect(params[11]).toEqual(expect.arrayContaining(["Black / African American-Owned"]));
   });
 
   it("retrieves an explicitly classified Philadelphia senior-support service for Kinfolk", async () => {

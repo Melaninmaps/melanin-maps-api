@@ -72,6 +72,7 @@ import {
   ensureLibraryEvidenceBatchD,
 } from "./library-evidence-seed.js";
 import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoContainment";
+import { CITY_SAFETY_SOURCE_REGISTRY } from "../kinfolk/city-safety-briefing-v1";
 
 const PUBLIC_BUSINESS_RECORD_FUNCTION_BODY = `
   SELECT COALESCE(p_status, 'active') NOT IN ('suspended', 'removed', 'deleted', 'permanently_hidden')
@@ -6533,6 +6534,14 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     [
       "business intake provenance v1",
       () => ensureBusinessIntakeMetadataSchema(log, warn),
+    ],
+    // ── Current Kinfolk city safety evidence ───────────────────────────────
+    // Adds a reviewed source registry and content-minimized retrieval audit.
+    // It does not alter business records, community safety reports, or chat
+    // behavior while CITY_SAFETY_BRIEFING_V1 remains disabled.
+    [
+      "kinfolk city safety evidence v1",
+      () => ensureKinfolkCitySafetyEvidenceSchema(log, warn),
     ],
     // ── Completed cohort directory-only discovery audit ────────────────────
     // Allows receipt-backed records without verified coordinates to be searched
@@ -17686,6 +17695,79 @@ async function ensureBusinessIntakeMetadataSchema(
     warn(
       `ensureBusinessIntakeMetadataSchema failed: ${err instanceof Error ? err.message : String(err)}`,
     );
+  }
+}
+
+// ── Kinfolk city safety evidence registry ───────────────────────────────────
+// The source registry is additive and administrator-managed. Retrieval audit
+// rows intentionally exclude member ids, prompts, messages, raw source bodies,
+// device location, and any private-memory content.
+async function ensureKinfolkCitySafetyEvidenceSchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS kinfolk_city_safety_sources (
+        id TEXT PRIMARY KEY,
+        city_id TEXT NOT NULL CHECK (city_id IN ('minneapolis-mn', 'philadelphia-pa', 'houston-tx')),
+        topic TEXT NOT NULL CHECK (topic IN ('official_alert', 'transit', 'weather', 'road', 'event_advisory')),
+        display_name TEXT NOT NULL CHECK (char_length(display_name) BETWEEN 2 AND 180),
+        url TEXT NOT NULL CHECK (url ~ '^https://'),
+        publisher_class TEXT NOT NULL CHECK (publisher_class IN ('official_city', 'official_transit', 'official_weather', 'official_emergency')),
+        freshness_minutes INTEGER NOT NULL CHECK (freshness_minutes BETWEEN 5 AND 180),
+        enabled BOOLEAN NOT NULL DEFAULT TRUE,
+        normalizer TEXT NOT NULL CHECK (normalizer IN ('nws_alerts', 'oem_activation', 'none')),
+        reviewed_by TEXT,
+        version INTEGER NOT NULL DEFAULT 1 CHECK (version >= 1),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS kinfolk_city_safety_sources_city_enabled_idx
+        ON kinfolk_city_safety_sources (city_id, enabled, topic)
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS kinfolk_city_safety_retrieval_audit_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        source_id TEXT NOT NULL,
+        city_id TEXT NOT NULL CHECK (city_id IN ('minneapolis-mn', 'philadelphia-pa', 'houston-tx')),
+        topic TEXT NOT NULL CHECK (topic IN ('official_alert', 'transit', 'weather', 'road', 'event_advisory')),
+        outcome TEXT NOT NULL CHECK (outcome IN ('current', 'unavailable', 'stale', 'fetch_failed', 'city_mismatch')),
+        retrieved_at TIMESTAMPTZ NOT NULL,
+        expires_at TIMESTAMPTZ,
+        reason_code TEXT NOT NULL CHECK (char_length(reason_code) BETWEEN 2 AND 120),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS kinfolk_city_safety_audit_source_created_idx
+        ON kinfolk_city_safety_retrieval_audit_events (city_id, source_id, created_at DESC)
+    `);
+    for (const source of CITY_SAFETY_SOURCE_REGISTRY) {
+      await pool.query(
+        `INSERT INTO kinfolk_city_safety_sources
+           (id, city_id, topic, display_name, url, publisher_class,
+            freshness_minutes, enabled, normalizer, reviewed_by, version)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'system_seed', 1)
+         ON CONFLICT (id) DO NOTHING`,
+        [
+          source.id,
+          source.cityId,
+          source.topic,
+          source.displayName,
+          source.url,
+          source.publisherClass,
+          source.freshnessMinutes,
+          source.enabled,
+          source.normalizer,
+        ],
+      );
+    }
+    log("ensureKinfolkCitySafetyEvidenceSchema: source registry and minimized audit ready");
+  } catch (err: unknown) {
+    warn(`ensureKinfolkCitySafetyEvidenceSchema failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

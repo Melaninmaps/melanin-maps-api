@@ -42,6 +42,7 @@ import {
   normalizeDirectoryIdentity,
   sourceBackedDirectoryPublicationFields,
 } from "../directoryIntake/sourceBackedDirectoryIntake";
+import { CITY_SAFETY_SOURCE_REGISTRY } from "../kinfolk/city-safety-briefing-v1";
 
 const router: IRouter = Router();
 
@@ -79,6 +80,124 @@ async function sourceDirectoryExistingBusinessCandidates(): Promise<
   );
   return result.rows;
 }
+
+type CitySafetySourceAdminRow = Readonly<{
+  id: string;
+  city_id: string;
+  topic: string;
+  display_name: string;
+  url: string;
+  publisher_class: string;
+  freshness_minutes: number;
+  enabled: boolean;
+  normalizer: string;
+  version: number;
+  updated_at: string | null;
+}>;
+
+const CITY_SAFETY_CITY_IDS = new Set(["minneapolis-mn", "philadelphia-pa", "houston-tx"]);
+const CITY_SAFETY_TOPICS = new Set(["official_alert", "transit", "weather", "road", "event_advisory"]);
+const CITY_SAFETY_PUBLISHERS = new Set(["official_city", "official_transit", "official_weather", "official_emergency"]);
+const CITY_SAFETY_NORMALIZERS = new Set(["nws_alerts", "oem_activation", "none"]);
+
+function textSafetySourceField(value: unknown, limit: number): string | null {
+  return typeof value === "string" && value.trim().length > 0 && value.trim().length <= limit
+    ? value.trim()
+    : null;
+}
+
+function parseCitySafetySourceUpdate(body: unknown): {
+  cityId: string;
+  topic: string;
+  displayName: string;
+  url: string;
+  publisherClass: string;
+  freshnessMinutes: number;
+  enabled: boolean;
+  normalizer: string;
+} | null {
+  const value = body && typeof body === "object" ? body as Record<string, unknown> : null;
+  if (!value) return null;
+  const cityId = textSafetySourceField(value.cityId, 40);
+  const topic = textSafetySourceField(value.topic, 40);
+  const displayName = textSafetySourceField(value.displayName, 180);
+  const url = textSafetySourceField(value.url, 2048);
+  const publisherClass = textSafetySourceField(value.publisherClass, 40);
+  const normalizer = textSafetySourceField(value.normalizer, 40);
+  const freshnessMinutes = Number(value.freshnessMinutes);
+  if (
+    !cityId || !topic || !displayName || !url || !publisherClass || !normalizer ||
+    !CITY_SAFETY_CITY_IDS.has(cityId) || !CITY_SAFETY_TOPICS.has(topic) ||
+    !CITY_SAFETY_PUBLISHERS.has(publisherClass) || !CITY_SAFETY_NORMALIZERS.has(normalizer) ||
+    !Number.isInteger(freshnessMinutes) || freshnessMinutes < 5 || freshnessMinutes > 180 ||
+    typeof value.enabled !== "boolean"
+  ) return null;
+  try {
+    if (new URL(url).protocol !== "https:") return null;
+  } catch {
+    return null;
+  }
+  return { cityId, topic, displayName, url, publisherClass, freshnessMinutes, enabled: value.enabled, normalizer };
+}
+
+/** Reviewed registry only; source content is fetched by Kinfolk and never stored here. */
+router.get("/admin/kinfolk/city-safety-sources", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  try {
+    const result = await pool.query<CitySafetySourceAdminRow>(
+      `SELECT id, city_id, topic, display_name, url, publisher_class,
+              freshness_minutes, enabled, normalizer, version, updated_at
+         FROM kinfolk_city_safety_sources
+        ORDER BY city_id, topic, id`,
+    );
+    res.json({ sources: result.rows, source: "managed_registry" });
+  } catch {
+    // Before the additive migration runs, show the same reviewed defaults rather
+    // than pretending the source registry is empty.
+    res.json({
+      sources: CITY_SAFETY_SOURCE_REGISTRY.map((source) => ({
+        id: source.id,
+        city_id: source.cityId,
+        topic: source.topic,
+        display_name: source.displayName,
+        url: source.url,
+        publisher_class: source.publisherClass,
+        freshness_minutes: source.freshnessMinutes,
+        enabled: source.enabled,
+        normalizer: source.normalizer,
+        version: 1,
+        updated_at: null,
+      })),
+      source: "reviewed_defaults_pending_registry_migration",
+    });
+  }
+});
+
+router.put("/admin/kinfolk/city-safety-sources/:sourceId", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  const sourceId = textSafetySourceField(req.params.sourceId, 100);
+  const input = parseCitySafetySourceUpdate(req.body);
+  if (!sourceId || !input) {
+    return void res.status(400).json({ error: "A complete, valid official source record is required." });
+  }
+  try {
+    const result = await pool.query<CitySafetySourceAdminRow>(
+      `UPDATE kinfolk_city_safety_sources
+          SET city_id = $2, topic = $3, display_name = $4, url = $5,
+              publisher_class = $6, freshness_minutes = $7, enabled = $8,
+              normalizer = $9, reviewed_by = $10, version = version + 1,
+              updated_at = NOW()
+        WHERE id = $1
+        RETURNING id, city_id, topic, display_name, url, publisher_class,
+                  freshness_minutes, enabled, normalizer, version, updated_at`,
+      [sourceId, input.cityId, input.topic, input.displayName, input.url, input.publisherClass, input.freshnessMinutes, input.enabled, input.normalizer, req.user?.id ?? null],
+    );
+    if (!result.rows[0]) return void res.status(404).json({ error: "Safety source not found." });
+    res.json({ source: result.rows[0] });
+  } catch {
+    res.status(503).json({ error: "Safety source registry is temporarily unavailable." });
+  }
+});
 
 /**
  * Founder-authorized, source-backed intake. It deliberately never alters an

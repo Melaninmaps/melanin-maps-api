@@ -90,6 +90,15 @@ import {
   requestsExactRadius,
 } from "../kinfolk/governed-discovery-v2";
 import {
+  citySafetyCityId,
+  citySafetySourcesForResponse,
+  currentCitySafetyBriefing,
+  isCitySafetyBriefingV1Enabled,
+  renderCitySafetyBriefing,
+} from "../kinfolk/city-safety-briefing-v1";
+import { isDirectoryTaxonomyV2Enabled } from "../kinfolk/directory-taxonomy-v2";
+import { resolveKinfolkStaffAuditPolicy } from "../kinfolk/staff-audit-mode";
+import {
   destinationForEnabledSession,
   getHeritageCity,
   resolveTurnGeography,
@@ -6460,6 +6469,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   memoryEnabled: boolean;
   cityHint?: string;
   conversationContext?: unknown;
+  staffAudit?: boolean;
 }): Promise<boolean> {
   // A city-bearing health, safety, legal, or financial question must never be
   // consumed by the ordinary business-card fast path. It continues below to the
@@ -6609,10 +6619,12 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
         )
         .catch(() => [])
     : [];
-  const [prefs, assuredAgeBand] = await Promise.all([
-    getCachedPrefs(input.req.user!.id),
-    getMemberAgeBand(input.req.user!.id),
-  ]);
+  const [prefs, assuredAgeBand] = input.memoryEnabled
+    ? await Promise.all([
+        getCachedPrefs(input.req.user!.id),
+        getMemberAgeBand(input.req.user!.id),
+      ])
+    : [null, "mixed_all_ages" as const];
   const ageBand = effectiveBusinessAudienceBand(
     assuredAgeBand,
     temporaryBusinessAudienceBand(input.message),
@@ -6730,7 +6742,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     scope,
     subject,
     repository: governedBusinessRepository,
-    signalRepository: discoverySignalRepository,
+    signalRepository: input.staffAudit ? undefined : discoverySignalRepository,
     personalization: {
       ageBand,
       preferenceTerms: [
@@ -6753,6 +6765,8 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     },
     requiredDesignationIds: discoveryDesignationIds,
     strictEvidenceRequired: strictSourceBackedDiscovery,
+    documentedSourceTaxonomy:
+      strictSourceBackedDiscovery && isDirectoryTaxonomyV2Enabled(),
     allowAllPublicPlaces: explicitAllPlacesExpansion,
   });
   const resultView = buildConversationalBusinessResultView({
@@ -6764,10 +6778,27 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const externalCount = discoveryResult.discovery.webFindings.length;
   const relatedPlaceCount = discoveryResult.discovery.mapPlaces.length;
   const designationSummary = joinMemberFacingDesignations(discoveryDesignationIds);
-  const strictSafetyLimit =
-    strictSourceBackedDiscovery && requestsCurrentLocalSafetyContext(input.message)
-      ? governedDirectorySafetyLimit(scope.city)
-      : "";
+  const strictSafetyRequested =
+    strictSourceBackedDiscovery && requestsCurrentLocalSafetyContext(input.message);
+  // Safety conditions are a second bounded, independent query. Directory cards
+  // can never supply safety evidence, and a source from another city cannot be
+  // rendered into this city response.
+  const safetyCityId = strictSafetyRequested ? citySafetyCityId(scope) : null;
+  const citySafetyBriefing =
+    safetyCityId && isCitySafetyBriefingV1Enabled()
+      ? await currentCitySafetyBriefing({
+          cityId: safetyCityId,
+          auditPool: input.staffAudit ? undefined : pool,
+        })
+      : null;
+  const strictSafetyLimit = strictSafetyRequested
+    ? citySafetyBriefing
+      ? renderCitySafetyBriefing(citySafetyBriefing)
+      : governedDirectorySafetyLimit(scope.city)
+    : "";
+  const citySafetySources = citySafetyBriefing
+    ? citySafetySourcesForResponse(citySafetyBriefing)
+    : [];
   const requestedSubjectLabel = [
     subject.dietaryRequirement?.label,
     subject.documentedServiceRequirement?.label,
@@ -6799,6 +6830,10 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     resultView.followUp,
     ...(planningFollowUp ? [planningFollowUp] : []),
   ];
+  const responseSources = [
+    ...discoveryResult.sources.map(({ title, url }) => ({ title, url })),
+    ...citySafetySources,
+  ];
   const finalSessionId = await persistDeterministicDiscoveryTurn({
     userId: input.req.user!.id,
     memoryEnabled: input.memoryEnabled,
@@ -6811,7 +6846,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     > | null,
     resultView: resultView as unknown as Record<string, unknown>,
     followUpSuggestions: deterministicFollowUps,
-    sources: discoveryResult.sources.map(({ title, url }) => ({ title, url })),
+    sources: responseSources,
     destination: location.city,
     vibes: input.vibes,
   });
@@ -6837,8 +6872,18 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       requiresClarification: false,
       strictOwnershipEvidence: strictSourceBackedDiscovery,
     },
-    sources: discoveryResult.sources,
-    sourceNote: discoveryResult.sourceNote,
+    sources: [
+      ...discoveryResult.sources,
+      ...citySafetySources.map(({ title, url }) => ({
+        id: url,
+        title,
+        url,
+        label: "official_safety" as const,
+      })),
+    ],
+    sourceNote: citySafetyBriefing
+      ? `${discoveryResult.sourceNote} Business-directory and city-safety sources are separate.`
+      : discoveryResult.sourceNote,
     educationalStatus: discoveryResult.educationalStatus,
     discovery: discoveryResult.discovery,
     needsClarification: false,
@@ -6896,6 +6941,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     cityHint,
     includeCommunityPerspective,
     conversationContext,
+    staffAudit: requestedStaffAudit,
   } = req.body as {
     sessionId?: string;
     message: string;
@@ -6905,6 +6951,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     cityHint?: unknown;
     includeCommunityPerspective?: unknown;
     conversationContext?: unknown;
+    staffAudit?: unknown;
   };
 
   if (!message?.trim()) {
@@ -6922,16 +6969,33 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   // Resolve the server flag and the authenticated member's own setting before
   // any session/history lookup. A settings-read failure disables memory for this
   // request rather than risking reinjection or persistence after an opt-out.
-  const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
+  const staffAuditPolicy = resolveKinfolkStaffAuditPolicy({
+    requested: requestedStaffAudit,
+    administrator: isAdmin(req),
+  });
+  if (requestedStaffAudit === true && !staffAuditPolicy) {
+    res.status(403).json({ error: "Staff audit access is required." });
+    return;
+  }
+  let resolvedMemoryEnabled = false;
+  if (!staffAuditPolicy) {
+    // Staff audits must not read member memory settings; ordinary member chat
+    // remains explicitly gated before every history or memory operation.
+    const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
+    resolvedMemoryEnabled = memoryEnabled;
+  }
+  const memoryEnabled = resolvedMemoryEnabled;
 
   // A clear "remember …" statement is a first-party consent command, not an
   // ordinary chat turn. Save exactly the member's own words, acknowledge it,
   // and avoid sending their profile detail to a model unnecessarily.
-  const explicitMemory = await persistExplicitMemberMemory({
-    userId: req.user.id,
-    sessionId,
-    message,
-  });
+  const explicitMemory = staffAuditPolicy
+    ? null
+    : await persistExplicitMemberMemory({
+        userId: req.user.id,
+        sessionId,
+        message,
+      });
   if (explicitMemory) {
     return void res.json({
       sessionId,
@@ -7285,7 +7349,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         typeof cityHint === "string" && cityHint.length <= 120
           ? cityHint
           : undefined,
-      conversationContext,
+      conversationContext: staffAuditPolicy ? undefined : conversationContext,
+      staffAudit: Boolean(staffAuditPolicy),
     }))
   )
     return;
@@ -7342,7 +7407,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // The same authenticated administrator-or-active-tester policy that selects
       // the demo model also permits the controlled demo call. Standard users keep
       // their existing free and paid quota behavior unchanged.
-      if (modelPolicy.mode !== "staff_demo") {
+      if (modelPolicy.mode !== "staff_demo" && !staffAuditPolicy) {
         const resolvedTier = getTierFromMemberType(user?.memberType);
 
         // A paid subscription or active trial with an unset/unknown memberType is
@@ -7426,7 +7491,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let savedSupportLensDesignationIds: string[] = [];
     let savedMemberResearchContextTags: string[] = [];
 
-    if (req.user?.id) {
+    if (req.user?.id && !staffAuditPolicy) {
       // User preferences — served from 30s per-user cache to avoid N concurrent
       // Drizzle round-trips at peak load. getCachedPrefs() is read-through and
       // never throws — falls back to null which Kinfolk handles gracefully.
@@ -7553,7 +7618,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Load or create session
     chatStage = "session_read";
     let currentSession: typeof kinfolkSessionsTable.$inferSelect | null = null;
-    const ephemeralSession = !memoryEnabled
+    const ephemeralSession = !memoryEnabled && !staffAuditPolicy
       ? readEphemeralKinfolkSession(req.user.id, sessionId)
       : null;
     let sessionPersistenceAvailable = memoryEnabled;
@@ -8810,7 +8875,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // ── Library Growth signal (fire-and-forget) ─────────────────────────────
     // Capture only when: user is authenticated, learningEligible, and message is
     // not excluded. Raw message text is NEVER stored — only derived canonical subject.
-    if (req.user?.id) {
+    if (req.user?.id && !staffAuditPolicy) {
       const sensitivityTier = classifyGrowthSensitivity(message);
       const growthSubject = deriveGrowthSubject(
         intentClass,
@@ -10207,7 +10272,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         );
         finalSessionId = undefined;
       }
-    } else if (req.user?.id && !memoryEnabled) {
+    } else if (req.user?.id && !memoryEnabled && !staffAuditPolicy) {
       finalSessionId = writeEphemeralKinfolkSession(
         {
           userId: req.user.id,

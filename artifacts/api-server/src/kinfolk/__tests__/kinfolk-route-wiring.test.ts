@@ -16,6 +16,10 @@ const governedDiscoveryV2Source = readFileSync(
   fileURLToPath(new URL("../governed-discovery-v2.ts", import.meta.url)),
   "utf8",
 );
+const citySafetyV1Source = readFileSync(
+  fileURLToPath(new URL("../city-safety-briefing-v1.ts", import.meta.url)),
+  "utf8",
+);
 const chatRoute = routeSource.slice(
   routeSource.indexOf('router.post("/kinfolk/chat"'),
   routeSource.indexOf('router.get("/kinfolk/business-action-plan'),
@@ -245,6 +249,42 @@ describe("Kinfolk chat static wiring", () => {
     expect(helper).toContain("requestsCurrentLocalSafetyContext(input.message)");
     expect(helper).toContain("governedDirectorySafetyLimit(scope.city)");
     expect(helper).toContain("strictSafetyLimit");
+  });
+
+  it("keeps staff audit isolation server-authorized and independent of New Chat", () => {
+    expect(routeSource).toContain("resolveKinfolkStaffAuditPolicy");
+    expect(routeSource).toContain("requested: requestedStaffAudit");
+    expect(routeSource).toContain("administrator: isAdmin(req)");
+    expect(routeSource).toContain('res.status(403).json({ error: "Staff audit access is required." })');
+    expect(routeSource).toContain("if (!staffAuditPolicy)");
+    expect(routeSource).toContain("let resolvedMemoryEnabled = false;");
+    expect(routeSource).toContain("conversationContext: staffAuditPolicy ? undefined : conversationContext");
+    expect(routeSource).toContain("signalRepository: input.staffAudit ? undefined : discoverySignalRepository");
+    expect(routeSource).toContain("!memoryEnabled && !staffAuditPolicy");
+    expect(routeSource).toContain("!staffAuditPolicy");
+    expect(routeSource).not.toContain("New Chat is an audit control");
+  });
+
+  it("keeps current city-safety evidence separately gated from directory cards", () => {
+    const helperStart = routeSource.indexOf("async function tryAnswerDeterministicBusinessDiscovery");
+    const helperEnd = routeSource.indexOf('router.post("/kinfolk/chat"', helperStart);
+    const helper = routeSource.slice(helperStart, helperEnd);
+
+    expect(citySafetyV1Source).toContain("CITY_SAFETY_BRIEFING_V1");
+    expect(helper).toContain("isCitySafetyBriefingV1Enabled()");
+    expect(helper).toContain("currentCitySafetyBriefing");
+    expect(helper).toContain("Business-directory and city-safety sources are separate.");
+    expect(helper).toContain("input.staffAudit ? undefined : pool");
+  });
+
+  it("keeps documentary taxonomy tags separately gated from ownership evidence", () => {
+    const helperStart = routeSource.indexOf("async function tryAnswerDeterministicBusinessDiscovery");
+    const helperEnd = routeSource.indexOf('router.post("/kinfolk/chat"', helperStart);
+    const helper = routeSource.slice(helperStart, helperEnd);
+
+    expect(routeSource).toContain("isDirectoryTaxonomyV2Enabled");
+    expect(helper).toContain("documentedSourceTaxonomy");
+    expect(helper).toContain("strictSourceBackedDiscovery && isDirectoryTaxonomyV2Enabled()");
   });
 
   it("keeps city briefing sources out of prior-city resolver context", () => {
