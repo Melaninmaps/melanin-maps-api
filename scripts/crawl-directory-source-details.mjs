@@ -80,6 +80,18 @@ function extractMetaDescription(html) {
   }
   return null;
 }
+function extractBusinessDescription(html) {
+  const selectorPatterns = [
+    /<(?:div|section|p)[^>]+itemprop\s*=\s*["']description["'][^>]*>([\s\S]*?)<\/(?:div|section|p)>/i,
+    /<(?:div|section)[^>]+class\s*=\s*["'][^"']*(?:listing[-_ ]?description|geodir[-_ ]?(?:field[-_ ]?)?description|business[-_ ]?description|entry-content)[^"']*["'][^>]*>([\s\S]*?)<\/(?:div|section)>/i,
+    /<p[^>]+class\s*=\s*["'][^"']*(?:description|about)[^"']*["'][^>]*>([\s\S]*?)<\/p>/i,
+  ];
+  for (const pattern of selectorPatterns) {
+    const text = safeText(html.match(pattern)?.[1], 2000);
+    if (text && text.length >= 30 && !GENERIC_DESCRIPTION.test(text)) return text;
+  }
+  return null;
+}
 function jsonLdObjects(html) {
   const results = [];
   for (const match of html.matchAll(/<script\b[^>]*type\s*=\s*["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
@@ -236,7 +248,9 @@ async function auditRecord(record, scheduledFetch, options) {
     sourceListingLooksLikeDetail(listing.finalUrl ?? listingUrl, listingHtml, record.name));
   const listingDescription = usableDescription(
     listingIsDetail
-      ? descriptionFromJsonLd(listingHtml, record.name) ?? extractMetaDescription(listingHtml)
+      ? descriptionFromJsonLd(listingHtml, record.name)
+        ?? extractMetaDescription(listingHtml)
+        ?? extractBusinessDescription(listingHtml)
       : null,
     record.sourceLabel,
   );
@@ -331,7 +345,14 @@ async function main() {
   const domainPauseMs = positiveInteger(option("--domain-pause-ms"), 350);
   const timeoutMs = positiveInteger(option("--timeout-ms"), 15_000);
   const withWebsites = !has("--skip-websites");
-  const records = (await relevantRecords(inputDir)).slice(0, limit);
+  const sourceKeysPath = option("--only-source-keys", null);
+  const onlySourceKeys = sourceKeysPath
+    ? new Set((await fs.readFile(path.resolve(sourceKeysPath), "utf8"))
+      .split(/\r?\n/).map((value) => value.trim()).filter(Boolean))
+    : null;
+  const records = (await relevantRecords(inputDir))
+    .filter((record) => !onlySourceKeys || onlySourceKeys.has(record.sourceRecordKey))
+    .slice(0, limit);
   await fs.mkdir(path.dirname(output), { recursive: true });
   const stream = createWriteStream(output, { flags: "w" });
   const scheduledFetch = memoizeFetch(createScheduler(concurrency, domainPauseMs));
@@ -342,6 +363,7 @@ async function main() {
     output,
     totalReceipts: records.length,
     withWebsites,
+    onlySourceKeys: onlySourceKeys?.size ?? null,
     concurrency,
     domainPauseMs,
     complete: 0,
