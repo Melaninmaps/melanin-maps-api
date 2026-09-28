@@ -163,8 +163,19 @@ function appendSourceDescription(
   const existing = existingDescription?.trim() ?? "";
   const addition = candidateDescription?.trim() ?? "";
   if (!existing) return addition || "Source-backed directory listing.";
-  if (!addition || existing.toLowerCase().includes(addition.toLowerCase())) return existing;
-  return `${existing}\n\nSource directory details: ${addition}`;
+  if (!addition) return existing;
+  // Earlier Minnesota source imports prefixed every record with this generic
+  // location-card sentence. It is importer-created—not owner or community
+  // copy—so remove it only when replacing it with source-published detail.
+  const withoutGenericMinnesotaPrefix = existing.replace(
+    /^[^.]{1,120}\s+business in\s+[^.]{1,120}\.\s+Listed by Minnesota Black-Owned Business Directory\.\s*/i,
+    "",
+  ).trim();
+  if (!withoutGenericMinnesotaPrefix) return addition;
+  if (withoutGenericMinnesotaPrefix.toLowerCase().includes(addition.toLowerCase())) {
+    return withoutGenericMinnesotaPrefix;
+  }
+  return `${withoutGenericMinnesotaPrefix}\n\n${addition}`;
 }
 
 function sameNamedDirectoryPlace(

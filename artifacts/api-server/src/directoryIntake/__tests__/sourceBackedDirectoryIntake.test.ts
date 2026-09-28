@@ -163,4 +163,16 @@ describe("source-backed directory reconciliation", () => {
     expect(fields.description).toContain("Ethiopian cuisine");
     expect(fields.tags).toEqual(expect.arrayContaining(["restaurant", "Ethiopian", "vegan"]));
   });
+
+  it("leads public cards with source-published detail instead of a repeated directory prefix", () => {
+    const fields = sourceBackedDirectoryPublicationFields(candidate({
+      category: "Restaurants, coffee shops, bars & bakeries",
+      city: "Minneapolis",
+      sourceLabel: "Minnesota Black-Owned Business Directory",
+      sourceDescription: "A Somali cafe serving sambusas, coffee, smoothies, and sandwiches.",
+    }));
+
+    expect(fields.description).toBe("A Somali cafe serving sambusas, coffee, smoothies, and sandwiches.");
+    expect(fields.description).not.toContain("Listed by Minnesota Black-Owned Business Directory");
+  });
 });

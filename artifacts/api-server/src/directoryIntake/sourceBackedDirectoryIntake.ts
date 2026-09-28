@@ -59,9 +59,13 @@ export function sourceBackedDirectoryPublicationFields(candidate: SourceBackedDi
       candidate.subcategory,
       ...candidate.serviceTerms,
     ])],
+    // When the source published actual descriptive copy, lead with that copy.
+    // A repeated category/city/source sentence made otherwise distinct public
+    // cards look identical and could consume the visible card excerpt. Keep a
+    // compact fallback only for source listings that genuinely have no detail.
     description: [
-      `${candidate.category} business in ${candidate.city}. Listed by ${candidate.sourceLabel}.`,
-      candidate.sourceDescription?.trim() || null,
+      candidate.sourceDescription?.trim()
+        || `${candidate.category} listing in ${candidate.city}.`,
       sourceListedContact ? `Source-listed contact: ${sourceListedContact}.` : null,
     ].filter(Boolean).join(" "),
   };
