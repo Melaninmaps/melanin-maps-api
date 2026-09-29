@@ -682,6 +682,11 @@ export function FullMapView({
     // location, not a broad city overview. Keep the map to the one documented
     // match; the bottom card still opens that listing's MWM profile.
     if (directMatchHasCoordinates && directMatch) return [directMatch];
+    // A submitted service or keyword search is also a deliberate map request.
+    // Do not leave the ordinary nearby fallback pins layered over its results:
+    // that hid the matching markers (for example, four hair stores beneath
+    // 100+ nearby pins) and made the map appear not to respond to search.
+    if (submittedBusinessSearch.trim()) return focusedMappedBusinesses;
     // Local/direct results have richer card data and therefore win when the
     // same business exists in both layers. Canonical pins remain underneath as
     // a stable fallback so valid markers do not disappear during a scope change.
@@ -690,7 +695,7 @@ export function FullMapView({
       if (!localById.has(business.id)) localById.set(business.id, business);
     });
     return [...localById.values()];
-  }, [directMatch, directMatchHasCoordinates, focusedMappedBusinesses, nearbyCanonicalMapPins]);
+  }, [directMatch, directMatchHasCoordinates, focusedMappedBusinesses, nearbyCanonicalMapPins, submittedBusinessSearch]);
   const visibleMapPinCount = displayBusinessPins.length;
   const activeMapDiscoveryLabel = mapDiscoveryFocus === "all"
     ? "All nearby places"
@@ -701,6 +706,10 @@ export function FullMapView({
       ? `in ${mapLocality.city}${mapLocality.state ? `, ${mapLocality.state}` : ""}`
       : "in your map area";
   const hasSubmittedBusinessSearch = submittedBusinessSearch.length > 0;
+  const submittedMappedBusinessResults = useMemo(
+    () => hasSubmittedBusinessSearch ? focusedMappedBusinesses.slice(0, 5) : [],
+    [focusedMappedBusinesses, hasSubmittedBusinessSearch],
+  );
   const focusDirectBusinessOnMap = useCallback((business: Business) => {
     setSelectedBusiness(business);
     setSelectedCulturalSite(null);
@@ -922,16 +931,18 @@ export function FullMapView({
   // fit a country- or world-sized result set; only explicit exploration may.
   useEffect(() => {
     hasFitToBusinessesRef.current = false;
-  }, [localityScopeKey, mapDiscoveryFocus, mapDiscoveryRadius]);
+  }, [localityScopeKey, mapDiscoveryFocus, mapDiscoveryRadius, submittedBusinessSearch]);
 
   useEffect(() => {
     if (directMatchHasCoordinates) return;
     // Local search results stay first. When a location/radius refresh returns
     // no local rows, fit the stable website-equivalent pins instead of leaving
     // a 50-mile choice on a blank map.
-    const pinsToFit = focusedMappedBusinesses.length > 0
+    const pinsToFit = submittedBusinessSearch.trim()
       ? focusedMappedBusinesses
-      : nearbyCanonicalMapPins;
+      : focusedMappedBusinesses.length > 0
+        ? focusedMappedBusinesses
+        : nearbyCanonicalMapPins;
     if (!mapReady || pinsToFit.length === 0 || hasFitToBusinessesRef.current)
       return;
     const coordinates = pinsToFit.map((b) => ({
@@ -941,7 +952,7 @@ export function FullMapView({
     if (!exploringAllAreas && !isSafeLocalFit(coordinates)) return;
     hasFitToBusinessesRef.current = true;
     scheduleMapAction(() => safelyFitToCoordinates(coordinates), 600);
-  }, [directMatchHasCoordinates, mapReady, focusedMappedBusinesses, nearbyCanonicalMapPins, exploringAllAreas, localityScopeKey, mapDiscoveryRadius, safelyFitToCoordinates, scheduleMapAction]);
+  }, [directMatchHasCoordinates, mapReady, focusedMappedBusinesses, nearbyCanonicalMapPins, exploringAllAreas, localityScopeKey, mapDiscoveryRadius, safelyFitToCoordinates, scheduleMapAction, submittedBusinessSearch]);
 
   const normalizedMapSearch = submittedBusinessSearch.trim().toLowerCase();
   const filteredCulturalSites = culturalSites.filter((site) => {
@@ -1846,6 +1857,7 @@ export function FullMapView({
               } else {
                 setSubmittedBusinessSearch(query);
               }
+              setMapDiscoveryFocus("all");
               setSelectedBusiness(null);
             }}
             placeholder="Search a business, service, item, or city"
@@ -1907,7 +1919,51 @@ export function FullMapView({
           </View>
         )}
 
-        {mapLocality && (
+        {hasSubmittedBusinessSearch &&
+          !isBusinessSearchLoading &&
+          !businessSearchError &&
+          !directMatch &&
+          submittedMappedBusinessResults.length > 0 && (
+            <View
+              accessibilityLabel="Matched business cards"
+              style={[s.mapSearchResults, wideMapOverlayStyle]}
+            >
+              <Text style={s.mapSearchResultsTitle}>
+                Choose one of {mapped.length} mapped {mapped.length === 1 ? "match" : "matches"}
+              </Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={s.mapSearchResultsRow}
+              >
+                {submittedMappedBusinessResults.map((business) => (
+                  <TouchableOpacity
+                    key={business.id}
+                    accessibilityLabel={`Show ${business.name} on the map`}
+                    accessibilityRole="button"
+                    activeOpacity={0.86}
+                    style={s.mapSearchResultCard}
+                    onPress={() => focusDirectBusinessOnMap(business)}
+                  >
+                    <Text numberOfLines={1} style={s.mapSearchResultName}>
+                      {business.name}
+                    </Text>
+                    <Text numberOfLines={1} style={s.mapSearchResultMeta}>
+                      {[business.subcategory, business.city, business.state]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </Text>
+                    <View style={s.mapSearchResultAction}>
+                      <Feather name="map-pin" size={11} color="#FFFFFF" />
+                      <Text style={s.mapSearchResultActionText}>Show on map</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
+
+        {mapLocality && !hasSubmittedBusinessSearch && (
           <View
             accessibilityLabel="Around you map discovery"
             style={[s.mapDiscoveryCard, wideMapOverlayStyle]}
@@ -3115,6 +3171,62 @@ const s = StyleSheet.create({
     color: "#F5EBD8",
     fontFamily: "Inter_500Medium",
     fontSize: 11,
+  },
+  mapSearchResults: {
+    marginHorizontal: 12,
+    marginTop: 7,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: "rgba(24, 12, 5, 0.92)",
+    borderWidth: 1,
+    borderColor: "rgba(202,146,43,0.72)",
+  },
+  mapSearchResultsTitle: {
+    color: "#F5EBD8",
+    fontFamily: "Inter_700Bold",
+    fontSize: 11,
+    paddingHorizontal: 10,
+    marginBottom: 7,
+  },
+  mapSearchResultsRow: {
+    gap: 8,
+    paddingHorizontal: 10,
+  },
+  mapSearchResultCard: {
+    width: 190,
+    minHeight: 78,
+    borderRadius: 9,
+    padding: 9,
+    backgroundColor: "rgba(255,253,248,0.98)",
+    borderWidth: 1,
+    borderColor: "rgba(202,146,43,0.42)",
+  },
+  mapSearchResultName: {
+    color: "#2B1507",
+    fontFamily: "Inter_700Bold",
+    fontSize: 12,
+  },
+  mapSearchResultMeta: {
+    color: "rgba(58,31,14,0.66)",
+    fontFamily: "Inter_400Regular",
+    fontSize: 10,
+    marginTop: 3,
+  },
+  mapSearchResultAction: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 7,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    borderRadius: 10,
+    backgroundColor: GOLD,
+  },
+  mapSearchResultActionText: {
+    color: "#FFFFFF",
+    fontFamily: "Inter_700Bold",
+    fontSize: 9,
   },
   directMatchAction: {
     alignSelf: "flex-start",

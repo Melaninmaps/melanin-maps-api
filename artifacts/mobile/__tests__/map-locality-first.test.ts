@@ -109,7 +109,8 @@ describe("FullMapView locality-first contracts", () => {
 
   it("does not fit an ordinary map to a country-wide coordinate spread", () => {
     expect(fullMapSource).toContain("if (!exploringAllAreas && !isSafeLocalFit(coordinates)) return;");
-    expect(fullMapSource).toContain("const pinsToFit = focusedMappedBusinesses.length > 0");
+    expect(fullMapSource).toContain("const pinsToFit = submittedBusinessSearch.trim()");
+    expect(fullMapSource).toContain("? focusedMappedBusinesses");
     expect(fullMapSource).toContain(": nearbyCanonicalMapPins;");
     expect(fullMapSource).toContain("const coordinates = pinsToFit.map");
   });
@@ -131,6 +132,15 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("setSubmittedBusinessSearch(query)");
     expect(fullMapSource).toContain('enabled: deliberateMapNameSearch || exploringAllAreas || mapLocality !== null');
     expect(fullMapSource).toContain('accessibilityLabel="Clear map search and return to my local map"');
+  });
+
+  it("keeps a submitted service search focused on its matches and makes those listings selectable", () => {
+    expect(fullMapSource).toContain("if (submittedBusinessSearch.trim()) return focusedMappedBusinesses;");
+    expect(fullMapSource).toContain('accessibilityLabel="Matched business cards"');
+    expect(fullMapSource).toContain("const submittedMappedBusinessResults");
+    expect(fullMapSource).toContain("Choose one of {mapped.length} mapped");
+    expect(fullMapSource).toContain("onPress={() => focusDirectBusinessOnMap(business)}");
+    expect(fullMapSource).toContain("{mapLocality && !hasSubmittedBusinessSearch && (");
   });
 
   it("keeps ordinary service browse local while allowing a deliberate public business name to show its pin", () => {

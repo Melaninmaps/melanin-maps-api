@@ -42,6 +42,14 @@ describe("mobile map discovery card", () => {
     expect(mapSource).toContain("View Business");
   });
 
+  it("shows cards for a service search instead of burying its pins beneath the nearby layer", () => {
+    expect(mapSource).toContain('accessibilityLabel="Matched business cards"');
+    expect(mapSource).toContain("submittedMappedBusinessResults.map");
+    expect(mapSource).toContain("Show on map");
+    expect(mapSource).toContain("setMapDiscoveryFocus(\"all\")");
+    expect(mapSource).toContain("{mapLocality && !hasSubmittedBusinessSearch && (");
+  });
+
   it("keeps historical sundown-town records out of the persistent map while retaining other travel data", () => {
     expect(mapSource).toContain('site.heritageCategory === "Historical Sundown Town"');
     expect(mapSource).not.toContain("showSundownHistory");
