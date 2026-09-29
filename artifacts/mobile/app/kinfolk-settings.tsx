@@ -394,6 +394,25 @@ export default function KinfolkSettingsScreen() {
           })}
         </View>
 
+        <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>VOICE CHECK</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity
+            accessibilityLabel="Open Kinfolk Voice Preflight"
+            activeOpacity={0.8}
+            style={styles.optionRow}
+            onPress={() => router.push("/kinfolk-voice-preflight" as never)}
+          >
+            <View style={[styles.rowIcon, { backgroundColor: colors.primary + "16" }]}>
+              <Feather name="mic" size={16} color={colors.primary} />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={[styles.rowLabel, { color: colors.foreground }]}>Run Voice Preflight</Text>
+              <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>Test permission, recording, transcription, Kinfolk speech, playback, and the physical route before reporting a voice issue.</Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
+        </View>
+
         {/* Communication Style */}
         <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>COMMUNICATION STYLE</Text>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>

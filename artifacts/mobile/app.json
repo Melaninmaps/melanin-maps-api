@@ -40,7 +40,7 @@
     },
     "android": {
       "package": "com.melaninmaps.app",
-      "version": "1.1.7",
+      "version": "1.1.10",
       "runtimeVersion": "1.1.7-native.1",
       "edgeToEdgeEnabled": true,
       "intentFilters": [

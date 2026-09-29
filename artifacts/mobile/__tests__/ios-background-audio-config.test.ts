@@ -49,7 +49,7 @@ describe("iOS App Review background-audio configuration", () => {
     expect(appJson.expo.ios.buildNumber).toBe("128");
     expect(appJson.expo.android.versionCode).toBe(97);
     expect(appJson.expo.version).toBe("1.1.10");
-    expect(appJson.expo.android.version).toBe("1.1.7");
+    expect(appJson.expo.android.version).toBe("1.1.10");
     expect(appJson.expo.runtimeVersion).toBe("1.1.9-native.1");
     expect(appJson.expo.android.runtimeVersion).toBe("1.1.7-native.1");
   });
