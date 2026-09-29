@@ -98,6 +98,7 @@ node scripts/validate-android-eas-jdk17.cjs || fail "Android EAS Java 17 image c
 
 check_authored_source_whitespace
 pnpm install --frozen-lockfile --prefer-offline
+node --test scripts/__tests__/release-state.test.mjs
 pnpm run typecheck:libs
 pnpm --dir artifacts/api-server run typecheck
 pnpm --dir artifacts/web run typecheck
@@ -105,6 +106,9 @@ pnpm --dir artifacts/mobile run typecheck
 
 pnpm --dir artifacts/api-server exec vitest run \
   src/__tests__/compiled-build-identity.test.ts \
+  src/middlewares/__tests__/authMiddleware-approval.test.ts \
+  src/middleware/__tests__/business-membership-entitlement.test.ts \
+  src/__tests__/membership-price-integrity.test.ts \
   src/__tests__/community-feed.test.ts \
   src/__tests__/community-feed-schema-guard.test.ts \
   src/__tests__/kinfolk-mobile-continuity-contract.test.ts \
@@ -138,6 +142,7 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/__tests__/kinfolk-server-voice-contract.test.ts \
   src/__tests__/public-impact-metrics-contract.test.ts \
   src/__tests__/admin-business-inventory-controls.test.ts \
+  src/routes/__tests__/profile-photo-session-preservation.test.ts \
   src/routes/__tests__/waitlist-unified-contract.test.ts \
   src/kinfolk/__tests__/designation-predicate-policy.test.ts \
   src/businesses/__tests__/mwmCoreDiscoveryPolicy.test.ts \
@@ -165,6 +170,8 @@ pnpm exec vitest run \
   artifacts/web/src/__tests__/essential-services-map.test.ts \
   artifacts/web/src/__tests__/map-profile-navigation.test.ts \
   artifacts/mobile/__tests__/adaptive-platform-config.test.ts \
+  artifacts/mobile/__tests__/auth-nav-guard.test.ts \
+  artifacts/mobile/__tests__/web-payment-handoff.test.ts \
   artifacts/mobile/__tests__/ios-background-audio-config.test.ts \
   artifacts/mobile/__tests__/community-feed-recovery.test.ts \
   artifacts/mobile/__tests__/community-map-voice-regressions.test.ts \
@@ -182,6 +189,11 @@ pnpm exec vitest run \
   artifacts/mobile/__tests__/map-locality-first.test.ts \
   artifacts/mobile/__tests__/map-kinfolk-continuity.test.ts \
   artifacts/mobile/__tests__/essential-services-map.test.ts
+
+pnpm --dir artifacts/web exec vitest run \
+  src/__tests__/authenticated-fetch.test.ts \
+  src/__tests__/admin-business-edit-preservation.test.ts \
+  src/__tests__/community-business-ownership-parity.test.ts
 
 pnpm --dir artifacts/web run build
 

@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://mappingwithmelanin.com/schemas/release-evidence-v1.json",
+  "title": "Mapping With Melanin release evidence envelope",
+  "description": "Append-only release evidence for one immutable Git source candidate. This artifact contains no customer, member, payment, transcript, raw audio, location, Community, or directory record data.",
+  "type": "object",
+  "required": ["version", "candidate", "transitions", "chainDigest"],
+  "properties": {
+    "version": { "const": 1 },
+    "candidate": {
+      "type": "object",
+      "required": ["id", "sourceSha", "treeSha"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^rc-[a-f0-9]{12,40}-[a-z0-9-]{3,64}$" },
+        "sourceSha": { "type": "string", "pattern": "^[a-f0-9]{40}$" },
+        "treeSha": { "type": "string", "pattern": "^[a-f0-9]{40}$" }
+      },
+      "additionalProperties": false
+    },
+    "transitions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["stage", "at", "actor", "evidence", "previousDigest", "digest"],
+        "properties": {
+          "stage": {
+            "enum": [
+              "CODED",
+              "AUTOMATED_TESTED",
+              "INTEGRATION_TESTED",
+              "DEVICE_TESTED_IOS",
+              "DEVICE_TESTED_ANDROID",
+              "FOUNDER_ACCEPTED",
+              "RELEASED"
+            ]
+          },
+          "at": { "type": "string", "format": "date-time" },
+          "actor": { "type": "string", "minLength": 3, "maxLength": 160 },
+          "evidence": { "type": "object" },
+          "previousDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+          "digest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "chainDigest": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+  },
+  "additionalProperties": false
+}

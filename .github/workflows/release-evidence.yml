@@ -1,0 +1,29 @@
+name: Release evidence
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  release-evidence-contract:
+    name: Release evidence contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v22
+        with:
+          node-version: 22
+      - name: Validate immutable transition contract
+        run: node --test scripts/__tests__/release-state.test.mjs
+      - name: Reject executable legacy auto-submit paths
+        run: |
+          if grep -nE -- '--auto-submit-with-profile|--auto-submit' scripts/release-build-*.sh scripts/replit-release-*.sh artifacts/mobile/SUBMISSION.md; then
+            echo 'Legacy automatic store submission instruction detected.' >&2
+            exit 1
+          fi
+      - name: Verify evidence schema is valid JSON
+        run: node -e "JSON.parse(require('fs').readFileSync('release/evidence.schema.json', 'utf8')); console.log('release evidence schema valid')"

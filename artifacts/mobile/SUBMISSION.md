@@ -1,24 +1,35 @@
-# Mapping With Melanin Build 106 — TestFlight Staging Only
+# Historical submission instructions — retired
 
-This repository permits exactly one store-distribution action for Build 106: an **iOS TestFlight build backed by the isolated staging API**. It does not permit an Android build, EAS Update, production-profile build, App Review submission, Play submission, or signing change.
+This document previously described a Build 106 TestFlight staging path. It is **not an executable release procedure** and must not be used to request a build, upload to TestFlight, submit to App Review, or promote a Google Play track.
 
-## Canonical command
+## Current policy
 
-Run from the repository root only after the exact candidate commit has passed independent review:
+Use the repository-wide [release-stage policy](../../docs/RELEASE_STAGE_POLICY.md) and the append-only validator:
 
 ```bash
-MWM_BUILD106_SOURCE_SHA=<reviewed-40-character-commit-sha> \
-  bash scripts/release-build-106.sh ios-testflight-staging
+node scripts/release-state.mjs --help
 ```
 
-Do not call `eas build`, `eas submit`, or `eas update` directly. The dispatcher verifies the clean full SHA, Build `1.1.6 (106)`, runtime `1.1.6-native.1`, staging API origin, disabled Expo Updates, disabled RevenueCat behavior, removed background audio, source scans, tests, typechecks, Expo config/introspection, and a local iOS export before it starts EAS. It uses only the `testflight-staging` build and submit profiles and freezes existing remote signing credentials.
+A source candidate must have a validated, immutable evidence chain in this order:
 
-## Required result
+```text
+CODED
+→ AUTOMATED_TESTED
+→ INTEGRATION_TESTED
+→ DEVICE_TESTED_IOS
+→ DEVICE_TESTED_ANDROID
+→ FOUNDER_ACCEPTED
+→ RELEASED
+```
 
-A successful run must report the EAS Build ID, exact Git SHA, app version/build number, runtime version, `testflight-staging` profile, staging API origin, signing-credential reuse, App Store Connect/TestFlight upload status, and explicit confirmation that App Review was not started.
+A local build number, `app.json`, `eas.json`, a successful source gate, an EAS request, an EAS completion, or a TestFlight upload is not device evidence or a release by itself.
 
-Build 105 remains untouched. Testers should install Build 106 from TestFlight only after Apple finishes processing it. Tester acceptance is a separate post-upload step and must cover login/session restore, generic and exact-name business discovery, Map/list behavior, community business submission, Kinfolk directory-first results, current cited answers, microphone transcription, foreground spoken response, and privacy opt-out.
+## Prohibited shortcuts
 
-## Prohibited commands
+- Do not run an old `release-build-106.sh` command.
+- Do not use automatic EAS submission flags.
+- Do not mark a build as fixed based on source inspection or configuration alone.
+- Do not reuse an iOS build number or Android versionCode without first checking the live EAS and store records.
+- Do not change or overwrite `.build-record.json` to create release evidence.
 
-The repository-root `eas.json` intentionally has no build profiles. The mobile project intentionally has no `production` profile. Any old document or task backup showing direct production EAS commands is historical and must not be used.
+The release-evidence chain intentionally contains only redacted IDs, hashes, timestamps, and test references. It must never carry member, payment, transcript, raw audio, location, Community, or business/directory records.

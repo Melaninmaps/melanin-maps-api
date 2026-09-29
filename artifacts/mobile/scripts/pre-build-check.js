@@ -1,32 +1,29 @@
 #!/usr/bin/env node
 /**
- * Pre-build gate for Mapping With Melanin release candidates.
+ * Native candidate preflight.
+ *
+ * This validates configuration facts only after an immutable release-evidence
+ * chain has reached INTEGRATION_TESTED for the exact checked-out source SHA.
+ * It never requests EAS, submits to a store, or records a build as consumed.
  *
  * Usage:
- *   node scripts/pre-build-check.js ios
- *   node scripts/pre-build-check.js android
- *   node scripts/pre-build-check.js all
- *
- * Reads app.json for current build numbers and .build-record.json for
- * the last numbers submitted to or reserved by Apple / Google. Blocks the
- * build if the current number is not strictly greater than every known value.
- *
- * After a successful EAS build, update .build-record.json manually
- * (or run: node scripts/pre-build-check.js --record ios|android).
+ *   node scripts/pre-build-check.js ios --release-evidence <snapshot.json>
+ *   node scripts/pre-build-check.js android --release-evidence <snapshot.json>
+ *   node scripts/pre-build-check.js all --release-evidence <snapshot.json>
  */
 
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
+const { pathToFileURL } = require("url");
 
 const SCRIPT_DIR = path.dirname(require.resolve("./pre-build-check.js"));
-const ROOT = path.resolve(SCRIPT_DIR, "..");
-const APP_JSON = path.join(ROOT, "app.json");
-const RECORD_FILE = path.join(ROOT, ".build-record.json");
+const MOBILE_ROOT = path.resolve(SCRIPT_DIR, "..");
+const REPOSITORY_ROOT = path.resolve(MOBILE_ROOT, "../..");
+const APP_JSON = path.join(MOBILE_ROOT, "app.json");
+const RECORD_FILE = path.join(MOBILE_ROOT, ".build-record.json");
 
-// ── helpers ────────────────────────────────────────────────────────────────
-
-function readJSON(filePath) {
+function readJson(filePath) {
   try {
     return JSON.parse(fs.readFileSync(filePath, "utf8"));
   } catch {
@@ -34,188 +31,150 @@ function readJSON(filePath) {
   }
 }
 
-function banner(text, char = "─") {
-  const line = char.repeat(60);
-  console.log(`\n${line}`);
-  console.log(` ${text}`);
-  console.log(line);
+function banner(text, character = "─") {
+  const line = character.repeat(68);
+  console.log(`\n${line}\n ${text}\n${line}`);
 }
 
 function pass(label, value) {
-  console.log(`  ✅  ${label.padEnd(30)} ${value}`);
+  console.log(`  PASS  ${label.padEnd(34)} ${value}`);
 }
 
 function fail(label, value) {
-  console.log(`  ❌  ${label.padEnd(30)} ${value}`);
+  console.log(`  FAIL  ${label.padEnd(34)} ${value}`);
 }
 
 function info(label, value) {
-  console.log(`  ℹ️   ${label.padEnd(30)} ${value}`);
+  console.log(`  INFO  ${label.padEnd(34)} ${value}`);
 }
 
-// ── load files ─────────────────────────────────────────────────────────────
-
-const appJson = readJSON(APP_JSON);
-if (!appJson) {
-  console.error("FATAL: cannot read app.json");
-  process.exit(1);
+function exitUsage(message) {
+  if (message) console.error(`BUILD_PREFLIGHT_BLOCKED: ${message}`);
+  console.error("Usage: node scripts/pre-build-check.js ios|android|all --release-evidence <snapshot.json>");
+  process.exit(64);
 }
 
-const record = readJSON(RECORD_FILE) ?? {
-  lastIosSubmitted: 0,
-  lastAndroidSubmitted: 0,
-  lastIosReserved: 0,
-  lastAndroidReserved: 0,
-};
-const lastIosConsumed = Math.max(
-  Number(record.lastIosSubmitted) || 0,
-  Number(record.lastIosReserved) || 0,
-);
-const lastAndroidConsumed = Math.max(
-  Number(record.lastAndroidSubmitted) || 0,
-  Number(record.lastAndroidReserved) || 0,
-);
-
-// ── read current state ─────────────────────────────────────────────────────
-
-const version = appJson.expo.version;
-const iosBuild = parseInt(appJson.expo.ios.buildNumber, 10);
-const androidCode = parseInt(appJson.expo.android.versionCode, 10);
-const bundle = appJson.expo.ios.bundleIdentifier;
-const easProjectId =
-  appJson.expo.extra?.eas?.projectId ?? "(not found in app.json)";
-
-let gitCommit = "(unknown)";
-let gitDirty = false;
-try {
-  gitCommit = execSync("git rev-parse --short HEAD", { cwd: ROOT })
-    .toString()
-    .trim();
-  const status = execSync("git status --porcelain -- .", { cwd: ROOT })
-    .toString()
-    .trim();
-  gitDirty = status.length > 0;
-} catch {
-  // non-fatal
-}
-
-// ── parse platform arg ─────────────────────────────────────────────────────
-
-const arg = process.argv[2] ?? "all";
-
-// Record mode: update .build-record.json after a successful build
-if (arg === "--record") {
-  const platform = process.argv[3];
-  const updated = { ...record };
-  if (platform === "ios" || platform === "all")
-    updated.lastIosReserved = iosBuild;
-  if (platform === "android" || platform === "all")
-    updated.lastAndroidReserved = androidCode;
-  fs.writeFileSync(RECORD_FILE, JSON.stringify(updated, null, 2) + "\n");
-  console.log("✅  .build-record.json updated:", updated);
-  process.exit(0);
-}
-
-const checkIos = arg === "ios" || arg === "all";
-const checkAndroid = arg === "android" || arg === "all";
-
-// ── print pre-build checklist ──────────────────────────────────────────────
-
-banner("MWM PRE-BUILD CHECKLIST", "═");
-
-console.log("\n  ENVIRONMENT");
-info("Working directory", ROOT);
-info("Git commit", gitCommit + (gitDirty ? " (dirty — uncommitted changes)" : " (clean)"));
-info("EAS Project ID", easProjectId);
-info("Bundle / Package", bundle);
-info("App version", version);
-
-console.log("\n  BUILD NUMBERS");
-if (checkIos) {
-  info("iOS — last consumed", lastIosConsumed);
-  info("iOS — current in app.json", iosBuild);
-  info("iOS — required minimum", lastIosConsumed + 1);
-}
-if (checkAndroid) {
-  info("Android — last consumed", lastAndroidConsumed);
-  info("Android — current in app.json", androidCode);
-  info("Android — required minimum", lastAndroidConsumed + 1);
-}
-
-// ── validation ─────────────────────────────────────────────────────────────
-
-banner("VALIDATION RESULTS");
-
-let blocked = false;
-
-if (checkIos) {
-  if (iosBuild > lastIosConsumed) {
-    pass("iOS build number", `${iosBuild} > ${lastIosConsumed} ✓`);
-  } else {
-    fail(
-      "iOS build number",
-      `${iosBuild} is NOT > ${lastIosConsumed} — must increment`
-    );
-    blocked = true;
+function parseArgs(argv) {
+  const platform = argv[0] ?? "all";
+  if (!["ios", "android", "all"].includes(platform)) {
+    exitUsage("platform must be ios, android, or all");
   }
-}
-
-if (checkAndroid) {
-  if (androidCode > lastAndroidConsumed) {
-    pass("Android versionCode", `${androidCode} > ${lastAndroidConsumed} ✓`);
-  } else {
-    fail(
-      "Android versionCode",
-      `${androidCode} is NOT > ${lastAndroidConsumed} — must increment`
-    );
-    blocked = true;
+  const values = {};
+  for (let index = 1; index < argv.length; index += 1) {
+    const key = argv[index];
+    if (!key.startsWith("--")) exitUsage(`unexpected argument ${key}`);
+    const value = argv[index + 1];
+    if (!value || value.startsWith("--")) exitUsage(`missing value for ${key}`);
+    values[key.slice(2)] = value;
+    index += 1;
   }
+  if (!values["release-evidence"]) {
+    exitUsage("--release-evidence is required; configuration alone is not build authorization");
+  }
+  return { platform, releaseEvidence: values["release-evidence"] };
 }
 
-if (gitDirty) {
-  fail("Working tree", "has uncommitted changes in artifacts/mobile");
-  blocked = true;
-} else {
-  pass("Working tree", "clean");
-}
+async function main() {
+  const { platform, releaseEvidence } = parseArgs(process.argv.slice(2));
+  const appJson = readJson(APP_JSON);
+  if (!appJson?.expo) {
+    throw new Error("cannot read artifacts/mobile/app.json");
+  }
 
-if (easProjectId === "(not found in app.json)") {
-  fail("EAS Project ID", "not found — check app.json extras.eas.projectId");
-  blocked = true;
-} else {
-  pass("EAS Project ID", easProjectId);
-}
+  const evidencePath = path.resolve(process.cwd(), releaseEvidence);
+  if (!fs.existsSync(evidencePath)) {
+    throw new Error(`release evidence snapshot does not exist: ${evidencePath}`);
+  }
 
-// ── result ─────────────────────────────────────────────────────────────────
-
-if (blocked) {
-  banner("BUILD BLOCKED", "!");
-  console.log(
-    "\n  BUILD BLOCKED — Build number was not incremented (or other check failed).\n"
+  const { validateEvidence } = await import(
+    pathToFileURL(path.join(REPOSITORY_ROOT, "scripts", "release-state.mjs")).href,
   );
-  console.log("  Fix the items marked ❌ above, then re-run this script.\n");
-  process.exit(1);
-} else {
-  banner("BUILD APPROVED ✅");
-  console.log("\n  All checks passed. Safe to run:\n");
-  if (checkIos) {
-    console.log(
-      "    eas build --platform ios --profile production"
-    );
-    console.log(
-      `\n  After the build completes, record the submitted number:\n`
-    );
-    console.log(
-      `    node scripts/pre-build-check.js --record ios\n`
-    );
+  const evidence = validateEvidence(readJson(evidencePath), {
+    requireStage: "INTEGRATION_TESTED",
+  });
+
+  const version = appJson.expo.version;
+  const iosBuild = Number.parseInt(appJson.expo.ios.buildNumber, 10);
+  const androidCode = Number.parseInt(appJson.expo.android.versionCode, 10);
+  const easProjectId = appJson.expo.extra?.eas?.projectId ?? "(not found)";
+  const sourceSha = execSync("git rev-parse HEAD", { cwd: REPOSITORY_ROOT })
+    .toString()
+    .trim();
+  const gitDirty = execSync("git status --porcelain --untracked-files=all", {
+    cwd: REPOSITORY_ROOT,
+  })
+    .toString()
+    .trim().length > 0;
+  const buildRecord = readJson(RECORD_FILE);
+
+  banner("MWM NATIVE CANDIDATE PREFLIGHT", "═");
+  info("Candidate", evidence.candidate.id);
+  info("Validated stage", evidence.transitions.at(-1).stage);
+  info("Evidence snapshot", evidencePath);
+  info("Source SHA", sourceSha);
+  info("App version", version);
+  info("iOS build number", String(iosBuild));
+  info("Android versionCode", String(androidCode));
+  info("EAS project ID", easProjectId);
+
+  banner("VALIDATION RESULTS");
+  let blocked = false;
+
+  if (sourceSha !== evidence.candidate.sourceSha) {
+    fail("Evidence source identity", "checked-out SHA does not equal the immutable candidate SHA");
+    blocked = true;
+  } else {
+    pass("Evidence source identity", evidence.candidate.sourceSha);
   }
-  if (checkAndroid) {
-    console.log("    eas build --platform android --profile production\n");
-    console.log(
-      "  After the build completes, record the submitted number:\n"
-    );
-    console.log(
-      "    node scripts/pre-build-check.js --record android\n"
-    );
+  if (gitDirty) {
+    fail("Repository working tree", "dirty source cannot produce a candidate artifact");
+    blocked = true;
+  } else {
+    pass("Repository working tree", "clean");
   }
+  if (easProjectId === "(not found)") {
+    fail("EAS project identity", "missing from app.json");
+    blocked = true;
+  } else {
+    pass("EAS project identity", easProjectId);
+  }
+  if (!Number.isInteger(iosBuild) || iosBuild <= 0) {
+    fail("iOS build number", "must be a positive integer");
+    blocked = true;
+  } else if (platform === "ios" || platform === "all") {
+    pass("iOS build number", String(iosBuild));
+  }
+  if (!Number.isInteger(androidCode) || androidCode <= 0) {
+    fail("Android versionCode", "must be a positive integer");
+    blocked = true;
+  } else if (platform === "android" || platform === "all") {
+    pass("Android versionCode", String(androidCode));
+  }
+  if (appJson.expo.ios.supportsTablet !== true || appJson.expo.ios.infoPlist?.UIRequiresFullScreen !== false) {
+    fail("iPad capability", "tablet support or multitasking configuration changed");
+    blocked = true;
+  } else {
+    pass("iPad capability", "tablet support and multitasking preserved");
+  }
+
+  if (buildRecord) {
+    info("Legacy build record", "read-only historical context; verify live EAS/store records before assigning a number");
+  } else {
+    info("Legacy build record", "absent; live EAS/store review remains required");
+  }
+
+  if (blocked) {
+    banner("BUILD PREFLIGHT BLOCKED", "!");
+    process.exitCode = 1;
+    return;
+  }
+
+  banner("CANDIDATE CONFIGURATION VALIDATED");
+  console.log("No EAS build request, artifact upload, TestFlight action, Play action, or record update was performed.");
+  console.log("Before an approved build request, obtain live EAS and store-number evidence and record the returned artifact facts in a new evidence snapshot.");
 }
+
+main().catch((error) => {
+  console.error(`BUILD_PREFLIGHT_BLOCKED: ${error.message}`);
+  process.exitCode = 1;
+});
