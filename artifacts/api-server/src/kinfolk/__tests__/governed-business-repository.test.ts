@@ -345,6 +345,29 @@ describe("governed Kinfolk business repository", () => {
     expect(params[11]).toEqual(expect.arrayContaining(["Black / African American-Owned"]));
   });
 
+  it("maps a controlled completed-directory marker as receipt evidence without inventing a source URL", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [{
+      ...AMINA_ROW,
+      research_source_url: null,
+      research_source_label: null,
+      data_source: "completed_cohort_directory_discovery",
+    }] }) };
+    const result = await createGovernedKinfolkBusinessRepository(pool).findBySubject(
+      { city: "Philadelphia", stateCode: "PA" },
+      deriveBusinessSubject("Find Black-owned restaurants in Philadelphia")!,
+      12,
+      ["black-african-american"],
+    );
+
+    expect(result).toEqual([
+      expect.objectContaining({
+        id: AMINA_ROW.id,
+        researchSourceUrl: null,
+        sourceReceipt: true,
+      }),
+    ]);
+  });
+
   it("retrieves an explicitly classified Philadelphia senior-support service for Kinfolk", async () => {
     const pool = { query: vi.fn().mockResolvedValue({ rows: [{
       ...AMINA_ROW,

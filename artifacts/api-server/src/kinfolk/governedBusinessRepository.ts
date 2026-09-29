@@ -92,6 +92,8 @@ export type GovernedKinfolkBusiness = Readonly<{
   researchSourceLabel?: string | null;
   /** When MWM captured or last updated the public listing record. */
   sourceCapturedAt?: string | null;
+  /** Internal documentary-receipt status for strict ownership retrieval. */
+  sourceReceipt?: boolean;
   /** Non-destructive identity evidence retained when likely duplicates are suppressed. */
   identityReasons: string[];
 }>;
@@ -150,6 +152,7 @@ type BusinessRow = {
   research_source_url: unknown;
   research_source_label: unknown;
   source_captured_at: unknown;
+  data_source: unknown;
 };
 
 type MapPlaceRow = {
@@ -167,6 +170,17 @@ type MapPlaceRow = {
 const DEFAULT_CATALOG_LIMIT = 25;
 const MAX_CATALOG_LIMIT = 50;
 const MAX_RADIUS_MILES = 100;
+
+// These are server-controlled import markers, not user-provided labels. Older
+// completed directory records retain their documentary receipt in data_source
+// instead of a per-record research URL. They remain eligible for a strict
+// ownership request only because the stored ownership designation is matched
+// separately in SQL below; this marker never creates or infers that label.
+const RETAINED_DIRECTORY_SOURCE_RECEIPTS = new Set([
+  "completed_cohort_directory_discovery",
+  "founder_source_directory_intake",
+  "national_diaspora_master_18294",
+]);
 
 function governedDirectoryDiscoveryPredicate(allowAllPublicPlaces = false): string {
   // During the founder-led cleanup, every public, non-archived listing is in
@@ -244,6 +258,7 @@ const CANONICAL_SELECT = `
   b.kinfolk_recommendation_reason,
   b.research_source_url,
   b.research_source_label,
+  COALESCE(b.data_source, '') AS data_source,
   b.created_at AS source_captured_at`;
 
 function text(value: unknown): string {
@@ -276,6 +291,11 @@ function stringArray(value: unknown): string[] {
 }
 
 function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
+  const sourceReceipt =
+    Boolean(
+      nullableText(row.research_source_url) &&
+      canonicalizeContextualUrl(text(row.research_source_url)),
+    ) || RETAINED_DIRECTORY_SOURCE_RECEIPTS.has(text(row.data_source).trim());
   return {
     id: text(row.id),
     name: text(row.name),
@@ -326,6 +346,7 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
       canonicalizeContextualUrl(text(row.research_source_url)),
     researchSourceLabel: nullableText(row.research_source_label),
     sourceCapturedAt: nullableText(row.source_captured_at),
+    sourceReceipt,
     identityReasons: [],
   };
 }

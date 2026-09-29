@@ -626,6 +626,32 @@ describe("deterministic local business discovery", () => {
     ]));
   });
 
+  it("retains a strict ownership card when its documentary receipt is a controlled directory import marker", async () => {
+    const retainedDirectoryRecord = {
+      ...governedBusiness,
+      id: "controlled-directory-receipt",
+      researchSourceUrl: null,
+      researchSourceLabel: null,
+      sourceCapturedAt: null,
+      sourceReceipt: true,
+    };
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Atlanta", stateCode: "GA" },
+      subject: bookstore,
+      repository: repository({ businesses: [retainedDirectoryRecord] }),
+      requiredDesignationIds: ["black-african-american"],
+      strictEvidenceRequired: true,
+      webSearch: vi.fn(),
+    });
+
+    expect(result.discovery.platformBusinesses).toEqual([
+      expect.objectContaining({ id: "controlled-directory-receipt" }),
+    ]);
+    // A source marker proves provenance for retrieval but never fabricates a
+    // public source URL on the card.
+    expect(result.discovery.platformBusinesses[0]?.ownershipEvidence).toBeNull();
+  });
+
   it("keeps current public discovery available during founder-led cleanup", async () => {
     const webSearch = vi.fn().mockResolvedValue({
       state: "completed",

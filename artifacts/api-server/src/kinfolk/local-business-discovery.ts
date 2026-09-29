@@ -608,7 +608,7 @@ export async function discoverLocalBusinesses(input: {
   // unproven ownership recommendation.
   if (input.strictEvidenceRequired) {
     businessRows = businessRows.filter((business) =>
-      Boolean(business.researchSourceUrl),
+      business.sourceReceipt === true || Boolean(business.researchSourceUrl),
     );
   }
   const afterOwnershipEvidenceCount = businessRows.length;
