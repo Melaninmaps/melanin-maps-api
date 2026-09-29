@@ -330,9 +330,15 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(directoryAssembly).toContain("mergeMissingCrawlEvidence");
   });
 
+  it("treats a retained exact research receipt as source evidence, never as a name-only match", () => {
+    expect(adminRoute).toContain("OR research_source_url = ANY($3::text[])");
+    expect(adminRoute).toContain("sourceUrl: business.sourceUrl ?? business.researchSourceUrl");
+    expect(adminRoute).toContain("sourceUrl: existing.sourceUrl ?? candidate.sourceListingUrl ?? candidate.sourceUrl");
+  });
+
   it("places only exact held source receipts into the reversible Archive vault", () => {
     expect(adminRoute).toContain('router.post("/admin/directory-intake/source-backed/quality-hold"');
-    expect(adminRoute).toContain("heldSourceListingUrls.has(existing.sourceUrl!)");
+    expect(adminRoute).toContain("heldSourceListingUrls.has(existing.sourceUrl ?? existing.researchSourceUrl!)");
     expect(adminRoute).toContain("!existing.isDuplicate");
     expect(adminRoute).toContain('existing.listingStatus !== "archived"');
     expect(adminRoute).toContain("Exact source listing URL only; no name-only, address-only, duplicate-vault, merge, or delete action.");

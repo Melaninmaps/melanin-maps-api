@@ -140,6 +140,7 @@ async function sourceDirectoryExistingBusinessCandidates(
             OR dedupe_key = ANY($2::text[])
           )
         ) OR source_url = ANY($3::text[])
+          OR research_source_url = ANY($3::text[])
         `,
     [sourceNames, sourceReceiptKeys, sourceListingUrls],
   );
@@ -347,9 +348,17 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
     : 75;
   try {
     const existingBusinesses = await sourceDirectoryExistingBusinessCandidates(intakeCandidates);
+    const sourceReceiptMatchingBusinesses = existingBusinesses.map((business) => ({
+      ...business,
+      // Older directory imports retained the exact listing receipt in the
+      // research field rather than source_url. It is still exact source
+      // evidence—not a name-only match—so it can safely receive the current
+      // source detail without a merge or record replacement.
+      sourceUrl: business.sourceUrl ?? business.researchSourceUrl,
+    }));
     const plan = buildSourceBackedDirectoryIntakePlan(
       intakeCandidates,
-      existingBusinesses,
+      sourceReceiptMatchingBusinesses,
     );
     const nextBatch = plan.toCreate.slice(0, batchSize);
     const possibleDuplicateCanonicalByReceipt = new Map(
@@ -423,6 +432,7 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
           address: retainedAddress,
           country: retainedCountry,
           description: appendSourceDescription(existing.description, candidate.sourceDescription),
+          sourceUrl: existing.sourceUrl ?? candidate.sourceListingUrl ?? candidate.sourceUrl,
           phone: existing.phone ?? publicationFields.phone,
           website: existing.website ?? candidate.officialUrl,
           facebook: existing.facebook ?? social.facebook ?? null,
@@ -653,15 +663,19 @@ router.post("/admin/directory-intake/source-backed/quality-hold", async (req: Re
   }
   try {
     const existingBusinesses = await sourceDirectoryExistingBusinessCandidates(intakeCandidates);
-    const plan = buildSourceBackedDirectoryIntakePlan(intakeCandidates, existingBusinesses);
+    const sourceReceiptMatchingBusinesses = existingBusinesses.map((business) => ({
+      ...business,
+      sourceUrl: business.sourceUrl ?? business.researchSourceUrl,
+    }));
+    const plan = buildSourceBackedDirectoryIntakePlan(intakeCandidates, sourceReceiptMatchingBusinesses);
     const heldSourceListingUrls = new Set(
       plan.heldForDescription.map((candidate) => candidate.sourceListingUrl ?? candidate.sourceUrl),
     );
     const targets = existingBusinesses.filter((existing) =>
       !existing.isDuplicate
       && existing.listingStatus !== "archived"
-      && Boolean(existing.sourceUrl)
-      && heldSourceListingUrls.has(existing.sourceUrl!),
+      && Boolean(existing.sourceUrl ?? existing.researchSourceUrl)
+      && heldSourceListingUrls.has(existing.sourceUrl ?? existing.researchSourceUrl!),
     );
     if (targets.length > 500) {
       return void res.status(409).json({
