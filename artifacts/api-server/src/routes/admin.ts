@@ -209,7 +209,7 @@ type CitySafetySourceAdminRow = Readonly<{
 }>;
 
 const CITY_SAFETY_CITY_IDS = new Set(["minneapolis-mn", "philadelphia-pa", "houston-tx"]);
-const CITY_SAFETY_TOPICS = new Set(["official_alert", "transit", "weather", "road", "event_advisory"]);
+const CITY_SAFETY_TOPICS = new Set(["official_alert", "transit", "weather", "road", "event_advisory", "immigration"]);
 const CITY_SAFETY_PUBLISHERS = new Set(["official_city", "official_transit", "official_weather", "official_emergency"]);
 const CITY_SAFETY_NORMALIZERS = new Set(["nws_alerts", "oem_activation", "none"]);
 

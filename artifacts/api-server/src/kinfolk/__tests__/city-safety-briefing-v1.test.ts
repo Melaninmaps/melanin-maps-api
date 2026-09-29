@@ -58,11 +58,36 @@ describe("city safety briefing v1", () => {
       "Are there current transit service alerts in Philadelphia today?",
     )).toBe(true);
     expect(requestsCurrentCitySafetyBriefing(
+      "Are there any current ICE actions in Minneapolis I should know about before I travel?",
+    )).toBe(true);
+    expect(requestsCurrentCitySafetyBriefing(
       "Find a Black-owned lunch restaurant in Houston.",
     )).toBe(false);
     expect(requestsCurrentCitySafetyBriefing(
       "Find a shellfish-safe Black-owned dinner in Minneapolis.",
     )).toBe(false);
+  });
+
+  it("returns City immigration resources without treating them as proof of nearby activity", async () => {
+    const result = await currentCitySafetyBriefing({
+      cityId: "minneapolis-mn",
+      now: new Date("2026-09-28T12:00:00.000Z"),
+      fetchImpl: vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => ({ features: [] }),
+        text: async () => "No active source marker",
+      }),
+    });
+
+    expect(result.officialLinks).toEqual(expect.arrayContaining([
+      expect.objectContaining({ topic: "immigration", url: expect.stringContaining("city-federal-response") }),
+      expect.objectContaining({ topic: "immigration", url: expect.stringContaining("know-your-rights-and-resources") }),
+    ]));
+    const reply = renderDirectCitySafetyBriefing("Minneapolis", result);
+    expect(reply).toContain("do not have a verified location-specific ICE activity report");
+    expect(reply).toContain("Know Your Rights and Resources");
+    expect(reply).not.toMatch(/you are safe|no ICE activity/i);
   });
 
   it("returns an active official condition only from an unexpired official source", async () => {

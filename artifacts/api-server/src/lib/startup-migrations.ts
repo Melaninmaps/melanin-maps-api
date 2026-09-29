@@ -17742,7 +17742,7 @@ async function ensureKinfolkCitySafetyEvidenceSchema(
       CREATE TABLE IF NOT EXISTS kinfolk_city_safety_sources (
         id TEXT PRIMARY KEY,
         city_id TEXT NOT NULL CHECK (city_id IN ('minneapolis-mn', 'philadelphia-pa', 'houston-tx')),
-        topic TEXT NOT NULL CHECK (topic IN ('official_alert', 'transit', 'weather', 'road', 'event_advisory')),
+        topic TEXT NOT NULL CHECK (topic IN ('official_alert', 'transit', 'weather', 'road', 'event_advisory', 'immigration')),
         display_name TEXT NOT NULL CHECK (char_length(display_name) BETWEEN 2 AND 180),
         url TEXT NOT NULL CHECK (url ~ '^https://'),
         publisher_class TEXT NOT NULL CHECK (publisher_class IN ('official_city', 'official_transit', 'official_weather', 'official_emergency')),
@@ -17764,7 +17764,7 @@ async function ensureKinfolkCitySafetyEvidenceSchema(
         id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
         source_id TEXT NOT NULL,
         city_id TEXT NOT NULL CHECK (city_id IN ('minneapolis-mn', 'philadelphia-pa', 'houston-tx')),
-        topic TEXT NOT NULL CHECK (topic IN ('official_alert', 'transit', 'weather', 'road', 'event_advisory')),
+        topic TEXT NOT NULL CHECK (topic IN ('official_alert', 'transit', 'weather', 'road', 'event_advisory', 'immigration')),
         outcome TEXT NOT NULL CHECK (outcome IN ('current', 'unavailable', 'stale', 'fetch_failed', 'city_mismatch')),
         retrieved_at TIMESTAMPTZ NOT NULL,
         expires_at TIMESTAMPTZ,
@@ -17785,12 +17785,26 @@ async function ensureKinfolkCitySafetyEvidenceSchema(
       .join(", ");
     await pool.query(`
       ALTER TABLE kinfolk_city_safety_sources
+        DROP CONSTRAINT IF EXISTS kinfolk_city_safety_sources_topic_check;
+      ALTER TABLE kinfolk_city_safety_sources
+        ADD CONSTRAINT kinfolk_city_safety_sources_topic_check
+        CHECK (topic IN ('official_alert', 'transit', 'weather', 'road', 'event_advisory', 'immigration')) NOT VALID;
+      ALTER TABLE kinfolk_city_safety_sources
+        VALIDATE CONSTRAINT kinfolk_city_safety_sources_topic_check;
+      ALTER TABLE kinfolk_city_safety_sources
         DROP CONSTRAINT IF EXISTS kinfolk_city_safety_sources_city_id_check;
       ALTER TABLE kinfolk_city_safety_sources
         ADD CONSTRAINT kinfolk_city_safety_sources_city_id_check
         CHECK (city_id IN (${supportedCityIds})) NOT VALID;
       ALTER TABLE kinfolk_city_safety_sources
         VALIDATE CONSTRAINT kinfolk_city_safety_sources_city_id_check;
+      ALTER TABLE kinfolk_city_safety_retrieval_audit_events
+        DROP CONSTRAINT IF EXISTS kinfolk_city_safety_retrieval_audit_events_topic_check;
+      ALTER TABLE kinfolk_city_safety_retrieval_audit_events
+        ADD CONSTRAINT kinfolk_city_safety_retrieval_audit_events_topic_check
+        CHECK (topic IN ('official_alert', 'transit', 'weather', 'road', 'event_advisory', 'immigration')) NOT VALID;
+      ALTER TABLE kinfolk_city_safety_retrieval_audit_events
+        VALIDATE CONSTRAINT kinfolk_city_safety_retrieval_audit_events_topic_check;
       ALTER TABLE kinfolk_city_safety_retrieval_audit_events
         DROP CONSTRAINT IF EXISTS kinfolk_city_safety_retrieval_audit_events_city_id_check;
       ALTER TABLE kinfolk_city_safety_retrieval_audit_events

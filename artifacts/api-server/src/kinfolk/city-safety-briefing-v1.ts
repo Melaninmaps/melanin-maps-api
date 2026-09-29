@@ -27,8 +27,9 @@ export function requestsCurrentCitySafetyBriefing(message: string): boolean {
   if (dietaryBusinessRequest) return false;
   const asksForSafety = /\b(?:safety|safe(?:ty)?|unsafe|crime|danger|emergency|travel advis(?:ory|ories)|weather alert)\b/i.test(message);
   const asksForTransit = /\b(?:transit|public transport(?:ation)?|rider alerts?|service alerts?|service disruption|detours?|subway|metro|septa|bus(?:es)?|train(?:s)?)\b/i.test(message);
+  const asksForImmigration = /\b(?:ice|immigration|deportation|federal enforcement|immigration enforcement)\b/i.test(message);
   const currentOrTravelContext = /\b(?:current|today|right now|before (?:i|we) go|travel(?:ing)?|trip|visit(?:ing)?|heading to|going to)\b/i.test(message);
-  return asksForSafety || (asksForTransit && currentOrTravelContext);
+  return asksForSafety || asksForImmigration || (asksForTransit && currentOrTravelContext);
 }
 
 export type CitySafetyTopic =
@@ -36,7 +37,8 @@ export type CitySafetyTopic =
   | "transit"
   | "weather"
   | "road"
-  | "event_advisory";
+  | "event_advisory"
+  | "immigration";
 
 export type CitySafetyPublisherClass =
   | "official_city"
@@ -205,6 +207,31 @@ export const CITY_SAFETY_SOURCE_REGISTRY: readonly CitySafetySourceRecord[] = [
     url: "https://www.minneapolismn.gov/government/departments/emergency-management/",
     publisherClass: "official_city",
     freshnessMinutes: 30,
+    enabled: true,
+    normalizer: "none",
+  },
+  // These are city-maintained resource links, not proof that a federal action
+  // is active at a member's location. They give a direct immigration question
+  // useful official next steps without manufacturing an alert claim.
+  {
+    id: "minneapolis-federal-immigration-response",
+    cityId: "minneapolis-mn",
+    topic: "immigration",
+    displayName: "City of Minneapolis federal immigration enforcement response",
+    url: "https://www.minneapolismn.gov/government/programs-initiatives/city-federal-response/",
+    publisherClass: "official_city",
+    freshnessMinutes: 120,
+    enabled: true,
+    normalizer: "none",
+  },
+  {
+    id: "minneapolis-immigration-rights-resources",
+    cityId: "minneapolis-mn",
+    topic: "immigration",
+    displayName: "City of Minneapolis Know Your Rights and Resources",
+    url: "https://www2.minneapolismn.gov/government/departments/ncr/immigrants-refugees/know-your-rights-and-resources/",
+    publisherClass: "official_city",
+    freshnessMinutes: 120,
     enabled: true,
     normalizer: "none",
   },
@@ -428,7 +455,7 @@ function citySafetySourceRecord(value: Record<string, unknown>): CitySafetySourc
   if (
     !id || !displayName || !url.startsWith("https://") ||
     !CITY_SAFETY_CITY_CENTERS.some((city) => city.cityId === String(cityId)) ||
-    !["official_alert", "transit", "weather", "road", "event_advisory"].includes(String(topic)) ||
+    !["official_alert", "transit", "weather", "road", "event_advisory", "immigration"].includes(String(topic)) ||
     !["official_city", "official_transit", "official_weather", "official_emergency"].includes(String(publisherClass)) ||
     !["nws_alerts", "oem_activation", "none"].includes(String(normalizer)) ||
     !Number.isInteger(freshnessMinutes) || freshnessMinutes < 5 || freshnessMinutes > 180
@@ -590,6 +617,14 @@ export function renderDirectCitySafetyBriefing(
   city: string,
   result: CitySafetyBriefing,
 ): string {
+  const immigrationResources = result.officialLinks.filter((source) => source.topic === "immigration");
+  if (immigrationResources.length > 0) {
+    return [
+      `For ${city}, I do not have a verified location-specific ICE activity report in this check. I will not treat a city resource page as proof of an active operation where you are staying or traveling.`,
+      "What is useful right now: the City maintains a federal immigration-enforcement response page and a separate Know Your Rights and Resources page. Open those links for the City's latest update and legal-support resources before changing plans. This is general information, not individual legal advice.",
+      "For immediate danger, contact local emergency services. I will not turn this into a business recommendation or make a personal risk prediction.",
+    ].join("\n\n");
+  }
   return [
     `For ${city}, I can provide only the current information supported by approved official sources.`,
     renderCitySafetyBriefing(result),
