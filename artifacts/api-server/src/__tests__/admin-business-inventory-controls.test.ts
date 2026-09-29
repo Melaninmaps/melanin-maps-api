@@ -67,6 +67,15 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("No records were merged or deleted");
   });
 
+  it("indexes exact source receipts before a large protected batch is reconciled", () => {
+    expect(migrations).toContain("businesses_source_url_receipt_idx");
+    expect(migrations).toContain("businesses_research_source_url_receipt_idx");
+    expect(migrations).toContain("businesses_active_normalized_name_idx");
+    expect(migrations).toContain("CREATE INDEX CONCURRENTLY IF NOT EXISTS");
+    expect(adminRoute).toContain("source_url = ANY($3::text[])");
+    expect(adminRoute).toContain("research_source_url = ANY($3::text[])");
+  });
+
   it("supports city, service, date-added, and selected-row archive controls in the web dashboard", () => {
     expect(adminScreen).toContain("All cities");
     expect(adminScreen).toContain("All business types and services");

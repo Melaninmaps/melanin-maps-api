@@ -17721,7 +17721,26 @@ async function ensureBusinessIntakeMetadataSchema(
       CREATE INDEX IF NOT EXISTS businesses_admin_inventory_filter_idx
         ON businesses (city, category, created_at DESC)
     `);
-    log("ensureBusinessIntakeMetadataSchema: provenance and inventory filters ready");
+    // Source-backed reconciliation compares receipts, never a broad table scan
+    // or a name-only enrichment. These indexes cover the three proof lanes in
+    // sourceDirectoryExistingBusinessCandidates: exact source URL, exact
+    // research URL, and normalized names used only to route possible duplicates
+    // to the review vault. They are additive and do not change a business row,
+    // listing status, duplicate linkage, or public visibility.
+    await pool.query(`
+      CREATE INDEX CONCURRENTLY IF NOT EXISTS businesses_source_url_receipt_idx
+        ON businesses (source_url)
+    `);
+    await pool.query(`
+      CREATE INDEX CONCURRENTLY IF NOT EXISTS businesses_research_source_url_receipt_idx
+        ON businesses (research_source_url)
+    `);
+    await pool.query(`
+      CREATE INDEX CONCURRENTLY IF NOT EXISTS businesses_active_normalized_name_idx
+        ON businesses (REGEXP_REPLACE(LOWER(COALESCE(name, '')), '[^a-z0-9]+', '', 'g'))
+        WHERE COALESCE(is_duplicate, false) = false
+    `);
+    log("ensureBusinessIntakeMetadataSchema: provenance, receipt lookup, and inventory filters ready");
   } catch (err: unknown) {
     warn(
       `ensureBusinessIntakeMetadataSchema failed: ${err instanceof Error ? err.message : String(err)}`,

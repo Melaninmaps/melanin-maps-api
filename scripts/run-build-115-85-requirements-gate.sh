@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Requirements-to-proof source/artifact gate. Defaults to the next 129/98
+# Requirements-to-proof source/artifact gate. Defaults to the next 130/98
 # iOS version-train repair while retaining prior reviewed pairs for reproducible checks.
 #
 # Usage:
@@ -26,7 +26,7 @@ esac
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-129}"
+EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-130}"
 EXPECTED_ANDROID_CODE="${EXPECTED_ANDROID_CODE:-98}"
 if [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "115/85" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "116/86" ] &&
@@ -42,7 +42,8 @@ if [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "115/85" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "126/96" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "127/96" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "128/97" ] &&
-   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "129/98" ]; then
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "129/98" ] &&
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "130/98" ]; then
   printf '%s\n' 'Unsupported release identifier pair' >&2
   exit 64
 fi
