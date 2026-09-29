@@ -22,7 +22,7 @@ const directoryAssembly = source("../../../../scripts/assemble-source-backed-dir
 describe("administrator full-inventory and reversible duplicate controls", () => {
   it("returns one server-filtered page instead of sending the full inventory to the browser", () => {
     expect(adminRoute).toContain("const DEFAULT_INVENTORY_PAGE_SIZE = 50");
-    expect(adminRoute).toContain("const MAX_INVENTORY_PAGE_SIZE = 100");
+    expect(adminRoute).toContain("const MAX_INVENTORY_PAGE_SIZE = 500");
     expect(adminRoute).toContain("LIMIT $${filterParams.length + 1}");
     expect(adminRoute).toContain("OFFSET $${filterParams.length + 2}");
     expect(adminRoute).toContain("filteredTotal");
@@ -46,6 +46,8 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Loading business inventory");
     expect(adminScreen).toContain("Business inventory rows per page");
     expect(adminScreen).toContain("<option value={100}>100</option>");
+    expect(adminScreen).toContain("<option value={500}>500</option>");
+    expect(adminScreen).toContain("pageSize: requested === 500 || requested === 250 || requested === 100");
   });
 
   it("supports city, service, date-added, and selected-row archive controls in the web dashboard", () => {
@@ -130,6 +132,9 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     }
     expect(adminScreen).toContain("Missing a website");
     expect(adminScreen).toContain("No website or social media");
+    expect(adminScreen).toContain("No direct social URL saved (review queue)");
+    expect(adminRoute).toContain('link === "social_missing"');
+    expect(adminRoute).toContain("not that a business has no social presence");
     expect(adminScreen).toContain("Website &amp; social");
     expect(adminScreen).toContain("Select this page");
   });
@@ -199,7 +204,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("business_listing_status_audit_events");
     expect(adminRoute).toContain("remove_public_discovery");
     expect(adminScreen).toContain("research, source, or Kinfolk context");
-    expect(adminRoute).toContain("Select between 1 and 100 archived or duplicate businesses.");
+    expect(adminRoute).toContain("Select between 1 and 500 archived or duplicate businesses.");
     expect(adminRoute).toContain("Permanent deletion is allowed only for records already in Archive vault or Duplicate vault.");
     expect(adminRoute).toContain("business_permanent_deletion_audit_events");
     expect(adminRoute).toContain('DELETE FROM businesses WHERE id = ANY($1::text[])');

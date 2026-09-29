@@ -1027,6 +1027,12 @@ async function compileAdminBusinessInventoryFilters(
     // Instagram, and a Facebook/TikTok/etc. row from another city leaked into
     // an otherwise city-scoped Administrator review.
     filters.push("(NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(twitter, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(youtube, '')), '') IS NOT NULL OR NULLIF(BTRIM(COALESCE(pinterest, '')), '') IS NOT NULL)");
+  } else if (link === "social_missing") {
+    // This is a conservative review queue: it means no direct social URL is
+    // stored on the record, not that a business has no social presence. An
+    // official website remains independently visible and does not satisfy the
+    // social-review criterion.
+    filters.push("(NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(twitter, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(youtube, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(pinterest, '')), '') IS NULL)");
   } else if (link === "no_public_link") {
     filters.push("(NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(twitter, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(youtube, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(pinterest, '')), '') IS NULL)");
   }
@@ -1341,7 +1347,11 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     // of rows freezes ordinary computers. Each server-filtered page remains a
     // reviewable slice of the complete inventory, including older records.
     const DEFAULT_INVENTORY_PAGE_SIZE = 50;
-    const MAX_INVENTORY_PAGE_SIZE = 100;
+    // A review batch can contain up to 500 records, matching the bounded,
+    // audited archive and permanent-deletion operations below. The server
+    // still filters and pages the full catalog; it never sends it all to a
+    // browser at once.
+    const MAX_INVENTORY_PAGE_SIZE = 500;
     const requestedPage = Number.parseInt(String(req.query.page ?? "1"), 10);
     const page = Number.isFinite(requestedPage) && requestedPage > 0 ? requestedPage : 1;
     const requestedPageSize = Number.parseInt(
@@ -1829,8 +1839,8 @@ router.delete("/admin/businesses/permanent", async (req: Request, res: Response)
     ? [...new Set(req.body.ids.filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0))]
     : [];
   const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
-  if (ids.length === 0 || ids.length > 100) {
-    res.status(400).json({ error: "Select between 1 and 100 archived or duplicate businesses." });
+  if (ids.length === 0 || ids.length > 500) {
+    res.status(400).json({ error: "Select between 1 and 500 archived or duplicate businesses." });
     return;
   }
   if (reason.length < 3 || reason.length > 1_000) {

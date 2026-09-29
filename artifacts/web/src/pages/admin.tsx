@@ -924,7 +924,7 @@ export default function Admin() {
   const [bizIntakeCohortFilter, setBizIntakeCohortFilter] =
     useState<IntakeCohort>("all");
   const [bizLinkFilter, setBizLinkFilter] = useState<
-    "all" | "website_present" | "website_missing" | "social_present" | "no_public_link"
+    "all" | "website_present" | "website_missing" | "social_present" | "social_missing" | "no_public_link"
   >("all");
   const [bizOwnershipFilter, setBizOwnershipFilter] = useState<"all" | "black" | "hispanic" | "no_tag">("all");
   const [bizAddedFrom, setBizAddedFrom] = useState("");
@@ -952,7 +952,7 @@ export default function Admin() {
   const [businessInventoryFilteredTotal, setBusinessInventoryFilteredTotal] =
     useState(0);
   const [businessInventoryPage, setBusinessInventoryPage] = useState(1);
-  const [businessInventoryPageSize, setBusinessInventoryPageSize] = useState<50 | 100>(50);
+  const [businessInventoryPageSize, setBusinessInventoryPageSize] = useState<50 | 100 | 250 | 500>(50);
   const [businessInventoryTotalPages, setBusinessInventoryTotalPages] =
     useState(1);
   const [businessInventoryLoading, setBusinessInventoryLoading] = useState(false);
@@ -966,7 +966,7 @@ export default function Admin() {
   >([]);
   const businessInventoryQueryRef = useRef({
     page: 1,
-    pageSize: 50 as 50 | 100,
+    pageSize: 50 as 50 | 100 | 250 | 500,
     search: "",
     status: "active" as typeof bizStatusFilter,
     cities: [] as string[],
@@ -1230,7 +1230,7 @@ export default function Admin() {
 
   const loadBusinesses = useCallback((next: {
     page?: number;
-    pageSize?: 50 | 100;
+    pageSize?: 50 | 100 | 250 | 500;
     search?: string;
     status?: typeof bizStatusFilter;
     cities?: string[];
@@ -2378,7 +2378,7 @@ export default function Admin() {
   const allBusinessInventoryExportHref = `${BASE}api/admin/businesses/export-csv?status=all&sort=name_asc`;
 
   const applyBusinessInventoryFilters = (next: {
-    pageSize?: 50 | 100;
+    pageSize?: 50 | 100 | 250 | 500;
     search?: string;
     status?: typeof bizStatusFilter;
     cities?: string[];
@@ -2536,7 +2536,7 @@ export default function Admin() {
 
 
   const permanentlyDeleteBusinesses = async (ids: string[], names: string[]) => {
-    if (ids.length === 0 || ids.length > 100) return;
+    if (ids.length === 0 || ids.length > 500) return;
     if (bizStatusFilter !== "archived" && bizStatusFilter !== "duplicates") {
       window.alert("Permanent deletion is available only from Archive vault or Duplicate vault.");
       return;
@@ -4881,6 +4881,7 @@ Selected: ${summary}`,
                   <option value="website_present">Has a website</option>
                   <option value="website_missing">Missing a website</option>
                   <option value="social_present">Has any social media</option>
+                  <option value="social_missing">No direct social URL saved (review queue)</option>
                   <option value="no_public_link">No website or social media</option>
                 </select>
               </label>
@@ -4916,7 +4917,7 @@ Selected: ${summary}`,
             </div>
 
             <p className="-mt-2 mb-5 text-xs text-[#3A1F0E]/50">
-              Filters combine within the selected inventory tab: select one or more cities, then add business type, documented ownership tag, source cohort, website/social, date, and name/key-phrase filters. Archive vault + a cohort shows only archived records from that cohort; Live inventory + the same cohort shows only live records. Ownership filters use only recorded labels; they never infer identity. Put one phrase in quotes to require those words together, for example “full wash and detangle”.
+              Filters combine within the selected inventory tab: select one or more cities, then add business type, documented ownership tag, source cohort, website/social, date, and name/key-phrase filters. “No direct social URL saved” is a review queue, not proof that a business has no social presence. Archive vault + a cohort shows only archived records from that cohort; Live inventory + the same cohort shows only live records. Ownership filters use only recorded labels; they never infer identity. Put one phrase in quotes to require those words together, for example “full wash and detangle”.
             </p>
 
             {bizStatusFilter === "permanently_closed" && (
@@ -4950,12 +4951,21 @@ Selected: ${summary}`,
                   Rows
                   <select
                     value={businessInventoryPageSize}
-                    onChange={(event) => applyBusinessInventoryFilters({ pageSize: Number(event.target.value) === 100 ? 100 : 50 })}
+                    onChange={(event) => {
+                      const requested = Number(event.target.value);
+                      applyBusinessInventoryFilters({
+                        pageSize: requested === 500 || requested === 250 || requested === 100
+                          ? requested
+                          : 50,
+                      });
+                    }}
                     className="bg-transparent text-xs font-bold text-[#3A1F0E] focus:outline-none"
                     aria-label="Business inventory rows per page"
                   >
                     <option value={50}>50</option>
                     <option value={100}>100</option>
+                    <option value={250}>250</option>
+                    <option value={500}>500</option>
                   </select>
                 </label>
                 {bizStatusFilter === "duplicates" ? (
