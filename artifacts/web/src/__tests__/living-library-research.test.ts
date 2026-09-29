@@ -100,6 +100,9 @@ describe("Living Library research presentation", () => {
     expect(pageSource).toContain("withoutResearchLensTags");
     expect(pageSource).toContain("not saved as your identity");
     expect(pageSource).toContain("formatLibraryLensLabels");
+    expect(pageSource).toContain("Community research filters:");
+    expect(pageSource).toContain("formatLibraryLensLabels(activeResearchLensTags)");
+    expect(pageSource).not.toContain("formatLibraryLensLabels(response.researchLenses.map");
   });
 
   it("renders general research and direct-evidence community context as distinct packets", () => {

@@ -54,6 +54,8 @@ describe("mobile Library research experience", () => {
     expect(researchScreen).toContain("buildLibraryResearchQuery");
     expect(researchScreen).toContain("withoutResearchLensTags");
     expect(researchScreen).toContain("It is not saved as your identity.");
+    expect(researchScreen).toContain("formatLibraryLensLabels(activeResearchLensTags)");
+    expect(researchScreen).not.toContain("formatLibraryLensLabels(search.researchLenses.map");
   });
 
   it("uses an optional expandable community-context section instead of a horizontal carousel", () => {

@@ -459,11 +459,11 @@ export default function LibraryResearchScreen() {
             </Text>
           </View>
         ) : null}
-        {search?.researchLenses?.length ? (
+        {activeResearchLensTags.length ? (
           <View style={[styles.lensCard, { borderColor: "#CA922B45", backgroundColor: "#CA922B10" }]}>
             <Text style={[styles.scopeCopy, { color: colors.mutedForeground }]}>
               <Text style={{ fontWeight: "800" }}>Research lens: </Text>
-              {formatLibraryLensLabels(search.researchLenses.map((lens) => lens.tag))}. This scope guides evidence; it does not describe the reader.
+              {formatLibraryLensLabels(activeResearchLensTags)}. This scope guides evidence; it does not describe the reader.
             </Text>
           </View>
         ) : null}

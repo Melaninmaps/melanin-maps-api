@@ -533,7 +533,7 @@ export function LibrarySearchPage() {
             <div>
               <p className="living-library-eyebrow">Approved internal matches</p>
               <h2>Results for “{withoutResearchLensTags(response.query)}”</h2>
-              <p className="library-search-provider-note">Community evidence: {formatLibraryLensLabels(response.researchLenses.map((lens) => lens.tag)) || "None selected"}.</p>
+              <p className="library-search-provider-note">Community research filters: {formatLibraryLensLabels(activeResearchLensTags) || "None selected"}.</p>
             </div>
             <span>{response.total} {response.total === 1 ? "result" : "results"}</span>
           </div>
