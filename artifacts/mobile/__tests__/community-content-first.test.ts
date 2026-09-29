@@ -28,7 +28,7 @@ describe("native Community content-first surface", () => {
     expect(source).toContain("<CommunityPostCard");
     expect(feedList).not.toContain("ListHeaderComponent");
     expect(feedList).not.toContain("feedComposeBar");
-    expect(feedList).toContain("paddingTop: 16");
+    expect(feedList).toContain("paddingTop: 0");
     expect(feedList).toContain('justifyContent: "flex-start"');
     expect(feedList).toContain('contentInsetAdjustmentBehavior="never"');
     expect(source).toContain('accessibilityLabel="Add a Community post, photo, or video"');
@@ -55,6 +55,9 @@ describe("native Community content-first surface", () => {
     expect(source).toContain("This changes presentation only");
     expect(source).toContain("People & connections");
     expect(source).toContain('router.push("/connections")');
+    expect(source).toContain("const feedListRef = useRef<FlatList<CommunityPost> | null>(null)");
+    expect(source).toContain("feedListRef.current?.scrollToOffset({ offset: 0, animated: false })");
+    expect(source).toContain("setShowFeedControls(false)");
   });
 
   it("keeps a playable visual card in the feed while a native video frame loads", () => {

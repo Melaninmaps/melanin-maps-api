@@ -299,6 +299,7 @@ export default function CommunityScreen() {
   const [groupCreatePrivate, setGroupCreatePrivate] = useState(false);
   const [groupCreateSubmitting, setGroupCreateSubmitting] = useState(false);
   const inputRef = useRef<TextInput>(null);
+  const feedListRef = useRef<FlatList<CommunityPost> | null>(null);
   const feedRequestInFlightRef = useRef(false);
   const lastFeedRequestAtRef = useRef(0);
 
@@ -405,6 +406,11 @@ export default function CommunityScreen() {
   const selectCommunityFeedDisplay = useCallback(async (next: CommunityFeedDisplay) => {
     const previous = communityFeedDisplay;
     setCommunityFeedDisplay(next);
+    setActiveTab("Feed");
+    setShowFeedControls(false);
+    requestAnimationFrame(() => {
+      feedListRef.current?.scrollToOffset({ offset: 0, animated: false });
+    });
     if (Platform.OS !== "web") void Haptics.selectionAsync();
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
@@ -1428,13 +1434,14 @@ export default function CommunityScreen() {
       ) : (
         <View style={{ flex: 1 }}>
           <FlatList
+            ref={feedListRef}
             data={filteredPosts}
             keyExtractor={(p) => p.id}
             style={{ flex: 1 }}
             // Cards remain immediately below the tabs. Presentation controls,
             // people, topics, and composing stay reachable without a promo or
             // discovery block displacing the content-first feed.
-            contentContainerStyle={[styles.list, { paddingTop: 16, paddingBottom: bottomPad + 100, flexGrow: 0, justifyContent: "flex-start" }]}
+            contentContainerStyle={[styles.list, { paddingTop: 0, paddingBottom: bottomPad + 100, flexGrow: 0, justifyContent: "flex-start" }]}
             // The screen already accounts for its own safe area in the header.
             // Do not let iOS add a second automatic inset before the first post.
             contentInsetAdjustmentBehavior="never"
