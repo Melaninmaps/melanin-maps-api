@@ -1421,11 +1421,16 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const liveInventoryWhere = "COALESCE(listing_status, 'live_unclaimed') <> 'archived' AND COALESCE(is_duplicate, false) = false";
     const archivedInventoryWhere = "listing_status = 'archived' AND COALESCE(is_duplicate, false) = false";
     const duplicateInventoryWhere = "COALESCE(is_duplicate, false) = true";
+    // The master owner inventory deliberately includes every retained row.
+    // Its controls remain status-aware; this only removes the view-level wall
+    // between live, archived, and duplicate records.
     const inventoryScopeWhere = status === "duplicates"
       ? duplicateInventoryWhere
       : status === "archived"
         ? archivedInventoryWhere
-        : liveInventoryWhere;
+        : status === "all"
+          ? "TRUE"
+          : liveInventoryWhere;
     const [
       businesses,
       inventoryCount,
@@ -1454,6 +1459,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       ownership_designations: string[] | null;
       status: string;
       listing_status: string;
+      is_duplicate: boolean;
       phone: string | null;
       website: string | null;
       instagram: string | null;
@@ -1476,8 +1482,8 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       intake_cohort: "protected_historical_cohort" | "user_national_master" | "other_inventory";
       manus_created: boolean;
       }>(
-      `SELECT id, name, category, subcategory, city, state, verified, black_owned, ownership_designations, status,
-              listing_status, phone, website, instagram, tiktok, facebook, twitter, youtube, pinterest, created_at,
+       `SELECT id, name, category, subcategory, city, state, verified, black_owned, ownership_designations, status,
+              listing_status, is_duplicate, phone, website, instagram, tiktok, facebook, twitter, youtube, pinterest, created_at,
               needs_verification, enrichment_note, address, latitude, longitude,
               to_jsonb(businesses)->>'data_source' AS data_source,
               to_jsonb(businesses)->>'research_source_label' AS research_source_label,
@@ -1602,6 +1608,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       ownershipDesignations: Array.isArray(b.ownership_designations) ? b.ownership_designations : [],
       status: b.status,
       listingStatus: b.listing_status,
+      isDuplicate: b.is_duplicate,
       phone: b.phone,
       website: b.website,
       instagram: b.instagram,

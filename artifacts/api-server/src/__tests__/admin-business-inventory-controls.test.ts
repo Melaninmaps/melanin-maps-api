@@ -119,21 +119,32 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain('params.set("sort", sortValue)');
   });
 
-  it("keeps archived duplicate records in a separate vault and counts each discovery surface", () => {
+  it("opens one paginated master inventory while preserving status-specific safeguards", () => {
     expect(adminRoute).toContain('const status = String(query.status ?? "active")');
     expect(adminRoute).toContain("COALESCE(listing_status, 'live_unclaimed') <> 'archived'");
     expect(adminRoute).toContain("const liveInventoryWhere");
     expect(adminRoute).toContain("const archivedInventoryWhere");
+    expect(adminRoute).toContain('status === "all"');
+    expect(adminRoute).toContain('? "TRUE"');
+    expect(adminRoute).toContain("listing_status, is_duplicate, phone");
+    expect(adminRoute).toContain("isDuplicate: b.is_duplicate");
     expect(adminRoute).toContain("liveInventoryTotal");
     expect(adminRoute).toContain("archivedInventoryTotal");
     expect(adminRoute).toContain("publicDirectoryTotal");
     expect(adminRoute).toContain("kinfolkRecommendableTotal");
     expect(adminRoute).toContain("FROM public.public_businesses");
+    expect(adminScreen).toContain('>("all")');
+    expect(adminScreen).toContain('status: "all" as typeof bizStatusFilter');
+    expect(adminScreen).toContain("All retained business records");
+    expect(adminScreen).toContain("All businesses (");
+    expect(adminScreen).toContain("masterInventoryMode");
+    expect(adminScreen).toContain("Review-only master list");
+    expect(adminScreen).toContain("Status-specific actions remain protected");
+    expect(adminScreen).toContain("Duplicate vault");
     expect(adminScreen).toContain("Archive vault");
     expect(adminScreen).toContain("Public Directory searchable");
     expect(adminScreen).toContain("Current Kinfolk catalog");
-    expect(adminScreen).toContain("Archived in separate vault");
-    expect(adminScreen).toContain("status: \"active\"");
+    expect(adminScreen).toContain("Archived records in master list");
     expect(adminScreen).toContain("Unhide / restore public listing");
   });
 
