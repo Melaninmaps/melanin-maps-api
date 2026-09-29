@@ -225,6 +225,10 @@ function relevantRecords(inputDir) {
     const sourceFiles = names
       .filter((name) => /^\d{2}-.*\.json$/i.test(name))
       .filter((name) => !/-(?:full|sample)\.json$/i.test(name))
+      // Evidence reports share the numbered directory-artifact folder but are
+      // summaries, not source-record arrays. Never treat a crawler's own
+      // output as a new source list on a targeted re-run.
+      .filter((name) => !/\.report\.json$/i.test(name))
       .sort();
     const byReceipt = new Map();
     for (const name of sourceFiles) {
@@ -259,6 +263,7 @@ async function auditRecord(record, scheduledFetch, options) {
     : {};
   const websitePages = [];
   let websiteSocial = {};
+  let officialDescription = null;
   let officialWebsiteStatus = "website_not_provided";
   if (websiteUrl && options.withWebsites) {
     const home = await scheduledFetch(websiteUrl, options.timeoutMs);
@@ -273,6 +278,12 @@ async function auditRecord(record, scheduledFetch, options) {
     websitePages.push(homeDetails);
     if (meaningfulOfficialPage({ ...homeDetails, status: home.status }, record.name)) {
       officialWebsiteStatus = "official_site_readable";
+      officialDescription = usableDescription(
+        descriptionFromJsonLd(home.text, record.name)
+          ?? extractMetaDescription(home.text)
+          ?? extractBusinessDescription(home.text),
+        record.sourceLabel,
+      );
       websiteSocial = extractSocialLinks(home.text, home.finalUrl ?? websiteUrl);
       const followUps = internalPriorityLinks(home.text, home.finalUrl ?? websiteUrl);
       for (const followUp of followUps) {
@@ -285,6 +296,12 @@ async function auditRecord(record, scheduledFetch, options) {
           description: extractMetaDescription(page.text),
           error: page.error,
         });
+        officialDescription = officialDescription ?? usableDescription(
+          descriptionFromJsonLd(page.text, record.name)
+            ?? extractMetaDescription(page.text)
+            ?? extractBusinessDescription(page.text),
+          record.sourceLabel,
+        );
         websiteSocial = { ...extractSocialLinks(page.text, page.finalUrl ?? followUp), ...websiteSocial };
       }
     } else {
@@ -297,7 +314,15 @@ async function auditRecord(record, scheduledFetch, options) {
     : listing?.status && listing.status >= 200 && listing.status < 400
       ? "detail_page_not_specific"
       : listingUrl ? "detail_page_failed" : "detail_page_not_provided";
-  const description = listingDescription;
+  // A source-directory detail is preferred for provenance. A readable,
+  // identity-confirmed official site is the only fallback allowed to add a
+  // missing description; search snippets and directory landing pages never do.
+  const description = listingDescription ?? officialDescription;
+  const descriptionOrigin = listingDescription
+    ? "source_directory_detail"
+    : officialDescription
+      ? "official_site"
+      : null;
   const socialStatus = Object.keys(socials).length
     ? "DIRECT_SOCIAL_VERIFIED"
     : websiteUrl && officialWebsiteStatus === "official_site_readable"
@@ -319,6 +344,7 @@ async function auditRecord(record, scheduledFetch, options) {
     parseStatus: description ? "business_specific_description_found" : "description_not_found_or_generic",
     activeSignal: listingIsDetail ? "current_first_party_directory_detail" : null,
     sourceDescription: description,
+    descriptionOrigin,
     sourceSocialUrls: socials,
     officialWebsite: websiteUrl,
     officialWebsiteStatus,
