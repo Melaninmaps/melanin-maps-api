@@ -9,12 +9,17 @@ describe("direct Kinfolk calendar answers", () => {
     "What is the date today?",
     "Today's date",
     "What day is it?",
+    "What weekday and calendar date will tomorrow be in Minneapolis?",
+    "What's tomorrow's date?",
   ])("recognizes a direct calendar question: %s", (message) => {
     expect(isDirectKinfolkCalendarDateQuestion(message)).toBe(true);
   });
 
-  it("does not intercept a question that only mentions date freshness", () => {
-    expect(isDirectKinfolkCalendarDateQuestion("Is this information current as of today?")).toBe(false);
+  it.each([
+    "Is this information current as of today?",
+    "I want to plan dinner tomorrow in Minneapolis.",
+  ])("does not intercept a planning or freshness question: %s", (message) => {
+    expect(isDirectKinfolkCalendarDateQuestion(message)).toBe(false);
   });
 
   it("uses the client-local calendar day instead of the server clock", () => {
@@ -24,6 +29,15 @@ describe("direct Kinfolk calendar answers", () => {
       clientTimeZone: "America/New_York",
       now,
     })).toBe("Today is Monday, September 28, 2026.");
+  });
+
+  it("calculates tomorrow from the local calendar without leaking into web research", () => {
+    const now = new Date("2026-09-29T00:30:00.000Z");
+    expect(answerDirectKinfolkCalendarDate({
+      message: "What weekday and calendar date will tomorrow be in Minneapolis?",
+      clientTimeZone: "America/Chicago",
+      now,
+    })).toBe("Tomorrow will be Tuesday, September 29, 2026.");
   });
 
   it("safely falls back when a client sends an invalid timezone", () => {
