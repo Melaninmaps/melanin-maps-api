@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   KINFOLK_TTS_BASE_VOICE_ENV,
@@ -7,6 +9,11 @@ import {
   resolveKinfolkSpeechConfiguration,
   resolveKinfolkVoiceDelivery,
 } from "../voice-delivery";
+
+const routeSource = readFileSync(
+  fileURLToPath(new URL("../../routes/kinfolk.ts", import.meta.url)),
+  "utf8",
+);
 
 describe("Kinfolk server-owned voice delivery", () => {
   it("keeps one approved base voice on the server and fails closed on invalid settings", () => {
@@ -52,5 +59,13 @@ describe("Kinfolk server-owned voice delivery", () => {
     })).toEqual({ mode: "professor", requestId: "turn-123" });
     expect(normalizeKinfolkSpeechRequest({ mode: "unrecognized", requestId: 8 }))
       .toEqual({ mode: "community", requestId: null });
+  });
+
+  it("returns only valid audio metadata to the protected client playback path", () => {
+    expect(routeSource).toContain('router.post("/kinfolk/speak"');
+    expect(routeSource).toContain("audioBuffer.length < 256");
+    expect(routeSource).toContain('contentType: "audio/wav"');
+    expect(routeSource).toContain("bytes: audioBuffer.length");
+    expect(routeSource).toContain("safeKinfolkErrorMetadata(err)");
   });
 });

@@ -41,6 +41,16 @@ describe("Community, map, and primary Kinfolk regressions", () => {
     expect(travel).not.toContain('from "expo-speech"');
   });
 
+  it("makes native playback state visible and validates delivered audio before playing", () => {
+    const travel = source("app/travel.tsx");
+    expect(travel).toContain('setVoiceOutputStatus("Preparing voice…")');
+    expect(travel).toContain('setVoiceOutputStatus("Speaking…")');
+    expect(travel).toContain('Voice unavailable — try Listen again.');
+    expect(travel).toContain('payload.bytes < 256');
+    expect(travel).toContain('payload.contentType?.startsWith("audio/")');
+    expect(travel).toContain('playsInSilentMode: true');
+  });
+
   it("does not erase successfully loaded pins after a transient business refresh failure", () => {
     const businesses = source("hooks/useBusinesses.ts");
     expect(businesses).toContain("lastSuccessfulBusinessesRef");

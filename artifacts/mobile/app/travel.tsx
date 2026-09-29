@@ -2021,6 +2021,9 @@ export default function TravelScreen() {
   const queuedVoicePlaybackRef = useRef<VoicePlaybackRequest | null>(null);
   const [voiceAudioUri, setVoiceAudioUri] = useState<string | undefined>(undefined);
   const [playingVoice, setPlayingVoice] = useState(false);
+  // TTS has separate receipt, playback, and completion stages. Keep this
+  // visible so a member never has to guess whether Listen failed or is loading.
+  const [voiceOutputStatus, setVoiceOutputStatus] = useState<string | null>(null);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [isTranscribingVoice, setIsTranscribingVoice] = useState(false);
   const [voiceInputStatus, setVoiceInputStatus] = useState<string | null>(null);
@@ -2102,6 +2105,7 @@ export default function TravelScreen() {
     const request = autoSpeechGuardRef.current.begin();
     let queued = false;
     setPlayingVoice(true);
+    setVoiceOutputStatus("Preparing voice…");
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const response = await fetch(`${getApiBase()}/api/kinfolk/speak`, {
@@ -2126,8 +2130,19 @@ export default function TravelScreen() {
         const payload = await response.json().catch(() => ({})) as { message?: string };
         throw new Error(payload.message ?? "Kinfolk could not create audio right now.");
       }
-      const payload = await response.json() as { audio?: string; format?: string };
-      if (!payload.audio || !payload.format) throw new Error("Kinfolk did not return playable audio.");
+      const payload = await response.json() as {
+        audio?: string;
+        format?: string;
+        contentType?: string;
+        bytes?: number;
+      };
+      if (
+        !payload.audio
+        || !["wav", "mp3", "m4a"].includes(payload.format ?? "")
+        || typeof payload.bytes !== "number"
+        || payload.bytes < 256
+        || !payload.contentType?.startsWith("audio/")
+      ) throw new Error("Kinfolk did not return playable audio.");
       if (!autoSpeechGuardRef.current.canPlay(request)) return;
       const temporaryFile = new FileSystem.File(
         FileSystem.Paths.cache,
@@ -2141,6 +2156,7 @@ export default function TravelScreen() {
     } catch (cause) {
       if (request.signal.aborted) return;
       const message = cause instanceof Error ? cause.message : "Kinfolk audio could not start.";
+      setVoiceOutputStatus("Voice unavailable — try Listen again.");
       Alert.alert("Voice playback unavailable", `${message} You can still read the reply and try Listen again.`);
     } finally {
       if (!queued) {
@@ -2171,10 +2187,12 @@ export default function TravelScreen() {
         if (cancelled || !autoSpeechGuardRef.current.canPlay(request)) return;
         serverVoicePlayer.volume = 1;
         serverVoicePlayer.play();
+        setVoiceOutputStatus("Speaking…");
         queuedVoicePlaybackRef.current = null;
         autoSpeechGuardRef.current.finish(request);
       } catch {
         if (!cancelled) {
+          setVoiceOutputStatus("Voice unavailable — try Listen again.");
           Alert.alert("Voice playback unavailable", "Kinfolk created audio but your device could not play it. Check volume and try Listen again.");
           stopServerVoice("playback_start_failed");
         }
@@ -2185,6 +2203,7 @@ export default function TravelScreen() {
 
   useEffect(() => {
     if (serverVoicePlayerStatus.error && playingVoice) {
+      setVoiceOutputStatus("Voice unavailable — try Listen again.");
       Alert.alert("Voice playback unavailable", "Kinfolk audio could not play on this device. Check volume and try again.");
       stopServerVoice("playback_error");
     }
@@ -2192,6 +2211,7 @@ export default function TravelScreen() {
 
   useEffect(() => {
     if (playingVoice && serverVoicePlayer.isLoaded && !serverVoicePlayer.playing && !queuedVoicePlaybackRef.current) {
+      setVoiceOutputStatus("Voice finished. Tap Listen to play it again.");
       const timer = setTimeout(() => setPlayingVoice(false), 0);
       return () => clearTimeout(timer);
     }
@@ -2833,6 +2853,12 @@ export default function TravelScreen() {
         </View>
         </>}
 
+        {voiceOutputStatus ? (
+          <View style={[styles.voiceInputStatus, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+            <Ionicons name={playingVoice ? "volume-high-outline" : "volume-medium-outline"} size={15} color={colors.primary} />
+            <Text style={[styles.voiceInputStatusText, { color: colors.mutedForeground }]}>{voiceOutputStatus}</Text>
+          </View>
+        ) : null}
         {voiceInputStatus ? (
           <View style={[styles.voiceInputStatus, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
             {isRecordingVoice || isTranscribingVoice ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="mic-outline" size={15} color={colors.primary} />}

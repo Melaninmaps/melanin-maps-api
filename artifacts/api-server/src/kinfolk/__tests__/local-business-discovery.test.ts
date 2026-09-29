@@ -10,11 +10,12 @@ vi.mock("@workspace/integrations-openai-ai-server", () => ({
 }));
 
 import { resolveNamedBusinessTurn } from "../business-reference";
-import { deriveBusinessSubject } from "../business-subject";
+import { deriveBusinessSubject, deriveFoodIntent } from "../business-subject";
 import type { GovernedKinfolkBusiness, GovernedKinfolkMapPlace } from "../governedBusinessRepository";
 import {
   buildBusinessDiscoveryWebQueries,
   discoverLocalBusinesses,
+  eligibleForImmediateDining,
 } from "../local-business-discovery";
 import { classifyKinfolkRequest } from "../request-classifier";
 import { searchAllQueriesWithState, searchLocalBusinessQueriesWithState } from "../web-search";
@@ -37,6 +38,36 @@ afterEach(() => {
 });
 
 const bookstore = deriveBusinessSubject("Can you tell me about bookstores in Atlanta GA")!;
+
+describe("immediate dining intent", () => {
+  it("keeps caterer-only records out of dinner tonight while retaining actionable restaurants", () => {
+    const subject = deriveBusinessSubject("I need dinner tonight in Minneapolis")!;
+    expect(subject.foodIntent).toBe("dining_now");
+    expect(deriveFoodIntent("Need a caterer for a 40-person event Friday")).toBe("event_catering");
+    expect(eligibleForImmediateDining({
+      name: "Celebration Catering",
+      category: "Catering",
+      subcategory: null,
+      description: "Private event catering.",
+      tags: ["catering"],
+      specialties: [],
+      address: "123 Market St",
+      phone: "555-555-0100",
+      website: "https://catering.example.com",
+    }, subject)).toBe(false);
+    expect(eligibleForImmediateDining({
+      name: "Dinner Table",
+      category: "Restaurant",
+      subcategory: "Dine-in",
+      description: "Dinner service.",
+      tags: ["restaurant"],
+      specialties: [],
+      address: "456 Market St",
+      phone: null,
+      website: "https://dinner.example.com",
+    }, subject)).toBe(true);
+  });
+});
 
 const governedBusiness: GovernedKinfolkBusiness = {
   id: "business-1",

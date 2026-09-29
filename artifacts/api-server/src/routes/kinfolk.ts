@@ -13255,7 +13255,7 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
     ]).finally(() => {
       if (ttsTimer) clearTimeout(ttsTimer);
     });
-    if (!Buffer.isBuffer(audioBuffer) || audioBuffer.length === 0) {
+    if (!Buffer.isBuffer(audioBuffer) || audioBuffer.length < 256) {
       return void res.status(503).json({
         error: "TTS_UNAVAILABLE",
         message: "Kinfolk could not create audio for that response. Please try again or read the text instead.",
@@ -13270,6 +13270,8 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
     res.json({
       audio: audioBuffer.toString("base64"),
       format: "wav",
+      contentType: "audio/wav",
+      bytes: audioBuffer.length,
       deliveryMode: delivery.mode,
       deliveryLabel: delivery.label,
       charsUsed: newUsed,

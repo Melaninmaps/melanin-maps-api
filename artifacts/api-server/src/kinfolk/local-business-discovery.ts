@@ -234,6 +234,32 @@ function requestedSubjectLabel(subject: NormalizedBusinessSubject): string {
   return [...qualifiers, subject.label].join(" ");
 }
 
+/**
+ * "Dinner tonight" means an individual or small group needs an actionable
+ * place to eat, not that an event caterer is a sensible substitute. The
+ * directory does not yet carry reliable live hours for every listing, so this
+ * deliberately narrows only the service type and never claims a business is
+ * open; the card continues to direct the member to confirm current hours.
+ */
+export function eligibleForImmediateDining(
+  business: Pick<GovernedKinfolkBusiness, "name" | "category" | "subcategory" | "description" | "tags" | "specialties" | "address" | "phone" | "website">,
+  subject: NormalizedBusinessSubject,
+): boolean {
+  if (subject.foodIntent !== "dining_now") return true;
+  if (!business.address && !business.phone && !business.website) return false;
+  const text = [
+    business.name,
+    business.category,
+    business.subcategory ?? "",
+    business.description,
+    ...(business.tags ?? []),
+    ...(business.specialties ?? []),
+  ].join(" ").toLowerCase();
+  const cateringOnly = /\b(?:caterer|catering|private chef)\b/.test(text)
+    && !/\b(?:restaurant|dine[ -]?in|counter service|take[ -]?out|food truck|cafe|coffee shop)\b/.test(text);
+  return !cateringOnly;
+}
+
 function webQueries(
   subject: NormalizedBusinessSubject,
   scope: ValidatedKinfolkCityScope,
@@ -607,6 +633,23 @@ export async function discoverLocalBusinesses(input: {
   }
   const afterServiceEvidenceCount = businessRows.length;
 
+  businessRows = businessRows.filter((business) =>
+    eligibleForImmediateDining(business, input.subject),
+  );
+  mapRows = mapRows.filter((place) =>
+    eligibleForImmediateDining({
+      name: place.title,
+      category: place.entityKind,
+      subcategory: null,
+      description: place.summary,
+      tags: [],
+      specialties: [],
+      address: null,
+      phone: null,
+      website: place.websiteUrl,
+    }, input.subject),
+  );
+
   // A strict Support Lens and the default Diaspora Promotion Catalog are
   // documentary-only. Kinfolk may answer general factual questions with
   // sources, but it must never promote an externally found business unless a
@@ -670,6 +713,19 @@ export async function discoverLocalBusinesses(input: {
         ageBand: input.personalization?.ageBand,
         text: `${result.title} ${result.content}`,
       }),
+    )
+    .filter((result) =>
+      eligibleForImmediateDining({
+        name: result.title,
+        category: "",
+        subcategory: null,
+        description: result.content,
+        tags: [],
+        specialties: [],
+        address: null,
+        phone: null,
+        website: result.url,
+      }, input.subject),
     )
     .slice(0, 8)
     .map(webFinding)

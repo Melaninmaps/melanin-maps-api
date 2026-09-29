@@ -33,6 +33,9 @@ export type BusinessSubjectKey =
   | "fashion"
   | "dessert";
 
+/** Food timing is a current-turn service need, not a saved preference. */
+export type FoodIntent = "dining_now" | "dining_later" | "takeout_or_delivery" | "event_catering" | "private_chef";
+
 export type NormalizedBusinessSubject = Readonly<{
   key: BusinessSubjectKey;
   label: string;
@@ -45,6 +48,8 @@ export type NormalizedBusinessSubject = Readonly<{
   documentedServiceRequirement?: DocumentedServiceRequirement;
   /** Current-turn street or amenity cues that must be documented on the listing. */
   contextualEvidenceTerms?: readonly string[];
+  /** Prevents a caterer-only record from being offered as dinner tonight. */
+  foodIntent?: FoodIntent;
 }>;
 
 export type DietaryRequirement = Readonly<{
@@ -489,6 +494,15 @@ export function deriveDocumentedServiceRequirement(
     : undefined;
 }
 
+export function deriveFoodIntent(message: string): FoodIntent | undefined {
+  if (/\b(?:cater(?:er|ing)?|feeding\s+\d+|event|wedding|reception|corporate\s+lunch)\b/i.test(message)) return "event_catering";
+  if (/\bprivate\s+chef\b/i.test(message)) return "private_chef";
+  if (/\b(?:delivery|deliver|take[ -]?out|pick[ -]?up)\b/i.test(message)) return "takeout_or_delivery";
+  if (/\b(?:dinner|lunch|breakfast|brunch)\s+(?:tonight|now)\b|\b(?:where|what).{0,32}\b(?:eat|dine)\s+now\b/i.test(message)) return "dining_now";
+  if (/\b(?:dinner|lunch|breakfast|brunch)\b/i.test(message)) return "dining_later";
+  return undefined;
+}
+
 export function deriveBusinessSubject(
   message: string,
 ): NormalizedBusinessSubject | null {
@@ -527,6 +541,7 @@ export function deriveBusinessSubject(
         dietaryRequirement: deriveDietaryRequirement(message),
         documentedServiceRequirement: deriveDocumentedServiceRequirement(message),
         contextualEvidenceTerms: deriveContextualBusinessEvidenceTerms(message),
+    foodIntent: deriveFoodIntent(message),
       };
     }
     const booksAsShoppingRequest =
@@ -544,6 +559,7 @@ export function deriveBusinessSubject(
       dietaryRequirement: deriveDietaryRequirement(message),
       documentedServiceRequirement: deriveDocumentedServiceRequirement(message),
       contextualEvidenceTerms: deriveContextualBusinessEvidenceTerms(message),
+    foodIntent: deriveFoodIntent(message),
     };
   }
   return {
@@ -554,6 +570,7 @@ export function deriveBusinessSubject(
     dietaryRequirement: deriveDietaryRequirement(message),
     documentedServiceRequirement: deriveDocumentedServiceRequirement(message),
     contextualEvidenceTerms: deriveContextualBusinessEvidenceTerms(message),
+    foodIntent: deriveFoodIntent(message),
   };
 }
 
