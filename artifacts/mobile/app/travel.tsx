@@ -52,6 +52,7 @@ import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voice
 import { KinfolkCompanionMemoryOfferCard } from "@/components/KinfolkCompanionMemoryOffer";
 import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDisclosure";
 import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiveMemoryConfirmation";
+import { KinfolkInlineMemoryConsent } from "@/components/KinfolkInlineMemoryConsent";
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
 const NATIVE_VOICE_MAX_DURATION_MS = 60_000;
@@ -1999,7 +2000,7 @@ export default function TravelScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
-  const { messages, sessionId, isLoading, sessions, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft } = useKinfolk();
+  const { messages, sessionId, isLoading, sessions, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent } = useKinfolk();
   const { preferences, update: updatePreferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
   const { isAuthenticated } = useAuth();
@@ -2586,6 +2587,13 @@ export default function TravelScreen() {
           onSpeak={speakManually}
           colors={colors}
         />
+        {item.inlineMemoryConsent && <KinfolkInlineMemoryConsent
+          message={item.inlineMemoryConsent.message}
+          plan={item.inlineMemoryConsent.plan}
+          sessionId={item.inlineMemoryConsent.sessionId}
+          onSaved={() => { dismissInlineMemoryConsent(item.id); void loadKinfolkContinuity(); }}
+          onDismiss={() => dismissInlineMemoryConsent(item.id)}
+        />}
         {item.sensitiveMemoryDraft && <KinfolkSensitiveMemoryConfirmation
           content={item.sensitiveMemoryDraft.content}
           purpose={item.sensitiveMemoryDraft.purpose}
@@ -2595,7 +2603,7 @@ export default function TravelScreen() {
         />}
       </View>
     );
-  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction, speakManually, dismissSensitiveMemoryDraft]);
+  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction, speakManually, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, loadKinfolkContinuity]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>

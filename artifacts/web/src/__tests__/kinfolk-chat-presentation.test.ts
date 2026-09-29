@@ -94,6 +94,12 @@ describe("Kinfolk chat presentation", () => {
     expect(memoryManagerSource).toContain("Confirm sensitive edit");
   });
 
+  it("renders direct memory choices inside the Kinfolk conversation", () => {
+    expect(travelPageSource).toContain("KinfolkInlineMemoryConsent");
+    expect(travelPageSource).toContain("memoryConsentPlan?: KinfolkInlineMemoryConsentPlan | null");
+    expect(travelPageSource).toContain("inlineMemoryConsent: data.memoryConsentPlan");
+  });
+
   it("renders deterministic business recommendations with active detail and website links", () => {
     expect(travelPageSource).toContain("biz.detailUrl");
     expect(travelPageSource).toContain("View details");

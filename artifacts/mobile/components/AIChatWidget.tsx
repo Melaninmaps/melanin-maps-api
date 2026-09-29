@@ -46,6 +46,7 @@ import {
   type KinfolkCompanionMemoryOffer,
 } from "@/components/KinfolkCompanionMemoryOffer";
 import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiveMemoryConfirmation";
+import { KinfolkInlineMemoryConsent, type KinfolkInlineMemoryConsentPlan } from "@/components/KinfolkInlineMemoryConsent";
 
 interface Message {
   id: string;
@@ -64,6 +65,7 @@ interface Message {
   intentClass?: string | null;
   companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
   sensitiveMemoryDraft?: { content: string; purpose: string; sessionId?: string | null } | null;
+  inlineMemoryConsent?: { message: string; plan: KinfolkInlineMemoryConsentPlan; sessionId?: string | null } | null;
 }
 
 interface TaskActionPayload {
@@ -183,6 +185,7 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
   intentClass?: string | null;
   companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
   sensitiveMemoryDraft?: { content: string; purpose: string; sessionId?: string | null } | null;
+  inlineMemoryConsent?: { message: string; plan: KinfolkInlineMemoryConsentPlan; sessionId?: string | null } | null;
 }> {
   const base = getApiBase();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -223,6 +226,7 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
     intentClass?: string | null;
     companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
     sensitiveMemoryConfirmation?: { confirmationRequired?: boolean; purpose?: string } | null;
+    memoryConsentPlan?: KinfolkInlineMemoryConsentPlan | null;
   };
   if (data.sessionId) sessionId = data.sessionId;
   return {
@@ -239,6 +243,7 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
     libraryAction: data.libraryAction ?? null,
     intentClass: data.intentClass ?? null,
     companionMemoryOffer: data.companionMemoryOffer ?? null,
+    inlineMemoryConsent: data.memoryConsentPlan ? { message, plan: data.memoryConsentPlan, sessionId: data.sessionId ?? sessionId } : null,
     sensitiveMemoryDraft:
       data.sensitiveMemoryConfirmation?.confirmationRequired === true
         ? {
@@ -1389,6 +1394,15 @@ export function AIChatWidget() {
                   <KinfolkCompanionMemoryOfferCard
                     offer={item.companionMemoryOffer}
                     sessionId={sessionId}
+                  />
+                ) : null}
+                {!item.fromUser && item.inlineMemoryConsent ? (
+                  <KinfolkInlineMemoryConsent
+                    message={item.inlineMemoryConsent.message}
+                    plan={item.inlineMemoryConsent.plan}
+                    sessionId={item.inlineMemoryConsent.sessionId}
+                    onSaved={() => setMessages((current) => current.map((message) => message.id === item.id ? { ...message, inlineMemoryConsent: null } : message))}
+                    onDismiss={() => setMessages((current) => current.map((message) => message.id === item.id ? { ...message, inlineMemoryConsent: null } : message))}
                   />
                 ) : null}
                 {!item.fromUser && item.sensitiveMemoryDraft ? (

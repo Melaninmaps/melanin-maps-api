@@ -297,10 +297,10 @@ import {
   planningDiscoveryPreferenceTerms,
 } from "../kinfolk/consented-planning-context";
 import { resolveConsentedHealthPopulationContext } from "../kinfolk/consented-health-context";
+import { buildExplicitMemoryConsentPlan } from "../kinfolk/explicit-memory-consent";
 import {
   isExplicitMemberMemoryCapabilityQuestion,
   isExplicitProfileMemoryRelevant,
-  parseExplicitMemberMemory,
   profileDiscoveryContextTerms,
 } from "../kinfolk/explicit-member-memory";
 import {
@@ -5892,6 +5892,76 @@ router.get("/kinfolk/memories", async (req: Request, res: Response) => {
   }
 });
 
+router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
+  if (!isKinfolkPrivateMemoryEnabled() && !isExplicitMemberMemoryEnabled()) {
+    return void res.status(403).json({ error: "Kinfolk private memory is disabled.", code: "PRIVATE_MEMORY_DISABLED" });
+  }
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+
+  const body = req.body as Record<string, unknown>;
+  const plan = buildExplicitMemoryConsentPlan(body.message);
+  const selectedIds = Array.isArray(body.selectedIds)
+    ? [...new Set(body.selectedIds.filter((id): id is string => typeof id === "string"))].slice(0, 12)
+    : [];
+  if (!plan || selectedIds.length === 0 || body.consent !== true) {
+    return void res.status(400).json({
+      error: "Choose at least one item and confirm before Kinfolk saves a private memory.",
+      code: "MEMORY_CONSENT_SELECTION_REQUIRED",
+    });
+  }
+
+  const items = [...plan.ordinary, ...plan.sensitive];
+  const selected = items.filter((item) => selectedIds.includes(item.id));
+  if (selected.length !== selectedIds.length) {
+    return void res.status(400).json({ error: "One or more memory choices are no longer valid.", code: "MEMORY_CONSENT_SELECTION_INVALID" });
+  }
+
+  try {
+    const now = new Date();
+    const [current] = await db.select({ disclosedAt: userSettingsTable.kinfolkContinuityDisclosedAt })
+      .from(userSettingsTable).where(eq(userSettingsTable.userId, req.user.id)).limit(1);
+    const continuityUpdate = {
+      kinfolkMemoryEnabled: true,
+      kinfolkContinuityEnabled: true,
+      kinfolkContinuityUpdatedAt: now,
+      kinfolkContinuityDisclosureDecision: "accepted" as const,
+      kinfolkContinuityDisclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
+      kinfolkContinuityDisclosedAt: current?.disclosedAt ?? now,
+      updatedAt: now,
+    };
+    const updated = await db.update(userSettingsTable).set(continuityUpdate)
+      .where(eq(userSettingsTable.userId, req.user.id)).returning({ userId: userSettingsTable.userId });
+    if (updated.length === 0) {
+      await db.insert(userSettingsTable).values({ userId: req.user.id, ...continuityUpdate })
+        .onConflictDoUpdate({ target: userSettingsTable.userId, set: continuityUpdate });
+    }
+
+    const sessionId = typeof body.sessionId === "string" ? body.sessionId : null;
+    let saved = 0;
+    for (const item of selected) {
+      const existing = await db.select({ id: kinfolkPrivateMemoriesTable.id }).from(kinfolkPrivateMemoriesTable)
+        .where(and(eq(kinfolkPrivateMemoriesTable.userId, req.user.id), eq(kinfolkPrivateMemoriesTable.content, item.content), isNull(kinfolkPrivateMemoriesTable.revokedAt)))
+        .limit(1);
+      if (existing.length) continue;
+      await db.insert(kinfolkPrivateMemoriesTable).values({
+        userId: req.user.id,
+        content: item.content,
+        purpose: plan.purpose,
+        sourceSessionId: sessionId,
+        isSensitive: item.kind === "sensitive",
+        sensitiveConsentGrantedAt: item.kind === "sensitive" ? now : null,
+      });
+      saved += 1;
+    }
+    invalidatePrefsCache(req.user.id);
+    invalidateSessionsCache(req.user.id);
+    res.status(201).json({ saved, alreadySaved: selected.length - saved, enabled: true });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to save inline Kinfolk memory consent");
+    res.status(500).json({ error: "Kinfolk could not save the selected private details. Nothing new was confirmed." });
+  }
+});
+
 router.post("/kinfolk/memories", async (req: Request, res: Response) => {
   if (!isKinfolkPrivateMemoryEnabled() && !isExplicitMemberMemoryEnabled()) {
     return void res.status(403).json({
@@ -6143,60 +6213,24 @@ async function persistExplicitMemberMemory(input: {
 }): Promise<{
   remembered: boolean;
   reply: string;
-  sensitiveMemoryConfirmation?: ReturnType<typeof sensitiveMemoryConfirmation>;
+  memoryConsentPlan?: ReturnType<typeof buildExplicitMemoryConsentPlan>;
 } | null> {
-  const parsed = parseExplicitMemberMemory(input.message);
-  if (!parsed) return null;
-
-  const enabled = await resolveOwnerExplicitMemberMemoryAccess(input.userId);
-  if (!enabled) {
-    return {
-      remembered: false,
-      reply:
-        "I heard you. Choose whether Kinfolk should remember ordinary continuity in the first-use memory notice or in Memory settings. I have not saved that detail.",
-    };
-  }
-
-  const sensitiveTopic = sensitiveMemoryTopic(parsed.content);
-  if (sensitiveTopic !== null) {
-    return {
-      remembered: false,
-      reply:
-        "I heard you. That detail is sensitive, so I have not saved it. Confirm separately below if you want Kinfolk to keep it privately for future conversations.",
-      sensitiveMemoryConfirmation: sensitiveMemoryConfirmation(sensitiveTopic, parsed.purpose),
-    };
-  }
-
-  const existing = await db
-    .select({ id: kinfolkPrivateMemoriesTable.id })
-    .from(kinfolkPrivateMemoriesTable)
-    .where(
-      and(
-        eq(kinfolkPrivateMemoriesTable.userId, input.userId),
-        eq(kinfolkPrivateMemoriesTable.content, parsed.content),
-        isNull(kinfolkPrivateMemoriesTable.revokedAt),
-      ),
-    )
-    .limit(1)
-    .catch(() => []);
-
-  if (!existing.length) {
-    await db.insert(kinfolkPrivateMemoriesTable).values({
-      userId: input.userId,
-      content: parsed.content,
-      purpose: parsed.purpose,
-      sourceSessionId: input.sessionId ?? null,
-      isSensitive: false,
-    });
-  }
-
+  const plan = buildExplicitMemoryConsentPlan(input.message);
+  if (!plan) return null;
+  const ordinaryCount = plan.ordinary.length;
+  const sensitiveCount = plan.sensitive.length;
+  const ordinarySentence = ordinaryCount
+    ? "I can remember the preferences and interests you shared."
+    : "I heard you."
+  const sensitiveSentence = sensitiveCount
+    ? "You also shared personal details that stay in your control."
+    : "Choose what Kinfolk may use in future conversations."
   return {
-    remembered: true,
-    reply:
-      "I’ll remember that and use it only when it is genuinely relevant to a future question. You can review or forget it any time in Kinfolk settings.",
+    remembered: false,
+    reply: `${ordinarySentence} ${sensitiveSentence} Choose below what Kinfolk may use only when it is relevant.`,
+    memoryConsentPlan: plan,
   };
 }
-
 async function persistOrdinaryContinuityMemory(input: {
   userId: string;
   sessionId?: string;
@@ -7368,7 +7402,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       originalQuery: message,
       answerMode: "memory_confirmation",
       remembered: explicitMemory.remembered,
-      sensitiveMemoryConfirmation: explicitMemory.sensitiveMemoryConfirmation ?? null,
+      sensitiveMemoryConfirmation: null,
+      memoryConsentPlan: explicitMemory.memoryConsentPlan ?? null,
       structuredContent: null,
       mediaLinks: [],
       relatedConnections: [],

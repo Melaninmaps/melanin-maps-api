@@ -10,6 +10,7 @@ const detailSource = readFileSync(fileURLToPath(new URL("../app/business/[id].ts
 const widgetSource = readFileSync(fileURLToPath(new URL("../components/AIChatWidget.tsx", import.meta.url)), "utf8");
 const settingsSource = readFileSync(fileURLToPath(new URL("../app/kinfolk-settings.tsx", import.meta.url)), "utf8");
 const disclosureSource = readFileSync(fileURLToPath(new URL("../components/KinfolkContinuityDisclosure.tsx", import.meta.url)), "utf8");
+const inlineMemoryConsentSource = readFileSync(fileURLToPath(new URL("../components/KinfolkInlineMemoryConsent.tsx", import.meta.url)), "utf8");
 
 describe("Expo Kinfolk business demo cards", () => {
   it("supports canonical detail, vetted website, unclaimed status, and match reasons", () => {
@@ -57,6 +58,14 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(disclosureSource).toContain("Let Kinfolk remember");
     expect(disclosureSource).toContain("Keep memory off");
     expect(travelSource).toContain("KinfolkSensitiveMemoryConfirmation");
+  });
+
+  it("keeps direct memory choices inside the Kinfolk conversation", () => {
+    expect(hookSource).toContain("memoryConsentPlan?: InlineMemoryConsentPlan | null");
+    expect(hookSource).toContain("inlineMemoryConsent");
+    expect(travelSource).toContain("KinfolkInlineMemoryConsent");
+    expect(widgetSource).toContain("KinfolkInlineMemoryConsent");
+    expect(inlineMemoryConsentSource).toContain("/api/kinfolk/memory-consent");
   });
 
   it("keeps Kinfolk voice modes discoverable and makes microphone failures visible", () => {

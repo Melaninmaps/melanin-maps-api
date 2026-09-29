@@ -139,6 +139,12 @@ export type KinfolkCompanionMemoryOffer = {
   prompt: string;
 };
 
+export type InlineMemoryConsentPlan = {
+  purpose: string;
+  ordinary: Array<{ id: string; label: string; content: string }>;
+  sensitive: Array<{ id: string; label: string; content: string }>;
+};
+
 export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
@@ -178,6 +184,8 @@ export type ChatMessage = {
   companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
   /** A separate save choice is required; raw content remains local until chosen. */
   sensitiveMemoryDraft?: { content: string; purpose: string; sessionId?: string | null } | null;
+  /** Direct memory choices remain local until the member explicitly saves selected items. */
+  inlineMemoryConsent?: { message: string; plan: InlineMemoryConsentPlan; sessionId?: string | null } | null;
   /** Server decision metadata; clients fail closed when cards are not authorized. */
   responseMeta?: KinfolkResponseMeta | null;
 };
@@ -317,9 +325,13 @@ export function useKinfolk() {
             confirmationRequired?: boolean;
             purpose?: string;
           } | null;
+          memoryConsentPlan?: InlineMemoryConsentPlan | null;
         };
 
         if (data.sessionId) setSessionId(data.sessionId);
+        const inlineMemoryConsent: ChatMessage["inlineMemoryConsent"] = data.memoryConsentPlan
+          ? { message: text, plan: data.memoryConsentPlan, sessionId: data.sessionId ?? sessionId }
+          : null;
         let sensitiveMemoryDraft: ChatMessage["sensitiveMemoryDraft"] =
           data.sensitiveMemoryConfirmation?.confirmationRequired === true
             ? {
@@ -360,6 +372,7 @@ export function useKinfolk() {
           locationSource: data.locationSource ?? null,
           companionMemoryOffer: data.companionMemoryOffer ?? null,
           sensitiveMemoryDraft,
+          inlineMemoryConsent,
           responseMeta,
         };
         setPendingRetryText(null); // clear retry on success
@@ -618,6 +631,10 @@ export function useKinfolk() {
     setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, sensitiveMemoryDraft: null } : m));
   }, []);
 
+  const dismissInlineMemoryConsent = useCallback((messageId: string) => {
+    setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, inlineMemoryConsent: null } : m));
+  }, []);
+
   const clearPendingRetryText = useCallback(() => setPendingRetryText(null), []);
 
   return {
@@ -645,5 +662,6 @@ export function useKinfolk() {
     confirmTaskAction,
     dismissTaskAction,
     dismissSensitiveMemoryDraft,
+    dismissInlineMemoryConsent,
   };
 }
