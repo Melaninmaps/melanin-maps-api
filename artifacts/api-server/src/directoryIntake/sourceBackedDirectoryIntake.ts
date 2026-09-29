@@ -179,8 +179,12 @@ export function buildSourceBackedDirectoryIntakePlan(
 
   for (const candidate of candidates) {
     if (!hasBusinessSpecificSourceDescription(candidate)) {
+      // A founder-approved, named source directory is sufficient documentary
+      // evidence for a searchable unclaimed record. Missing detail copy is a
+      // review signal, never a reason to silently omit the source listing. The
+      // publication formatter intentionally leaves its member-facing
+      // description blank rather than inventing category/city boilerplate.
       heldForDescription.push(candidate);
-      continue;
     }
     // Directory rows with street addresses use a canonical place key for
     // deduplication, so their sourceRecordKey is retained as the exact

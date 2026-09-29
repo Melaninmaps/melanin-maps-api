@@ -79,31 +79,35 @@ describe("source-backed directory reconciliation", () => {
     expect(plan.toCreate).toEqual([candidate()]);
   });
 
-  it("holds a source receipt with generic or absent copy out of public creation", () => {
+  it("publishes a founder-sourced receipt with generic or absent copy without inventing card text", () => {
     const incomplete = candidate({ sourceDescription: null });
     const generic = candidate({
       sourceRecordKey: "source-receipt:generic-card",
+      address: "456 Walnut Street",
+      officialUrl: "https://generic-directory-record.example",
       sourceDescription: "Restaurant listing in Philadelphia.",
     });
     const plan = buildSourceBackedDirectoryIntakePlan([incomplete, generic], []);
 
-    expect(plan.toCreate).toEqual([]);
+    expect(plan.toCreate).toEqual([incomplete, generic]);
     expect(plan.heldForDescription).toEqual([incomplete, generic]);
     expect(plan.duplicateMatches).toEqual([]);
   });
 
-  it("accepts concise factual source copy while still rejecting a directory template", () => {
+  it("keeps concise factual copy and flags a directory template for review without omitting it", () => {
     const concise = candidate({
       sourceRecordKey: "source-receipt:concise-factual-copy",
       sourceDescription: "Authentic Ethiopian cuisine",
     });
     const template = candidate({
       sourceRecordKey: "source-receipt:concise-template-copy",
+      address: "456 Walnut Street",
+      officialUrl: "https://generic-directory-record.example",
       sourceDescription: "Restaurant listing in Philadelphia.",
     });
     const plan = buildSourceBackedDirectoryIntakePlan([concise, template], []);
 
-    expect(plan.toCreate).toEqual([concise]);
+    expect(plan.toCreate).toEqual([concise, template]);
     expect(plan.heldForDescription).toEqual([template]);
   });
 
