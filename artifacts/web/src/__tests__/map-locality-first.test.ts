@@ -22,4 +22,13 @@ describe("website map locality-first presentation", () => {
     expect(mapSource).not.toContain('aria-pressed={exploreAllAreas}');
     expect(mapSource).not.toContain('"Explore all areas"');
   });
+
+  it("requests live browser location before an honestly labelled saved-home fallback", () => {
+    expect(mapSource).toContain("const requestMapDeviceLocation = useCallback");
+    expect(mapSource).toContain("requestMapDeviceLocation({ onUnavailable: centerSavedHomeArea });");
+    expect(mapSource).toContain("This map is showing your saved home area, not your live location.");
+    expect(mapSource).toContain('onClick={() => requestMapDeviceLocation({ forceViewport: true })}');
+    expect(mapSource).toContain('aria-live="polite"');
+    expect(mapSource).not.toContain("userCoords ?? { lat: 39.9526, lng: -75.1652 }");
+  });
 });

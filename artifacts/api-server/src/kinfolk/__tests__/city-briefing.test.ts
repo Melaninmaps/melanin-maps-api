@@ -119,7 +119,7 @@ describe("city briefing policy", () => {
     })).toContain("longer-term city-life questions");
   });
 
-  it("keeps a whole-arrival question source-backed even when weather and transit are included", () => {
+  it("keeps a whole-arrival question source-backed without automatically seeking immigration context", () => {
     expect(
       isCityBriefingRequest(
         "What current safety, transit, weather, and practical information should I verify before I travel to Minneapolis?",
@@ -131,7 +131,8 @@ describe("city briefing policy", () => {
       city: "Minneapolis",
       stateCode: "MN",
     });
-    expect(plan.retrievalQueries.join(" ")).toMatch(/federal immigration enforcement/i);
+    expect(plan.retrievalQueries.join(" ")).toMatch(/public-service changes/i);
+    expect(plan.retrievalQueries.join(" ")).not.toMatch(/immigration|\bice\b/i);
   });
 
   it("recognizes the same whole-arrival request when the before-I-go phrase comes first", () => {
@@ -202,7 +203,7 @@ describe("city briefing policy", () => {
     expect(prompt).toContain("member’s actual current plan support it");
     expect(prompt).toContain("hotel, itinerary, route, planned stop, or travel date is known");
     expect(prompt).toContain("Black, African, Afro-Latin, or broader diaspora context");
-    expect(prompt).toContain("federal immigration-enforcement or public-service response");
+    expect(prompt).toContain("Do not raise immigration or ICE in an ordinary arrival briefing");
     expect(prompt).toContain("Do not infer a contributor's nationality");
     expect(prompt).toContain("not travel-brochure filler");
     expect(prompt).toContain("weather and packing");

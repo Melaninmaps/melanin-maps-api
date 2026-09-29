@@ -130,18 +130,18 @@ export function buildCityBriefingPlan(input: {
     ? [
         `${location} official resident services housing tenant transit resources current`,
         `${location} official city public notices weather transit current`,
-        `${location} official federal immigration enforcement response community practical move`,
+        `${location} current public-service changes Black community practical move`,
       ]
     : purpose === "visiting"
       ? [
           `${location} current visitor travel arrival public safety transit advisories`,
           `${location} official city public notices transit weather current`,
-          `${location} official federal immigration enforcement response Black diaspora community practical travel`,
+          `${location} current public-service changes Black diaspora community practical travel`,
         ]
       : [
           `${location} latest local news public safety travel advisories`,
           `${location} official city public notices transit weather current`,
-          `${location} official federal immigration enforcement response Black community practical travel`,
+          `${location} current public-service changes Black community practical travel`,
         ];
   return {
     taskMode: "city_briefing",
@@ -198,7 +198,7 @@ export function buildCityBriefingPromptBlock(input: {
   const lines = [
     `CITY BRIEFING — ${place}:`,
     "MEMBER VOICE: Speak like a thoughtful, well-connected cousin helping someone get oriented—not like a research report. Lead with what matters in plain language. Do not say source-backed, verified facts, evidence, data, system, or explain the research process. The app shows any available links separately. When a current detail cannot be confirmed, say naturally that you could not confirm a current update and give the next sensible check.",
-    "ANSWER QUALITY — A city-arrival question needs a real answer, not travel-brochure filler. Do not say a city is vibrant, has much to offer, has diverse neighborhoods, is known for an arts scene, or make other generic statements that could fit any city. Give 2–4 concrete, useful checks or conditions from the supplied material: weather and packing when current weather is available; transit or airport/road checks when applicable; emergency or city-service updates; and any supported civic or immigration-enforcement context that can affect a visitor or someone they care about. Name uncertainty plainly instead of padding the answer.",
+    "ANSWER QUALITY — A city-arrival question needs a real answer, not travel-brochure filler. Do not say a city is vibrant, has much to offer, has diverse neighborhoods, is known for an arts scene, or make other generic statements that could fit any city. Give 2–4 concrete, useful checks or conditions from the supplied material: weather and packing when current weather is available; transit or airport/road checks when applicable; and emergency or city-service updates. Name uncertainty plainly instead of padding the answer.",
     stableBackground
       ? "Give a stable factual background, not a current-status update. Use clearly labeled sections: City orientation; Civic and practical context; Culture and community; and What to verify closer to travel."
       : "Give a current overview with clear, human section labels: What is happening; Practical heads-up; Culture and community; and What to watch next. A short, natural opening is fine, but put the useful city-specific information immediately after it.",
@@ -213,7 +213,7 @@ export function buildCityBriefingPromptBlock(input: {
     "State that a verified alert, travel concern, affected area, event, or event date exists only when the supplied current sources support that specific claim. Never say a member is clear, safe, unaffected, or outside an affected area unless the supplied sources and the member’s actual current plan support it.",
     "Do not imply that a hotel, itinerary, route, planned stop, or travel date is known when the member did not provide it. When a plan or date is needed to assess an alert or an event, say what is not known and ask one concise follow-up.",
     "When the member expressly asks for Black, African, Afro-Latin, or broader diaspora context, use only source-supported cultural events, businesses, and community information. Keep that request separate from an assumption about the member’s identity.",
-    "When current official or established reporting identifies a city-level federal immigration-enforcement or public-service response, include it as practical civic context in one calm, clear sentence. Do not infer the member’s immigration status, make an individualized risk prediction, or provide personal legal advice.",
+    "Do not raise immigration or ICE in an ordinary arrival briefing. Mention it only when the member expressly asks, a supplied official source establishes a current city-level alert or public-service response, or a separately governed opt-in Community perspective is supplied and clearly labeled as perspective. Do not infer the member’s immigration status, make an individualized risk prediction, or provide personal legal advice.",
   ];
   if (knowBeforeYouGo) {
     lines.push("Include practical context only when it is supported by the supplied sources, such as public-service changes, civic deadlines, transit disruptions, or confirmed public advisories.");

@@ -171,6 +171,7 @@ function getConfidenceLabel(level: string): string {
 }
 
 type RouteInfo = { distance: string; duration: string; bizName: string };
+type MapGeolocationStatus = "idle" | "requesting" | "granted" | "denied" | "unavailable" | "timed_out" | "error";
 
 const BRAND_STYLE: object[] = [
   { elementType: "geometry", stylers: [{ color: "#f5ede0" }] },
@@ -369,9 +370,11 @@ export default function MapPage() {
   const [essentialServicesLoading, setEssentialServicesLoading] = useState(false);
   const [essentialServicesError, setEssentialServicesError] = useState<string | null>(null);
 
-  // Tracks whether the user explicitly denied location permission so we can
-  // show a retry prompt instead of silently falling back to homeCity.
-  const [geoPermissionDenied, setGeoPermissionDenied] = useState(false);
+  // Keep the browser's real location result visible. A saved home city can be
+  // a useful fallback, but it must never be presented as the member's live
+  // location when browser permission is unavailable.
+  const [geoLocationStatus, setGeoLocationStatus] = useState<MapGeolocationStatus>("idle");
+  const [geoLocationMessage, setGeoLocationMessage] = useState<string | null>(null);
 
   // Universal Search — populated on explicit submit; null = client-side filtering
   const [universalResults, setUniversalResults] = useState<UniversalSearchResult & {
@@ -395,6 +398,49 @@ export default function MapPage() {
     if (profileCoords) return { lat: profileCoords.lat, lng: profileCoords.lng, label: "your home area" };
     return null;
   }, [detectedLocation, profileCoords, userCoords]);
+
+  const requestMapDeviceLocation = useCallback((options?: {
+    forceViewport?: boolean;
+    onUnavailable?: () => void;
+  }) => {
+    if (!window.isSecureContext || !navigator.geolocation) {
+      setGeoLocationStatus("unavailable");
+      setGeoLocationMessage("This browser cannot share location on this connection. Your map can use a city you search or your saved home area instead.");
+      options?.onUnavailable?.();
+      return;
+    }
+
+    setGeoLocationStatus("requesting");
+    setGeoLocationMessage("Requesting your device location…");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const coordinates = { lat: position.coords.latitude, lng: position.coords.longitude };
+        if (mapRef.current && (options?.forceViewport === true || !searchViewportLockedRef.current)) {
+          mapRef.current.setCenter(coordinates);
+          mapRef.current.setZoom(13);
+        }
+        setUserCoords(coordinates);
+        setGeoLocationStatus("granted");
+        setGeoLocationMessage(null);
+      },
+      (geolocationError) => {
+        const status: MapGeolocationStatus = geolocationError.code === geolocationError.PERMISSION_DENIED
+          ? "denied"
+          : geolocationError.code === geolocationError.TIMEOUT
+            ? "timed_out"
+            : "error";
+        const message = status === "denied"
+          ? "Location permission is off. This map is showing your saved home area, not your live location. Allow location for Mapping With Melanin in your browser settings, then try again."
+          : status === "timed_out"
+            ? "Your location did not respond in time. This map is showing your saved home area, not your live location. Try again when your connection and device location are available."
+            : "Your location could not be determined. This map is showing your saved home area, not your live location. You can try again or search a city.";
+        setGeoLocationStatus(status);
+        setGeoLocationMessage(message);
+        options?.onUnavailable?.();
+      },
+      { enableHighAccuracy: true, timeout: 12_000, maximumAge: 0 },
+    );
+  }, []);
 
   const clearEssentialServices = useCallback(() => {
     essentialServiceMarkersRef.current.forEach((marker) => marker.setMap(null));
@@ -1266,12 +1312,14 @@ export default function MapPage() {
       setReady(true);
       infoWindowRef.current = new g.InfoWindow();
 
-      // ── Location priority: (1) profile homeCity, then (2) GPS override ─────
-      // Start by centering on the user's home city immediately from their profile.
+      // ── Location priority: (1) device location, then (2) saved home area ───
+      // Do not make a saved city look like a live location. It is used only if
+      // browser location is unavailable or denied, and the notice below says so.
       const homeCity = (authData?.user as any)?.homeCity as string | null | undefined;
-      // Skip home-city centering if a ?q= handoff search is active or a search
-      // has already locked the viewport to its result coordinates.
-      if (homeCity && !handoffQuery && !searchViewportLockedRef.current) {
+      const centerSavedHomeArea = () => {
+        // Skip the fallback if a directory handoff or an intentional search
+        // already owns the viewport.
+        if (!homeCity || handoffQuery || searchViewportLockedRef.current) return;
         new g.Geocoder().geocode(
           { address: homeCity },
           (results: any[], status: string) => {
@@ -1283,23 +1331,9 @@ export default function MapPage() {
             }
           },
         );
-      }
+      };
 
-      // Geolocation can further refine to the user's exact position if allowed,
-      // but must not override a search-locked viewport.
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            if (!searchViewportLockedRef.current) {
-              map.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-              map.setZoom(13);
-            }
-            setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-          },
-          () => { setGeoPermissionDenied(true); /* denied — homeCity is already center */ },
-          { timeout: 6_000, maximumAge: 120_000 },
-        );
-      }
+      requestMapDeviceLocation({ onUnavailable: centerSavedHomeArea });
 
       businesses.forEach((biz) => {
         const lat = parseFloat(String(biz.latitude));
@@ -1336,7 +1370,7 @@ export default function MapPage() {
 
     return () => window.removeEventListener("error", onGmError, true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, isLoading, handoffQuery, navigate]);
+  }, [ready, isLoading, handoffQuery, navigate, requestMapDeviceLocation]);
 
   const selectBusiness = useCallback((id: string, biz: BizWithCoords, marker?: GMarker) => {
     setSelected(id);
@@ -1382,8 +1416,14 @@ export default function MapPage() {
     clearRoute();
     const g = (window as any).google?.maps;
     if (!g || !mapRef.current) return;
-    mapRef.current.panTo(userCoords ?? { lat: 39.9526, lng: -75.1652 });
-    mapRef.current.setZoom(userCoords ? 13 : 12);
+    const resetTarget = userCoords ?? profileCoords;
+    if (resetTarget) {
+      mapRef.current.panTo(resetTarget);
+      mapRef.current.setZoom(userCoords ? 13 : 12);
+    } else {
+      mapRef.current.panTo({ lat: 38.5, lng: -96.5 });
+      mapRef.current.setZoom(4);
+    }
     infoWindowRef.current?.close();
     markersRef.current.forEach((mk) => {
       mk.setIcon({
@@ -1395,7 +1435,7 @@ export default function MapPage() {
         strokeWeight: 2,
       });
     });
-  }, [userCoords]);
+  }, [profileCoords, userCoords]);
 
   const clearRoute = useCallback(() => {
     if (directionsRendererRef.current) {
@@ -1636,32 +1676,23 @@ export default function MapPage() {
           </div>
         )}
 
-        {/* Location denied — show one-tap retry so user doesn't have to refresh */}
-        {!showingCultural && !userCoords && geoPermissionDenied && (
-          <div className="px-4 py-2 border-b border-[#3A1F0E]/6 shrink-0">
+        {/* Browser location is explicit: a saved home area is never shown as live GPS. */}
+        {!showingCultural && !userCoords && geoLocationStatus !== "idle" && geoLocationStatus !== "granted" && (
+          <div className="px-4 py-3 border-b border-[#3A1F0E]/6 bg-[#FFFCF6] shrink-0" role="status" aria-live="polite">
+            <p className="text-[11px] leading-relaxed text-[#3A1F0E]/75">
+              {geoLocationMessage ?? "Your location is not available yet. Search a city or try again."}
+            </p>
             <button
-              onClick={() => {
-                if (!navigator.geolocation) return;
-                navigator.geolocation.getCurrentPosition(
-                  (pos) => {
-                    if (mapRef.current) {
-                      mapRef.current.setCenter({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                      mapRef.current.setZoom(13);
-                    }
-                    setUserCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-                    setGeoPermissionDenied(false);
-                  },
-                  () => { /* still denied — keep prompt visible */ },
-                  { timeout: 8_000, maximumAge: 0 },
-                );
-              }}
-              className="flex items-center gap-2 text-[10px] font-bold text-[#CA922B] hover:text-[#B38024] transition-colors"
+              type="button"
+              onClick={() => requestMapDeviceLocation({ forceViewport: true })}
+              disabled={geoLocationStatus === "requesting"}
+              className="mt-2 flex items-center gap-2 text-[10px] font-bold text-[#CA922B] hover:text-[#B38024] transition-colors disabled:cursor-wait disabled:opacity-60"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="3"/>
                 <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
               </svg>
-              Use My Location
+              {geoLocationStatus === "requesting" ? "Checking location…" : "Use My Location"}
             </button>
           </div>
         )}

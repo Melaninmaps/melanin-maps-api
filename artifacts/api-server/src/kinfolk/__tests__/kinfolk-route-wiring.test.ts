@@ -237,7 +237,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("resolveAuthoritativeWeather(destination)");
     expect(chatRoute).toContain("currentCitySafetyBriefing({");
     expect(chatRoute).toContain("citySafetySourcesForResponse(arrivalSafety)");
-    expect(chatRoute).toContain("this check did not establish a current city-level federal immigration-enforcement response");
+    expect(chatRoute).toContain("arrival briefings do not introduce immigration context without an explicit");
+    expect(chatRoute).not.toContain("• Immigration and civic context:");
     expect(chatRoute).toContain("not going to fill the gaps with generic travel advice");
   });
 
@@ -246,7 +247,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(routeSource).toContain("!requestsCurrentCitySafetyBriefing(input.message) && !requestedCityBriefing");
     expect(routeSource).toContain("resolveAuthoritativeWeather(`${location.city}, ${location.state}`)");
     expect(routeSource).toContain("For a visit to ${location.city}, here is the current arrival check I can verify from the linked public sources.");
-    expect(routeSource).toContain("these sources do not establish a current city-level federal immigration-enforcement response");
+    expect(routeSource).toContain("!requestsCurrentCityImmigrationContext(input.message)");
+    expect(routeSource).not.toContain("• Immigration and civic context:");
   });
 
   it("uses bounded semantic city-readiness classification for natural arrival language without weakening deterministic routes", () => {

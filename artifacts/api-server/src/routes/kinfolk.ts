@@ -107,6 +107,7 @@ import {
   isCitySafetyBriefingV1Enabled,
   renderDirectCitySafetyBriefing,
   renderCitySafetyBriefing,
+  requestsCurrentCityImmigrationContext,
   requestsCurrentCitySafetyBriefing,
 } from "../kinfolk/city-safety-briefing-v1";
 import { isDirectoryTaxonomyV2Enabled } from "../kinfolk/directory-taxonomy-v2";
@@ -5454,31 +5455,36 @@ router.put("/kinfolk/continuity", async (req: Request, res: Response) => {
     const currentDecision = normalizeKinfolkContinuityDecision(current?.decision);
     const decision = requestedDecision ?? (enabled ? "accepted" : currentDecision ?? "declined");
     const disclosedAt = current?.disclosedAt ?? updatedAt;
-    await db
-      .insert(userSettingsTable)
-      .values({
-        userId: req.user.id,
-        kinfolkContinuityEnabled: enabled,
-        kinfolkContinuityUpdatedAt: updatedAt,
-        kinfolkContinuityDisclosureDecision: decision,
-        kinfolkContinuityDisclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
-        kinfolkContinuityDisclosedAt: disclosedAt,
-        // Some legacy user_settings rows predate the database default. Supply
-        // this explicitly so a member who has no settings row can still make
-        // the reversible continuity choice instead of receiving a 500.
-        updatedAt,
-      })
-      .onConflictDoUpdate({
-        target: userSettingsTable.userId,
-        set: {
-          kinfolkContinuityEnabled: enabled,
-          kinfolkContinuityUpdatedAt: updatedAt,
-          kinfolkContinuityDisclosureDecision: decision,
-          kinfolkContinuityDisclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
-          kinfolkContinuityDisclosedAt: disclosedAt,
-          updatedAt,
-        },
-      });
+    const continuityUpdate = {
+      // Keep the existing legacy memory flag aligned with the explicit modern
+      // continuity choice. Older read/share paths still consult this field.
+      kinfolkMemoryEnabled: enabled,
+      kinfolkContinuityEnabled: enabled,
+      kinfolkContinuityUpdatedAt: updatedAt,
+      kinfolkContinuityDisclosureDecision: decision,
+      kinfolkContinuityDisclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
+      kinfolkContinuityDisclosedAt: disclosedAt,
+      updatedAt,
+    };
+    // Update known rows first. PostgreSQL validates the VALUES clause before an
+    // upsert conflict is resolved, so an insert-first upsert can fail for a
+    // legacy user_settings row when an unrelated historical NOT NULL column has
+    // no deployed default. This path lets an existing member change their own
+    // reversible continuity setting without depending on those old defaults.
+    const updatedExisting = await db
+      .update(userSettingsTable)
+      .set(continuityUpdate)
+      .where(eq(userSettingsTable.userId, req.user.id))
+      .returning({ userId: userSettingsTable.userId });
+    if (updatedExisting.length === 0) {
+      await db
+        .insert(userSettingsTable)
+        .values({ userId: req.user.id, ...continuityUpdate })
+        .onConflictDoUpdate({
+          target: userSettingsTable.userId,
+          set: continuityUpdate,
+        });
+    }
     invalidatePrefsCache(req.user.id);
     invalidateSessionsCache(req.user.id);
     res.json(kinfolkContinuityStatus({
@@ -6602,8 +6608,11 @@ async function tryAnswerCurrentCitySafetyBriefing(input: {
       ? resolveAuthoritativeWeather(`${location.city}, ${location.state}`).catch(() => null)
       : Promise.resolve(null),
   ]);
+  const safetySources = citySafetySourcesForResponse(briefing);
   const sources = [
-    ...citySafetySourcesForResponse(briefing),
+    ...(requestedCityBriefing && !requestsCurrentCityImmigrationContext(input.message)
+      ? safetySources.filter((source) => !/\b(?:immigration|ice)\b/i.test(source.title))
+      : safetySources),
     ...(weather ? [{ title: weather.source.title, url: weather.source.url }] : []),
   ];
   const purpose = requestedCityBriefing
@@ -6619,7 +6628,6 @@ async function tryAnswerCurrentCitySafetyBriefing(input: {
         purpose === "moving"
           ? "• Moving lens: use the linked city and transit sources to verify resident services and commuting conditions for the specific area you are considering; I will not infer a neighborhood safety level."
           : "• Visit lens: recheck the linked transit, city, and weather updates close to departure and before changing routes; I will not infer a neighborhood safety level.",
-        "• Immigration and civic context: these sources do not establish a current city-level federal immigration-enforcement response, so I will not speculate or label one as active.",
       ].join("\n\n")
     : renderDirectCitySafetyBriefing(location.city, briefing);
   const finalSessionId = await persistDeterministicDiscoveryTurn({
@@ -9052,9 +9060,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // simply because broad independent reporting did not clear its stricter
       // corroboration gate. For cities in the reviewed official registry, return
       // the available live weather plus direct city/transit alert links. This is
-      // deliberately a partial check—not a claim that no issue exists—and keeps
-      // current immigration context explicitly unknown when no applicable public
-      // source was retrieved.
+      // deliberately a partial check—not a claim that no issue exists. Ordinary
+      // arrival briefings do not introduce immigration context without an explicit
+      // member request or a current official alert.
       const recoverySafetyCityId =
         contextualPlan.taskMode === "city_briefing" && destination && destinationState
           ? citySafetyCityId({ city: destination, stateCode: destinationState })
@@ -9077,7 +9085,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             url: arrivalWeather.source.url,
           }] : []),
           ...(arrivalSafety
-            ? citySafetySourcesForResponse(arrivalSafety).map((source) => ({
+            ? citySafetySourcesForResponse(arrivalSafety)
+              .filter((source) =>
+                requestsCurrentCityImmigrationContext(message) ||
+                !/\b(?:immigration|ice)\b/i.test(source.title),
+              )
+              .map((source) => ({
                 id: source.url,
                 label: "official_safety" as const,
                 title: source.title,
@@ -9094,7 +9107,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           `I could not complete the broader live ${destination} briefing from enough independent public reporting, so I am not going to fill the gaps with generic travel advice. Here is the current arrival check I could verify:`,
           arrivalWeather ? arrivalWeather.reply : `• Weather: I could not load a current ${destination} forecast in this check. Use the linked official local alerts and your travel provider before departure.`,
           safetyCheck,
-          "• Immigration and civic context: this check did not establish a current city-level federal immigration-enforcement response, so I will not speculate or label one as active. If that affects your plans, use an official local or federal update before travel.",
         ].join("\n\n");
         recordKinfolkTelemetry({
           requestId: _kinfolkReqId,

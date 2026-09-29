@@ -10,6 +10,7 @@ import {
   isCitySafetyBriefingV1Enabled,
   renderDirectCitySafetyBriefing,
   renderCitySafetyBriefing,
+  requestsCurrentCityImmigrationContext,
   requestsCurrentCitySafetyBriefing,
 } from "../city-safety-briefing-v1";
 
@@ -66,6 +67,11 @@ describe("city safety briefing v1", () => {
     expect(requestsCurrentCitySafetyBriefing(
       "Find a shellfish-safe Black-owned dinner in Minneapolis.",
     )).toBe(false);
+  });
+
+  it("requires an explicit immigration question before adding immigration context", () => {
+    expect(requestsCurrentCityImmigrationContext("Are there any current ICE actions in Minneapolis?")).toBe(true);
+    expect(requestsCurrentCityImmigrationContext("What should I know before visiting Minneapolis?")).toBe(false);
   });
 
   it("returns City immigration resources without treating them as proof of nearby activity", async () => {

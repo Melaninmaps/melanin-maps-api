@@ -26,8 +26,10 @@ describe("Kinfolk first-use continuity disclosure", () => {
   it("offers accept and decline without enrolling an existing member silently", () => {
     expect(route).toContain('KINFOLK_CONTINUITY_DECISION_MISMATCH');
     expect(route).toContain('requestedDecision ?? (enabled ? "accepted" : currentDecision ?? "declined")');
-    expect(route).toContain('kinfolkContinuityDisclosedAt: disclosedAt,\n        // Some legacy user_settings rows');
-    expect(route).toContain('        updatedAt,\n      })\n      .onConflictDoUpdate');
+    expect(route).toContain("const updatedExisting = await db");
+    expect(route).toContain("if (updatedExisting.length === 0)");
+    expect(route).toContain("kinfolkMemoryEnabled: enabled");
+    expect(route).toContain("PostgreSQL validates the VALUES clause before an");
     for (const source of [webDisclosure, mobileDisclosure]) {
       expect(source).toContain(disclosureCopy);
       expect(source).toContain("Let Kinfolk remember");

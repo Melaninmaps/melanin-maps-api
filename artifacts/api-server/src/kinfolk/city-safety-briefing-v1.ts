@@ -11,6 +11,10 @@ export function isCitySafetyBriefingV1Enabled(
   return environment.CITY_SAFETY_BRIEFING_V1 === "true";
 }
 
+export function requestsCurrentCityImmigrationContext(message: string): boolean {
+  return /\b(?:ice|immigration|deportation|federal enforcement|immigration enforcement)\b/i.test(message);
+}
+
 /**
  * Keep a city-level safety or transit question out of the directory and model
  * recommendation paths. This detects the member's explicit current-turn
@@ -27,7 +31,7 @@ export function requestsCurrentCitySafetyBriefing(message: string): boolean {
   if (dietaryBusinessRequest) return false;
   const asksForSafety = /\b(?:safety|safe(?:ty)?|unsafe|crime|danger|emergency|travel advis(?:ory|ories)|weather alert)\b/i.test(message);
   const asksForTransit = /\b(?:transit|public transport(?:ation)?|rider alerts?|service alerts?|service disruption|detours?|subway|metro|septa|bus(?:es)?|train(?:s)?)\b/i.test(message);
-  const asksForImmigration = /\b(?:ice|immigration|deportation|federal enforcement|immigration enforcement)\b/i.test(message);
+  const asksForImmigration = requestsCurrentCityImmigrationContext(message);
   const currentOrTravelContext = /\b(?:current|today|right now|before (?:i|we) go|travel(?:ing)?|trip|visit(?:ing)?|heading to|going to)\b/i.test(message);
   return asksForSafety || asksForImmigration || (asksForTransit && currentOrTravelContext);
 }
