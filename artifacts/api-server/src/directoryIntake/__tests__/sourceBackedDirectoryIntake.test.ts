@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildSourceBackedDirectoryIntakePlan,
   normalizeDirectoryIdentity,
+  selectSourceBackedEnrichmentBatch,
   sourceBackedDirectoryPublicationFields,
 } from "../sourceBackedDirectoryIntake";
 import type { SourceBackedDirectoryCandidate } from "../sourceBackedDirectoryCandidates";
@@ -169,6 +170,33 @@ describe("source-backed directory reconciliation", () => {
 
     expect(plan.duplicateMatches).toHaveLength(0);
     expect(plan.toCreate).toEqual([candidate(), separatelyAddressedReceipt]);
+  });
+
+  it("batches exact enrichment by immutable receipt instead of all matching rows", () => {
+    const first = candidate({ sourceRecordKey: "source-receipt:a" });
+    const second = candidate({ sourceRecordKey: "source-receipt:b" });
+    const third = candidate({ sourceRecordKey: "source-receipt:c" });
+    const matches = [
+      { candidate: first, existingBusinessId: "canonical-a" },
+      { candidate: first, existingBusinessId: "retained-review-a" },
+      { candidate: second, existingBusinessId: "canonical-b" },
+      { candidate: third, existingBusinessId: "canonical-c" },
+    ];
+
+    const firstBatch = selectSourceBackedEnrichmentBatch(matches, 2, null);
+    expect(firstBatch.receiptCount).toBe(2);
+    expect(firstBatch.matches.map((match) => match.existingBusinessId)).toEqual([
+      "canonical-a",
+      "retained-review-a",
+      "canonical-b",
+    ]);
+    expect(firstBatch.remainingReceiptCount).toBe(1);
+    expect(firstBatch.nextCursor).toBe("source-receipt:b");
+
+    const secondBatch = selectSourceBackedEnrichmentBatch(matches, 2, firstBatch.nextCursor);
+    expect(secondBatch.matches.map((match) => match.existingBusinessId)).toEqual(["canonical-c"]);
+    expect(secondBatch.remainingReceiptCount).toBe(0);
+    expect(secondBatch.nextCursor).toBeNull();
   });
 
   it("preserves overlong source categories and contacts without overflowing bounded columns", () => {

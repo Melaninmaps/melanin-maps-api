@@ -49,6 +49,7 @@ import {
 import {
   buildSourceBackedDirectoryIntakePlan,
   normalizeDirectoryIdentity,
+  selectSourceBackedEnrichmentBatch,
   sourceBackedDirectoryPublicationFields,
 } from "../directoryIntake/sourceBackedDirectoryIntake";
 import { buildMinnesotaLegacyCanonicalReconciliations } from "../directoryIntake/mnBlackDirectoryLegacyCanonicalReconciliation";
@@ -346,6 +347,13 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
   const batchSize = Number.isFinite(requestedBatchSize)
     ? Math.min(Math.max(Math.floor(requestedBatchSize), 1), 100)
     : 75;
+  const exactEnrichmentCursor = typeof req.body?.exactEnrichmentCursor === "string"
+    ? req.body.exactEnrichmentCursor.trim() || null
+    : null;
+  // Creation can require more batches after every exact source receipt has
+  // already been enriched. The dashboard sends this explicit marker so those
+  // later create-only batches cannot restart enrichment at the first receipt.
+  const skipExactEnrichment = apply && req.body?.skipExactEnrichment === true;
   try {
     const existingBusinesses = await sourceDirectoryExistingBusinessCandidates(intakeCandidates);
     const sourceReceiptMatchingBusinesses = existingBusinesses.map((business) => ({
@@ -360,6 +368,66 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
       intakeCandidates,
       sourceReceiptMatchingBusinesses,
     );
+    const isMinnesotaSourceBatch = requestedBatch.startsWith("mn_black_business_directory_");
+    const exactMatchesByRecordAndReceipt = new Map<string, {
+      candidate: SourceBackedDirectoryCandidate;
+      existingBusinessId: string;
+    }>();
+    if (requestedBatch) {
+      // Older imports can retain several rows for a single directory receipt.
+      // Each is eligible only when its stored source receipt equals the current
+      // listing URL; similar names, cities, addresses, and dedupe keys never
+      // qualify here. Shared category/search URLs are not immutable listing
+      // receipts, so retain them for review and do not enrich any row from them.
+      const candidatesByListingUrl = new Map<string, SourceBackedDirectoryCandidate[]>();
+      for (const candidate of intakeCandidates) {
+        const listingUrl = candidate.sourceListingUrl ?? candidate.sourceUrl;
+        const candidates = candidatesByListingUrl.get(listingUrl) ?? [];
+        candidates.push(candidate);
+        candidatesByListingUrl.set(listingUrl, candidates);
+      }
+      for (const existing of existingBusinesses) {
+        for (const sourceReceipt of [existing.sourceUrl, existing.researchSourceUrl]) {
+          if (!sourceReceipt) continue;
+          const candidates = candidatesByListingUrl.get(sourceReceipt);
+          const candidate = candidates?.length === 1 ? candidates[0] : null;
+          if (!candidate) continue;
+          exactMatchesByRecordAndReceipt.set(
+            `${existing.id}:${candidate.sourceRecordKey}`,
+            { candidate, existingBusinessId: existing.id },
+          );
+        }
+      }
+    }
+    const exactMatches = [...exactMatchesByRecordAndReceipt.values()];
+    const legacyMinnesotaCanonicals = isMinnesotaSourceBatch
+      ? buildMinnesotaLegacyCanonicalReconciliations(intakeCandidates, existingBusinesses)
+      : [];
+    const enrichmentReceiptCandidates = [
+      ...exactMatches.map((match) => ({ candidate: match.candidate })),
+      ...legacyMinnesotaCanonicals.map(({ candidate }) => ({ candidate })),
+    ];
+    const exactEnrichmentBatch = skipExactEnrichment
+      ? {
+          matches: [],
+          receiptCount: 0,
+          remainingReceiptCount: 0,
+          nextCursor: null,
+        }
+      : selectSourceBackedEnrichmentBatch(
+          enrichmentReceiptCandidates,
+          batchSize,
+          exactEnrichmentCursor,
+        );
+    const exactEnrichmentReceiptKeys = new Set(
+      exactEnrichmentBatch.matches.map((match) => match.candidate.sourceRecordKey),
+    );
+    const exactMatchesForBatch = exactMatches.filter((match) => (
+      exactEnrichmentReceiptKeys.has(match.candidate.sourceRecordKey)
+    ));
+    const legacyMinnesotaCanonicalsForBatch = legacyMinnesotaCanonicals.filter(({ candidate }) => (
+      exactEnrichmentReceiptKeys.has(candidate.sourceRecordKey)
+    ));
     const nextBatch = plan.toCreate.slice(0, batchSize);
     const possibleDuplicateCanonicalByReceipt = new Map(
       plan.toCreate.flatMap((candidate) => {
@@ -383,6 +451,12 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
         potentialDuplicateReviewCount: possibleDuplicateCanonicalByReceipt.size,
         batchSize,
         exactDuplicateCount: plan.duplicateMatches.length,
+        exactEnrichmentReceiptCount: enrichmentReceiptCandidates.length === 0
+          ? 0
+          : new Set(enrichmentReceiptCandidates.map(({ candidate }) => candidate.sourceRecordKey)).size,
+        nextBatchExactEnrichmentReceiptCount: exactEnrichmentBatch.receiptCount,
+        remainingExactEnrichmentReceiptCount: exactEnrichmentBatch.remainingReceiptCount,
+        nextExactEnrichmentCursor: exactEnrichmentBatch.nextCursor,
         addressEligibleForGeocodingCount: plan.toCreate.filter((candidate) => (
           !possibleDuplicateCanonicalByReceipt.has(candidate.sourceRecordKey) && Boolean(candidate.address)
         )).length,
@@ -402,53 +476,12 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
     // canonical record. Exact matches are enriched only where a field is blank;
     // source descriptions and tags are appended/unioned idempotently. The
     // transaction keeps each bounded batch an all-or-nothing publication.
-    const isMinnesotaSourceBatch = requestedBatch.startsWith("mn_black_business_directory_");
     const exactSourcePinTargets: MinnesotaSourcePinTarget[] = [];
     let exactExistingEnrichedCount = 0;
     await db.transaction(async (transaction) => {
-      // Legacy no-batch reconciliation preserves its historical create-only
-      // behavior. Additive enrichment is deliberately available only to an
-      // explicitly selected source cohort, such as the Minneapolis proof set.
-      const exactMatchesByRecordAndReceipt = new Map<string, {
-        candidate: SourceBackedDirectoryCandidate;
-        existingBusinessId: string;
-      }>();
-      if (requestedBatch) {
-        for (const match of plan.duplicateMatches) {
-          if (!match.existingBusinessId) continue;
-          exactMatchesByRecordAndReceipt.set(
-            `${match.existingBusinessId}:${match.candidate.sourceRecordKey}`,
-            { candidate: match.candidate, existingBusinessId: match.existingBusinessId },
-          );
-        }
-        // Older imports sometimes created several preserved rows for one
-        // individual directory receipt. A map's single value would choose an
-        // arbitrary (often archived) copy, leaving the live legacy card with
-        // generic importer text. Reconcile every row only when its *stored
-        // source or research URL* is exactly the candidate's individual listing
-        // URL. This does not use a similar-name, city, or address inference.
-        const eligibleCandidatesByListingUrl = new Map(
-          plan.duplicateMatches.map((match) => [
-            match.candidate.sourceListingUrl ?? match.candidate.sourceUrl,
-            match.candidate,
-          ]),
-        );
-        for (const existing of existingBusinesses) {
-          for (const sourceReceipt of [existing.sourceUrl, existing.researchSourceUrl]) {
-            if (!sourceReceipt) continue;
-            const candidate = eligibleCandidatesByListingUrl.get(sourceReceipt);
-            if (!candidate) continue;
-            exactMatchesByRecordAndReceipt.set(
-              `${existing.id}:${candidate.sourceRecordKey}`,
-              { candidate, existingBusinessId: existing.id },
-            );
-          }
-        }
-      }
-      const exactMatches = [...exactMatchesByRecordAndReceipt.values()];
-      exactExistingEnrichedCount = exactMatches.length;
+      exactExistingEnrichedCount = exactMatchesForBatch.length;
       const existingById = new Map(existingBusinesses.map((business) => [business.id, business]));
-      for (const match of exactMatches) {
+      for (const match of exactMatchesForBatch) {
         const matchedExisting = existingById.get(match.existingBusinessId!);
         if (!matchedExisting) continue;
         // A prior source receipt can live in the Duplicate vault while pointing
@@ -516,10 +549,7 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
       // public profile id and replace that importer-only copy with the richer,
       // explicitly published source detail. This is deliberately narrower than
       // normal source enrichment: it never replaces owner/community content.
-      const legacyMinnesotaCanonicals = isMinnesotaSourceBatch
-        ? buildMinnesotaLegacyCanonicalReconciliations(intakeCandidates, existingBusinesses)
-        : [];
-      for (const { candidate, canonicalId } of legacyMinnesotaCanonicals) {
+      for (const { candidate, canonicalId } of legacyMinnesotaCanonicalsForBatch) {
         const existing = existingById.get(canonicalId);
         if (!existing) continue;
         const publicationFields = sourceBackedDirectoryPublicationFields(candidate);
@@ -664,6 +694,9 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
       createdCount: publicNextBatch.length,
       duplicateReviewCreatedCount: duplicateReviewNextBatch.length,
       exactExistingEnrichedCount,
+      exactEnrichmentReceiptCount: exactEnrichmentBatch.receiptCount,
+      remainingExactEnrichmentReceiptCount: exactEnrichmentBatch.remainingReceiptCount,
+      nextExactEnrichmentCursor: exactEnrichmentBatch.nextCursor,
       remainingCreateCount: plan.toCreate.length - nextBatch.length,
       batchSize,
       exactDuplicateCount: plan.duplicateMatches.length,

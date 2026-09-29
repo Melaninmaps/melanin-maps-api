@@ -50,6 +50,23 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("pageSize: requested === 500 || requested === 250 || requested === 100");
   });
 
+  it("bounds exact source receipt enrichment and reports its remaining work separately from new profiles", () => {
+    expect(adminRoute).toContain("selectSourceBackedEnrichmentBatch");
+    expect(adminRoute).toContain("exactEnrichmentCursor");
+    expect(adminRoute).toContain("remainingExactEnrichmentReceiptCount");
+    expect(adminRoute).toContain("nextExactEnrichmentCursor");
+    expect(adminRoute).toContain("exactMatchesForBatch");
+    expect(adminRoute).toContain("legacyMinnesotaCanonicalsForBatch");
+    expect(adminScreen).toContain("Existing source receipts to enrich");
+    expect(adminScreen).toContain("remainingExactReceipts");
+    expect(adminScreen).toContain("exactEnrichmentCursor");
+    expect(adminScreen).toContain("while (remainingCreate > 0 || remainingExactReceipts > 0)");
+    expect(adminScreen).toContain("exactEnrichmentCursor,");
+    expect(adminScreen).toContain("skipExactEnrichment: exactEnrichmentComplete");
+    expect(adminRoute).toContain("const skipExactEnrichment = apply && req.body?.skipExactEnrichment === true");
+    expect(adminScreen).toContain("No records were merged or deleted");
+  });
+
   it("supports city, service, date-added, and selected-row archive controls in the web dashboard", () => {
     expect(adminScreen).toContain("All cities");
     expect(adminScreen).toContain("All business types and services");
@@ -331,7 +348,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("SOURCE_DIRECTORY_INTAKE_BATCH_OPTIONS");
     expect(adminScreen).toContain("Founder 44-state directory source pack");
     expect(adminScreen).toContain("Reconcile a received source-backed directory batch");
-    expect(adminScreen).toContain("Enrich exact matches");
+    expect(adminScreen).toContain("Enrich exact receipts");
     expect(adminScreen).toContain("sourceDirectoryIntakeBatch");
     expect(adminScreen).toContain("searchable, unclaimed MWM profile");
     expect(adminRoute).toContain("address: retainedAddress");
@@ -357,7 +374,11 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("sourceUrl: existing.sourceUrl ?? candidate.sourceListingUrl ?? candidate.sourceUrl");
     expect(adminRoute).toContain("exactMatchesByRecordAndReceipt");
     expect(adminRoute).toContain("for (const sourceReceipt of [existing.sourceUrl, existing.researchSourceUrl])");
-    expect(adminRoute).toContain("exactExistingEnrichedCount = exactMatches.length");
+    expect(adminRoute).toContain("const candidatesByListingUrl = new Map<string, SourceBackedDirectoryCandidate[]>()");
+    expect(adminRoute).toContain("const candidate = candidates?.length === 1 ? candidates[0] : null");
+    expect(adminRoute).not.toContain("for (const match of plan.duplicateMatches)");
+    expect(adminRoute).toContain("exactExistingEnrichedCount = exactMatchesForBatch.length");
+    expect(adminRoute).toContain("exactEnrichmentReceiptKeys");
   });
 
   it("places only exact held source receipts into the reversible Archive vault", () => {

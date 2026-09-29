@@ -87,6 +87,41 @@ export function sourceBackedDirectoryPublicationFields(candidate: SourceBackedDi
   };
 }
 
+/**
+ * Exact receipt enrichment is distinct from new-profile creation. A receipt
+ * can appear on several retained rows, so bound each request by immutable
+ * receipt rather than database row. The cursor permits a safe retry without
+ * skipping source receipts or creating a duplicate profile.
+ */
+export function selectSourceBackedEnrichmentBatch<T extends Readonly<{
+  candidate: SourceBackedDirectoryCandidate;
+}>>(
+  matches: readonly T[],
+  batchSize: number,
+  cursor: string | null | undefined,
+): Readonly<{
+  matches: readonly T[];
+  receiptCount: number;
+  remainingReceiptCount: number;
+  nextCursor: string | null;
+}> {
+  const receiptKeys = [...new Set(matches.map((match) => match.candidate.sourceRecordKey))].sort();
+  const normalizedCursor = cursor && receiptKeys.includes(cursor) ? cursor : null;
+  const remainingKeys = normalizedCursor
+    ? receiptKeys.filter((key) => key > normalizedCursor)
+    : receiptKeys;
+  const selectedKeys = remainingKeys.slice(0, Math.max(1, batchSize));
+  const selectedKeySet = new Set(selectedKeys);
+  const remainingReceiptCount = Math.max(0, remainingKeys.length - selectedKeys.length);
+
+  return {
+    matches: matches.filter((match) => selectedKeySet.has(match.candidate.sourceRecordKey)),
+    receiptCount: selectedKeys.length,
+    remainingReceiptCount,
+    nextCursor: remainingReceiptCount > 0 ? selectedKeys.at(-1) ?? null : null,
+  };
+}
+
 function normalizeStreetAddress(value: string | null | undefined): string {
   return (value ?? "")
     .toLowerCase()

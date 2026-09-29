@@ -153,9 +153,14 @@ type SourceBackedDirectoryIntakePreview = {
   batch: string;
   sourceCandidateCount: number;
   createCount: number;
+  heldForDescriptionCount: number;
   nextBatchCreateCount: number;
   potentialDuplicateReviewCount: number;
   exactDuplicateCount: number;
+  exactEnrichmentReceiptCount: number;
+  nextBatchExactEnrichmentReceiptCount: number;
+  remainingExactEnrichmentReceiptCount: number;
+  nextExactEnrichmentCursor: string | null;
   addressEligibleForGeocodingCount: number;
   maplessProfileCount: number;
 };
@@ -1451,23 +1456,30 @@ export default function Admin() {
 
   const reconcileSourceBackedDirectoryBatch = useCallback(async () => {
     const preview = sourceDirectoryIntakePreview;
-    if (!preview || (preview.createCount <= 0 && preview.exactDuplicateCount <= 0)) return;
+    if (!preview || (preview.createCount <= 0 && preview.exactEnrichmentReceiptCount <= 0)) return;
     const selectedBatch = SOURCE_DIRECTORY_INTAKE_BATCH_OPTIONS.find(
       (option) => option.value === sourceDirectoryIntakeBatch,
     );
     const batchLabel = selectedBatch?.label ?? "selected source directory batch";
     if (!window.confirm(
-      `Reconcile ${batchLabel} now? ${preview.createCount.toLocaleString()} source-backed profiles remain to add. Exact matches receive only missing source-backed details, potential duplicates go to the Duplicate vault for review, and only supplied street addresses may receive a map pin.`,
+      `Reconcile ${batchLabel} now? ${preview.createCount.toLocaleString()} source listings remain to process and ${preview.exactEnrichmentReceiptCount.toLocaleString()} existing source receipts can receive missing factual details. The server processes only bounded 100-receipt batches. It will not delete or merge records; potential duplicates remain in the Duplicate vault, and only supplied street addresses may receive a map pin.`,
     )) return;
 
     setSourceDirectoryIntakeApplying(true);
     setSourceDirectoryIntakeResult(null);
-    let created = 0;
-    let remaining = preview.createCount;
-    let exactExistingEnriched = 0;
+    let createdProfiles = 0;
+    let duplicateVaultAdded = 0;
+    let exactExistingRowsEnriched = 0;
+    let exactReceiptsProcessed = 0;
+    let remainingCreate = preview.createCount;
+    let remainingExactReceipts = preview.exactEnrichmentReceiptCount;
+    let exactEnrichmentCursor: string | null = null;
+    let exactEnrichmentComplete = remainingExactReceipts === 0;
     try {
       // The protected server recomputes its exact duplicate plan before every
       // batch, so a retry cannot recreate a row that was already committed.
+      // Exact receipt enrichment advances only from the immutable cursor that
+      // the server returns; it never treats a similar name as an exact match.
       do {
         const response = await fetch(`${BASE}api/admin/directory-intake/source-backed`, {
           method: "POST",
@@ -1477,26 +1489,49 @@ export default function Admin() {
             apply: true,
             batch: sourceDirectoryIntakeBatch,
             batchSize: 100,
+            exactEnrichmentCursor,
+            skipExactEnrichment: exactEnrichmentComplete,
           }),
         });
         const body = await response.json().catch(() => ({})) as {
           createdCount?: number;
           duplicateReviewCreatedCount?: number;
           exactExistingEnrichedCount?: number;
+          exactEnrichmentReceiptCount?: number;
           remainingCreateCount?: number;
+          remainingExactEnrichmentReceiptCount?: number;
+          nextExactEnrichmentCursor?: string | null;
           error?: string;
         };
         if (!response.ok) throw new Error(body.error ?? "The source directory intake stopped before completion.");
         const createdThisBatch = Number(body.createdCount ?? 0);
         const duplicateReviewThisBatch = Number(body.duplicateReviewCreatedCount ?? 0);
-        created += createdThisBatch + duplicateReviewThisBatch;
-        exactExistingEnriched = Number(body.exactExistingEnrichedCount ?? exactExistingEnriched);
-        remaining = Number(body.remainingCreateCount ?? 0);
-        if (createdThisBatch + duplicateReviewThisBatch === 0 && remaining > 0) {
-          throw new Error("The source directory intake made no progress; no additional records were added.");
+        const exactRowsThisBatch = Number(body.exactExistingEnrichedCount ?? 0);
+        const exactReceiptsThisBatch = Number(body.exactEnrichmentReceiptCount ?? 0);
+        createdProfiles += createdThisBatch;
+        duplicateVaultAdded += duplicateReviewThisBatch;
+        exactExistingRowsEnriched += exactRowsThisBatch;
+        exactReceiptsProcessed += exactReceiptsThisBatch;
+        remainingCreate = Number(body.remainingCreateCount ?? 0);
+        remainingExactReceipts = Number(body.remainingExactEnrichmentReceiptCount ?? 0);
+        exactEnrichmentCursor = typeof body.nextExactEnrichmentCursor === "string"
+          ? body.nextExactEnrichmentCursor
+          : null;
+        exactEnrichmentComplete = remainingExactReceipts === 0;
+        if (
+          createdThisBatch + duplicateReviewThisBatch + exactRowsThisBatch === 0
+          && (remainingCreate > 0 || remainingExactReceipts > 0)
+        ) {
+          throw new Error("The source directory intake made no progress; it stopped before all source listings and exact receipts were processed.");
         }
-      } while (remaining > 0);
-      setSourceDirectoryIntakeResult(`Reconciled ${created.toLocaleString()} ${batchLabel} profile${created === 1 ? "" : "s"}; updated ${exactExistingEnriched.toLocaleString()} exact source match${exactExistingEnriched === 1 ? "" : "es"} with missing details only. Potential duplicates remain in the Duplicate vault; mapless profiles remain searchable without a fabricated pin.`);
+        if (remainingExactReceipts > 0 && !exactEnrichmentCursor) {
+          throw new Error("The source directory intake did not return an exact-receipt cursor for remaining enrichment work.");
+        }
+        setSourceDirectoryIntakeResult(
+          `Progress: created ${createdProfiles.toLocaleString()} profiles; added ${duplicateVaultAdded.toLocaleString()} possible duplicate${duplicateVaultAdded === 1 ? "" : "s"} to the vault; enriched ${exactExistingRowsEnriched.toLocaleString()} retained profile${exactExistingRowsEnriched === 1 ? "" : "s"} from ${exactReceiptsProcessed.toLocaleString()} exact source receipt${exactReceiptsProcessed === 1 ? "" : "s"}. Remaining: ${remainingCreate.toLocaleString()} source listings and ${remainingExactReceipts.toLocaleString()} exact receipts.`,
+        );
+      } while (remainingCreate > 0 || remainingExactReceipts > 0);
+      setSourceDirectoryIntakeResult(`Completed ${batchLabel}: created ${createdProfiles.toLocaleString()} profiles; added ${duplicateVaultAdded.toLocaleString()} possible duplicate${duplicateVaultAdded === 1 ? "" : "s"} to the vault; enriched ${exactExistingRowsEnriched.toLocaleString()} retained profile${exactExistingRowsEnriched === 1 ? "" : "s"} from ${exactReceiptsProcessed.toLocaleString()} exact source receipt${exactReceiptsProcessed === 1 ? "" : "s"}. No records were merged or deleted; mapless profiles remain searchable without a fabricated pin.`);
       await Promise.all([loadBusinesses(), loadSourceBackedDirectoryIntakePreview(sourceDirectoryIntakeBatch)]);
     } catch (error) {
       setSourceDirectoryIntakeResult(error instanceof Error ? error.message : "The source directory intake stopped before completion.");
@@ -4718,26 +4753,28 @@ Selected: ${summary}`,
                 <button
                   type="button"
                   onClick={() => void reconcileSourceBackedDirectoryBatch()}
-                  disabled={sourceDirectoryIntakeLoading || sourceDirectoryIntakeApplying || !sourceDirectoryIntakePreview || (sourceDirectoryIntakePreview.createCount === 0 && sourceDirectoryIntakePreview.exactDuplicateCount === 0)}
+                  disabled={sourceDirectoryIntakeLoading || sourceDirectoryIntakeApplying || !sourceDirectoryIntakePreview || (sourceDirectoryIntakePreview.createCount === 0 && sourceDirectoryIntakePreview.exactEnrichmentReceiptCount === 0)}
                   className="shrink-0 rounded-xl bg-[#CA922B] px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-[#B38024] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {sourceDirectoryIntakeApplying
                     ? "Reconciling source records…"
                     : sourceDirectoryIntakePreview?.createCount
                       ? `Reconcile batch (${sourceDirectoryIntakePreview.createCount.toLocaleString()})`
-                      : sourceDirectoryIntakePreview?.exactDuplicateCount
-                        ? `Enrich exact matches (${sourceDirectoryIntakePreview.exactDuplicateCount.toLocaleString()})`
+                      : sourceDirectoryIntakePreview?.exactEnrichmentReceiptCount
+                        ? `Enrich exact receipts (${sourceDirectoryIntakePreview.exactEnrichmentReceiptCount.toLocaleString()})`
                         : "No remaining source records"}
                 </button>
               </div>
               {sourceDirectoryIntakeLoading ? (
                 <p className="mt-3 text-sm text-[#3A1F0E]/60">Checking the protected duplicate plan…</p>
               ) : sourceDirectoryIntakePreview ? (
-                <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-6">
-                  <div><dt className="text-[#3A1F0E]/55">Received source records</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.sourceCandidateCount.toLocaleString()}</dd></div>
-                  <div><dt className="text-[#3A1F0E]/55">Remaining to reconcile</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.createCount.toLocaleString()}</dd></div>
-                  <div><dt className="text-[#3A1F0E]/55">Exact records reconciled</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.exactDuplicateCount.toLocaleString()}</dd></div>
+                <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-7">
+                  <div><dt className="text-[#3A1F0E]/55">Received source listings</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.sourceCandidateCount.toLocaleString()}</dd></div>
+                  <div><dt className="text-[#3A1F0E]/55">New profiles still to create</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.createCount.toLocaleString()}</dd></div>
+                  <div><dt className="text-[#3A1F0E]/55">Existing source receipts to enrich</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.exactEnrichmentReceiptCount.toLocaleString()}</dd></div>
+                  <div><dt className="text-[#3A1F0E]/55">Exact receipts after next batch</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.remainingExactEnrichmentReceiptCount.toLocaleString()}</dd></div>
                   <div><dt className="text-[#3A1F0E]/55">Potential duplicates to review</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.potentialDuplicateReviewCount.toLocaleString()}</dd></div>
+                  <div><dt className="text-[#3A1F0E]/55">Requires description review</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.heldForDescriptionCount.toLocaleString()}</dd></div>
                   <div><dt className="text-[#3A1F0E]/55">Street-address profiles</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.addressEligibleForGeocodingCount.toLocaleString()}</dd></div>
                   <div><dt className="text-[#3A1F0E]/55">Searchable without pin</dt><dd className="mt-0.5 font-bold text-[#3A1F0E]">{sourceDirectoryIntakePreview.maplessProfileCount.toLocaleString()}</dd></div>
                 </dl>
