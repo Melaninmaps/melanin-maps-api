@@ -216,7 +216,7 @@ const SUBJECTS: readonly SubjectDefinition[] = [
   {
     key: "auto_repair",
     label: "auto repair services",
-    match: /\b(?:auto repair|car repair|mechanics?|automotive service)\b/i,
+    match: /\b(?:auto[- ]?repair|car[- ]?repair|mechanics?|automotive service)\b/i,
     searchTerms: ["auto repair", "car repair", "mechanic", "automotive"],
   },
   {
@@ -430,6 +430,10 @@ export function deriveContextualBusinessEvidenceTerms(
 ): readonly string[] {
   const terms = new Set<string>();
   const streetSuffix = "avenue|ave\\.?|street|st\\.?|road|rd\\.?|boulevard|blvd\\.?|drive|dr\\.?|lane|ln\\.?|place|pl\\.?|court|ct\\.?|way|pike";
+  // “Place” is a valid street suffix only when the member deliberately uses a
+  // street preposition. In a free-form fallback it commonly appears in phrases
+  // such as “dinner place,” which must never become a hard directory constraint.
+  const fallbackStreetSuffix = "avenue|ave\\.?|street|st\\.?|road|rd\\.?|boulevard|blvd\\.?|drive|dr\\.?|lane|ln\\.?|court|ct\\.?|way|pike";
   // Prefer a deliberate location preposition so “the bookstore in Philadelphia
   // on Germantown Avenue” extracts only the street, not the preceding request.
   const explicitStreetPattern = new RegExp(
@@ -437,7 +441,7 @@ export function deriveContextualBusinessEvidenceTerms(
     "gi",
   );
   const fallbackStreetPattern = new RegExp(
-    `\\b([A-Za-z][A-Za-z0-9.'-]*(?:\\s+[A-Za-z][A-Za-z0-9.'-]*){0,1}\\s+(?:${streetSuffix}))\\b`,
+    `\\b([A-Za-z][A-Za-z0-9.'-]*(?:\\s+[A-Za-z][A-Za-z0-9.'-]*){0,1}\\s+(?:${fallbackStreetSuffix}))\\b`,
     "gi",
   );
   const streetMatches = [...message.matchAll(explicitStreetPattern)];

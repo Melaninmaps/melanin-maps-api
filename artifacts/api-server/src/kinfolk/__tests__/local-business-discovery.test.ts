@@ -189,6 +189,21 @@ describe("local business subject classification", () => {
     ]);
   });
 
+  it("does not treat a generic dinner place as a street-evidence constraint", () => {
+    const subject = deriveBusinessSubject(
+      "Find a Black-owned dinner place within 25 miles with a shellfish-safe option.",
+    );
+    expect(subject).toMatchObject({ key: "restaurant" });
+    expect(subject?.contextualEvidenceTerms).toEqual([]);
+  });
+
+  it("recognizes a hyphenated auto-repair request as governed discovery", () => {
+    expect(deriveBusinessSubject("Find a Black-owned auto-repair shop in Minneapolis")).toMatchObject({
+      key: "auto_repair",
+      label: "auto repair services",
+    });
+  });
+
   it("routes the production bookstore question to business discovery", () => {
     expect(classifyKinfolkRequest("Can you tell me about bookstores in Atlanta GA", "Atlanta")).toMatchObject({
       route: "business_discovery",

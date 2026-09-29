@@ -30,6 +30,7 @@ import {
   uniqueActionableBusinessResults,
   type ConversationalBusinessResultView,
 } from "./business-result-view";
+import { logRadiusDiscoveryTrace } from "./radius-discovery-trace";
 import { isMwmDiasporaPromotionEnabled } from "../businesses/mwmCoreDiscoveryPolicy";
 import { mayUseSourceBackedTagEvidence } from "./directory-taxonomy-v2";
 
@@ -490,6 +491,8 @@ export async function discoverLocalBusinesses(input: {
   allowAllPublicPlaces?: boolean;
   /** Transient geocoded public origin for a one-turn exact-radius request. */
   verifiedRadius?: VerifiedRadiusOrigin;
+  /** Server-generated correlation id for count-only exact-radius diagnostics. */
+  radiusTraceRequestId?: string;
 }): Promise<DeterministicBusinessDiscoveryResponse> {
   let platformStatus: "completed" | "degraded" = "completed";
   let businessRows: GovernedKinfolkBusiness[] = [];
@@ -566,7 +569,9 @@ export async function discoverLocalBusinesses(input: {
     mapRows = platformResults[1].value;
   else platformStatus = "degraded";
 
+  const repositoryMatchedCount = businessRows.length;
   businessRows = withinVerifiedRadius(businessRows, input.verifiedRadius);
+  const afterRadiusCount = businessRows.length;
   // A mapped cultural/place entity has no business coordinate contract, so it
   // cannot be offered as an exact-radius result.
   if (input.verifiedRadius) mapRows = [];
@@ -580,6 +585,7 @@ export async function discoverLocalBusinesses(input: {
       Boolean(business.researchSourceUrl),
     );
   }
+  const afterOwnershipEvidenceCount = businessRows.length;
 
   // A cuisine or another documented current-turn detail cannot be broadened by
   // a stale repository row, an external result, or a cultural-place record.
@@ -599,6 +605,7 @@ export async function discoverLocalBusinesses(input: {
       ),
     );
   }
+  const afterServiceEvidenceCount = businessRows.length;
 
   // A strict Support Lens and the default Diaspora Promotion Catalog are
   // documentary-only. Kinfolk may answer general factual questions with
@@ -670,14 +677,32 @@ export async function discoverLocalBusinesses(input: {
   // Keep a single actionable display cohort for cards, text, and serialized
   // recommendations. This never alters directory records; it only prevents a
   // response from naming a duplicate or actionless place that is not clickable.
+  const actionableBusinesses = rankGovernedBusinessesForMember(
+    businessRows,
+    input.personalization,
+  )
+    .slice(0, 12)
+    .map(platformBusiness);
   const businesses = uniqueActionableBusinessResults(
-    rankGovernedBusinessesForMember(
-      businessRows,
-      input.personalization,
-    )
-      .slice(0, 12)
-      .map(platformBusiness),
+    actionableBusinesses,
   ).slice(0, 5);
+  if (input.verifiedRadius && input.radiusTraceRequestId) {
+    logRadiusDiscoveryTrace({
+      requestId: input.radiusTraceRequestId,
+      city: input.scope.city,
+      category: input.subject.key,
+      ownershipRequested: Boolean(input.requiredDesignationIds?.length),
+      radiusMiles: input.verifiedRadius.radiusMiles,
+      originKind: "verified_public",
+      repositoryMatched: repositoryMatchedCount,
+      afterRadius: afterRadiusCount,
+      afterOwnershipEvidence: afterOwnershipEvidenceCount,
+      afterServiceEvidence: afterServiceEvidenceCount,
+      actionable: actionableBusinesses.length,
+      deduped: businesses.length,
+      returned: businesses.length,
+    });
+  }
   const subjectLabel = requestedSubjectLabel(input.subject);
   const mapPlaces = (input.requiredDesignationIds?.length ? [] : mapRows)
     .filter((place) =>

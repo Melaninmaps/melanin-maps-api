@@ -390,6 +390,10 @@ import {
   normalizeKinfolkFormalDocumentReply,
   normalizeKinfolkConversationMode,
 } from "../kinfolk/conversation-mode";
+import {
+  isKinfolkRaisePreparationRequest,
+  renderKinfolkRaisePreparation,
+} from "../kinfolk/career-mode-response";
 import { normalizeKinfolkMemberReply } from "../kinfolk/response-format";
 import { buildKinfolkCurrentTurnCorrectionInstruction } from "../kinfolk/current-turn-correction";
 import { normalizeKinfolkTaskAction } from "../kinfolk/task-action-contract";
@@ -7026,6 +7030,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       strictSourceBackedDiscovery && isDirectoryTaxonomyV2Enabled(),
     allowAllPublicPlaces: explicitAllPlacesExpansion,
     verifiedRadius: verifiedRadius ?? undefined,
+    radiusTraceRequestId: verifiedRadius ? crypto.randomUUID() : undefined,
   });
   const resultView = buildConversationalBusinessResultView({
     businesses: discoveryResult.discovery.platformBusinesses,
@@ -7736,6 +7741,71 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }))
   )
     return;
+  // A direct request to prepare for a raise is bounded, ordinary coaching—not
+  // a directory query or current-research task. Render a shared truthful plan
+  // through the selected visible Kinfolk Voice before the model queue so mode
+  // selection is reliable under temporary provider pressure.
+  if (
+    verifiedImageUrls.length === 0 &&
+    typeof requestedVoiceMode === "string" &&
+    isKinfolkRaisePreparationRequest(message)
+  ) {
+    const careerResponse = renderKinfolkRaisePreparation(
+      normalizeKinfolkConversationMode(requestedVoiceMode),
+    );
+    const careerSessionId = await persistDeterministicDiscoveryTurn({
+      userId: req.user.id,
+      memoryEnabled,
+      sessionId,
+      message,
+      reply: careerResponse.reply,
+      recommendations: null,
+      resultView: null,
+      followUpSuggestions: careerResponse.followUpSuggestions,
+      sources: [],
+      destination: "",
+      vibes,
+    });
+    res.status(200).json({
+      sessionId: careerSessionId,
+      reply: careerResponse.reply,
+      recommendations: null,
+      itinerary: null,
+      resultView: null,
+      followUpSuggestions: careerResponse.followUpSuggestions,
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "general_knowledge",
+      sources: [],
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "career_coaching",
+      responseMeta: {
+        schemaVersion: 1,
+        planKind: "general_assistant",
+        answerMode: "conversation",
+        retrieval: "none",
+        allowBusinessCards: false,
+        evidenceRequired: false,
+        requiresClarification: false,
+      },
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "not_needed",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
+    });
+    return;
+  }
   if (contextualRequestAbort.signal.aborted) return;
 
   // chatStage tracks which boundary the handler was crossing when an error is
@@ -10534,8 +10604,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       ReturnType<typeof callOpenAIWithCompatibilityFallback>
     >;
     try {
+      // A user may have separate active Kinfolk conversations (for example a
+      // travel chat and a career chat). Limit in-flight work per conversation,
+      // while the global queue still bounds provider concurrency and token use.
+      // A second send in the same conversation remains serialized.
+      const queueConversationKey = sessionId
+        ? `${req.user?.id ?? "anon"}:${sessionId}`
+        : req.user?.id ?? "anon";
       completionResult = await kinfolkQueue.run(
-        req.user?.id ?? "anon",
+        queueConversationKey,
         estimatedTotal,
         () => {
           chatStage = "provider_call";
@@ -11504,7 +11581,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     if (isOverload) {
       res.status(503).set("Retry-After", "20").json({
         error:
-          "Kinfolk is helping a few people right now. Your question is saved — try again in about 20 seconds.",
+          "Kinfolk is temporarily busy. Please retry this question in about 20 seconds.",
         code: "KINFOLK_BUSY",
         retryAfterSeconds: 20,
       });

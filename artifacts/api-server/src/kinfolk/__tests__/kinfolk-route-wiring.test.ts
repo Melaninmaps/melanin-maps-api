@@ -329,6 +329,16 @@ describe("Kinfolk chat static wiring", () => {
     expect(routeSource).toContain("answerDirectKinfolkLocalTime");
   });
 
+  it("uses count-only radius tracing and governed deterministic repairs", () => {
+    expect(routeSource).toContain("radiusTraceRequestId: verifiedRadius ? crypto.randomUUID() : undefined");
+    expect(routeSource).toContain("isKinfolkRaisePreparationRequest(message)");
+    expect(routeSource).toContain("renderKinfolkRaisePreparation(");
+    expect(routeSource).toContain('answerMode: "career_coaching"');
+    expect(routeSource).toContain("const queueConversationKey = sessionId");
+    expect(routeSource).toContain("queueConversationKey,");
+    expect(routeSource).toContain("Kinfolk is temporarily busy. Please retry this question");
+  });
+
   it("keeps current city-safety evidence separately gated from directory cards", () => {
     const helperStart = routeSource.indexOf("async function tryAnswerDeterministicBusinessDiscovery");
     const helperEnd = routeSource.indexOf('router.post("/kinfolk/chat"', helperStart);
