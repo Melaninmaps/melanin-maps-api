@@ -471,6 +471,15 @@ describe("Kinfolk chat static wiring", () => {
     expect(routeSource).toContain("ON-SCREEN FORMAT: Return plain text");
   });
 
+  it("injects one server-resolved temporal contract into both full and lean Kinfolk responses", () => {
+    expect(routeSource).toContain('import { buildKinfolkTemporalContext } from "../kinfolk/temporal-context";');
+    expect(chatRoute).toContain("const temporalContext = buildKinfolkTemporalContext({");
+    expect(chatRoute).toContain("clientTimeZone,");
+    expect(chatRoute).toContain("destinationLocalTimeContext,");
+    expect(chatRoute).toContain("`\\n\\n${temporalContext}`");
+    expect(chatRoute).toContain("${buildLeanGeneralChatPrompt(conversationVoiceMode)}\\n\\n${temporalContext}");
+  });
+
   it("uses the shared natural-conversation contract in the full Kinfolk prompt", () => {
     expect(routeSource).toContain("buildKinfolkNaturalConversationContract,");
     expect(routeSource).toContain("const naturalConversationContract = buildKinfolkNaturalConversationContract();");

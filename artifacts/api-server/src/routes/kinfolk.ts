@@ -120,6 +120,7 @@ import {
   resolveTurnGeography,
 } from "../kinfolk/heritage-city-registry";
 import { answerDirectKinfolkCalendarDate } from "../kinfolk/direct-calendar-answer";
+import { buildKinfolkTemporalContext } from "../kinfolk/temporal-context";
 import {
   normalizeTranscript,
   VOICE_MAX_DURATION_SECONDS,
@@ -10489,6 +10490,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const destinationLocalTimeContext = promptDestination
       ? await resolveDestinationLocalTimeContext(promptDestination)
       : null;
+    const temporalContext = buildKinfolkTemporalContext({
+      clientTimeZone,
+      destinationLocalTimeContext,
+    });
     const baseSystemPrompt =
       buildSystemPrompt({
         prefs,
@@ -10536,7 +10541,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       (culturalLearningOpportunity
         ? `\n\n${culturalLearningOpportunity.promptBlock}`
         : "") +
-      (cityBriefingPromptBlock ? `\n\n${cityBriefingPromptBlock}` : "");
+      (cityBriefingPromptBlock ? `\n\n${cityBriefingPromptBlock}` : "") +
+      `\n\n${temporalContext}`;
 
     // Build server-authoritative supplemental blocks from context resolution
     const entityBlock = contextResolution.entityContextBlock;
@@ -10688,7 +10694,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       maxOutputTokens: resolveKinfolkOutputTokenBudget(modelPolicy, responseDepth),
     };
     const systemPromptWithLibrary = leanGeneralChat
-      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${responseDepthPrompt}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
+      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${temporalContext}\n\n${responseDepthPrompt}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
       : (!contextualHighConsequence && libraryGroundingBlock
           ? `${systemPrompt}\n\n${libraryGroundingBlock}`
           : systemPrompt) +
