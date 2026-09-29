@@ -10,6 +10,7 @@
  *   node scripts/pre-build-check.js ios --release-evidence <snapshot.json>
  *   node scripts/pre-build-check.js android --release-evidence <snapshot.json>
  *   node scripts/pre-build-check.js all --release-evidence <snapshot.json>
+ *   node scripts/pre-build-check.js ios --source-gate
  */
 
 const fs = require("fs");
@@ -50,7 +51,7 @@ function info(label, value) {
 
 function exitUsage(message) {
   if (message) console.error(`BUILD_PREFLIGHT_BLOCKED: ${message}`);
-  console.error("Usage: node scripts/pre-build-check.js ios|android|all --release-evidence <snapshot.json>");
+  console.error("Usage: node scripts/pre-build-check.js ios|android|all --release-evidence <snapshot.json>|--source-gate");
   process.exit(64);
 }
 
@@ -63,35 +64,45 @@ function parseArgs(argv) {
   for (let index = 1; index < argv.length; index += 1) {
     const key = argv[index];
     if (!key.startsWith("--")) exitUsage(`unexpected argument ${key}`);
+    if (key === "--source-gate") {
+      values.sourceGate = true;
+      continue;
+    }
     const value = argv[index + 1];
     if (!value || value.startsWith("--")) exitUsage(`missing value for ${key}`);
     values[key.slice(2)] = value;
     index += 1;
   }
-  if (!values["release-evidence"]) {
+  if (values.sourceGate && values["release-evidence"]) {
+    exitUsage("choose either --source-gate or --release-evidence, never both");
+  }
+  if (!values.sourceGate && !values["release-evidence"]) {
     exitUsage("--release-evidence is required; configuration alone is not build authorization");
   }
-  return { platform, releaseEvidence: values["release-evidence"] };
+  return { platform, releaseEvidence: values["release-evidence"], sourceGate: values.sourceGate === true };
 }
 
 async function main() {
-  const { platform, releaseEvidence } = parseArgs(process.argv.slice(2));
+  const { platform, releaseEvidence, sourceGate } = parseArgs(process.argv.slice(2));
   const appJson = readJson(APP_JSON);
   if (!appJson?.expo) {
     throw new Error("cannot read artifacts/mobile/app.json");
   }
 
-  const evidencePath = path.resolve(process.cwd(), releaseEvidence);
-  if (!fs.existsSync(evidencePath)) {
-    throw new Error(`release evidence snapshot does not exist: ${evidencePath}`);
+  let evidence = null;
+  let evidencePath = null;
+  if (!sourceGate) {
+    evidencePath = path.resolve(process.cwd(), releaseEvidence);
+    if (!fs.existsSync(evidencePath)) {
+      throw new Error(`release evidence snapshot does not exist: ${evidencePath}`);
+    }
+    const { validateEvidence } = await import(
+      pathToFileURL(path.join(REPOSITORY_ROOT, "scripts", "release-state.mjs")).href,
+    );
+    evidence = validateEvidence(readJson(evidencePath), {
+      requireStage: "INTEGRATION_TESTED",
+    });
   }
-
-  const { validateEvidence } = await import(
-    pathToFileURL(path.join(REPOSITORY_ROOT, "scripts", "release-state.mjs")).href,
-  );
-  const evidence = validateEvidence(readJson(evidencePath), {
-    requireStage: "INTEGRATION_TESTED",
-  });
 
   const version = appJson.expo.version;
   const iosBuild = Number.parseInt(appJson.expo.ios.buildNumber, 10);
@@ -108,9 +119,13 @@ async function main() {
   const buildRecord = readJson(RECORD_FILE);
 
   banner("MWM NATIVE CANDIDATE PREFLIGHT", "═");
-  info("Candidate", evidence.candidate.id);
-  info("Validated stage", evidence.transitions.at(-1).stage);
-  info("Evidence snapshot", evidencePath);
+  if (sourceGate) {
+    info("Mode", "source configuration gate only — not build authorization");
+  } else {
+    info("Candidate", evidence.candidate.id);
+    info("Validated stage", evidence.transitions.at(-1).stage);
+    info("Evidence snapshot", evidencePath);
+  }
   info("Source SHA", sourceSha);
   info("App version", version);
   info("iOS build number", String(iosBuild));
@@ -120,11 +135,13 @@ async function main() {
   banner("VALIDATION RESULTS");
   let blocked = false;
 
-  if (sourceSha !== evidence.candidate.sourceSha) {
-    fail("Evidence source identity", "checked-out SHA does not equal the immutable candidate SHA");
-    blocked = true;
-  } else {
-    pass("Evidence source identity", evidence.candidate.sourceSha);
+  if (evidence) {
+    if (sourceSha !== evidence.candidate.sourceSha) {
+      fail("Evidence source identity", "checked-out SHA does not equal the immutable candidate SHA");
+      blocked = true;
+    } else {
+      pass("Evidence source identity", evidence.candidate.sourceSha);
+    }
   }
   if (gitDirty) {
     fail("Repository working tree", "dirty source cannot produce a candidate artifact");
@@ -169,9 +186,14 @@ async function main() {
     return;
   }
 
-  banner("CANDIDATE CONFIGURATION VALIDATED");
-  console.log("No EAS build request, artifact upload, TestFlight action, Play action, or record update was performed.");
-  console.log("Before an approved build request, obtain live EAS and store-number evidence and record the returned artifact facts in a new evidence snapshot.");
+  if (sourceGate) {
+    banner("SOURCE CONFIGURATION VALIDATED");
+    console.log("This source-only result is not native build authorization. No EAS build request, artifact upload, TestFlight action, Play action, or record update was performed.");
+  } else {
+    banner("CANDIDATE CONFIGURATION VALIDATED");
+    console.log("No EAS build request, artifact upload, TestFlight action, Play action, or record update was performed.");
+    console.log("Before an approved build request, obtain live EAS and store-number evidence and record the returned artifact facts in a new evidence snapshot.");
+  }
 }
 
 main().catch((error) => {

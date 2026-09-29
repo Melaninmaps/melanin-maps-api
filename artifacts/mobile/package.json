@@ -12,10 +12,8 @@
     "build": "node scripts/build.js",
     "serve": "node server/serve.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "prebuild:ios": "node scripts/pre-build-check.js ios && node scripts/verify-ios-app-review-config.js",
-    "prebuild:android": "node scripts/pre-build-check.js android",
-    "build:record:ios": "node scripts/pre-build-check.js --record ios",
-    "build:record:android": "node scripts/pre-build-check.js --record android",
+    "prebuild:ios": "node scripts/pre-build-check.js ios --source-gate && node scripts/verify-ios-app-review-config.js",
+    "prebuild:android": "node scripts/pre-build-check.js android --source-gate",
     "audit": "node scripts/audit.js",
     "lint": "expo lint"
   },
