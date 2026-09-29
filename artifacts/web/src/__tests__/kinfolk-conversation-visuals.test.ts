@@ -11,6 +11,8 @@ describe("web Kinfolk conversation-first visuals", () => {
   it("keeps the first screen focused on a conversation without removing starting paths", () => {
     expect(travelPageSource).toContain('data-testid="kinfolk-conversation-welcome"');
     expect(travelPageSource).toContain("Start a conversation");
+    expect(travelPageSource).toContain("Kinfolk here — let's map it out.");
+    expect(travelPageSource).not.toContain("KINFOLK_WELCOME_HEADLINES");
     expect(travelPageSource).toContain("Start here");
     expect(travelPageSource).toContain("More ways Kinfolk can help");
     expect(travelPageSource).toContain("See example questions");
@@ -37,6 +39,7 @@ describe("web Kinfolk conversation-first visuals", () => {
     );
     expect(composerControls).not.toContain('data-testid={`kinfolk-mode-${id}`}');
     expect(composerControls).not.toContain("Reply style");
+    expect(composerControls).not.toContain("Save this as a specific note");
     expect(travelPageSource).toContain('data-testid="kinfolk-community-perspective-opt-in"');
     expect(travelPageSource).toContain("Manage private Kinfolk memory");
   });

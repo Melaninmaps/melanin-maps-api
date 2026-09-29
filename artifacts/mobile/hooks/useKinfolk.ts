@@ -229,7 +229,7 @@ export function useKinfolk() {
 
   const sendMessage = useCallback(async (
     text: string,
-    opts?: { vibes?: string[]; voiceMode?: "community" | "professor" | "business_manager" | "best_friend"; imageUrls?: string[]; rememberThis?: boolean; includeCommunityPerspective?: boolean; publicOrigin?: string },
+    opts?: { vibes?: string[]; voiceMode?: "community" | "professor" | "business_manager" | "best_friend"; imageUrls?: string[]; includeCommunityPerspective?: boolean; publicOrigin?: string },
   ): Promise<void> => {
     // A new member turn always wins. Abort the prior fetch without adding an
     // artificial error bubble, so Kinfolk feels interruptible like a real chat.
@@ -280,6 +280,7 @@ export function useKinfolk() {
           cityHint,
           publicOrigin: opts?.publicOrigin?.trim() || undefined,
           conversationContext,
+          clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
         signal: controller.signal,
       }).finally(() => clearTimeout(chatTimeout));
@@ -320,16 +321,6 @@ export function useKinfolk() {
           data.sensitiveMemoryConfirmation?.confirmationRequired === true
             ? { content: text, purpose: "ongoing_context", sessionId: data.sessionId ?? sessionId }
             : null;
-        if (opts?.rememberThis) {
-          const memoryResponse = await fetch(`${apiBase}/api/kinfolk/memories`, {
-            method: "POST",
-            headers,
-            body: JSON.stringify({ consent: true, content: text, purpose: "ongoing_context", sessionId: data.sessionId }),
-          }).catch(() => null);
-          if (memoryResponse?.status === 409) {
-            sensitiveMemoryDraft = { content: text, purpose: "ongoing_context", sessionId: data.sessionId ?? sessionId };
-          }
-        }
         if (typeof data.queriesUsed === "number") setQueriesUsed(data.queriesUsed);
         if (typeof data.queriesLimit === "number") setQueriesLimit(data.queriesLimit);
 

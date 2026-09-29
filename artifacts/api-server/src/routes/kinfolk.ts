@@ -118,6 +118,7 @@ import {
   isDirectKinfolkLocalTimeQuestion,
   resolveTurnGeography,
 } from "../kinfolk/heritage-city-registry";
+import { answerDirectKinfolkCalendarDate } from "../kinfolk/direct-calendar-answer";
 import {
   normalizeTranscript,
   VOICE_MAX_DURATION_SECONDS,
@@ -7275,6 +7276,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     includeCommunityPerspective,
     conversationContext,
     staffAudit: requestedStaffAudit,
+    clientTimeZone,
   } = req.body as {
     sessionId?: string;
     message: string;
@@ -7286,6 +7288,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     includeCommunityPerspective?: unknown;
     conversationContext?: unknown;
     staffAudit?: unknown;
+    clientTimeZone?: unknown;
   };
 
   if (!message?.trim()) {
@@ -7394,6 +7397,59 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       originalQuery: message,
       answerMode: "memory_help",
       remembered: false,
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "unavailable",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
+    });
+  }
+
+  // A direct question about today's date is a stable calendar answer, not a
+  // live-research request. Answer using the member's supplied device timezone
+  // when it is a valid IANA identifier; the helper rejects untrusted values.
+  const directCalendarDateReply = answerDirectKinfolkCalendarDate({
+    message,
+    clientTimeZone,
+  });
+  if (directCalendarDateReply) {
+    const directCalendarSessionId = await persistDeterministicDiscoveryTurn({
+      userId: req.user.id,
+      memoryEnabled,
+      sessionId,
+      message,
+      reply: directCalendarDateReply,
+      recommendations: null,
+      resultView: null,
+      followUpSuggestions: [],
+      sources: [],
+      destination: "",
+      vibes,
+    });
+    return void res.json({
+      sessionId: directCalendarSessionId,
+      reply: directCalendarDateReply,
+      recommendations: null,
+      itinerary: null,
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "general_knowledge",
+      sources: [],
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "direct_calendar_date",
       structuredContent: null,
       mediaLinks: [],
       relatedConnections: [],

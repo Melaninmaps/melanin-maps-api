@@ -111,20 +111,7 @@ const WELCOME_CHIPS = [
   "Family spots in Chicago",
   "Would my community like this city?",
 ];
-const WELCOME_HEADLINES = [
-  "What are you navigating today?",
-  "Looking for your next favorite place?",
-  "Planning a move?",
-  "Need a trusted recommendation?",
-  "Looking for community?",
-  "Tell me where you're headed.",
-  "Need help deciding?",
-  "Looking for hidden gems?",
-  "Let's map it out.",
-  "Ready for your next adventure?",
-  "What's your next chapter?",
-  "How can I help today?",
-];
+const WELCOME_HEADLINE = "Kinfolk here — let's map it out.";
 
 // ─── Kinfolk Voices™ constants ────────────────────────────────────────────────
 const KINFOLK_VOICES = [
@@ -1192,7 +1179,7 @@ function WelcomeScreen({
   colors: ReturnType<typeof useColors>;
   onChipPress: (t: string) => void;
 }) {
-  const [headline] = useState(() => WELCOME_HEADLINES[Math.floor(Math.random() * WELCOME_HEADLINES.length)]);
+  const headline = WELCOME_HEADLINE;
   const [showMorePrompts, setShowMorePrompts] = useState(false);
   const [showMorePaths, setShowMorePaths] = useState(false);
   const visiblePrompts = showMorePrompts ? WELCOME_CHIPS : WELCOME_CHIPS.slice(0, 3);
@@ -2024,7 +2011,6 @@ export default function TravelScreen() {
   const [voiceMode, setVoiceMode] = useState<"community" | "professor" | "business_manager" | "best_friend">("community");
   const [kinfolkImages, setKinfolkImages] = useState<string[]>([]);
   const [uploadingKinfolkImage, setUploadingKinfolkImage] = useState(false);
-  const [rememberThis, setRememberThis] = useState(false);
   const [includeCommunityPerspective, setIncludeCommunityPerspective] = useState(false);
   const [voiceOutput, setVoiceOutput] = useState(false);
   const [showComposerControls, setShowComposerControls] = useState(false);
@@ -2354,7 +2340,6 @@ export default function TravelScreen() {
     // The hook cancels the old request; this stops any server-owned playback.
     stopServerVoice("member_new_turn");
     const attachedImages = [...kinfolkImages];
-    const shouldRemember = rememberThis;
     const publicOrigin = exactRadiusOrigin.trim();
     setInputText("");
     // The origin is one-turn public context only. It is never shown in the
@@ -2365,14 +2350,12 @@ export default function TravelScreen() {
     await sendMessage(msg, {
       voiceMode,
       imageUrls: attachedImages,
-      rememberThis: shouldRemember,
       includeCommunityPerspective,
       publicOrigin: publicOrigin || undefined,
     });
     setKinfolkImages([]);
-    setRememberThis(false);
     setIncludeCommunityPerspective(false);
-  }, [inputText, voiceMode, sendMessage, isAuthenticated, onUserSend, kinfolkImages, rememberThis, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin]);
+  }, [inputText, voiceMode, sendMessage, isAuthenticated, onUserSend, kinfolkImages, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin]);
 
   const stopPrimaryVoiceRecording = useCallback(async () => {
     const recordingWasActive = primaryRecorder.isRecording || isRecordingVoice;
@@ -2821,11 +2804,7 @@ export default function TravelScreen() {
 
         {showComposerControls && <>
         <View style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, gap: 7 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-            <TouchableOpacity activeOpacity={0.8} onPress={() => setRememberThis((value) => !value)} style={{ flexDirection: "row", alignItems: "center", gap: 8, flex: 1 }} accessibilityRole="checkbox" accessibilityState={{ checked: rememberThis }} accessibilityLabel="Save this to my private Kinfolk memory">
-              <Ionicons name={rememberThis ? "checkbox" : "square-outline"} size={18} color={rememberThis ? colors.primary : colors.mutedForeground} />
-              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.mutedForeground }}>Save this as a specific note</Text>
-            </TouchableOpacity>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end" }}>
             <TouchableOpacity accessibilityLabel="Manage private Kinfolk memory" onPress={() => router.push("/kinfolk-memory" as any)}><Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primary }}>Manage memory</Text></TouchableOpacity>
           </View>
           <TouchableOpacity

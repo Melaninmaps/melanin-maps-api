@@ -188,7 +188,13 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
   const res = await fetch(`${base}/api/kinfolk/chat`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ message, sessionId, voiceMode, cityHint }),
+    body: JSON.stringify({
+      message,
+      sessionId,
+      voiceMode,
+      cityHint,
+      clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    }),
   });
   if (!res.ok) {
     // Extract server error message so the catch block can surface it to the user

@@ -403,6 +403,19 @@ describe("Kinfolk chat static wiring", () => {
     expect(routeSource).toContain('answerMode: "authoritative_weather"');
   });
 
+  it("answers a direct calendar question before weather or live-research fallback", () => {
+    const calendarAnswer = chatRoute.indexOf("const directCalendarDateReply = answerDirectKinfolkCalendarDate({");
+    const weatherShortCircuit = chatRoute.indexOf("await tryAnswerAuthoritativeWeather({");
+    const citedResearch = chatRoute.indexOf("const citedResearchRequired =");
+
+    expect(routeSource).toContain('import { answerDirectKinfolkCalendarDate } from "../kinfolk/direct-calendar-answer";');
+    expect(chatRoute).toContain("clientTimeZone,");
+    expect(calendarAnswer).toBeGreaterThan(-1);
+    expect(calendarAnswer).toBeLessThan(weatherShortCircuit);
+    expect(calendarAnswer).toBeLessThan(citedResearch);
+    expect(chatRoute).toContain('answerMode: "direct_calendar_date"');
+  });
+
   it("uses the reviewed city-arrival shortcut rather than generic model prose for a whole arrival briefing", () => {
     expect(routeSource).toContain("A broad \"before I go\" request may include weather");
     expect(routeSource).toContain("if (isCityBriefingRequest(input.message, currentTurnCity)) return false;");

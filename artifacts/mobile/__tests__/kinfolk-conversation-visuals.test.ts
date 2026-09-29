@@ -10,6 +10,8 @@ describe("mobile Kinfolk conversation-first visuals", () => {
   it("uses a compact welcome conversation while retaining every start path", () => {
     expect(travelSource).toContain('testID="kinfolk-conversation-welcome"');
     expect(travelSource).toContain("START A CONVERSATION");
+    expect(travelSource).toContain("Kinfolk here — let's map it out.");
+    expect(travelSource).not.toContain("WELCOME_HEADLINES");
     expect(travelSource).toContain("Start here");
     expect(travelSource).toContain("visiblePaths.map");
     expect(travelSource).toContain("More ways Kinfolk can help");
@@ -28,10 +30,11 @@ describe("mobile Kinfolk conversation-first visuals", () => {
     expect(travelSource).toContain('accessibilityLabel="Start a new Kinfolk conversation"');
   });
 
-  it("retains the compact Voice and privacy controls at the composer", () => {
-    expect(travelSource).toContain("Voice &amp; privacy");
+  it("retains compact memory and privacy controls at the composer", () => {
+    expect(travelSource).toContain("Memory & privacy");
     expect(travelSource).toContain("showComposerControls");
-    expect(travelSource).toContain("Save this to my private Kinfolk memory");
+    expect(travelSource).not.toContain("Save this as a specific note");
+    expect(travelSource).toContain("Manage private Kinfolk memory");
     expect(travelSource).toContain("Use approved public Community posts");
   });
 });

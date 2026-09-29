@@ -363,24 +363,10 @@ const KINFOLK_EXAMPLE_CHIPS = [
   "Would my community like this city?",
 ];
 
-/**
- * Rotating welcome headlines for the empty state — one is picked randomly per mount.
- * Mirrors the mobile WELCOME_HEADLINES. PERMANENT.
- */
-const KINFOLK_WELCOME_HEADLINES = [
-  "What are you navigating today?",
-  "Looking for your next favorite place?",
-  "Planning a move?",
-  "Need a trusted recommendation?",
-  "Looking for community?",
-  "Tell me where you're headed.",
-  "Need help deciding?",
-  "Looking for hidden gems?",
-  "Let's map it out.",
-  "Ready for your next chapter?",
-  "What's on your mind?",
-  "How can I help today?",
-];
+// The opening line is deliberately stable. A member's chosen delivery mode and
+// first name may personalize a returning greeting, but random slogans should
+// not make Kinfolk feel like a different assistant on each visit.
+const KINFOLK_WELCOME_HEADLINE = "Kinfolk here — let's map it out.";
 
 // ─── Chip toggle helper ───────────────────────────────────────────────────────
 // selected defaults to [] so a null/undefined value from the API never crashes.
@@ -1031,7 +1017,6 @@ function TravelPage() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
-  const [rememberThis, setRememberThis] = useState(false);
   const [includeCommunityPerspective, setIncludeCommunityPerspective] = useState(false);
   const [showMemoryManager, setShowMemoryManager] = useState(false);
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
@@ -1059,11 +1044,6 @@ function TravelPage() {
   const [modeSaveStatus, setModeSaveStatus] = useState<"idle" | "saving" | "error">("idle");
   const [copyToast, setCopyToast] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
-  // Pick one welcome headline per mount — stays stable for the session
-  const [kinfolkWelcomeHeadline] = useState(() =>
-    KINFOLK_WELCOME_HEADLINES[Math.floor(Math.random() * KINFOLK_WELCOME_HEADLINES.length)]
-  );
-
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("settings") === "kinfolk") {
       setShowPrefs(true);
@@ -1669,24 +1649,6 @@ function TravelPage() {
     return true;
   }, [loadSessions]);
 
-  const saveSpecificMemory = useCallback(async (
-    content: string,
-    purpose: string,
-    memorySessionId?: string,
-  ): Promise<boolean> => {
-    const response = await fetch(`${BASE}api/kinfolk/memories`, {
-      method: "POST",
-      credentials: "include",
-      headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
-      body: JSON.stringify({ consent: true, content, purpose, sessionId: memorySessionId }),
-    });
-    if (response.status === 409) {
-      setPendingSensitiveMemory({ content, purpose, sessionId: memorySessionId });
-      return false;
-    }
-    return response.ok;
-  }, []);
-
   const organizeSession = useCallback(async (id: string, action: "archive" | "restore" | "pin" | "unpin") => {
     const response = await fetch(`${BASE}api/kinfolk/sessions/${encodeURIComponent(id)}/organization`, {
       method: "PATCH",
@@ -1796,7 +1758,6 @@ function TravelPage() {
     if (inputRef.current) { inputRef.current.style.height = "auto"; }
 
     const attachedImages = [...imageUrls];
-    const shouldRemember = rememberThis;
     const conversationContext = messages.slice(-6).map((message) => ({
       role: message.role,
       content: message.content,
@@ -1827,7 +1788,7 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/chat`, {
         method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include",
-        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageUrls: attachedImages, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, conversationContext }),
+        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageUrls: attachedImages, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
         signal: controller.signal,
       });
 
@@ -1912,10 +1873,6 @@ function TravelPage() {
 
       if (data.sessionId && data.sessionId !== sessionId) { setSessionId(data.sessionId); loadSessions(); }
       setImageUrls([]);
-      if (shouldRemember) {
-        void saveSpecificMemory(trimmed, "ongoing_context", data.sessionId ?? sessionId);
-        setRememberThis(false);
-      }
       if (data.sensitiveMemoryConfirmation?.confirmationRequired === true) {
         setPendingSensitiveMemory({ content: trimmed, purpose: "ongoing_context", sessionId: data.sessionId ?? sessionId });
       }
@@ -1991,7 +1948,7 @@ function TravelPage() {
       clearResponseStatusTimers();
       setSending(false);
     }
-  }, [sending, sessionId, loadSessions, imageUrls, rememberThis, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, saveSpecificMemory, exactRadiusOrigin]);
+  }, [sending, sessionId, loadSessions, imageUrls, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, exactRadiusOrigin]);
 
   // Change the depth of an existing answer (Show more / Show less).
   // Records the event server-side and updates the local message state optimistically.
@@ -2394,7 +2351,7 @@ function TravelPage() {
                               ? `Welcome back, ${(authData.user as { firstName?: string }).firstName}.`
                               : sessions.length > 0
                               ? "Welcome back."
-                              : kinfolkWelcomeHeadline}
+                              : KINFOLK_WELCOME_HEADLINE}
                           </h2>
                         </div>
                       </div>
@@ -2846,11 +2803,7 @@ function TravelPage() {
                 </div>
                 {showComposerControls && (
                   <div id="kinfolk-composer-controls" className="mx-auto mb-3 max-w-3xl rounded-2xl border border-[#3A1F0E]/8 bg-[#FAF6EF] p-3">
-                    <div className="grid gap-2 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
-                      <label className="flex items-start gap-2 text-[11px] leading-5 text-[#3A1F0E]/60" title="Save this message as a specific private note. After you choose memory, Kinfolk can also retain useful non-sensitive preferences, plans, and goals when you share them.">
-                        <input type="checkbox" checked={rememberThis} onChange={(event) => setRememberThis(event.target.checked)} className="mt-0.5" />
-                        Save this as a specific note
-                      </label>
+                    <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
                       <label className="flex items-start gap-2 text-[11px] leading-5 text-[#3A1F0E]/60" title="Use approved public Community posts with matching hashtags. This does not share your chat. Community content is perspective, never evidence or a recommendation.">
                         <input data-testid="kinfolk-community-perspective-opt-in" type="checkbox" checked={includeCommunityPerspective} onChange={(event) => setIncludeCommunityPerspective(event.target.checked)} className="mt-0.5" />
                         Use approved public Community posts
@@ -2947,7 +2900,6 @@ function TravelPage() {
                     setResponseFeedbackNotes({});
                     setResponseFeedbackError({});
                     setShowHistory(false);
-                    setRememberThis(false);
                     setIncludeCommunityPerspective(false);
                     void loadKinfolkContinuity();
                   }}
