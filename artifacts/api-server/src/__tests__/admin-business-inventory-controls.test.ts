@@ -139,6 +139,18 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Select this page");
   });
 
+  it("scopes source-directory social review to the selected retained batch", () => {
+    expect(adminRoute).toContain("sourceBatch?: unknown");
+    expect(adminRoute).toContain("const sourceBatch = String(query.sourceBatch ?? \"\").trim().slice(0, 160)");
+    expect(adminRoute).toContain("COALESCE(intake_batch_reference, '') = ?");
+    expect(adminRoute).toContain("sourceBatch: String(req.query.sourceBatch ?? \"\").trim()");
+    expect(adminScreen).toContain("Source directory batch");
+    expect(adminScreen).toContain("founder_city_directories_2026_09_27");
+    expect(adminScreen).toContain('params.set("sourceBatch", sourceBatchValue)');
+    expect(adminScreen).toContain('params.set("sourceBatch", bizSourceBatchFilter)');
+    expect(adminScreen).toContain("The inventory response did not confirm the source-batch filter");
+  });
+
   it("filters ownership only by documented Black, Hispanic, or no-tag states", () => {
     expect(adminRoute).toContain('const ownership = String(query.ownership ?? "all")');
     expect(adminRoute).toContain('ownership === "black"');

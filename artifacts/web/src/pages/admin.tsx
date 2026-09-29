@@ -133,6 +133,16 @@ type IntakeCohortOption = {
   count: number;
 };
 
+const DIRECTORY_SOURCE_BATCH_OPTIONS = [
+  { value: "", label: "All source batches" },
+  { value: "founder_city_directories_2026_09_27", label: "Founder city directories (44-state source pack)" },
+  { value: "directory_sources_2026_09_27", label: "Supporting directory sources" },
+  { value: "minneapolis_directory_sources_2026_09_27", label: "Minnesota directory sources" },
+  { value: "philadelphia_community_black_restaurants_2026_09_27", label: "Philadelphia community restaurants" },
+] as const;
+
+type DirectorySourceBatch = (typeof DIRECTORY_SOURCE_BATCH_OPTIONS)[number]["value"];
+
 type AdminCityOption = {
   value: string;
   label: string;
@@ -923,6 +933,8 @@ export default function Admin() {
   const [bizCategoryFilter, setBizCategoryFilter] = useState("all");
   const [bizIntakeCohortFilter, setBizIntakeCohortFilter] =
     useState<IntakeCohort>("all");
+  const [bizSourceBatchFilter, setBizSourceBatchFilter] =
+    useState<DirectorySourceBatch>("");
   const [bizLinkFilter, setBizLinkFilter] = useState<
     "all" | "website_present" | "website_missing" | "social_present" | "social_missing" | "no_public_link"
   >("all");
@@ -972,6 +984,7 @@ export default function Admin() {
     cities: [] as string[],
     category: "all",
     intakeCohort: "all" as IntakeCohort,
+    sourceBatch: "" as DirectorySourceBatch,
     link: "all" as typeof bizLinkFilter,
     ownership: "all" as typeof bizOwnershipFilter,
     addedFrom: "",
@@ -1133,6 +1146,7 @@ export default function Admin() {
       cities: bizCityFilters,
       category: bizCategoryFilter,
       intakeCohort: bizIntakeCohortFilter,
+      sourceBatch: bizSourceBatchFilter,
       link: bizLinkFilter,
       ownership: bizOwnershipFilter,
       addedFrom: bizAddedFrom,
@@ -1145,6 +1159,7 @@ export default function Admin() {
     bizCategoryFilter,
     bizCityFilters,
     bizIntakeCohortFilter,
+    bizSourceBatchFilter,
     bizLinkFilter,
     bizOwnershipFilter,
     bizSearch,
@@ -1236,6 +1251,7 @@ export default function Admin() {
     cities?: string[];
     category?: string;
     intakeCohort?: IntakeCohort;
+    sourceBatch?: DirectorySourceBatch;
     link?: typeof bizLinkFilter;
     ownership?: typeof bizOwnershipFilter;
     addedFrom?: string;
@@ -1250,6 +1266,7 @@ export default function Admin() {
     const cityValues = next.cities ?? current.cities;
     const categoryValue = next.category ?? current.category;
     const intakeCohortValue = next.intakeCohort ?? current.intakeCohort;
+    const sourceBatchValue = next.sourceBatch ?? current.sourceBatch;
     const linkValue = next.link ?? current.link;
     const ownershipValue = next.ownership ?? current.ownership;
     const addedFromValue = next.addedFrom ?? current.addedFrom;
@@ -1269,6 +1286,7 @@ export default function Admin() {
       if (scope === "subcategory") params.set("subcategory", value);
     }
     if (intakeCohortValue !== "all") params.set("intakeCohort", intakeCohortValue);
+    if (sourceBatchValue) params.set("sourceBatch", sourceBatchValue);
     if (linkValue !== "all") params.set("link", linkValue);
     if (ownershipValue !== "all") params.set("ownership", ownershipValue);
     if (addedFromValue) params.set("addedFrom", addedFromValue);
@@ -1292,6 +1310,13 @@ export default function Admin() {
           setBusinessInventoryFilteredTotal(0);
           setBusinessInventoryTotalPages(1);
           setBusinessInventoryFilterError("The inventory response did not confirm the city filter, so no mismatched businesses were shown. Refresh and try the filter again.");
+          return;
+        }
+        if (String(data?.appliedFilters?.sourceBatch ?? "") !== sourceBatchValue) {
+          setBusinesses([]);
+          setBusinessInventoryFilteredTotal(0);
+          setBusinessInventoryTotalPages(1);
+          setBusinessInventoryFilterError("The inventory response did not confirm the source-batch filter, so no mismatched businesses were shown. Refresh and try the filter again.");
           return;
         }
         const responseBusinesses: AdminBusiness[] = Array.isArray(data.businesses)
@@ -2368,6 +2393,7 @@ export default function Admin() {
       if (scope === "subcategory") params.set("subcategory", value);
     }
     if (bizIntakeCohortFilter !== "all") params.set("intakeCohort", bizIntakeCohortFilter);
+    if (bizSourceBatchFilter) params.set("sourceBatch", bizSourceBatchFilter);
     if (bizLinkFilter !== "all") params.set("link", bizLinkFilter);
     if (bizOwnershipFilter !== "all") params.set("ownership", bizOwnershipFilter);
     if (bizAddedFrom) params.set("addedFrom", bizAddedFrom);
@@ -2384,6 +2410,7 @@ export default function Admin() {
     cities?: string[];
     category?: string;
     intakeCohort?: IntakeCohort;
+    sourceBatch?: DirectorySourceBatch;
     link?: typeof bizLinkFilter;
     ownership?: typeof bizOwnershipFilter;
     addedFrom?: string;
@@ -2402,6 +2429,7 @@ export default function Admin() {
       cities: next.cities ?? bizCityFilters,
       category: next.category ?? bizCategoryFilter,
       intakeCohort: requestedIntakeCohort,
+      sourceBatch: next.sourceBatch ?? bizSourceBatchFilter,
       link: next.link ?? bizLinkFilter,
       ownership: next.ownership ?? bizOwnershipFilter,
       addedFrom: next.addedFrom ?? bizAddedFrom,
@@ -2414,6 +2442,7 @@ export default function Admin() {
     setBizCityFilters(query.cities);
     setBizCategoryFilter(query.category);
     setBizIntakeCohortFilter(query.intakeCohort);
+    setBizSourceBatchFilter(query.sourceBatch);
     setBizLinkFilter(query.link);
     setBizOwnershipFilter(query.ownership);
     setBizAddedFrom(query.addedFrom);
@@ -2435,6 +2464,7 @@ export default function Admin() {
       cities: [],
       category: "all",
       intakeCohort: "all",
+      sourceBatch: "",
       link: "all",
       ownership: "all",
       addedFrom: "",
@@ -4729,6 +4759,21 @@ Selected: ${summary}`,
                   ))}
                 </select>
               </label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                Source directory batch
+                <select
+                  value={bizSourceBatchFilter}
+                  onChange={(event) => applyBusinessInventoryFilters({ sourceBatch: event.target.value as DirectorySourceBatch })}
+                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+                  aria-label="Filter businesses by their retained source directory batch"
+                >
+                  {DIRECTORY_SOURCE_BATCH_OPTIONS.map((batch) => (
+                    <option key={batch.value || "all"} value={batch.value}>
+                      {batch.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <div className="relative text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                 <span>Cities (select one or more)</span>
                 <button
@@ -4917,7 +4962,7 @@ Selected: ${summary}`,
             </div>
 
             <p className="-mt-2 mb-5 text-xs text-[#3A1F0E]/50">
-              Filters combine within the selected inventory tab: select one or more cities, then add business type, documented ownership tag, source cohort, website/social, date, and name/key-phrase filters. “No direct social URL saved” is a review queue, not proof that a business has no social presence. Archive vault + a cohort shows only archived records from that cohort; Live inventory + the same cohort shows only live records. Ownership filters use only recorded labels; they never infer identity. Put one phrase in quotes to require those words together, for example “full wash and detangle”.
+              Filters combine within the selected inventory tab: select one or more cities, then add business type, documented ownership tag, source cohort or directory batch, website/social, date, and name/key-phrase filters. “No direct social URL saved” is a review queue, not proof that a business has no social presence. Archive vault + a cohort shows only archived records from that cohort. A selected directory batch independently limits both Live inventory and Archive vault to that retained source scope. Ownership filters use only recorded labels; they never infer identity. Put one phrase in quotes to require those words together, for example “full wash and detangle”.
             </p>
 
             {bizStatusFilter === "permanently_closed" && (

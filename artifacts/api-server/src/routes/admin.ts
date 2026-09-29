@@ -841,6 +841,7 @@ type AdminBusinessInventoryQuery = Readonly<{
   category?: unknown;
   subcategory?: unknown;
   intakeCohort?: unknown;
+  sourceBatch?: unknown;
   status?: unknown;
   link?: unknown;
   ownership?: unknown;
@@ -876,6 +877,10 @@ async function compileAdminBusinessInventoryFilters(
   const category = String(query.category ?? "").trim();
   const subcategory = String(query.subcategory ?? "").trim();
   const intakeCohort = String(query.intakeCohort ?? "all").trim();
+  // A source batch is retained provenance from a protected directory import.
+  // It scopes review actions without changing source records or pulling in
+  // unrelated inventory that happens to share a city or category.
+  const sourceBatch = String(query.sourceBatch ?? "").trim().slice(0, 160);
   const status = String(query.status ?? "active");
   const link = String(query.link ?? "all");
   const ownership = String(query.ownership ?? "all");
@@ -982,6 +987,9 @@ async function compileAdminBusinessInventoryFilters(
     filters.push(nationalMasterPredicate);
   } else if (intakeCohort === "other_inventory") {
     filters.push(`NOT (${completedCohortPredicate} OR ${nationalMasterPredicate})`);
+  }
+  if (sourceBatch) {
+    addFilter("COALESCE(intake_batch_reference, '') = ?", sourceBatch);
   }
   if (status === "duplicates") {
     // Confirmed duplicate records are retained for evidence and reversible
@@ -1639,6 +1647,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
         category: String(req.query.category ?? "").trim(),
         subcategory: String(req.query.subcategory ?? "").trim(),
         intakeCohort: String(req.query.intakeCohort ?? "all").trim(),
+        sourceBatch: String(req.query.sourceBatch ?? "").trim(),
         link: String(req.query.link ?? "all").trim(),
         ownership: String(req.query.ownership ?? "all").trim(),
         search: String(req.query.search ?? "").trim(),
