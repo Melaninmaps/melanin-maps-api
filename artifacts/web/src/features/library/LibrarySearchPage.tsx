@@ -1,5 +1,6 @@
 import { type FormEvent, useCallback, useEffect, useId, useState } from "react";
 import { Link, useLocation, useSearch } from "wouter";
+import { formatLibraryLensLabels, formatLibraryResearchBody } from "@workspace/constants";
 import { MwmTopicIcon } from "@/components/brand/MwmTopicIcon";
 import { safeLibrarySourceHref } from "./librarySourceUrl";
 import "@/styles/mwm-topic-icons.css";
@@ -130,13 +131,22 @@ const RESEARCH_LENS_OPTIONS = [
 ] as const;
 
 function hasResearchLens(question: string, tag: string): boolean {
-  return new RegExp(`(?:^|\\s)${tag.replace("#", "\\#")}\\b`, "i").test(question.normalize("NFKC"));
+  return new RegExp(`(?:^|\s)${tag.replace("#", "\\#")}\b`, "i").test(question.normalize("NFKC"));
 }
 
-function toggleResearchLens(question: string, tag: string): string {
-  const tagPattern = new RegExp(`(?:^|\\s)${tag.replace("#", "\\#")}\\b`, "ig");
-  if (hasResearchLens(question, tag)) return question.replace(tagPattern, " ").replace(/\s+/g, " ").trim();
-  return `${tag} ${question}`.replace(/\s+/g, " ").trim();
+function selectedResearchLensTags(question: string): string[] {
+  return RESEARCH_LENS_OPTIONS.filter((lens) => hasResearchLens(question, lens.tag)).map((lens) => lens.tag);
+}
+
+function withoutResearchLensTags(question: string): string {
+  return RESEARCH_LENS_OPTIONS.reduce(
+    (current, lens) => current.replace(new RegExp(`(?:^|\s)${lens.tag.replace("#", "\\#")}\b`, "ig"), " "),
+    question,
+  ).replace(/\s+/g, " ").trim();
+}
+
+function buildLibraryResearchQuery(question: string, tags: readonly string[], keywords = ""): string {
+  return [...tags, question.trim(), keywords.trim()].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
 }
 
 function formattedFreshness(value: string): string {
@@ -172,13 +182,12 @@ function SourceList({ sources }: { sources: LibrarySourceLink[] }) {
 function ResearchBody({ body, title }: { body: string; title: string }) {
   return (
     <div className="library-research-body">
-      {body.split(/\n\s*\n/).map((paragraph, index) => {
-        const heading = paragraph.match(/^##\s+(.+)$/);
-        return heading ? (
-          <h3 key={`${title}-${index}`}>{heading[1]}</h3>
-        ) : (
-          <p className="library-search-result__body" key={`${title}-${index}`}>{paragraph}</p>
-        );
+      {formatLibraryResearchBody(body).map((block, index) => {
+        if (block.kind === "heading") return <h3 key={`${title}-${index}`}>{block.text}</h3>;
+        if (block.kind === "bullets") {
+          return <ul className="library-research-bullets" key={`${title}-${index}`}>{block.items.map((item) => <li key={item}>{item}</li>)}</ul>;
+        }
+        return <p className="library-search-result__body" key={`${title}-${index}`}>{block.text}</p>;
       })}
     </div>
   );
@@ -195,8 +204,6 @@ function ExpandableAnswer({
   disclaimer,
   relatedQuestions = [],
   onRelated,
-  researchScope,
-  researchTrack = "foundation",
 }: {
   title: string;
   summary: string;
@@ -208,8 +215,6 @@ function ExpandableAnswer({
   disclaimer?: string | null;
   relatedQuestions?: string[];
   onRelated?: (question: string) => void;
-  researchScope?: LibraryResearchScope;
-  researchTrack?: "foundation" | "community";
 }) {
   const [expanded, setExpanded] = useState(false);
   const detailsId = useId();
@@ -231,24 +236,6 @@ function ExpandableAnswer({
       >
         {expanded ? "See Less" : "See More"}
       </button>
-      {researchScope ? (
-        <aside className="library-research-scope" aria-label="Research scope">
-          <h3>{researchTrack === "foundation" ? "How the current foundation was researched" : "How this was researched"}</h3>
-          {researchTrack === "foundation" ? (
-            <p><strong>Current foundation:</strong> Current, authoritative information for any reader. An explicit community lens is researched and shown separately, never substituted for this answer.</p>
-          ) : (
-            <p><strong>Research lens:</strong> {researchScope.researchLenses.map((lens) => lens.tag).join(" ")}</p>
-          )}
-          <p><strong>Source standard:</strong> {researchScope.sourceStandard}</p>
-          <p>{researchScope.groupGuidance}</p>
-          {researchScope.connectedTopics.length > 0 ? (
-            <div className="library-research-topic-links">
-              <strong>Connected Library topics:</strong>
-              {researchScope.connectedTopics.map((topic) => <Link href={topic.href} key={topic.href}>{topic.label}</Link>)}
-            </div>
-          ) : null}
-        </aside>
-      ) : null}
       <SourceList sources={sources} />
       <div className="library-search-result__footer">
         <span>{sourceCount} {sourceCount === 1 ? "source" : "sources"}</span>
@@ -304,7 +291,9 @@ export function LibrarySearchPage() {
   const params = new URLSearchParams(rawSearch);
   const routeQuery = params.get("q")?.trim() ?? "";
   const researchOnOpen = params.get("research") === "true";
-  const [input, setInput] = useState(routeQuery);
+  const [input, setInput] = useState(withoutResearchLensTags(routeQuery));
+  const [selectedResearchTags, setSelectedResearchTags] = useState<string[]>(() => selectedResearchLensTags(routeQuery));
+  const [filterKeywords, setFilterKeywords] = useState("");
   const [response, setResponse] = useState<LibrarySearchResponse | null>(null);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [research, setResearch] = useState<LibraryResearchResponse | null>(null);
@@ -314,7 +303,7 @@ export function LibrarySearchPage() {
   const [state, setState] = useState<"idle" | "loading" | "ready" | "error">(routeQuery ? "loading" : "idle");
   const [researchState, setResearchState] = useState<"idle" | "loading" | "ready" | "error">("idle");
   const [, navigate] = useLocation();
-  const activeResearchLensTags = RESEARCH_LENS_OPTIONS.filter((lens) => hasResearchLens(input, lens.tag)).map((lens) => lens.tag);
+  const activeResearchLensTags = selectedResearchTags;
 
   useEffect(() => {
     const controller = new AbortController();
@@ -358,7 +347,8 @@ export function LibrarySearchPage() {
   }, [contextConsent, contextConsentState, navigate, routeQuery]);
 
   useEffect(() => {
-    setInput(routeQuery);
+    setInput(withoutResearchLensTags(routeQuery));
+    setSelectedResearchTags(selectedResearchLensTags(routeQuery));
     setResults([]);
     setResponse(null);
     setResearch(null);
@@ -388,7 +378,7 @@ export function LibrarySearchPage() {
   function submit(event: FormEvent) {
     event.preventDefault();
     const query = input.trim();
-    if (query) navigate(`/library/search?q=${encodeURIComponent(query)}`);
+    if (query) navigate(`/library/search?q=${encodeURIComponent(buildLibraryResearchQuery(query, selectedResearchTags, filterKeywords))}`);
   }
 
   const researchCurrentQuestion = useCallback(async () => {
@@ -461,8 +451,12 @@ export function LibrarySearchPage() {
           <input id="library-result-search" maxLength={120} onChange={(event) => setInput(event.target.value)} placeholder="Try HVAC, oldest bookstore in the US, or life after death" required type="search" value={input} />
             <button type="submit">Search</button>
           </form>
-          <div className="library-research-lens-filter" aria-label="Library research lens">
-            <p>Choose community evidence to add alongside the current foundation. A lens is not saved as your identity.</p>
+          <details className="library-research-lens-filter">
+            <summary>
+              <span>Community research filters</span>
+              <small>{activeResearchLensTags.length > 0 ? formatLibraryLensLabels(activeResearchLensTags) : "Optional"}</small>
+            </summary>
+            <p>Choose community evidence to add alongside the current foundation. These filters are not saved as your identity.</p>
             <div role="group" aria-label="Research lens choices">
               {RESEARCH_LENS_OPTIONS.map((lens) => {
                 const selected = activeResearchLensTags.includes(lens.tag);
@@ -471,7 +465,7 @@ export function LibrarySearchPage() {
                     aria-pressed={selected}
                     className={selected ? "is-selected" : undefined}
                     key={lens.tag}
-                    onClick={() => setInput((current) => toggleResearchLens(current, lens.tag))}
+                    onClick={() => setSelectedResearchTags((current) => current.includes(lens.tag) ? current.filter((tag) => tag !== lens.tag) : [...current, lens.tag])}
                     type="button"
                   >
                     {lens.label}
@@ -479,7 +473,19 @@ export function LibrarySearchPage() {
                 );
               })}
             </div>
-          </div>
+            {activeResearchLensTags.length > 0 ? (
+              <label className="library-research-filter-keywords">
+                <span>Optional focus words</span>
+                <input
+                  onChange={(event) => setFilterKeywords(event.target.value)}
+                  placeholder="For example: first-generation, caregiving, local history"
+                  type="text"
+                  value={filterKeywords}
+                />
+                <small>These words refine this search only. Edit or clear them whenever you like.</small>
+              </label>
+            ) : null}
+          </details>
           {contextConsent ? (
             <label className="library-context-consent">
               <input
@@ -526,8 +532,8 @@ export function LibrarySearchPage() {
           <div className="library-search-heading">
             <div>
               <p className="living-library-eyebrow">Approved internal matches</p>
-              <h2>Results for “{response.query}”</h2>
-              <p className="library-search-provider-note">Research lens: {response.researchLenses.map((lens) => lens.tag).join(" ")}. This scope guides evidence; it does not describe the reader.</p>
+              <h2>Results for “{withoutResearchLensTags(response.query)}”</h2>
+              <p className="library-search-provider-note">Community evidence: {formatLibraryLensLabels(response.researchLenses.map((lens) => lens.tag)) || "None selected"}.</p>
             </div>
             <span>{response.total} {response.total === 1 ? "result" : "results"}</span>
           </div>
@@ -539,7 +545,7 @@ export function LibrarySearchPage() {
         {state === "ready" && response && !research && !response.searchClarification && response.webResearch.status !== "not_needed" ? (
           <section className="library-search-empty library-research-offer">
             <h2>{researchState === "loading" ? "Researching this question from vetted sources…" : "No approved entry answers this yet."}</h2>
-            <p>{researchState === "loading" ? "The first search takes a little longer because the Library is gathering, checking, and summarizing sources before it offers related next questions." : `${response.webResearch.message} Reputable sources depend on the topic: medical research uses clinical and public-health authorities; financial research uses regulators and economic research; other topics use their appropriate public-interest, academic, or archival sources.`}</p>
+            <p>{researchState === "loading" ? "The first search takes a little longer because the Library is gathering, checking, and summarizing sources before it offers related next questions." : "The Library will gather and summarize reputable sources appropriate to the question, then show the explanation first and the cited websites directly below it."}</p>
             <button disabled={researchState === "loading"} onClick={() => void researchCurrentQuestion()} type="button">
               {researchState === "loading" ? "Building your research brief…" : "Research vetted sources"}
             </button>
@@ -549,21 +555,18 @@ export function LibrarySearchPage() {
 
         {research ? (
           <>
-            <p className={`library-provider-status library-provider-status--${research.provider.status}`} role="status">{research.provider.message}</p>
             {research.memberContextApplied?.length ? (
               <p className="library-search-provider-note">
-                <strong>Private default context:</strong> {research.memberContextApplied.join(" ")} was added because the signed-in member chose it in Kinfolk setup. The foundation remains general; “general only” or “this is for a friend” overrides it.
+                <strong>Private default context:</strong> {formatLibraryLensLabels(research.memberContextApplied)} was added because the signed-in member chose it in Kinfolk setup. The foundation remains general; “general only” or “this is for a friend” overrides it.
               </p>
             ) : null}
             <ExpandableAnswer
               body={(research.foundation ?? research.answer).body}
               disclaimer={(research.foundation ?? research.answer).disclaimer}
               eyebrow={research.origin === "internal" || research.published ? "Current foundation · Source-governed Library entry" : "Current foundation · Private response"}
-              onRelated={(question) => navigate(`/library/search?q=${encodeURIComponent(`${research.researchScope.researchLenses.map((lens) => lens.tag).join(" ")} ${question}`.trim())}`)}
+              onRelated={(question) => navigate(`/library/search?q=${encodeURIComponent(buildLibraryResearchQuery(question, research.researchScope.researchLenses.map((lens) => lens.tag)))}`)}
               refreshedAt={(research.foundation ?? research.answer).refreshedAt}
               relatedQuestions={(research.foundation ?? research.answer).relatedQuestions}
-              researchScope={research.researchScope}
-              researchTrack="foundation"
               sourceCount={(research.foundation ?? research.answer).sourceCount}
               sources={(research.foundation ?? research.answer).sources}
               summary={(research.foundation ?? research.answer).summary}
@@ -571,17 +574,15 @@ export function LibrarySearchPage() {
             />
             {research.communityContext?.status === "available" && research.communityContext.answer ? (
               <section className="library-search-results" aria-label="Community-specific research context">
-                <p className="living-library-eyebrow">Community context: {research.communityContext.researchLenses.join(" ")}</p>
+                <p className="living-library-eyebrow">Community context: {formatLibraryLensLabels(research.communityContext.researchLenses)}</p>
                 <p className="library-search-provider-note">{research.communityContext.message}</p>
                 <ExpandableAnswer
                   body={research.communityContext.answer.body}
                   disclaimer={research.communityContext.answer.disclaimer}
                   eyebrow="Directly evidenced community packet"
-                  onRelated={(question) => navigate(`/library/search?q=${encodeURIComponent(`${research.communityContext!.researchLenses.join(" ")} ${question}`.trim())}`)}
+                  onRelated={(question) => navigate(`/library/search?q=${encodeURIComponent(buildLibraryResearchQuery(question, research.communityContext!.researchLenses))}`)}
                   refreshedAt={research.communityContext.answer.refreshedAt}
                   relatedQuestions={research.communityContext.answer.relatedQuestions}
-                  researchScope={research.researchScope}
-                  researchTrack="community"
                   sourceCount={research.communityContext.answer.sourceCount}
                   sources={research.communityContext.answer.sources}
                   summary={research.communityContext.answer.summary}
@@ -604,11 +605,10 @@ export function LibrarySearchPage() {
             <h2>{researchFailure.code === "LIBRARY_RESEARCH_INSUFFICIENT_EVIDENCE" ? "Not enough reliable evidence yet" : "Live research is temporarily unavailable"}</h2>
             <p>{researchFailure.error}</p>
             {researchFailure.retryable ? <button onClick={() => void researchCurrentQuestion()} type="button">Retry research</button> : null}
-            <p>Provider status: {researchFailure.provider?.status ?? "unavailable"}. This is not a zero-result Library answer.</p>
+            <p>This is not a zero-result Library answer.</p>
           </section>
         ) : null}
 
-        {response?.webResearch ? <p className="library-search-provider-note">Research status: {response.webResearch.status.replace("_", " ")}.</p> : null}
       </section>
     </main>
   );

@@ -45,11 +45,15 @@ describe("Living Library research presentation", () => {
     expect(pageSource).toContain('target="_blank"');
   });
 
-  it("formats a governed research brief with source standards and connected Library topics", () => {
+  it("shows the explanation before citations without exposing internal research-method notes", () => {
     expect(pageSource).toContain("ResearchBody");
-    expect(pageSource).toContain("How this was researched");
-    expect(pageSource).toContain("Source standard:");
-    expect(pageSource).toContain("Connected Library topics:");
+    expect(pageSource).toContain("formatLibraryResearchBody(body)");
+    expect(pageSource).toContain("<SourceList sources={sources} />");
+    expect(pageSource).not.toContain("How the current foundation was researched");
+    expect(pageSource).not.toContain("How this was researched");
+    expect(pageSource).not.toContain("Source standard:");
+    expect(pageSource).not.toContain("Connected Library topics:");
+    expect(pageSource).not.toContain("Primary web research was unavailable");
     expect(pageSource).toContain("People also explore these evidence-led next questions.");
   });
 
@@ -83,15 +87,19 @@ describe("Living Library research presentation", () => {
     expect(pageSource).not.toMatch(/you are (?:black|african|christian|muslim|a woman)/i);
   });
 
-  it("offers explicit, non-persistent community research lens filters", () => {
+  it("offers editable community research filters without putting hash tokens into a member question", () => {
     expect(pageSource).toContain("RESEARCH_LENS_OPTIONS");
     expect(pageSource).toContain("#Diaspora");
     expect(pageSource).toContain("#BlackWomen");
     expect(pageSource).toContain("#BlackStudents");
     expect(pageSource).toContain("#HBCUStudents");
     expect(pageSource).toContain('aria-label="Research lens choices"');
-    expect(pageSource).toContain("toggleResearchLens");
+    expect(pageSource).toContain("selectedResearchTags");
+    expect(pageSource).toContain("Optional focus words");
+    expect(pageSource).toContain("buildLibraryResearchQuery");
+    expect(pageSource).toContain("withoutResearchLensTags");
     expect(pageSource).toContain("not saved as your identity");
+    expect(pageSource).toContain("formatLibraryLensLabels");
   });
 
   it("renders general research and direct-evidence community context as distinct packets", () => {
@@ -100,8 +108,8 @@ describe("Living Library research presentation", () => {
     expect(pageSource).toContain("Community evidence is insufficient for now");
     expect(pageSource).toContain("The current foundation remains complete and separately sourced above.");
     expect(pageSource).toContain("communityContext?.status === \"available\"");
-    expect(pageSource).toContain("researchTrack=\"foundation\"");
-    expect(pageSource).toContain('researchTrack="community"');
+    expect(pageSource).toContain('eyebrow={research.origin === "internal" || research.published');
+    expect(pageSource).toContain('eyebrow="Directly evidenced community packet"');
   });
 
   it("discloses a member-selected default context without replacing the foundation", () => {

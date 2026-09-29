@@ -27,10 +27,10 @@ export function createExtractiveLibraryWriter(): LibrarySynthesisWriter {
         title: `Research overview · ${domain}`,
         summary: boundedExcerpt(`${framing} ${excerpts.slice(0, 2).join(" ")}`, 560),
         body: [
-          `## At a glance\n\n${framing}`,
-          `## What the evidence says\n\n${sources.map((source, index) => `${source.title}: ${excerpts[index]} [Source ${index + 1}]`).join("\n\n")}`,
-          "## Why this matters\n\nThe cited material provides a starting point for understanding this question. Its relevance to a particular community or person depends on what the sources directly establish.",
-          `## What to consider next\n\nCompare the cited primary or research sources, identify which facts apply to the specific question, and bring personal medical, legal, or financial decisions to an appropriately qualified professional.${disclaimer ? `\n\n${disclaimer}` : ""}`,
+          `At a glance\n\n${framing}`,
+          `What the evidence says\n\n${sources.map((source, index) => `${source.title}: ${excerpts[index]} [Source ${index + 1}]`).join("\n\n")}`,
+          "Why this matters\n\nThe cited material provides a starting point for understanding this question. Its relevance to a particular community or person depends on what the sources directly establish.",
+          `What to consider next\n\n• Compare the cited primary or research sources.\n• Identify which facts apply to the specific question.\n• Bring personal medical, legal, or financial decisions to an appropriately qualified professional.${disclaimer ? `\n\n${disclaimer}` : ""}`,
         ].filter(Boolean).join("\n\n"),
         citedSourceIndexes: sources.map((_, index) => index),
         sourceNotes: sources.map((source, index) => ({

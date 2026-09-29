@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { formatLibraryLensLabels, formatLibraryResearchBody } from "@workspace/constants";
 import { useColors } from "@/hooks/useColors";
 
 function getApiBase(): string {
@@ -105,13 +106,22 @@ const APPROVED_TOPIC_STARTERS = [
 ] as const;
 
 function hasResearchLens(question: string, tag: string): boolean {
-  return new RegExp(`(?:^|\\s)${tag.replace("#", "\\#")}\\b`, "i").test(question.normalize("NFKC"));
+  return new RegExp(`(?:^|\s)${tag.replace("#", "\\#")}\b`, "i").test(question.normalize("NFKC"));
 }
 
-function toggleResearchLens(question: string, tag: string): string {
-  const tagPattern = new RegExp(`(?:^|\\s)${tag.replace("#", "\\#")}\\b`, "ig");
-  if (hasResearchLens(question, tag)) return question.replace(tagPattern, " ").replace(/\s+/g, " ").trim();
-  return `${tag} ${question}`.replace(/\s+/g, " ").trim();
+function selectedResearchLensTags(question: string): string[] {
+  return RESEARCH_LENS_OPTIONS.filter((lens) => hasResearchLens(question, lens.tag)).map((lens) => lens.tag);
+}
+
+function withoutResearchLensTags(question: string): string {
+  return RESEARCH_LENS_OPTIONS.reduce(
+    (current, lens) => current.replace(new RegExp(`(?:^|\s)${lens.tag.replace("#", "\\#")}\b`, "ig"), " "),
+    question,
+  ).replace(/\s+/g, " ").trim();
+}
+
+function buildLibraryResearchQuery(question: string, tags: readonly string[], keywords = ""): string {
+  return [...tags, question.trim(), keywords.trim()].filter(Boolean).join(" ").replace(/\s+/g, " ").trim();
 }
 
 function safeUrl(value: string): string | null {
@@ -126,18 +136,7 @@ function safeUrl(value: string): string | null {
   }
 }
 
-function sections(body: string): Array<{ heading: string | null; copy: string }> {
-  return body
-    .split(/\n\s*\n/)
-    .map((part) => part.trim())
-    .filter(Boolean)
-    .map((part) => {
-      const heading = part.match(/^##\s+(.+)$/);
-      return heading ? { heading: heading[1], copy: "" } : { heading: null, copy: part };
-    });
-}
-
-function AnswerCard({ answer, scope, onConnectedTopic, researchTrack = "foundation" }: { answer: LibraryEntry; scope?: ResearchScope; onConnectedTopic?: (topic: string) => void; researchTrack?: "foundation" | "community" }) {
+function AnswerCard({ answer, researchTrack = "foundation" }: { answer: LibraryEntry; researchTrack?: "foundation" | "community" }) {
   const colors = useColors();
   const [expanded, setExpanded] = useState(false);
   const safeSources = useMemo(
@@ -148,7 +147,7 @@ function AnswerCard({ answer, scope, onConnectedTopic, researchTrack = "foundati
   return (
     <View style={[styles.answerCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <Text style={[styles.eyebrow, { color: "#936719" }]}>{researchTrack === "foundation" ? "CURRENT FOUNDATION · SOURCE-GOVERNED" : "DIRECTLY EVIDENCED COMMUNITY PACKET"}</Text>
-      {answer.researchLenses?.length ? <Text style={[styles.researchLens, { color: "#70480F" }]}>{answer.researchLenses.join(" ")}</Text> : null}
+      {answer.researchLenses?.length ? <Text style={[styles.researchLens, { color: "#70480F" }]}>{formatLibraryLensLabels(answer.researchLenses)}</Text> : null}
       <Text style={[styles.answerTitle, { color: colors.foreground }]}>{answer.title}</Text>
       <Text style={[styles.summary, { color: colors.mutedForeground }]}>{answer.summary}</Text>
       <TouchableOpacity
@@ -163,11 +162,11 @@ function AnswerCard({ answer, scope, onConnectedTopic, researchTrack = "foundati
       </TouchableOpacity>
       {expanded && (
         <View style={styles.longForm}>
-          {sections(answer.body).map((section, index) => section.heading ? (
-            <Text key={`${section.heading}-${index}`} style={[styles.sectionHeading, { color: colors.foreground }]}>{section.heading}</Text>
-          ) : (
-            <Text key={`copy-${index}`} style={[styles.copy, { color: colors.foreground }]}>{section.copy}</Text>
-          ))}
+          {formatLibraryResearchBody(answer.body).map((block, index) => {
+            if (block.kind === "heading") return <Text key={`${block.text}-${index}`} style={[styles.sectionHeading, { color: colors.foreground }]}>{block.text}</Text>;
+            if (block.kind === "bullets") return <View key={`bullets-${index}`} style={styles.bulletList}>{block.items.map((item) => <Text key={item} style={[styles.copy, { color: colors.foreground }]}>• {item}</Text>)}</View>;
+            return <Text key={`copy-${index}`} style={[styles.copy, { color: colors.foreground }]}>{block.text}</Text>;
+          })}
           {answer.disclaimer ? (
             <View style={[styles.disclaimer, { backgroundColor: "#F59E0B12", borderColor: "#F59E0B40" }]}>
               <Feather name="alert-circle" color="#B27621" size={15} />
@@ -176,25 +175,6 @@ function AnswerCard({ answer, scope, onConnectedTopic, researchTrack = "foundati
           ) : null}
         </View>
       )}
-      {scope ? (
-        <View style={[styles.scopeCard, { backgroundColor: "#CA922B10", borderColor: "#CA922B45" }]}>
-          <Text style={[styles.scopeTitle, { color: colors.foreground }]}>{researchTrack === "foundation" ? "How the current foundation was researched" : "How this was researched"}</Text>
-          <Text style={[styles.scopeCopy, { color: colors.mutedForeground }]}>{researchTrack === "foundation" ? <><Text style={{ fontWeight: "800" }}>Current foundation: </Text>Current, authoritative information for any reader. An explicit community lens appears separately when directly evidenced.</> : <><Text style={{ fontWeight: "800" }}>Research lens: </Text>{scope.researchLenses.map((lens) => lens.tag).join(" ")}</>}</Text>
-          <Text style={[styles.scopeCopy, { color: colors.mutedForeground }]}><Text style={{ fontWeight: "800" }}>Source standard: </Text>{scope.sourceStandard}</Text>
-          <Text style={[styles.scopeCopy, { color: colors.mutedForeground }]}>{scope.groupGuidance}</Text>
-          {scope.connectedTopics.length > 0 ? (
-            <View style={styles.topicTagRow}>
-              <Text style={[styles.scopeCopy, { color: colors.mutedForeground, width: "100%" }]}>Connected Library topics</Text>
-              {scope.connectedTopics.map((topic) => (
-                <TouchableOpacity key={topic.href} onPress={() => onConnectedTopic?.(topic.label)} activeOpacity={0.8} style={styles.topicTag}>
-                  <Text style={styles.topicTagText}>{topic.label}</Text>
-                  <Feather name="arrow-up-right" size={12} color="#70480F" />
-                </TouchableOpacity>
-              ))}
-            </View>
-          ) : null}
-        </View>
-      ) : null}
       {safeSources.length > 0 ? (
         <View style={styles.sourceSection}>
           <Text style={[styles.sectionHeading, { color: colors.foreground }]}>Sources</Text>
@@ -227,10 +207,12 @@ export default function LibraryResearchScreen() {
   const [state, setState] = useState<"idle" | "searching" | "researching" | "ready" | "error">("idle");
   const [message, setMessage] = useState("");
   const [lensPickerOpen, setLensPickerOpen] = useState(false);
+  const [selectedResearchTags, setSelectedResearchTags] = useState<string[]>([]);
+  const [filterKeywords, setFilterKeywords] = useState("");
   const [contextConsent, setContextConsent] = useState<LibraryPurposeConsent | null>(null);
   const [contextConsentState, setContextConsentState] = useState<"idle" | "saving" | "error">("idle");
   const appliedSuggestedQuestion = useRef(false);
-  const activeResearchLensTags = RESEARCH_LENS_OPTIONS.filter((lens) => hasResearchLens(question, lens.tag)).map((lens) => lens.tag);
+  const activeResearchLensTags = selectedResearchTags;
 
   const internalEntry = search?.results.find((result): result is { kind: "entry" } & LibraryEntry => result.kind === "entry") ?? null;
   const matchingTopics = (search?.results ?? []).filter(
@@ -282,21 +264,25 @@ export default function LibraryResearchScreen() {
   useEffect(() => {
     if (!appliedSuggestedQuestion.current && typeof suggestedQuestion === "string" && suggestedQuestion.trim()) {
       const routedQuestion = suggestedQuestion.trim().slice(0, 500);
-      setQuestion(routedQuestion);
+      const routedTags = selectedResearchLensTags(routedQuestion);
+      const visibleQuestion = withoutResearchLensTags(routedQuestion);
+      setQuestion(visibleQuestion);
+      setSelectedResearchTags(routedTags);
       appliedSuggestedQuestion.current = true;
       // Collection subjects are intentional, prefilled Library questions—not
       // decoration. Search approved Library material immediately, then obtain a
       // current source-governed brief without requiring the member to retype it.
-      if (researchOnOpen === "true") void searchLibrary(routedQuestion, true);
+      if (researchOnOpen === "true") void searchLibrary(visibleQuestion, true, routedTags);
     }
   }, [researchOnOpen, suggestedQuestion]);
 
-  async function searchLibrary(questionOverride?: string, forceResearch = false) {
-    const cleaned = (questionOverride ?? question).normalize("NFKC").trim().replace(/\s+/g, " ");
-    if (cleaned.length < 3) {
+  async function searchLibrary(questionOverride?: string, forceResearch = false, tagsOverride = activeResearchLensTags, keywordsOverride = filterKeywords) {
+    const visibleQuestion = withoutResearchLensTags(questionOverride ?? question).normalize("NFKC").trim().replace(/\s+/g, " ");
+    if (visibleQuestion.length < 3) {
       setMessage("Enter a question with at least three characters.");
       return;
     }
+    const cleaned = buildLibraryResearchQuery(visibleQuestion, tagsOverride, keywordsOverride);
     setState("searching");
     setMessage("");
     setResearch(null);
@@ -350,8 +336,11 @@ export default function LibraryResearchScreen() {
 
   function startPrefilledResearch(nextQuestion: string) {
     const cleaned = nextQuestion.normalize("NFKC").trim().replace(/\s+/g, " ");
-    setQuestion(cleaned);
-    void searchLibrary(cleaned, true);
+    const routedTags = selectedResearchLensTags(cleaned);
+    const visibleQuestion = withoutResearchLensTags(cleaned);
+    setQuestion(visibleQuestion);
+    setSelectedResearchTags(routedTags);
+    void searchLibrary(visibleQuestion, true, routedTags);
   }
 
   return (
@@ -369,7 +358,7 @@ export default function LibraryResearchScreen() {
         <View style={[styles.hero, { backgroundColor: "#2A0F05" }]}>
           <Text style={styles.heroEyebrow}>THE LIVING LIBRARY</Text>
           <Text style={styles.heroTitle}>Research that starts with reputable sources.</Text>
-          <Text style={styles.heroCopy}>Every search begins with current, reputable information for anyone. Add a tag such as #BlackWomen or #BlackStudents for a separately labeled community-evidence packet. A tag is a research instruction, not an assumption about you.</Text>
+          <Text style={styles.heroCopy}>Every search begins with current, reputable information for anyone. You can add optional community context for a separately labeled evidence packet. It is a research instruction, not an assumption about you.</Text>
         </View>
         <View style={[styles.searchCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.label, { color: colors.foreground }]}>What would you like to understand?</Text>
@@ -394,7 +383,7 @@ export default function LibraryResearchScreen() {
                 <Text style={[styles.lensFilterLabel, { color: colors.foreground }]}>Community research context <Text style={[styles.optionalLabel, { color: colors.mutedForeground }]}>optional</Text></Text>
                 <Text style={[styles.lensFilterCopy, { color: colors.mutedForeground }]}>
                   {activeResearchLensTags.length > 0
-                    ? `${activeResearchLensTags.join(" ")} will appear as a separately labeled evidence packet.`
+                    ? `${formatLibraryLensLabels(activeResearchLensTags)} will appear as a separately labeled evidence packet.`
                     : "Current foundation only. Add a community packet if you want one."}
                 </Text>
               </View>
@@ -411,12 +400,12 @@ export default function LibraryResearchScreen() {
                     accessibilityState={{ checked: selected }}
                     activeOpacity={0.8}
                     key={lens.tag}
-                    onPress={() => setQuestion((current) => toggleResearchLens(current, lens.tag))}
+                    onPress={() => setSelectedResearchTags((current) => current.includes(lens.tag) ? current.filter((tag) => tag !== lens.tag) : [...current, lens.tag])}
                     style={[styles.lensFilterOption, { backgroundColor: selected ? "#70480F" : colors.background, borderColor: selected ? "#70480F" : colors.border }]}
                   >
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.lensFilterChipText, { color: selected ? "#FFFDF8" : colors.foreground }]}>{lens.label}</Text>
-                      <Text style={[styles.lensOptionCopy, { color: selected ? "#F1DFCC" : colors.mutedForeground }]}>{lens.tag} community evidence</Text>
+                      <Text style={[styles.lensOptionCopy, { color: selected ? "#F1DFCC" : colors.mutedForeground }]}>Community evidence</Text>
                     </View>
                     <Feather name={selected ? "check-circle" : "circle"} size={18} color={selected ? "#FFFDF8" : colors.mutedForeground} />
                   </TouchableOpacity>
@@ -425,6 +414,19 @@ export default function LibraryResearchScreen() {
               </View>
             ) : null}
           </View>
+          {activeResearchLensTags.length > 0 ? (
+            <View style={styles.keywordFilterSection}>
+              <Text style={[styles.lensFilterLabel, { color: colors.foreground }]}>Optional focus words</Text>
+              <TextInput
+                onChangeText={setFilterKeywords}
+                placeholder="For example: first-generation, caregiving, local history"
+                placeholderTextColor={colors.mutedForeground}
+                style={[styles.keywordFilterInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+                value={filterKeywords}
+              />
+              <Text style={[styles.lensFilterCopy, { color: colors.mutedForeground }]}>These words refine this search only. Edit or clear them whenever you like.</Text>
+            </View>
+          ) : null}
           {contextConsent ? (
             <TouchableOpacity
               accessibilityRole="checkbox"
@@ -453,7 +455,7 @@ export default function LibraryResearchScreen() {
           <View style={[styles.lensCard, { borderColor: "#CA922B45", backgroundColor: "#CA922B10" }]}>
             <Text style={[styles.scopeCopy, { color: colors.mutedForeground }]}>
               <Text style={{ fontWeight: "800" }}>Private default context: </Text>
-              {research.memberContextApplied.join(" ")} was added because you chose it in Kinfolk setup. The current foundation is still general and you can override this with “general only” or “this is for a friend.”
+              {formatLibraryLensLabels(research.memberContextApplied)} was added because you chose it in Kinfolk setup. The current foundation is still general and you can override this with “general only” or “this is for a friend.”
             </Text>
           </View>
         ) : null}
@@ -461,7 +463,7 @@ export default function LibraryResearchScreen() {
           <View style={[styles.lensCard, { borderColor: "#CA922B45", backgroundColor: "#CA922B10" }]}>
             <Text style={[styles.scopeCopy, { color: colors.mutedForeground }]}>
               <Text style={{ fontWeight: "800" }}>Research lens: </Text>
-              {search.researchLenses.map((lens) => lens.tag).join(" ")}. This scope guides evidence; it does not describe the reader.
+              {formatLibraryLensLabels(search.researchLenses.map((lens) => lens.tag))}. This scope guides evidence; it does not describe the reader.
             </Text>
           </View>
         ) : null}
@@ -525,12 +527,12 @@ export default function LibraryResearchScreen() {
             <Feather name="chevron-right" size={18} color="#70480F" />
           </TouchableOpacity>
         ) : null}
-        {research ? <AnswerCard answer={research.foundation ?? research.answer} researchTrack="foundation" scope={research.researchScope} onConnectedTopic={startPrefilledResearch} /> : null}
+        {research ? <AnswerCard answer={research.foundation ?? research.answer} researchTrack="foundation" /> : null}
         {research?.communityContext?.status === "available" && research.communityContext.answer ? (
           <View style={{ gap: 8 }}>
-            <Text style={[styles.communityContextEyebrow, { color: "#70480F" }]}>COMMUNITY CONTEXT · {research.communityContext.researchLenses.join(" ")}</Text>
+            <Text style={[styles.communityContextEyebrow, { color: "#70480F" }]}>COMMUNITY CONTEXT · {formatLibraryLensLabels(research.communityContext.researchLenses)}</Text>
             <Text style={[styles.communityContextCopy, { color: colors.mutedForeground }]}>{research.communityContext.message}</Text>
-            <AnswerCard answer={research.communityContext.answer} researchTrack="community" scope={research.researchScope} onConnectedTopic={(topic) => startPrefilledResearch(`${research.communityContext!.researchLenses.join(" ")} ${topic}`)} />
+            <AnswerCard answer={research.communityContext.answer} researchTrack="community" />
           </View>
         ) : research?.communityContext ? (
           <View style={[styles.emptyCard, { backgroundColor: research.communityContext.status === "operational_failure" ? "#FFF1EF" : "#FFF8E8", borderColor: research.communityContext.status === "operational_failure" ? "#D59A9A" : "#CA922B" }]}>
@@ -578,6 +580,8 @@ const styles = StyleSheet.create({
   lensFilterSection: { gap: 8 },
   lensFilterLabel: { fontSize: 13, fontWeight: "800" },
   lensFilterCopy: { fontSize: 11, lineHeight: 16 },
+  keywordFilterSection: { gap: 6 },
+  keywordFilterInput: { minHeight: 44, borderWidth: 1, borderRadius: 10, paddingHorizontal: 11, paddingVertical: 9, fontSize: 13 },
   optionalLabel: { fontSize: 11, fontWeight: "600" },
   lensPickerTrigger: { minHeight: 66, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, flexDirection: "row", alignItems: "center", gap: 10 },
   lensPickerList: { borderWidth: 1, borderRadius: 12, padding: 10, gap: 8 },
@@ -622,6 +626,7 @@ const styles = StyleSheet.create({
   longForm: { gap: 8 },
   sectionHeading: { fontSize: 16, lineHeight: 22, fontWeight: "800", marginTop: 6 },
   copy: { fontSize: 14, lineHeight: 22 },
+  bulletList: { gap: 5 },
   disclaimer: { flexDirection: "row", alignItems: "flex-start", gap: 8, borderWidth: 1, borderRadius: 10, padding: 11, marginTop: 4 },
   disclaimerText: { flex: 1, fontSize: 12, lineHeight: 17 },
   scopeCard: { borderWidth: 1, borderRadius: 12, padding: 12, gap: 6 },

@@ -20,6 +20,13 @@ export {
 } from "./business-categories";
 export type { BusinessCategory } from "./business-categories";
 
+// ── Library research presentation ──────────────────────────────────────────
+export {
+  formatLibraryLensLabels,
+  formatLibraryResearchBody,
+} from "./library-research-format";
+export type { LibraryResearchBlock } from "./library-research-format";
+
 // ── Business discovery normalization ───────────────────────────────────────
 export {
   BUSINESS_SEARCH_NORMALIZATION_VERSION,

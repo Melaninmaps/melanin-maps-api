@@ -31,24 +31,28 @@ describe("mobile Library research experience", () => {
     expect(researchScreen).toContain("!search?.searchClarification");
   });
 
-  it("shows answer sections, source links, scope, and connected topic tags", () => {
-    expect(researchScreen).toContain("const heading = part.match");
-    expect(researchScreen).toContain("How this was researched");
-    expect(researchScreen).toContain("Research lens:");
-    expect(researchScreen).toContain("#BlackWomen");
-    expect(researchScreen).toContain("Connected Library topics");
+  it("shows a plain-language explanation before source links without research-method clutter", () => {
+    expect(researchScreen).toContain("formatLibraryResearchBody(answer.body)");
+    expect(researchScreen).toContain("formatLibraryLensLabels");
+    expect(researchScreen).not.toContain("How the current foundation was researched");
+    expect(researchScreen).not.toContain("How this was researched");
+    expect(researchScreen).not.toContain("Source standard:");
+    expect(researchScreen).not.toContain("Connected Library topics");
     expect(researchScreen).toContain("safeUrl(source.url)");
     expect(researchScreen).toContain('Linking.openURL(source.href)');
   });
 
-  it("offers the same explicit research-lens filters as the website", () => {
+  it("offers editable research filters without putting hash tokens into a member question", () => {
     expect(researchScreen).toContain("RESEARCH_LENS_OPTIONS");
     expect(researchScreen).toContain("#Diaspora");
     expect(researchScreen).toContain("#BlackWomen");
     expect(researchScreen).toContain("#BlackStudents");
     expect(researchScreen).toContain("#HBCUStudents");
     expect(researchScreen).toContain('accessibilityRole="checkbox"');
-    expect(researchScreen).toContain("toggleResearchLens");
+    expect(researchScreen).toContain("selectedResearchTags");
+    expect(researchScreen).toContain("Optional focus words");
+    expect(researchScreen).toContain("buildLibraryResearchQuery");
+    expect(researchScreen).toContain("withoutResearchLensTags");
     expect(researchScreen).toContain("It is not saved as your identity.");
   });
 
@@ -74,13 +78,12 @@ describe("mobile Library research experience", () => {
     expect(libraryTab).toContain('pathname: "/library-research"');
     expect(libraryTab).toContain("params: libraryCollectionResearchParams(path.question)");
     expect(researchScreen).toContain('researchOnOpen === "true"');
-    expect(researchScreen).toContain("void searchLibrary(routedQuestion, true)");
+    expect(researchScreen).toContain("void searchLibrary(visibleQuestion, true, routedTags)");
     expect(researchScreen).toContain("if (forceResearch || !hasPublishedEntry)");
   });
 
-  it("runs connected and related questions through the same approved-first path", () => {
+  it("runs related questions through the same approved-first path", () => {
     expect(researchScreen).toContain("function startPrefilledResearch(nextQuestion: string)");
-    expect(researchScreen).toContain("onConnectedTopic={startPrefilledResearch}");
     expect(researchScreen).toContain("startPrefilledResearch(`${research.researchScope.researchLenses");
   });
 

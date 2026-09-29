@@ -288,7 +288,7 @@ export function registerLivingLibraryRoutes(
                 : result.entry.publicationStatus === "published"
                   ? "Current source-governed research completed and is now available for the next reader."
                   : result.providerStatus === "degraded"
-                  ? "Primary web research was unavailable; a configured fallback supplied the cited research."
+                  ? "Current source review completed."
                   : "Current research completed for this response. It remains private until it clears the reusable Library gate.",
           },
           researchScope,

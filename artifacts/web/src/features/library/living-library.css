@@ -95,14 +95,55 @@
   text-align: left;
 }
 
-.library-research-lens-filter > p {
+.library-research-lens-filter summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 2.7rem;
+  border: 1px solid #f1dfcc;
+  border-radius: 0.7rem;
+  background: rgb(255 253 248 / 10%);
+  color: #fffdf8;
+  padding: 0.6rem 0.8rem;
+  cursor: pointer;
+  list-style: none;
+}
+
+.library-research-lens-filter summary::-webkit-details-marker {
+  display: none;
+}
+
+.library-research-lens-filter summary::after {
+  content: "⌄";
+  color: #f0cf63;
+  font-size: 1.1rem;
+}
+
+.library-research-lens-filter[open] summary {
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.library-research-lens-filter summary span {
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.library-research-lens-filter summary small {
+  margin-left: auto;
+  color: #f1dfcc;
+  font-size: 0.76rem;
+}
+
+.library-research-lens-filter[open] > p {
   margin: 0 0 0.45rem;
   color: #f1dfcc;
   font-size: 0.8rem;
   line-height: 1.4;
 }
 
-.library-research-lens-filter > div {
+.library-research-lens-filter[open] > div {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
@@ -129,6 +170,36 @@
 .library-research-lens-filter button:focus-visible {
   outline: 3px solid #f0cf63;
   outline-offset: 3px;
+}
+
+.library-research-filter-keywords {
+  display: grid;
+  max-width: 44rem;
+  margin: 0.75rem auto 0;
+  color: #fffdf8;
+  gap: 0.35rem;
+  text-align: left;
+}
+
+.library-research-filter-keywords > span {
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.library-research-filter-keywords input {
+  min-height: 2.6rem;
+  border: 1px solid #f1dfcc;
+  border-radius: 0.55rem;
+  background: #fffdf8;
+  color: #2a0f05;
+  padding: 0.55rem 0.7rem;
+  font: inherit;
+}
+
+.library-research-filter-keywords small {
+  color: #f1dfcc;
+  font-size: 0.76rem;
+  line-height: 1.35;
 }
 
 .library-context-consent {
@@ -580,6 +651,15 @@
   color: #2a0f05;
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 1.02rem;
+}
+
+.library-research-bullets {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0.75rem 0;
+  padding-left: 1.25rem;
+  color: #4b3716;
+  line-height: 1.55;
 }
 
 .library-research-scope {
