@@ -13,6 +13,11 @@ describe("Kinfolk audit repairs on web", () => {
     for (const mode of ["community", "professor", "business_manager", "best_friend"]) {
       expect(travel).toContain(`id: "${mode}"`);
     }
+    expect(travel).toContain("data-testid={`kinfolk-preference-mode-${option.id}`}");
+    expect(travel).toContain('data-testid="kinfolk-style-control"');
+    expect(travel.indexOf('data-testid="kinfolk-style-control"')).toBeLessThan(
+      travel.indexOf('ChipSet label="Favorite experiences"'),
+    );
     expect(travel).not.toContain("data-testid={`kinfolk-mode-${id}`}");
     expect(travel).toContain("const selectKinfolkMode");
     expect(travel).toContain("JSON.stringify({ personalityMode: nextMode })");

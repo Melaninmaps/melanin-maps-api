@@ -5462,6 +5462,10 @@ router.put("/kinfolk/continuity", async (req: Request, res: Response) => {
         kinfolkContinuityDisclosureDecision: decision,
         kinfolkContinuityDisclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
         kinfolkContinuityDisclosedAt: disclosedAt,
+        // Some legacy user_settings rows predate the database default. Supply
+        // this explicitly so a member who has no settings row can still make
+        // the reversible continuity choice instead of receiving a 500.
+        updatedAt,
       })
       .onConflictDoUpdate({
         target: userSettingsTable.userId,

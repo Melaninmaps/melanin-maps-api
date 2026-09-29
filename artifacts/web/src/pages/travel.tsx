@@ -523,6 +523,25 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
+          <section className="rounded-2xl border border-[#CA922B]/25 bg-[#CA922B]/[0.06] p-4" data-testid="kinfolk-style-control">
+            <div className="text-[11px] font-bold text-[#3A1F0E]">Kinfolk style</div>
+            <p className="mt-0.5 text-[10px] leading-relaxed text-[#3A1F0E]/55">Choose how Kinfolk frames the same accurate, private, and source-aware answer.</p>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {PERSONALITY_MODES.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  data-testid={`kinfolk-preference-mode-${option.id}`}
+                  aria-pressed={local.personalityMode === option.id}
+                  disabled={!hydrated || saving}
+                  onClick={() => setLocal((current) => ({ ...current, personalityMode: option.id }))}
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors disabled:opacity-40 ${local.personalityMode === option.id ? "bg-[#CA922B] text-white" : "bg-white text-[#3A1F0E]/70 border border-[#3A1F0E]/10 hover:border-[#CA922B]/45"}`}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </section>
           <ChipSet label="Favorite experiences" options={ALL_CATEGORIES} selected={local.favoriteCategories} onChange={v => setLocal(p => ({ ...p, favoriteCategories: v }))} />
           <div>
             <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">Something specific Kinfolk should look for</div>
@@ -688,17 +707,6 @@ function PreferencesPanel({ open, onClose, prefs, onSave, hydrated }: {
                       </button>
                     );
                   })}
-                </div>
-              </div>
-              <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-[#3A1F0E]/40 mb-2">Kinfolk style</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {PERSONALITY_MODES.map(o => (
-                    <button key={o.id} onClick={() => setLocal(p => ({ ...p, personalityMode: o.id }))}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${local.personalityMode === o.id ? "bg-[#CA922B] text-white" : "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/8 hover:border-[#CA922B]/30"}`}>
-                      {o.label}
-                    </button>
-                  ))}
                 </div>
               </div>
               <div>
