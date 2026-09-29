@@ -186,6 +186,7 @@ pnpm exec vitest run \
   artifacts/mobile/__tests__/map-discovery-card.test.ts \
   artifacts/mobile/__tests__/business-discovery-contract.test.ts \
   artifacts/mobile/__tests__/live-impact-statistics.test.ts \
+  artifacts/mobile/__tests__/map-location-status.test.ts \
   artifacts/mobile/__tests__/map-locality-first.test.ts \
   artifacts/mobile/__tests__/map-kinfolk-continuity.test.ts \
   artifacts/mobile/__tests__/essential-services-map.test.ts

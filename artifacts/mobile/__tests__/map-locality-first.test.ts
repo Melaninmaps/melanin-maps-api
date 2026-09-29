@@ -92,10 +92,22 @@ describe("FullMapView locality-first contracts", () => {
   it("requests precise foreground location once on the first native map visit", () => {
     expect(fullMapSource).toContain("const hasRequestedInitialLocationRef = useRef(false)");
     expect(fullMapSource).toContain("Location.requestForegroundPermissionsAsync()");
-    expect(fullMapSource).toContain("accuracy: Location.Accuracy.Highest");
+    expect(fullMapSource).toContain("Location.hasServicesEnabledAsync()");
+    expect(fullMapSource).toContain("Location.getLastKnownPositionAsync({");
+    expect(fullMapSource).toContain("accuracy: Location.Accuracy.Balanced");
     expect(fullMapSource).toContain("hasRequestedInitialLocationRef.current = true");
     expect(fullMapSource).toContain("void recenter()");
     expect(fullMapSource).toContain('if (Platform.OS === "web" || !isFocused || hasRequestedInitialLocationRef.current) return;');
+  });
+
+  it("never silently abandons a native location failure", () => {
+    expect(fullMapSource).toContain("const [locationNotice, setLocationNotice]");
+    expect(fullMapSource).toContain("mapLocationServicesOffNotice()");
+    expect(fullMapSource).toContain("mapLocationFailureNotice(error)");
+    expect(fullMapSource).toContain('accessibilityLabel="Map location needs attention"');
+    expect(fullMapSource).toContain('accessibilityLabel="Retry map location"');
+    expect(fullMapSource).toContain("Retry location");
+    expect(fullMapSource).not.toContain("} catch {} finally {");
   });
 
   it("keeps cultural, event, safety, and tour collections local by default", () => {

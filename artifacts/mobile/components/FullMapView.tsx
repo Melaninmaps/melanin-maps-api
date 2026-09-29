@@ -41,6 +41,11 @@ import { useColors } from "@/hooks/useColors";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity } from "@/hooks/useSafetyProximity";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import {
+  mapLocationFailureNotice,
+  mapLocationServicesOffNotice,
+  type MapLocationNotice,
+} from "@/lib/mapLocationStatus";
 import { useAuth } from "@/lib/auth";
 import {
   canLoadLocalCollections,
@@ -440,6 +445,7 @@ export function FullMapView({
 
   const [locationGranted, setLocationGranted] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [locationNotice, setLocationNotice] = useState<MapLocationNotice | null>(null);
   const [memberLocation, setMemberLocation] = useState<{
     latitude: number;
     longitude: number;
@@ -1312,41 +1318,72 @@ export function FullMapView({
 
   const recenter = useCallback(async () => {
     setLocating(true);
+    setLocationNotice(null);
+    let recoveredLocation = false;
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (!isMapMountedRef.current) return;
-      if (status !== "granted") return;
+      if (status !== "granted") {
+        setLocationGranted(false);
+        setMemberLocation(null);
+        setMemberPlace(null);
+        setLocationNotice(
+          mapLocationFailureNotice(new Error("Location permission denied")),
+        );
+        return;
+      }
       setLocationGranted(true);
+
+      const servicesEnabled = await Location.hasServicesEnabledAsync();
+      if (!isMapMountedRef.current) return;
+      if (!servicesEnabled) {
+        setMemberLocation(null);
+        setMemberPlace(null);
+        setLocationNotice(mapLocationServicesOffNotice());
+        return;
+      }
+
+      // A recent, reasonably accurate device reading makes the map useful
+      // indoors or immediately after launch. A fresh position still follows,
+      // so this never claims a cached coordinate is the member's precise fix.
+      const lastKnown = await Location.getLastKnownPositionAsync({
+        maxAge: 5 * 60_000,
+        requiredAccuracy: 500,
+      }).catch(() => null);
+      if (!isMapMountedRef.current) return;
+      if (lastKnown) {
+        const cachedLocation = {
+          latitude: lastKnown.coords.latitude,
+          longitude: lastKnown.coords.longitude,
+        };
+        recoveredLocation = true;
+        setMemberLocation(cachedLocation);
+        if (!mapReadyRef.current) {
+          pendingLocationRef.current = cachedLocation;
+        } else {
+          safelyAnimateToRegion(
+            { ...cachedLocation, latitudeDelta: 0.12, longitudeDelta: 0.12 },
+            450,
+          );
+        }
+      }
+
       const loc = (await Promise.race([
         Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Highest,
+          accuracy: Location.Accuracy.Balanced,
+          mayShowUserSettingsDialog: true,
         }),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("location timeout")), 8_000),
+          setTimeout(() => reject(new Error("location timeout")), 15_000),
         ),
       ])) as Awaited<ReturnType<typeof Location.getCurrentPositionAsync>>;
       if (!isMapMountedRef.current) return;
-      setMemberLocation({
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude,
-      });
-      try {
-        const [place] = await Location.reverseGeocodeAsync({
-          latitude: loc.coords.latitude,
-          longitude: loc.coords.longitude,
-        });
-        setMemberPlace({
-          city: place?.city ?? place?.subregion ?? null,
-          state: place?.region ?? null,
-        });
-      } catch {
-        // Coordinates still provide a valid nearby-business scope.
-      }
       const location = {
         latitude: loc.coords.latitude,
         longitude: loc.coords.longitude,
       };
-      if (!isMapMountedRef.current) return;
+      recoveredLocation = true;
+      setMemberLocation(location);
       if (!mapReadyRef.current) {
         pendingLocationRef.current = location;
       } else {
@@ -1355,7 +1392,29 @@ export function FullMapView({
           600,
         );
       }
-    } catch {} finally {
+      void Location.reverseGeocodeAsync({
+        latitude: location.latitude,
+        longitude: location.longitude,
+      })
+        .then(([place]) => {
+          if (!isMapMountedRef.current) return;
+          setMemberPlace({
+            city: place?.city ?? place?.subregion ?? null,
+            state: place?.region ?? null,
+          });
+        })
+        .catch(() => {
+          // Coordinates still provide a valid nearby-business scope.
+        });
+    } catch (error) {
+      if (isMapMountedRef.current) {
+        if (!recoveredLocation) {
+          setMemberLocation(null);
+          setMemberPlace(null);
+        }
+        setLocationNotice(mapLocationFailureNotice(error));
+      }
+    } finally {
       if (isMapMountedRef.current) setLocating(false);
     }
   }, [safelyAnimateToRegion]);
@@ -1891,6 +1950,28 @@ export function FullMapView({
             </TouchableOpacity>
           )}
         </View>
+        {locationNotice && (
+          <View
+            accessibilityRole="alert"
+            accessibilityLabel="Map location needs attention"
+            style={[s.locationNotice, wideMapOverlayStyle]}
+          >
+            <Feather name="map-pin" size={14} color="#F5EBD8" />
+            <Text style={s.locationNoticeText}>{locationNotice.message}</Text>
+            <TouchableOpacity
+              onPress={() => void recenter()}
+              accessibilityRole="button"
+              accessibilityLabel="Retry map location"
+              accessibilityState={{ disabled: locating }}
+              disabled={locating}
+              style={s.locationNoticeRetry}
+            >
+              <Text style={s.locationNoticeRetryText}>
+                {locating ? "Finding…" : "Retry location"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
         {hasSubmittedBusinessSearch && (
           <View style={[s.businessSearchStatus, wideMapOverlayStyle]}>
             <Text style={s.businessSearchStatusText}>
@@ -3171,6 +3252,36 @@ const s = StyleSheet.create({
     color: "#F5EBD8",
     fontFamily: "Inter_500Medium",
     fontSize: 11,
+  },
+  locationNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 9,
+    gap: 7,
+    backgroundColor: "rgba(94, 45, 8, 0.94)",
+    borderWidth: 1,
+    borderColor: "rgba(245, 235, 216, 0.36)",
+  },
+  locationNoticeText: {
+    flex: 1,
+    color: "#F5EBD8",
+    fontFamily: "Inter_500Medium",
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  locationNoticeRetry: {
+    backgroundColor: "#F5EBD8",
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 7,
+  },
+  locationNoticeRetryText: {
+    color: "#3B1F0E",
+    fontFamily: "Inter_700Bold",
+    fontSize: 10,
   },
   mapSearchResults: {
     marginHorizontal: 12,
