@@ -55,4 +55,11 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(widget).toContain('accessibilityLabel="Save this Kinfolk reminder"');
     expect(widget).toContain("dueAt: t.dueAt");
   });
+
+  it("requires separate sensitive-memory confirmation in the floating widget", () => {
+    expect(widget).toContain("sensitiveMemoryConfirmation");
+    expect(widget).toContain("sensitiveMemoryDraft");
+    expect(widget).toContain("KinfolkSensitiveMemoryConfirmation");
+    expect(widget).toContain("purpose: data.sensitiveMemoryConfirmation.purpose");
+  });
 });

@@ -1,3 +1,4 @@
+import { permittedIdentityContext } from "./permitted-identity-context";
 import { sensitiveMemoryTopic } from "./sensitive-memory";
 
 export type ExplicitMemberMemory = Readonly<{
@@ -89,6 +90,13 @@ export function profileDiscoveryContextTerms(
   memory: { content: string; purpose: string },
 ): string[] {
   if (memory.purpose !== "profile_context") return [];
+  const savedIdentity = permittedIdentityContext(memory.content).demographic;
+  if (savedIdentity === "Black woman") {
+    return ["Black", "African American", "Woman", "Women"];
+  }
+  if (savedIdentity === "Black man") {
+    return ["Black", "African American", "Man", "Men"];
+  }
   return [
     ...new Set(
       DISCOVERY_CONTEXT_TERMS

@@ -123,7 +123,14 @@ function expandExplicitResearchLensTags(value: string): string {
     .replace(/#blackwomen\b/gi, "Black women")
     .replace(/#blackmen\b/gi, "Black men")
     .replace(/#blackstudents\b/gi, "Black students")
-    .replace(/#hbcustudents\b/gi, "HBCU students");
+    .replace(/#hbcustudents\b/gi, "HBCU students")
+    // BW and BM have other meanings in ordinary text. Expand them only in a
+    // self-description or explicit population-research phrase; never treat a
+    // bare abbreviation as a member identity.
+    .replace(/\b(i\s+(?:am|identify\s+as)|i['’]m|as)\s+(?:a\s+)?bw\b/gi, "$1 Black woman")
+    .replace(/\b(i\s+(?:am|identify\s+as)|i['’]m|as)\s+(?:a\s+)?bm\b/gi, "$1 Black man")
+    .replace(/\b(for|about|among|with|to|affecting|affects)\s+bw\b/gi, "$1 Black women")
+    .replace(/\b(for|about|among|with|to|affecting|affects)\s+bm\b/gi, "$1 Black men");
 }
 
 function classifyKind(value: string): ExplicitIdentityKind {

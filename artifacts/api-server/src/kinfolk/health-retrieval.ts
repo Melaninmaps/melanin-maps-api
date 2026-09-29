@@ -2,12 +2,14 @@
  * Kinfolk Health Intelligence Retrieval
  *
  * Retrieves condition-first health information from NIH MedlinePlus. A population
- * qualifier is supplemental only when directly stated in the current user turn.
- * Group-level evidence never diagnoses or predicts an individual outcome.
+ * qualifier is supplemental only when directly stated in the current user turn
+ * or carried from a separately confirmed private identity note. Group-level
+ * evidence never diagnoses or predicts an individual outcome.
  */
 
 import { permittedIdentityContext } from "./permitted-identity-context";
 import { getLifeIntentGuidance } from "./life-intent-guidance";
+import type { ConsentedHealthPopulationContext } from "./consented-health-context";
 
 const NIH_MEDLINEPLUS_API = "https://wsearch.nlm.nih.gov/ws/query";
 const HEALTH_RETRIEVAL_TIMEOUT_MS = 6000;
@@ -130,6 +132,7 @@ async function fetchNIHHealthTopics(topic: string): Promise<NIHHealthResult[] | 
 export async function buildHealthRetrievalContext(
   message: string,
   intentClass: string,
+  consentedPopulationContext?: ConsentedHealthPopulationContext | null,
 ): Promise<{ contextBlock: string; sources: Array<{ title: string; url: string; source: string }> } | null> {
   if (intentClass !== "medical_health") return null;
 
@@ -139,8 +142,11 @@ export async function buildHealthRetrievalContext(
   }
 
   const identity = permittedIdentityContext(message);
-  const population = identity.demographicQualifier;
-  const topic = extractHealthTopic(message);
+  const currentTurnPopulation = identity.demographicQualifier;
+  const population = currentTurnPopulation ?? consentedPopulationContext?.label ?? null;
+  const topic = currentTurnPopulation
+    ? extractHealthTopic(message)
+    : [extractHealthTopic(message), population].filter(Boolean).join(" ");
   const nihResults = await fetchNIHHealthTopics(topic);
   const retrievedAt = new Date().toISOString().slice(0, 10);
   const sources: Array<{ title: string; url: string; source: string }> = [];
@@ -167,7 +173,7 @@ export async function buildHealthRetrievalContext(
   );
 
   const populationInstruction = population
-    ? `\nEXPLICIT POPULATION CONTEXT: The current turn names "${population}". Population evidence may be included only as group-level context. It is non-diagnostic, does not determine this member's risk or condition, and must not replace condition-first clinical guidance.\n`
+    ? `\n${currentTurnPopulation ? "EXPLICIT CURRENT-TURN POPULATION CONTEXT" : "MEMBER-APPROVED PRIVATE POPULATION CONTEXT"}: ${currentTurnPopulation ? `The current turn names "${population}".` : `The member separately confirmed a private identity note for relevant health context: "${population}".`} Population evidence may be included only as group-level context. It is non-diagnostic, does not determine this member's risk or condition, and must not replace condition-first clinical guidance. Do not disclose or repeat the saved note unless the member asks about it directly.\n`
     : "";
 
   const contextBlock = `

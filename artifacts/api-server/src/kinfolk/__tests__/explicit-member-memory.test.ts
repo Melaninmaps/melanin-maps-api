@@ -52,6 +52,10 @@ describe("explicit member memory", () => {
     expect(parseExplicitMemberMemory("Remember I am Muslim.")).toMatchObject({ isSensitive: true });
     expect(parseExplicitMemberMemory("Remember I am bisexual.")).toMatchObject({ isSensitive: true });
     expect(parseExplicitMemberMemory("Remember my son needs daycare.")).toMatchObject({ isSensitive: true });
+    expect(parseExplicitMemberMemory("Please remember this about me: I am a BW.")).toMatchObject({
+      purpose: "profile_context",
+      isSensitive: true,
+    });
   });
 
   it("uses a chosen name broadly but limits other profile context to a matching turn", () => {
@@ -69,6 +73,12 @@ describe("explicit member memory", () => {
     expect(isExplicitProfileMemoryRelevant(healthProfile!, "Find a doctor in Philadelphia.")).toBe(true);
     expect(profileDiscoveryContextTerms(healthProfile!)).toEqual(expect.arrayContaining(["Hispanic", "Latina", "Woman"]));
     expect(isExplicitProfileMemoryRelevant(healthProfile!, "Explain photosynthesis.")).toBe(false);
+
+    const bwProfile = parseExplicitMemberMemory("Please remember this about me: I am a BW.");
+    expect(bwProfile).not.toBeNull();
+    expect(profileDiscoveryContextTerms(bwProfile!)).toEqual(
+      expect.arrayContaining(["Black", "African American", "Woman", "Women"]),
+    );
 
     const militaryInterest = parseExplicitMemberMemory("Kinfolk, this is what I want you to remember about me: I follow military activity and deployments.");
     expect(militaryInterest).not.toBeNull();

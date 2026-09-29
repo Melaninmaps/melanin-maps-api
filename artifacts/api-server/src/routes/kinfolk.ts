@@ -296,6 +296,7 @@ import {
   isConsentedPlanningMemoryRelevant,
   planningDiscoveryPreferenceTerms,
 } from "../kinfolk/consented-planning-context";
+import { resolveConsentedHealthPopulationContext } from "../kinfolk/consented-health-context";
 import {
   isExplicitMemberMemoryCapabilityQuestion,
   isExplicitProfileMemoryRelevant,
@@ -5818,10 +5819,14 @@ router.get("/kinfolk/sessions/:id", async (req: Request, res: Response) => {
 const FREE_MONTHLY_LIMIT = 3;
 
 // ─── Kinfolk private memory — explicit consent and ownership only ──────────────
-function sensitiveMemoryConfirmation(topic: SensitiveMemoryTopic | null) {
+function sensitiveMemoryConfirmation(
+  topic: SensitiveMemoryTopic | null,
+  purpose?: "planning_context" | "profile_context",
+) {
   return {
     confirmationRequired: true,
     sensitiveTopic: topic ?? "sensitive_detail",
+    purpose: purpose ?? "ongoing_context",
     message:
       "This detail is sensitive. Kinfolk has not saved it. Confirm separately if you want to keep it private for future conversations.",
   };
@@ -6158,7 +6163,7 @@ async function persistExplicitMemberMemory(input: {
       remembered: false,
       reply:
         "I heard you. That detail is sensitive, so I have not saved it. Confirm separately below if you want Kinfolk to keep it privately for future conversations.",
-      sensitiveMemoryConfirmation: sensitiveMemoryConfirmation(sensitiveTopic),
+      sensitiveMemoryConfirmation: sensitiveMemoryConfirmation(sensitiveTopic, parsed.purpose),
     };
   }
 
@@ -9287,11 +9292,45 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       url: string;
       source: string;
     }> = [];
+    // A separately confirmed private identity note may refine group-level health
+    // research for this authenticated member only. It cannot enter city safety,
+    // discovery ownership, profile, or generic-answer paths.
+    const consentedHealthPopulationContext = intentClass === "medical_health" && memoryEnabled
+      ? await db
+          .select({
+            content: kinfolkPrivateMemoriesTable.content,
+            purpose: kinfolkPrivateMemoriesTable.purpose,
+            isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
+            sensitiveConsentGrantedAt:
+              kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt,
+          })
+          .from(kinfolkPrivateMemoriesTable)
+          .where(
+            and(
+              eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+              eq(kinfolkPrivateMemoriesTable.purpose, "profile_context"),
+              eq(kinfolkPrivateMemoriesTable.isSensitive, true),
+              isNotNull(kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt),
+              isNull(kinfolkPrivateMemoriesTable.revokedAt),
+              or(
+                isNull(kinfolkPrivateMemoriesTable.expiresAt),
+                gt(kinfolkPrivateMemoriesTable.expiresAt, new Date()),
+              ),
+            ),
+          )
+          .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
+          .limit(8)
+          .then((memories) =>
+            resolveConsentedHealthPopulationContext(memories, message),
+          )
+          .catch(() => null)
+      : null;
     if (intentClass === "medical_health") {
       try {
         const healthCtx = await buildHealthRetrievalContext(
           message,
           intentClass,
+          consentedHealthPopulationContext,
         );
         if (healthCtx) {
           healthEvidenceBlock = healthCtx.contextBlock;

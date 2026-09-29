@@ -21,7 +21,7 @@ const SENSITIVE_MEMORY_TOPICS: ReadonlyArray<{
   },
   {
     key: "race_ethnicity",
-    pattern: /\b(?:black|african(?:[- ]american)?|hispanic|latina|latino|latinx|asian(?:[- ]american)?|indigenous|native(?: american)?|arab|middle eastern|ethnic(?:ity)?|race)\b/i,
+    pattern: /\b(?:black|african(?:[- ]american)?|hispanic|latina|latino|latinx|asian(?:[- ]american)?|indigenous|native(?: american)?|arab|middle eastern|ethnic(?:ity)?|race)\b|\b(?:i\s+(?:am|identify\s+as)|i['’]m|as)\s+(?:a\s+)?(?:bw|bm)\b/i,
   },
   {
     key: "religion",

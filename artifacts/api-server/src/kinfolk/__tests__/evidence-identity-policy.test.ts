@@ -212,6 +212,20 @@ describe("permitted current-turn identity context", () => {
     expect(context.persist).toBe(false);
   });
 
+  it("understands BW and BM only in a self-description or population phrase", () => {
+    expect(permittedIdentityContext("I am a BW. What should I know about anemia?")).toMatchObject({
+      demographic: "Black woman",
+      demographicQualifier: "Black woman",
+      source: "explicit_current_turn",
+    });
+    expect(permittedIdentityContext("What applies to BW specifically for anemia?")).toMatchObject({
+      demographic: null,
+      requestedPopulation: "Black women",
+      demographicQualifier: "Black women",
+    });
+    expect(permittedIdentityContext("What does BM mean in this report?").demographicQualifier).toBeNull();
+  });
+
   it("does not treat Black-owned preference wording as demographic context", () => {
     expect(extractExplicitPopulationWording("Find Black-owned restaurants near me")).toBeNull();
   });
@@ -323,5 +337,22 @@ describe("neutral research and health planning", () => {
     expect(generic?.contextBlock).toMatch(/Never diagnose the member/i);
     expect(explicit?.contextBlock).toContain('current turn names "Black woman"');
     expect(explicit?.contextBlock).toMatch(/group-level, non-diagnostic evidence/i);
+  });
+
+  it("uses a separately confirmed private context only as quiet group-level health evidence", async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response("<nlmSearchResult></nlmSearchResult>", { status: 200 }),
+    );
+
+    const context = await buildHealthRetrievalContext(
+      "What should I ask my doctor about anemia?",
+      "medical_health",
+      { label: "Black woman", source: "consented_private_memory" },
+    );
+
+    expect(context?.contextBlock).toContain("MEMBER-APPROVED PRIVATE POPULATION CONTEXT");
+    expect(context?.contextBlock).toContain('private identity note for relevant health context: "Black woman"');
+    expect(context?.contextBlock).toContain("Do not disclose or repeat the saved note");
+    expect(context?.contextBlock).toMatch(/group-level, non-diagnostic evidence/i);
   });
 });

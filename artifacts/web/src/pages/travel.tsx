@@ -1860,7 +1860,10 @@ function TravelPage() {
         degradedReason?: string | null;
         companionMemoryOffer?: CompanionMemoryOffer | null;
         responseMeta?: KinfolkResponseMeta | null;
-        sensitiveMemoryConfirmation?: { confirmationRequired?: boolean } | null;
+        sensitiveMemoryConfirmation?: {
+          confirmationRequired?: boolean;
+          purpose?: string;
+        } | null;
       };
 
       // A structured itinerary may intentionally omit conversational copy. Legacy replies
@@ -1874,7 +1877,11 @@ function TravelPage() {
       if (data.sessionId && data.sessionId !== sessionId) { setSessionId(data.sessionId); loadSessions(); }
       setImageUrls([]);
       if (data.sensitiveMemoryConfirmation?.confirmationRequired === true) {
-        setPendingSensitiveMemory({ content: trimmed, purpose: "ongoing_context", sessionId: data.sessionId ?? sessionId });
+        setPendingSensitiveMemory({
+          content: trimmed,
+          purpose: data.sensitiveMemoryConfirmation.purpose ?? "ongoing_context",
+          sessionId: data.sessionId ?? sessionId,
+        });
       }
       // Capture the ID so we can wire the clarifier to this specific message.
       const assistantMsgId = crypto.randomUUID();

@@ -45,6 +45,7 @@ import {
   KinfolkCompanionMemoryOfferCard,
   type KinfolkCompanionMemoryOffer,
 } from "@/components/KinfolkCompanionMemoryOffer";
+import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiveMemoryConfirmation";
 
 interface Message {
   id: string;
@@ -62,6 +63,7 @@ interface Message {
   recommendations?: KinfolkBusinessRecommendation[];
   intentClass?: string | null;
   companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
+  sensitiveMemoryDraft?: { content: string; purpose: string; sessionId?: string | null } | null;
 }
 
 interface TaskActionPayload {
@@ -180,6 +182,7 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
   recommendations: KinfolkBusinessRecommendation[];
   intentClass?: string | null;
   companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
+  sensitiveMemoryDraft?: { content: string; purpose: string; sessionId?: string | null } | null;
 }> {
   const base = getApiBase();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -219,6 +222,7 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
     recommendations?: { businesses?: KinfolkBusinessRecommendation[] } | null;
     intentClass?: string | null;
     companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
+    sensitiveMemoryConfirmation?: { confirmationRequired?: boolean; purpose?: string } | null;
   };
   if (data.sessionId) sessionId = data.sessionId;
   return {
@@ -235,6 +239,14 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
     libraryAction: data.libraryAction ?? null,
     intentClass: data.intentClass ?? null,
     companionMemoryOffer: data.companionMemoryOffer ?? null,
+    sensitiveMemoryDraft:
+      data.sensitiveMemoryConfirmation?.confirmationRequired === true
+        ? {
+            content: message,
+            purpose: data.sensitiveMemoryConfirmation.purpose ?? "ongoing_context",
+            sessionId: data.sessionId ?? sessionId,
+          }
+        : null,
     recommendations: Array.isArray(data.recommendations?.businesses)
       ? data.recommendations.businesses
         .filter((business) => Boolean(business?.id && business?.name))
@@ -939,6 +951,7 @@ export function AIChatWidget() {
         recommendations,
         intentClass,
         companionMemoryOffer,
+        sensitiveMemoryDraft,
       } = await sendToKinfolk(text, token, voiceMode, await nearbyCityHint(text));
 
       const aiMsg: Message = {
@@ -958,6 +971,7 @@ export function AIChatWidget() {
         recommendations,
         intentClass,
         companionMemoryOffer,
+        sensitiveMemoryDraft,
       };
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
@@ -1375,6 +1389,19 @@ export function AIChatWidget() {
                   <KinfolkCompanionMemoryOfferCard
                     offer={item.companionMemoryOffer}
                     sessionId={sessionId}
+                  />
+                ) : null}
+                {!item.fromUser && item.sensitiveMemoryDraft ? (
+                  <KinfolkSensitiveMemoryConfirmation
+                    content={item.sensitiveMemoryDraft.content}
+                    purpose={item.sensitiveMemoryDraft.purpose}
+                    sessionId={item.sensitiveMemoryDraft.sessionId}
+                    onSaved={() => setMessages((current) => current.map((message) =>
+                      message.id === item.id ? { ...message, sensitiveMemoryDraft: null } : message,
+                    ))}
+                    onDismiss={() => setMessages((current) => current.map((message) =>
+                      message.id === item.id ? { ...message, sensitiveMemoryDraft: null } : message,
+                    ))}
                   />
                 ) : null}
                 {!item.fromUser && item.sourceNote ? (

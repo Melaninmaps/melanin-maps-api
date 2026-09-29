@@ -313,13 +313,20 @@ export function useKinfolk() {
           locationSource?: string | null;
           companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
           responseMeta?: KinfolkResponseMeta | null;
-          sensitiveMemoryConfirmation?: { confirmationRequired?: boolean } | null;
+          sensitiveMemoryConfirmation?: {
+            confirmationRequired?: boolean;
+            purpose?: string;
+          } | null;
         };
 
         if (data.sessionId) setSessionId(data.sessionId);
         let sensitiveMemoryDraft: ChatMessage["sensitiveMemoryDraft"] =
           data.sensitiveMemoryConfirmation?.confirmationRequired === true
-            ? { content: text, purpose: "ongoing_context", sessionId: data.sessionId ?? sessionId }
+            ? {
+                content: text,
+                purpose: data.sensitiveMemoryConfirmation.purpose ?? "ongoing_context",
+                sessionId: data.sessionId ?? sessionId,
+              }
             : null;
         if (typeof data.queriesUsed === "number") setQueriesUsed(data.queriesUsed);
         if (typeof data.queriesLimit === "number") setQueriesLimit(data.queriesLimit);
