@@ -35,10 +35,10 @@ function ImpactCounter() {
     fetch(`${BASE}api/impact`).then(r => r.ok ? r.json() : Promise.reject()).then(setStats).catch(() => {});
   }, []);
   const items = [
-    { icon: Building2, label: "Businesses Listed", value: stats?.businesses ?? 0, suffix: "+" },
+    { icon: Building2, label: "Public Listings", value: stats?.businesses ?? 0, suffix: "" },
     { icon: Globe, label: "Cities Covered", value: stats?.cities ?? 0, suffix: "" },
-    { icon: BookOpen, label: "Cultural Heritage Sites", value: stats?.culturalSites ?? 0, suffix: "+" },
-    { icon: Users, label: "Community Members", value: stats?.community ?? 0, suffix: "+" },
+    { icon: BookOpen, label: "Cultural Heritage Sites", value: stats?.culturalSites ?? 0, suffix: "" },
+    { icon: Users, label: "Member Accounts", value: stats?.community ?? 0, suffix: "" },
   ];
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
@@ -777,16 +777,16 @@ export default function Home() {
               <div className="text-sm font-semibold text-[#F5EBD8]/70">Every day</div>
             </div>
             <div className="px-4 py-2">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">200+ Cities Covered</div>
-              <div className="text-sm font-semibold text-[#F5EBD8]/70">Across the US and beyond</div>
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">City Search</div>
+              <div className="text-sm font-semibold text-[#F5EBD8]/70">Check current local availability</div>
             </div>
             <div className="px-4 py-2">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">96/100 Avg. Confidence Score</div>
-              <div className="text-sm font-semibold text-[#F5EBD8]/70">For top-rated destinations</div>
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">Community Context</div>
+              <div className="text-sm font-semibold text-[#F5EBD8]/70">Evidence stays with each listing</div>
             </div>
             <div className="px-4 py-2">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">100% Community-Sourced</div>
-              <div className="text-sm font-semibold text-[#F5EBD8]/70">Every insight, every review</div>
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">Living Directory</div>
+              <div className="text-sm font-semibold text-[#F5EBD8]/70">Updates are reviewed before publication</div>
             </div>
           </div>
         </div>

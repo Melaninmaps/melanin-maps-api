@@ -428,7 +428,7 @@ export default function Features() {
               </div>
               <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#3A1F0E] mb-6">How Community Scores Work</h2>
               <p className="text-lg text-[#3A1F0E]/70 mb-10">
-                A 96/100 Community Score isn't a star rating — it's a composite signal built from six layers of real community data. Google Maps doesn't have it. TripAdvisor doesn't have it. Yelp doesn't have it.
+                A Community Score isn't a star rating — it combines documented member feedback and current listing information.
               </p>
               <div className="space-y-6">
                 {[

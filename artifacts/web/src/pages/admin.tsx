@@ -2944,9 +2944,11 @@ Selected: ${summary}`,
                   {businessInventoryTotal.toLocaleString()}
                 </span>
                 <span className="block text-[#F5EBD8]/70 text-xs uppercase tracking-wider">
-                  Businesses
+                  Inventory records
                 </span>
-                <span className="mt-1 block text-[10px] font-semibold text-[#F5EBD8]/50">Open list</span>
+                <span className="mt-1 block text-[10px] font-semibold text-[#F5EBD8]/50">
+                  {businessLiveInventoryTotal.toLocaleString()} live · {businessArchivedInventoryTotal.toLocaleString()} archived · {businessDuplicateInventoryTotal.toLocaleString()} duplicates
+                </span>
               </button>
             </div>
           </div>

@@ -7,11 +7,6 @@ const BASE = import.meta.env.BASE_URL;
 interface ReferrerInfo { firstName: string; memberSince: string | null; }
 interface WaitlistStats { count: number; }
 
-function formatCount(n: number) {
-  if (n >= 1000) return `${Math.floor(n / 100) * 100}+`;
-  return `${n}+`;
-}
-
 export default function ReferralLanding() {
   const params = useParams<{ code: string }>();
   const [, navigate] = useLocation();
@@ -79,7 +74,7 @@ export default function ReferralLanding() {
                 {firstName} invited you<br /><span className="text-[#CA922B]">to the community.</span>
               </h1>
               <p className="text-[#F5EBD8]/70 text-lg">
-                Join {stats ? formatCount(stats.count) : "10,000+"} people discovering minority-owned businesses,
+                Join {stats ? `${stats.count.toLocaleString()} people` : "the community"} discovering minority-owned businesses,
                 planning journeys safely, and supporting community-driven culture.
               </p>
             </div>

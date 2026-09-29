@@ -1,19 +1,20 @@
 import { Router } from "express";
-import { db, pool, businessesTable, usersTable, reviewsTable } from "@workspace/db";
-import { count, countDistinct, eq, inArray } from "drizzle-orm";
+import { db, pool, usersTable } from "@workspace/db";
+import { count } from "drizzle-orm";
 
 const router = Router();
 
 router.get("/impact", async (req, res) => {
   try {
-    // Count only active businesses — pending/inactive entries are not visible to users
-    const [bizStats] = await db
-      .select({
-        totalBusinesses: count(businessesTable.id),
-        totalCities: countDistinct(businessesTable.city),
-      })
-      .from(businessesTable)
-      .where(eq(businessesTable.status, "active"));
+    // `public.public_businesses` is the canonical member-facing directory
+    // scope. Inventory rows can be archived, duplicate-vault, hidden, or
+    // otherwise non-public; never market that internal total as listings.
+    const publicDirectoryResult = await pool.query<{ total_businesses: string; total_cities: string }>(
+      `SELECT COUNT(*)::text AS total_businesses,
+              COUNT(DISTINCT city)::text AS total_cities
+         FROM public.public_businesses`,
+    );
+    const publicDirectoryStats = publicDirectoryResult.rows[0];
 
     // Count cultural heritage sites — HBCUs, museums, landmarks, civil rights sites, etc.
     // Using pool.query since cultural_sites is managed via raw SQL throughout the codebase.
@@ -27,8 +28,8 @@ router.get("/impact", async (req, res) => {
       .from(usersTable);
 
     res.json({
-      businesses: Number(bizStats?.totalBusinesses ?? 0),
-      cities: Number(bizStats?.totalCities ?? 0),
+      businesses: Number(publicDirectoryStats?.total_businesses ?? 0),
+      cities: Number(publicDirectoryStats?.total_cities ?? 0),
       culturalSites: totalCulturalSites,
       community: Number(userStats?.totalUsers ?? 0),
     });

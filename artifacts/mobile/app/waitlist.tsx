@@ -32,8 +32,8 @@ const SHARE_PLATFORMS = [
 const BENEFITS = [
   { icon: "zap", label: "Early Access", desc: "First to explore new cities and features" },
   { icon: "shield", label: "Safety Insights", desc: "Community-driven safety scores, verified reviews, and real-time insights" },
-  { icon: "map-pin", label: "48 States", desc: "2,400+ verified minority-owned businesses nationwide" },
-  { icon: "users", label: "10K+ Members", desc: "Join a global community of travelers, entrepreneurs, and creators" },
+  { icon: "map-pin", label: "Directory Access", desc: "Search live public listings and community-submitted places" },
+  { icon: "users", label: "Growing Community", desc: "Connect with travelers, entrepreneurs, and creators" },
 ];
 
 const BIZ_CATEGORIES = [
@@ -279,7 +279,7 @@ export default function WaitlistScreen() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [position, setPosition] = useState(() => Math.floor(Math.random() * 800) + 200);
+  const [position, setPosition] = useState<number | null>(null);
   const [showRecommend, setShowRecommend] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
   const [inviteCount, setInviteCount] = useState(0);
@@ -396,15 +396,8 @@ export default function WaitlistScreen() {
                 Join the Waitlist
               </Text>
               <Text style={[styles.heroSub, { color: colors.mutedForeground }]}>
-                Be among the first to connect with trusted businesses, community safety intelligence, and AI travel guides across 200+ cities worldwide.
+                Be among the first to connect with trusted businesses, community safety intelligence, and AI travel guides.
               </Text>
-
-              <View style={[styles.positionBadge, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "30" }]}>
-                <Feather name="users" size={14} color={colors.primary} />
-                <Text style={[styles.positionTxt, { color: colors.primary }]}>
-                  {position.toLocaleString()}+ people already on the list
-                </Text>
-              </View>
             </View>
 
             <View style={styles.benefits}>
@@ -640,7 +633,7 @@ export default function WaitlistScreen() {
                   : `We&apos;ll send your early access invite to ${email} when we launch in your city.`}
               </Text>
 
-              {!testerAccessActive && (
+              {!testerAccessActive && position != null && (
                 <View style={[styles.positionCard, { backgroundColor: colors.secondary }]}>
                   <Text style={[styles.positionNum, { color: colors.primary }]}>#{position}</Text>
                   <Text style={[styles.positionLabel, { color: colors.mutedForeground }]}>Your waitlist position</Text>

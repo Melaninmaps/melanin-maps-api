@@ -1,8 +1,8 @@
 {
   "lastIosSubmitted": 112,
   "lastAndroidSubmitted": 82,
-  "lastIosReserved": 130,
-  "lastAndroidReserved": 98,
+  "lastIosReserved": 131,
+  "lastAndroidReserved": 99,
   "iosEasBuildId": "72c83873-a049-4999-9a59-fc8d8dde37e6",
   "iosEasArtifactStatus": "APP_STORE_CONNECT_UPLOADED_PROCESSING",
   "androidEasBuildId": null,
@@ -15,5 +15,5 @@
     "ios": "EAS build finished: iOS App Store build 1.1.10 (127)",
     "android": "EAS build finished: Android Play Store build 1.1.10 (96)"
   },
-  "notes": "Founder-supplied App Store Connect evidence on 2026-09-26 confirmed that EAS build 126 completed from source 64dc3aade93c619a1a019ef16338bedb3626ac35, then Apple rejected the IPA because version train 1.1.9 is closed (90186/90062). Builds 127/96 and 128/97 are consumed and will not be reused. Expo build evidence on 2026-09-29 confirms iOS 1.1.10 (129), EAS build 72c83873-a049-4999-9a59-fc8d8dde37e6, completed from ce3d6c6b185b9ee66b06c4a78ddb6aff8d69487f. EAS successfully uploaded it to App Store Connect through submission c59d57b5-ab69-4b41-81a0-55df33d0fb12. Apple processing remains a separate status and must be verified before calling it TestFlight-ready. Android 1.1.10 (97) completed from 47c58b9 and is consumed; its EAS build ID was not recorded and is intentionally left null rather than guessed. The next source release must use iOS build 130 and Android versionCode 98 or higher."
+  "notes": "Founder-supplied App Store Connect evidence on 2026-09-26 confirmed that EAS build 126 completed from source 64dc3aade93c619a1a019ef16338bedb3626ac35, then Apple rejected the IPA because version train 1.1.9 is closed (90186/90062). Builds 127/96 and 128/97 are consumed and will not be reused. Expo build evidence on 2026-09-29 confirms iOS 1.1.10 (129), EAS build 72c83873-a049-4999-9a59-fc8d8dde37e6, completed from ce3d6c6b185b9ee66b06c4a78ddb6aff8d69487f. EAS successfully uploaded it to App Store Connect through submission c59d57b5-ab69-4b41-81a0-55df33d0fb12. Apple processing remains a separate status and must be verified before calling it TestFlight-ready. Android 1.1.10 (97) completed from 47c58b9 and is consumed; its EAS build ID was not recorded and is intentionally left null rather than guessed. iOS 131 and Android 99 were subsequently reserved by EAS build requests and must not be reused. The next source release must use iOS build 132 and Android versionCode 100 or higher."
 }

@@ -70,6 +70,39 @@ export default function DiscoverScreen() {
   });
   const [prefsBannerDismissed, setPrefsBannerDismissed] = useState(false);
   const [supportScopeOverride, setSupportScopeOverride] = useState<"all_businesses" | null>(null);
+  const [impactStats, setImpactStats] = useState<{
+    businesses: number | null;
+    cities: number | null;
+    culturalSites: number | null;
+    community: number | null;
+  } | null>(null);
+
+  const loadImpactStats = React.useCallback(async () => {
+    try {
+      const res = await fetch(`${getApiBase()}/api/impact`);
+      if (!res.ok) return;
+      const data = await res.json() as {
+        businesses?: number | null;
+        cities?: number | null;
+        culturalSites?: number | null;
+        community?: number | null;
+      };
+      setImpactStats({
+        businesses: data.businesses ?? null,
+        cities: data.cities ?? null,
+        culturalSites: data.culturalSites ?? null,
+        community: data.community ?? null,
+      });
+    } catch {
+      // A temporary network failure must show an unavailable value, not a
+      // fabricated marketing statistic.
+      setImpactStats(null);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    void loadImpactStats();
+  }, [loadImpactStats]);
 
   // Algorithmic twin recommendations
   const [twinRecs, setTwinRecs] = useState<{ business: { id: string; name: string; category: string; city: string; state: string; imageUrl: string | null; confidenceScore: number; verified: boolean; blackOwned: boolean; priceRange: string | null; description: string }; twinCount: number; reason: string; twinCities: string[] }[]>([]);
@@ -260,7 +293,7 @@ export default function DiscoverScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await refetchBusinesses();
+    await Promise.all([refetchBusinesses(), loadImpactStats()]);
     setRefreshing(false);
   };
 
@@ -660,14 +693,16 @@ export default function DiscoverScreen() {
             {/* Stats strip */}
             <View style={styles.statsStrip}>
               {[
-                { value: "2,400+", label: "Verified Businesses" },
-                { value: "48", label: "States" },
-                { value: "94/100", label: "Avg. Score" },
-                { value: "100%", label: "Authenticity Checked" },
+                { value: impactStats?.businesses, label: "Public Listings" },
+                { value: impactStats?.cities, label: "Cities" },
+                { value: impactStats?.culturalSites, label: "Cultural Sites" },
+                { value: impactStats?.community, label: "Member Accounts" },
               ].map((stat, i, arr) => (
                 <React.Fragment key={stat.label}>
                   <View style={styles.statItem}>
-                    <Text style={[styles.statValue, { color: colors.primary }]}>{stat.value}</Text>
+                    <Text style={[styles.statValue, { color: colors.primary }]}>
+                      {typeof stat.value === "number" ? stat.value.toLocaleString() : "—"}
+                    </Text>
                     <Text style={[styles.statLabel, { color: colors.mutedForeground }]}>{stat.label}</Text>
                   </View>
                   {i < arr.length - 1 && <View style={[styles.statDivider, { backgroundColor: colors.border }]} />}

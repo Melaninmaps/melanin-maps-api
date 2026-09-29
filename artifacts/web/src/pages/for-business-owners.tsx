@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Check } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
+
+type PublicImpactStats = { businesses: number | null };
 
 const CATEGORIES = [
   "Food & Drink",
@@ -31,6 +33,13 @@ const CATEGORIES = [
 ];
 
 export default function ForBusinessOwners() {
+  const [impactStats, setImpactStats] = useState<PublicImpactStats | null>(null);
+  useEffect(() => {
+    fetch(`${BASE}api/impact`)
+      .then((response) => response.ok ? response.json() : Promise.reject())
+      .then((data: PublicImpactStats) => setImpactStats(data))
+      .catch(() => setImpactStats(null));
+  }, []);
   const scrollToHow = () => {
     document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -140,8 +149,10 @@ export default function ForBusinessOwners() {
 
           <div className="flex flex-wrap justify-center gap-8 md:gap-16 pt-8 border-t border-white/10 w-full max-w-4xl">
             <div className="text-center">
-              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">2,400+</div>
-              <div className="text-sm text-[#F5EBD8]/70 uppercase tracking-wider font-bold">Listed Businesses</div>
+              <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">
+                {typeof impactStats?.businesses === "number" ? impactStats.businesses.toLocaleString() : "—"}
+              </div>
+              <div className="text-sm text-[#F5EBD8]/70 uppercase tracking-wider font-bold">Public Listings</div>
             </div>
             <div className="text-center">
               <div className="text-3xl font-serif font-bold text-[#CA922B] mb-1">🌱</div>

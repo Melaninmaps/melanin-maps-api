@@ -48,6 +48,10 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("<option value={100}>100</option>");
     expect(adminScreen).toContain("<option value={500}>500</option>");
     expect(adminScreen).toContain("pageSize: requested === 500 || requested === 250 || requested === 100");
+    expect(adminScreen).toContain("Inventory records");
+    expect(adminScreen).toContain("live ·");
+    expect(adminScreen).toContain("archived ·");
+    expect(adminScreen).toContain("duplicates");
   });
 
   it("bounds exact source receipt enrichment and reports its remaining work separately from new profiles", () => {

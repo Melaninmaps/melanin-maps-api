@@ -81,21 +81,21 @@ export default function OnboardingJoin() {
           professionals, and creators who understand your experience.
         </Text>
 
-        <View style={styles.statsRow}>
-          <View style={styles.stat}>
-            <Text style={styles.statNum}>10K+</Text>
-            <Text style={styles.statLabel}>Members</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.stat}>
-            <Text style={styles.statNum}>500+</Text>
-            <Text style={styles.statLabel}>Cities</Text>
-          </View>
-          <View style={styles.statDivider} />
-          <View style={styles.stat}>
-            <Text style={styles.statNum}>2K+</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.stat}>
+            <Text style={styles.statNum}>Discover</Text>
             <Text style={styles.statLabel}>Businesses</Text>
-          </View>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.stat}>
+            <Text style={styles.statNum}>Plan</Text>
+            <Text style={styles.statLabel}>Travel</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.stat}>
+            <Text style={styles.statNum}>Connect</Text>
+            <Text style={styles.statLabel}>Community</Text>
+            </View>
         </View>
 
         <View style={styles.finalBtns}>

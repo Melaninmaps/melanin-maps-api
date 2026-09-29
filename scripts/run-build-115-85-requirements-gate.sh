@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Requirements-to-proof source/artifact gate. Defaults to the next 131/99
+# Requirements-to-proof source/artifact gate. Defaults to the next 132/100
 # iOS version-train repair while retaining prior reviewed pairs for reproducible checks.
 #
 # Usage:
@@ -26,8 +26,8 @@ esac
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-131}"
-EXPECTED_ANDROID_CODE="${EXPECTED_ANDROID_CODE:-99}"
+EXPECTED_IOS_BUILD="${EXPECTED_IOS_BUILD:-132}"
+EXPECTED_ANDROID_CODE="${EXPECTED_ANDROID_CODE:-100}"
 if [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "115/85" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "116/86" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "117/87" ] &&
@@ -44,7 +44,8 @@ if [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "115/85" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "128/97" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "129/98" ] &&
    [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "130/98" ] &&
-   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "131/99" ]; then
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "131/99" ] &&
+   [ "$EXPECTED_IOS_BUILD/$EXPECTED_ANDROID_CODE" != "132/100" ]; then
   printf '%s\n' 'Unsupported release identifier pair' >&2
   exit 64
 fi
@@ -135,6 +136,7 @@ pnpm --dir artifacts/api-server exec vitest run \
   src/kinfolk/__tests__/audio-inspection.test.ts \
   src/kinfolk/__tests__/transcription-handler.test.ts \
   src/__tests__/kinfolk-server-voice-contract.test.ts \
+  src/__tests__/public-impact-metrics-contract.test.ts \
   src/__tests__/admin-business-inventory-controls.test.ts \
   src/routes/__tests__/waitlist-unified-contract.test.ts \
   src/kinfolk/__tests__/designation-predicate-policy.test.ts \
@@ -176,6 +178,7 @@ pnpm exec vitest run \
   artifacts/mobile/__tests__/map-clean-surface.test.ts \
   artifacts/mobile/__tests__/map-discovery-card.test.ts \
   artifacts/mobile/__tests__/business-discovery-contract.test.ts \
+  artifacts/mobile/__tests__/live-impact-statistics.test.ts \
   artifacts/mobile/__tests__/map-locality-first.test.ts \
   artifacts/mobile/__tests__/map-kinfolk-continuity.test.ts \
   artifacts/mobile/__tests__/essential-services-map.test.ts
