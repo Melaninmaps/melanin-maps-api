@@ -31,6 +31,19 @@ describe("source-backed directory candidate manifest", () => {
     expect(founderCityRows.every((candidate) => candidate.sourceLabel.trim().length > 0)).toBe(true);
   });
 
+  it("retains the official-site social and business-detail evidence without changing receipt identities", () => {
+    const withDirectSocial = sourceBackedDirectoryCandidates.filter((candidate) => (
+      candidate.socialLinks && Object.keys(candidate.socialLinks).length > 0
+    ));
+    const withBusinessSpecificDescription = sourceBackedDirectoryCandidates.filter((candidate) => (
+      typeof candidate.sourceDescription === "string" && candidate.sourceDescription.trim().length >= 30
+    ));
+
+    expect(withDirectSocial).toHaveLength(4_475);
+    expect(withBusinessSpecificDescription).toHaveLength(3_582);
+    expect(sourceBackedDirectoryCandidates.every((candidate) => candidate.sourceRecordKey.startsWith("source-receipt:"))).toBe(true);
+  });
+
   it("retains the complete Minneapolis proof cohort with searchable source details", () => {
     expect(minneapolisSourceBackedDirectoryCandidates).toHaveLength(129);
     expect(minneapolisSourceBackedDirectoryCandidates.every((candidate) => (
