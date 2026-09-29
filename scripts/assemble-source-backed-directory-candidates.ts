@@ -199,7 +199,8 @@ function safeCandidate(input: ExtractedCandidate, sourceFile: string): {
 async function extractedArtifacts(): Promise<Array<{ file: string; row: ExtractedCandidate }>> {
   const names = (await fs.readdir(extractionDirectory))
     .filter((name) => /^\d{2}-.*\.json$/i.test(name))
-    .filter((name) => !name.endsWith("-sample.json"));
+    .filter((name) => !name.endsWith("-sample.json"))
+    .filter((name) => !name.endsWith(".report.json"));
   const result: Array<{ file: string; row: ExtractedCandidate }> = [];
   for (const name of names.sort()) {
     const parsed = JSON.parse(await fs.readFile(path.join(extractionDirectory, name), "utf8"));
