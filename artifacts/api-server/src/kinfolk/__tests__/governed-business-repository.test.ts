@@ -102,8 +102,11 @@ describe("governed Kinfolk business repository", () => {
         name: "AMINA",
         city: "Philadelphia",
         stateCode: "PA",
-        latitude: 39.9526,
-        longitude: -75.1652,
+        // This legacy seed value is the documented Philadelphia city-center
+        // fallback, not proof of AMINA's street location. The profile remains
+        // discoverable, but cannot become a map pin or exact-radius result.
+        latitude: null,
+        longitude: null,
         verified: true,
         blackOwned: true,
         tags: ["restaurant"],
@@ -122,6 +125,19 @@ describe("governed Kinfolk business repository", () => {
     expect(sql).toContain("UPPER(BTRIM(COALESCE(b.state, ''))) = $3");
     expect(sql).not.toContain("promotion_eligible");
     expect(params).toEqual(["amina", "Philadelphia", "PA"]);
+  });
+
+  it("does not let a legacy city-center fallback satisfy an exact-radius search", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [AMINA_ROW] }) };
+    const repository = createGovernedKinfolkBusinessRepository(pool);
+
+    const results = await repository.findWithinRadius({
+      latitude: 39.9526,
+      longitude: -75.1652,
+      radiusMiles: 2,
+    });
+
+    expect(results).toEqual([]);
   });
 
   it.each([

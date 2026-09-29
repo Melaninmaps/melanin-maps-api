@@ -6,6 +6,7 @@ import {
   sanitizePublicListingCopy,
   sanitizePublicListingCopyOrNull,
 } from "../businesses/publicListingCopy";
+import { hasTrustworthyMapCoordinate } from "../businesses/mapCoordinateIntegrity";
 import { buildDesignationPredicateSql } from "./designation-predicate-policy";
 import {
   businessSubjectSearchPatterns,
@@ -296,6 +297,14 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
       nullableText(row.research_source_url) &&
       canonicalizeContextualUrl(text(row.research_source_url)),
     ) || RETAINED_DIRECTORY_SOURCE_RECEIPTS.has(text(row.data_source).trim());
+  const latitude = numberOrNull(row.latitude);
+  const longitude = numberOrNull(row.longitude);
+  const hasMapCoordinate = hasTrustworthyMapCoordinate({
+    city: row.city,
+    stateCode: row.state_code,
+    latitude,
+    longitude,
+  });
   return {
     id: text(row.id),
     name: text(row.name),
@@ -307,8 +316,10 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     stateCode: nullableText(row.state_code),
     country: nullableText(row.country),
     isOnlineOnly: row.is_online_only === true,
-    latitude: numberOrNull(row.latitude),
-    longitude: numberOrNull(row.longitude),
+    // A legacy city-center fallback remains searchable by city, but cannot be
+    // displayed as a business pin or used to satisfy an exact-radius request.
+    latitude: hasMapCoordinate ? latitude : null,
+    longitude: hasMapCoordinate ? longitude : null,
     distanceMiles: numberOrNull(row.distance_miles),
     phone: nullableText(row.phone),
     // A published listing may contain a stale or malformed URL. Keep only a
@@ -924,8 +935,11 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       `,
         [radius.latitude, radius.longitude, radius.radiusMiles, resultLimit],
       );
-      return suppressProbableDuplicateBusinesses(rows.map(mapBusiness))
-        .businesses;
+      return suppressProbableDuplicateBusinesses(
+        rows
+          .map(mapBusiness)
+          .filter((business) => business.latitude !== null && business.longitude !== null),
+      ).businesses;
     },
 
     async findExactByNormalizedName(input: {

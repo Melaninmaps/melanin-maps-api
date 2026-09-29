@@ -51,6 +51,10 @@ import { isPublicBusinessDiscoveryRead } from "../businesses/publicBusinessDisco
 import { resolveCanonicalBusinessId } from "../businesses/canonicalBusiness";
 import { sanitizePublicListingCopy } from "../businesses/publicListingCopy";
 import {
+  hasTrustworthyMapCoordinate,
+  MAP_LOCATION_HOLD_REASON,
+} from "../businesses/mapCoordinateIntegrity";
+import {
   completedCohortDirectoryDiscoverySqlPredicate,
   mwmDiasporaPromotionSqlPredicate,
   NATIONAL_MASTER_DIRECTORY_SOURCE,
@@ -241,13 +245,32 @@ function toPublicBusinessRecord<T extends Record<string, unknown>>(
     _sim_score,
     ...publicRecord
   } = business;
+  const hasMapCoordinate = hasTrustworthyMapCoordinate({
+    city: publicRecord.city,
+    stateCode: publicRecord.state,
+    latitude: publicRecord.latitude,
+    longitude: publicRecord.longitude,
+  });
+  const mapLocationHold = !hasMapCoordinate &&
+    publicRecord.latitude != null &&
+    publicRecord.longitude != null
+      ? MAP_LOCATION_HOLD_REASON
+      : null;
+  const coordinateSafeRecord = hasMapCoordinate
+    ? publicRecord
+    : {
+        ...publicRecord,
+        latitude: null,
+        longitude: null,
+        mapLocationHold,
+      };
   // Old imports placed the internal provenance phrase in descriptions. Do not
   // expose it on any public client; listing status already communicates whether
   // a profile is claimed or verified without changing the business-page layout.
-  if (typeof publicRecord.description !== "string") return publicRecord;
-  const description = sanitizePublicListingCopy(publicRecord.description);
+  if (typeof coordinateSafeRecord.description !== "string") return coordinateSafeRecord;
+  const description = sanitizePublicListingCopy(coordinateSafeRecord.description);
   return {
-    ...publicRecord,
+    ...coordinateSafeRecord,
     description: description
       .replace(/\bcommunity\s*\/\s*founder-listed\b/gi, "Publicly listed")
       .replace(/\bfounder-listed\b/gi, "Publicly listed"),
@@ -491,7 +514,19 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
         ${designationWhere}
       ORDER BY confidence_score DESC NULLS LAST, created_at DESC
     `, designationParams);
-    sendDynamicJson(res, { pins: rows });
+    // Historical city-center fallbacks are not business locations. Omit only
+    // those exact, known placeholders; their searchable public profiles and
+    // source evidence remain retained in the directory.
+    sendDynamicJson(res, {
+      pins: rows.filter((business) =>
+        hasTrustworthyMapCoordinate({
+          city: business.city,
+          stateCode: business.state,
+          latitude: business.latitude,
+          longitude: business.longitude,
+        }),
+      ),
+    });
   } catch (err) {
     res.status(500).json({ error: "Failed to load map pins" });
   }
