@@ -334,6 +334,9 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("OR research_source_url = ANY($3::text[])");
     expect(adminRoute).toContain("sourceUrl: business.sourceUrl ?? business.researchSourceUrl");
     expect(adminRoute).toContain("sourceUrl: existing.sourceUrl ?? candidate.sourceListingUrl ?? candidate.sourceUrl");
+    expect(adminRoute).toContain("exactMatchesByRecordAndReceipt");
+    expect(adminRoute).toContain("for (const sourceReceipt of [existing.sourceUrl, existing.researchSourceUrl])");
+    expect(adminRoute).toContain("exactExistingEnrichedCount = exactMatches.length");
   });
 
   it("places only exact held source receipts into the reversible Archive vault", () => {

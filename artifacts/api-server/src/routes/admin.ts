@@ -404,13 +404,49 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
     // transaction keeps each bounded batch an all-or-nothing publication.
     const isMinnesotaSourceBatch = requestedBatch.startsWith("mn_black_business_directory_");
     const exactSourcePinTargets: MinnesotaSourcePinTarget[] = [];
+    let exactExistingEnrichedCount = 0;
     await db.transaction(async (transaction) => {
       // Legacy no-batch reconciliation preserves its historical create-only
       // behavior. Additive enrichment is deliberately available only to an
       // explicitly selected source cohort, such as the Minneapolis proof set.
-      const exactMatches = requestedBatch
-        ? plan.duplicateMatches.filter((match) => match.existingBusinessId)
-        : [];
+      const exactMatchesByRecordAndReceipt = new Map<string, {
+        candidate: SourceBackedDirectoryCandidate;
+        existingBusinessId: string;
+      }>();
+      if (requestedBatch) {
+        for (const match of plan.duplicateMatches) {
+          if (!match.existingBusinessId) continue;
+          exactMatchesByRecordAndReceipt.set(
+            `${match.existingBusinessId}:${match.candidate.sourceRecordKey}`,
+            { candidate: match.candidate, existingBusinessId: match.existingBusinessId },
+          );
+        }
+        // Older imports sometimes created several preserved rows for one
+        // individual directory receipt. A map's single value would choose an
+        // arbitrary (often archived) copy, leaving the live legacy card with
+        // generic importer text. Reconcile every row only when its *stored
+        // source or research URL* is exactly the candidate's individual listing
+        // URL. This does not use a similar-name, city, or address inference.
+        const eligibleCandidatesByListingUrl = new Map(
+          plan.duplicateMatches.map((match) => [
+            match.candidate.sourceListingUrl ?? match.candidate.sourceUrl,
+            match.candidate,
+          ]),
+        );
+        for (const existing of existingBusinesses) {
+          for (const sourceReceipt of [existing.sourceUrl, existing.researchSourceUrl]) {
+            if (!sourceReceipt) continue;
+            const candidate = eligibleCandidatesByListingUrl.get(sourceReceipt);
+            if (!candidate) continue;
+            exactMatchesByRecordAndReceipt.set(
+              `${existing.id}:${candidate.sourceRecordKey}`,
+              { candidate, existingBusinessId: existing.id },
+            );
+          }
+        }
+      }
+      const exactMatches = [...exactMatchesByRecordAndReceipt.values()];
+      exactExistingEnrichedCount = exactMatches.length;
       const existingById = new Map(existingBusinesses.map((business) => [business.id, business]));
       for (const match of exactMatches) {
         const matchedExisting = existingById.get(match.existingBusinessId!);
@@ -627,9 +663,7 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
       batch: requestedBatch || "all_source_backed_batches",
       createdCount: publicNextBatch.length,
       duplicateReviewCreatedCount: duplicateReviewNextBatch.length,
-      exactExistingEnrichedCount: requestedBatch
-        ? plan.duplicateMatches.filter((match) => Boolean(match.existingBusinessId)).length
-        : 0,
+      exactExistingEnrichedCount,
       remainingCreateCount: plan.toCreate.length - nextBatch.length,
       batchSize,
       exactDuplicateCount: plan.duplicateMatches.length,
