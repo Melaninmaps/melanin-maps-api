@@ -31,7 +31,11 @@ export function hasBusinessSpecificSourceDescription(
   candidate: SourceBackedDirectoryCandidate,
 ): boolean {
   const description = candidate.sourceDescription?.replace(/\s+/g, " ").trim() ?? "";
-  if (description.length < 30) return false;
+  // A concise factual source line such as "Authentic Ethiopian cuisine" is
+  // useful consumer-facing copy. Reject only empty/near-placeholder text; the
+  // directory/template guard below, not an arbitrary long-form requirement,
+  // decides whether it is business-specific.
+  if (description.length < 12) return false;
   const category = candidate.category.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   return !new RegExp(
     `(?:source-backed directory|business directory|current .* listing|${category} listing in)`,

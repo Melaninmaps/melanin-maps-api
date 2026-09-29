@@ -330,6 +330,16 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(directoryAssembly).toContain("mergeMissingCrawlEvidence");
   });
 
+  it("places only exact held source receipts into the reversible Archive vault", () => {
+    expect(adminRoute).toContain('router.post("/admin/directory-intake/source-backed/quality-hold"');
+    expect(adminRoute).toContain("heldSourceListingUrls.has(existing.sourceUrl!)");
+    expect(adminRoute).toContain("!existing.isDuplicate");
+    expect(adminRoute).toContain('existing.listingStatus !== "archived"');
+    expect(adminRoute).toContain("Exact source listing URL only; no name-only, address-only, duplicate-vault, merge, or delete action.");
+    expect(adminRoute).toContain("recordListingStatusAudit(client");
+    expect(adminRoute).toContain("Held after source crawl: no business-specific source description.");
+  });
+
   it("creates a map pin only from a successfully geocoded supplied street address", () => {
     expect(adminPublisher).toContain("const coordinates = input.address");
     expect(adminPublisher).toContain("if (coordinates)");

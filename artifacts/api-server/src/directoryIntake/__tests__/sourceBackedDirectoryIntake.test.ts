@@ -92,6 +92,21 @@ describe("source-backed directory reconciliation", () => {
     expect(plan.duplicateMatches).toEqual([]);
   });
 
+  it("accepts concise factual source copy while still rejecting a directory template", () => {
+    const concise = candidate({
+      sourceRecordKey: "source-receipt:concise-factual-copy",
+      sourceDescription: "Authentic Ethiopian cuisine",
+    });
+    const template = candidate({
+      sourceRecordKey: "source-receipt:concise-template-copy",
+      sourceDescription: "Restaurant listing in Philadelphia.",
+    });
+    const plan = buildSourceBackedDirectoryIntakePlan([concise, template], []);
+
+    expect(plan.toCreate).toEqual([concise]);
+    expect(plan.heldForDescription).toEqual([template]);
+  });
+
   it("skips a prior intake retry by its exact retained source receipt key", () => {
     const mapless = candidate({ address: null, officialUrl: null });
     const plan = buildSourceBackedDirectoryIntakePlan([mapless], [{

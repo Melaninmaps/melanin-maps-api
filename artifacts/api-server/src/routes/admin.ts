@@ -90,6 +90,11 @@ type SourceDirectoryExistingBusiness = Readonly<{
   researchSourceUrl: string | null;
   kinfolkRecommendationReason: string | null;
   intakeBatchReference: string | null;
+  listingStatus: string | null;
+  status: string;
+  promotionEligible: boolean | null;
+  featured: boolean | null;
+  promotedUntil: string | null;
   isDuplicate: boolean | null;
   duplicateOfId: string | null;
 }>;
@@ -122,6 +127,9 @@ async function sourceDirectoryExistingBusinessCandidates(
             research_source_url AS "researchSourceUrl",
             kinfolk_recommendation_reason AS "kinfolkRecommendationReason",
             intake_batch_reference AS "intakeBatchReference",
+            listing_status AS "listingStatus", status,
+            promotion_eligible AS "promotionEligible", featured,
+            promoted_until AS "promotedUntil",
             COALESCE(is_duplicate, false) AS "isDuplicate",
             duplicate_of_id AS "duplicateOfId"
        FROM businesses
@@ -622,6 +630,114 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
   } catch (error) {
     req.log.error({ error }, "Failed to publish source-backed directory intake");
     res.status(500).json({ error: "Failed to publish source-backed directory intake." });
+  }
+});
+
+/**
+ * Reversible quality hold for a legacy public card that has no business-specific
+ * copy after the approved source crawl. It is intentionally narrower than a
+ * name/city duplicate check: a record may move only when its stored listing URL
+ * is exactly one of the held source receipts. No row is deleted, merged, or
+ * relinked, and the standard Archive-vault audit/restore path remains intact.
+ */
+router.post("/admin/directory-intake/source-backed/quality-hold", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  const requestedBatch = typeof req.body?.batch === "string" ? req.body.batch.trim() : "";
+  const apply = req.body?.apply === true;
+  if (!requestedBatch) {
+    return void res.status(400).json({ error: "A source-backed intake batch is required." });
+  }
+  const intakeCandidates = protectedSourceDirectoryCandidates.filter((candidate) => candidate.batch === requestedBatch);
+  if (intakeCandidates.length === 0) {
+    return void res.status(400).json({ error: "Unknown source-backed intake batch." });
+  }
+  try {
+    const existingBusinesses = await sourceDirectoryExistingBusinessCandidates(intakeCandidates);
+    const plan = buildSourceBackedDirectoryIntakePlan(intakeCandidates, existingBusinesses);
+    const heldSourceListingUrls = new Set(
+      plan.heldForDescription.map((candidate) => candidate.sourceListingUrl ?? candidate.sourceUrl),
+    );
+    const targets = existingBusinesses.filter((existing) =>
+      !existing.isDuplicate
+      && existing.listingStatus !== "archived"
+      && Boolean(existing.sourceUrl)
+      && heldSourceListingUrls.has(existing.sourceUrl!),
+    );
+    if (targets.length > 500) {
+      return void res.status(409).json({
+        error: "Quality hold is limited to 500 exact source records per approved batch.",
+        targetCount: targets.length,
+      });
+    }
+    if (!apply) {
+      return void res.json({
+        ok: true,
+        requiresExplicitApply: true,
+        batch: requestedBatch,
+        heldSourceReceiptCount: plan.heldForDescription.length,
+        exactSourceArchiveCount: targets.length,
+        guard: "Exact source listing URL only; no name-only, address-only, duplicate-vault, merge, or delete action.",
+      });
+    }
+
+    const client = await pool.connect();
+    try {
+      await ensureListingStatusAuditSchema(client);
+      await client.query("BEGIN");
+      for (const target of targets) {
+        const beforeState: ListingAuditState = {
+          listingStatus: target.listingStatus,
+          status: target.status,
+          promotionEligible: Boolean(target.promotionEligible),
+          featured: Boolean(target.featured),
+          promotedUntil: target.promotedUntil,
+        };
+        const afterState: ListingAuditState = {
+          listingStatus: "archived",
+          status: "suspended",
+          promotionEligible: false,
+          featured: false,
+          promotedUntil: null,
+        };
+        await client.query(
+          `UPDATE businesses
+              SET listing_status = $1, status = $2, promotion_eligible = $3,
+                  featured = $4, promoted_until = $5, updated_at = NOW()
+            WHERE id = $6`,
+          [
+            afterState.listingStatus,
+            afterState.status,
+            afterState.promotionEligible,
+            afterState.featured,
+            afterState.promotedUntil,
+            target.id,
+          ],
+        );
+        await recordListingStatusAudit(client, {
+          businessId: target.id,
+          action: "remove_public_discovery",
+          actorUserId: req.user?.id ?? null,
+          reason: "Held after source crawl: no business-specific source description.",
+          beforeState,
+          afterState,
+        });
+      }
+      await client.query("COMMIT");
+      return void res.json({
+        ok: true,
+        batch: requestedBatch,
+        archivedCount: targets.length,
+        message: "Exact source records without business-specific source copy moved to the reversible Archive vault.",
+      });
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      throw error;
+    } finally {
+      client.release();
+    }
+  } catch (error) {
+    req.log.error({ error }, "Failed to apply source-backed directory quality hold");
+    return void res.status(500).json({ error: "Failed to apply source-backed directory quality hold." });
   }
 });
 
