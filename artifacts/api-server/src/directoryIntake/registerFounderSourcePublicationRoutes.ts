@@ -162,7 +162,12 @@ async function upsertEvidence(
 async function recordSourceReceiptAndEligibility(
   client: { query: Function },
   target: SourceTarget,
-): Promise<{ qualified: boolean; officialWebsiteBlanked: boolean; socialOnly: boolean }> {
+): Promise<{
+  qualified: boolean;
+  officialWebsiteBlanked: boolean;
+  socialOnly: boolean;
+  holdReason: "no_usable_official_presence" | "no_documented_ownership_designation" | null;
+}> {
   const { candidate, businessId } = target;
   const presence = target.presence;
   const sourceUrl = candidate.sourceListingUrl ?? candidate.sourceUrl;
@@ -192,7 +197,20 @@ async function recordSourceReceiptAndEligibility(
     ],
   );
   if (!presence.hasOfficialPresence) {
-    return { qualified: false, officialWebsiteBlanked: Boolean(presence.rejectedWebsite), socialOnly: false };
+    return {
+      qualified: false,
+      officialWebsiteBlanked: Boolean(presence.rejectedWebsite),
+      socialOnly: false,
+      holdReason: "no_usable_official_presence",
+    };
+  }
+  if (!candidate.ownershipDesignations.length) {
+    return {
+      qualified: false,
+      officialWebsiteBlanked: false,
+      socialOnly: false,
+      holdReason: "no_documented_ownership_designation",
+    };
   }
 
   const identityEvidenceId = await upsertEvidence(client, businessId, "identity", candidate, {
@@ -244,6 +262,7 @@ async function recordSourceReceiptAndEligibility(
     qualified: true,
     officialWebsiteBlanked: Boolean(presence.rejectedWebsite && !presence.officialWebsite),
     socialOnly: !presence.officialWebsite && Boolean(firstSocial),
+    holdReason: null,
   };
 }
 
@@ -289,7 +308,7 @@ async function queueIdentityHold(
 async function queueCanonicalProfileHold(
   client: { query: Function },
   candidate: SourceBackedDirectoryCandidate,
-  reason: "no_existing_canonical_profile" | "no_usable_official_presence",
+  reason: "no_existing_canonical_profile" | "no_usable_official_presence" | "no_documented_ownership_designation",
 ): Promise<void> {
   await client.query(
     `INSERT INTO founder_source_identity_review_queue (
@@ -332,6 +351,7 @@ function publicManifest(
     }).length,
     mapPinnedProfiles: 0,
     noPresenceHolds: noPresence.length,
+    ownershipDesignationHolds: selected.filter((candidate) => !candidate.ownershipDesignations.length).length,
     existingCandidateCount: existing.length,
   };
 }
@@ -699,6 +719,9 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
         let blankedCount = 0;
         let socialOnlyCount = 0;
         let noPresenceHoldCount = noPresence.length;
+        const ownershipDesignationHoldCount = selected.filter(
+          (candidate) => !candidate.ownershipDesignations.length,
+        ).length;
         const qualifiedBusinessIds = new Set<string>();
         const sourceDesignationsByBusiness = new Map<string, Set<string>>();
         for (const target of targets) {
@@ -708,7 +731,12 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
             const designations = sourceDesignationsByBusiness.get(target.businessId) ?? new Set<string>();
             target.candidate.ownershipDesignations.forEach((designation) => designations.add(designation));
             sourceDesignationsByBusiness.set(target.businessId, designations);
-          } else noPresenceHoldCount += 1;
+          } else if (result.holdReason === "no_usable_official_presence") {
+            noPresenceHoldCount += 1;
+            await queueCanonicalProfileHold(client, target.candidate, result.holdReason);
+          } else if (result.holdReason === "no_documented_ownership_designation") {
+            await queueCanonicalProfileHold(client, target.candidate, result.holdReason);
+          }
           if (result.officialWebsiteBlanked) blankedCount += 1;
           if (result.socialOnly) socialOnlyCount += 1;
         }
@@ -731,6 +759,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           officialSocialOnlyProfiles: socialOnlyCount,
           mapPinnedProfiles: 0,
           noPresenceHolds: noPresenceHoldCount,
+          ownershipDesignationHolds: ownershipDesignationHoldCount,
           publicationState: "published_unclaimed_source_documented",
           mapNote: "No map pin was created by this publication. Address and audited geocode remain a separate enrichment requirement.",
         };
