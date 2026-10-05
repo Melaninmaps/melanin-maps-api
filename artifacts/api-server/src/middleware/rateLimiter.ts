@@ -1,5 +1,6 @@
 import { ipKeyGenerator, rateLimit } from "express-rate-limit";
 import type { Request } from "express";
+import { isAdmin } from "../lib/adminAuth";
 
 /**
  * Normal authenticated browsing must be isolated by the stable member ID,
@@ -21,6 +22,15 @@ function isAuthRoute(req: Request): boolean {
   return req.path === "/auth" || req.path.startsWith("/auth/");
 }
 
+function isAuthorizedFounderReconciliationRoute(req: Request): boolean {
+  // The protected founder reconciliation job performs one bounded transaction
+  // per receipt page and has its own authorization plus idempotency guards.
+  // It must not consume the member-facing browse budget during a large,
+  // administrator-authorized repair run.
+  return req.path === "/admin/founder-source-publication"
+    || req.path.startsWith("/admin/founder-source-publication/");
+}
+
 export const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 200,
@@ -30,7 +40,9 @@ export const generalLimiter = rateLimit({
   // Auth routes are protected by authLimiter in app.ts and must never consume
   // a signed-in member's general browsing budget.
   // KinfolkAI has its own token-bucket queue; skip it here too.
-  skip: (req: Request) => isAuthRoute(req) || req.path.startsWith("/kinfolk"),
+  skip: (req: Request) => isAuthRoute(req)
+    || req.path.startsWith("/kinfolk")
+    || (isAuthorizedFounderReconciliationRoute(req) && isAdmin(req)),
   handler: (_req, res) => {
     res.status(429).json({
       error: "Too many requests, please try again later.",
