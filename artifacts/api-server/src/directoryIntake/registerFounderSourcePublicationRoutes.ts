@@ -226,10 +226,10 @@ async function recordSourceReceiptAndEligibility(
     ],
   );
   await client.query(
-    `INSERT INTO business_discovery_eligibility_audit_events
+     `INSERT INTO business_discovery_eligibility_audit_events
        (id, business_id, action, actor_id, reason, before_state, after_state)
      VALUES ($1, $2, 'qualified', 'founder-source-publication', $3, '{}'::jsonb,
-       jsonb_build_object('sourceRecordKey', $4, 'policyVersion', $5))`,
+       jsonb_build_object('sourceRecordKey', $4::text, 'policyVersion', $5::text))`,
     [randomUUID(), businessId, "Founder source presence publication", candidate.sourceRecordKey, DOCUMENTED_DISCOVERY_POLICY_VERSION],
   );
   return {
