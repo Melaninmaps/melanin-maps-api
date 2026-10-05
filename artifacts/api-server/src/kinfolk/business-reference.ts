@@ -125,7 +125,7 @@ export function namedBusinessPromptBlock(business: GovernedKinfolkBusiness): str
     "NAMED BUSINESS — SERVER-AUTHORITATIVE EXACT RECORD:",
     `${business.name} [${business.id}] | ${business.category} | ${business.city}, ${business.stateCode ?? ""}`,
     business.description || business.story || "No public description is available.",
-    "Answer only about this canonical visible record. Do not broaden to a city catalog, rename it, merge another business, or invent details.",
-    `Any recommendation must use businessId "${business.id}" and exact name "${business.name}".`,
+    "This is an explicit safety/context lookup, not a recommendation. Answer only about this canonical record; do not recommend it, offer it as an alternative, broaden to a city catalog, rename it, merge another business, or invent details.",
+    `Do not emit a recommendation card for businessId "${business.id}" unless a separate documented-discovery query independently qualifies it.`,
   ].join("\n");
 }

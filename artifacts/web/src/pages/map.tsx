@@ -32,6 +32,19 @@ function safePublicUrl(value?: string | null): string | null {
   }
 }
 
+/** Mirrors the server's narrow direct-name exception; category browse never uses it. */
+function isDeliberateBusinessNameLookup(value: string): boolean {
+  const normalized = value.trim().replace(/\s+/g, " ");
+  if (normalized.length < 3 || normalized.length > 100) return false;
+  const generic = new Set([
+    "business", "businesses", "restaurant", "restaurants", "bar", "bars",
+    "club", "clubs", "hospital", "hospitals", "doctor", "doctors", "near me",
+    "philly", "philadelphia", "houston", "atlanta", "minneapolis",
+  ]);
+  const words = normalized.toLocaleLowerCase("en-US").split(" ");
+  return words.length <= 7 && words.some((word) => !generic.has(word));
+}
+
 function escapeHtml(value: string): string {
   return value.replace(/[&<>'"]/g, (character) => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;",
@@ -382,6 +395,7 @@ export default function MapPage() {
     heritageGeoExpansion?: string; heritageGeoMessage?: string;
     libraryTopicQueued?: boolean; libraryQueueMessage?: string;
     exactDirectorySearch?: boolean;
+    directNameLookup?: boolean;
   } | null>(null);
   const [universalLoading, setUniversalLoading] = useState(false);
 
@@ -678,14 +692,33 @@ export default function MapPage() {
           } catch { /* exact directory request failed — continue with universal results */ }
         }
 
-        const finalBusinesses = phraseBusinesses.length > 0 ? phraseBusinesses : universalBusinesses;
-        const finalPayload = phraseBusinesses.length > 0
+        let directNameBusinesses: any[] = [];
+        if (phraseBusinesses.length === 0 && universalBusinesses.length === 0 && isDeliberateBusinessNameLookup(q)) {
+          try {
+            const direct = new URLSearchParams({ search: q.trim(), lookup: "direct_name", limit: "20" });
+            const directRes = await fetch(`${apiBase}/api/businesses?${direct}`, { credentials: "include" });
+            if (directRes.ok) {
+              const directPayload = await directRes.json();
+              if (directPayload?.searchScope === "explicit_public_listing" && Array.isArray(directPayload.businesses)) {
+                directNameBusinesses = directPayload.businesses;
+              }
+            }
+          } catch { /* never broaden an unavailable direct-name lookup into category discovery */ }
+        }
+
+        const finalBusinesses = phraseBusinesses.length > 0
+          ? phraseBusinesses
+          : directNameBusinesses.length > 0
+            ? directNameBusinesses
+            : universalBusinesses;
+        const finalPayload = phraseBusinesses.length > 0 || directNameBusinesses.length > 0
           ? {
               ...payload,
-              results: { ...payload.results, businesses: phraseBusinesses },
-              totalResults: phraseBusinesses.length,
+              results: { ...payload.results, businesses: finalBusinesses },
+              totalResults: finalBusinesses.length,
               fallbackMessage: null,
-              exactDirectorySearch: usedExactDirectorySearch,
+              exactDirectorySearch: usedExactDirectorySearch || directNameBusinesses.length > 0,
+              directNameLookup: directNameBusinesses.length > 0,
             }
           : payload;
 
@@ -696,7 +729,7 @@ export default function MapPage() {
         // When coordinates are available, LocalBusinessResults.onPinsChange → applyLocalMapViewport
         // manages the business viewport. Skip fitMapToBusinessResults to avoid overriding it.
         const useLocalSearch = (geoLat !== null && geoLng !== null) || (userCoords !== null && localIntent.usesDeviceLocation === true);
-        if (!useLocalSearch) {
+        if (!useLocalSearch && !directNameBusinesses.length) {
           const fitted = fitMapToBusinessResults(finalBusinesses);
           if (!fitted && geoLat !== null && geoLng !== null && mapRef.current) {
             // No MWM records with valid coords — keep the geocoded pan.
@@ -1569,7 +1602,7 @@ export default function MapPage() {
   // set. Its validated coordinates own the search-pin layer, rather than the
   // generic nearby-search endpoint substituting unrelated local records.
   useEffect(() => {
-    if (!universalResults?.exactDirectorySearch || !detectedLocation) return;
+    if (!universalResults?.exactDirectorySearch || universalResults.directNameLookup || !detectedLocation) return;
     const pins = (universalResults.results.businesses ?? []).flatMap((business: any) => {
       const latitude = Number(business.latitude);
       const longitude = Number(business.longitude);

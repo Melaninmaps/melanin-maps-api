@@ -74,7 +74,7 @@ export function BusinessSupportPreferences() {
       if (!response.ok) throw new Error(body.error ?? "Could not save business support choices.");
       setMode(selected.length === 0 ? "all_businesses" : "strict_documented_designations");
       setMessage(selected.length === 0
-        ? "Cleared. All documented businesses are available."
+        ? "Cleared. Support the Diaspora is active for current documented businesses."
         : "Saved across the website and app. Strict results match every selected designation.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not save business support choices.");
@@ -99,7 +99,7 @@ export function BusinessSupportPreferences() {
       });
       const body = await response.json() as PreferencesResponse;
       if (!response.ok) throw new Error(body.error ?? "Could not clear Support Lens.");
-      setMessage("Cleared. All documented businesses are available.");
+      setMessage("Cleared. Support the Diaspora is active for current documented businesses.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Could not clear Support Lens.");
     } finally {
@@ -116,7 +116,7 @@ export function BusinessSupportPreferences() {
         <div>
           <h2 className="font-serif text-xl font-bold text-[#2B1507]">Your Support Lens</h2>
           <p className="mt-1 text-sm leading-5 text-[#3A1F0E]/65">
-            Your Support Lens is optional and private. It helps MWM show documented businesses you intentionally want to support. It does not say who you are, and it never removes anyone from MWM. You can change, clear, or broaden it any time.
+            Your Support Lens is optional and private. When no specific choice is active, MWM uses Support the Diaspora: ordinary discovery shows only businesses with current, source-documented eligibility. A specific choice narrows those documented results; it does not say who you are.
           </p>
         </div>
       </div>
@@ -154,12 +154,12 @@ export function BusinessSupportPreferences() {
       )}
 
       <p className="mt-3 text-xs font-semibold text-[#3A1F0E]/60">
-        {selected.length > 1 ? "Show businesses that match every selection." : mode === "strict_documented_designations" ? "Strict documented-designation results are active." : "All documented businesses are available."}
+        {selected.length > 1 ? "Show businesses that match every selection." : mode === "strict_documented_designations" ? "Strict documented-designation results are active." : "Support the Diaspora is active: current documented businesses are available."}
       </p>
       <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs font-semibold text-[#3A1F0E]/55">{selected.length} selected</p>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <button type="button" onClick={() => void clearAndSave()} disabled={saving} className="min-h-10 rounded-full border border-[#3A1F0E]/20 bg-white px-4 text-sm font-bold text-[#2B1507]">Show all businesses equally</button>
+          <button type="button" onClick={() => void clearAndSave()} disabled={saving} className="min-h-10 rounded-full border border-[#3A1F0E]/20 bg-white px-4 text-sm font-bold text-[#2B1507]">Use Support the Diaspora</button>
           <button type="button" onClick={() => void clearAndSave()} disabled={saving} className="min-h-10 rounded-full border border-[#3A1F0E]/20 bg-white px-4 text-sm font-bold text-[#2B1507]">Skip for now</button>
           <button type="button" onClick={() => void save()} disabled={loading || saving} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-[#2B1507] px-5 text-sm font-bold text-white disabled:opacity-50">
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}

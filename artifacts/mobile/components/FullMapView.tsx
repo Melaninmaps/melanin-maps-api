@@ -677,17 +677,10 @@ export function FullMapView({
   const directMatch = businessSearchScope === "explicit_public_listing"
     ? businesses[0] ?? null
     : null;
-  const directMatchHasCoordinates = Boolean(
-    directMatch &&
-    Number.isFinite(directMatch.latitude) &&
-    Number.isFinite(directMatch.longitude) &&
-    (Math.abs(directMatch.latitude) > 0.001 || Math.abs(directMatch.longitude) > 0.001),
-  );
   const displayBusinessPins = useMemo(() => {
-    // A member who deliberately searched a named business asked for its exact
-    // location, not a broad city overview. Keep the map to the one documented
-    // match; the bottom card still opens that listing's MWM profile.
-    if (directMatchHasCoordinates && directMatch) return [directMatch];
+    // An exact-name safety/context lookup may identify a retained profile, but
+    // it never creates a map marker. Only the source-qualified map feed can.
+    if (directMatch) return [];
     // A submitted service or keyword search is also a deliberate map request.
     // Do not leave the ordinary nearby fallback pins layered over its results:
     // that hid the matching markers (for example, four hair stores beneath
@@ -701,7 +694,7 @@ export function FullMapView({
       if (!localById.has(business.id)) localById.set(business.id, business);
     });
     return [...localById.values()];
-  }, [directMatch, directMatchHasCoordinates, focusedMappedBusinesses, nearbyCanonicalMapPins, submittedBusinessSearch]);
+  }, [directMatch, focusedMappedBusinesses, nearbyCanonicalMapPins, submittedBusinessSearch]);
   const visibleMapPinCount = displayBusinessPins.length;
   const activeMapDiscoveryLabel = mapDiscoveryFocus === "all"
     ? "All nearby places"
@@ -738,16 +731,6 @@ export function FullMapView({
       longitudeDelta: 0.025,
     }, 500);
   }, [safelyAnimateToRegion]);
-
-  const showDirectMatchOnMap = useCallback(() => {
-    if (!directMatch || !directMatchHasCoordinates) return;
-    focusDirectBusinessOnMap(directMatch);
-  }, [directMatch, directMatchHasCoordinates, focusDirectBusinessOnMap]);
-
-  useEffect(() => {
-    if (!directMatch || !directMatchHasCoordinates) return;
-    focusDirectBusinessOnMap(directMatch);
-  }, [directMatch, directMatchHasCoordinates, focusDirectBusinessOnMap]);
 
   const clearEssentialServices = useCallback(() => {
     setEssentialServiceCategory(null);
@@ -940,7 +923,7 @@ export function FullMapView({
   }, [localityScopeKey, mapDiscoveryFocus, mapDiscoveryRadius, submittedBusinessSearch]);
 
   useEffect(() => {
-    if (directMatchHasCoordinates) return;
+    if (directMatch) return;
     // Local search results stay first. When a location/radius refresh returns
     // no local rows, fit the stable website-equivalent pins instead of leaving
     // a 50-mile choice on a blank map.
@@ -958,7 +941,7 @@ export function FullMapView({
     if (!exploringAllAreas && !isSafeLocalFit(coordinates)) return;
     hasFitToBusinessesRef.current = true;
     scheduleMapAction(() => safelyFitToCoordinates(coordinates), 600);
-  }, [directMatchHasCoordinates, mapReady, focusedMappedBusinesses, nearbyCanonicalMapPins, exploringAllAreas, localityScopeKey, mapDiscoveryRadius, safelyFitToCoordinates, scheduleMapAction, submittedBusinessSearch]);
+  }, [directMatch, mapReady, focusedMappedBusinesses, nearbyCanonicalMapPins, exploringAllAreas, localityScopeKey, mapDiscoveryRadius, safelyFitToCoordinates, scheduleMapAction, submittedBusinessSearch]);
 
   const normalizedMapSearch = submittedBusinessSearch.trim().toLowerCase();
   const filteredCulturalSites = culturalSites.filter((site) => {
@@ -1982,21 +1965,11 @@ export function FullMapView({
                 : businessSearchError
                   ? "Couldn’t search local listings. Try again."
                   : directMatch
-                    ? `${directMatch.name} is available by direct name${directMatchHasCoordinates ? ". Show its pin below." : "."}`
+                    ? `${directMatch.name} is available by direct name for safety or context. It is not included in map discovery.`
                     : mapped.length + culturalSearchMatchCount > 0
                     ? `${mapped.length + culturalSearchMatchCount} mapped local result${mapped.length + culturalSearchMatchCount === 1 ? "" : "s"}`
                     : "No mapped local results. Try another name, service, or location."}
             </Text>
-            {directMatchHasCoordinates && !isBusinessSearchLoading && (
-              <TouchableOpacity
-                onPress={showDirectMatchOnMap}
-                accessibilityLabel={`Show ${directMatch?.name ?? "this business"} on the map`}
-                style={s.directMatchAction}
-              >
-                <Feather name="map-pin" size={13} color="#FFFFFF" />
-                <Text style={s.directMatchActionText}>Show pin</Text>
-              </TouchableOpacity>
-            )}
           </View>
         )}
 

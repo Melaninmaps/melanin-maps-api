@@ -59,6 +59,7 @@ import { findExactRecords, findNearestAvailableLocation } from "./discovery/post
 import { registerSubmissionRoutes } from "./businessIntake/registerSubmissionRoutes";
 import { registerMediaRoutes } from "./media/registerMediaRoutes";
 import { registerAdminPublishAndClaimRoutes } from "./businesses/registerAdminPublishAndClaimRoutes";
+import { registerDocumentedDiscoveryReviewRoutes } from "./businesses/registerDocumentedDiscoveryReviewRoutes";
 import { registerDirectoryImportRoutes } from "./directoryImport/registerDirectoryImportRoutes";
 import { registerReconciliationRoutes } from "./directoryReconciliation/registerReconciliationRoutes";
 import { assertDirectoryReviewLocalStaging } from "./directoryImport/localStagingGuard";
@@ -411,6 +412,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 registerSubmissionRoutes(app);
 registerMediaRoutes(app);
 registerAdminPublishAndClaimRoutes(app);
+registerDocumentedDiscoveryReviewRoutes(app);
 registerReconciliationRoutes(app);
 if (assertDirectoryReviewLocalStaging(process.env)) {
   registerDirectoryImportRoutes(app);

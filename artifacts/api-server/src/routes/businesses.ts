@@ -55,10 +55,9 @@ import {
   MAP_LOCATION_HOLD_REASON,
 } from "../businesses/mapCoordinateIntegrity";
 import {
-  completedCohortDirectoryDiscoverySqlPredicate,
   mwmDiasporaPromotionSqlPredicate,
-  NATIONAL_MASTER_DIRECTORY_SOURCE,
 } from "../businesses/mwmCoreDiscoveryPolicy";
+import { documentedDiscoveryEligibilitySqlPredicate } from "../businesses/documentedDiscoveryEligibility";
 import { validateSubmission } from "../businessIntake/types";
 import { SubmissionRepository } from "../businessIntake/submissionRepository";
 import {
@@ -277,6 +276,58 @@ function toPublicBusinessRecord<T extends Record<string, unknown>>(
   };
 }
 
+type DocumentedOwnershipRow = {
+  business_id: string;
+  ownership_designations: unknown;
+  source_url: string;
+  source_label: string | null;
+  observed_at: string;
+};
+
+/**
+ * Recommendation surfaces expose the reviewed ownership receipt explicitly so
+ * a client can render “documented by source” without mistaking it for owner
+ * verification. Direct-name-only records do not acquire this annotation.
+ */
+async function attachDocumentedOwnership<T extends Record<string, unknown>>(
+  records: T[],
+): Promise<Array<T & { documentedOwnership?: Record<string, unknown> }>> {
+  const ids = records
+    .map((record) => typeof record.id === "string" ? record.id : null)
+    .filter((id): id is string => Boolean(id));
+  if (ids.length === 0) return records;
+  const { rows } = await pool.query<DocumentedOwnershipRow>(
+    `SELECT eligibility.business_id, eligibility.ownership_designations,
+            receipt.source_url, receipt.source_label, receipt.observed_at::text
+       FROM business_discovery_eligibility AS eligibility
+       JOIN business_profile_evidence_receipts AS receipt
+         ON receipt.id = eligibility.ownership_evidence_id
+      WHERE eligibility.business_id = ANY($1::varchar[])
+        AND eligibility.eligibility_status = 'qualified'
+        AND eligibility.ownership_source_expires_at > CURRENT_TIMESTAMP
+        AND eligibility.review_after > CURRENT_TIMESTAMP`,
+    [ids],
+  );
+  const byId = new Map(rows.map((row) => [row.business_id, row]));
+  return records.map((record) => {
+    const row = typeof record.id === "string" ? byId.get(record.id) : undefined;
+    if (!row) return record;
+    const designations = Array.isArray(row.ownership_designations)
+      ? row.ownership_designations.filter((value): value is string => typeof value === "string")
+      : [];
+    return {
+      ...record,
+      documentedOwnership: {
+        status: "documented_by_source",
+        labels: designations.map((label) => `${label} — documented by source`),
+        sourceUrl: row.source_url,
+        sourceLabel: row.source_label,
+        observedAt: row.observed_at,
+      },
+    };
+  });
+}
+
 function publicBusinessVisibilityCondition() {
   return sql<boolean>`public.business_record_is_public(
     ${businessesTable.status},
@@ -323,12 +374,6 @@ function mwmDiasporaPromotionCondition() {
   )}`;
 }
 
-function completedCohortDirectoryDiscoveryCondition() {
-  return sql<boolean>`${sql.raw(
-    completedCohortDirectoryDiscoverySqlPredicate('"businesses"."id"'),
-  )}`;
-}
-
 /**
  * A narrow direct-lookup escape hatch. It is intentionally limited to a
  * member-entered, plausible business name after promotion search returned no
@@ -344,6 +389,14 @@ function isDeliberateNamedBusinessLookup(value: string): boolean {
   ]);
   const words = normalized.toLocaleLowerCase("en-US").split(" ");
   return words.length <= 7 && words.some((word) => !generic.has(word));
+}
+
+function normalizedDirectBusinessName(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("en-US")
+    .replace(/[^a-z0-9]+/g, "");
 }
 
 /**
@@ -363,8 +416,8 @@ async function sendDirectNameAvailabilityFallback(
   const state = typeof req.query.state === "string" ? req.query.state.trim() : "";
   const limitParam = typeof req.query.limit === "string" ? Number.parseInt(req.query.limit, 10) : 20;
   const limit = Math.min(50, Math.max(1, Number.isFinite(limitParam) ? limitParam : 20));
-  const params: unknown[] = [search];
-  const filters = ["name ILIKE '%' || $1 || '%'"];
+  const params: unknown[] = [normalizedDirectBusinessName(search)];
+  const filters = ["REGEXP_REPLACE(LOWER(COALESCE(name, '')), '[^a-z0-9]+', '', 'g') = $1"];
 
   if (city) {
     params.push(city);
@@ -379,7 +432,7 @@ async function sendDirectNameAvailabilityFallback(
   const { rows } = await pool.query<Record<string, unknown>>(
     `SELECT * FROM public.public_businesses
       WHERE ${filters.join(" AND ")}
-      ORDER BY CASE WHEN LOWER(name) = LOWER($1) THEN 0 ELSE 1 END, name, id
+      ORDER BY name, id
       LIMIT $${params.length}`,
     params,
   );
@@ -389,8 +442,11 @@ async function sendDirectNameAvailabilityFallback(
     { search, city: city || null, state: state || null, resultCount: rows.length },
     "Directory query failed; returned direct-name availability fallback",
   );
+  const publicRecords = await attachDocumentedOwnership(
+    rows.map((business) => toPublicBusinessRecord(business)),
+  );
   sendDynamicJson(res, {
-    businesses: rows.map((business) => toPublicBusinessRecord(business)),
+    businesses: publicRecords,
     total: rows.length,
     page: { offset: 0, limit },
     featuredCount: 0,
@@ -446,6 +502,9 @@ router.get("/businesses/categories", (_req: Request, res: Response) => {
 // The small payload (id/name/lat/lng/category/city/country) keeps it fast.
 router.get("/businesses/map-pins", async (req: Request, res: Response) => {
   try {
+    // This may clear a member's saved designation filter, but never bypasses
+    // the documented eligibility gate. "all_businesses" is retained only as a
+    // compatibility input while clients migrate to Support the Diaspora copy.
     const allBusinessesOverride = req.query.supportScope === "all_businesses";
     let requestedIds = normalizeOwnershipDesignationFilterIds([
       ...(typeof req.query.ownership === "string" ? [req.query.ownership] : []),
@@ -507,7 +566,7 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
       FROM public.public_businesses
       WHERE latitude IS NOT NULL
         AND longitude IS NOT NULL
-        AND ${mwmDiasporaPromotionSqlPredicate("public.public_businesses.id")}
+        AND ${documentedDiscoveryEligibilitySqlPredicate("public.public_businesses.id", "map")}
         AND NOT (latitude::numeric = 0 AND longitude::numeric = 0)
         AND COALESCE(name, '') NOT ILIKE '%[demo]%'
         AND COALESCE(description, '') NOT ILIKE '%[demo]%'
@@ -581,25 +640,16 @@ router.get("/businesses", async (req: Request, res: Response) => {
         const conditions = [];
         const designationConditions: any[] = [];
         const promotionCondition = mwmDiasporaPromotionCondition();
-        const cohortDirectoryCondition = completedCohortDirectoryDiscoveryCondition();
-        const nationalMasterDirectoryCondition = sql<boolean>`COALESCE(${businessesTable.dataSource}, '') = ${NATIONAL_MASTER_DIRECTORY_SOURCE}`;
-        const defaultDiscoveryCondition = or(
-          promotionCondition,
-          cohortDirectoryCondition,
-          nationalMasterDirectoryCondition,
-        )!;
-        // The default is the documented Diaspora Promotion Catalog. A signed-in
-        // member may explicitly choose the all-places mode. Receipt-backed,
-        // directory-only cohort profiles join ordinary name/category discovery
-        // without receiving fabricated map coordinates or an inferred badge.
-        const hasExplicitAllPlacesConsent =
-          req.user?.id != null && supportScope === "all_businesses";
+        const defaultDiscoveryCondition = promotionCondition;
+        // Every ordinary directory browse remains in the documented Diaspora
+        // catalog. A member can clear a saved designation preference, but not
+        // convert category/map/discovery into an all-public listing search.
 
         // One canonical database function enforces active/live lifecycle, duplicate,
         // permanent-hide, demo-source/name/description, and reserved test-phone rules.
         const publicVisibilityCondition = publicBusinessVisibilityCondition();
         conditions.push(publicVisibilityCondition);
-        if (!hasExplicitAllPlacesConsent) conditions.push(defaultDiscoveryCondition);
+        conditions.push(defaultDiscoveryCondition);
 
         if (category && typeof category === "string" && category !== "All") {
           const categoryValues = categoryFilterStorageValues(category);
@@ -858,27 +908,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
             )`
           : null;
         if (distanceMilesSql) {
-          // A receipt-backed directory profile without verified coordinates is
-          // still a local directory result when its recorded city/state is the
-          // chosen locality. It remains coordinate-free, so map rendering and
-          // turn-by-turn directions cannot mistake a city label for a street
-          // location.
-          const localDirectoryOnlyCondition =
-            city && typeof city === "string" && city.trim()
-              ? and(
-                  or(cohortDirectoryCondition, nationalMasterDirectoryCondition),
-                  sql`(${businessesTable.latitude} IS NULL OR ${businessesTable.longitude} IS NULL)`,
-                  sql`LOWER(BTRIM(COALESCE(${businessesTable.city}, ''))) = LOWER(BTRIM(${normalizeCityAlias(city)}))`,
-                  state && typeof state === "string" && state.trim()
-                    ? sql`UPPER(BTRIM(COALESCE(${businessesTable.state}, ''))) = UPPER(BTRIM(${state.trim()}))`
-                    : sql<boolean>`TRUE`,
-                )
-              : null;
-          conditions.push(
-            localDirectoryOnlyCondition
-              ? or(sql`${distanceMilesSql} <= ${geoRadiusMi}`, localDirectoryOnlyCondition)!
-              : sql`${distanceMilesSql} <= ${geoRadiusMi}`,
-          );
+          conditions.push(sql`${distanceMilesSql} <= ${geoRadiusMi}`);
         }
 
         // True total count for pagination UI
@@ -909,7 +939,6 @@ router.get("/businesses", async (req: Request, res: Response) => {
         const directSearchText = typeof search === "string" ? search.trim() : "";
         if (
           totalCount === 0 &&
-          !hasExplicitAllPlacesConsent &&
           isDeliberateNamedBusinessLookup(directSearchText)
         ) {
           const directConditions = conditions.filter(
@@ -920,10 +949,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
           );
           directConditions.push(directNameLookupVisibilityCondition());
           directConditions.push(
-            or(
-              ilike(businessesTable.name, directSearchText),
-              ilike(businessesTable.name, `${directSearchText}%`),
-            )!,
+            sql`REGEXP_REPLACE(LOWER(COALESCE(${businessesTable.name}, '')), '[^a-z0-9]+', '', 'g') = ${normalizedDirectBusinessName(directSearchText)}`,
           );
           const directTotal = await db
             .select({ total: count() })
@@ -1164,12 +1190,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
 
             const fuzzyConditions = [
               publicBusinessVisibilityCondition(),
-              hasExplicitAllPlacesConsent
-                ? sql<boolean>`TRUE`
-                : or(
-                    mwmDiasporaPromotionCondition(),
-                    completedCohortDirectoryDiscoveryCondition(),
-                  )!,
+              mwmDiasporaPromotionCondition(),
             ];
             if (city && typeof city === "string" && city.trim()) {
               fuzzyConditions.push(
@@ -1277,19 +1298,18 @@ router.get("/businesses", async (req: Request, res: Response) => {
               ),
             })
           : null;
+        const publicResults = await attachDocumentedOwnership(
+          withDistance.map((business) => toPublicBusinessRecord(business)),
+        );
         sendDynamicJson(res, {
-          businesses: withDistance.map((business) =>
-            toPublicBusinessRecord(business),
-          ),
+          businesses: publicResults,
           total: responseTotal,
           page: { offset, limit: pageLimit },
           featuredCount: withDistance.filter((b: any) => b.featured).length,
           usedFuzzyFallback,
           searchScope: usedExplicitPublicLookup
             ? "explicit_public_listing"
-            : hasExplicitAllPlacesConsent
-              ? "all_public_places"
-              : "diaspora_promotion_catalog",
+            : "diaspora_promotion_catalog",
           // Metadata only: it never changes the member's query, filters, or
           // results. Clients choose whether to retry the suggestion.
           searchClarification,

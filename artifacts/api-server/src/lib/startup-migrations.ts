@@ -5344,6 +5344,93 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
     CREATE INDEX IF NOT EXISTS business_inventory_cohort_receipts_cohort_idx
       ON business_inventory_cohort_receipts (cohort, observed_at DESC);`,
   },
+  // ── Documented Discovery eligibility — field receipts, review, no inference ─
+  // This is intentionally separate from source intake and legacy public profile
+  // fields. A historical source URL, social URL, or ownership string alone does
+  // not authorize recommendation/map visibility; a reviewed evidence row does.
+  {
+    name: "business_profile_evidence_receipts_v1",
+    sql: `CREATE TABLE IF NOT EXISTS business_profile_evidence_receipts (
+      id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      business_id        varchar(255) NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+      field_name         text NOT NULL CHECK (field_name IN (
+        'identity', 'ownership', 'official_website', 'official_social', 'address', 'map_pin'
+      )),
+      source_kind        text NOT NULL CHECK (source_kind IN (
+        'business_official', 'owner_official', 'approved_public', 'official_geocoder'
+      )),
+      source_url         text NOT NULL,
+      source_label       text,
+      observed_at        timestamptz NOT NULL,
+      source_expires_at  timestamptz,
+      confidence         text NOT NULL CHECK (confidence IN ('high', 'medium', 'low')),
+      observed_value     jsonb NOT NULL DEFAULT '{}'::jsonb,
+      source_sha256      text,
+      captured_by        varchar(255),
+      created_at         timestamptz NOT NULL DEFAULT now(),
+      superseded_at      timestamptz,
+      CHECK (char_length(source_url) <= 2048),
+      CHECK (source_sha256 IS NULL OR char_length(source_sha256) = 64)
+    );
+    CREATE INDEX IF NOT EXISTS business_profile_evidence_receipts_business_field_idx
+      ON business_profile_evidence_receipts (business_id, field_name, observed_at DESC)
+      WHERE superseded_at IS NULL;`,
+  },
+  {
+    name: "business_discovery_eligibility_v1",
+    sql: `CREATE TABLE IF NOT EXISTS business_discovery_eligibility (
+      business_id                    varchar(255) PRIMARY KEY REFERENCES businesses(id) ON DELETE RESTRICT,
+      eligibility_status             text NOT NULL CHECK (eligibility_status IN (
+        'qualified', 'direct_name_only', 'review_hold', 'revoked'
+      )),
+      policy_version                 text NOT NULL,
+      identity_evidence_id           uuid REFERENCES business_profile_evidence_receipts(id) ON DELETE RESTRICT,
+      ownership_evidence_id          uuid REFERENCES business_profile_evidence_receipts(id) ON DELETE RESTRICT,
+      official_website_evidence_id   uuid REFERENCES business_profile_evidence_receipts(id) ON DELETE RESTRICT,
+      official_social_evidence_id    uuid REFERENCES business_profile_evidence_receipts(id) ON DELETE RESTRICT,
+      address_evidence_id            uuid REFERENCES business_profile_evidence_receipts(id) ON DELETE RESTRICT,
+      map_pin_evidence_id            uuid REFERENCES business_profile_evidence_receipts(id) ON DELETE RESTRICT,
+      ownership_designations         jsonb NOT NULL DEFAULT '[]'::jsonb,
+      ownership_source_expires_at    timestamptz,
+      review_after                   timestamptz,
+      decision_reason                text NOT NULL,
+      decided_by                     varchar(255),
+      decided_at                     timestamptz NOT NULL DEFAULT now(),
+      updated_at                     timestamptz NOT NULL DEFAULT now(),
+      CHECK (char_length(decision_reason) BETWEEN 3 AND 4000),
+      CHECK (
+        eligibility_status <> 'qualified' OR (
+          identity_evidence_id IS NOT NULL
+          AND ownership_evidence_id IS NOT NULL
+          AND official_website_evidence_id IS NOT NULL
+          AND official_social_evidence_id IS NOT NULL
+          AND jsonb_array_length(ownership_designations) > 0
+          AND ownership_source_expires_at IS NOT NULL
+          AND review_after IS NOT NULL
+        )
+      )
+    );
+    CREATE INDEX IF NOT EXISTS business_discovery_eligibility_qualified_idx
+      ON business_discovery_eligibility (eligibility_status, ownership_source_expires_at, review_after);`,
+  },
+  {
+    name: "business_discovery_eligibility_audit_events_v1",
+    sql: `CREATE TABLE IF NOT EXISTS business_discovery_eligibility_audit_events (
+      id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      business_id        varchar(255) NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+      action             text NOT NULL CHECK (action IN (
+        'qualified', 'direct_name_only', 'review_hold', 'revoked', 'requalified'
+      )),
+      actor_id           varchar(255),
+      reason             text NOT NULL,
+      before_state       jsonb NOT NULL DEFAULT '{}'::jsonb,
+      after_state        jsonb NOT NULL DEFAULT '{}'::jsonb,
+      created_at         timestamptz NOT NULL DEFAULT now(),
+      CHECK (char_length(reason) BETWEEN 3 AND 4000)
+    );
+    CREATE INDEX IF NOT EXISTS business_discovery_eligibility_audit_events_business_idx
+      ON business_discovery_eligibility_audit_events (business_id, created_at DESC);`,
+  },
   {
     // Private, explicit consent only. Existing members remain opted out until
     // they make a choice in Kinfolk setup or Settings.

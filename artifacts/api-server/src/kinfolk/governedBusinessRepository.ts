@@ -257,10 +257,40 @@ const CANONICAL_SELECT = `
   COALESCE(bi.environment_tags, '[]'::jsonb) AS environment_tags,
   COALESCE(bi.amenity_tags, '[]'::jsonb) AS amenity_tags,
   b.kinfolk_recommendation_reason,
-  b.research_source_url,
-  b.research_source_label,
+  COALESCE((
+    SELECT ownership_receipt.source_url
+      FROM public.business_discovery_eligibility AS documented_eligibility
+      JOIN public.business_profile_evidence_receipts AS ownership_receipt
+        ON ownership_receipt.id = documented_eligibility.ownership_evidence_id
+     WHERE documented_eligibility.business_id::text = b.id::text
+       AND documented_eligibility.eligibility_status = 'qualified'
+       AND documented_eligibility.ownership_source_expires_at > CURRENT_TIMESTAMP
+       AND documented_eligibility.review_after > CURRENT_TIMESTAMP
+     LIMIT 1
+  ), b.research_source_url) AS research_source_url,
+  COALESCE((
+    SELECT ownership_receipt.source_label
+      FROM public.business_discovery_eligibility AS documented_eligibility
+      JOIN public.business_profile_evidence_receipts AS ownership_receipt
+        ON ownership_receipt.id = documented_eligibility.ownership_evidence_id
+     WHERE documented_eligibility.business_id::text = b.id::text
+       AND documented_eligibility.eligibility_status = 'qualified'
+       AND documented_eligibility.ownership_source_expires_at > CURRENT_TIMESTAMP
+       AND documented_eligibility.review_after > CURRENT_TIMESTAMP
+     LIMIT 1
+  ), b.research_source_label) AS research_source_label,
   COALESCE(b.data_source, '') AS data_source,
-  b.created_at AS source_captured_at`;
+  COALESCE((
+    SELECT ownership_receipt.observed_at::text
+      FROM public.business_discovery_eligibility AS documented_eligibility
+      JOIN public.business_profile_evidence_receipts AS ownership_receipt
+        ON ownership_receipt.id = documented_eligibility.ownership_evidence_id
+     WHERE documented_eligibility.business_id::text = b.id::text
+       AND documented_eligibility.eligibility_status = 'qualified'
+       AND documented_eligibility.ownership_source_expires_at > CURRENT_TIMESTAMP
+       AND documented_eligibility.review_after > CURRENT_TIMESTAMP
+     LIMIT 1
+  ), b.created_at::text) AS source_captured_at`;
 
 function text(value: unknown): string {
   return typeof value === "string" ? value : value == null ? "" : String(value);
@@ -959,7 +989,10 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           AND LOWER(BTRIM(b.city)) = LOWER($2)
           AND UPPER(BTRIM(COALESCE(b.state, ''))) = $3
           AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-          AND ${governedDirectoryDiscoveryPredicate()}
+          -- Exact named lookup is a safety/context read, not a recommendation.
+          -- It may resolve a retained public profile that lacks the documentary
+          -- receipt bundle required by ordinary Kinfolk discovery.
+          AND TRUE
         ORDER BY b.verified DESC, b.confidence_score DESC NULLS LAST, b.name ASC
         LIMIT 1
       `,
