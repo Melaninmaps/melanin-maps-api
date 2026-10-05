@@ -457,7 +457,13 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
       }
     } catch (error) {
       req.log.error({ error }, "Founder-source publication failed");
-      return void res.status(500).json({ error: "Founder-source publication failed" });
+      // This endpoint is administrator-only. Return the deterministic failure
+      // category to permit safe repair/retry without exposing database details
+      // on a public directory endpoint.
+      return void res.status(500).json({
+        error: "Founder-source publication failed",
+        detail: error instanceof Error ? error.message : "unknown_publication_error",
+      });
     }
   });
 }
