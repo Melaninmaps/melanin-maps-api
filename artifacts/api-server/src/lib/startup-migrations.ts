@@ -5522,6 +5522,38 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
         ON founder_source_publication_batches (city, state, created_at DESC);`,
   },
   {
+    // A source receipt is never silently repointed after an identity conflict.
+    // Preserve the original row, mark its mapping held, supersede only derived
+    // evidence, and send the candidate identities to an administrator queue.
+    name: "founder_source_receipt_integrity_review_v1",
+    sql: `ALTER TABLE business_source_directory_receipts
+      ADD COLUMN IF NOT EXISTS mapping_status text NOT NULL DEFAULT 'active',
+      ADD COLUMN IF NOT EXISTS mapping_hold_reason text,
+      ADD COLUMN IF NOT EXISTS mapping_reviewed_at timestamptz;
+      ALTER TABLE business_source_directory_receipts
+      ADD CONSTRAINT business_source_directory_receipts_mapping_status_check
+      CHECK (mapping_status IN ('active', 'review_hold', 'superseded')) NOT VALID;
+      ALTER TABLE business_source_directory_receipts
+      VALIDATE CONSTRAINT business_source_directory_receipts_mapping_status_check;
+      CREATE INDEX IF NOT EXISTS business_source_directory_receipts_mapping_status_idx
+        ON business_source_directory_receipts (mapping_status, source_record_key);
+
+      CREATE TABLE IF NOT EXISTS founder_source_identity_review_queue (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        source_record_key text NOT NULL UNIQUE,
+        source_batch text NOT NULL,
+        conflict_reason text NOT NULL,
+        candidate_business_ids jsonb NOT NULL DEFAULT '[]'::jsonb,
+        source_snapshot jsonb NOT NULL,
+        status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'resolved', 'dismissed')),
+        created_at timestamptz NOT NULL DEFAULT now(),
+        resolved_at timestamptz,
+        resolution_note text
+      );
+      CREATE INDEX IF NOT EXISTS founder_source_identity_review_queue_status_idx
+        ON founder_source_identity_review_queue (status, created_at);`,
+  },
+  {
     // Private, explicit consent only. Existing members remain opted out until
     // they make a choice in Kinfolk setup or Settings.
     name: "user_preferences_member_context_default_consent_v1",

@@ -259,6 +259,26 @@ async function queueDuplicate(
   );
 }
 
+async function queueIdentityHold(
+  client: { query: Function },
+  hold: ReturnType<typeof buildSourceBackedDirectoryIntakePlan>["identityHolds"][number],
+): Promise<void> {
+  await client.query(
+    `INSERT INTO founder_source_identity_review_queue (
+       source_record_key, source_batch, conflict_reason, candidate_business_ids, source_snapshot
+     ) VALUES ($1, $2, $3, $4::jsonb, $5::jsonb)
+     ON CONFLICT (source_record_key) DO UPDATE SET
+       source_batch = EXCLUDED.source_batch, conflict_reason = EXCLUDED.conflict_reason,
+       candidate_business_ids = EXCLUDED.candidate_business_ids, source_snapshot = EXCLUDED.source_snapshot,
+       status = CASE WHEN founder_source_identity_review_queue.status = 'resolved' THEN 'pending'
+                     ELSE founder_source_identity_review_queue.status END`,
+    [
+      hold.candidate.sourceRecordKey, hold.candidate.batch, hold.reason,
+      JSON.stringify(hold.candidateBusinessIds), JSON.stringify(hold.candidate),
+    ],
+  );
+}
+
 function publicManifest(
   request: FounderSourceRequest,
   selected: readonly SourceBackedDirectoryCandidate[],
@@ -270,6 +290,7 @@ function publicManifest(
   const noPresence = plannedCreates.filter((candidate) => !founderSourcePresence(candidate).hasOfficialPresence);
   const publishable = plannedCreates.filter((candidate) => founderSourcePresence(candidate).hasOfficialPresence);
   const duplicateMatches = plan.duplicateMatches.filter((match) => selectedKeys.has(match.candidate.sourceRecordKey));
+  const identityHolds = plan.identityHolds.filter((hold) => selectedKeys.has(hold.candidate.sourceRecordKey));
   return {
     policyVersion: FOUNDER_SOURCE_PUBLICATION_POLICY_VERSION,
     requestedScope: { city: request.city, state: request.state, batch: request.batch },
@@ -277,6 +298,7 @@ function publicManifest(
     profilesToCreate: publishable.length,
     existingProfilesToEnrich: duplicateMatches.filter((match) => Boolean(match.existingBusinessId)).length,
     duplicateHolds: duplicateMatches.length,
+    identityHolds: identityHolds.length,
     officialSiteBlanks: selected.filter((candidate) => Boolean(founderSourcePresence(candidate).rejectedWebsite)).length,
     officialSocialOnlyProfiles: publishable.filter((candidate) => {
       const presence = founderSourcePresence(candidate);
@@ -316,9 +338,11 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
         status: string | null;
         listing_status: string | null;
         eligibility_status: string | null;
+        mapping_status: string;
+        mapping_hold_reason: string | null;
       }>(
         `SELECT r.source_record_key, r.business_id, b.name, b.city, b.state, b.status, b.listing_status,
-                e.eligibility_status
+                e.eligibility_status, r.mapping_status, r.mapping_hold_reason
            FROM business_source_directory_receipts r
            JOIN businesses b ON b.id = r.business_id
            LEFT JOIN business_discovery_eligibility e ON e.business_id = b.id
@@ -344,6 +368,152 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
     } catch (error) {
       req.log.error({ error }, "Founder-source receipt audit failed");
       return void res.status(500).json({ error: "Founder-source receipt audit failed" });
+    }
+  });
+
+  /**
+   * Corrects only the false source-record → profile links caused by a prior
+   * shared-directory receipt match. Raw receipts are retained with a review
+   * hold; derived evidence is superseded and any decision that depended on it
+   * is fail-closed. No business row is deleted or repointed automatically.
+   */
+  app.post("/api/admin/founder-source-publication/repair-identity-mismatches", async (req: Request, res: Response) => {
+    if (!isAdmin(req)) return void res.status((req as any).user?.id ? 403 : 401).json({ error: "Administrator access required" });
+    const request = parseRequest(req);
+    if (!request) return void res.status(400).json({ error: "A source batch or city is required." });
+    const scope = FOUNDER_SOURCE_CANDIDATES
+      .filter((candidate) => !request.batch || candidate.batch === request.batch)
+      .filter((candidate) => !request.city || normalizeDirectoryIdentity(candidate.city) === normalizeDirectoryIdentity(request.city!))
+      .filter((candidate) => !request.state || candidate.state?.trim().toUpperCase() === request.state)
+      .sort((a, b) => a.sourceRecordKey.localeCompare(b.sourceRecordKey));
+    const selected = scope
+      .filter((candidate) => !request.cursor || candidate.sourceRecordKey > request.cursor!)
+      .slice(0, request.batchSize);
+    if (!selected.length) return void res.status(404).json({ error: "No founder source records matched this scope." });
+    const candidatesByKey = new Map(selected.map((candidate) => [candidate.sourceRecordKey, candidate]));
+    type AttachedReceipt = Readonly<{ source_record_key: string; business_id: string; name: string | null; city: string | null; state: string | null; mapping_status: string }>;
+    const hasSameIdentity = (candidate: SourceBackedDirectoryCandidate, row: AttachedReceipt) =>
+      normalizeDirectoryIdentity(candidate.name) === normalizeDirectoryIdentity(row.name)
+      && normalizeDirectoryIdentity(candidate.city) === normalizeDirectoryIdentity(row.city)
+      && normalizeDirectoryIdentity(candidate.state) === normalizeDirectoryIdentity(row.state);
+    try {
+      const attached = await pool.query<AttachedReceipt>(
+        `SELECT r.source_record_key, r.business_id, b.name, b.city, b.state, r.mapping_status
+           FROM business_source_directory_receipts r
+           JOIN businesses b ON b.id = r.business_id
+          WHERE r.source_record_key = ANY($1::text[])
+            AND r.mapping_status = 'active'`,
+        [selected.map((candidate) => candidate.sourceRecordKey)],
+      );
+      const mismatches = attached.rows.filter((row) => {
+        const candidate = candidatesByKey.get(row.source_record_key);
+        return candidate && !hasSameIdentity(candidate, row);
+      });
+      if (!request.apply) {
+        return void res.json({
+          ok: true,
+          requiresExplicitApply: true,
+          sourceRecordsProcessed: selected.length,
+          activeMappings: attached.rows.length,
+          mismatchedMappings: mismatches.length,
+          mismatchedSourceRecords: new Set(mismatches.map((row) => row.source_record_key)).size,
+          sample: mismatches.slice(0, 20).map((row) => ({
+            source: candidatesByKey.get(row.source_record_key),
+            attachedBusiness: { id: row.business_id, name: row.name, city: row.city, state: row.state },
+          })),
+          rule: "A repair holds false mappings and supersedes their derived evidence; it does not delete receipts or profiles.",
+        });
+      }
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const mismatchesByBusiness = new Map<string, AttachedReceipt[]>();
+        for (const mismatch of mismatches) {
+          const rows = mismatchesByBusiness.get(mismatch.business_id) ?? [];
+          rows.push(mismatch);
+          mismatchesByBusiness.set(mismatch.business_id, rows);
+          const candidate = candidatesByKey.get(mismatch.source_record_key)!;
+          await client.query(
+            `UPDATE business_source_directory_receipts
+                SET mapping_status = 'review_hold', mapping_hold_reason = 'source_identity_mismatch', mapping_reviewed_at = now()
+              WHERE source_record_key = $1 AND business_id = $2 AND mapping_status = 'active'`,
+            [mismatch.source_record_key, mismatch.business_id],
+          );
+          await client.query(
+            `INSERT INTO founder_source_identity_review_queue
+               (source_record_key, source_batch, conflict_reason, candidate_business_ids, source_snapshot)
+             VALUES ($1, $2, 'source_identity_mismatch', $3::jsonb, $4::jsonb)
+             ON CONFLICT (source_record_key) DO UPDATE SET
+               conflict_reason = EXCLUDED.conflict_reason, candidate_business_ids = EXCLUDED.candidate_business_ids,
+               source_snapshot = EXCLUDED.source_snapshot, status = 'pending', resolved_at = NULL, resolution_note = NULL`,
+            [mismatch.source_record_key, candidate.batch, JSON.stringify([mismatch.business_id]), JSON.stringify(candidate)],
+          );
+        }
+        let heldEligibilityCount = 0;
+        for (const [businessId, badRows] of mismatchesByBusiness) {
+          const hashes = badRows.flatMap((row) => ["identity", "ownership", "official_website", "official_social"]
+            .map((field) => hash(`${row.source_record_key}:${field}`)));
+          const before = await client.query<{ state: Record<string, unknown> }>(
+            `SELECT to_jsonb(e) AS state FROM business_discovery_eligibility e WHERE e.business_id = $1`,
+            [businessId],
+          );
+          const superseded = await client.query<{ id: string }>(
+            `UPDATE business_profile_evidence_receipts
+                SET superseded_at = COALESCE(superseded_at, now())
+              WHERE business_id = $1
+                AND captured_by = 'founder-source-publication'
+                AND source_sha256 = ANY($2::text[])
+              RETURNING id`,
+            [businessId, hashes],
+          );
+          const evidenceIds = superseded.rows.map((row) => row.id);
+          if (!evidenceIds.length) continue;
+          const held = await client.query<{ state: Record<string, unknown> }>(
+            `UPDATE business_discovery_eligibility e
+                SET eligibility_status = 'review_hold', identity_evidence_id = NULL, ownership_evidence_id = NULL,
+                    official_website_evidence_id = NULL, official_social_evidence_id = NULL,
+                    address_evidence_id = NULL, map_pin_evidence_id = NULL, ownership_designations = '[]'::jsonb,
+                    ownership_source_expires_at = NULL, review_after = NULL,
+                    decision_reason = 'Held after source-record identity mismatch; administrator review required.',
+                    decided_by = 'founder-source-publication-integrity-repair', decided_at = now(), updated_at = now()
+              WHERE e.business_id = $1
+                AND (e.identity_evidence_id = ANY($2::uuid[]) OR e.ownership_evidence_id = ANY($2::uuid[])
+                  OR e.official_website_evidence_id = ANY($2::uuid[]) OR e.official_social_evidence_id = ANY($2::uuid[]))
+              RETURNING to_jsonb(e) AS state`,
+            [businessId, evidenceIds],
+          );
+          if (held.rows[0]) {
+            heldEligibilityCount += 1;
+            await client.query(
+              `INSERT INTO business_discovery_eligibility_audit_events
+                 (id, business_id, action, actor_id, reason, before_state, after_state)
+               VALUES ($1, $2, 'review_hold', 'founder-source-publication-integrity-repair', $3, $4::jsonb, $5::jsonb)`,
+              [
+                randomUUID(), businessId,
+                "Source receipt was attached to a different normalized business identity; evidence held for review.",
+                JSON.stringify(before.rows[0]?.state ?? {}), JSON.stringify(held.rows[0].state),
+              ],
+            );
+          }
+        }
+        await client.query("COMMIT");
+        return void res.json({
+          ok: true,
+          sourceRecordsProcessed: selected.length,
+          heldMappings: mismatches.length,
+          heldSourceRecords: new Set(mismatches.map((row) => row.source_record_key)).size,
+          heldEligibilityDecisions: heldEligibilityCount,
+          rule: "False mappings and their derived discovery decisions are now review-held; source receipts and profiles remain retained for audit.",
+        });
+      } catch (error) {
+        await client.query("ROLLBACK").catch(() => undefined);
+        throw error;
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      req.log.error({ error }, "Founder-source mapping repair failed");
+      return void res.status(500).json({ error: "Founder-source mapping repair failed", detail: error instanceof Error ? error.message : "unknown_repair_error" });
     }
   });
 
@@ -385,6 +555,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
         .filter((candidate) => selectedKeys.has(candidate.sourceRecordKey))
         .filter((candidate) => !founderSourcePresence(candidate).hasOfficialPresence);
       const duplicateMatches = plan.duplicateMatches.filter((match) => selectedKeys.has(match.candidate.sourceRecordKey));
+      const identityHolds = plan.identityHolds.filter((hold) => selectedKeys.has(hold.candidate.sourceRecordKey));
       const batchKey = hash(JSON.stringify({
         policy: FOUNDER_SOURCE_PUBLICATION_POLICY_VERSION,
         city: request.city, state: request.state, batch: request.batch,
@@ -401,6 +572,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           [batchKey, request.city, request.state, FOUNDER_SOURCE_PUBLICATION_POLICY_VERSION, selected.length,
             JSON.stringify(beforeManifest), (req as any).user?.id ?? "founder-source-publication"],
         );
+        for (const hold of identityHolds) await queueIdentityHold(client, hold);
 
         const targets: SourceTarget[] = [];
         const businessByReceipt = new Map<string, string>();
@@ -509,6 +681,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
             latinxHispanicOwned: countSourceDesignation("Latino / Hispanic-Owned"),
           },
           duplicateHolds: duplicateMatches.length,
+          identityHolds: identityHolds.length,
           officialSiteBlanks: blankedCount,
           officialSocialOnlyProfiles: socialOnlyCount,
           mapPinnedProfiles: 0,

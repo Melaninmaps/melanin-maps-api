@@ -160,6 +160,29 @@ describe("source-backed directory reconciliation", () => {
     expect(plan.duplicateMatches[0]?.existingBusinessId).toBe("previous-source-intake");
   });
 
+  it("holds an exact source receipt when more than one canonical profile retains it", () => {
+    const retry = candidate({ address: null, officialUrl: null });
+    const existing = ["duplicate-a", "duplicate-b"].map((id) => ({
+      id,
+      name: "Amina's Kitchen",
+      city: "Philadelphia",
+      state: "PA",
+      address: null,
+      website: null,
+      sourceUrl: "https://example.test/directory",
+      dedupeKey: "source-receipt:ammina",
+    }));
+    const plan = buildSourceBackedDirectoryIntakePlan([retry], existing);
+
+    expect(plan.toCreate).toEqual([]);
+    expect(plan.duplicateMatches).toEqual([]);
+    expect(plan.identityHolds).toEqual([{
+      candidate: retry,
+      candidateBusinessIds: ["duplicate-a", "duplicate-b"],
+      reason: "ambiguous_source_receipt",
+    }]);
+  });
+
   it("skips a prior review-vault retry by its exact retained source listing URL", () => {
     const plan = buildSourceBackedDirectoryIntakePlan([candidate()], [{
       id: "previous-source-review",

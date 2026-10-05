@@ -25,6 +25,11 @@ export type ExistingDirectoryBusiness = Readonly<{
 export type SourceBackedDirectoryIntakePlan = Readonly<{
   toCreate: readonly SourceBackedDirectoryCandidate[];
   heldForDescription: readonly SourceBackedDirectoryCandidate[];
+  identityHolds: readonly Readonly<{
+    candidate: SourceBackedDirectoryCandidate;
+    candidateBusinessIds: readonly string[];
+    reason: "ambiguous_source_receipt" | "ambiguous_exact_address" | "ambiguous_official_destination" | "ambiguous_phone" | "ambiguous_social";
+  }>[];
   duplicateMatches: readonly Readonly<{
     candidate: SourceBackedDirectoryCandidate;
     existingBusinessId: string | null;
@@ -243,6 +248,11 @@ export function buildSourceBackedDirectoryIntakePlan(
 ): SourceBackedDirectoryIntakePlan {
   const toCreate: SourceBackedDirectoryCandidate[] = [];
   const heldForDescription: SourceBackedDirectoryCandidate[] = [];
+  const identityHolds: Array<{
+    candidate: SourceBackedDirectoryCandidate;
+    candidateBusinessIds: readonly string[];
+    reason: "ambiguous_source_receipt" | "ambiguous_exact_address" | "ambiguous_official_destination" | "ambiguous_phone" | "ambiguous_social";
+  }> = [];
   const duplicateMatches: Array<{
     candidate: SourceBackedDirectoryCandidate;
     existingBusinessId: string | null;
@@ -261,22 +271,30 @@ export function buildSourceBackedDirectoryIntakePlan(
     const listingReceipt = candidate.sourceListingUrl ?? candidate.sourceUrl;
     listingReceiptCounts.set(listingReceipt, (listingReceiptCounts.get(listingReceipt) ?? 0) + 1);
   }
-  const existingByReceipt = new Map<string, ExistingDirectoryBusiness>();
-  const existingByListingReceipt = new Map<string, ExistingDirectoryBusiness>();
-  const existingByAddress = new Map<string, ExistingDirectoryBusiness>();
-  const existingByOfficialDestination = new Map<string, ExistingDirectoryBusiness>();
-  const existingByPhone = new Map<string, ExistingDirectoryBusiness>();
-  const existingBySocial = new Map<string, ExistingDirectoryBusiness>();
+  const existingByReceipt = new Map<string, ExistingDirectoryBusiness[]>();
+  const existingByListingReceipt = new Map<string, ExistingDirectoryBusiness[]>();
+  const existingByAddress = new Map<string, ExistingDirectoryBusiness[]>();
+  const existingByOfficialDestination = new Map<string, ExistingDirectoryBusiness[]>();
+  const existingByPhone = new Map<string, ExistingDirectoryBusiness[]>();
+  const existingBySocial = new Map<string, ExistingDirectoryBusiness[]>();
+  const appendExisting = (index: Map<string, ExistingDirectoryBusiness[]>, key: string | null, existing: ExistingDirectoryBusiness) => {
+    if (!key) return;
+    const rows = index.get(key) ?? [];
+    rows.push(existing);
+    index.set(key, rows);
+  };
+  const uniqueExisting = (rows: readonly ExistingDirectoryBusiness[] | undefined): ExistingDirectoryBusiness[] =>
+    [...new Map((rows ?? []).map((row) => [row.id, row])).values()];
   for (const existing of existingBusinesses) {
-    if (existing.dedupeKey) existingByReceipt.set(existing.dedupeKey, existing);
-    if (existing.sourceUrl) existingByListingReceipt.set(existing.sourceUrl, existing);
+    appendExisting(existingByReceipt, existing.dedupeKey, existing);
+    appendExisting(existingByListingReceipt, existing.sourceUrl, existing);
     const addressKey = exactAddressKey(existing);
-    if (addressKey) existingByAddress.set(addressKey, existing);
+    appendExisting(existingByAddress, addressKey, existing);
     const destinationKey = officialDestinationKey(existing);
-    if (destinationKey) existingByOfficialDestination.set(destinationKey, existing);
+    appendExisting(existingByOfficialDestination, destinationKey, existing);
     const phoneKey = phoneDestinationKey(existing);
-    if (phoneKey) existingByPhone.set(phoneKey, existing);
-    for (const socialKey of socialDestinationKeys(existing)) existingBySocial.set(socialKey, existing);
+    appendExisting(existingByPhone, phoneKey, existing);
+    for (const socialKey of socialDestinationKeys(existing)) appendExisting(existingBySocial, socialKey, existing);
   }
 
   const createdByAddress = new Map<string, SourceBackedDirectoryCandidate>();
@@ -297,50 +315,80 @@ export function buildSourceBackedDirectoryIntakePlan(
     // deduplication, so their sourceRecordKey is retained as the exact
     // source-listing URL rather than overwriting the place key. Either exact
     // persisted receipt proves this is a retry, including a review-vault row.
-    const sourceReceiptMatch = existingByReceipt.get(candidate.sourceRecordKey)
+    const sourceReceiptMatches = uniqueExisting(
+      existingByReceipt.get(candidate.sourceRecordKey)
       ?? (listingReceiptCounts.get(candidate.sourceListingUrl ?? candidate.sourceUrl) === 1
         ? existingByListingReceipt.get(candidate.sourceListingUrl ?? candidate.sourceUrl)
-        : undefined);
-    if (sourceReceiptMatch) {
+        : undefined),
+    );
+    if (sourceReceiptMatches.length === 1) {
       duplicateMatches.push({
         candidate,
-        existingBusinessId: sourceReceiptMatch.id,
+        existingBusinessId: sourceReceiptMatches[0]!.id,
         reason: "exact_official_destination",
+      });
+      continue;
+    }
+    if (sourceReceiptMatches.length > 1) {
+      identityHolds.push({
+        candidate,
+        candidateBusinessIds: sourceReceiptMatches.map((match) => match.id),
+        reason: "ambiguous_source_receipt",
       });
       continue;
     }
 
     const addressKey = exactAddressKey(candidate);
-    const addressMatch = addressKey ? existingByAddress.get(addressKey) : undefined;
-    if (addressMatch) {
-      duplicateMatches.push({ candidate, existingBusinessId: addressMatch.id, reason: "exact_address" });
+    const addressMatches = uniqueExisting(addressKey ? existingByAddress.get(addressKey) : undefined);
+    if (addressMatches.length === 1) {
+      duplicateMatches.push({ candidate, existingBusinessId: addressMatches[0]!.id, reason: "exact_address" });
+      continue;
+    }
+    if (addressMatches.length > 1) {
+      identityHolds.push({ candidate, candidateBusinessIds: addressMatches.map((match) => match.id), reason: "ambiguous_exact_address" });
       continue;
     }
 
     const destinationKey = officialDestinationKey(candidate);
-    const officialDestinationMatch = destinationKey
+    const officialDestinationMatches = uniqueExisting(destinationKey
       ? existingByOfficialDestination.get(destinationKey)
-      : undefined;
-    if (officialDestinationMatch) {
+      : undefined);
+    if (officialDestinationMatches.length === 1) {
       duplicateMatches.push({
         candidate,
-        existingBusinessId: officialDestinationMatch.id,
+        existingBusinessId: officialDestinationMatches[0]!.id,
         reason: "exact_official_destination",
+      });
+      continue;
+    }
+    if (officialDestinationMatches.length > 1) {
+      identityHolds.push({
+        candidate,
+        candidateBusinessIds: officialDestinationMatches.map((match) => match.id),
+        reason: "ambiguous_official_destination",
       });
       continue;
     }
 
     const phoneKey = phoneDestinationKey(candidate);
-    const phoneMatch = phoneKey ? existingByPhone.get(phoneKey) : undefined;
-    if (phoneMatch) {
-      duplicateMatches.push({ candidate, existingBusinessId: phoneMatch.id, reason: "exact_phone" });
+    const phoneMatches = uniqueExisting(phoneKey ? existingByPhone.get(phoneKey) : undefined);
+    if (phoneMatches.length === 1) {
+      duplicateMatches.push({ candidate, existingBusinessId: phoneMatches[0]!.id, reason: "exact_phone" });
+      continue;
+    }
+    if (phoneMatches.length > 1) {
+      identityHolds.push({ candidate, candidateBusinessIds: phoneMatches.map((match) => match.id), reason: "ambiguous_phone" });
       continue;
     }
 
     const socialKeys = socialDestinationKeys(candidate);
-    const socialMatch = socialKeys.map((key) => existingBySocial.get(key)).find(Boolean);
-    if (socialMatch) {
-      duplicateMatches.push({ candidate, existingBusinessId: socialMatch.id, reason: "exact_social" });
+    const socialMatches = uniqueExisting(socialKeys.flatMap((key) => existingBySocial.get(key) ?? []));
+    if (socialMatches.length === 1) {
+      duplicateMatches.push({ candidate, existingBusinessId: socialMatches[0]!.id, reason: "exact_social" });
+      continue;
+    }
+    if (socialMatches.length > 1) {
+      identityHolds.push({ candidate, candidateBusinessIds: socialMatches.map((match) => match.id), reason: "ambiguous_social" });
       continue;
     }
 
@@ -397,5 +445,5 @@ export function buildSourceBackedDirectoryIntakePlan(
     for (const socialKey of socialKeys) createdBySocial.set(socialKey, candidate);
   }
 
-  return { toCreate, heldForDescription, duplicateMatches };
+  return { toCreate, heldForDescription, identityHolds, duplicateMatches };
 }
