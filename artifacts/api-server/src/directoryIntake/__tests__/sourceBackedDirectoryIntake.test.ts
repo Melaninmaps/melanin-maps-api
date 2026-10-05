@@ -144,7 +144,7 @@ describe("source-backed directory reconciliation", () => {
     expect(plan.heldForDescription).toEqual([template]);
   });
 
-  it("skips a prior intake retry by its exact retained source receipt key", () => {
+  it("holds a retained source receipt when its stored identity no longer agrees", () => {
     const mapless = candidate({ address: null, officialUrl: null });
     const plan = buildSourceBackedDirectoryIntakePlan([mapless], [{
       id: "previous-source-intake",
@@ -157,7 +157,12 @@ describe("source-backed directory reconciliation", () => {
       dedupeKey: "source-receipt:ammina",
     }]);
     expect(plan.toCreate).toHaveLength(0);
-    expect(plan.duplicateMatches[0]?.existingBusinessId).toBe("previous-source-intake");
+    expect(plan.duplicateMatches).toEqual([]);
+    expect(plan.identityHolds).toEqual([{
+      candidate: mapless,
+      candidateBusinessIds: ["previous-source-intake"],
+      reason: "ambiguous_source_receipt",
+    }]);
   });
 
   it("holds an exact source receipt when more than one canonical profile retains it", () => {

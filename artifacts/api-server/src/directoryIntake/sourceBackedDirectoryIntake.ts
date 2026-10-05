@@ -315,12 +315,24 @@ export function buildSourceBackedDirectoryIntakePlan(
     // deduplication, so their sourceRecordKey is retained as the exact
     // source-listing URL rather than overwriting the place key. Either exact
     // persisted receipt proves this is a retry, including a review-vault row.
-    const sourceReceiptMatches = uniqueExisting(
+    const rawSourceReceiptMatches = uniqueExisting(
       existingByReceipt.get(candidate.sourceRecordKey)
       ?? (listingReceiptCounts.get(candidate.sourceListingUrl ?? candidate.sourceUrl) === 1
         ? existingByListingReceipt.get(candidate.sourceListingUrl ?? candidate.sourceUrl)
         : undefined),
     );
+    // A retained receipt can prove a retry only after it still agrees with the
+    // submitted identity. Historical imports may carry a stale/shared receipt;
+    // never let that string silently override a different name or location.
+    const sourceReceiptMatches = rawSourceReceiptMatches.filter((match) => samePlaceKey(match) === samePlaceKey(candidate));
+    if (rawSourceReceiptMatches.length > sourceReceiptMatches.length) {
+      identityHolds.push({
+        candidate,
+        candidateBusinessIds: rawSourceReceiptMatches.map((match) => match.id),
+        reason: "ambiguous_source_receipt",
+      });
+      continue;
+    }
     if (sourceReceiptMatches.length === 1) {
       duplicateMatches.push({
         candidate,
