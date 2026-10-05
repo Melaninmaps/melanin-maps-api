@@ -6,6 +6,10 @@ import {
   sourceBackedDirectoryPublicationFields,
 } from "../sourceBackedDirectoryIntake";
 import type { SourceBackedDirectoryCandidate } from "../sourceBackedDirectoryCandidates";
+import {
+  founderSourcePresence,
+  sanitizeFounderSourceOfficialWebsite,
+} from "../founderSourcePublicationPolicy";
 
 const candidate = (overrides: Partial<SourceBackedDirectoryCandidate> = {}): SourceBackedDirectoryCandidate => ({
   name: "Amina's Kitchen",
@@ -63,6 +67,34 @@ describe("source-backed directory reconciliation", () => {
     }]);
     expect(plan.toCreate).toHaveLength(0);
     expect(plan.duplicateMatches[0]?.reason).toBe("exact_official_destination");
+  });
+
+  it("matches a same-place profile by a source-listed official social handle or phone", () => {
+    const social = candidate({ address: null, officialUrl: null, socialLinks: { instagram: "https://www.instagram.com/aminaskitchen/" } });
+    const socialPlan = buildSourceBackedDirectoryIntakePlan([social], [{
+      id: "existing-social", name: "Amina's Kitchen", city: "Philadelphia", state: "PA",
+      address: null, website: null, sourceUrl: null, dedupeKey: null,
+      instagram: "https://www.instagram.com/aminaskitchen/",
+    }]);
+    expect(socialPlan.duplicateMatches[0]?.reason).toBe("exact_social");
+
+    const phone = candidate({ officialUrl: null, socialLinks: null, phone: "215-555-0199" });
+    const phonePlan = buildSourceBackedDirectoryIntakePlan([phone], [{
+      id: "existing-phone", name: "Amina's Kitchen", city: "Philadelphia", state: "PA",
+      address: null, website: null, sourceUrl: null, dedupeKey: null, phone: "+1 (215) 555-0199",
+    }]);
+    expect(phonePlan.duplicateMatches[0]?.reason).toBe("exact_phone");
+  });
+
+  it("rejects directory websites but permits a social-only source-backed profile", () => {
+    expect(sanitizeFounderSourceOfficialWebsite("https://www.yelp.com/biz/aminas-kitchen")).toBeNull();
+    const presence = founderSourcePresence(candidate({
+      officialUrl: "https://maps.google.com/?cid=123",
+      socialLinks: { instagram: "https://www.instagram.com/aminaskitchen/" },
+    }));
+    expect(presence.officialWebsite).toBeNull();
+    expect(presence.hasOfficialPresence).toBe(true);
+    expect(presence.officialSocials.instagram).toBe("https://www.instagram.com/aminaskitchen/");
   });
 
   it("retains a similar name when neither source address nor official destination proves a duplicate", () => {

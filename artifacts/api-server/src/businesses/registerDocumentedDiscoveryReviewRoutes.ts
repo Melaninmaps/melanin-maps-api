@@ -16,6 +16,7 @@ type EvidenceSourceKind =
   | "business_official"
   | "owner_official"
   | "approved_public"
+  | "founder_directory"
   | "official_geocoder";
 type EligibilityStatus = "qualified" | "direct_name_only" | "review_hold" | "revoked";
 
@@ -56,7 +57,7 @@ const EVIDENCE_FIELDS = new Set<EvidenceField>([
   "identity", "ownership", "official_website", "official_social", "address", "map_pin",
 ]);
 const SOURCE_KINDS = new Set<EvidenceSourceKind>([
-  "business_official", "owner_official", "approved_public", "official_geocoder",
+  "business_official", "owner_official", "approved_public", "founder_directory", "official_geocoder",
 ]);
 const ELIGIBILITY_STATUSES = new Set<EligibilityStatus>([
   "qualified", "direct_name_only", "review_hold", "revoked",
@@ -137,7 +138,10 @@ function validateEvidence(value: unknown, now: Date): EvidenceInput {
     if (!OFFICIAL_SOCIAL_HOSTS.has(hostOf(profileUrl))) {
       throw new Error("official social profile must be Instagram, Facebook, or TikTok");
     }
-    if (isDirectoryOrMarketplaceUrl(sourceUrl) || OFFICIAL_SOCIAL_HOSTS.has(hostOf(sourceUrl))) {
+    if (
+      raw.sourceKind !== "founder_directory"
+      && (isDirectoryOrMarketplaceUrl(sourceUrl) || OFFICIAL_SOCIAL_HOSTS.has(hostOf(sourceUrl)))
+    ) {
       throw new Error("official social evidence must be observed from an official website or approved source, not a directory or the social profile itself");
     }
   }
@@ -201,9 +205,8 @@ export function validateDocumentedDiscoveryReviewInput(value: unknown, now: Date
     : futureTimestamp(raw.reviewAfter, "reviewAfter", now);
 
   if (eligibilityStatus === "qualified") {
-    const required: EvidenceField[] = ["identity", "ownership", "official_website", "official_social"];
-    if (required.some((field) => !counts.has(field))) {
-      throw new Error("qualified eligibility requires identity, ownership, official website, and official social receipts");
+    if (!counts.has("ownership") || (!counts.has("official_website") && !counts.has("official_social"))) {
+      throw new Error("qualified eligibility requires ownership plus an official website or official social receipt");
     }
     if (ownershipDesignations.length === 0) throw new Error("qualified eligibility requires a documented ownership designation");
     if (!ownershipSourceExpiresAt || !reviewAfter) {

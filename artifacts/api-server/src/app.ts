@@ -60,6 +60,7 @@ import { registerSubmissionRoutes } from "./businessIntake/registerSubmissionRou
 import { registerMediaRoutes } from "./media/registerMediaRoutes";
 import { registerAdminPublishAndClaimRoutes } from "./businesses/registerAdminPublishAndClaimRoutes";
 import { registerDocumentedDiscoveryReviewRoutes } from "./businesses/registerDocumentedDiscoveryReviewRoutes";
+import { registerFounderSourcePublicationRoutes } from "./directoryIntake/registerFounderSourcePublicationRoutes";
 import { registerDirectoryImportRoutes } from "./directoryImport/registerDirectoryImportRoutes";
 import { registerReconciliationRoutes } from "./directoryReconciliation/registerReconciliationRoutes";
 import { assertDirectoryReviewLocalStaging } from "./directoryImport/localStagingGuard";
@@ -413,6 +414,7 @@ registerSubmissionRoutes(app);
 registerMediaRoutes(app);
 registerAdminPublishAndClaimRoutes(app);
 registerDocumentedDiscoveryReviewRoutes(app);
+registerFounderSourcePublicationRoutes(app);
 registerReconciliationRoutes(app);
 if (assertDirectoryReviewLocalStaging(process.env)) {
   registerDirectoryImportRoutes(app);

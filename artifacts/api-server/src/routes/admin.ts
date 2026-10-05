@@ -332,6 +332,18 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
     res.status(403).json({ error: "Forbidden" });
     return;
   }
+  // This v1 route coupled publication to description copy, treated source-pack
+  // website data too permissively, and created archived duplicate rows. It is
+  // retained only as an explicit migration notice so an old admin UI cannot
+  // silently run the superseded workflow. The v2 endpoint publishes one
+  // presence-qualified source batch, attaches immutable receipts to canonicals,
+  // and queues duplicates without creating a second profile.
+  res.status(410).json({
+    error: "SOURCE_BACKED_INTAKE_V1_RETIRED",
+    replacement: "/api/admin/founder-source-publication",
+    policy: "founder-source-presence-publication-v1",
+  });
+  return;
   const apply = req.body?.apply === true;
   const requestedBatch = typeof req.body?.batch === "string"
     ? req.body.batch.trim()
@@ -388,10 +400,11 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
       }
       for (const existing of existingBusinesses) {
         for (const sourceReceipt of [existing.sourceUrl, existing.researchSourceUrl]) {
-          if (!sourceReceipt) continue;
-          const candidates = candidatesByListingUrl.get(sourceReceipt);
-          const candidate = candidates?.length === 1 ? candidates[0] : null;
-          if (!candidate) continue;
+          const receipt: string = String(sourceReceipt ?? "").trim();
+          if (!receipt) continue;
+          const matchingCandidates: SourceBackedDirectoryCandidate[] = candidatesByListingUrl.get(receipt) ?? [];
+          if (matchingCandidates.length !== 1) continue;
+          const candidate: SourceBackedDirectoryCandidate = matchingCandidates[0]!;
           exactMatchesByRecordAndReceipt.set(
             `${existing.id}:${candidate.sourceRecordKey}`,
             { candidate, existingBusinessId: existing.id },
@@ -719,6 +732,13 @@ router.post("/admin/directory-intake/source-backed", async (req: Request, res: R
  */
 router.post("/admin/directory-intake/source-backed/quality-hold", async (req: Request, res: Response) => {
   if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  // Founder-source directory records are no longer archived for sparse source
+  // descriptions. Description quality is an enrichment concern, not a
+  // publication/retention decision; this legacy mutation stays unavailable.
+  return void res.status(410).json({
+    error: "SOURCE_DESCRIPTION_ARCHIVE_RETIRED",
+    policy: "founder-source-presence-publication-v1",
+  });
   const requestedBatch = typeof req.body?.batch === "string" ? req.body.batch.trim() : "";
   const apply = req.body?.apply === true;
   if (!requestedBatch) {

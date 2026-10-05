@@ -51,12 +51,25 @@ function qualified(evidence: readonly unknown[] = baseEvidence) {
 }
 
 describe("documented discovery review input", () => {
-  it("requires the complete receipt chain for a qualified decision", () => {
+  it("requires ownership plus one official presence for a qualified decision", () => {
     const result = validateDocumentedDiscoveryReviewInput(qualified(), now);
     expect(result.eligibilityStatus).toBe("qualified");
     expect(result.evidence).toHaveLength(4);
-    expect(() => validateDocumentedDiscoveryReviewInput(qualified(baseEvidence.slice(0, 3)), now))
-      .toThrow("official social receipts");
+    expect(validateDocumentedDiscoveryReviewInput(qualified(baseEvidence.slice(0, 3)), now).eligibilityStatus).toBe("qualified");
+    expect(() => validateDocumentedDiscoveryReviewInput(qualified(baseEvidence.slice(0, 2)), now))
+      .toThrow("official website or official social receipt");
+  });
+
+  it("accepts a founder-directory official social receipt without requiring a website link", () => {
+    const socialOnly = [baseEvidence[1], {
+      field: "official_social" as const,
+      sourceKind: "founder_directory" as const,
+      sourceUrl: "https://founder-directory.example/listing/acme",
+      observedAt: "2026-10-05T00:00:00.000Z",
+      confidence: "high" as const,
+      observedValue: { profileUrl: "https://www.instagram.com/acme/" },
+    }];
+    expect(validateDocumentedDiscoveryReviewInput(qualified(socialOnly), now).eligibilityStatus).toBe("qualified");
   });
 
   it("rejects Yelp, marketplaces, and social profiles as an official website", () => {

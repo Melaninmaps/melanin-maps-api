@@ -5432,6 +5432,96 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ON business_discovery_eligibility_audit_events (business_id, created_at DESC);`,
   },
   {
+    // Founder-provided ownership directories are a documented source basis for
+    // their stated designation. They need one official member-facing presence
+    // (website OR official social) for directory/Discovery eligibility; a street
+    // address and geocode remain map-only requirements. The migration preserves
+    // every receipt and hold, and changes no existing profile by itself.
+    name: "founder_source_presence_publication_v1",
+    sql: `ALTER TABLE business_profile_evidence_receipts
+      DROP CONSTRAINT IF EXISTS business_profile_evidence_receipts_source_kind_check;
+      ALTER TABLE business_profile_evidence_receipts
+      ADD CONSTRAINT business_profile_evidence_receipts_source_kind_check
+      CHECK (source_kind IN (
+        'business_official', 'owner_official', 'approved_public', 'founder_directory', 'official_geocoder'
+      )) NOT VALID;
+      ALTER TABLE business_profile_evidence_receipts
+      VALIDATE CONSTRAINT business_profile_evidence_receipts_source_kind_check;
+
+      ALTER TABLE business_discovery_eligibility
+      DROP CONSTRAINT IF EXISTS business_discovery_eligibility_check;
+      ALTER TABLE business_discovery_eligibility
+      ADD CONSTRAINT business_discovery_eligibility_check
+      CHECK (
+        eligibility_status <> 'qualified' OR (
+          ownership_evidence_id IS NOT NULL
+          AND (official_website_evidence_id IS NOT NULL OR official_social_evidence_id IS NOT NULL)
+          AND jsonb_array_length(ownership_designations) > 0
+          AND ownership_source_expires_at IS NOT NULL
+          AND review_after IS NOT NULL
+        )
+      ) NOT VALID;
+      ALTER TABLE business_discovery_eligibility
+      VALIDATE CONSTRAINT business_discovery_eligibility_check;
+
+      CREATE TABLE IF NOT EXISTS business_source_directory_receipts (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        business_id varchar(255) NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+        source_record_key text NOT NULL,
+        source_batch text NOT NULL,
+        source_label text NOT NULL,
+        source_url text NOT NULL,
+        source_listing_url text,
+        observed_at timestamptz NOT NULL,
+        ownership_designations jsonb NOT NULL DEFAULT '[]'::jsonb,
+        ownership_evidence text NOT NULL,
+        official_website_url text,
+        official_socials jsonb NOT NULL DEFAULT '{}'::jsonb,
+        receipt_sha256 text,
+        created_at timestamptz NOT NULL DEFAULT now(),
+        UNIQUE (business_id, source_record_key),
+        CHECK (char_length(source_record_key) BETWEEN 1 AND 512),
+        CHECK (char_length(source_url) <= 2048),
+        CHECK (receipt_sha256 IS NULL OR char_length(receipt_sha256) = 64)
+      );
+      CREATE INDEX IF NOT EXISTS business_source_directory_receipts_business_idx
+        ON business_source_directory_receipts (business_id, observed_at DESC);
+      CREATE UNIQUE INDEX IF NOT EXISTS business_profile_evidence_receipts_source_field_idx
+        ON business_profile_evidence_receipts (business_id, field_name, source_sha256)
+        WHERE source_sha256 IS NOT NULL;
+
+      CREATE TABLE IF NOT EXISTS founder_source_duplicate_review_queue (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        source_record_key text NOT NULL UNIQUE,
+        source_batch text NOT NULL,
+        canonical_business_id varchar(255) NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+        duplicate_reason text NOT NULL,
+        source_snapshot jsonb NOT NULL,
+        status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'resolved', 'dismissed')),
+        created_at timestamptz NOT NULL DEFAULT now(),
+        resolved_at timestamptz,
+        resolution_note text
+      );
+      CREATE INDEX IF NOT EXISTS founder_source_duplicate_review_queue_status_idx
+        ON founder_source_duplicate_review_queue (status, created_at);
+
+      CREATE TABLE IF NOT EXISTS founder_source_publication_batches (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        batch_key text NOT NULL UNIQUE,
+        city text,
+        state text,
+        policy_version text NOT NULL,
+        source_count integer NOT NULL CHECK (source_count >= 0),
+        before_manifest jsonb NOT NULL,
+        after_manifest jsonb,
+        created_by varchar(255),
+        created_at timestamptz NOT NULL DEFAULT now(),
+        completed_at timestamptz
+      );
+      CREATE INDEX IF NOT EXISTS founder_source_publication_batches_city_created_idx
+        ON founder_source_publication_batches (city, state, created_at DESC);`,
+  },
+  {
     // Private, explicit consent only. Existing members remain opted out until
     // they make a choice in Kinfolk setup or Settings.
     name: "user_preferences_member_context_default_consent_v1",

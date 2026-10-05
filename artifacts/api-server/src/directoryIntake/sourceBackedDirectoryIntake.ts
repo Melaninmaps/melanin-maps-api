@@ -1,4 +1,8 @@
 import type { SourceBackedDirectoryCandidate } from "./sourceBackedDirectoryCandidates";
+import {
+  sanitizeFounderSourceOfficialWebsite,
+  sourceListedOfficialSocials,
+} from "./founderSourcePublicationPolicy";
 
 export type ExistingDirectoryBusiness = Readonly<{
   id: string;
@@ -9,6 +13,13 @@ export type ExistingDirectoryBusiness = Readonly<{
   website: string | null;
   sourceUrl: string | null;
   dedupeKey: string | null;
+  phone?: string | null;
+  facebook?: string | null;
+  instagram?: string | null;
+  tiktok?: string | null;
+  twitter?: string | null;
+  youtube?: string | null;
+  pinterest?: string | null;
 }>;
 
 export type SourceBackedDirectoryIntakePlan = Readonly<{
@@ -18,7 +29,7 @@ export type SourceBackedDirectoryIntakePlan = Readonly<{
     candidate: SourceBackedDirectoryCandidate;
     existingBusinessId: string | null;
     matchedSourceReceiptKey?: string;
-    reason: "exact_address" | "exact_official_destination" | "within_source_batch";
+    reason: "exact_address" | "exact_official_destination" | "exact_phone" | "exact_social" | "within_source_batch";
   }>[];
 }>;
 
@@ -136,13 +147,28 @@ function normalizeStreetAddress(value: string | null | undefined): string {
 }
 
 function hostname(value: string | null | undefined): string {
-  const raw = value?.trim();
-  if (!raw) return "";
+  const sanitized = sanitizeFounderSourceOfficialWebsite(value);
+  if (!sanitized) return "";
   try {
-    return new URL(raw).hostname.replace(/^www\./i, "").toLowerCase();
+    return new URL(sanitized).hostname.replace(/^www\./i, "").toLowerCase();
   } catch {
     return "";
   }
+}
+
+function phoneIdentity(value: string | null | undefined): string {
+  const digits = (value ?? "").replace(/\D/g, "");
+  const normalized = digits.length === 11 && digits.startsWith("1") ? digits.slice(1) : digits;
+  return normalized.length >= 7 ? normalized : "";
+}
+
+function socialIdentity(value: string | null | undefined): string {
+  if (!value) return "";
+  const social = sourceListedOfficialSocials({ instagram: value });
+  const normalized = social.instagram;
+  if (!normalized) return "";
+  const parsed = new URL(normalized);
+  return `${parsed.hostname.replace(/^www\./i, "").toLowerCase()}${parsed.pathname.replace(/\/+$/, "").toLowerCase()}`;
 }
 
 function samePlaceKey(value: Readonly<{ name: string | null; city: string | null; state: string | null }>): string {
@@ -174,6 +200,37 @@ function officialDestinationKey(value: Readonly<{
   return domain ? `${samePlaceKey(value)}|host:${domain}` : null;
 }
 
+function phoneDestinationKey(value: Readonly<{
+  name: string | null;
+  city: string | null;
+  state: string | null;
+  phone?: string | null;
+}>): string | null {
+  const phone = phoneIdentity(value.phone);
+  return phone ? `${samePlaceKey(value)}|phone:${phone}` : null;
+}
+
+function socialDestinationKeys(value: Readonly<{
+  name: string | null;
+  city: string | null;
+  state: string | null;
+  socialLinks?: SourceBackedDirectoryCandidate["socialLinks"];
+  facebook?: string | null;
+  instagram?: string | null;
+  tiktok?: string | null;
+  twitter?: string | null;
+  youtube?: string | null;
+  pinterest?: string | null;
+}>): string[] {
+  const profiles = value.socialLinks
+    ? Object.values(sourceListedOfficialSocials(value.socialLinks))
+    : [value.facebook, value.instagram, value.tiktok, value.twitter, value.youtube, value.pinterest];
+  return profiles
+    .map(socialIdentity)
+    .filter(Boolean)
+    .map((social) => `${samePlaceKey(value)}|social:${social}`);
+}
+
 /**
  * A source listing is skipped only when it can be tied to an already-live record
  * by the same normalized name + city + state and an exact street address or
@@ -190,7 +247,7 @@ export function buildSourceBackedDirectoryIntakePlan(
     candidate: SourceBackedDirectoryCandidate;
     existingBusinessId: string | null;
     matchedSourceReceiptKey?: string;
-    reason: "exact_address" | "exact_official_destination" | "within_source_batch";
+    reason: "exact_address" | "exact_official_destination" | "exact_phone" | "exact_social" | "within_source_batch";
   }> = [];
 
   // The protected founder manifest is intentionally large. Indexing preserves
@@ -200,6 +257,8 @@ export function buildSourceBackedDirectoryIntakePlan(
   const existingByListingReceipt = new Map<string, ExistingDirectoryBusiness>();
   const existingByAddress = new Map<string, ExistingDirectoryBusiness>();
   const existingByOfficialDestination = new Map<string, ExistingDirectoryBusiness>();
+  const existingByPhone = new Map<string, ExistingDirectoryBusiness>();
+  const existingBySocial = new Map<string, ExistingDirectoryBusiness>();
   for (const existing of existingBusinesses) {
     if (existing.dedupeKey) existingByReceipt.set(existing.dedupeKey, existing);
     if (existing.sourceUrl) existingByListingReceipt.set(existing.sourceUrl, existing);
@@ -207,10 +266,15 @@ export function buildSourceBackedDirectoryIntakePlan(
     if (addressKey) existingByAddress.set(addressKey, existing);
     const destinationKey = officialDestinationKey(existing);
     if (destinationKey) existingByOfficialDestination.set(destinationKey, existing);
+    const phoneKey = phoneDestinationKey(existing);
+    if (phoneKey) existingByPhone.set(phoneKey, existing);
+    for (const socialKey of socialDestinationKeys(existing)) existingBySocial.set(socialKey, existing);
   }
 
   const createdByAddress = new Map<string, SourceBackedDirectoryCandidate>();
   const createdByOfficialDestination = new Map<string, SourceBackedDirectoryCandidate>();
+  const createdByPhone = new Map<string, SourceBackedDirectoryCandidate>();
+  const createdBySocial = new Map<string, SourceBackedDirectoryCandidate>();
 
   for (const candidate of candidates) {
     if (!hasBusinessSpecificSourceDescription(candidate)) {
@@ -256,6 +320,20 @@ export function buildSourceBackedDirectoryIntakePlan(
       continue;
     }
 
+    const phoneKey = phoneDestinationKey(candidate);
+    const phoneMatch = phoneKey ? existingByPhone.get(phoneKey) : undefined;
+    if (phoneMatch) {
+      duplicateMatches.push({ candidate, existingBusinessId: phoneMatch.id, reason: "exact_phone" });
+      continue;
+    }
+
+    const socialKeys = socialDestinationKeys(candidate);
+    const socialMatch = socialKeys.map((key) => existingBySocial.get(key)).find(Boolean);
+    if (socialMatch) {
+      duplicateMatches.push({ candidate, existingBusinessId: socialMatch.id, reason: "exact_social" });
+      continue;
+    }
+
     // Retain every source receipt in the protected manifest, but do not create
     // two records in one publish transaction when exact same-place evidence
     // ties independently sourced records together. Similar names stay separate.
@@ -263,6 +341,8 @@ export function buildSourceBackedDirectoryIntakePlan(
     const sameDestinationCreated = destinationKey
       ? createdByOfficialDestination.get(destinationKey)
       : undefined;
+    const samePhoneCreated = phoneKey ? createdByPhone.get(phoneKey) : undefined;
+    const sameSocialCreated = socialKeys.map((key) => createdBySocial.get(key)).find(Boolean);
     // Preserve the established conservative rule: when both source records have
     // addresses, only the exact address can collapse them. An official-domain
     // match remains sufficient when the candidate or its earlier receipt is
@@ -281,9 +361,30 @@ export function buildSourceBackedDirectoryIntakePlan(
       continue;
     }
 
+    if (samePhoneCreated) {
+      duplicateMatches.push({
+        candidate,
+        existingBusinessId: null,
+        matchedSourceReceiptKey: samePhoneCreated.sourceRecordKey,
+        reason: "within_source_batch",
+      });
+      continue;
+    }
+    if (sameSocialCreated) {
+      duplicateMatches.push({
+        candidate,
+        existingBusinessId: null,
+        matchedSourceReceiptKey: sameSocialCreated.sourceRecordKey,
+        reason: "within_source_batch",
+      });
+      continue;
+    }
+
     toCreate.push(candidate);
     if (addressKey) createdByAddress.set(addressKey, candidate);
     if (destinationKey) createdByOfficialDestination.set(destinationKey, candidate);
+    if (phoneKey) createdByPhone.set(phoneKey, candidate);
+    for (const socialKey of socialKeys) createdBySocial.set(socialKey, candidate);
   }
 
   return { toCreate, heldForDescription, duplicateMatches };

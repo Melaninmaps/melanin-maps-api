@@ -19,9 +19,11 @@ const current = {
 const now = new Date("2026-10-05T00:00:00.000Z");
 
 describe("documented Discovery eligibility", () => {
-  it("requires every source receipt and a current ownership review", () => {
+  it("requires ownership plus one official presence and a current ownership review", () => {
     expect(isDocumentedDiscoveryEligible(current, "discovery", now)).toBe(true);
-    expect(isDocumentedDiscoveryEligible({ ...current, officialSocialEvidenceId: null }, "discovery", now)).toBe(false);
+    expect(isDocumentedDiscoveryEligible({ ...current, officialSocialEvidenceId: null }, "discovery", now)).toBe(true);
+    expect(isDocumentedDiscoveryEligible({ ...current, officialWebsiteEvidenceId: null }, "discovery", now)).toBe(true);
+    expect(isDocumentedDiscoveryEligible({ ...current, officialWebsiteEvidenceId: null, officialSocialEvidenceId: null }, "discovery", now)).toBe(false);
     expect(isDocumentedDiscoveryEligible({ ...current, ownershipSourceExpiresAt: "2026-10-04T23:59:59.000Z" }, "discovery", now)).toBe(false);
     expect(isDocumentedDiscoveryEligible({ ...current, reviewAfter: "2026-10-04T23:59:59.000Z" }, "discovery", now)).toBe(false);
     expect(isDocumentedDiscoveryEligible({ ...current, ownershipDesignations: [] }, "discovery", now)).toBe(false);
@@ -44,6 +46,7 @@ describe("documented Discovery eligibility", () => {
     expect(discovery).toContain("ownership_evidence_id IS NOT NULL");
     expect(discovery).toContain("official_website_evidence_id IS NOT NULL");
     expect(discovery).toContain("official_social_evidence_id IS NOT NULL");
+    expect(discovery).toContain(" OR ");
     expect(discovery).toContain("ownership_source_expires_at > CURRENT_TIMESTAMP");
     expect(discovery).toContain("review_after > CURRENT_TIMESTAMP");
     expect(map).toContain("map_pin_evidence_id IS NOT NULL");
