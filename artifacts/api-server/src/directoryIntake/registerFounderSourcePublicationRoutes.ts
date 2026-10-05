@@ -236,7 +236,7 @@ async function recordSourceReceiptAndEligibility(
   );
   return {
     qualified: true,
-    officialWebsiteBlanked: Boolean(presence.rejectedWebsite),
+    officialWebsiteBlanked: Boolean(presence.rejectedWebsite && !presence.officialWebsite),
     socialOnly: !presence.officialWebsite && Boolean(firstSocial),
   };
 }
@@ -424,6 +424,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
         let qualifiedCount = 0;
         let blankedCount = 0;
         let socialOnlyCount = 0;
+        let noPresenceHoldCount = noPresence.length;
         const qualifiedBusinessIds = new Set<string>();
         const sourceDesignationsByBusiness = new Map<string, Set<string>>();
         for (const target of targets) {
@@ -433,7 +434,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
             const designations = sourceDesignationsByBusiness.get(target.businessId) ?? new Set<string>();
             target.candidate.ownershipDesignations.forEach((designation) => designations.add(designation));
             sourceDesignationsByBusiness.set(target.businessId, designations);
-          }
+          } else noPresenceHoldCount += 1;
           if (result.officialWebsiteBlanked) blankedCount += 1;
           if (result.socialOnly) socialOnlyCount += 1;
         }
@@ -442,8 +443,8 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           .filter((designations) => designations.has(designation)).length;
         const afterManifest = {
           ...beforeManifest,
-          profilesCreated: targets.filter((target) => target.outcome === "created").length,
-          existingProfilesEnriched: targets.filter((target) => target.outcome === "linked_existing").length,
+          profilesCreated: new Set(targets.filter((target) => target.outcome === "created").map((target) => target.businessId)).size,
+          existingProfilesEnriched: new Set(targets.filter((target) => target.outcome === "linked_existing").map((target) => target.businessId)).size,
           searchableInMwm: qualifiedCount,
           sourceDocumentedOwnership: {
             blackOwned: countSourceDesignation("Black / African American-Owned"),
@@ -453,7 +454,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           officialSiteBlanks: blankedCount,
           officialSocialOnlyProfiles: socialOnlyCount,
           mapPinnedProfiles: 0,
-          noPresenceHolds: noPresence.length,
+          noPresenceHolds: noPresenceHoldCount,
           publicationState: "published_unclaimed_source_documented",
           mapNote: "No map pin was created by this publication. Address and audited geocode remain a separate enrichment requirement.",
         };
