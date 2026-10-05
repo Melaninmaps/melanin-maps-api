@@ -253,6 +253,14 @@ export function buildSourceBackedDirectoryIntakePlan(
   // The protected founder manifest is intentionally large. Indexing preserves
   // the exact same-place rules while avoiding repeated full-list scans in the
   // admin preview and in every bounded publication retry.
+  // A shared directory/category URL is provenance, not an individual listing
+  // receipt. It cannot connect a candidate to a canonical profile: only a URL
+  // that occurs once in the supplied source scope can be an exact listing key.
+  const listingReceiptCounts = new Map<string, number>();
+  for (const candidate of candidates) {
+    const listingReceipt = candidate.sourceListingUrl ?? candidate.sourceUrl;
+    listingReceiptCounts.set(listingReceipt, (listingReceiptCounts.get(listingReceipt) ?? 0) + 1);
+  }
   const existingByReceipt = new Map<string, ExistingDirectoryBusiness>();
   const existingByListingReceipt = new Map<string, ExistingDirectoryBusiness>();
   const existingByAddress = new Map<string, ExistingDirectoryBusiness>();
@@ -290,7 +298,9 @@ export function buildSourceBackedDirectoryIntakePlan(
     // source-listing URL rather than overwriting the place key. Either exact
     // persisted receipt proves this is a retry, including a review-vault row.
     const sourceReceiptMatch = existingByReceipt.get(candidate.sourceRecordKey)
-      ?? existingByListingReceipt.get(candidate.sourceListingUrl ?? candidate.sourceUrl);
+      ?? (listingReceiptCounts.get(candidate.sourceListingUrl ?? candidate.sourceUrl) === 1
+        ? existingByListingReceipt.get(candidate.sourceListingUrl ?? candidate.sourceUrl)
+        : undefined);
     if (sourceReceiptMatch) {
       duplicateMatches.push({
         candidate,

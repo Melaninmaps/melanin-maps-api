@@ -176,6 +176,31 @@ describe("source-backed directory reconciliation", () => {
     expect(plan.duplicateMatches[0]?.existingBusinessId).toBe("previous-source-review");
   });
 
+  it("does not use a shared directory URL as an identity receipt", () => {
+    const second = candidate({
+      name: "Different Business",
+      sourceRecordKey: "source-receipt:different-business",
+      sourceListingUrl: "https://example.test/directory",
+      officialUrl: null,
+    });
+    const plan = buildSourceBackedDirectoryIntakePlan([
+      candidate({ sourceListingUrl: "https://example.test/directory" }),
+      second,
+    ], [{
+      id: "shared-directory-row",
+      name: "Unrelated Business",
+      city: "Philadelphia",
+      state: "PA",
+      address: null,
+      website: null,
+      sourceUrl: "https://example.test/directory",
+      dedupeKey: null,
+    }]);
+
+    expect(plan.duplicateMatches).toEqual([]);
+    expect(plan.toCreate).toHaveLength(2);
+  });
+
   it("publishes one exact same-place record when distinct source receipts arrive together", () => {
     const secondReceipt = candidate({
       sourceRecordKey: "source-receipt:ammina-secondary-directory",

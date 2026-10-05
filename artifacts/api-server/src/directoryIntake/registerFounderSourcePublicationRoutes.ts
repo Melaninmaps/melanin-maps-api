@@ -289,6 +289,64 @@ function publicManifest(
 }
 
 export function registerFounderSourcePublicationRoutes(app: Express): void {
+  /** Administrator-only trace view for source receipt → canonical profile audits. */
+  app.get("/api/admin/founder-source-publication/receipts", async (req: Request, res: Response) => {
+    if (!isAdmin(req)) return void res.status((req as any).user?.id ? 403 : 401).json({ error: "Administrator access required" });
+    const city = text(req.query.city, 100);
+    const state = text(req.query.state, 50)?.toUpperCase() ?? null;
+    const batch = text(req.query.batch, 255);
+    const cursor = text(req.query.cursor, 512);
+    const rawLimit = Number(req.query.limit ?? 100);
+    const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(Math.floor(rawLimit), 1), 100) : 100;
+    if (!city && !batch) return void res.status(400).json({ error: "A source batch or city is required." });
+    const selected = FOUNDER_SOURCE_CANDIDATES
+      .filter((candidate) => !batch || candidate.batch === batch)
+      .filter((candidate) => !city || normalizeDirectoryIdentity(candidate.city) === normalizeDirectoryIdentity(city))
+      .filter((candidate) => !state || candidate.state?.trim().toUpperCase() === state)
+      .sort((a, b) => a.sourceRecordKey.localeCompare(b.sourceRecordKey))
+      .filter((candidate) => !cursor || candidate.sourceRecordKey > cursor)
+      .slice(0, limit);
+    try {
+      const result = await pool.query<{
+        source_record_key: string;
+        business_id: string;
+        name: string | null;
+        city: string | null;
+        state: string | null;
+        status: string | null;
+        listing_status: string | null;
+        eligibility_status: string | null;
+      }>(
+        `SELECT r.source_record_key, r.business_id, b.name, b.city, b.state, b.status, b.listing_status,
+                e.eligibility_status
+           FROM business_source_directory_receipts r
+           JOIN businesses b ON b.id = r.business_id
+           LEFT JOIN business_discovery_eligibility e ON e.business_id = b.id
+          WHERE r.source_record_key = ANY($1::text[])
+          ORDER BY r.source_record_key, r.created_at DESC`,
+        [selected.map((candidate) => candidate.sourceRecordKey)],
+      );
+      const receiptsByKey = new Map<string, typeof result.rows>();
+      for (const row of result.rows) {
+        const rows = receiptsByKey.get(row.source_record_key) ?? [];
+        rows.push(row);
+        receiptsByKey.set(row.source_record_key, rows);
+      }
+      return void res.json({
+        policyVersion: FOUNDER_SOURCE_PUBLICATION_POLICY_VERSION,
+        records: selected.map((candidate) => ({
+          sourceRecordKey: candidate.sourceRecordKey,
+          sourceIdentity: { name: candidate.name, city: candidate.city, state: candidate.state },
+          attachedProfiles: receiptsByKey.get(candidate.sourceRecordKey) ?? [],
+        })),
+        nextCursor: selected.at(-1)?.sourceRecordKey ?? null,
+      });
+    } catch (error) {
+      req.log.error({ error }, "Founder-source receipt audit failed");
+      return void res.status(500).json({ error: "Founder-source receipt audit failed" });
+    }
+  });
+
   app.post("/api/admin/founder-source-publication", async (req: Request, res: Response) => {
     if (!isAdmin(req)) return void res.status((req as any).user?.id ? 403 : 401).json({ error: "Administrator access required" });
     const request = parseRequest(req);
