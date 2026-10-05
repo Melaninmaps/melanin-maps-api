@@ -9,6 +9,7 @@ import {
   founderSourcePresence,
   sanitizeFounderSourceOfficialWebsite,
   sourceListedOfficialSocials,
+  type FounderSourcePresence,
 } from "./founderSourcePublicationPolicy";
 import { sourceBackedDirectoryCandidates, type SourceBackedDirectoryCandidate } from "./sourceBackedDirectoryCandidates";
 import { minneapolisSourceBackedDirectoryCandidates } from "./minneapolisSourceBackedDirectoryCandidates";
@@ -40,6 +41,7 @@ type SourceTarget = Readonly<{
   candidate: SourceBackedDirectoryCandidate;
   businessId: string;
   outcome: "created" | "linked_existing";
+  presence: FounderSourcePresence;
 }>;
 
 type FounderSourceRequest = Readonly<{
@@ -156,7 +158,7 @@ async function recordSourceReceiptAndEligibility(
   target: SourceTarget,
 ): Promise<{ qualified: boolean; officialWebsiteBlanked: boolean; socialOnly: boolean }> {
   const { candidate, businessId } = target;
-  const presence = founderSourcePresence(candidate);
+  const presence = target.presence;
   const sourceUrl = candidate.sourceListingUrl ?? candidate.sourceUrl;
   const receiptHash = hash(JSON.stringify({
     sourceRecordKey: candidate.sourceRecordKey,
@@ -372,7 +374,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
             ],
           );
           businessByReceipt.set(candidate.sourceRecordKey, id);
-          targets.push({ candidate, businessId: id, outcome: "created" });
+          targets.push({ candidate, businessId: id, outcome: "created", presence });
         }
 
         const seenExisting = new Set<string>();
@@ -381,9 +383,15 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
             ?? (duplicate.matchedSourceReceiptKey ? businessByReceipt.get(duplicate.matchedSourceReceiptKey) ?? null : null);
           if (!businessId) continue;
           const existingRecord = existing.find((item) => item.id === businessId);
-          const presence = founderSourcePresence(duplicate.candidate);
-          const retainedWebsite = sanitizeFounderSourceOfficialWebsite(existingRecord?.website) ?? presence.officialWebsite;
+          const candidatePresence = founderSourcePresence(duplicate.candidate);
+          const retainedWebsite = sanitizeFounderSourceOfficialWebsite(existingRecord?.website) ?? candidatePresence.officialWebsite;
           const retainedSocials = existingRecord ? nonDirectoryExistingSocials(existingRecord) : {};
+          const presence: FounderSourcePresence = {
+            officialWebsite: retainedWebsite,
+            officialSocials: { ...candidatePresence.officialSocials, ...retainedSocials },
+            hasOfficialPresence: Boolean(retainedWebsite || Object.keys({ ...candidatePresence.officialSocials, ...retainedSocials }).length),
+            rejectedWebsite: candidatePresence.rejectedWebsite,
+          };
           await client.query(
             `UPDATE businesses SET
                website = $2, instagram = COALESCE($3, instagram), facebook = COALESCE($4, facebook),
@@ -409,24 +417,38 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           await queueDuplicate(client, duplicate.candidate, businessId, duplicate.reason);
           if (!seenExisting.has(`${businessId}:${duplicate.candidate.sourceRecordKey}`)) {
             seenExisting.add(`${businessId}:${duplicate.candidate.sourceRecordKey}`);
-            targets.push({ candidate: duplicate.candidate, businessId, outcome: "linked_existing" });
+            targets.push({ candidate: duplicate.candidate, businessId, outcome: "linked_existing", presence });
           }
         }
 
         let qualifiedCount = 0;
         let blankedCount = 0;
         let socialOnlyCount = 0;
+        const qualifiedBusinessIds = new Set<string>();
+        const sourceDesignationsByBusiness = new Map<string, Set<string>>();
         for (const target of targets) {
           const result = await recordSourceReceiptAndEligibility(client, target);
-          if (result.qualified) qualifiedCount += 1;
+          if (result.qualified) {
+            qualifiedBusinessIds.add(target.businessId);
+            const designations = sourceDesignationsByBusiness.get(target.businessId) ?? new Set<string>();
+            target.candidate.ownershipDesignations.forEach((designation) => designations.add(designation));
+            sourceDesignationsByBusiness.set(target.businessId, designations);
+          }
           if (result.officialWebsiteBlanked) blankedCount += 1;
           if (result.socialOnly) socialOnlyCount += 1;
         }
+        qualifiedCount = qualifiedBusinessIds.size;
+        const countSourceDesignation = (designation: string) => [...sourceDesignationsByBusiness.values()]
+          .filter((designations) => designations.has(designation)).length;
         const afterManifest = {
           ...beforeManifest,
           profilesCreated: targets.filter((target) => target.outcome === "created").length,
           existingProfilesEnriched: targets.filter((target) => target.outcome === "linked_existing").length,
           searchableInMwm: qualifiedCount,
+          sourceDocumentedOwnership: {
+            blackOwned: countSourceDesignation("Black / African American-Owned"),
+            latinxHispanicOwned: countSourceDesignation("Latino / Hispanic-Owned"),
+          },
           duplicateHolds: duplicateMatches.length,
           officialSiteBlanks: blankedCount,
           officialSocialOnlyProfiles: socialOnlyCount,
