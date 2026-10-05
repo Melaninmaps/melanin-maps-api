@@ -242,6 +242,9 @@ function toPublicBusinessRecord<T extends Record<string, unknown>>(
     flagCount: _flagCount,
     flagStatus: _flagStatus,
     _sim_score,
+    ownershipDesignations: _ownershipDesignations,
+    blackOwned: _blackOwned,
+    verifiedDesignations: _verifiedDesignations,
     ...publicRecord
   } = business;
   const hasMapCoordinate = hasTrustworthyMapCoordinate({
@@ -266,10 +269,19 @@ function toPublicBusinessRecord<T extends Record<string, unknown>>(
   // Old imports placed the internal provenance phrase in descriptions. Do not
   // expose it on any public client; listing status already communicates whether
   // a profile is claimed or verified without changing the business-page layout.
-  if (typeof coordinateSafeRecord.description !== "string") return coordinateSafeRecord;
-  const description = sanitizePublicListingCopy(coordinateSafeRecord.description);
-  return {
+  // A public ownership label is re-attached below only from a current documented
+  // eligibility receipt. Raw/legacy values cannot appear owner-verified by
+  // accident, including after a held or superseded source receipt.
+  const ownershipSafeRecord = {
     ...coordinateSafeRecord,
+    ownershipDesignations: [] as string[],
+    blackOwned: false,
+    verifiedDesignations: [] as string[],
+  };
+  if (typeof ownershipSafeRecord.description !== "string") return ownershipSafeRecord;
+  const description = sanitizePublicListingCopy(ownershipSafeRecord.description);
+  return {
+    ...ownershipSafeRecord,
     description: description
       .replace(/\bcommunity\s*\/\s*founder-listed\b/gi, "Publicly listed")
       .replace(/\bfounder-listed\b/gi, "Publicly listed"),
@@ -311,12 +323,20 @@ async function attachDocumentedOwnership<T extends Record<string, unknown>>(
   const byId = new Map(rows.map((row) => [row.business_id, row]));
   return records.map((record) => {
     const row = typeof record.id === "string" ? byId.get(record.id) : undefined;
-    if (!row) return record;
+    const ownershipSafeRecord = {
+      ...record,
+      ownershipDesignations: [] as string[],
+      blackOwned: false,
+      verifiedDesignations: [] as string[],
+    };
+    if (!row) return ownershipSafeRecord;
     const designations = Array.isArray(row.ownership_designations)
       ? row.ownership_designations.filter((value): value is string => typeof value === "string")
       : [];
     return {
-      ...record,
+      ...ownershipSafeRecord,
+      ownershipDesignations: designations,
+      blackOwned: designations.includes("Black / African American-Owned"),
       documentedOwnership: {
         status: "documented_by_source",
         labels: designations.map((label) => `${label} — documented by source`),
@@ -2518,9 +2538,10 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
         .catch(() => {});
     })();
 
+    const [publicBusiness] = await attachDocumentedOwnership([toPublicBusinessRecord(business)]);
     sendDynamicJson(res, {
       business: {
-        ...toPublicBusinessRecord(business),
+        ...publicBusiness,
         // Normalize array fields so the web/mobile clients always receive [] not null.
         // photos and pendingPhotos are jsonb columns that default to [] but can be null
         // in older rows that pre-date the column addition.
