@@ -1,50 +1,54 @@
-/**
- * AdminEditBusiness — full-featured edit modal for any business already in the DB.
- *
- * Fetches the full business record on open, then lets admin update:
- *   Tab 1 — Info:       name, description, address, hours, price range, phone, website
- *   Tab 2 — Social:     Instagram, TikTok, Facebook, Twitter/X, YouTube, Pinterest
- *   Tab 3 — Identity:   ownership designations, category, subcategory
- *   Tab 4 — Discovery:  vibes (category-gated), tags
- *   Tab 5 — Photos:     photo upload + social media link paste (reuses AdminBusinessMediaStep)
- *
- * Saves via PATCH /api/admin/businesses/:id/profile (no new API needed).
- * Works on mobile — designed for the tour workflow.
- */
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
-  X, Loader2, Store, Info, Share2, Award, Compass, Image,
-  Check, AlertTriangle, ChevronLeft, ChevronRight
+  AlertTriangle, Award, Check, ChevronLeft, ChevronRight, Compass, Image,
+  Info, Loader2, Share2, Store, X, ClipboardCheck, ShieldCheck,
 } from "lucide-react";
 import { AdminBusinessMediaStep } from "./AdminBusinessMediaStep";
 import { OwnershipDesignationCombobox } from "./OwnershipDesignationCombobox";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 import {
   BUSINESS_CATEGORY_TAXONOMY,
+  OWNERSHIP_DESIGNATIONS,
   VIBES_BY_CATEGORY,
   VIBE_ELIGIBLE_CATEGORIES,
-  OWNERSHIP_DESIGNATIONS,
 } from "@workspace/constants";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
-type Tab = "info" | "social" | "identity" | "discovery" | "photos";
+type Tab = "info" | "social" | "identity" | "discovery" | "catalog" | "photos";
 const TABS: { id: Tab; label: string; icon: React.ReactNode }[] = [
-  { id: "info",      label: "Info",      icon: <Info className="w-4 h-4" /> },
-  { id: "social",    label: "Social",    icon: <Share2 className="w-4 h-4" /> },
-  { id: "identity",  label: "Identity",  icon: <Award className="w-4 h-4" /> },
-  { id: "discovery", label: "Discovery", icon: <Compass className="w-4 h-4" /> },
-  { id: "photos",    label: "Photos",    icon: <Image className="w-4 h-4" /> },
+  { id: "info", label: "Info", icon: <Info className="h-4 w-4" /> },
+  { id: "social", label: "Social", icon: <Share2 className="h-4 w-4" /> },
+  { id: "identity", label: "Identity", icon: <Award className="h-4 w-4" /> },
+  { id: "discovery", label: "Discovery", icon: <Compass className="h-4 w-4" /> },
+  { id: "catalog", label: "Catalog", icon: <ClipboardCheck className="h-4 w-4" /> },
+  { id: "photos", label: "Photos", icon: <Image className="h-4 w-4" /> },
 ];
 
-interface FullBusiness {
+type OwnershipReceipt = {
+  sourceUrl: string;
+  sourceLabel: string;
+  observedAt: string;
+  note: string | null;
+  createdAt?: string;
+};
+
+type CatalogMembership = {
+  state: "intake" | "review" | "ready" | "held" | "removed";
+  reason: string;
+  updated_at?: string;
+  updatedAt?: string;
+} | null;
+
+type CatalogState = NonNullable<CatalogMembership>["state"];
+
+type FullBusiness = {
   id: string;
   name: string;
   description: string | null;
   address: string | null;
-  city: string;
-  state: string;
-  latitude: number | null;
-  longitude: number | null;
+  city: string | null;
+  state: string | null;
   phone: string | null;
   website: string | null;
   hours: string | null;
@@ -55,34 +59,35 @@ interface FullBusiness {
   twitter: string | null;
   youtube: string | null;
   pinterest: string | null;
-  primarySocialPlatform: string | null;
-  ownerName: string | null;
-  businessTagline: string | null;
-  ownerBio: string | null;
-  ownerStory: string | null;
   ownershipDesignations: string[];
-  blackOwned: boolean;
   vibes: string[];
   tags: string[];
-  category: string;
+  category: string | null;
   subcategory: string | null;
   photos: string[];
-}
+  listingStatus: "live_unclaimed" | "live_claimed" | "archived" | "staged" | null;
+  isDuplicate: boolean;
+};
 
-interface Props {
+type Props = {
   businessId: string;
   businessName: string;
   onClose: () => void;
   onSaved: () => void;
-}
+};
+
+const inputCls = "w-full rounded-xl border border-[#2B1507]/15 bg-white px-4 py-3 text-sm text-[#3A1F0E] placeholder-[#3A1F0E]/30 focus:border-[#CA922B] focus:outline-none";
+const labelCls = "mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60";
 
 export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }: Props) {
   const [tab, setTab] = useState<Tab>("info");
   const [biz, setBiz] = useState<FullBusiness | null>(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [savedMessage, setSavedMessage] = useState("");
 
-  // Editable field state — initialised from fetched biz
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [address, setAddress] = useState("");
@@ -104,427 +109,140 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
   const [selectedVibes, setSelectedVibes] = useState<string[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [changeNote, setChangeNote] = useState("");
+  const [ownershipReceipt, setOwnershipReceipt] = useState<OwnershipReceipt>({
+    sourceUrl: "", sourceLabel: "", observedAt: "", note: null,
+  });
+  const [catalogMembership, setCatalogMembership] = useState<CatalogMembership>(null);
+  const [catalogState, setCatalogState] = useState<CatalogState>("intake");
+  const [catalogReason, setCatalogReason] = useState("");
+  const [catalogSaving, setCatalogSaving] = useState(false);
+  const [listingStatus, setListingStatus] = useState<"live_unclaimed" | "live_claimed" | "archived" | "staged">("live_unclaimed");
+  const [listingReason, setListingReason] = useState("");
+  const [listingSaving, setListingSaving] = useState(false);
 
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState("");
-  const [savedOk, setSavedOk] = useState(false);
+  const hydrate = useCallback((data: { business?: FullBusiness; ownershipReceipt?: OwnershipReceipt | null; catalogMembership?: CatalogMembership }) => {
+    const b = data.business;
+    if (!b) throw new Error("Not found");
+    setBiz(b);
+    setName(b.name ?? ""); setDescription(b.description ?? ""); setAddress(b.address ?? "");
+    setCity(b.city ?? ""); setState(b.state ?? ""); setPhone(b.phone ?? "");
+    setWebsite(b.website ?? ""); setHours(b.hours ?? ""); setPriceRange(b.priceRange ?? "");
+    setInstagram(b.instagram ?? ""); setTiktok(b.tiktok ?? ""); setFacebook(b.facebook ?? "");
+    setTwitter(b.twitter ?? ""); setYoutube(b.youtube ?? ""); setPinterest(b.pinterest ?? "");
+    setOwnershipDesignations(b.ownershipDesignations ?? []); setCategory(b.category ?? "");
+    setSubcategory(b.subcategory ?? ""); setSelectedVibes(b.vibes ?? []); setSelectedTags(b.tags ?? []);
+    setOwnershipReceipt(data.ownershipReceipt ?? { sourceUrl: "", sourceLabel: "", observedAt: "", note: null });
+    setCatalogMembership(data.catalogMembership ?? null);
+    setCatalogState(data.catalogMembership?.state ?? "intake");
+    setCatalogReason(data.catalogMembership?.reason ?? "");
+    setListingStatus(b.listingStatus ?? "live_unclaimed");
+  }, []);
 
-  // Fetch full business details
   const fetchBiz = useCallback(async () => {
-    setLoading(true);
-    setFetchError("");
+    setLoading(true); setFetchError("");
     try {
-      const res = await fetch(`${BASE}/api/businesses/${businessId}`, { credentials: "include" });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json() as { business?: FullBusiness };
-      const b = data.business;
-      if (!b) throw new Error("Not found");
-      setBiz(b);
-      // Populate form
-      setName(b.name ?? "");
-      setDescription(b.description ?? "");
-      setAddress(b.address ?? "");
-      setCity(b.city ?? "");
-      setState(b.state ?? "");
-      setPhone(b.phone ?? "");
-      setWebsite(b.website ?? "");
-      setHours(b.hours ?? "");
-      setPriceRange(b.priceRange ?? "");
-      setInstagram(b.instagram ?? "");
-      setTiktok(b.tiktok ?? "");
-      setFacebook(b.facebook ?? "");
-      setTwitter(b.twitter ?? "");
-      setYoutube(b.youtube ?? "");
-      setPinterest(b.pinterest ?? "");
-      setOwnershipDesignations(b.ownershipDesignations ?? []);
-      setCategory(b.category ?? "");
-      setSubcategory(b.subcategory ?? "");
-      setSelectedVibes(b.vibes ?? []);
-      setSelectedTags(b.tags ?? []);
-    } catch (e) {
-      setFetchError("Could not load business details. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  }, [businessId]);
+      const response = await authenticatedFetch(`${BASE}/api/admin/businesses/${businessId}/profile`);
+      const data = await response.json() as { error?: string; business?: FullBusiness; ownershipReceipt?: OwnershipReceipt | null; catalogMembership?: CatalogMembership };
+      if (!response.ok) throw new Error(data.error ?? `HTTP ${response.status}`);
+      hydrate(data);
+    } catch {
+      setFetchError("Could not load the administrator business profile. Confirm admin access and try again.");
+    } finally { setLoading(false); }
+  }, [businessId, hydrate]);
 
   useEffect(() => { void fetchBiz(); }, [fetchBiz]);
-
-  // Reset subcategory / vibes when category changes
   useEffect(() => {
-    if (biz && category !== biz.category) {
-      setSubcategory("");
-      setSelectedVibes([]);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [category]);
+    if (biz && category !== biz.category) { setSubcategory(""); setSelectedVibes([]); }
+  }, [biz, category]);
 
-  async function save() {
-    setSaving(true);
-    setSaveError("");
-    setSavedOk(false);
+  async function saveProfile() {
+    setSaving(true); setSaveError(""); setSavedMessage("");
     try {
       const body: Record<string, unknown> = {
-        name, description, address, city, state,
-        phone: phone || null, website: website || null,
-        hours: hours || null, priceRange: priceRange || null,
-        instagram: instagram || null, tiktok: tiktok || null,
-        facebook: facebook || null, twitter: twitter || null,
-        youtube: youtube || null, pinterest: pinterest || null,
-        ownershipDesignations,
-        blackOwned: ownershipDesignations.some(d => d.toLowerCase().includes("black")),
-        subcategory: subcategory || null,
-        vibes: selectedVibes, tags: selectedTags,
+        name, description, address: address || null, city, state: state || null,
+        phone: phone || null, website: website || null, hours: hours || null, priceRange: priceRange || null,
+        instagram: instagram || null, tiktok: tiktok || null, facebook: facebook || null,
+        twitter: twitter || null, youtube: youtube || null, pinterest: pinterest || null,
+        ownershipDesignations, category, subcategory, vibes: selectedVibes, tags: selectedTags, changeNote,
       };
-      // Some retained source records pre-date the category taxonomy. Never
-      // replace a stored category with an empty string merely because that
-      // legacy value has no current dropdown option.
-      if (category.trim()) body.category = category.trim();
-      else if (biz?.category?.trim()) body.category = biz.category.trim();
-      const res = await fetch(`${BASE}/api/admin/businesses/${businessId}/profile`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(body),
+      if (ownershipReceipt.sourceUrl || ownershipReceipt.sourceLabel || ownershipReceipt.observedAt || ownershipReceipt.note) {
+        body.ownershipReceipt = ownershipReceipt;
+      }
+      const response = await authenticatedFetch(`${BASE}/api/admin/businesses/${businessId}/profile`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
       });
-      const data = await res.json() as { error?: string };
-      if (!res.ok) { setSaveError(data.error ?? "Save failed."); return; }
-      setSavedOk(true);
+      const data = await response.json() as { error?: string; business?: FullBusiness; message?: string };
+      if (!response.ok) { setSaveError(data.error ?? "Profile save failed."); return; }
+      if (data.business) setBiz(data.business);
+      setSavedMessage(data.message ?? "Profile saved with an audit receipt.");
+      setChangeNote("");
       onSaved();
-      setTimeout(() => setSavedOk(false), 3000);
-    } catch {
-      setSaveError("Could not save this business. Check the connection and try again.");
-    } finally {
-      setSaving(false);
-    }
+    } catch { setSaveError("Could not save this business. Check the connection and try again."); }
+    finally { setSaving(false); }
   }
 
-
-  function toggleVibe(v: string) {
-    setSelectedVibes(prev =>
-      prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]
-    );
+  async function saveCatalogMembership() {
+    setCatalogSaving(true); setSaveError(""); setSavedMessage("");
+    try {
+      const response = await authenticatedFetch(`${BASE}/api/admin/kinfolk-catalog/${businessId}`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ state: catalogState, reason: catalogReason }),
+      });
+      const data = await response.json() as { error?: string; membership?: CatalogMembership };
+      if (!response.ok) { setSaveError(data.error ?? "Catalog update failed."); return; }
+      setCatalogMembership(data.membership ?? { state: catalogState, reason: catalogReason });
+      setSavedMessage("Kinfolk Catalog membership saved with an audit receipt. No listing status changed.");
+      onSaved();
+    } catch { setSaveError("Could not update the Kinfolk Catalog membership."); }
+    finally { setCatalogSaving(false); }
   }
 
-  function addTag() {
-    const t = tagInput.trim();
-    if (t && !selectedTags.includes(t)) {
-      setSelectedTags(prev => [...prev, t]);
-    }
-    setTagInput("");
+  async function saveListingStatus() {
+    if (!listingReason.trim()) { setSaveError("A lifecycle reason is required before changing listing status."); return; }
+    setListingSaving(true); setSaveError(""); setSavedMessage("");
+    try {
+      const response = await authenticatedFetch(`${BASE}/api/admin/businesses/${businessId}/listing-status`, {
+        method: "PATCH", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingStatus, reason: listingReason }),
+      });
+      const data = await response.json() as { error?: string; listingStatus?: string };
+      if (!response.ok) { setSaveError(data.error ?? "Lifecycle update failed."); return; }
+      setListingStatus((data.listingStatus ?? listingStatus) as typeof listingStatus);
+      setListingReason("");
+      setSavedMessage("Listing lifecycle updated through its separate reversible audit workflow.");
+      onSaved();
+    } catch { setSaveError("Could not update the listing lifecycle."); }
+    finally { setListingSaving(false); }
   }
 
-  const selectedCategoryData = BUSINESS_CATEGORY_TAXONOMY.find(c => c.name === category);
-  // Older, source-backed listings retain their originally supplied category
-  // wording (for example, "Beauty & Hair"). Keep that value visible and
-  // selectable so an edit does not silently erase or recategorize the record.
-  const hasLegacyCategory = Boolean(
-    category && !BUSINESS_CATEGORY_TAXONOMY.some((item) => item.name === category),
-  );
+  const selectedCategory = BUSINESS_CATEGORY_TAXONOMY.find((item) => item.name === category);
+  const hasLegacyCategory = Boolean(category && !BUSINESS_CATEGORY_TAXONOMY.some((item) => item.name === category));
   const vibeEligible = VIBE_ELIGIBLE_CATEGORIES.includes(category);
-  const availableVibes = VIBES_BY_CATEGORY[category] ?? [];
-
-  const inputCls = "w-full border border-[#2B1507]/15 rounded-xl px-4 py-3 text-sm text-[#3A1F0E] placeholder-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B] bg-white";
-  const labelCls = "block text-xs font-bold text-[#3A1F0E]/60 uppercase tracking-wider mb-1.5";
-
-  const tabIdx = TABS.findIndex(t => t.id === tab);
+  const tabIndex = TABS.findIndex((item) => item.id === tab);
+  const toggleVibe = (vibe: string) => setSelectedVibes((current) => current.includes(vibe) ? current.filter((item) => item !== vibe) : [...current, vibe]);
+  const addTag = () => { const value = tagInput.trim(); if (value && !selectedTags.includes(value)) setSelectedTags((current) => [...current, value]); setTagInput(""); };
 
   return (
-    <div
-      className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4"
-      onClick={onClose}
-    >
-      <div
-        className="bg-white w-full sm:max-w-2xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[100dvh] sm:max-h-[90vh] overflow-hidden"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
-        <div className="bg-[#2B1507] px-5 py-4 shrink-0">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2.5">
-              <Store className="w-5 h-5 text-[#CA922B]" />
-              <div>
-                <h2 className="font-serif font-bold text-white text-base leading-tight">{businessName}</h2>
-                <p className="text-[#F5EBD8]/50 text-xs">Edit business</p>
-              </div>
-            </div>
-            <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 shrink-0">
-              <X className="w-4 h-4 text-[#F5EBD8]" />
-            </button>
-          </div>
-
-          {/* Tab bar */}
-          <div className="flex gap-1 overflow-x-auto scrollbar-hide -mx-1 px-1">
-            {TABS.map(t => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors shrink-0 ${
-                  tab === t.id
-                    ? "bg-[#CA922B] text-white"
-                    : "text-[#F5EBD8]/50 hover:text-[#F5EBD8] hover:bg-white/10"
-                }`}
-              >
-                {t.icon}{t.label}
-              </button>
-            ))}
-          </div>
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/60 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
+      <div className="flex max-h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-2xl sm:max-h-[90vh] sm:max-w-2xl sm:rounded-3xl" onClick={(event) => event.stopPropagation()}>
+        <div className="shrink-0 bg-[#2B1507] px-5 py-4">
+          <div className="mb-3 flex items-center justify-between"><div className="flex items-center gap-2.5"><Store className="h-5 w-5 text-[#CA922B]" /><div><h2 className="font-serif text-base font-bold leading-tight text-white">{businessName}</h2><p className="text-xs text-[#F5EBD8]/50">Admin profile editor — audited changes only</p></div></div><button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 hover:bg-white/20"><X className="h-4 w-4 text-[#F5EBD8]" /></button></div>
+          <div className="-mx-1 flex gap-1 overflow-x-auto px-1">{TABS.map((item) => <button key={item.id} type="button" onClick={() => setTab(item.id)} className={`flex shrink-0 items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-colors ${tab === item.id ? "bg-[#CA922B] text-white" : "text-[#F5EBD8]/50 hover:bg-white/10 hover:text-[#F5EBD8]"}`}>{item.icon}{item.label}</button>)}</div>
         </div>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 py-5">
-          {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-[#CA922B]" />
-            </div>
-          ) : fetchError ? (
-            <div className="flex items-center gap-2 text-sm text-red-700 bg-red-50 border border-red-200 rounded-2xl px-4 py-4">
-              <AlertTriangle className="w-5 h-5 shrink-0" /> {fetchError}
-              <button onClick={() => void fetchBiz()} className="ml-auto underline text-xs">Retry</button>
-            </div>
-          ) : (
-            <>
-              {/* ── Tab: Info ──────────────────────────────────────────── */}
-              {tab === "info" && (
-                <div className="space-y-4">
-                  <div>
-                    <label className={labelCls}>Business Name</label>
-                    <input className={inputCls} value={name} onChange={e => setName(e.target.value)} placeholder="Business name" />
-                  </div>
-                  <div>
-                    <label className={labelCls}>Description</label>
-                    <textarea className={`${inputCls} resize-none`} rows={4} value={description} onChange={e => setDescription(e.target.value)} placeholder="What makes this business special?" />
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className={labelCls}>Phone</label>
-                      <input className={inputCls} type="tel" value={phone} onChange={e => setPhone(e.target.value)} placeholder="(555) 000-0000" />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Website</label>
-                      <input className={inputCls} type="url" value={website} onChange={e => setWebsite(e.target.value)} placeholder="https://" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className={labelCls}>Address</label>
-                    <input className={inputCls} value={address} onChange={e => setAddress(e.target.value)} placeholder="123 Main St" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className={labelCls}>City</label>
-                      <input className={inputCls} value={city} onChange={e => setCity(e.target.value)} placeholder="City" />
-                    </div>
-                    <div>
-                      <label className={labelCls}>State</label>
-                      <input className={inputCls} value={state} onChange={e => setState(e.target.value)} placeholder="VA" maxLength={2} />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className={labelCls}>Hours</label>
-                      <input className={inputCls} value={hours} onChange={e => setHours(e.target.value)} placeholder="Mon–Fri 9am–6pm" />
-                    </div>
-                    <div>
-                      <label className={labelCls}>Price Range</label>
-                      <select className={inputCls} value={priceRange} onChange={e => setPriceRange(e.target.value)}>
-                        <option value="">Select</option>
-                        {["$", "$$", "$$$", "$$$$"].map(p => <option key={p} value={p}>{p}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* ── Tab: Social ────────────────────────────────────────── */}
-              {tab === "social" && (
-                <div className="space-y-4">
-                  {([
-                    { label: "Instagram", key: "instagram", value: instagram, set: setInstagram, prefix: "@" },
-                    { label: "TikTok", key: "tiktok", value: tiktok, set: setTiktok, prefix: "@" },
-                    { label: "Facebook", key: "facebook", value: facebook, set: setFacebook, prefix: "URL or handle" },
-                    { label: "Twitter / X", key: "twitter", value: twitter, set: setTwitter, prefix: "@" },
-                    { label: "YouTube", key: "youtube", value: youtube, set: setYoutube, prefix: "Channel URL or @handle" },
-                    { label: "Pinterest", key: "pinterest", value: pinterest, set: setPinterest, prefix: "@" },
-                  ] as const).map(({ label, value, set, prefix }) => (
-                    <div key={label}>
-                      <label className={labelCls}>{label}</label>
-                      <input
-                        className={inputCls}
-                        value={value as string}
-                        onChange={e => set(e.target.value)}
-                        placeholder={prefix as string}
-                      />
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* ── Tab: Identity ──────────────────────────────────────── */}
-              {tab === "identity" && (
-                <div className="space-y-5">
-                  <div>
-                    <label className={labelCls}>Category</label>
-                    <select className={inputCls} value={category} onChange={e => setCategory(e.target.value)}>
-                      <option value="">Select category</option>
-                      {hasLegacyCategory && (
-                        <option value={category}>{category} (current category)</option>
-                      )}
-                      {BUSINESS_CATEGORY_TAXONOMY.map(c => (
-                        <option key={c.name} value={c.name}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  {selectedCategoryData?.subcategories && selectedCategoryData.subcategories.length > 0 && (
-                    <div>
-                      <label className={labelCls}>Subcategory</label>
-                      <select className={inputCls} value={subcategory} onChange={e => setSubcategory(e.target.value)}>
-                        <option value="">Select subcategory</option>
-                        {selectedCategoryData.subcategories.map((s: string) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-                  <OwnershipDesignationCombobox
-                    id="admin-edit-ownership-designations"
-                    options={OWNERSHIP_DESIGNATIONS.map((label) => ({ value: label, label }))}
-                    values={ownershipDesignations}
-                    onChange={setOwnershipDesignations}
-                    helperText="Type Black, Hispanic, Ethiopian, or another documented designation. Only selected approved labels are saved."
-                  />
-                </div>
-              )}
-
-              {/* ── Tab: Discovery ─────────────────────────────────────── */}
-              {tab === "discovery" && (
-                <div className="space-y-6">
-                  {/* Vibes */}
-                  {vibeEligible ? (
-                    <div>
-                      <label className={labelCls}>Vibes — {selectedVibes.length} selected</label>
-                      <p className="text-xs text-[#3A1F0E]/40 mb-3">Select the vibes that best describe this place</p>
-                      <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto pr-1">
-                        {availableVibes.map((v) => (
-                          <button
-                            key={v.label}
-                            type="button"
-                            onClick={() => toggleVibe(v.label)}
-                            title={v.helperText}
-                            className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
-                              selectedVibes.includes(v.label)
-                                ? "bg-[#CA922B] text-white border-[#CA922B]"
-                                : "bg-white text-[#3A1F0E]/60 border-[#2B1507]/15 hover:border-[#CA922B]/50"
-                            }`}
-                          >
-                            {v.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-[#FAF6EF] rounded-2xl px-4 py-4 text-sm text-[#3A1F0E]/50">
-                      Vibes are available for Restaurant, Retail, and Experience categories. Change the category in the Identity tab to unlock vibes.
-                    </div>
-                  )}
-
-                  {/* Tags */}
-                  <div>
-                    <label className={labelCls}>Tags — {selectedTags.length} added</label>
-                    <p className="text-xs text-[#3A1F0E]/40 mb-3">Type a tag and press Enter or Add</p>
-                    <div className="flex gap-2 mb-3">
-                      <input
-                        className={`${inputCls} flex-1`}
-                        value={tagInput}
-                        onChange={e => setTagInput(e.target.value)}
-                        onKeyDown={e => e.key === "Enter" && (e.preventDefault(), addTag())}
-                        placeholder="e.g. Soul Food, Family Friendly…"
-                      />
-                      <button
-                        type="button"
-                        onClick={addTag}
-                        disabled={!tagInput.trim()}
-                        className="px-4 py-2.5 bg-[#CA922B] hover:bg-[#B38024] disabled:opacity-40 text-white rounded-xl text-sm font-bold transition-colors shrink-0"
-                      >
-                        Add
-                      </button>
-                    </div>
-                    {selectedTags.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {selectedTags.map(t => (
-                          <span key={t} className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2B1507]/5 rounded-full text-xs font-bold text-[#3A1F0E]">
-                            {t}
-                            <button
-                              type="button"
-                              onClick={() => setSelectedTags(prev => prev.filter(x => x !== t))}
-                              className="text-[#3A1F0E]/40 hover:text-red-500 transition-colors"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* ── Tab: Photos ────────────────────────────────────────── */}
-              {tab === "photos" && biz && (
-                <AdminBusinessMediaStep
-                  businessId={businessId}
-                  businessName={businessName}
-                  onDone={() => { onSaved(); onClose(); }}
-                  showSuccessBanner={false}
-                />
-              )}
-            </>
-          )}
+          {loading ? <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-[#CA922B]" /></div> : fetchError ? <div className="flex items-center gap-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700"><AlertTriangle className="h-5 w-5 shrink-0" />{fetchError}<button type="button" onClick={() => void fetchBiz()} className="ml-auto underline">Retry</button></div> : <>
+            {tab === "info" && <div className="space-y-4"><div><label className={labelCls}>Business name</label><input className={inputCls} value={name} onChange={(event) => setName(event.target.value)} /></div><div><label className={labelCls}>Description</label><textarea className={`${inputCls} resize-none`} rows={4} value={description} onChange={(event) => setDescription(event.target.value)} /></div><div className="grid gap-4 sm:grid-cols-2"><div><label className={labelCls}>Phone</label><input className={inputCls} value={phone} onChange={(event) => setPhone(event.target.value)} /></div><div><label className={labelCls}>Website</label><input className={inputCls} type="url" placeholder="https://" value={website} onChange={(event) => setWebsite(event.target.value)} /></div></div><div><label className={labelCls}>Address</label><input className={inputCls} value={address} onChange={(event) => setAddress(event.target.value)} /><p className="mt-1 text-xs text-[#3A1F0E]/50">Changing an address clears any old map pin. A new pin requires separate, audited geocode evidence.</p></div><div className="grid grid-cols-2 gap-4"><div><label className={labelCls}>City</label><input className={inputCls} value={city} onChange={(event) => setCity(event.target.value)} /></div><div><label className={labelCls}>State / region</label><input className={inputCls} value={state} onChange={(event) => setState(event.target.value)} /></div></div><div className="grid grid-cols-2 gap-4"><div><label className={labelCls}>Hours</label><input className={inputCls} value={hours} onChange={(event) => setHours(event.target.value)} /></div><div><label className={labelCls}>Price range</label><select className={inputCls} value={priceRange} onChange={(event) => setPriceRange(event.target.value)}><option value="">Select</option>{["$", "$$", "$$$", "$$$$"].map((price) => <option key={price} value={price}>{price}</option>)}</select></div></div></div>}
+            {tab === "social" && <div className="space-y-4">{([{ label: "Instagram", value: instagram, set: setInstagram, placeholder: "@handle or official URL" }, { label: "TikTok", value: tiktok, set: setTiktok, placeholder: "@handle or official URL" }, { label: "Facebook", value: facebook, set: setFacebook, placeholder: "Official URL or handle" }, { label: "X / Twitter", value: twitter, set: setTwitter, placeholder: "@handle or official URL" }, { label: "YouTube", value: youtube, set: setYoutube, placeholder: "Channel URL or @handle" }, { label: "Pinterest", value: pinterest, set: setPinterest, placeholder: "@handle or official URL" }] as const).map(({ label, value, set, placeholder }) => <div key={label}><label className={labelCls}>{label}</label><input className={inputCls} value={value} placeholder={placeholder} onChange={(event) => set(event.target.value)} /></div>)}</div>}
+            {tab === "identity" && <div className="space-y-5"><div><label className={labelCls}>Category</label><select className={inputCls} value={category} onChange={(event) => setCategory(event.target.value)}>{hasLegacyCategory && <option value={category}>{category} (current)</option>}{BUSINESS_CATEGORY_TAXONOMY.map((item) => <option key={item.name} value={item.name}>{item.name}</option>)}</select></div><div><label className={labelCls}>Subcategory</label><select className={inputCls} value={subcategory} onChange={(event) => setSubcategory(event.target.value)}><option value="">Select subcategory</option>{selectedCategory?.subcategories?.map((item: string) => <option key={item} value={item}>{item}</option>)}</select></div><OwnershipDesignationCombobox id="admin-edit-ownership-designations" options={OWNERSHIP_DESIGNATIONS.map((label) => ({ value: label, label }))} values={ownershipDesignations} onChange={setOwnershipDesignations} helperText="Ownership labels require a public source receipt. They remain source-submitted until a separate documented-review decision; saving here never makes them verified." />{ownershipDesignations.length > 0 && <div className="space-y-3 rounded-2xl border border-amber-200 bg-amber-50 p-4"><div className="flex items-center gap-2 text-sm font-bold text-amber-900"><ShieldCheck className="h-4 w-4" />Ownership source receipt / provenance</div><div><label className={labelCls}>Public source URL</label><input className={inputCls} type="url" placeholder="https://" value={ownershipReceipt.sourceUrl} onChange={(event) => setOwnershipReceipt((current) => ({ ...current, sourceUrl: event.target.value }))} /></div><div className="grid gap-3 sm:grid-cols-2"><div><label className={labelCls}>Source label</label><input className={inputCls} placeholder="Official site, dated article, etc." value={ownershipReceipt.sourceLabel} onChange={(event) => setOwnershipReceipt((current) => ({ ...current, sourceLabel: event.target.value }))} /></div><div><label className={labelCls}>Observed on</label><input className={inputCls} type="date" value={ownershipReceipt.observedAt} onChange={(event) => setOwnershipReceipt((current) => ({ ...current, observedAt: event.target.value }))} /></div></div><div><label className={labelCls}>Receipt note (optional)</label><textarea className={`${inputCls} resize-none`} rows={2} value={ownershipReceipt.note ?? ""} onChange={(event) => setOwnershipReceipt((current) => ({ ...current, note: event.target.value || null }))} /></div></div>}</div>}
+            {tab === "discovery" && <div className="space-y-6">{vibeEligible ? <div><label className={labelCls}>Vibes — {selectedVibes.length} selected</label><div className="flex max-h-64 flex-wrap gap-2 overflow-y-auto pr-1">{(VIBES_BY_CATEGORY[category] ?? []).map((vibe) => <button key={vibe.label} type="button" title={vibe.helperText} onClick={() => toggleVibe(vibe.label)} className={`rounded-full border px-3 py-1.5 text-xs font-bold ${selectedVibes.includes(vibe.label) ? "border-[#CA922B] bg-[#CA922B] text-white" : "border-[#2B1507]/15 bg-white text-[#3A1F0E]/60"}`}>{vibe.label}</button>)}</div></div> : <div className="rounded-2xl bg-[#FAF6EF] px-4 py-4 text-sm text-[#3A1F0E]/50">Vibes are available for eligible taxonomy categories.</div>}<div><label className={labelCls}>Service tags — {selectedTags.length} added</label><div className="mb-3 flex gap-2"><input className={`${inputCls} flex-1`} value={tagInput} placeholder="e.g. vegan options" onChange={(event) => setTagInput(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); addTag(); } }} /><button type="button" onClick={addTag} className="rounded-xl bg-[#CA922B] px-4 text-sm font-bold text-white">Add</button></div><div className="flex flex-wrap gap-2">{selectedTags.map((tag) => <span key={tag} className="flex items-center gap-1.5 rounded-full bg-[#2B1507]/5 px-3 py-1.5 text-xs font-bold text-[#3A1F0E]">{tag}<button type="button" onClick={() => setSelectedTags((current) => current.filter((item) => item !== tag))}><X className="h-3 w-3" /></button></span>)}</div></div></div>}
+            {tab === "catalog" && <div className="space-y-6"><div className="rounded-2xl border border-sky-200 bg-sky-50 p-4 text-sm text-sky-950"><strong>Kinfolk Catalog is an internal intake cohort.</strong> It points to this existing canonical business only. It never creates a listing, changes public visibility, or turns a business into an owner-verified profile.</div><div><label className={labelCls}>Catalog state</label><select className={inputCls} value={catalogState} onChange={(event) => setCatalogState(event.target.value as typeof catalogState)}>{["intake", "review", "ready", "held", "removed"].map((item) => <option key={item} value={item}>{item}</option>)}</select></div><div><label className={labelCls}>Catalog decision / review reason</label><textarea className={`${inputCls} resize-none`} rows={3} value={catalogReason} onChange={(event) => setCatalogReason(event.target.value)} placeholder="Required audit reason (3–1,000 characters)" /></div><button type="button" disabled={catalogSaving || catalogReason.trim().length < 3} onClick={() => void saveCatalogMembership()} className="inline-flex items-center gap-2 rounded-full bg-[#2B1507] px-5 py-2.5 text-sm font-bold text-[#F5EBD8] disabled:opacity-50">{catalogSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ClipboardCheck className="h-4 w-4" />}{catalogMembership ? "Update catalog membership" : "Add existing business to catalog intake"}</button><div className="border-t border-[#2B1507]/10 pt-5"><h3 className="mb-2 text-sm font-bold text-[#3A1F0E]">Listing lifecycle — separate audited control</h3><p className="mb-3 text-xs text-[#3A1F0E]/55">This is the only control here that can change public discovery. It is reversible and requires its own reason.</p><select className={inputCls} value={listingStatus} onChange={(event) => setListingStatus(event.target.value as typeof listingStatus)}>{["live_unclaimed", "live_claimed", "staged", "archived"].map((item) => <option key={item} value={item}>{item}</option>)}</select><textarea className={`${inputCls} mt-3 resize-none`} rows={2} value={listingReason} onChange={(event) => setListingReason(event.target.value)} placeholder="Lifecycle reason (3–1,000 characters)" /><button type="button" disabled={listingSaving || listingReason.trim().length < 3} onClick={() => void saveListingStatus()} className="mt-3 inline-flex items-center gap-2 rounded-full border border-[#CA922B]/40 px-5 py-2.5 text-sm font-bold text-[#704809] disabled:opacity-50">{listingSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}Apply audited lifecycle change</button></div></div>}
+            {tab === "photos" && biz && <AdminBusinessMediaStep businessId={businessId} businessName={businessName} onDone={() => { onSaved(); onClose(); }} showSuccessBanner={false} />}
+          </>}
         </div>
-
-        {/* Footer — save + nav (hidden on Photos tab, which has its own Done) */}
-        {tab !== "photos" && !loading && !fetchError && (
-          <div className="shrink-0 px-5 py-4 border-t border-[#2B1507]/8 bg-white flex items-center gap-3">
-            {/* Prev tab */}
-            <button
-              onClick={() => setTab(TABS[Math.max(0, tabIdx - 1)].id)}
-              disabled={tabIdx === 0}
-              className="w-9 h-9 rounded-full border border-[#2B1507]/15 flex items-center justify-center text-[#3A1F0E]/40 hover:border-[#CA922B]/50 disabled:opacity-30 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-            </button>
-
-            <div className="flex-1 text-center">
-              {saveError && (
-                <p className="text-xs text-red-600 flex items-center justify-center gap-1">
-                  <AlertTriangle className="w-3.5 h-3.5" /> {saveError}
-                </p>
-              )}
-              {savedOk && (
-                <p className="text-xs text-green-700 flex items-center justify-center gap-1">
-                  <Check className="w-3.5 h-3.5" /> Saved — public profile links are live now
-                </p>
-              )}
-            </div>
-
-            {/* Next tab */}
-            <button
-              onClick={() => setTab(TABS[Math.min(TABS.length - 1, tabIdx + 1)].id)}
-              disabled={tabIdx === TABS.length - 1}
-              className="w-9 h-9 rounded-full border border-[#2B1507]/15 flex items-center justify-center text-[#3A1F0E]/40 hover:border-[#CA922B]/50 disabled:opacity-30 transition-colors"
-            >
-              <ChevronRight className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => void save()}
-              disabled={saving || !name.trim()}
-              className="flex items-center gap-2 bg-[#2B1507] hover:bg-[#3A1F0E] disabled:opacity-50 text-[#F5EBD8] rounded-full px-6 py-2.5 text-sm font-bold transition-colors"
-            >
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              Save Changes
-            </button>
-          </div>
-        )}
+        {tab !== "photos" && !loading && !fetchError && <div className="flex shrink-0 items-center gap-3 border-t border-[#2B1507]/8 bg-white px-5 py-4"><button type="button" onClick={() => setTab(TABS[Math.max(0, tabIndex - 1)].id)} disabled={tabIndex === 0} className="flex h-9 w-9 items-center justify-center rounded-full border border-[#2B1507]/15 disabled:opacity-30"><ChevronLeft className="h-4 w-4" /></button><div className="flex-1 text-center">{saveError && <p className="flex items-center justify-center gap-1 text-xs text-red-600"><AlertTriangle className="h-3.5 w-3.5" />{saveError}</p>}{savedMessage && <p className="flex items-center justify-center gap-1 text-xs text-green-700"><Check className="h-3.5 w-3.5" />{savedMessage}</p>}</div><button type="button" onClick={() => setTab(TABS[Math.min(TABS.length - 1, tabIndex + 1)].id)} disabled={tabIndex === TABS.length - 1} className="flex h-9 w-9 items-center justify-center rounded-full border border-[#2B1507]/15 disabled:opacity-30"><ChevronRight className="h-4 w-4" /></button><button type="button" onClick={() => void saveProfile()} disabled={saving || !name.trim() || !changeNote.trim() || tab === "catalog"} className="inline-flex items-center gap-2 rounded-full bg-[#2B1507] px-5 py-2.5 text-sm font-bold text-[#F5EBD8] disabled:opacity-50">{saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}Save profile</button></div>}
+        {tab !== "photos" && !loading && !fetchError && <div className="shrink-0 border-t border-[#2B1507]/5 bg-[#FAF6EF] px-5 py-3"><label className={labelCls}>Profile edit note — required for audit</label><input className={inputCls} value={changeNote} onChange={(event) => setChangeNote(event.target.value)} placeholder="What changed and why?" maxLength={1000} /></div>}
       </div>
     </div>
   );

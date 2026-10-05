@@ -2,24 +2,45 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-const source = () =>
-  readFileSync(
-    fileURLToPath(new URL("../components/AdminEditBusiness.tsx", import.meta.url)),
-    "utf8",
-  );
+const source = () => readFileSync(
+  fileURLToPath(new URL("../components/AdminEditBusiness.tsx", import.meta.url)),
+  "utf8",
+);
+const adminPage = () => readFileSync(
+  fileURLToPath(new URL("../pages/admin.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("admin business edit preservation", () => {
-  it("keeps an older stored category visible rather than presenting an empty selector", () => {
+  it("loads the protected administrator profile endpoint with the shared bearer-and-cookie fetch helper", () => {
     const editor = source();
-    expect(editor).toContain("const hasLegacyCategory");
-    expect(editor).toContain("(current category)");
-    expect(editor).toContain('value={category}');
+    expect(editor).toContain('import { authenticatedFetch } from "@/lib/authenticatedFetch"');
+    expect(editor).toContain("/api/admin/businesses/${businessId}/profile");
+    expect(editor).not.toContain("/api/businesses/${businessId}`");
   });
 
-  it("does not overwrite a retained category with an empty value and reports transport failures", () => {
+  it("keeps legacy categories visible and does not send blackOwned as a generic profile edit", () => {
     const editor = source();
-    expect(editor).toContain("if (category.trim()) body.category = category.trim();");
-    expect(editor).toContain("else if (biz?.category?.trim()) body.category = biz.category.trim();");
-    expect(editor).toContain("Could not save this business. Check the connection and try again.");
+    expect(editor).toContain("const hasLegacyCategory");
+    expect(editor).toContain("(current)");
+    expect(editor).not.toContain("blackOwned: ownershipDesignations");
+    expect(editor).toContain("ownershipReceipt");
+    expect(editor).toContain("changeNote");
+  });
+
+  it("keeps map pins and lifecycle publication out of the generic save path", () => {
+    const editor = source();
+    expect(editor).toContain("A new pin requires separate, audited geocode evidence");
+    expect(editor).toContain("/listing-status");
+    expect(editor).toContain("Apply audited lifecycle change");
+    expect(editor).toContain("It never creates a listing, changes public visibility, or turns a business into an owner-verified profile.");
+  });
+
+  it("restores the row-level editor in the master inventory while retaining separate status actions", () => {
+    const page = adminPage();
+    expect(page).toContain("Edit profile is available. Choose a status tab before archival");
+    expect(page).toContain("setEditingBiz({ id: biz.id, name: biz.name })");
+    expect(page).toContain("KinfolkCatalogCohort");
+    expect(page).toContain('id: "kinfolk-catalog"');
   });
 });

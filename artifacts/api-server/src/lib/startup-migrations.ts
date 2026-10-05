@@ -5626,8 +5626,68 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       after jsonb,
       created_at timestamptz NOT NULL DEFAULT now()
     );
-    CREATE INDEX IF NOT EXISTS founder_product_knowledge_audit_record_idx
-      ON founder_product_knowledge_audit (knowledge_id, created_at DESC);`,
+   CREATE INDEX IF NOT EXISTS founder_product_knowledge_audit_record_idx
+     ON founder_product_knowledge_audit (knowledge_id, created_at DESC);`,
+ },
+  {
+    // This schema is additive only: it does not create, publish, merge, or
+    // remove a business. Catalog membership is a durable relation to an
+    // existing canonical profile and each state change keeps an audit receipt.
+    name: "admin_business_edit_and_kinfolk_catalog_v1",
+    sql: `CREATE TABLE IF NOT EXISTS business_admin_profile_edit_audit_events (
+      id UUID PRIMARY KEY,
+      business_id TEXT NOT NULL,
+      actor_user_id TEXT,
+      change_note TEXT NOT NULL CHECK (char_length(change_note) BETWEEN 3 AND 1000),
+      changed_fields JSONB NOT NULL,
+      before_state JSONB NOT NULL,
+      after_state JSONB NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS business_admin_profile_edit_audit_business_created_idx
+      ON business_admin_profile_edit_audit_events (business_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS business_admin_ownership_source_receipts (
+      id UUID PRIMARY KEY,
+      business_id TEXT NOT NULL,
+      ownership_designations JSONB NOT NULL,
+      source_url TEXT NOT NULL,
+      source_label TEXT NOT NULL,
+      observed_at DATE NOT NULL,
+      note TEXT,
+      actor_user_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS business_admin_ownership_receipt_business_created_idx
+      ON business_admin_ownership_source_receipts (business_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS business_catalog_cohort_memberships (
+      business_id TEXT NOT NULL,
+      cohort_key TEXT NOT NULL CHECK (cohort_key = 'kinfolk_catalog'),
+      state TEXT NOT NULL CHECK (state IN ('intake', 'review', 'ready', 'held', 'removed')),
+      reason TEXT NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 1000),
+      created_by_user_id TEXT,
+      updated_by_user_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (business_id, cohort_key)
+    );
+    CREATE INDEX IF NOT EXISTS business_catalog_cohort_membership_state_updated_idx
+      ON business_catalog_cohort_memberships (cohort_key, state, updated_at DESC);
+
+    CREATE TABLE IF NOT EXISTS business_catalog_cohort_audit_events (
+      id UUID PRIMARY KEY,
+      business_id TEXT NOT NULL,
+      cohort_key TEXT NOT NULL CHECK (cohort_key = 'kinfolk_catalog'),
+      action TEXT NOT NULL CHECK (action IN ('added', 'state_changed')),
+      actor_user_id TEXT,
+      reason TEXT NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 1000),
+      before_state JSONB,
+      after_state JSONB NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS business_catalog_cohort_audit_business_created_idx
+      ON business_catalog_cohort_audit_events (business_id, created_at DESC);`,
   },
 ];
 

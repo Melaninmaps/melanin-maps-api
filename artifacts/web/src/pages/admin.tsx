@@ -49,6 +49,7 @@ import {
 } from "lucide-react";
 import { AdminAddBusiness } from "@/components/AdminAddBusiness";
 import { AdminEditBusiness } from "@/components/AdminEditBusiness";
+import { KinfolkCatalogCohort } from "@/components/KinfolkCatalogCohort";
 import { AdminFeedbackTab } from "@/components/AdminFeedbackTab";
 import { AdminAccessLedger } from "@/components/AdminAccessLedger";
 import { AdminBusinessVideoContributions } from "@/components/AdminBusinessVideoContributions";
@@ -459,6 +460,7 @@ type Tab =
   | "users"
   | "access"
   | "businesses"
+  | "kinfolk-catalog"
   | "members"
   | "reviews"
   | "reports"
@@ -2785,6 +2787,11 @@ Selected: ${summary}`,
       label: "Businesses",
       icon: <Store className="w-4 h-4" />,
       badge: contactedCount || undefined,
+    },
+    {
+      id: "kinfolk-catalog",
+      label: "Kinfolk Catalog",
+      icon: <BookOpen className="w-4 h-4" />,
     },
     {
       id: "members",
@@ -7982,6 +7989,8 @@ Selected: ${summary}`,
           <AdminBusinessReview embedded />
         </div>
       )}
+
+      {tab === "kinfolk-catalog" && <KinfolkCatalogCohort />}
 
       {tab === "business-videos" && (
         <div className="p-6">
