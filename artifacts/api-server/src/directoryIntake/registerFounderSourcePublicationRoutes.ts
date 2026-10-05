@@ -670,9 +670,10 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
                website = $2, instagram = COALESCE($3, instagram), facebook = COALESCE($4, facebook),
                tiktok = COALESCE($5, tiktok), twitter = COALESCE($6, twitter), youtube = COALESCE($7, youtube),
                pinterest = COALESCE($8, pinterest), ownership_designations = (
-                 SELECT jsonb_agg(DISTINCT value) FROM jsonb_array_elements_text(
-                   COALESCE(ownership_designations, '[]'::jsonb) || $9::jsonb
-                 ) AS value
+                 SELECT COALESCE(jsonb_agg(DISTINCT value), '[]'::jsonb)
+                   FROM jsonb_array_elements_text(
+                     COALESCE(ownership_designations, '[]'::jsonb) || $9::jsonb
+                   ) AS value
                ), black_owned = COALESCE(black_owned, false) OR $10, updated_at = now()
              WHERE id = $1`,
             [
