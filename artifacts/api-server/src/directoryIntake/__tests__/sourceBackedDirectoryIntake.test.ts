@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildSourceBackedDirectoryIntakePlan,
+  nextSourceReceiptCursor,
   normalizeDirectoryIdentity,
   selectSourceBackedEnrichmentBatch,
   sourceBackedDirectoryPublicationFields,
@@ -282,6 +283,17 @@ describe("source-backed directory reconciliation", () => {
     expect(secondBatch.matches.map((match) => match.existingBusinessId)).toEqual(["canonical-c"]);
     expect(secondBatch.remainingReceiptCount).toBe(0);
     expect(secondBatch.nextCursor).toBeNull();
+  });
+
+  it("returns the last processed source key for exclusive cursor pagination", () => {
+    const scope = [
+      candidate({ sourceRecordKey: "source-receipt:a" }),
+      candidate({ sourceRecordKey: "source-receipt:b" }),
+      candidate({ sourceRecordKey: "source-receipt:c" }),
+    ];
+
+    expect(nextSourceReceiptCursor(scope, scope.slice(0, 2))).toBe("source-receipt:b");
+    expect(nextSourceReceiptCursor(scope, scope.slice(2))).toBeNull();
   });
 
   it("preserves overlong source categories and contacts without overflowing bounded columns", () => {

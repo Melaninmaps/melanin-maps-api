@@ -138,6 +138,24 @@ export function selectSourceBackedEnrichmentBatch<T extends Readonly<{
   };
 }
 
+/**
+ * Cursor pagination is exclusive (`sourceRecordKey > cursor`). Return the last
+ * processed key—not the first unprocessed key—so no immutable receipt is
+ * skipped when the next bounded reconciliation page begins.
+ */
+export function nextSourceReceiptCursor<T extends Readonly<{
+  sourceRecordKey: string;
+}>>(
+  scope: readonly T[],
+  selected: readonly T[],
+): string | null {
+  const lastProcessedKey = selected.at(-1)?.sourceRecordKey ?? null;
+  if (!lastProcessedKey) return null;
+  return scope.some((candidate) => candidate.sourceRecordKey > lastProcessedKey)
+    ? lastProcessedKey
+    : null;
+}
+
 function normalizeStreetAddress(value: string | null | undefined): string {
   return (value ?? "")
     .toLowerCase()

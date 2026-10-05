@@ -16,6 +16,7 @@ import { minneapolisSourceBackedDirectoryCandidates } from "./minneapolisSourceB
 import { mnblackStatewideSourceBackedDirectoryCandidates } from "./mnblackStatewideSourceBackedDirectoryCandidates";
 import {
   buildSourceBackedDirectoryIntakePlan,
+  nextSourceReceiptCursor,
   normalizeDirectoryIdentity,
   sourceBackedDirectoryPublicationFields,
   type ExistingDirectoryBusiness,
@@ -321,11 +322,12 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
     const rawLimit = Number(req.query.limit ?? 100);
     const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(Math.floor(rawLimit), 1), 100) : 100;
     if (!city && !batch) return void res.status(400).json({ error: "A source batch or city is required." });
-    const selected = FOUNDER_SOURCE_CANDIDATES
+    const scope = FOUNDER_SOURCE_CANDIDATES
       .filter((candidate) => !batch || candidate.batch === batch)
       .filter((candidate) => !city || normalizeDirectoryIdentity(candidate.city) === normalizeDirectoryIdentity(city))
       .filter((candidate) => !state || candidate.state?.trim().toUpperCase() === state)
-      .sort((a, b) => a.sourceRecordKey.localeCompare(b.sourceRecordKey))
+      .sort((a, b) => a.sourceRecordKey.localeCompare(b.sourceRecordKey));
+    const selected = scope
       .filter((candidate) => !cursor || candidate.sourceRecordKey > cursor)
       .slice(0, limit);
     try {
@@ -363,7 +365,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           sourceIdentity: { name: candidate.name, city: candidate.city, state: candidate.state },
           attachedProfiles: receiptsByKey.get(candidate.sourceRecordKey) ?? [],
         })),
-        nextCursor: selected.at(-1)?.sourceRecordKey ?? null,
+        nextCursor: nextSourceReceiptCursor(scope, selected),
       });
     } catch (error) {
       req.log.error({ error }, "Founder-source receipt audit failed");
@@ -542,7 +544,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           ok: true,
           requiresExplicitApply: true,
           manifest: beforeManifest,
-          nextCursor: scope.find((candidate) => candidate.sourceRecordKey > selected.at(-1)!.sourceRecordKey)?.sourceRecordKey ?? null,
+          nextCursor: nextSourceReceiptCursor(scope, selected),
           rule: "No profile, map pin, ownership verification, or source receipt is written by a dry run.",
         });
       }
@@ -700,7 +702,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           ok: true,
           batchKey,
           manifest: afterManifest,
-          nextCursor: scope.find((candidate) => candidate.sourceRecordKey > selected.at(-1)!.sourceRecordKey)?.sourceRecordKey ?? null,
+          nextCursor: nextSourceReceiptCursor(scope, selected),
           message: "Founder-source profiles were published unclaimed with documented-by-source ownership labels; no address-only map pins were created.",
         });
       } catch (error) {
