@@ -47,6 +47,7 @@ type SourceTarget = Readonly<{
 
 type FounderSourceRequest = Readonly<{
   apply: boolean;
+  existingOnly: boolean;
   city: string | null;
   state: string | null;
   batch: string | null;
@@ -73,6 +74,10 @@ function parseRequest(req: Request): FounderSourceRequest | null {
   if (!city && !batch) return null;
   return {
     apply: req.body?.apply === true,
+    // Source-receipt reconciliation is canonical-profile enrichment by
+    // default. A separate, explicit future workflow is required to create a
+    // business profile that does not already have a unique canonical record.
+    existingOnly: req.body?.existingOnly !== false,
     city,
     state,
     batch,
@@ -280,6 +285,25 @@ async function queueIdentityHold(
   );
 }
 
+/** Retains a source receipt for review when it cannot safely enrich a canonical profile. */
+async function queueCanonicalProfileHold(
+  client: { query: Function },
+  candidate: SourceBackedDirectoryCandidate,
+  reason: "no_existing_canonical_profile" | "no_usable_official_presence",
+): Promise<void> {
+  await client.query(
+    `INSERT INTO founder_source_identity_review_queue (
+       source_record_key, source_batch, conflict_reason, candidate_business_ids, source_snapshot
+     ) VALUES ($1, $2, $3, '[]'::jsonb, $4::jsonb)
+     ON CONFLICT (source_record_key) DO UPDATE SET
+       source_batch = EXCLUDED.source_batch, conflict_reason = EXCLUDED.conflict_reason,
+       candidate_business_ids = EXCLUDED.candidate_business_ids, source_snapshot = EXCLUDED.source_snapshot,
+       status = CASE WHEN founder_source_identity_review_queue.status = 'resolved' THEN 'pending'
+                     ELSE founder_source_identity_review_queue.status END`,
+    [candidate.sourceRecordKey, candidate.batch, reason, JSON.stringify(candidate)],
+  );
+}
+
 function publicManifest(
   request: FounderSourceRequest,
   selected: readonly SourceBackedDirectoryCandidate[],
@@ -294,14 +318,15 @@ function publicManifest(
   const identityHolds = plan.identityHolds.filter((hold) => selectedKeys.has(hold.candidate.sourceRecordKey));
   return {
     policyVersion: FOUNDER_SOURCE_PUBLICATION_POLICY_VERSION,
-    requestedScope: { city: request.city, state: request.state, batch: request.batch },
+    requestedScope: { city: request.city, state: request.state, batch: request.batch, existingOnly: request.existingOnly },
     sourceRecordsProcessed: selected.length,
-    profilesToCreate: publishable.length,
+    profilesToCreate: request.existingOnly ? 0 : publishable.length,
+    unmatchedCanonicalHolds: request.existingOnly ? publishable.length : 0,
     existingProfilesToEnrich: duplicateMatches.filter((match) => Boolean(match.existingBusinessId)).length,
     duplicateHolds: duplicateMatches.length,
     identityHolds: identityHolds.length,
     officialSiteBlanks: selected.filter((candidate) => Boolean(founderSourcePresence(candidate).rejectedWebsite)).length,
-    officialSocialOnlyProfiles: publishable.filter((candidate) => {
+    officialSocialOnlyProfiles: request.existingOnly ? 0 : publishable.filter((candidate) => {
       const presence = founderSourcePresence(candidate);
       return !presence.officialWebsite && presence.hasOfficialPresence;
     }).length,
@@ -550,11 +575,21 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
       }
 
       const selectedKeys = new Set(selected.map((candidate) => candidate.sourceRecordKey));
-      const newCandidates = plan.toCreate
+      const plannedCreates = plan.toCreate
+        .filter((candidate) => selectedKeys.has(candidate.sourceRecordKey));
+      const canonicalProfileHolds = request.existingOnly
+        ? [
+          ...plannedCreates.filter((candidate) => founderSourcePresence(candidate).hasOfficialPresence),
+          ...plan.duplicateMatches
+            .filter((match) => selectedKeys.has(match.candidate.sourceRecordKey) && !match.existingBusinessId)
+            .map((match) => match.candidate),
+        ]
+        : [];
+      const canonicalProfileHoldKeys = new Set(canonicalProfileHolds.map((candidate) => candidate.sourceRecordKey));
+      const newCandidates = (request.existingOnly ? [] : plannedCreates)
         .filter((candidate) => selectedKeys.has(candidate.sourceRecordKey))
         .filter((candidate) => founderSourcePresence(candidate).hasOfficialPresence);
-      const noPresence = plan.toCreate
-        .filter((candidate) => selectedKeys.has(candidate.sourceRecordKey))
+      const noPresence = plannedCreates
         .filter((candidate) => !founderSourcePresence(candidate).hasOfficialPresence);
       const duplicateMatches = plan.duplicateMatches.filter((match) => selectedKeys.has(match.candidate.sourceRecordKey));
       const identityHolds = plan.identityHolds.filter((hold) => selectedKeys.has(hold.candidate.sourceRecordKey));
@@ -575,6 +610,12 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
             JSON.stringify(beforeManifest), (req as any).user?.id ?? "founder-source-publication"],
         );
         for (const hold of identityHolds) await queueIdentityHold(client, hold);
+        for (const candidate of canonicalProfileHolds) {
+          if (!canonicalProfileHoldKeys.has(candidate.sourceRecordKey)) continue;
+          canonicalProfileHoldKeys.delete(candidate.sourceRecordKey);
+          await queueCanonicalProfileHold(client, candidate, "no_existing_canonical_profile");
+        }
+        for (const candidate of noPresence) await queueCanonicalProfileHold(client, candidate, "no_usable_official_presence");
 
         const targets: SourceTarget[] = [];
         const businessByReceipt = new Map<string, string>();
@@ -684,6 +725,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           },
           duplicateHolds: duplicateMatches.length,
           identityHolds: identityHolds.length,
+          unmatchedCanonicalHolds: [...new Set(canonicalProfileHolds.map((candidate) => candidate.sourceRecordKey))].length,
           officialSiteBlanks: blankedCount,
           officialSocialOnlyProfiles: socialOnlyCount,
           mapPinnedProfiles: 0,
