@@ -316,8 +316,10 @@ export function AIChatWidget() {
   const [messages, setMessages] = useState<Message[]>(() => [
     { id: "0", text: GREETING, fromUser: false, ts: Date.now() },
   ]);
-  const [responseFeedback, setResponseFeedback] = useState<Record<string, "helpful" | "not_helpful">>({});
+  const [responseFeedback, setResponseFeedback] = useState<Record<string, "helpful" | "not_helpful" | "needs_more_help">>({});
   const [responseFeedbackNotes, setResponseFeedbackNotes] = useState<Record<string, string>>({});
+  const [responseFeedbackTopics, setResponseFeedbackTopics] = useState<Record<string, string>>({});
+  const [responseFeedbackNeedDrafts, setResponseFeedbackNeedDrafts] = useState<Record<string, boolean>>({});
   const [feedbackSavingId, setFeedbackSavingId] = useState<string | null>(null);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -1033,12 +1035,12 @@ export function AIChatWidget() {
 
   const submitResponseFeedback = async (
     message: Message,
-    reaction: "helpful" | "not_helpful",
+    reaction: "helpful" | "not_helpful" | "needs_more_help",
     includeNote = false,
   ) => {
     const token = await getToken();
     if (!token) {
-      Alert.alert("Sign in to share feedback", "Please sign in so Kinfolk can apply your feedback to future answers.");
+      Alert.alert("Sign in to share feedback", "Please sign in to save or revoke your feedback. It does not automatically change Kinfolk’s behavior.");
       return;
     }
 
@@ -1054,10 +1056,18 @@ export function AIChatWidget() {
           messageId: message.id,
           reaction,
           note: includeNote ? responseFeedbackNotes[message.id]?.trim() || null : null,
+          topicKey: reaction === "needs_more_help" ? responseFeedbackTopics[message.id] ?? null : null,
           intentClass: message.intentClass ?? null,
         }),
       });
       if (!response.ok) throw new Error("Feedback was not saved");
+      if (reaction === "needs_more_help") {
+        setResponseFeedbackNeedDrafts((current) => {
+          const next = { ...current };
+          delete next[message.id];
+          return next;
+        });
+      }
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
       setResponseFeedback((current) => {
@@ -1067,6 +1077,40 @@ export function AIChatWidget() {
         return next;
       });
       Alert.alert("Feedback not saved", "Please check your connection and try again.");
+    } finally {
+      setFeedbackSavingId(null);
+    }
+  };
+
+  const revokeResponseFeedback = async (messageId: string) => {
+    const token = await getToken();
+    if (!token) return;
+    const previous = responseFeedback[messageId];
+    setResponseFeedback((current) => {
+      const next = { ...current };
+      delete next[messageId];
+      return next;
+    });
+    setFeedbackSavingId(messageId);
+    try {
+      const response = await fetch(`${getApiBase()}/api/kinfolk/response-feedback/${encodeURIComponent(messageId)}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error("Feedback was not revoked");
+      setResponseFeedbackNotes((current) => {
+        const next = { ...current };
+        delete next[messageId];
+        return next;
+      });
+      setResponseFeedbackTopics((current) => {
+        const next = { ...current };
+        delete next[messageId];
+        return next;
+      });
+    } catch {
+      if (previous) setResponseFeedback((current) => ({ ...current, [messageId]: previous }));
+      Alert.alert("Feedback not removed", "Please try again.");
     } finally {
       setFeedbackSavingId(null);
     }
@@ -1283,8 +1327,17 @@ export function AIChatWidget() {
                         <Feather name="thumbs-down" size={12} color={responseFeedback[item.id] === "not_helpful" ? colors.primary : colors.mutedForeground} />
                         <Text style={[styles.responseFeedbackButtonText, { color: responseFeedback[item.id] === "not_helpful" ? colors.primary : colors.mutedForeground }]}>Not helpful</Text>
                       </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => setResponseFeedbackNeedDrafts((current) => ({ ...current, [item.id]: true }))}
+                        disabled={feedbackSavingId === item.id}
+                        style={[styles.responseFeedbackButton, { borderColor: responseFeedback[item.id] === "needs_more_help" || responseFeedbackNeedDrafts[item.id] ? colors.primary : colors.border, backgroundColor: responseFeedback[item.id] === "needs_more_help" || responseFeedbackNeedDrafts[item.id] ? `${colors.primary}18` : colors.card }]}
+                        accessibilityLabel="Ask Kinfolk for more help with this answer"
+                      >
+                        <Feather name="message-circle" size={12} color={responseFeedback[item.id] === "needs_more_help" || responseFeedbackNeedDrafts[item.id] ? colors.primary : colors.mutedForeground} />
+                        <Text style={[styles.responseFeedbackButtonText, { color: responseFeedback[item.id] === "needs_more_help" || responseFeedbackNeedDrafts[item.id] ? colors.primary : colors.mutedForeground }]}>I need more help</Text>
+                      </TouchableOpacity>
                     </View>
-                    {responseFeedback[item.id] === "not_helpful" && (
+                    {(responseFeedback[item.id] === "not_helpful" || responseFeedback[item.id] === "needs_more_help" || responseFeedbackNeedDrafts[item.id]) && (
                       <View style={styles.responseFeedbackNoteRow}>
                         <TextInput
                           value={responseFeedbackNotes[item.id] ?? ""}
@@ -1295,8 +1348,8 @@ export function AIChatWidget() {
                           maxLength={240}
                         />
                         <TouchableOpacity
-                          onPress={() => void submitResponseFeedback(item, "not_helpful", true)}
-                          disabled={feedbackSavingId === item.id}
+                          onPress={() => void submitResponseFeedback(item, responseFeedbackNeedDrafts[item.id] || responseFeedback[item.id] === "needs_more_help" ? "needs_more_help" : "not_helpful", true)}
+                          disabled={feedbackSavingId === item.id || ((responseFeedbackNeedDrafts[item.id] || responseFeedback[item.id] === "needs_more_help") && !responseFeedbackTopics[item.id])}
                           style={[styles.responseFeedbackSend, { backgroundColor: colors.primary, opacity: feedbackSavingId === item.id ? 0.6 : 1 }]}
                           accessibilityLabel="Send optional Kinfolk feedback note"
                         >
@@ -1304,8 +1357,39 @@ export function AIChatWidget() {
                         </TouchableOpacity>
                       </View>
                     )}
+                    {(responseFeedback[item.id] === "needs_more_help" || responseFeedbackNeedDrafts[item.id]) && (
+                      <View style={[styles.communityNeedCard, { borderColor: `${colors.primary}35`, backgroundColor: `${colors.primary}08` }]}>
+                        <Text style={[styles.communityNeedTitle, { color: colors.foreground }]}>Choose a broad topic</Text>
+                        <Text style={[styles.communityNeedSub, { color: colors.mutedForeground }]}>Only this broad topic can count toward a private community need.</Text>
+                        <View style={styles.communityNeedTopics}>
+                          {[
+                            ["general_clarity", "Clearer explanations"],
+                            ["sources_and_freshness", "Current sources"],
+                            ["life_insurance_terms", "Life-insurance terms"],
+                            ["healthcare_navigation", "Navigating care"],
+                            ["benefits_navigation", "Benefits"],
+                            ["money_basics", "Money basics"],
+                          ].map(([key, label]) => (
+                            <TouchableOpacity
+                              key={key}
+                              onPress={() => setResponseFeedbackTopics((current) => ({ ...current, [item.id]: key }))}
+                              style={[styles.communityNeedTopic, { borderColor: responseFeedbackTopics[item.id] === key ? colors.primary : colors.border, backgroundColor: responseFeedbackTopics[item.id] === key ? `${colors.primary}18` : colors.card }]}
+                              accessibilityLabel={`Choose ${label} as a community need topic`}
+                            >
+                              <Text style={[styles.communityNeedTopicText, { color: responseFeedbackTopics[item.id] === key ? colors.primary : colors.mutedForeground }]}>{label}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                        <Text style={[styles.communityNeedPrivacy, { color: colors.mutedForeground }]}>Kinfolk does not change your answers automatically. A business owner sees only a broad topic after five different members choose it — never your name, message, note, or chat transcript.</Text>
+                      </View>
+                    )}
                     {responseFeedback[item.id] && (
-                      <Text style={[styles.responseFeedbackThanks, { color: colors.mutedForeground }]}>Thanks — this helps Kinfolk tailor future answers for you.</Text>
+                      <View style={styles.responseFeedbackSavedRow}>
+                        <Text style={[styles.responseFeedbackThanks, { color: colors.mutedForeground }]}>Thanks — your feedback does not automatically change Kinfolk.</Text>
+                        <TouchableOpacity onPress={() => void revokeResponseFeedback(item.id)} disabled={feedbackSavingId === item.id} accessibilityLabel="Remove Kinfolk feedback">
+                          <Text style={[styles.responseFeedbackRevoke, { color: colors.mutedForeground }]}>Remove feedback</Text>
+                        </TouchableOpacity>
+                      </View>
                     )}
                   </View>
                 )}
@@ -1838,6 +1922,15 @@ const styles = StyleSheet.create({
   responseFeedbackInput: { flex: 1, borderWidth: 1, borderRadius: 12, paddingHorizontal: 9, paddingVertical: 7, fontSize: 11, fontFamily: "Inter_400Regular" },
   responseFeedbackSend: { width: 31, height: 31, borderRadius: 15.5, alignItems: "center", justifyContent: "center" },
   responseFeedbackThanks: { fontSize: 10, fontFamily: "Inter_400Regular", marginTop: 5, fontStyle: "italic" },
+  responseFeedbackSavedRow: { flexDirection: "row", alignItems: "center", gap: 8, flexWrap: "wrap" },
+  responseFeedbackRevoke: { fontSize: 10, fontFamily: "Inter_600SemiBold", marginTop: 5, textDecorationLine: "underline" },
+  communityNeedCard: { borderWidth: 1, borderRadius: 12, marginTop: 7, padding: 9, maxWidth: "86%", gap: 5 },
+  communityNeedTitle: { fontSize: 11, fontFamily: "Inter_700Bold" },
+  communityNeedSub: { fontSize: 10, fontFamily: "Inter_400Regular", lineHeight: 14 },
+  communityNeedTopics: { flexDirection: "row", flexWrap: "wrap", gap: 5, marginTop: 2 },
+  communityNeedTopic: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 7, paddingVertical: 5 },
+  communityNeedTopicText: { fontSize: 10, fontFamily: "Inter_500Medium" },
+  communityNeedPrivacy: { fontSize: 9, fontFamily: "Inter_400Regular", lineHeight: 13, marginTop: 2 },
   voiceMeter: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 10, borderBottomWidth: 1 },
   voiceMeterTrack: { height: 3, borderRadius: 2, overflow: "hidden", marginBottom: 5 },
   voiceMeterFill: { height: "100%", borderRadius: 2 },

@@ -43,6 +43,15 @@ type Business = {
   description?: string;
 };
 
+type CommunityNeedInsight = {
+  id: string;
+  topicKey: string;
+  topicLabel: string;
+  memberCount: number;
+  threshold: number;
+  firstReachedAt: string;
+};
+
 type AdminSection = {
   id: string;
   icon: keyof typeof Feather.glyphMap;
@@ -69,6 +78,7 @@ export default function BusinessOwnerHome() {
   const [analyticsLocked, setAnalyticsLocked] = useState(false);
   const [skipInsights, setSkipInsights] = useState<string[]>([]);
   const [skipExpanded, setSkipExpanded] = useState(false);
+  const [communityNeeds, setCommunityNeeds] = useState<CommunityNeedInsight[]>([]);
 
   const load = useCallback(async () => {
     try {
@@ -93,6 +103,13 @@ export default function BusinessOwnerHome() {
           if (sRes.ok) {
             const sData = await sRes.json() as { messages?: string[] };
             setSkipInsights(sData.messages ?? []);
+          }
+          const needsRes = await fetch(`${getApiBase()}/api/businesses/${data.business.id}/kinfolk-community-needs`, { headers });
+          if (needsRes.ok) {
+            const needsData = await needsRes.json() as { insights?: CommunityNeedInsight[] };
+            setCommunityNeeds(needsData.insights ?? []);
+          } else {
+            setCommunityNeeds([]);
           }
         }
       }
@@ -373,6 +390,26 @@ export default function BusinessOwnerHome() {
               ))}
             </View>
 
+            {communityNeeds.length > 0 && (
+              <View style={[styles.communityNeedsCard, { backgroundColor: `${colors.primary}08`, borderColor: `${colors.primary}35` }]} testID="kinfolk-community-needs-owner-insight">
+                <View style={styles.communityNeedsHeader}>
+                  <View style={[styles.communityNeedsIcon, { backgroundColor: `${colors.primary}18` }]}>
+                    <Feather name="message-circle" size={15} color={colors.primary} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.communityNeedsTitle, { color: colors.foreground }]}>Private Kinfolk community needs</Text>
+                    <Text style={[styles.communityNeedsSub, { color: colors.mutedForeground }]}>Aggregate only — no member identity, message, note, transcript, health detail, location, or account information.</Text>
+                  </View>
+                </View>
+                {communityNeeds.map((insight) => (
+                  <View key={insight.id} style={[styles.communityNeedsInsight, { backgroundColor: colors.card, borderColor: `${colors.primary}20` }]}>
+                    <Text style={[styles.communityNeedsInsightText, { color: colors.foreground }]}>{insight.memberCount} community members asked for more help with {insight.topicLabel}.</Text>
+                    <Text style={[styles.communityNeedsDate, { color: colors.mutedForeground }]}>Threshold reached {new Date(insight.firstReachedAt).toLocaleDateString()}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
             {skipInsights.length > 0 && (
               <TouchableOpacity
                 style={[styles.skipCard, { backgroundColor: colors.card, borderColor: colors.border }]}
@@ -480,4 +517,12 @@ const styles = StyleSheet.create({
   skipRow: { flexDirection: "row", gap: 8, alignItems: "flex-start" },
   skipMsg: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1, lineHeight: 18 },
   skipMore: { fontFamily: "Inter_400Regular", fontSize: 12, textAlign: "center", paddingTop: 4 },
+  communityNeedsCard: { borderRadius: 16, borderWidth: 1, padding: 14, gap: 10, marginTop: 12 },
+  communityNeedsHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  communityNeedsIcon: { width: 34, height: 34, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  communityNeedsTitle: { fontFamily: "Inter_700Bold", fontSize: 14 },
+  communityNeedsSub: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, marginTop: 2 },
+  communityNeedsInsight: { borderRadius: 11, borderWidth: 1, paddingHorizontal: 11, paddingVertical: 10 },
+  communityNeedsInsightText: { fontFamily: "Inter_600SemiBold", fontSize: 12, lineHeight: 17 },
+  communityNeedsDate: { fontFamily: "Inter_400Regular", fontSize: 10, marginTop: 4 },
 });

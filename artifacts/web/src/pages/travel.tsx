@@ -1033,8 +1033,10 @@ function TravelPage() {
   } | null>(null);
   const [historyView, setHistoryView] = useState<"active" | "archived">("active");
   const [feedback, setFeedback] = useState<Record<string, "like" | "dislike">>({});
-  const [responseFeedback, setResponseFeedback] = useState<Record<string, "helpful" | "not_helpful">>({});
+  const [responseFeedback, setResponseFeedback] = useState<Record<string, "helpful" | "not_helpful" | "needs_more_help">>({});
   const [responseFeedbackNotes, setResponseFeedbackNotes] = useState<Record<string, string>>({});
+  const [responseFeedbackTopics, setResponseFeedbackTopics] = useState<Record<string, string>>({});
+  const [responseFeedbackNeedDrafts, setResponseFeedbackNeedDrafts] = useState<Record<string, boolean>>({});
   const [responseFeedbackSaving, setResponseFeedbackSaving] = useState<string | null>(null);
   const [responseFeedbackError, setResponseFeedbackError] = useState<Record<string, string>>({});
   const [showPrefs, setShowPrefs] = useState(false);
@@ -2064,7 +2066,7 @@ function TravelPage() {
 
   const submitResponseFeedback = async (
     message: Message,
-    reaction: "helpful" | "not_helpful",
+    reaction: "helpful" | "not_helpful" | "needs_more_help",
     includeNote = false,
   ) => {
     if (!isLoggedIn) return;
@@ -2086,10 +2088,18 @@ function TravelPage() {
           messageId: message.id,
           reaction,
           note: includeNote ? responseFeedbackNotes[message.id]?.trim() || null : null,
+          topicKey: reaction === "needs_more_help" ? responseFeedbackTopics[message.id] ?? null : null,
           intentClass: message.intentClass ?? null,
         }),
       });
       if (!response.ok) throw new Error("Feedback was not saved");
+      if (reaction === "needs_more_help") {
+        setResponseFeedbackNeedDrafts(prev => {
+          const next = { ...prev };
+          delete next[message.id];
+          return next;
+        });
+      }
     } catch {
       setResponseFeedback(current => {
         const next = { ...current };
@@ -2098,6 +2108,40 @@ function TravelPage() {
         return next;
       });
       setResponseFeedbackError(prev => ({ ...prev, [message.id]: "Feedback was not saved. Please try again." }));
+    } finally {
+      setResponseFeedbackSaving(null);
+    }
+  };
+
+  const revokeResponseFeedback = async (messageId: string) => {
+    if (!isLoggedIn) return;
+    const previous = responseFeedback[messageId];
+    setResponseFeedback(prev => {
+      const next = { ...prev };
+      delete next[messageId];
+      return next;
+    });
+    setResponseFeedbackSaving(messageId);
+    try {
+      const response = await fetch(`${BASE}api/kinfolk/response-feedback/${encodeURIComponent(messageId)}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: kinfolkAuthHeaders(),
+      });
+      if (!response.ok) throw new Error("Feedback was not revoked");
+      setResponseFeedbackNotes(prev => {
+        const next = { ...prev };
+        delete next[messageId];
+        return next;
+      });
+      setResponseFeedbackTopics(prev => {
+        const next = { ...prev };
+        delete next[messageId];
+        return next;
+      });
+    } catch {
+      if (previous) setResponseFeedback(current => ({ ...current, [messageId]: previous }));
+      setResponseFeedbackError(prev => ({ ...prev, [messageId]: "Feedback was not removed. Please try again." }));
     } finally {
       setResponseFeedbackSaving(null);
     }
@@ -2560,11 +2604,31 @@ function TravelPage() {
                             >
                               <ThumbsDown size={11} /> Not helpful
                             </button>
+                            <button
+                              type="button"
+                              onClick={() => setResponseFeedbackNeedDrafts(prev => ({ ...prev, [msg.id]: true }))}
+                              disabled={responseFeedbackSaving === msg.id}
+                              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors ${
+                                responseFeedback[msg.id] === "needs_more_help"
+                                  ? "border-[#CA922B]/50 bg-[#CA922B]/10 text-[#8D5C17]"
+                                  : "border-[#3A1F0E]/10 bg-white text-[#3A1F0E]/45 hover:border-[#CA922B]/35 hover:text-[#8D5C17]"
+                              }`}
+                              aria-label="Ask Kinfolk for more help with this answer"
+                            >
+                              <MessageSquare size={11} /> I need more help
+                            </button>
                             {responseFeedback[msg.id] && (
-                              <span className="text-[10px] italic text-[#3A1F0E]/40">Thanks — this helps Kinfolk tailor future answers for you.</span>
+                              <button
+                                type="button"
+                                onClick={() => void revokeResponseFeedback(msg.id)}
+                                disabled={responseFeedbackSaving === msg.id}
+                                className="text-[10px] italic text-[#3A1F0E]/45 underline hover:text-[#8D5C17] disabled:opacity-60"
+                              >
+                                Remove feedback
+                              </button>
                             )}
                           </div>
-                          {responseFeedback[msg.id] === "not_helpful" && (
+                          {(responseFeedback[msg.id] === "not_helpful" || responseFeedback[msg.id] === "needs_more_help" || responseFeedbackNeedDrafts[msg.id]) && (
                             <div className="mt-2 flex max-w-md items-center gap-2">
                               <input
                                 value={responseFeedbackNotes[msg.id] ?? ""}
@@ -2576,12 +2640,37 @@ function TravelPage() {
                               />
                               <button
                                 type="button"
-                                onClick={() => submitResponseFeedback(msg, "not_helpful", true)}
-                                disabled={responseFeedbackSaving === msg.id}
+                                onClick={() => void submitResponseFeedback(msg, responseFeedbackNeedDrafts[msg.id] || responseFeedback[msg.id] === "needs_more_help" ? "needs_more_help" : "not_helpful", true)}
+                                disabled={responseFeedbackSaving === msg.id || ((responseFeedbackNeedDrafts[msg.id] || responseFeedback[msg.id] === "needs_more_help") && !responseFeedbackTopics[msg.id])}
                                 className="rounded-lg bg-[#2B1507] px-2.5 py-1.5 text-[10px] font-semibold text-white transition-colors hover:bg-[#5A3517] disabled:opacity-60"
                               >
                                 Send note
                               </button>
+                            </div>
+                          )}
+                          {(responseFeedback[msg.id] === "needs_more_help" || responseFeedbackNeedDrafts[msg.id]) && (
+                            <div className="mt-2 max-w-md rounded-lg border border-[#CA922B]/20 bg-[#CA922B]/[0.04] p-2.5">
+                              <label className="block text-[10px] font-semibold text-[#3A1F0E]/60" htmlFor={`kinfolk-need-topic-${msg.id}`}>
+                                Choose a broad topic to count toward a private community need
+                              </label>
+                              <select
+                                id={`kinfolk-need-topic-${msg.id}`}
+                                value={responseFeedbackTopics[msg.id] ?? ""}
+                                onChange={(event) => setResponseFeedbackTopics(prev => ({ ...prev, [msg.id]: event.target.value }))}
+                                className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/12 bg-white px-2.5 py-1.5 text-[11px] text-[#2B1507] outline-none focus:border-[#CA922B]/50"
+                                aria-label="Choose a broad community need topic"
+                              >
+                                <option value="">Select a topic</option>
+                                <option value="general_clarity">Clearer everyday explanations</option>
+                                <option value="sources_and_freshness">Current sources and freshness</option>
+                                <option value="life_insurance_terms">Life-insurance terms</option>
+                                <option value="healthcare_navigation">Navigating care</option>
+                                <option value="benefits_navigation">Navigating benefits</option>
+                                <option value="money_basics">Money basics</option>
+                              </select>
+                              <p className="mt-1.5 text-[10px] leading-4 text-[#3A1F0E]/45">
+                                This feedback does not automatically change Kinfolk. A business owner can only see a broad topic after at least five different members choose it — never your name, message, note, or chat transcript.
+                              </p>
                             </div>
                           )}
                           {responseFeedbackError[msg.id] && (
@@ -2982,6 +3071,8 @@ function TravelPage() {
                     setFeedback({});
                     setResponseFeedback({});
                     setResponseFeedbackNotes({});
+                    setResponseFeedbackTopics({});
+                    setResponseFeedbackNeedDrafts({});
                     setResponseFeedbackError({});
                     setShowHistory(false);
                     setIncludeCommunityPerspective(false);

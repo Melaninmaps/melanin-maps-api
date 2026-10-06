@@ -247,6 +247,85 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       ON kinfolk_response_feedback (user_id, created_at DESC);`,
   },
   {
+    name: "kinfolk_feedback_flywheel_v1",
+    sql: `ALTER TABLE kinfolk_response_feedback
+      ADD COLUMN IF NOT EXISTS topic_key VARCHAR(64),
+      ADD COLUMN IF NOT EXISTS revoked_at TIMESTAMPTZ;
+    DO $$
+    DECLARE reaction_constraint TEXT;
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+         WHERE conname = 'kinfolk_response_feedback_reaction_v2_check'
+           AND conrelid = 'kinfolk_response_feedback'::regclass
+      ) THEN
+        SELECT c.conname INTO reaction_constraint
+          FROM pg_constraint AS c
+         WHERE c.conrelid = 'kinfolk_response_feedback'::regclass
+           AND c.contype = 'c'
+           AND pg_get_constraintdef(c.oid) ILIKE '%reaction%'
+         LIMIT 1;
+        IF reaction_constraint IS NOT NULL THEN
+          EXECUTE format('ALTER TABLE kinfolk_response_feedback DROP CONSTRAINT %I', reaction_constraint);
+        END IF;
+        ALTER TABLE kinfolk_response_feedback
+          ADD CONSTRAINT kinfolk_response_feedback_reaction_v2_check
+          CHECK (reaction IN ('helpful', 'not_helpful', 'needs_more_help'));
+      END IF;
+    END $$;
+    CREATE INDEX IF NOT EXISTS kinfolk_response_feedback_active_topic_idx
+      ON kinfolk_response_feedback (topic_key, created_at DESC)
+      WHERE revoked_at IS NULL AND reaction = 'needs_more_help' AND topic_key IS NOT NULL;
+    CREATE TABLE IF NOT EXISTS kinfolk_community_need_insights (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      business_id VARCHAR(255) NOT NULL REFERENCES businesses(id) ON DELETE CASCADE,
+      topic_key VARCHAR(64) NOT NULL,
+      threshold INTEGER NOT NULL DEFAULT 5 CHECK (threshold >= 5),
+      member_count INTEGER NOT NULL DEFAULT 5 CHECK (member_count >= 5),
+      status VARCHAR(16) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'revoked')),
+      first_reached_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      last_observed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      revoked_at TIMESTAMPTZ,
+      UNIQUE (business_id, topic_key, threshold)
+    );
+    CREATE INDEX IF NOT EXISTS kinfolk_community_need_insights_owner_idx
+      ON kinfolk_community_need_insights (business_id, status, first_reached_at DESC);`,
+  },
+  {
+    name: "canonical_mwm_owner_attachment_audit_v1",
+    sql: `CREATE TABLE IF NOT EXISTS canonical_mwm_owner_attachment_audit (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      business_id VARCHAR(255) NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+      target_user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+      actor_user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+      action VARCHAR(48) NOT NULL,
+      prior_owner_link_id VARCHAR(255),
+      prior_owner_user_id VARCHAR(255),
+      new_owner_link_id VARCHAR(255),
+      prior_state JSONB NOT NULL,
+      next_state JSONB NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE OR REPLACE FUNCTION reject_canonical_mwm_owner_attachment_audit_mutation()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      RAISE EXCEPTION 'canonical_mwm_owner_attachment_audit is append-only';
+    END;
+    $$ LANGUAGE plpgsql;
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM pg_trigger
+         WHERE tgname = 'canonical_mwm_owner_attachment_audit_immutable'
+           AND tgrelid = 'canonical_mwm_owner_attachment_audit'::regclass
+      ) THEN
+        CREATE TRIGGER canonical_mwm_owner_attachment_audit_immutable
+          BEFORE UPDATE OR DELETE ON canonical_mwm_owner_attachment_audit
+          FOR EACH ROW EXECUTE FUNCTION reject_canonical_mwm_owner_attachment_audit_mutation();
+      END IF;
+    END $$;`,
+  },
+  {
     name: "user_preferences_recommendation_life_stage_v1",
     sql: `ALTER TABLE user_preferences
       ADD COLUMN IF NOT EXISTS recommendation_life_stage VARCHAR(20) NOT NULL DEFAULT 'unspecified';
@@ -6428,6 +6507,57 @@ const DISABLED_RELEASE_USER_MUTATION_MIGRATIONS = new Set([
   "pre_manus_tester_clear_must_change_password_v1",
   "tester_moon_mayes_v1",
 ]);
+
+// Explicit feature-release deployments deliberately skip the broad startup
+// migration runner to protect directory, seed, and account boundaries. The
+// feedback routes therefore own this exact, schema-only readiness gate rather
+// than depending on an operator flag or silently returning a database 500.
+const KINFOLK_FEEDBACK_SCHEMA_MIGRATIONS = new Set([
+  "kinfolk_response_feedback_v1",
+  "kinfolk_feedback_flywheel_v1",
+]);
+
+export async function ensureKinfolkFeedbackFlywheelSchema(logger?: Logger): Promise<void> {
+  const log = (msg: string) =>
+    logger ? logger.info(msg) : console.log(`[kinfolk-feedback-schema] ${msg}`);
+  const migrations = MIGRATIONS.filter((migration) =>
+    KINFOLK_FEEDBACK_SCHEMA_MIGRATIONS.has(migration.name),
+  );
+
+  if (migrations.length !== KINFOLK_FEEDBACK_SCHEMA_MIGRATIONS.size) {
+    throw new Error("Kinfolk feedback schema migration definition is incomplete.");
+  }
+
+  for (const migration of migrations) {
+    await pool.query(migration.sql);
+  }
+
+  // Query only the newly required columns/tables. This is a read-only
+  // structural assertion after idempotent DDL, never a seed or data mutation.
+  await pool.query("SELECT topic_key, revoked_at FROM kinfolk_response_feedback LIMIT 0");
+  await pool.query(
+    "SELECT business_id, topic_key, threshold, member_count, status FROM kinfolk_community_need_insights LIMIT 0",
+  );
+  log("Kinfolk feedback flywheel schema is ready");
+}
+
+export async function ensureCanonicalMwmOwnerAttachmentAuditSchema(logger?: Logger): Promise<void> {
+  const log = (msg: string) =>
+    logger ? logger.info(msg) : console.log(`[canonical-mwm-owner-audit-schema] ${msg}`);
+  const migration = MIGRATIONS.find(
+    (entry) => entry.name === "canonical_mwm_owner_attachment_audit_v1",
+  );
+  if (!migration) {
+    throw new Error("Canonical owner attachment audit migration definition is missing.");
+  }
+
+  await pool.query(migration.sql);
+  // Read-only structural verification after the idempotent audit-table DDL.
+  await pool.query(
+    "SELECT business_id, target_user_id, actor_user_id, action, prior_state, next_state FROM canonical_mwm_owner_attachment_audit LIMIT 0",
+  );
+  log("Canonical Mapping With Melanin owner audit schema is ready");
+}
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
   const log = (msg: string) =>

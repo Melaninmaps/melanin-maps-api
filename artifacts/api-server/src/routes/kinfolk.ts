@@ -72,7 +72,16 @@ import {
   responseStyleToDelivery,
   type ResponseStyle,
 } from "../kinfolk/delivery-profile";
-import { buildKinfolkResponseFeedbackPrompt } from "../kinfolk/response-feedback";
+import {
+  CANONICAL_MWM_BUSINESS_ID,
+  COMMUNITY_NEED_THRESHOLD,
+  KINFOLK_FEEDBACK_RATE_LIMIT,
+  KINFOLK_FEEDBACK_RATE_LIMIT_WINDOW_MINUTES,
+  isAggregateCommunityNeed,
+  isKinfolkResponseReaction,
+  normalizeCommunityNeedTopic,
+} from "../kinfolk/community-need-feedback";
+import { ensureKinfolkFeedbackFlywheelSchema } from "../lib/startup-migrations";
 import {
   classifyKinfolkRequest,
   buildDiscoveryInstruction,
@@ -5197,60 +5206,212 @@ router.post("/kinfolk/feedback", async (req: Request, res: Response) => {
   }
 });
 
-// ─── PUT /api/kinfolk/response-feedback ──────────────────────────────────────
-// Feedback on Kinfolk's written answer. This is deliberately separate from a
-// like/dislike on a recommended business so the two signals cannot be confused.
-router.put("/kinfolk/response-feedback", async (req: Request, res: Response) => {
-  if (!req.user?.id) {
-    res.status(401).json({ error: "Authentication required" });
-    return;
+async function reconcileCanonicalCommunityNeedInsights(client: { query: typeof pool.query }): Promise<void> {
+  const counts = await client.query<{ topic_key: string; member_count: string }>(
+    `SELECT topic_key, COUNT(DISTINCT user_id)::text AS member_count
+       FROM kinfolk_response_feedback
+      WHERE reaction = 'needs_more_help'
+        AND topic_key IS NOT NULL
+        AND revoked_at IS NULL
+      GROUP BY topic_key
+     HAVING COUNT(DISTINCT user_id) >= $1`,
+    [COMMUNITY_NEED_THRESHOLD],
+  );
+
+  for (const count of counts.rows) {
+    // There is one durable threshold event per broad topic. The first five
+    // members create the alert; a sixth member neither creates another alert
+    // nor exposes any individual feedback to the owner.
+    await client.query(
+      `INSERT INTO kinfolk_community_need_insights
+         (business_id, topic_key, threshold, member_count, status, first_reached_at, last_observed_at)
+       VALUES ($1, $2, $3, $3, 'active', NOW(), NOW())
+       ON CONFLICT (business_id, topic_key, threshold) DO UPDATE
+         SET status = 'active',
+             revoked_at = NULL,
+             last_observed_at = NOW()
+       WHERE kinfolk_community_need_insights.status = 'revoked'`,
+      [CANONICAL_MWM_BUSINESS_ID, count.topic_key, COMMUNITY_NEED_THRESHOLD],
+    );
   }
 
-  const { sessionId, messageId, reaction, note, intentClass } = req.body as Record<string, unknown>;
-  if (
-    typeof messageId !== "string" ||
-    messageId.trim().length === 0 ||
-    !["helpful", "not_helpful"].includes(reaction as string)
-  ) {
-    res.status(400).json({ error: "messageId and a valid reaction are required" });
-    return;
+  // A member-controlled revoke removes the item from future aggregate counts.
+  // Existing threshold events are hidden until the same broad need reaches the
+  // threshold again; no member, message, or note is retained in the insight.
+  await client.query(
+    `UPDATE kinfolk_community_need_insights AS insight
+        SET status = 'revoked', revoked_at = NOW(), last_observed_at = NOW()
+      WHERE insight.business_id = $1
+        AND insight.status = 'active'
+        AND NOT EXISTS (
+          SELECT 1
+            FROM kinfolk_response_feedback AS feedback
+           WHERE feedback.reaction = 'needs_more_help'
+             AND feedback.revoked_at IS NULL
+             AND feedback.topic_key = insight.topic_key
+           GROUP BY feedback.topic_key
+          HAVING COUNT(DISTINCT feedback.user_id) >= insight.threshold
+        )`,
+    [CANONICAL_MWM_BUSINESS_ID],
+  );
+}
+
+let kinfolkFeedbackSchemaReady: Promise<void> | null = null;
+
+async function ensureKinfolkFeedbackSchemaForRequest(): Promise<void> {
+  if (!kinfolkFeedbackSchemaReady) {
+    kinfolkFeedbackSchemaReady = ensureKinfolkFeedbackFlywheelSchema();
+  }
+  try {
+    await kinfolkFeedbackSchemaReady;
+  } catch (error) {
+    // Retry a future request after a transient database failure; never cache a
+    // rejected promise or misreport a schema outage as a generic feedback error.
+    kinfolkFeedbackSchemaReady = null;
+    throw error;
+  }
+}
+
+// ─── PUT /api/kinfolk/response-feedback ──────────────────────────────────────
+// Feedback is a member-controlled quality signal. It never changes one
+// member's future answers automatically and it never exposes raw notes to a
+// business owner. Only a selected broad need can become an owner-facing
+// aggregate after five distinct members independently request more help.
+router.put("/kinfolk/response-feedback", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  try {
+    await ensureKinfolkFeedbackSchemaForRequest();
+  } catch (error) {
+    req.log.error(safeKinfolkErrorMetadata(error), "Kinfolk feedback schema is unavailable");
+    return void res.status(503).json({ error: "KINFOLK_FEEDBACK_SCHEMA_UNAVAILABLE" });
+  }
+
+  const { sessionId, messageId, reaction, note, intentClass, topicKey } = req.body as Record<string, unknown>;
+  if (typeof messageId !== "string" || !messageId.trim() || messageId.trim().length > 128 || !isKinfolkResponseReaction(reaction)) {
+    return void res.status(400).json({ error: "messageId and a valid reaction are required" });
   }
   if (note !== undefined && note !== null && typeof note !== "string") {
-    res.status(400).json({ error: "note must be text when supplied" });
-    return;
+    return void res.status(400).json({ error: "note must be text when supplied" });
   }
 
-  // Keep personal free text deliberately small. The note is only a private
-  // preference cue for future answers, never a transcript or factual source.
+  const selectedTopic = normalizeCommunityNeedTopic(topicKey);
+  if (reaction === "needs_more_help" && !selectedTopic) {
+    return void res.status(400).json({ error: "A selected broad topic is required when asking for more help." });
+  }
+  const aggregateTopic = isAggregateCommunityNeed(reaction, selectedTopic) ? selectedTopic : null;
   const normalizedNote = typeof note === "string" ? note.trim().slice(0, 240) || null : null;
+  const client = await pool.connect();
+
   try {
-    await db
-      .insert(kinfolkResponseFeedbackTable)
-      .values({
-        userId: req.user.id,
-        sessionId: typeof sessionId === "string" ? sessionId : null,
-        messageId: messageId.trim(),
-        reaction: reaction as "helpful" | "not_helpful",
-        note: normalizedNote,
-        intentClass: typeof intentClass === "string" ? intentClass.slice(0, 64) : null,
-      })
-      .onConflictDoUpdate({
-        target: [
-          kinfolkResponseFeedbackTable.userId,
-          kinfolkResponseFeedbackTable.messageId,
+    await client.query("BEGIN");
+    const existing = await client.query<{ id: string; revoked_at: string | null }>(
+      `SELECT id, revoked_at
+         FROM kinfolk_response_feedback
+        WHERE user_id = $1 AND message_id = $2
+        FOR UPDATE`,
+      [req.user.id, messageId.trim()],
+    );
+
+    if (!existing.rows[0]) {
+      const recent = await client.query<{ count: string }>(
+        `SELECT COUNT(*)::text AS count
+           FROM kinfolk_response_feedback
+          WHERE user_id = $1
+            AND created_at >= NOW() - ($2::text || ' minutes')::interval`,
+        [req.user.id, KINFOLK_FEEDBACK_RATE_LIMIT_WINDOW_MINUTES],
+      );
+      if (Number(recent.rows[0]?.count ?? 0) >= KINFOLK_FEEDBACK_RATE_LIMIT) {
+        await client.query("ROLLBACK");
+        return void res.status(429).json({ error: "Feedback rate limit reached. Please try again shortly." });
+      }
+      await client.query(
+        `INSERT INTO kinfolk_response_feedback
+           (user_id, session_id, message_id, reaction, note, intent_class, topic_key, created_at, updated_at, revoked_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW(), NULL)`,
+        [
+          req.user.id,
+          typeof sessionId === "string" ? sessionId.slice(0, 255) : null,
+          messageId.trim(),
+          reaction,
+          normalizedNote,
+          typeof intentClass === "string" ? intentClass.slice(0, 64) : null,
+          aggregateTopic,
         ],
-        set: {
-          reaction: reaction as "helpful" | "not_helpful",
-          note: normalizedNote,
-          intentClass: typeof intentClass === "string" ? intentClass.slice(0, 64) : null,
-          sessionId: typeof sessionId === "string" ? sessionId : null,
-          updatedAt: new Date(),
-        },
-      });
-    res.json({ ok: true, reaction });
+      );
+    } else {
+      // The unique member/message pair makes retries and changed selections
+      // idempotent: no duplicate feedback or duplicate aggregate event exists.
+      await client.query(
+        `UPDATE kinfolk_response_feedback
+            SET session_id = $3,
+                reaction = $4,
+                note = $5,
+                intent_class = $6,
+                topic_key = $7,
+                revoked_at = NULL,
+                updated_at = NOW()
+          WHERE id = $1 AND user_id = $2`,
+        [
+          existing.rows[0].id,
+          req.user.id,
+          typeof sessionId === "string" ? sessionId.slice(0, 255) : null,
+          reaction,
+          normalizedNote,
+          typeof intentClass === "string" ? intentClass.slice(0, 64) : null,
+          aggregateTopic,
+        ],
+      );
+    }
+
+    await reconcileCanonicalCommunityNeedInsights(client);
+    await client.query("COMMIT");
+    res.json({ ok: true, reaction, topicKey: aggregateTopic, automaticallyChangesKinfolk: false });
   } catch (err) {
+    await client.query("ROLLBACK").catch(() => undefined);
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to save Kinfolk response feedback");
     res.status(500).json({ error: "KINFOLK_RESPONSE_FEEDBACK_SAVE_FAILED" });
+  } finally {
+    client.release();
+  }
+});
+
+// ─── DELETE /api/kinfolk/response-feedback/:messageId ────────────────────────
+// Revocation clears the optional note and selected topic before reconciliation;
+// no raw text survives in an owner-facing aggregate.
+router.delete("/kinfolk/response-feedback/:messageId", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  try {
+    await ensureKinfolkFeedbackSchemaForRequest();
+  } catch (error) {
+    req.log.error(safeKinfolkErrorMetadata(error), "Kinfolk feedback schema is unavailable");
+    return void res.status(503).json({ error: "KINFOLK_FEEDBACK_SCHEMA_UNAVAILABLE" });
+  }
+  const messageId = String(req.params.messageId ?? "").trim();
+  if (!messageId || messageId.length > 128) return void res.status(400).json({ error: "A valid messageId is required" });
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await client.query<{ id: string }>(
+      `UPDATE kinfolk_response_feedback
+          SET revoked_at = NOW(), note = NULL, topic_key = NULL, session_id = NULL, updated_at = NOW()
+        WHERE user_id = $1 AND message_id = $2 AND revoked_at IS NULL
+      RETURNING id`,
+      [req.user.id, messageId],
+    );
+    if (!result.rows[0]) {
+      await client.query("ROLLBACK");
+      return void res.status(404).json({ error: "Active feedback was not found" });
+    }
+    await reconcileCanonicalCommunityNeedInsights(client);
+    await client.query("COMMIT");
+    res.json({ ok: true, revoked: true, automaticallyChangesKinfolk: false });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to revoke Kinfolk response feedback");
+    res.status(500).json({ error: "KINFOLK_RESPONSE_FEEDBACK_REVOKE_FAILED" });
+  } finally {
+    client.release();
   }
 });
 
@@ -8580,7 +8741,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let likedSpots: string[] = [];
     let dislikedSpots: string[] = [];
     let savedPlaces: string[] = [];
-    let responseFeedbackPrompt = "";
     let savedConversationMode: unknown = undefined;
     let savedSupportLensMode: string | null = null;
     let savedSupportLensDesignationIds: string[] = [];
@@ -8628,35 +8788,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         /* non-critical — proceed without feedback history */
       }
 
-      // Prior answer feedback is a member-owned preference signal. It never
-      // supplies facts and it is ignored when the member disables personalized
-      // suggestions below.
-      try {
-        const responseFeedback = await db
-          .select({
-            reaction: kinfolkResponseFeedbackTable.reaction,
-            note: kinfolkResponseFeedbackTable.note,
-            intentClass: kinfolkResponseFeedbackTable.intentClass,
-          })
-          .from(kinfolkResponseFeedbackTable)
-          .where(eq(kinfolkResponseFeedbackTable.userId, req.user.id))
-          .orderBy(desc(kinfolkResponseFeedbackTable.updatedAt))
-          .limit(12);
-        responseFeedbackPrompt = buildKinfolkResponseFeedbackPrompt(
-          responseFeedback.flatMap((feedback) =>
-            feedback.reaction === "helpful" || feedback.reaction === "not_helpful"
-              ? [{
-                  reaction: feedback.reaction,
-                  note: feedback.note,
-                  intentClass: feedback.intentClass,
-                }]
-              : [],
-          ),
-        );
-      } catch {
-        /* non-critical — proceed without response-feedback personalization */
-      }
-
       // Saved places
       try {
         const saved = await db
@@ -8683,7 +8814,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           likedSpots = [];
           dislikedSpots = [];
           savedPlaces = [];
-          responseFeedbackPrompt = "";
         }
       } catch {
         /* non-critical */
@@ -11382,12 +11512,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       maxOutputTokens: resolveKinfolkOutputTokenBudget(modelPolicy, responseDepth),
     };
     const systemPromptWithLibrary = leanGeneralChat
-      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${temporalContext}${privateMemoryBlock}\n\n${responseDepthPrompt}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
+      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${temporalContext}${privateMemoryBlock}\n\n${responseDepthPrompt}`
       : (!contextualHighConsequence && libraryGroundingBlock
           ? `${systemPrompt}\n\n${libraryGroundingBlock}`
           : systemPrompt) +
         `\n\n${responseDepthPrompt}` +
-        (responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : "") +
         (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "") +
         (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
     const systemPromptWithResponseFormat = `${systemPromptWithLibrary}\n\n${conversationalIntentPrompt}\n\n${buildKinfolkFormalResponseContract()}`;

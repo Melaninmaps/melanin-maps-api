@@ -21,6 +21,8 @@ describe("mobile Kinfolk Community perspective", () => {
     expect(consentSource).toContain("Choose individually");
     expect(consentSource).toContain("Don’t save");
     expect(consentSource).toContain("selectedIds: ids");
+    expect(consentSource).toContain("selected.length === 0");
+    expect(consentSource).toContain("consent: true");
   });
 
   it("renders only a generic unverified-perspective disclosure, never raw Community post content", () => {
