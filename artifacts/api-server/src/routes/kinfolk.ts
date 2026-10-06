@@ -10590,10 +10590,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // comes only from the current turn through permittedIdentity above.
     // A current city briefing may use travel language (for example, a work trip),
     // but it must keep its researched news, civic, and practical-answer contract.
-    // It is not permission to substitute a catalog itinerary.
+    // Nor is any generic current-evidence turn permission to substitute a catalog
+    // itinerary: a request for current hours, availability, prices, or status can
+    // mention a future visit while still requiring its live evidence answer.
     const isCurrentCityBriefing = contextualPlan?.taskMode === "city_briefing";
     const travelPlanning =
       !isCurrentCityBriefing &&
+      !generalAnswerRoute.requiresCurrentEvidence &&
       (isTravelPlanningPrompt(message) ||
         earlyDecision.route === "travel_planning");
     if (

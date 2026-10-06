@@ -7,6 +7,7 @@ import { canonicalizeContextualUrl } from "./contextual-url";
 // research when the answer depends on changing outside conditions.
 const SELF_DIRECTED_PLANNING_OR_WRITING_RE = /(?:\b(?:help(?:\s+me)?|can you|could you|please|i\s+(?:need|want|have)\s+to)\s+(?:plan|organize|organise|schedule|prioriti[sz]e|prepare|draft|write|rewrite|revise|edit|brainstorm|outline)\b|\b(?:plan|organize|organise|schedule|prioriti[sz]e|prepare)\s+(?:my|our)\b|\b(?:draft|write|rewrite|revise|edit|brainstorm|outline)\s+(?:a|an|the|my|our|this|that)\b|\b(?:make|create)\s+(?:me\s+)?(?:a\s+)?(?:[\p{L}'’-]+\s+){0,3}(?:plan|schedule|routine|to[- ]?do(?:\s+list)?|task\s+list)\b)/iu;
 const TIME_HORIZON_RE = /\b(?:today|tonight|tomorrow|(?:this|next)\s+weekend|this\s+(?:week|month|year))\b/i;
+const EXTERNAL_STATUS_DEPENDENCY_RE = /\b(?:current(?:ly)?|latest|updates?|availability|available|open|closed|weather|temperature|price|prices|cost|costs|traffic|transit|delay|delays|outage|outages|(?:opening|business|venue|location|site|facility|office|store|service|event)\s+hours?)\b/i;
 const EXTERNAL_STATUS_QUESTION_RE = /\b(?:what(?:'s|\s+is|\s+are)|when|where|who|is|are|will|does|do|can)\b[\s\S]{0,90}\b(?:open|closed|availability|available|hours?|schedule|scheduled|weather|temperature|price|prices|cost|costs|traffic|transit|delay|delays|outage|outages)\b/i;
 const TIME_BOUND_TRAVEL_RE = /\b(?:trip|travel|vacation|itinerary|flight|flights|hotel|hotels|reservation|reservations)\b/i;
 
@@ -14,6 +15,7 @@ function isSelfDirectedPlanningWithOnlyTimeHorizon(message: string): boolean {
   return TIME_HORIZON_RE.test(message)
     && SELF_DIRECTED_PLANNING_OR_WRITING_RE.test(message)
     && !EXTERNAL_STATUS_QUESTION_RE.test(message)
+    && !EXTERNAL_STATUS_DEPENDENCY_RE.test(message)
     && !TIME_BOUND_TRAVEL_RE.test(message);
 }
 

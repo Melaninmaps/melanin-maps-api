@@ -85,6 +85,8 @@ describe("current research routing", () => {
     expect(requiresCurrentResearch("Help me plan a trip to Atlanta tonight")).toBe(true);
     expect(requiresCurrentResearch("Can you plan my day tomorrow around what is open in Philadelphia?")).toBe(true);
     expect(requiresCurrentResearch("Help me plan tomorrow's flight options")).toBe(true);
+    expect(requiresCurrentResearch("Plan my museum visit tomorrow around the current opening hours.")).toBe(true);
+    expect(requiresCurrentResearch("Plan a visit tomorrow around the venue opening hours.")).toBe(true);
   });
 
   it("keeps explicit preferred-name recall out of the current-research path", () => {

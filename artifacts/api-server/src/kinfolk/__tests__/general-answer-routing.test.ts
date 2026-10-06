@@ -290,6 +290,22 @@ describe("Kinfolk generic answer routing", () => {
     expect(externalStatus.requiresCurrentEvidence).toBe(true);
   });
 
+  it("keeps varying current-hours visit plans on the evidence route", () => {
+    for (const message of [
+      "Plan my museum visit tomorrow around the current opening hours.",
+      "Before our weekend trip, what time is the gallery open today?",
+      "Can you help plan a visit using the venue's current schedule?",
+    ]) {
+      const route = resolveKinfolkGeneralAnswerRoute({
+        message,
+        evidence: evidence(),
+        semantic: decision({ evidenceNeed: "stable", purpose: "planning_or_writing", conversationIntent: "planning" }),
+      });
+      expect(route.strategy).toBe("current_evidence");
+      expect(route.requiresCurrentEvidence).toBe(true);
+    }
+  });
+
   it("does not treat personal conversational intent as a current-evidence claim", () => {
     const cases: Array<{
       intent: GenericAnswerRouteDecision["conversationIntent"];
