@@ -49,6 +49,10 @@ describe("current research routing", () => {
     "How many US dollars make 10K in Turkish lira?",
     "Convert $100 USD to Turkish lira",
     "What is 10,000 Turkish lira in dollars today?",
+    "How much is Beyoncé worth?",
+    "What are Beyoncé's current earnings?",
+    "Who is the CEO of Apple?",
+    "Is Beyoncé touring?",
     "Is Durk coming home?",
     "Will Lil Durk be released?",
   ])("requires current research for %s", (message) => {
@@ -65,6 +69,8 @@ describe("current research routing", () => {
     "live music recommendations",
     "My sister is coming home from school",
     "I collect Turkish lira from 2015",
+    "Explain leadership structure at a company",
+    "Tell me about Beyoncé's early career",
   ])("does not mistake stable or entertainment language for freshness in %s", (message) => {
     expect(requiresCurrentResearch(message)).toBe(false);
   });

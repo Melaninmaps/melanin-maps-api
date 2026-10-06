@@ -28,6 +28,14 @@ function isCurrencyConversionRequest(message: string): boolean {
  */
 const NAMED_CUSTODY_STATUS_RE = /\b(?:is|are|will|did|does|when\s+(?:is|will)|can)\s+[A-Z][\p{L}'’-]{1,}(?:\s+[A-Z][\p{L}'’-]{1,}){0,2}\s+(?:(?:come|coming|get|getting|be|being)\s+(?:back\s+)?home|(?:be\s+)?(?:out|released|free|on\s+bail|on\s+bond))\b/iu;
 
+// Net-worth estimates, public-figure earnings, corporate leadership, and
+// public-event status change even when the member does not add "current" or
+// "today." These concise question forms must use cited evidence rather than
+// model recall or a static Library entry.
+const INTRINSIC_CURRENT_FINANCIAL_STATUS_RE = /\b(?:net[\s-]?worth|how\s+(?:much|rich)\s+(?:is|are)\s+[\p{L}'’.-]{2,}(?:\s+[\p{L}'’.-]{2,}){0,5}\s+worth|how\s+much\s+does\s+[\p{L}'’.-]{2,}(?:\s+[\p{L}'’.-]{2,}){0,5}\s+(?:make|earn)|(?:current|latest|annual|yearly)\s+(?:earnings?|salary|income|compensation)|(?:stock|share)\s+price|market\s+cap(?:italization)?)\b/iu;
+const INTRINSIC_CURRENT_LEADERSHIP_STATUS_RE = /\b(?:who\s+(?:is|are)\s+(?:the\s+)?(?:current\s+)?(?:ceo|chief\s+executive(?:\s+officer)?|president|chair(?:person|man)?|director|governor|mayor|prime\s+minister)|(?:is|are)\s+[\p{L}'’.-]{2,}(?:\s+[\p{L}'’.-]{2,}){0,5}\s+(?:still\s+)?(?:the\s+)?(?:ceo|chief\s+executive(?:\s+officer)?|president|chair(?:person|man)?|director|governor|mayor|prime\s+minister)|who\s+(?:leads?|runs?|heads?)\s+(?:the\s+)?(?:company|organization|organisation|agency|department|administration))\b/iu;
+const INTRINSIC_CURRENT_PUBLIC_EVENT_STATUS_RE = /\b(?:is|are|will|when|where|what\s+time)\b[\s\S]{0,90}\b(?:tour(?:ing|\s+dates?)?|concerts?|events?|games?|appearances?|showtimes?|schedule)\b|\b(?:upcoming|next)\s+(?:tour|concert|event|game|appearance|show)\b/iu;
+
 const ARTICLE_SUMMARY_RE = /\b(?:summari[sz]e|summary)\b/i;
 const HTTPS_URL_RE = /https:\/\/[^\s<>'"`]+/i;
 
@@ -68,5 +76,8 @@ export function requiresCurrentResearch(message: string): boolean {
     || CHANGING_PUBLIC_STATISTIC_RE.test(message)
     || isCurrencyConversionRequest(message)
     || NAMED_CUSTODY_STATUS_RE.test(message)
+    || INTRINSIC_CURRENT_FINANCIAL_STATUS_RE.test(message)
+    || INTRINSIC_CURRENT_LEADERSHIP_STATUS_RE.test(message)
+    || INTRINSIC_CURRENT_PUBLIC_EVENT_STATUS_RE.test(message)
     || requestedArticleSummaryUrl(message) !== null;
 }
