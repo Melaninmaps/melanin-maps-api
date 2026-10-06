@@ -44,9 +44,9 @@ describe("founder business discoverability correction", () => {
     ]) {
       expect(businesses).toContain(`${field}: _${field}`);
     }
-    expect(businesses).toContain("businesses: withDistance.map((business) =>");
+    expect(businesses).toContain("businesses: publicResults");
     expect(businesses).toContain("toPublicBusinessRecord(business)");
-    expect(businesses).toContain("...toPublicBusinessRecord(business)");
+    expect(businesses).toContain("withDistance.map((business) => toPublicBusinessRecord(business))");
   });
 
   it("uses the canonical visibility function for normal and fuzzy searches without raw b-star rows", () => {
@@ -58,11 +58,12 @@ describe("founder business discoverability correction", () => {
     expect(businesses).toContain(".from(businessesTable)");
   });
 
-  it("keeps a deliberate business-name lookup available if the richer directory query fails", () => {
+  it("keeps a failed-query name fallback within the documented Kinfolk catalog", () => {
     expect(businesses).toContain("sendDirectNameAvailabilityFallback");
     expect(businesses).toContain("Directory query failed; returned direct-name availability fallback");
     expect(businesses).toContain("SELECT * FROM public.public_businesses");
-    expect(businesses).toContain('searchScope: "explicit_public_listing"');
+    expect(businesses).toContain('mwmDiasporaPromotionSqlPredicate("public.public_businesses.id")');
+    expect(businesses).toContain('searchScope: "diaspora_promotion_catalog"');
     expect(businesses).toContain("if (await sendDirectNameAvailabilityFallback(req, res)) return");
   });
 

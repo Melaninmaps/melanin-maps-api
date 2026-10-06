@@ -379,28 +379,6 @@ function publicBusinessVisibilityCondition() {
   )`;
 }
 
-// Administratively archived businesses are deliberately excluded from browse,
-// map, category, and Kinfolk discovery. The owner requested that a legitimate
-// archived record remain reachable only when a member expressly looks up its
-// name. Potential duplicate markers remain reviewable until the administrator
-// explicitly archives a record; permanent-hidden and demo rows stay excluded.
-function directNameLookupVisibilityCondition() {
-  return sql<boolean>`(
-    ${publicBusinessVisibilityCondition()}
-    OR (
-      COALESCE(${businessesTable.status}, '') = 'suspended'
-      AND COALESCE(${businessesTable.listingStatus}, '') = 'archived'
-      AND COALESCE(${sql.raw('"businesses"."permanently_hidden"')}, false) = false
-      AND NOT (
-        COALESCE(${businessesTable.name}, '') ILIKE '%[DEMO]%'
-        OR COALESCE(${businessesTable.description}, '') ILIKE '%[DEMO]%'
-        OR LOWER(BTRIM(COALESCE(${sql.raw('"businesses"."data_source"')}, ''))) IN ('demo', 'demo_seed')
-        OR REGEXP_REPLACE(COALESCE(${businessesTable.phone}, ''), '[^0-9]', '', 'g') IN ('15555550100', '5555550100')
-      )
-    )
-  )`;
-}
-
 /**
  * This applies only to public directory discovery. Detail, claim, moderation,
  * contribution, and account paths remain available and are never filtered by
@@ -470,6 +448,7 @@ async function sendDirectNameAvailabilityFallback(
   const { rows } = await pool.query<Record<string, unknown>>(
     `SELECT * FROM public.public_businesses
       WHERE ${filters.join(" AND ")}
+        AND ${mwmDiasporaPromotionSqlPredicate("public.public_businesses.id")}
       ORDER BY name, id
       LIMIT $${params.length}`,
     params,
@@ -489,7 +468,7 @@ async function sendDirectNameAvailabilityFallback(
     page: { offset: 0, limit },
     featuredCount: 0,
     usedFuzzyFallback: false,
-    searchScope: "explicit_public_listing",
+    searchScope: "diaspora_promotion_catalog",
     searchClarification: null,
     availabilityFallback: true,
   });
@@ -969,44 +948,6 @@ router.get("/businesses", async (req: Request, res: Response) => {
           .limit(pageLimit)
           .offset(offset);
 
-        // A named public-listing lookup is not an MWM recommendation. It only
-        // runs after the Promotion Catalog returns nothing, never broadens a
-        // category search, and removes Support Lens filters only for the exact
-        // public record the member deliberately asked to find.
-        let usedExplicitPublicLookup = false;
-        const directSearchText = typeof search === "string" ? search.trim() : "";
-        if (
-          totalCount === 0 &&
-          isDeliberateNamedBusinessLookup(directSearchText)
-        ) {
-          const directConditions = conditions.filter(
-            (condition) =>
-              condition !== defaultDiscoveryCondition &&
-              condition !== publicVisibilityCondition &&
-              !designationConditions.includes(condition),
-          );
-          directConditions.push(directNameLookupVisibilityCondition());
-          directConditions.push(
-            sql`REGEXP_REPLACE(LOWER(COALESCE(${businessesTable.name}, '')), '[^a-z0-9]+', '', 'g') = ${normalizedDirectBusinessName(directSearchText)}`,
-          );
-          const directTotal = await db
-            .select({ total: count() })
-            .from(businessesTable)
-            .where(and(...directConditions));
-          const directBusinesses = await db
-            .select()
-            .from(businessesTable)
-            .where(and(...directConditions))
-            .orderBy(asc(businessesTable.name), asc(businessesTable.id))
-            .limit(pageLimit)
-            .offset(offset);
-          if (directBusinesses.length > 0) {
-            businesses = directBusinesses;
-            totalCount = directTotal[0]?.total ?? directBusinesses.length;
-            usedExplicitPublicLookup = true;
-          }
-        }
-
         // Annotate businesses that have active growth-tool promotions as featured.
         // Only businesses that already matched the search criteria are promoted —
         // no injecting off-topic results.
@@ -1345,9 +1286,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
           page: { offset, limit: pageLimit },
           featuredCount: withDistance.filter((b: any) => b.featured).length,
           usedFuzzyFallback,
-          searchScope: usedExplicitPublicLookup
-            ? "explicit_public_listing"
-            : "diaspora_promotion_catalog",
+          searchScope: "diaspora_promotion_catalog",
           // Metadata only: it never changes the member's query, filters, or
           // results. Clients choose whether to retry the suggestion.
           searchClarification,
