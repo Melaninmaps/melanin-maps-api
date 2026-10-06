@@ -4816,6 +4816,15 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ADD COLUMN IF NOT EXISTS sensitive_consent_granted_at timestamptz`,
   },
   {
+    // Personal Memory V1 adds only control metadata. It does not change, pause,
+    // revoke, delete, or otherwise backfill any existing member memory.
+    name: "kinfolk_private_memories_pause_and_capacity_v3",
+    sql: `ALTER TABLE kinfolk_private_memories
+      ADD COLUMN IF NOT EXISTS paused_at timestamptz;
+    CREATE INDEX IF NOT EXISTS kinfolk_private_memories_user_review_idx
+      ON kinfolk_private_memories (user_id, revoked_at, paused_at, expires_at, created_at DESC)`,
+  },
+  {
     name: "happening_personalization_privacy_v1",
     sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS home_state varchar(2);
     UPDATE users

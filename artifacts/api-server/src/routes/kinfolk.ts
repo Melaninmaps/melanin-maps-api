@@ -53,7 +53,7 @@ import {
   type SessionMessage,
   type JourneyPhase,
 } from "@workspace/db";
-import { eq, desc, and, ilike, or, inArray, isNull, isNotNull, gt } from "drizzle-orm";
+import { eq, ne, desc, and, ilike, or, inArray, isNull, isNotNull, gt, sql } from "drizzle-orm";
 import {
   getKnowledgeGraphContext,
   renderKnowledgeGraphContext,
@@ -323,10 +323,12 @@ import {
   isExplicitProfileMemoryRelevant,
   profileDiscoveryContextTerms,
 } from "../kinfolk/explicit-member-memory";
+import { isOrdinaryContinuityMemoryRelevant } from "../kinfolk/ordinary-continuity-memory";
 import {
-  extractOrdinaryContinuityMemory,
-  isOrdinaryContinuityMemoryRelevant,
-} from "../kinfolk/ordinary-continuity-memory";
+  MAX_ACTIVE_KINFOLK_PRIVATE_NOTES,
+  resolvePrivateMemoryCapacity,
+  resolvePrivateMemoryState,
+} from "../kinfolk/private-memory-policy";
 import {
   sensitiveMemoryTopic,
   type SensitiveMemoryTopic,
@@ -6038,6 +6040,71 @@ router.delete("/kinfolk/preferred-name", async (req: Request, res: Response) => 
   }
 });
 
+class PrivateMemoryCapacityError extends Error {
+  readonly code = "PRIVATE_MEMORY_ACTIVE_LIMIT_REACHED" as const;
+
+  constructor(
+    readonly activeCount: number,
+    readonly requestedCount: number,
+    readonly availableSlots: number,
+  ) {
+    super(
+      `Kinfolk can keep up to ${MAX_ACTIVE_KINFOLK_PRIVATE_NOTES} active private notes.`,
+    );
+  }
+}
+
+/**
+ * Serializes all generic-note writes for one member before the application
+ * transaction runs. The preferred-name lifecycle intentionally does not take
+ * this lock because it has its own one-record replacement semantics.
+ */
+async function withSerializedPrivateMemoryWrite<T>(input: {
+  userId: string;
+  write: (activeCount: number) => Promise<T>;
+}): Promise<T> {
+  const client = await pool.connect();
+  const lockKey = `kinfolk-private-memory:${input.userId}`;
+  let locked = false;
+  try {
+    await client.query("SELECT pg_advisory_lock(hashtext($1))", [lockKey]);
+    locked = true;
+    const countResult = await client.query<{ active_count: number | string }>(
+      `SELECT COUNT(*)::integer AS active_count
+       FROM kinfolk_private_memories
+       WHERE user_id = $1
+         AND purpose <> $2
+         AND revoked_at IS NULL
+         AND paused_at IS NULL
+         AND (expires_at IS NULL OR expires_at > NOW())`,
+      [input.userId, PREFERRED_NAME_MEMORY_PURPOSE],
+    );
+    return await input.write(Number(countResult.rows[0]?.active_count ?? 0));
+  } finally {
+    if (locked) {
+      await client
+        .query("SELECT pg_advisory_unlock(hashtext($1))", [lockKey])
+        .catch(() => undefined);
+    }
+    client.release();
+  }
+}
+
+function requirePrivateMemoryCapacity(input: {
+  activeCount: number;
+  requestedCount: number;
+}) {
+  const capacity = resolvePrivateMemoryCapacity(input);
+  if (!capacity.allowed) {
+    throw new PrivateMemoryCapacityError(
+      capacity.activeCount,
+      capacity.requestedCount,
+      capacity.availableSlots,
+    );
+  }
+  return capacity;
+}
+
 router.get("/kinfolk/memories", async (req: Request, res: Response) => {
   if (!isKinfolkPrivateMemoryEnabled() && !isExplicitMemberMemoryEnabled()) {
     return void res.status(403).json({
@@ -6049,6 +6116,26 @@ router.get("/kinfolk/memories", async (req: Request, res: Response) => {
     return void res.status(401).json({ error: "Authentication required" });
   try {
     const now = new Date();
+    const requestedOffset = Number.parseInt(String(req.query.offset ?? "0"), 10);
+    const offset = Number.isFinite(requestedOffset)
+      ? Math.min(10_000, Math.max(0, requestedOffset))
+      : 0;
+    const includeInactive = String(req.query.includeInactive ?? "") === "true";
+    const pageSize = MAX_ACTIVE_KINFOLK_PRIVATE_NOTES;
+    const reviewableMemory = and(
+      eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+      ne(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
+      isNull(kinfolkPrivateMemoriesTable.revokedAt),
+    );
+    const activeMemory = and(
+      reviewableMemory,
+      isNull(kinfolkPrivateMemoriesTable.pausedAt),
+      or(
+        isNull(kinfolkPrivateMemoriesTable.expiresAt),
+        gt(kinfolkPrivateMemoriesTable.expiresAt, now),
+      ),
+    );
+    const listedMemory = includeInactive ? reviewableMemory : activeMemory;
     const memories = await db
       .select({
         id: kinfolkPrivateMemoriesTable.id,
@@ -6058,29 +6145,47 @@ router.get("/kinfolk/memories", async (req: Request, res: Response) => {
         sensitiveConsentGrantedAt:
           kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt,
         expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
+        pausedAt: kinfolkPrivateMemoriesTable.pausedAt,
         createdAt: kinfolkPrivateMemoriesTable.createdAt,
         updatedAt: kinfolkPrivateMemoriesTable.updatedAt,
       })
       .from(kinfolkPrivateMemoriesTable)
-      .where(
-        and(
-          eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
-          isNull(kinfolkPrivateMemoriesTable.revokedAt),
-          or(
-            isNull(kinfolkPrivateMemoriesTable.expiresAt),
-            gt(kinfolkPrivateMemoriesTable.expiresAt, now),
-          ),
-        ),
-      )
+      .where(listedMemory)
       .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
-      .limit(50);
+      .limit(pageSize)
+      .offset(offset);
+    const [totalRow] = await db
+      .select({ total: sql<number>`count(*)::integer` })
+      .from(kinfolkPrivateMemoriesTable)
+      .where(listedMemory);
+    const [activeRow] = await db
+      .select({ active: sql<number>`count(*)::integer` })
+      .from(kinfolkPrivateMemoriesTable)
+      .where(activeMemory);
     // Preferred names have their own explicit lifecycle controls. Keep them
     // out of the generic editor so this narrow consent never becomes a freeform
     // profile-memory mutation path.
+    const totalReviewable = Number(totalRow?.total ?? 0);
+    const activeCount = Number(activeRow?.active ?? 0);
     res.json({
-      memories: memories.filter(
-        (memory) => memory.purpose !== PREFERRED_NAME_MEMORY_PURPOSE,
-      ),
+      memories: memories.map((memory) => ({
+        ...memory,
+        state: resolvePrivateMemoryState({
+          revokedAt: null,
+          pausedAt: memory.pausedAt,
+          expiresAt: memory.expiresAt,
+          now,
+        }),
+      })),
+      activeCount,
+      maxActiveNotes: MAX_ACTIVE_KINFOLK_PRIVATE_NOTES,
+      totalReviewable,
+      includeInactive,
+      offset,
+      nextOffset:
+        offset + memories.length < totalReviewable
+          ? offset + memories.length
+          : null,
     });
   } catch (err) {
     req.log.error(
@@ -6116,46 +6221,108 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
   }
 
   try {
-    const now = new Date();
-    const [current] = await db.select({ disclosedAt: userSettingsTable.kinfolkContinuityDisclosedAt })
-      .from(userSettingsTable).where(eq(userSettingsTable.userId, req.user.id)).limit(1);
-    const continuityUpdate = {
-      kinfolkMemoryEnabled: true,
-      kinfolkContinuityEnabled: true,
-      kinfolkContinuityUpdatedAt: now,
-      kinfolkContinuityDisclosureDecision: "accepted" as const,
-      kinfolkContinuityDisclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
-      kinfolkContinuityDisclosedAt: current?.disclosedAt ?? now,
-      updatedAt: now,
-    };
-    const updated = await db.update(userSettingsTable).set(continuityUpdate)
-      .where(eq(userSettingsTable.userId, req.user.id)).returning({ userId: userSettingsTable.userId });
-    if (updated.length === 0) {
-      await db.insert(userSettingsTable).values({ userId: req.user.id, ...continuityUpdate })
-        .onConflictDoUpdate({ target: userSettingsTable.userId, set: continuityUpdate });
-    }
-
-    const sessionId = typeof body.sessionId === "string" ? body.sessionId : null;
-    let saved = 0;
-    for (const item of selected) {
-      const existing = await db.select({ id: kinfolkPrivateMemoriesTable.id }).from(kinfolkPrivateMemoriesTable)
-        .where(and(eq(kinfolkPrivateMemoriesTable.userId, req.user.id), eq(kinfolkPrivateMemoriesTable.content, item.content), isNull(kinfolkPrivateMemoriesTable.revokedAt)))
-        .limit(1);
-      if (existing.length) continue;
-      await db.insert(kinfolkPrivateMemoriesTable).values({
-        userId: req.user.id,
-        content: item.content,
-        purpose: plan.purpose,
-        sourceSessionId: sessionId,
-        isSensitive: item.kind === "sensitive",
-        sensitiveConsentGrantedAt: item.kind === "sensitive" ? now : null,
-      });
-      saved += 1;
-    }
+    const result = await withSerializedPrivateMemoryWrite({
+      userId: req.user.id,
+      write: async (activeCount) => {
+        const now = new Date();
+        const activeDuplicates = await db
+          .select({ content: kinfolkPrivateMemoriesTable.content })
+          .from(kinfolkPrivateMemoriesTable)
+          .where(
+            and(
+              eq(kinfolkPrivateMemoriesTable.userId, req.user!.id),
+              ne(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
+              inArray(
+                kinfolkPrivateMemoriesTable.content,
+                selected.map((item) => item.content),
+              ),
+              isNull(kinfolkPrivateMemoriesTable.revokedAt),
+              isNull(kinfolkPrivateMemoriesTable.pausedAt),
+              or(
+                isNull(kinfolkPrivateMemoriesTable.expiresAt),
+                gt(kinfolkPrivateMemoriesTable.expiresAt, now),
+              ),
+            ),
+          );
+        const activeContent = new Set(activeDuplicates.map((memory) => memory.content));
+        const queuedContent = new Set<string>();
+        const itemsToSave = selected.filter((item) => {
+          if (activeContent.has(item.content) || queuedContent.has(item.content)) {
+            return false;
+          }
+          queuedContent.add(item.content);
+          return true;
+        });
+        const capacity = requirePrivateMemoryCapacity({
+          activeCount,
+          requestedCount: itemsToSave.length,
+        });
+        const sessionId = typeof body.sessionId === "string" ? body.sessionId : null;
+        const saved = await db.transaction(async (tx) => {
+          const [current] = await tx
+            .select({ disclosedAt: userSettingsTable.kinfolkContinuityDisclosedAt })
+            .from(userSettingsTable)
+            .where(eq(userSettingsTable.userId, req.user!.id))
+            .limit(1);
+          const continuityUpdate = {
+            kinfolkMemoryEnabled: true,
+            kinfolkContinuityEnabled: true,
+            kinfolkContinuityUpdatedAt: now,
+            kinfolkContinuityDisclosureDecision: "accepted" as const,
+            kinfolkContinuityDisclosureVersion: KINFOLK_CONTINUITY_DISCLOSURE_VERSION,
+            kinfolkContinuityDisclosedAt: current?.disclosedAt ?? now,
+            updatedAt: now,
+          };
+          const updated = await tx
+            .update(userSettingsTable)
+            .set(continuityUpdate)
+            .where(eq(userSettingsTable.userId, req.user!.id))
+            .returning({ userId: userSettingsTable.userId });
+          if (updated.length === 0) {
+            await tx
+              .insert(userSettingsTable)
+              .values({ userId: req.user!.id, ...continuityUpdate })
+              .onConflictDoUpdate({
+                target: userSettingsTable.userId,
+                set: continuityUpdate,
+              });
+          }
+          for (const item of itemsToSave) {
+            await tx.insert(kinfolkPrivateMemoriesTable).values({
+              userId: req.user!.id,
+              content: item.content,
+              purpose: plan.purpose,
+              sourceSessionId: sessionId,
+              isSensitive: item.kind === "sensitive",
+              sensitiveConsentGrantedAt:
+                item.kind === "sensitive" ? now : null,
+            });
+          }
+          return itemsToSave.length;
+        });
+        return { capacity, saved };
+      },
+    });
     invalidatePrefsCache(req.user.id);
     invalidateSessionsCache(req.user.id);
-    res.status(201).json({ saved, alreadySaved: selected.length - saved, enabled: true });
+    res.status(201).json({
+      saved: result.saved,
+      alreadySaved: selected.length - result.saved,
+      enabled: true,
+      activeCount: result.capacity.activeCount + result.saved,
+      maxActiveNotes: result.capacity.limit,
+      availableSlots: result.capacity.availableSlots - result.saved,
+    });
   } catch (err) {
+    if (err instanceof PrivateMemoryCapacityError) {
+      return void res.status(409).json({
+        error: err.message,
+        code: err.code,
+        activeCount: err.activeCount,
+        maxActiveNotes: MAX_ACTIVE_KINFOLK_PRIVATE_NOTES,
+        availableSlots: err.availableSlots,
+      });
+    }
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to save inline Kinfolk memory consent");
     res.status(500).json({ error: "Kinfolk could not save the selected private details. Nothing new was confirmed." });
   }
@@ -6236,24 +6403,48 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
       });
     }
 
-    const [memory] = await db
-      .insert(kinfolkPrivateMemoriesTable)
-      .values({
-        userId: req.user.id,
-        content,
-        purpose,
-        sourceSessionId:
-          typeof body.sessionId === "string" ? body.sessionId : null,
-        isSensitive,
-        sensitiveConsentGrantedAt: isSensitive ? new Date() : null,
-        expiresAt,
-      })
-      .returning();
+    const result = await withSerializedPrivateMemoryWrite({
+      userId: req.user.id,
+      write: async (activeCount) => {
+        const capacity = requirePrivateMemoryCapacity({
+          activeCount,
+          requestedCount: 1,
+        });
+        const [memory] = await db.transaction(async (tx) =>
+          tx
+            .insert(kinfolkPrivateMemoriesTable)
+            .values({
+              userId: req.user!.id,
+              content,
+              purpose,
+              sourceSessionId:
+                typeof body.sessionId === "string" ? body.sessionId : null,
+              isSensitive,
+              sensitiveConsentGrantedAt: isSensitive ? new Date() : null,
+              expiresAt,
+            })
+            .returning(),
+        );
+        return { capacity, memory };
+      },
+    });
     res.status(201).json({
-      memory,
+      memory: result.memory,
+      activeCount: result.capacity.activeCount + 1,
+      maxActiveNotes: result.capacity.limit,
+      availableSlots: result.capacity.availableSlots - 1,
       message: `I’ll remember that for ${purpose.replace("_", " ")}. You can view or forget it any time in Kinfolk settings.`,
     });
   } catch (err) {
+    if (err instanceof PrivateMemoryCapacityError) {
+      return void res.status(409).json({
+        error: err.message,
+        code: err.code,
+        activeCount: err.activeCount,
+        maxActiveNotes: MAX_ACTIVE_KINFOLK_PRIVATE_NOTES,
+        availableSlots: err.availableSlots,
+      });
+    }
     req.log.error(
       safeKinfolkErrorMetadata(err),
       "Failed to save Kinfolk memory",
@@ -6293,6 +6484,7 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
         and(
           eq(kinfolkPrivateMemoriesTable.id, String(req.params.id)),
           eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+          ne(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
           isNull(kinfolkPrivateMemoriesTable.revokedAt),
         ),
       )
@@ -6323,6 +6515,7 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
         and(
           eq(kinfolkPrivateMemoriesTable.id, existing.id),
           eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+          ne(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
           isNull(kinfolkPrivateMemoriesTable.revokedAt),
         ),
       )
@@ -6343,6 +6536,90 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
   }
 });
 
+router.patch("/kinfolk/memories/:id/pause", async (req: Request, res: Response) => {
+  if (!isKinfolkPrivateMemoryEnabled() && !isExplicitMemberMemoryEnabled()) {
+    return void res.status(403).json({
+      error: "Kinfolk private memory is disabled.",
+      code: "PRIVATE_MEMORY_DISABLED",
+    });
+  }
+  if (!req.user?.id) {
+    return void res.status(401).json({ error: "Authentication required" });
+  }
+  const body = req.body as Record<string, unknown>;
+  if (typeof body.paused !== "boolean") {
+    return void res.status(400).json({
+      error: "A boolean paused value is required.",
+      code: "MEMORY_PAUSE_VALUE_REQUIRED",
+    });
+  }
+  try {
+    const [existing] = await db
+      .select({
+        id: kinfolkPrivateMemoriesTable.id,
+        expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
+      })
+      .from(kinfolkPrivateMemoriesTable)
+      .where(
+        and(
+          eq(kinfolkPrivateMemoriesTable.id, String(req.params.id)),
+          eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+          ne(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
+          isNull(kinfolkPrivateMemoriesTable.revokedAt),
+        ),
+      )
+      .limit(1);
+    if (!existing) {
+      return void res.status(404).json({ error: "Memory not found" });
+    }
+    const now = new Date();
+    if (body.paused === false && existing.expiresAt && existing.expiresAt <= now) {
+      return void res.status(409).json({
+        error:
+          "This note has expired. Save it again explicitly if you want Kinfolk to use it in the future.",
+        code: "MEMORY_EXPIRED_CANNOT_RESUME",
+      });
+    }
+    const [memory] = await db
+      .update(kinfolkPrivateMemoriesTable)
+      .set({ pausedAt: body.paused ? now : null, updatedAt: now })
+      .where(
+        and(
+          eq(kinfolkPrivateMemoriesTable.id, existing.id),
+          eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+          ne(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
+          isNull(kinfolkPrivateMemoriesTable.revokedAt),
+        ),
+      )
+      .returning({
+        id: kinfolkPrivateMemoriesTable.id,
+        content: kinfolkPrivateMemoriesTable.content,
+        purpose: kinfolkPrivateMemoriesTable.purpose,
+        isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
+        expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
+        pausedAt: kinfolkPrivateMemoriesTable.pausedAt,
+        updatedAt: kinfolkPrivateMemoriesTable.updatedAt,
+      });
+    if (!memory) {
+      return void res.status(404).json({ error: "Memory not found" });
+    }
+    res.json({
+      memory: {
+        ...memory,
+        state: resolvePrivateMemoryState({
+          revokedAt: null,
+          pausedAt: memory.pausedAt,
+          expiresAt: memory.expiresAt,
+          now,
+        }),
+      },
+    });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to pause Kinfolk memory");
+    res.status(500).json({ error: "Failed to update memory" });
+  }
+});
+
 router.delete("/kinfolk/memories/:id", async (req: Request, res: Response) => {
   if (!isKinfolkPrivateMemoryEnabled() && !isExplicitMemberMemoryEnabled()) {
     return void res.status(403).json({
@@ -6360,6 +6637,7 @@ router.delete("/kinfolk/memories/:id", async (req: Request, res: Response) => {
         and(
           eq(kinfolkPrivateMemoriesTable.id, String(req.params.id)),
           eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+          ne(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
         ),
       )
       .returning({ id: kinfolkPrivateMemoriesTable.id });
@@ -6430,38 +6708,6 @@ async function persistExplicitMemberMemory(input: {
     memoryConsentPlan: plan,
   };
 }
-async function persistOrdinaryContinuityMemory(input: {
-  userId: string;
-  sessionId?: string;
-  message: string;
-}): Promise<void> {
-  const memory = extractOrdinaryContinuityMemory(input.message);
-  if (!memory) return;
-  try {
-    const existing = await db
-      .select({ id: kinfolkPrivateMemoriesTable.id })
-      .from(kinfolkPrivateMemoriesTable)
-      .where(
-        and(
-          eq(kinfolkPrivateMemoriesTable.userId, input.userId),
-          eq(kinfolkPrivateMemoriesTable.content, memory.content),
-          isNull(kinfolkPrivateMemoriesTable.revokedAt),
-        ),
-      )
-      .limit(1);
-    if (existing.length) return;
-    await db.insert(kinfolkPrivateMemoriesTable).values({
-      userId: input.userId,
-      content: memory.content,
-      purpose: memory.purpose,
-      sourceSessionId: input.sessionId ?? null,
-      isSensitive: false,
-    });
-  } catch (error) {
-    console.warn(`[kinfolk-ordinary-memory] save_failed pgCode=${pgCode(error)}`);
-  }
-}
-
 async function findFounderApprovedProductAnswer(message: string): Promise<string | null> {
   try {
     const records = await db
@@ -6544,11 +6790,6 @@ async function persistDeterministicDiscoveryTurn(input: {
           updatedAt: new Date(),
         })
         .where(eq(kinfolkSessionsTable.id, currentSession.id));
-      await persistOrdinaryContinuityMemory({
-        userId: input.userId,
-        sessionId: currentSession.id,
-        message: input.message,
-      });
       return currentSession.id;
     }
 
@@ -6565,11 +6806,6 @@ async function persistDeterministicDiscoveryTurn(input: {
         messages,
       })
       .returning({ id: kinfolkSessionsTable.id });
-    await persistOrdinaryContinuityMemory({
-      userId: input.userId,
-      sessionId: created?.id,
-      message: input.message,
-    });
     return created?.id;
   } catch (error) {
     // Discovery results are still useful when optional conversation persistence
@@ -7045,6 +7281,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
               isNotNull(kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt),
             ),
             isNull(kinfolkPrivateMemoriesTable.revokedAt),
+            isNull(kinfolkPrivateMemoriesTable.pausedAt),
             or(
               isNull(kinfolkPrivateMemoriesTable.expiresAt),
               gt(kinfolkPrivateMemoriesTable.expiresAt, new Date()),
@@ -7086,6 +7323,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
               isNotNull(kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt),
             ),
             isNull(kinfolkPrivateMemoriesTable.revokedAt),
+            isNull(kinfolkPrivateMemoriesTable.pausedAt),
             or(
               isNull(kinfolkPrivateMemoriesTable.expiresAt),
               gt(kinfolkPrivateMemoriesTable.expiresAt, new Date()),
@@ -9707,6 +9945,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               eq(kinfolkPrivateMemoriesTable.isSensitive, true),
               isNotNull(kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt),
               isNull(kinfolkPrivateMemoriesTable.revokedAt),
+              isNull(kinfolkPrivateMemoriesTable.pausedAt),
               or(
                 isNull(kinfolkPrivateMemoriesTable.expiresAt),
                 gt(kinfolkPrivateMemoriesTable.expiresAt, new Date()),
@@ -10795,6 +11034,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
                   isNotNull(kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt),
                 ),
                 isNull(kinfolkPrivateMemoriesTable.revokedAt),
+                isNull(kinfolkPrivateMemoriesTable.pausedAt),
                 or(
                   isNull(kinfolkPrivateMemoriesTable.expiresAt),
                   gt(kinfolkPrivateMemoriesTable.expiresAt, new Date()),
@@ -11558,11 +11798,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             .returning();
           finalSessionId = newSession?.id;
         }
-        await persistOrdinaryContinuityMemory({
-          userId: req.user.id,
-          sessionId: finalSessionId,
-          message,
-        });
       } catch (err) {
         if (!isOptionalSchemaGap(err)) throw err;
         console.warn(
