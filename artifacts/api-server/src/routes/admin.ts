@@ -1008,6 +1008,16 @@ async function compileAdminBusinessInventoryFilters(
     )`);
   }
   const manusCreatedPredicate = `(${manusCreatedPredicateParts.join(" OR ")})`;
+  // Kinfolk Current is the same current, public catalog that drives the
+  // existing Kinfolk count. It is not a source-ingestion, ownership, paid, or
+  // promotion cohort. Scoping through the public view keeps archived,
+  // duplicate, hidden, suspended, and demonstration records out even when an
+  // administrator is otherwise reviewing the retained master inventory.
+  const kinfolkCurrentPredicate = `businesses.id IN (
+    SELECT current_kinfolk.id
+      FROM public.public_businesses AS current_kinfolk
+     WHERE ${mwmDiasporaPromotionSqlPredicate("current_kinfolk.id")}
+  )`;
   const filters: string[] = [];
   const filterParams: unknown[] = [];
   const addFilter = (clause: string, value: string) => {
@@ -1034,6 +1044,8 @@ async function compileAdminBusinessInventoryFilters(
     // Provenance narrows the selected inventory scope; it must not make an
     // archived or duplicate record appear in the live Manus-created worklist.
     filters.push(manusCreatedPredicate);
+  } else if (intakeCohort === "kinfolk_current") {
+    filters.push(kinfolkCurrentPredicate);
   } else if (intakeCohort === "protected_historical_cohort") {
     filters.push(completedCohortPredicate);
   } else if (intakeCohort === "user_national_master") {
@@ -1729,6 +1741,11 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
           value: "manus_created",
           label: "Manus-created research/imports (direct provenance)",
           count: Number(manusCreatedCount.rows[0]?.total ?? 0),
+        },
+        {
+          value: "kinfolk_current",
+          label: "Kinfolk Current — current public catalog",
+          count: kinfolkRecommendableTotal,
         },
         {
           value: "protected_historical_cohort",

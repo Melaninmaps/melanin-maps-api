@@ -119,7 +119,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain('params.set("sort", sortValue)');
   });
 
-  it("opens one paginated master inventory while preserving status-specific safeguards", () => {
+  it("opens one paginated full-management inventory while preserving status-specific safeguards", () => {
     expect(adminRoute).toContain('const status = String(query.status ?? "active")');
     expect(adminRoute).toContain("COALESCE(listing_status, 'live_unclaimed') <> 'archived'");
     expect(adminRoute).toContain("const liveInventoryWhere");
@@ -137,9 +137,13 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain('status: "all" as typeof bizStatusFilter');
     expect(adminScreen).toContain("All retained business records");
     expect(adminScreen).toContain("All businesses (");
-    expect(adminScreen).toContain("masterInventoryMode");
-    expect(adminScreen).toContain("Review-only master list");
-    expect(adminScreen).toContain("Status-specific actions remain protected");
+    expect(adminScreen).toContain('const selectableBusinessRows = bizStatusFilter === "duplicates"');
+    expect(adminScreen).toContain("disabled={!selectableBusinessRows.some((business) => business.id === biz.id)}");
+    expect(adminScreen).toContain("Select all visible live listings");
+    expect(adminScreen).toContain("Edit profile");
+    expect(adminScreen).not.toContain("masterInventoryMode");
+    expect(adminScreen).not.toContain("Review-only master list");
+    expect(adminScreen).not.toContain("Status-specific actions remain protected");
     expect(adminScreen).toContain("Duplicate vault");
     expect(adminScreen).toContain("Archive vault");
     expect(adminScreen).toContain("Public Directory searchable");
@@ -245,7 +249,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
       expect(businessRoutes).toContain(`businessesTable.${field}`);
     }
     expect(businessRoutes).toContain("sendDynamicJson(res, {");
-    expect(businessRoutes).toContain("...toPublicBusinessRecord(business)");
+    expect(businessRoutes).toContain("const [publicBusiness] = await attachDocumentedOwnership([toPublicBusinessRecord(business)]);");
     expect(adminEditBusiness).toContain("public profile links are live now");
     expect(publicBusinessDetail).toContain("refetchOnWindowFocus: true");
     expect(mobileBusinessHook).toContain("useFocusEffect");
@@ -339,6 +343,32 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("manus_created");
   });
 
+  it("adds Kinfolk Current as the existing public catalog without replacing the Admin workflow", () => {
+    expect(adminRoute).toContain('intakeCohort === "kinfolk_current"');
+    expect(adminRoute).toContain("const kinfolkCurrentPredicate");
+    expect(adminRoute).toContain("FROM public.public_businesses AS current_kinfolk");
+    expect(adminRoute).toContain('mwmDiasporaPromotionSqlPredicate("current_kinfolk.id")');
+    expect(adminRoute).toContain('value: "kinfolk_current"');
+    expect(adminRoute).toContain("Kinfolk Current — current public catalog");
+    expect(adminRoute).toContain("count: kinfolkRecommendableTotal");
+    expect(adminScreen).toContain('"kinfolk_current"');
+    expect(adminScreen).toContain("const kinfolkCurrentCohortSelected");
+    expect(adminScreen).toContain("Use the same filters, checkboxes, full editor, and reversible archive action");
+    expect(adminScreen).toContain("onSaved={() => {");
+    expect(adminScreen).toContain("await loadBusinesses();");
+  });
+
+  it("preserves selected live rows and the active query across editor and page navigation", () => {
+    expect(adminScreen).toContain("const deselectAllVisibleBusinessListings");
+    expect(adminScreen).toContain("...previous,");
+    expect(adminScreen).toContain("selectableBusinessRows.forEach((business) => next.delete(business.id));");
+    expect(adminScreen).toContain("void loadBusinesses({ page: nextPage });");
+    expect(adminScreen).not.toContain("setSelectedBusinessIds(new Set());\n    void loadBusinesses({ page: nextPage });");
+    expect(adminScreen).toContain("onClose={() => setEditingBiz(null)}");
+    expect(adminScreen).toContain("onSaved={() => {");
+    expect(adminScreen).toContain("businessInventoryQueryRef.current");
+  });
+
   it("keeps archive, duplicate, and live status boundaries independent from each intake cohort", () => {
     expect(adminRoute).toContain("Provenance narrows the selected inventory scope");
     expect(adminRoute).toContain("listing_status = 'archived' AND COALESCE(is_duplicate, false) = false");
@@ -399,7 +429,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("exactMatchesByRecordAndReceipt");
     expect(adminRoute).toContain("for (const sourceReceipt of [existing.sourceUrl, existing.researchSourceUrl])");
     expect(adminRoute).toContain("const candidatesByListingUrl = new Map<string, SourceBackedDirectoryCandidate[]>()");
-    expect(adminRoute).toContain("const candidate = candidates?.length === 1 ? candidates[0] : null");
+    expect(adminRoute).toContain("const candidate: SourceBackedDirectoryCandidate = matchingCandidates[0]!");
     expect(adminRoute).not.toContain("for (const match of plan.duplicateMatches)");
     expect(adminRoute).toContain("exactExistingEnrichedCount = exactMatchesForBatch.length");
     expect(adminRoute).toContain("exactEnrichmentReceiptKeys");

@@ -123,6 +123,7 @@ function formatWaitlistSignupSources(value: string | null | undefined): string {
 type IntakeCohort =
   | "all"
   | "manus_created"
+  | "kinfolk_current"
   | "protected_historical_cohort"
   | "user_national_master"
   | "other_inventory";
@@ -246,6 +247,7 @@ function normalizedCityFilterValues(values: unknown): string[] {
 
 const INTAKE_COHORT_LABELS: Record<Exclude<IntakeCohort, "all">, string> = {
   manus_created: "Manus-created research/imports (direct provenance)",
+  kinfolk_current: "Kinfolk Current — current public catalog",
   protected_historical_cohort: "Protected historical cohort (receipt-backed)",
   user_national_master: "User-supplied national master",
   other_inventory: "Other existing, manual, or community inventory",
@@ -2451,14 +2453,12 @@ export default function Admin() {
   const restorableFilteredBiz = filteredBiz.filter(
     (b) => b.listingStatus === "archived" && !b.isDuplicate,
   );
+  const kinfolkCurrentCohortSelected = bizIntakeCohortFilter === "kinfolk_current";
   const selectableBusinessRows = bizStatusFilter === "duplicates"
     ? filteredBiz
     : bizStatusFilter === "archived"
       ? restorableFilteredBiz
-      : bizStatusFilter === "all"
-        ? []
-        : archivableFilteredBiz;
-  const masterInventoryMode = bizStatusFilter === "all";
+      : archivableFilteredBiz;
   const selectedVisibleBusinessCount = selectedBusinessIds.size;
   const businessInventoryExportHref = (() => {
     const params = new URLSearchParams({ status: bizStatusFilter });
@@ -2568,7 +2568,6 @@ export default function Admin() {
 
   const changeBusinessInventoryPage = (nextPage: number) => {
     if (nextPage < 1 || nextPage > businessInventoryTotalPages) return;
-    setSelectedBusinessIds(new Set());
     void loadBusinesses({ page: nextPage });
   };
 
@@ -2582,7 +2581,18 @@ export default function Admin() {
   };
 
   const selectAllVisibleBusinessListings = () => {
-    setSelectedBusinessIds(new Set(selectableBusinessRows.map((business) => business.id)));
+    setSelectedBusinessIds((previous) => new Set([
+      ...previous,
+      ...selectableBusinessRows.map((business) => business.id),
+    ]));
+  };
+
+  const deselectAllVisibleBusinessListings = () => {
+    setSelectedBusinessIds((previous) => {
+      const next = new Set(previous);
+      selectableBusinessRows.forEach((business) => next.delete(business.id));
+      return next;
+    });
   };
 
   const updateSelectedBusinessListingStatus = async (
@@ -4600,37 +4610,43 @@ Selected: ${summary}`,
             <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#CA922B]">
-                  {bizStatusFilter === "all"
-                    ? "Master business inventory"
-                    : bizStatusFilter === "duplicates"
+                  {bizStatusFilter === "duplicates"
                       ? "Duplicate vault"
                       : bizStatusFilter === "archived"
                         ? "Archive vault"
-                      : bizIntakeCohortFilter === "manus_created"
-                        ? "Manus-created review list"
-                        : "Live business inventory"}
+                        : kinfolkCurrentCohortSelected
+                          ? "Kinfolk Current"
+                          : bizStatusFilter === "all"
+                            ? "Master business inventory"
+                            : bizIntakeCohortFilter === "manus_created"
+                              ? "Manus-created review list"
+                              : "Live business inventory"}
                 </p>
                 <h2 className="mt-1 text-2xl font-serif font-bold text-[#3A1F0E]">
-                  {bizStatusFilter === "all"
-                    ? `All retained business records (${businessInventoryTotal.toLocaleString()})`
-                    : bizStatusFilter === "duplicates"
+                  {bizStatusFilter === "duplicates"
                       ? `Duplicate vault (${duplicateCount.toLocaleString()})`
                       : bizStatusFilter === "archived"
                         ? `Archived business records (${businessArchivedInventoryTotal.toLocaleString()})`
-                      : bizIntakeCohortFilter === "manus_created"
-                        ? `Manus-created review list (${businessInventoryFilteredTotal.toLocaleString()})`
-                        : `Live business inventory (${businessLiveInventoryTotal.toLocaleString()})`}
+                        : kinfolkCurrentCohortSelected
+                          ? `Kinfolk Current (${businessInventoryFilteredTotal.toLocaleString()})`
+                          : bizStatusFilter === "all"
+                            ? `All retained business records (${businessInventoryTotal.toLocaleString()})`
+                            : bizIntakeCohortFilter === "manus_created"
+                              ? `Manus-created review list (${businessInventoryFilteredTotal.toLocaleString()})`
+                              : `Live business inventory (${businessLiveInventoryTotal.toLocaleString()})`}
                 </h2>
                 <p className="mt-1 max-w-2xl text-sm text-[#3A1F0E]/60">
-                  {bizStatusFilter === "all"
-                    ? "Every retained business record is together here. The row status tells you whether it is live, archived, or a confirmed duplicate; those statuses still protect the actions available for that row."
-                    : bizStatusFilter === "duplicates"
+                  {bizStatusFilter === "duplicates"
                       ? "Review confirmed duplicates retained from every inventory state. They remain excluded from public discovery and all outreach until an audited merge is restored."
                       : bizStatusFilter === "archived"
                         ? "This separate vault retains archived profiles, research, source links, and audit history. Restore only a record you have re-confirmed."
-                      : bizIntakeCohortFilter === "manus_created"
-                        ? "Direct Manus research/import records only. Anything you already archived, hid, or retained as a duplicate is excluded here so you do not review it twice."
-                        : "Filter live inventory, select likely duplicates, and archive them from public discovery without deleting their profile, research, source, or Kinfolk context."}
+                        : kinfolkCurrentCohortSelected
+                          ? "The current public catalog available to Kinfolk. Use the same filters, checkboxes, full editor, and reversible archive action; this cohort does not publish, change source receipts, or alter ownership."
+                          : bizStatusFilter === "all"
+                            ? "Every retained business record is together here. The row status tells you whether it is live, archived, or a confirmed duplicate; those statuses still protect the actions available for that row."
+                            : bizIntakeCohortFilter === "manus_created"
+                              ? "Direct Manus research/import records only. Anything you already archived, hid, or retained as a duplicate is excluded here so you do not review it twice."
+                              : "Filter live inventory, select likely duplicates, and archive them from public discovery without deleting their profile, research, source, or Kinfolk context."}
                 </p>
                 {contactedCount > 0 && (
                   <p className="mt-1 text-xs text-[#3A1F0E]/45">
@@ -5093,9 +5109,7 @@ Selected: ${summary}`,
             <div className="mb-4 flex flex-col gap-3 rounded-xl border border-[#2B1507]/10 bg-[#2B1507]/5 px-4 py-3 text-sm text-[#3A1F0E]/70 md:flex-row md:items-center md:justify-between">
               <div>
                 <strong className="text-[#3A1F0E]">{businessInventoryFilteredTotal.toLocaleString()} filtered results.</strong>{" "}
-                {masterInventoryMode
-                  ? "Every retained business record is visible together. Use the status tags to compare records; select a status tab only when you are ready to take an archive, restore, or duplicate-review action."
-                  : bizStatusFilter === "duplicates"
+                {bizStatusFilter === "duplicates"
                   ? "These are confirmed duplicate records retained from all historical states. They are excluded from public discovery. Select one or more to permanently delete only after the required typed confirmation, or open Duplicates & review to restore an audited merge."
                   : bizStatusFilter === "archived"
                   ? "These are separated from routine city and business-name review. Use Unhide / restore public listing only after confirming the record should return to normal discovery, or permanently delete selected records with the typed confirmation."
@@ -5123,11 +5137,7 @@ Selected: ${summary}`,
                     <option value={500}>500</option>
                   </select>
                 </label>
-                {masterInventoryMode ? (
-                  <span className="rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-1.5 text-xs font-bold text-[#3A1F0E]/60">
-                    Status-specific actions remain protected
-                  </span>
-                ) : bizStatusFilter === "duplicates" ? (
+                {bizStatusFilter === "duplicates" ? (
                   <>
                     <button
                       type="button"
@@ -5234,9 +5244,7 @@ Selected: ${summary}`,
                       <th className="w-10 px-3 py-3 text-center">
                         <input
                           type="checkbox"
-                          aria-label={masterInventoryMode
-                            ? "Bulk actions are disabled while reviewing all business records together"
-                            : bizStatusFilter === "duplicates"
+                          aria-label={bizStatusFilter === "duplicates"
                             ? "Select all visible duplicate listings for permanent deletion"
                             : bizStatusFilter === "archived"
                               ? "Select all visible archived listings"
@@ -5245,10 +5253,10 @@ Selected: ${summary}`,
                             selectableBusinessRows.length > 0 &&
                             selectableBusinessRows.every((business) => selectedBusinessIds.has(business.id))
                           }
-                          disabled={masterInventoryMode}
+                          disabled={selectableBusinessRows.length === 0}
                           onChange={(event) => {
                             if (event.target.checked) selectAllVisibleBusinessListings();
-                            else setSelectedBusinessIds(new Set());
+                            else deselectAllVisibleBusinessListings();
                           }}
                           className="h-4 w-4 accent-[#CA922B] disabled:cursor-not-allowed disabled:opacity-35"
                         />
@@ -5287,7 +5295,7 @@ Selected: ${summary}`,
                             type="checkbox"
                             aria-label={`Select ${biz.name}`}
                             checked={selectedBusinessIds.has(biz.id)}
-                            disabled={masterInventoryMode}
+                            disabled={!selectableBusinessRows.some((business) => business.id === biz.id)}
                             onChange={() => toggleBusinessSelection(biz.id)}
                             className="h-4 w-4 accent-[#CA922B] disabled:cursor-not-allowed disabled:opacity-35"
                           />
@@ -5411,11 +5419,7 @@ Selected: ${summary}`,
                           )}
                         </td>
                         <td className="px-4 py-4">
-                          {masterInventoryMode ? (
-                            <span className="text-xs leading-5 text-[#3A1F0E]/50">
-                              Choose a status tab before outreach
-                            </span>
-                          ) : biz.isDuplicate ? (
+                          {biz.isDuplicate ? (
                             <span className="text-xs leading-5 text-[#3A1F0E]/50">
                               Outreach unavailable for retained duplicates
                             </span>
@@ -5428,13 +5432,8 @@ Selected: ${summary}`,
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-col gap-1.5">
-                            {masterInventoryMode ? (
-                              <span className="max-w-48 text-xs leading-5 text-[#3A1F0E]/55">
-                                Review-only master list — choose a status tab before editing or changing visibility.
-                              </span>
-                            ) : (
-                              <>
-                                <button
+                            <>
+                              <button
                                   onClick={() => {
                                     if (!biz.isDuplicate) {
                                       setEditingBiz({ id: biz.id, name: biz.name });
@@ -5549,8 +5548,7 @@ Selected: ${summary}`,
                               </button>
                               </>
                                 )}
-                              </>
-                            )}
+                            </>
                           </div>
                         </td>
                       </tr>
