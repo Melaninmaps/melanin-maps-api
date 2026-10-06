@@ -27,6 +27,16 @@ describe("authoritative live weather", () => {
     expect(extractLiveWeatherLocation("Will it rain tonight?", null)).toBeNull();
   });
 
+  it("extracts a location from advisory wording without treating interrogative scaffolding as a city", () => {
+    expect(
+      extractLiveWeatherLocation(
+        "Are there any official weather advisories in Philadelphia today?",
+        null,
+      ),
+    ).toBe("Philadelphia");
+    expect(extractLiveWeatherLocation("Are there any weather alerts today?", null)).toBeNull();
+  });
+
   it("builds one dated, source-linked response from provider data without model generation", async () => {
     const fetcher = vi.fn()
       .mockResolvedValueOnce(jsonResponse({

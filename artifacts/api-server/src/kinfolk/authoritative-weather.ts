@@ -199,13 +199,25 @@ export function extractLiveWeatherLocation(
   cityHint?: string | null,
 ): string | null {
   const patterns = [
+    /(?:weather\s+)?(?:advisories?|alerts?|warnings?|watches)\s+(?:in|for|at|around)\s+([\p{L}\d][\p{L}\d .,'’-]{1,60}?)(?=\s+(?:today|tonight|tomorrow|right now|this week|this weekend)\b|[?.,;!]|$)/iu,
     /(?:weather|forecast|rain|temperature|degrees|umbrella|snow|storm|wind|humid|sunny|cloudy)\s+(?:in|for|at|around)\s+([\p{L}\d][\p{L}\d .,'’-]{1,60}?)(?=\s+(?:today|tonight|tomorrow|right now|this week|this weekend)\b|[?.,;!]|$)/iu,
     /(?:in|to|for|at|visiting|going to)\s+([\p{L}\d][\p{L}\d .,'’-]{1,60}?)(?:'s)?\s+weather\b/iu,
     /([\p{L}\d][\p{L}\d .,'’-]{1,60}?)\s+(?:weather|forecast|temperature)\b/iu,
   ];
   for (const pattern of patterns) {
     const matched = message.match(pattern)?.[1]?.trim();
-    if (matched) return matched;
+    // The final "<place> weather" pattern is intentionally broad enough for
+    // natural phrasing, so reject interrogative scaffolding before asking a
+    // geocoder to treat it as a city. This is language-shape validation, not a
+    // list of cities or topics.
+    if (
+      matched &&
+      !/^(?:are|is|was|will|what|when|where|why|how|any|official|current|the|today|tonight|tomorrow)\b/i.test(
+        matched,
+      )
+    ) {
+      return matched;
+    }
   }
   const hint = typeof cityHint === "string" ? cityHint.trim() : "";
   return hint || null;
