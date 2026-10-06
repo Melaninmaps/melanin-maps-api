@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildGenericAnswerRouteClassifierPrompt,
+  buildKinfolkConversationalIntentPrompt,
   parseGenericAnswerRouteDecision,
   resolveKinfolkEvidenceOutcome,
   resolveKinfolkGeneralAnswerRoute,
@@ -29,6 +30,7 @@ function decision(
   return {
     evidenceNeed: "stable",
     purpose: "answer",
+    conversationIntent: "informational",
     clarificationQuestion: null,
     ...overrides,
   };
@@ -56,25 +58,40 @@ describe("Kinfolk generic answer routing", () => {
       parseGenericAnswerRouteDecision({
         evidenceNeed: "latest",
         purpose: "answer",
+        conversationIntent: "informational",
       }),
     ).toBeNull();
     expect(
       parseGenericAnswerRouteDecision({
         evidenceNeed: "stable",
         purpose: "lookup_everything",
+        conversationIntent: "informational",
       }),
     ).toBeNull();
     expect(
       parseGenericAnswerRouteDecision({
         evidenceNeed: "current",
         purpose: "clarification",
+        conversationIntent: "clarification",
         clarificationQuestion: "  Which detail changes the answer?  ",
       }),
     ).toEqual({
       evidenceNeed: "current",
       purpose: "clarification",
+      conversationIntent: "clarification",
       clarificationQuestion: "Which detail changes the answer?",
     });
+  });
+
+  it("uses bounded conversational intent without inferring identity or dialect", () => {
+    const prompt = buildGenericAnswerRouteClassifierPrompt();
+    expect(prompt).toContain("bounded recentConversation");
+    expect(prompt).toContain("never receives profile, memory, identity, location");
+    expect(prompt).not.toMatch(/Beyonc|president|Mexico|celebrity/i);
+    expect(buildKinfolkConversationalIntentPrompt("social_interpretation"))
+      .toContain("Do not assert another person's hidden intent");
+    expect(buildKinfolkConversationalIntentPrompt("emotional_support"))
+      .toContain("Do not diagnose");
   });
 
   const classes: Array<{

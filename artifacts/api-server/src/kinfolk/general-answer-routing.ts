@@ -14,6 +14,18 @@ export type KinfolkAnswerStrategy =
   | "focused_clarification"
   | "honest_decline";
 
+/** A bounded disposition which affects framing, not truth, evidence, or memory scope. */
+export type KinfolkConversationalIntent =
+  | "informational"
+  | "emotional_support"
+  | "decision_support"
+  | "planning"
+  | "drafting"
+  | "social_interpretation"
+  | "approved_memory_recall"
+  | "clarification"
+  | "unsafe_or_unverifiable";
+
 export type GenericAnswerRouteDecision = Readonly<{
   evidenceNeed: "stable" | "current" | "authoritative";
   purpose:
@@ -22,6 +34,7 @@ export type GenericAnswerRouteDecision = Readonly<{
     | "approved_memory_recall"
     | "clarification"
     | "unsafe_or_unverifiable";
+  conversationIntent: KinfolkConversationalIntent;
   clarificationQuestion: string | null;
 }>;
 
@@ -62,6 +75,7 @@ export function parseGenericAnswerRouteDecision(
   const record = value as Record<string, unknown>;
   const evidenceNeed = record.evidenceNeed;
   const purpose = record.purpose;
+  const conversationIntent = record.conversationIntent;
   if (
     (evidenceNeed !== "stable" &&
       evidenceNeed !== "current" &&
@@ -70,7 +84,16 @@ export function parseGenericAnswerRouteDecision(
       purpose !== "planning_or_writing" &&
       purpose !== "approved_memory_recall" &&
       purpose !== "clarification" &&
-      purpose !== "unsafe_or_unverifiable")
+      purpose !== "unsafe_or_unverifiable") ||
+    (conversationIntent !== "informational" &&
+      conversationIntent !== "emotional_support" &&
+      conversationIntent !== "decision_support" &&
+      conversationIntent !== "planning" &&
+      conversationIntent !== "drafting" &&
+      conversationIntent !== "social_interpretation" &&
+      conversationIntent !== "approved_memory_recall" &&
+      conversationIntent !== "clarification" &&
+      conversationIntent !== "unsafe_or_unverifiable")
   ) {
     return null;
   }
@@ -78,6 +101,7 @@ export function parseGenericAnswerRouteDecision(
   return {
     evidenceNeed,
     purpose,
+    conversationIntent,
     clarificationQuestion:
       purpose === "clarification" ? clarificationQuestion : null,
   };
@@ -85,15 +109,18 @@ export function parseGenericAnswerRouteDecision(
 
 /**
  * This prompt deliberately describes answer properties rather than entity
- * classes, names, locations, or canned questions. It receives only the current
- * member turn and never profile, history, memory, identity, or directory data.
+ * classes, names, locations, or canned questions. It receives the current turn
+ * and a short recent conversation window, never profile, memory, identity,
+ * location, directory, or community data.
  */
 export function buildGenericAnswerRouteClassifierPrompt(): string {
   return [
     "Classify the member's conversational need before an answer is written.",
-    "Return JSON only with evidenceNeed, purpose, and clarificationQuestion.",
+    "The input JSON contains currentMessage and a bounded recentConversation. Use the history only to resolve the current message's purpose; do not repeat it or infer profile information from it. The classifier never receives profile, memory, identity, location, directory, or community data.",
+    "Return JSON only with evidenceNeed, purpose, conversationIntent, and clarificationQuestion.",
     "evidenceNeed must be one of: stable, current, authoritative.",
     "purpose must be one of: answer, planning_or_writing, approved_memory_recall, clarification, unsafe_or_unverifiable.",
+    "conversationIntent must be one of: informational, emotional_support, decision_support, planning, drafting, social_interpretation, approved_memory_recall, clarification, unsafe_or_unverifiable.",
     "Choose current when the truth depends on changing external conditions, a live status, a recent development, a current estimate, availability, a price, a ranking, or another time-sensitive public fact.",
     "Choose authoritative when an answer can materially affect health, law, finances, safety, or another high-consequence decision.",
     "Choose stable for explanations, everyday knowledge, or self-contained reasoning that does not depend on changing facts.",
@@ -103,6 +130,32 @@ export function buildGenericAnswerRouteClassifierPrompt(): string {
     "Choose unsafe_or_unverifiable only when the requested action is unsafe. Do not use it merely because you do not have sources; the server retrieves evidence after this classification.",
     "Do not answer the member. Do not infer identity, location, preferences, or facts not present in the turn.",
   ].join(" ");
+}
+
+/**
+ * Adds response-quality guidance only after server evidence, safety, memory,
+ * and mode policies are fixed. It never creates memory, identity claims,
+ * dialect, sources, or factual certainty.
+ */
+export function buildKinfolkConversationalIntentPrompt(
+  intent: KinfolkConversationalIntent | null | undefined,
+): string {
+  switch (intent) {
+    case "emotional_support":
+      return "CONVERSATIONAL INTENT — EMOTIONAL SUPPORT: Begin with calm acknowledgment, then offer a grounded next step if useful. Do not diagnose, claim to feel the member's emotions, overpromise, or turn ordinary distress into an emergency without supported signs.";
+    case "decision_support":
+      return "CONVERSATIONAL INTENT — DECISION SUPPORT: Help the member compare realistic options, tradeoffs, and next steps. State uncertainty plainly; do not invent stakes, values, costs, or outcomes.";
+    case "planning":
+      return "CONVERSATIONAL INTENT — PLANNING: Organize a practical path with concise, adjustable steps. Ask one focused question only when a missing detail materially changes the plan.";
+    case "drafting":
+      return "CONVERSATIONAL INTENT — DRAFTING: Produce or improve the requested text using the member's supplied purpose and content. Do not introduce claims, commitments, or personal details they did not provide.";
+    case "social_interpretation":
+      return "CONVERSATIONAL INTENT — SOCIAL INTERPRETATION: Separate observable wording from possible interpretations. Do not assert another person's hidden intent, identity, diagnosis, or motive as fact; name uncertainty and offer a respectful way to clarify when appropriate.";
+    case "approved_memory_recall":
+      return "CONVERSATIONAL INTENT — APPROVED MEMORY: Use only the explicit, server-authorized memory supplied for this turn. Do not infer, extend, or save additional personal information.";
+    default:
+      return "CONVERSATIONAL INTENT — GENERAL: Answer directly and naturally. Preserve evidence, safety, and member-consent boundaries already supplied by the server.";
+  }
 }
 
 /**
