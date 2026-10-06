@@ -357,6 +357,8 @@ export default function KinfolkSettingsControlCenter() {
         <Line colors={colors} /><Summary colors={colors} icon="user" title="Preferred name" value={nameLabel(preferredName)} detail="Saved separately and never altered by this screen." />
         <Line colors={colors} />
         <TouchableOpacity style={styles.row} activeOpacity={0.8} accessibilityLabel="Manage saved Kinfolk memories" onPress={() => router.push("/kinfolk-memory" as never)}><Icon colors={colors} name="lock" /><View style={styles.grow}><Text style={[styles.rowTitle, { color: colors.foreground }]}>Saved memories</Text><Text style={[styles.rowSub, { color: colors.mutedForeground }]}>See each explicit note and preferred name; pause, resume, revoke, edit, or delete it there.</Text></View><Feather name="chevron-right" color={colors.mutedForeground} size={18} /></TouchableOpacity>
+        <Line colors={colors} />
+        <TouchableOpacity style={styles.row} activeOpacity={0.8} accessibilityLabel="Manage Private Places" onPress={() => router.push("/kinfolk-private-places" as never)}><Icon colors={colors} name="map-pin" /><View style={styles.grow}><Text style={[styles.rowTitle, { color: colors.foreground }]}>Private Places</Text><Text style={[styles.rowSub, { color: colors.mutedForeground }]}>A separate encrypted space for places you choose; never chat memory or an automatic recommendation.</Text></View><Feather name="chevron-right" color={colors.mutedForeground} size={18} /></TouchableOpacity>
       </View>
 
       <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>CONVERSATION MODE</Text>

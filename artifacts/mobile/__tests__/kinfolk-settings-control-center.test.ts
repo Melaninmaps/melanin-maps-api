@@ -5,6 +5,7 @@ const settings = readFileSync(new URL("../app/settings.tsx", import.meta.url), "
 const kinfolkRoute = readFileSync(new URL("../app/kinfolk-settings.tsx", import.meta.url), "utf8");
 const controlCenter = readFileSync(new URL("../components/KinfolkSettingsControlCenter.tsx", import.meta.url), "utf8");
 const memory = readFileSync(new URL("../app/kinfolk-memory.tsx", import.meta.url), "utf8");
+const privatePlaces = readFileSync(new URL("../app/kinfolk-private-places.tsx", import.meta.url), "utf8");
 const exitGuard = readFileSync(new URL("../hooks/useUnsavedKinfolkExitGuard.ts", import.meta.url), "utf8");
 const widget = readFileSync(new URL("../components/AIChatWidget.tsx", import.meta.url), "utf8");
 
@@ -36,6 +37,8 @@ describe("Build 135 native Kinfolk Settings", () => {
     expect(controlCenter).toContain("/api/kinfolk/preferred-name");
     expect(controlCenter).toContain('router.push("/kinfolk-memory" as never)');
     expect(controlCenter).toContain("Accessibility and regional-language preferences are not inferred");
+    expect(controlCenter).toContain('router.push("/kinfolk-private-places" as never)');
+    expect(controlCenter).toContain("Private Places");
   });
 
   it("persists settings only through one explicit save transaction and retains a failed draft", () => {
@@ -65,7 +68,17 @@ describe("Build 135 native Kinfolk Settings", () => {
   });
 
   it("prevents the global chat pill from overlapping Settings content", () => {
-    expect(widget).toContain('const onSettingsRoute = ["/settings", "/kinfolk-settings", "/kinfolk-memory"]');
+    expect(widget).toContain('const onSettingsRoute = ["/settings", "/kinfolk-settings", "/kinfolk-memory", "/kinfolk-private-places"]');
     expect(widget).toContain("|| onSettingsRoute");
+  });
+
+  it("keeps native Private Places explicit, encrypted, and outside Kinfolk chat", () => {
+    expect(privatePlaces).toContain("Private Places");
+    expect(privatePlaces).toContain("api/kinfolk/private-places/status");
+    expect(privatePlaces).toContain("googleMapsGeocodingConsent: true");
+    expect(privatePlaces).toContain("Use for nearby directory search");
+    expect(privatePlaces).toContain("never becomes Kinfolk chat memory");
+    expect(privatePlaces).toContain("useUnsavedKinfolkExitGuard");
+    expect(privatePlaces).not.toContain("/api/kinfolk/chat");
   });
 });
