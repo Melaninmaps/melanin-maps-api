@@ -72,11 +72,38 @@ describe("documented discovery review input", () => {
     expect(validateDocumentedDiscoveryReviewInput(qualified(socialOnly), now).eligibilityStatus).toBe("qualified");
   });
 
+  it("accepts an identity-matching LinkedIn or YouTube business profile as complete official-social evidence", () => {
+    for (const profileUrl of ["https://www.linkedin.com/company/acme/", "https://www.youtube.com/@acme", "https://m.facebook.com/acme/"]) {
+      const socialOnly = [baseEvidence[1], {
+        field: "official_social" as const,
+        sourceKind: "founder_directory" as const,
+        sourceUrl: "https://founder-directory.example/listing/acme",
+        observedAt: "2026-10-05T00:00:00.000Z",
+        confidence: "high" as const,
+        observedValue: { profileUrl },
+      }];
+      expect(validateDocumentedDiscoveryReviewInput(qualified(socialOnly), now).eligibilityStatus).toBe("qualified");
+    }
+  });
+
   it("rejects Yelp, marketplaces, and social profiles as an official website", () => {
     const yelp = structuredClone(baseEvidence);
     (yelp[2] as { observedValue: { websiteUrl: string } }).observedValue.websiteUrl = "https://www.yelp.com/biz/acme";
     expect(() => validateDocumentedDiscoveryReviewInput(qualified(yelp), now))
       .toThrow("official website may not be a directory, marketplace, or social profile");
+  });
+
+  it("rejects a generic directory as official-social proof", () => {
+    const socialOnly = [baseEvidence[1], {
+      field: "official_social" as const,
+      sourceKind: "founder_directory" as const,
+      sourceUrl: "https://founder-directory.example/listing/acme",
+      observedAt: "2026-10-05T00:00:00.000Z",
+      confidence: "high" as const,
+      observedValue: { profileUrl: "https://www.yelp.com/biz/acme" },
+    }];
+    expect(() => validateDocumentedDiscoveryReviewInput(qualified(socialOnly), now))
+      .toThrow("official social profile must use an approved business-controlled social host");
   });
 
   it("requires an address receipt before a sourced geocode can enable a pin", () => {

@@ -29,6 +29,19 @@ describe("documented Discovery eligibility", () => {
     expect(isDocumentedDiscoveryEligible({ ...current, ownershipDesignations: [] }, "discovery", now)).toBe(false);
   });
 
+  it("retains documented social-only businesses outside Map until a geocode is separately audited", () => {
+    const socialOnly = { ...current, officialWebsiteEvidenceId: null };
+    expect(isDocumentedDiscoveryEligible(socialOnly, "discovery", now)).toBe(true);
+    expect(isDocumentedDiscoveryEligible(socialOnly, "map", now)).toBe(false);
+    expect(isDocumentedDiscoveryEligible({ ...socialOnly, mapPinEvidenceId: "geocode-receipt" }, "map", now)).toBe(true);
+  });
+
+  it("retains an official-social match when a separate website is invalid and holds records with neither presence", () => {
+    const officialSocialOnly = { ...current, officialWebsiteEvidenceId: null, officialSocialEvidenceId: "linkedin-social-receipt" };
+    expect(isDocumentedDiscoveryEligible(officialSocialOnly, "discovery", now)).toBe(true);
+    expect(isDocumentedDiscoveryEligible({ ...officialSocialOnly, officialSocialEvidenceId: null }, "discovery", now)).toBe(false);
+  });
+
   it("requires a separate geocode receipt before a qualified profile can be a map pin", () => {
     expect(isDocumentedDiscoveryEligible(current, "map", now)).toBe(false);
     expect(isDocumentedDiscoveryEligible({ ...current, mapPinEvidenceId: "geocode-receipt" }, "map", now)).toBe(true);
