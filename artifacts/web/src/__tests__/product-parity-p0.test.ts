@@ -25,11 +25,11 @@ describe("Businesses reliability and trusted hero media", () => {
     await expect(readBusinessDirectoryResponse(response)).rejects.toThrow("incomplete response");
   });
 
-  it("shows cover images only for claimed businesses", () => {
-    expect(canDisplayBusinessCover({ imageUrl: "https://example.com/demo.jpg", profileStatus: "community_listed" })).toBe(false);
-    expect(canDisplayBusinessCover({ imageUrl: "https://example.com/owner.jpg", profileStatus: "claimed" })).toBe(true);
-    expect(canDisplayBusinessCover({ imageUrl: "https://example.com/owner.jpg", listingStatus: "live_claimed" })).toBe(true);
-    expect(canDisplayBusinessCover({ imageUrl: null, profileStatus: "claimed" })).toBe(false);
+  it("shows cover images only with an approved source receipt", () => {
+    expect(canDisplayBusinessCover({ imageUrl: "https://example.com/demo.jpg", imageEligibility: "suppressed_unverified" })).toBe(false);
+    expect(canDisplayBusinessCover({ imageUrl: "https://example.com/owner.jpg", imageEligibility: "receipt_verified" })).toBe(true);
+    expect(canDisplayBusinessCover({ imageUrl: "https://example.com/owner.jpg", profileStatus: "claimed" })).toBe(false);
+    expect(canDisplayBusinessCover({ imageUrl: null, imageEligibility: "receipt_verified" })).toBe(false);
   });
 
   it("selects useful category icon plates", () => {

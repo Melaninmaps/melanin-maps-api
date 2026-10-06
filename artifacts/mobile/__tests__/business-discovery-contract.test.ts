@@ -21,6 +21,14 @@ const mapSource = readFileSync(
   decodeURIComponent(new URL("../components/FullMapView.tsx", import.meta.url).pathname),
   "utf8",
 );
+const businessCardSource = readFileSync(
+  decodeURIComponent(new URL("../components/BusinessCard.tsx", import.meta.url).pathname),
+  "utf8",
+);
+const businessPreviewSource = readFileSync(
+  decodeURIComponent(new URL("../components/BusinessPreviewModal.tsx", import.meta.url).pathname),
+  "utf8",
+);
 const locationShareSource = readFileSync(
   decodeURIComponent(new URL("../app/location-share.tsx", import.meta.url).pathname),
   "utf8",
@@ -83,6 +91,15 @@ describe("business discovery data contract", () => {
     expect(webDetailSource).toContain("const claimedCover = ownerManaged && business.imageUrl");
     expect(webDetailSource).toContain("style={styles.heroIconPlate}");
     expect(webDetailSource).toContain('accessibilityLabel={`${business.category || "Business"} category placeholder`}');
+  });
+
+  it("never substitutes category stock art for a business image", () => {
+    expect(businessCardSource).not.toContain("const CATEGORY_IMAGES");
+    expect(businessCardSource).not.toContain("bento-businesses.jpg");
+    expect(businessCardSource).toContain("Business profile");
+    expect(businessPreviewSource).not.toContain("const CATEGORY_IMAGES");
+    expect(businessPreviewSource).not.toContain("bento-nightlife.jpg");
+    expect(businessPreviewSource).toContain("Business profile");
   });
 
   it("gives deep-linked location sharing an accessible Safety Hub return path", () => {

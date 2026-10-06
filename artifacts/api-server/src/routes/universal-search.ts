@@ -25,6 +25,7 @@ import {
 import { isUpcomingOneOffEventDate } from "../lib/public-event-visibility";
 import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 import { sanitizePublicListingCopyOrNull } from "../businesses/publicListingCopy";
+import { attachEligibleBusinessImages } from "../businesses/businessImageEligibility";
 import {
   buildDesignationPredicateSql,
   matchesDocumentedDesignationScope,
@@ -2262,6 +2263,7 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       });
     }
 
+    const publicBusinesses = await attachEligibleBusinessImages(pool, businesses);
     res.json({
       query: trimmedQ,
       normalizedConcept,
@@ -2292,7 +2294,7 @@ router.get("/search/universal", async (req: Request, res: Response) => {
       // Correction 3 fields
       heritageGeoExpansion: heritageGeoExpansion === "none" ? undefined : heritageGeoExpansion,
       heritageGeoMessage,
-      results: { businesses, events, heritage, libraryTopics, communityOrgs },
+      results: { businesses: publicBusinesses, events, heritage, libraryTopics, communityOrgs },
     });
 
     // ── Library Growth signal (fire-and-forget) ───────────────────────────────

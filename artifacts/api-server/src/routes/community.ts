@@ -23,6 +23,7 @@ import {
   validateCommunityMediaUrls,
 } from "../community/communityMediaValidation";
 import { fetchTikTokVideoPreview, type TikTokVideoPreview } from "../community/tiktokPreview";
+import { attachEligibleBusinessImages } from "../businesses/businessImageEligibility";
 
 const router: IRouter = Router();
 const TIKTOK_PREVIEW_CACHE_TTL_MS = 10 * 60 * 1_000;
@@ -904,9 +905,9 @@ router.post("/community/posts", async (req: Request, res: Response) => {
             .where(and(eq(businessesTable.blackOwned, true), sql`lower(${businessesTable.city}) = lower(${searchCity})`))
             .orderBy(sql`${businessesTable.rating}::numeric DESC, ${businessesTable.confidenceScore} DESC`)
             .limit(3);
-          kinfolkSuggestions = fallback;
+          kinfolkSuggestions = await attachEligibleBusinessImages(pool, fallback);
         } else {
-          kinfolkSuggestions = alts;
+          kinfolkSuggestions = await attachEligibleBusinessImages(pool, alts);
         }
       }
     }

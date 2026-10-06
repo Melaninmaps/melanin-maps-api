@@ -78,16 +78,6 @@ function getExperienceLabel(
   return getVibeMatch(business.category);
 }
 
-const CATEGORY_IMAGES: Record<string, any> = {
-  Food: require("@/assets/images/bento-businesses.jpg"),
-  Beauty: require("@/assets/images/bento-nightlife.jpg"),
-  Retail: require("@/assets/images/bento-nightlife.jpg"),
-  Tech: require("@/assets/images/bento-businesses.jpg"),
-  Health: require("@/assets/images/bento-culture.jpg"),
-  Legal: require("@/assets/images/bento-businesses.jpg"),
-  Finance: require("@/assets/images/bento-businesses.jpg"),
-};
-
 interface Props {
   business: Business;
   onPress: () => void;
@@ -99,10 +89,10 @@ interface Props {
 
 export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizontal = false, warningCount = 0 }: Props) {
   const colors = useColors();
-  // Prefer the per-business image from the server; fall back to category stock art.
-  const img = business.imageUrl
-    ? { uri: business.imageUrl }
-    : (CATEGORY_IMAGES[business.category] ?? CATEGORY_IMAGES["Food"]);
+  const receiptEligibleImage = typeof business.imageUrl === "string" && business.imageUrl.trim() && (
+    !Object.prototype.hasOwnProperty.call(business, "imageEligibility") ||
+    (business as Business & { imageEligibility?: string }).imageEligibility === "receipt_verified"
+  ) ? business.imageUrl : null;
   const [showSafetySurvey, setShowSafetySurvey] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -134,7 +124,14 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
           accessibilityLabel={`${business.name}, ${business.category} in ${business.city}`}
           accessibilityHint="Double tap to view details, hold to preview"
         >
-          <Image source={img} style={styles.hImage} contentFit="cover" />
+          {receiptEligibleImage ? (
+            <Image source={{ uri: receiptEligibleImage }} style={styles.hImage} contentFit="cover" />
+          ) : (
+            <View style={[styles.hImage, styles.imagePlaceholder, { backgroundColor: colors.primary + "16" }]}>
+              <Feather name="map-pin" size={22} color={colors.primary} />
+              <Text style={[styles.placeholderText, { color: colors.primary }]}>Business profile</Text>
+            </View>
+          )}
           {business.ownershipDesignations?.includes("non-minority-owned") ? (
             <View style={styles.hBadgeOverlay}>
               <NonMinorityBadge size="sm" />
@@ -283,7 +280,14 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
         accessibilityHint="Double tap to view details, hold to preview"
       >
         <View style={styles.vImageWrap}>
-          <Image source={img} style={styles.vImage} contentFit="cover" />
+          {receiptEligibleImage ? (
+            <Image source={{ uri: receiptEligibleImage }} style={styles.vImage} contentFit="cover" />
+          ) : (
+            <View style={[styles.vImage, styles.imagePlaceholder, { backgroundColor: colors.primary + "16" }]}>
+              <Feather name="map-pin" size={22} color={colors.primary} />
+              <Text style={[styles.placeholderText, { color: colors.primary }]}>Business profile</Text>
+            </View>
+          )}
           {business.ownershipDesignations?.includes("non-minority-owned") ? (
             <View style={styles.vBadgeOverlay}>
               <NonMinorityBadge size="sm" />
@@ -429,6 +433,15 @@ const styles = StyleSheet.create({
   hImage: {
     width: "100%",
     height: 130,
+  },
+  imagePlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+  },
+  placeholderText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
   },
   hBadgeOverlay: {
     position: "absolute",

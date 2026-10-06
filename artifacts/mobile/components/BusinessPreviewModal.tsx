@@ -57,16 +57,6 @@ const SOCIAL_PLATFORMS = [
   { key: "twitter", label: "X / Twitter", icon: "twitter" as const, color: "#1DA1F2", bg: "#1DA1F218", baseUrl: "https://x.com/", allowedDomains: ["x.com", "twitter.com"] },
 ];
 
-const CATEGORY_IMAGES: Record<string, any> = {
-  Food: require("@/assets/images/bento-businesses.jpg"),
-  Beauty: require("@/assets/images/bento-nightlife.jpg"),
-  Retail: require("@/assets/images/bento-nightlife.jpg"),
-  Tech: require("@/assets/images/bento-businesses.jpg"),
-  Health: require("@/assets/images/bento-culture.jpg"),
-  Legal: require("@/assets/images/bento-businesses.jpg"),
-  Finance: require("@/assets/images/bento-businesses.jpg"),
-};
-
 interface Props {
   business: Business | null;
   visible: boolean;
@@ -105,7 +95,10 @@ export function BusinessPreviewModal({ business, visible, onClose, onViewProfile
 
   const chips = getComplimentChips(business);
   const captions = (business.topCaptions ?? []).slice(0, 4);
-  const img = CATEGORY_IMAGES[business.category] ?? CATEGORY_IMAGES["Food"];
+  const receiptEligibleImage = typeof business.imageUrl === "string" && business.imageUrl.trim() && (
+    !Object.prototype.hasOwnProperty.call(business, "imageEligibility") ||
+    (business as Business & { imageEligibility?: string }).imageEligibility === "receipt_verified"
+  ) ? business.imageUrl : null;
   const biz = business as any;
   const activeSocials = SOCIAL_PLATFORMS.filter((s) => !!biz[s.key]);
 
@@ -128,11 +121,14 @@ export function BusinessPreviewModal({ business, visible, onClose, onViewProfile
         keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} bounces={false}>
           {/* Hero */}
           <View style={s.heroWrap}>
-            <Image
-              source={business.imageUrl ? { uri: business.imageUrl } : img}
-              style={s.heroImage}
-              contentFit="cover"
-            />
+            {receiptEligibleImage ? (
+              <Image source={{ uri: receiptEligibleImage }} style={s.heroImage} contentFit="cover" />
+            ) : (
+              <View style={[s.heroImage, s.heroPlaceholder, { backgroundColor: colors.primary + "18" }]}>
+                <Feather name="map-pin" size={28} color={colors.primary} />
+                <Text style={[s.heroPlaceholderText, { color: colors.primary }]}>Business profile</Text>
+              </View>
+            )}
             <View style={s.heroOverlay} />
             <View style={s.heroContent}>
               <Text style={s.heroName} numberOfLines={2}>{business.name}</Text>
@@ -266,6 +262,15 @@ const s = StyleSheet.create({
   heroImage: {
     width: "100%",
     height: "100%",
+  },
+  heroPlaceholder: {
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  heroPlaceholderText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
   },
   heroOverlay: {
     position: "absolute", top: 0, left: 0, right: 0, bottom: 0,

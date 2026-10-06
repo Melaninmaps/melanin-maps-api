@@ -1,6 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool, db, businessesTable, communityPostsTable } from "@workspace/db";
 import { eq, desc, and, isNotNull, sql } from "drizzle-orm";
+import { attachEligibleBusinessImages } from "../businesses/businessImageEligibility";
 
 const router: IRouter = Router();
 
@@ -60,7 +61,7 @@ router.get("/preview/spotlight", async (_req: Request, res: Response) => {
       )
       .limit(6);
 
-    res.json({ businesses: rows });
+    res.json({ businesses: await attachEligibleBusinessImages(pool, rows) });
   } catch (err) {
     res.status(500).json({ error: "Failed to load spotlight" });
   }

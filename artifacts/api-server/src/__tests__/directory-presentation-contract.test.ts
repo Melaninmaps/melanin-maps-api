@@ -22,8 +22,9 @@ describe("directory presentation and history contracts", () => {
     expect(nativeSearch).toContain("removeHistoryEntry(h)");
   });
 
-  it("uses only owner-managed image covers and clear category fallbacks", () => {
+  it("uses receipt-backed image covers and clear category fallbacks", () => {
     expect(webResponse).toContain("imageUrl?: string | null");
+    expect(webResponse).toContain("imageEligibility?");
     expect(webResponse).toContain("profileStatus?: string | null");
     expect(webDirectory).toContain("canDisplayBusinessCover(record)");
     expect(webDirectory).toContain("getBusinessHeroIcon(record)");

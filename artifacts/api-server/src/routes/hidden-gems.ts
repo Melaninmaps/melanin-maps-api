@@ -1,7 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, businessesTable, hiddenGemNominationsTable } from "@workspace/db";
+import { db, pool, businessesTable, hiddenGemNominationsTable } from "@workspace/db";
 import { eq, sql, and, gt, isNotNull } from "drizzle-orm";
 import { getUserTier } from "../middleware/requireMembership";
+import { attachEligibleBusinessImages } from "../businesses/businessImageEligibility";
 
 const PAID_TIERS = new Set(["navigator", "trailblazer", "community_builder", "legacy_member"]);
 
@@ -257,7 +258,7 @@ router.get("/", async (req: Request, res: Response) => {
       .orderBy(sql`${businessesTable.hiddenGemNominations} DESC`)
       .limit(limit);
 
-    res.json({ locked: false, gems });
+    res.json({ locked: false, gems: await attachEligibleBusinessImages(pool, gems) });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch Hidden Gems");
     res.status(500).json({ error: "Failed to fetch Hidden Gems" });

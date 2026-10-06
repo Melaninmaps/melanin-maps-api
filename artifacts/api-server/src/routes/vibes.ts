@@ -7,6 +7,7 @@ import {
   VIBES_BY_CATEGORY,
 } from "@workspace/constants";
 import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import { attachEligibleBusinessImages } from "../businesses/businessImageEligibility";
 
 const router = Router();
 
@@ -180,8 +181,7 @@ router.get('/vibes/search', async (req, res) => {
     `;
     const result = await pool.query(sql, params);
 
-    res.json({
-      businesses: result.rows.map((row) => {
+    const businesses = result.rows.map((row) => {
         const policy = getBusinessExperiencePolicy(row.category, row.subcategory);
         const labels = new Map(policy.reactionChoices.map((choice) => [choice.key, choice.label]));
         const rawSignals = Array.isArray(row.community_signals) ? row.community_signals : [];
@@ -223,7 +223,9 @@ router.get('/vibes/search', async (req, res) => {
           isSaved: Number(row.saved_boost) > 0,
           rankScore: parseFloat(row.total_score ?? '0'),
         };
-      }),
+      });
+    res.json({
+      businesses: await attachEligibleBusinessImages(pool, businesses),
       meta: { vibesSearched: vibes, pricesFiltered: prices, city: city ?? null, total: result.rows.length },
     });
   } catch (err) {

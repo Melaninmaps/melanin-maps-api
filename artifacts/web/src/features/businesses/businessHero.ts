@@ -1,5 +1,6 @@
 export type BusinessHeroRecord = {
   imageUrl?: string | null;
+  imageEligibility?: "receipt_verified" | "suppressed_unverified" | "none" | null;
   profileStatus?: string | null;
   listingStatus?: string | null;
   category?: string | null;
@@ -9,13 +10,10 @@ export type BusinessHeroRecord = {
 /**
  * Unclaimed/community-listed records must never display an unverified stock or
  * demo image as if it belongs to that business. A cover can appear only after
- * the business profile is claimed and an image is present on the approved row.
+ * the API confirms a receipt for that exact image URL.
  */
 export function canDisplayBusinessCover(record: BusinessHeroRecord): boolean {
-  const profileStatus = record.profileStatus?.trim().toLowerCase();
-  const listingStatus = record.listingStatus?.trim().toLowerCase();
-  const isOwnerManaged = profileStatus === "claimed" || profileStatus === "participating" || listingStatus === "live_claimed";
-  return isOwnerManaged && Boolean(record.imageUrl?.trim());
+  return record.imageEligibility === "receipt_verified" && Boolean(record.imageUrl?.trim());
 }
 
 export type BusinessHeroIcon =

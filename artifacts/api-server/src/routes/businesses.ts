@@ -58,6 +58,12 @@ import {
   mwmDiasporaPromotionSqlPredicate,
 } from "../businesses/mwmCoreDiscoveryPolicy";
 import { documentedDiscoveryEligibilitySqlPredicate } from "../businesses/documentedDiscoveryEligibility";
+import {
+  BUSINESS_IMAGE_ELIGIBILITY_POLICY_VERSION,
+  attachEligibleBusinessImages,
+  ensureBusinessImageEvidenceSchema,
+  type ReceiptSafeBusinessImage,
+} from "../businesses/businessImageEligibility";
 import { validateSubmission } from "../businessIntake/types";
 import { SubmissionRepository } from "../businessIntake/submissionRepository";
 import {
@@ -348,6 +354,18 @@ async function attachDocumentedOwnership<T extends Record<string, unknown>>(
   });
 }
 
+/**
+ * Public directory, map, discovery, and detail responses share one
+ * presentation gate. Legacy image fields remain in storage but cannot reach a
+ * member until a current approved receipt authorizes that exact URL.
+ */
+async function attachPublicBusinessPresentation<T extends Record<string, unknown>>(
+  records: T[],
+): Promise<Array<ReceiptSafeBusinessImage<T> & { documentedOwnership?: Record<string, unknown> }>> {
+  const imageSafeRecords = await attachEligibleBusinessImages(pool, records);
+  return attachDocumentedOwnership(imageSafeRecords);
+}
+
 function publicBusinessVisibilityCondition() {
   return sql<boolean>`public.business_record_is_public(
     ${businessesTable.status},
@@ -462,7 +480,7 @@ async function sendDirectNameAvailabilityFallback(
     { search, city: city || null, state: state || null, resultCount: rows.length },
     "Directory query failed; returned direct-name availability fallback",
   );
-  const publicRecords = await attachDocumentedOwnership(
+  const publicRecords = await attachPublicBusinessPresentation(
     rows.map((business) => toPublicBusinessRecord(business)),
   );
   sendDynamicJson(res, {
@@ -1318,7 +1336,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
               ),
             })
           : null;
-        const publicResults = await attachDocumentedOwnership(
+        const publicResults = await attachPublicBusinessPresentation(
           withDistance.map((business) => toPublicBusinessRecord(business)),
         );
         sendDynamicJson(res, {
@@ -1642,6 +1660,20 @@ router.post(
         .update(businessesTable)
         .set({ pendingPhotos: updatedPending, updatedAt: new Date() })
         .where(eq(businessesTable.id, business.id));
+      await ensureBusinessImageEvidenceSchema(pool);
+      await pool.query(
+        `INSERT INTO business_image_evidence_receipts
+           (business_id, image_url, source_type, submitted_by_user_id, status, policy_version)
+         VALUES ($1, $2, 'business_owner_upload', $3, 'pending', $4)
+         ON CONFLICT (business_id, image_url) DO UPDATE SET
+           source_type = EXCLUDED.source_type,
+           submitted_by_user_id = EXCLUDED.submitted_by_user_id,
+           status = 'pending',
+           policy_version = EXCLUDED.policy_version,
+           rejection_or_revocation_reason = NULL,
+           updated_at = NOW()`,
+        [business.id, photoUrl, String(userId), BUSINESS_IMAGE_ELIGIBILITY_POLICY_VERSION],
+      );
 
       res.status(201).json({
         url: photoUrl,
@@ -1728,6 +1760,20 @@ router.post(
         .update(businessesTable)
         .set({ pendingPhotos: updatedPending, updatedAt: new Date() })
         .where(eq(businessesTable.id, businessId));
+      await ensureBusinessImageEvidenceSchema(pool);
+      await pool.query(
+        `INSERT INTO business_image_evidence_receipts
+           (business_id, image_url, source_type, submitted_by_user_id, status, policy_version)
+         VALUES ($1, $2, 'approved_member_visit', $3, 'pending', $4)
+         ON CONFLICT (business_id, image_url) DO UPDATE SET
+           source_type = EXCLUDED.source_type,
+           submitted_by_user_id = EXCLUDED.submitted_by_user_id,
+           status = 'pending',
+           policy_version = EXCLUDED.policy_version,
+           rejection_or_revocation_reason = NULL,
+           updated_at = NOW()`,
+        [businessId, photoUrl, String(userId), BUSINESS_IMAGE_ELIGIBILITY_POLICY_VERSION],
+      );
 
       res.status(201).json({
         url: photoUrl,
@@ -1801,6 +1847,31 @@ router.post(
         res.status(400).json({ error: "URL not found in pending photos" });
         return;
       }
+      await ensureBusinessImageEvidenceSchema(pool);
+      const receipt = await pool.query<{ id: string }>(
+        `SELECT id FROM business_image_evidence_receipts
+          WHERE business_id = $1 AND image_url = $2 AND status = 'pending'
+          LIMIT 1`,
+        [businessId, url],
+      );
+      if (!receipt.rows.length) {
+        res.status(409).json({
+          error: "This pending photo has no reviewable source receipt and cannot be made public.",
+        });
+        return;
+      }
+      await pool.query(
+        `UPDATE business_image_evidence_receipts
+            SET status = 'approved', reviewed_by_user_id = $1, reviewed_at = NOW(), updated_at = NOW()
+          WHERE id = $2`,
+        [typeof req.user?.id === "string" ? req.user.id : null, receipt.rows[0].id],
+      );
+      await pool.query(
+        `INSERT INTO business_image_audit_events
+           (business_id, image_url, action, reason, actor_user_id)
+         VALUES ($1, $2, 'receipt_approved', 'authenticated_upload_moderated', $3)`,
+        [businessId, url, typeof req.user?.id === "string" ? req.user.id : null],
+      );
       const approved = (business.photos as string[]) ?? [];
       const newPending = pending.filter((p) => p !== url);
       const newApproved = [...approved, url];
@@ -2538,14 +2609,14 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
         .catch(() => {});
     })();
 
-    const [publicBusiness] = await attachDocumentedOwnership([toPublicBusinessRecord(business)]);
+    const [publicBusiness] = await attachPublicBusinessPresentation([toPublicBusinessRecord(business)]);
     sendDynamicJson(res, {
       business: {
         ...publicBusiness,
         // Normalize array fields so the web/mobile clients always receive [] not null.
         // photos and pendingPhotos are jsonb columns that default to [] but can be null
         // in older rows that pre-date the column addition.
-        photos: Array.isArray(business.photos) ? business.photos : [],
+        photos: Array.isArray(publicBusiness.photos) ? publicBusiness.photos : [],
         audienceType: identity?.audienceType ?? "unknown",
         ageRestrictionReasons: identity?.ageRestrictionReasons ?? [],
         environmentTags: identity?.environmentTags ?? [],

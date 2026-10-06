@@ -77,6 +77,7 @@ export interface CanonicalBusinessSearchRecord {
   website?: string | null;
   sourceUrl?: string | null;
   imageUrl?: string | null;
+  imageEligibility?: "receipt_verified" | "suppressed_unverified" | "none" | null;
   profileStatus?: string | null;
   latitude?: string | number | null;
   longitude?: string | number | null;
