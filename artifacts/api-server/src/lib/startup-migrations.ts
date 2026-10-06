@@ -4825,6 +4825,30 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ON kinfolk_private_memories (user_id, revoked_at, paused_at, expires_at, created_at DESC)`,
   },
   {
+    // The authenticated API always scopes reads and writes to user_id. This
+    // database guard also prevents accidental memory-owner reassignment through
+    // future maintenance code or a direct database mutation.
+    name: "kinfolk_private_memories_owner_immutable_v1",
+    sql: `CREATE OR REPLACE FUNCTION kinfolk_private_memories_reject_owner_change()
+      RETURNS trigger
+      LANGUAGE plpgsql
+      AS $$
+      BEGIN
+        IF NEW.user_id IS DISTINCT FROM OLD.user_id THEN
+          RAISE EXCEPTION 'Kinfolk private memory ownership cannot be reassigned'
+            USING ERRCODE = '42501';
+        END IF;
+        RETURN NEW;
+      END;
+      $$;
+    DROP TRIGGER IF EXISTS kinfolk_private_memories_owner_immutable
+      ON kinfolk_private_memories;
+    CREATE TRIGGER kinfolk_private_memories_owner_immutable
+      BEFORE UPDATE OF user_id ON kinfolk_private_memories
+      FOR EACH ROW
+      EXECUTE FUNCTION kinfolk_private_memories_reject_owner_change()`,
+  },
+  {
     name: "happening_personalization_privacy_v1",
     sql: `ALTER TABLE users ADD COLUMN IF NOT EXISTS home_state varchar(2);
     UPDATE users

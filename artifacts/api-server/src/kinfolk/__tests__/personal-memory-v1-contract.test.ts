@@ -16,11 +16,13 @@ const migrations = readFileSync(
 
 describe("Kinfolk Personal Memory V1 contract", () => {
   it("serializes generic note writes and returns a deterministic capacity response", () => {
-    expect(route).toContain("pg_advisory_lock(hashtext($1))");
-    expect(route).toContain("pg_advisory_unlock(hashtext($1))");
+    expect(route).toContain("pg_advisory_xact_lock(hashtext(");
+    expect(route).toContain("Serializes the capacity count and all generic-note writes on one database");
+    expect(route).toContain("return db.transaction(async (tx) => {");
     expect(route).toContain("PRIVATE_MEMORY_ACTIVE_LIMIT_REACHED");
     expect(route).toContain("MAX_ACTIVE_KINFOLK_PRIVATE_NOTES");
     expect(route).toContain("requirePrivateMemoryCapacity({");
+    expect(route).toContain("alreadySaved: !result.created");
     expect(route).toContain('router.post("/kinfolk/memory-consent"');
     expect(route).toContain('router.post("/kinfolk/memories"');
   });
@@ -38,6 +40,8 @@ describe("Kinfolk Personal Memory V1 contract", () => {
     expect(migrations).toContain('name: "kinfolk_private_memories_pause_and_capacity_v3"');
     expect(migrations).toContain("ADD COLUMN IF NOT EXISTS paused_at timestamptz");
     expect(migrations).toContain("It does not change, pause,");
+    expect(migrations).toContain('name: "kinfolk_private_memories_owner_immutable_v1"');
+    expect(migrations).toContain("Kinfolk private memory ownership cannot be reassigned");
   });
 
   it("excludes paused notes from every prompt-facing generic-memory query", () => {
