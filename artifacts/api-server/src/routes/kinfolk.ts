@@ -8070,8 +8070,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     });
     return;
   }
+  // The deterministic catalog path is for stable discovery only. A member
+  // asking about hours, availability, price, weather, or another changing
+  // condition must reach the current-evidence route below; it cannot be
+  // replaced by matching MWM directory cards before that route is built.
   if (
     verifiedImageUrls.length === 0 &&
+    !requiresCurrentResearch(message) &&
     (await tryAnswerDeterministicBusinessDiscovery({
       req,
       res,

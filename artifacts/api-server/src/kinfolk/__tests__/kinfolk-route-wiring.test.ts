@@ -84,6 +84,12 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("hasApprovedRelevantMemory: isPreferredNameRecallRequest(message)");
   });
 
+  it("keeps deterministic directory discovery out of every current-research turn", () => {
+    expect(chatRoute).toMatch(
+      /verifiedImageUrls\.length === 0\s*&&\s*!requiresCurrentResearch\(message\)\s*&&\s*\(await tryAnswerDeterministicBusinessDiscovery\(/,
+    );
+  });
+
   it("forces every semantic task mode with a current answer requirement through live evidence", () => {
     expect(chatRoute).toContain("if (generalAnswerRoute.requiresCurrentEvidence) {");
     expect(chatRoute).toContain('freshness: "current"');
