@@ -3,6 +3,7 @@ import type { ExternalResearchProvider, ResearchDocument } from "../../library/t
 import {
   buildCurrentEvidenceSourceContext,
   contextualEvidenceNeedsFailClosedResponse,
+  contextualResearchTimeoutMs,
   orchestrateContextualResearch,
   type ContextualEvidenceItem,
 } from "../contextual-research-orchestrator";
@@ -62,6 +63,12 @@ describe("contextual research orchestrator", () => {
     ])).toBe(
       "Current evidence checked 2025-06-01. Source dates: Current financial report (published/updated 2025-05-31). Linked sources are shown below; financial estimates and public status can change.",
     );
+  });
+
+  it("gives current research a bounded provider window without delaying stable turns", () => {
+    expect(contextualResearchTimeoutMs(plan())).toBe(8_000);
+    expect(contextualResearchTimeoutMs(plan({ freshness: "current" }))).toBe(15_000);
+    expect(contextualResearchTimeoutMs(plan({ freshness: "current", taskMode: "city_briefing" }))).toBe(20_000);
   });
 
   it("stops after sufficient approved internal evidence and makes zero live calls", async () => {

@@ -304,6 +304,15 @@ function needsCorroboration(plan: SemanticTurnPlan): boolean {
   return plan.freshness === "current" || plan.evidenceNeeds.some((need) => need === "official_current" || need === "platform_records" || need === "critical_consensus");
 }
 
+export function contextualResearchTimeoutMs(plan: SemanticTurnPlan): number {
+  if (plan.taskMode === "city_briefing") return 20_000;
+  // Native web search often needs longer than a stable-answer turn to retrieve
+  // and cite current public evidence. Keep this bounded, while allowing the
+  // Tavily fallback a chance to run if the primary provider is unavailable.
+  if (plan.freshness === "current") return 15_000;
+  return 8_000;
+}
+
 function allowedForPlan(plan: SemanticTurnPlan, item: ContextualEvidenceItem): boolean {
   if (plan.taskMode !== "high_consequence") return true;
   return item.kind === "official" || item.kind === "research";

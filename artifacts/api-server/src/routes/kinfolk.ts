@@ -371,6 +371,7 @@ import {
 import {
   buildCurrentEvidenceSourceContext,
   contextualEvidenceNeedsFailClosedResponse,
+  contextualResearchTimeoutMs,
   orchestrateContextualResearch,
   type ContextualEvidenceBundle,
 } from "../kinfolk/contextual-research-orchestrator";
@@ -9183,8 +9184,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         // ordinary topic research. The orchestrator only admits an exact URL
         // match, never a same-publisher or related-story substitute.
         requestedArticleUrl: requestedArticleSummaryUrl(message),
-        timeoutMs:
-          contextualPlan.taskMode === "city_briefing" ? 20_000 : 8_000,
+        timeoutMs: contextualResearchTimeoutMs(contextualPlan),
         signal: contextualRequestAbort.signal,
       });
       const attempted =
