@@ -8,6 +8,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { KinfolkMemoryManager } from "./KinfolkMemoryManager";
+import { PrivatePlacesSettings } from "./PrivatePlacesSettings";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -502,6 +503,8 @@ export function KinfolkExperienceSettings() {
               Review saved memories
             </button>
           </section>
+
+          <PrivatePlacesSettings />
         </div>
       )}
       {showMemoryManager && (

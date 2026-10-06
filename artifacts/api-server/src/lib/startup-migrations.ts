@@ -6592,6 +6592,10 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     `Startup migrations complete: ${applied} applied, ${skipped} skipped/errored.`,
   );
 
+  // This creates only encrypted Private Places structure. It never enables the
+  // capability, geocodes an address, or creates a member record at startup.
+  await ensureKinfolkPrivatePlacesSchema(log, warn);
+
   // This narrowly scoped, founder-authorized recovery runs outside the generic
   // seed guard. It is required to repair the fixed tester roster when a
   // previously active account is wrongly sent to pending approval and cannot
@@ -18374,5 +18378,52 @@ async function ensureSaborWebsiteCorrection(
     warn(
       `ensureSaborWebsiteCorrection failed: ${err instanceof Error ? err.message : String(err)}`,
     );
+  }
+}
+
+// ── Kinfolk Private Places ───────────────────────────────────────────────────
+// The schema contains only a member-selected nickname and one authenticated
+// ciphertext envelope. Exact addresses and coordinates are never represented by
+// a plaintext column, and this migration does not create, infer, or transform
+// any existing member data.
+export async function ensureKinfolkPrivatePlacesSchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS kinfolk_private_places (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id VARCHAR(100) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        label VARCHAR(80) NOT NULL,
+        encrypted_payload TEXT NOT NULL CHECK (char_length(encrypted_payload) > 32),
+        encryption_key_version VARCHAR(32) NOT NULL,
+        geocode_provider VARCHAR(32) NOT NULL DEFAULT 'google_maps',
+        geocoded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        disclosure_version VARCHAR(64) NOT NULL,
+        is_active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CONSTRAINT kinfolk_private_places_owner_label_key UNIQUE (user_id, label)
+      );
+      CREATE INDEX IF NOT EXISTS kinfolk_private_places_owner_active_idx
+        ON kinfolk_private_places (user_id, is_active, updated_at DESC);
+      CREATE TABLE IF NOT EXISTS kinfolk_private_place_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        private_place_id UUID NOT NULL REFERENCES kinfolk_private_places(id) ON DELETE CASCADE,
+        user_id VARCHAR(100) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        action VARCHAR(24) NOT NULL CHECK (action IN ('created', 'updated', 'deactivated', 'reactivated')),
+        occurred_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS kinfolk_private_place_events_owner_idx
+        ON kinfolk_private_place_events (user_id, occurred_at DESC);
+      CREATE INDEX IF NOT EXISTS kinfolk_private_place_events_place_idx
+        ON kinfolk_private_place_events (private_place_id, occurred_at DESC);
+    `);
+    log("ensureKinfolkPrivatePlacesSchema: encrypted private-place structure ready");
+  } catch (_error: unknown) {
+    // Do not include driver data: a database error must never echo a ciphertext
+    // envelope, an address-derived query, or any raw request payload to logs.
+    warn("ensureKinfolkPrivatePlacesSchema failed");
   }
 }

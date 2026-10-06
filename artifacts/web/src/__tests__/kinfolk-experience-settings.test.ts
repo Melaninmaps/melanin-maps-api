@@ -12,6 +12,10 @@ const profileSource = readFileSync(
   new URL("../pages/profile.tsx", import.meta.url),
   "utf8",
 );
+const privatePlacesSource = readFileSync(
+  new URL("../components/kinfolk/PrivatePlacesSettings.tsx", import.meta.url),
+  "utf8",
+);
 
 describe("unified Web Kinfolk settings", () => {
   it("gives Profile Settings one home for conversation mode, speaker, and saved memories", () => {
@@ -48,5 +52,15 @@ describe("unified Web Kinfolk settings", () => {
     );
     expect(settingsSource).toContain("speakerFromStoredVoice");
     expect(settingsSource).not.toContain("voice: requestedVoice");
+  });
+
+  it("keeps Private Places in Kinfolk Settings but separate from chat and ordinary memory", () => {
+    expect(settingsSource).toContain("PrivatePlacesSettings");
+    expect(privatePlacesSource).toContain("Private Places");
+    expect(privatePlacesSource).toContain("api/kinfolk/private-places/status");
+    expect(privatePlacesSource).toContain("googleMapsGeocodingConsent: true");
+    expect(privatePlacesSource).toContain("Use for nearby directory search");
+    expect(privatePlacesSource).toContain("never chat memory");
+    expect(privatePlacesSource).not.toContain("api/kinfolk/chat");
   });
 });
