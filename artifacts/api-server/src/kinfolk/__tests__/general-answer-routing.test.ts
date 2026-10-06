@@ -270,6 +270,78 @@ describe("Kinfolk generic answer routing", () => {
     expect(high.strategy).toBe("current_evidence");
   });
 
+  it("does not treat personal conversational intent as a current-evidence claim", () => {
+    const cases: Array<{
+      intent: GenericAnswerRouteDecision["conversationIntent"];
+      purpose: GenericAnswerRouteDecision["purpose"];
+      message: string;
+      expected: string;
+    }> = [
+      {
+        intent: "emotional_support",
+        purpose: "answer",
+        message: fixture(["I received an outcome", "that left me discouraged."]),
+        expected: "stable_knowledge",
+      },
+      {
+        intent: "decision_support",
+        purpose: "answer",
+        message: fixture(["Help me weigh", "two realistic next steps."]),
+        expected: "stable_knowledge",
+      },
+      {
+        intent: "social_interpretation",
+        purpose: "answer",
+        message: fixture([
+          "How should I read",
+          "this unclear response from someone?",
+        ]),
+        expected: "stable_knowledge",
+      },
+      {
+        intent: "planning",
+        purpose: "planning_or_writing",
+        message: fixture(["Help me organize", "a flexible plan for a busy week."]),
+        expected: "planning_or_writing",
+      },
+      {
+        intent: "drafting",
+        purpose: "planning_or_writing",
+        message: fixture([
+          "Rewrite this note",
+          "so it is calm and clear: Thank you for the update.",
+        ]),
+        expected: "planning_or_writing",
+      },
+    ];
+
+    for (const item of cases) {
+      const result = resolveKinfolkGeneralAnswerRoute({
+        message: item.message,
+        evidence: evidence(),
+        semantic: decision({
+          evidenceNeed: "current",
+          purpose: item.purpose,
+          conversationIntent: item.intent,
+        }),
+      });
+      expect(result.strategy).toBe(item.expected);
+      expect(result.requiresCurrentEvidence).toBe(false);
+    }
+
+    const externalCurrent = resolveKinfolkGeneralAnswerRoute({
+      message: fixture(["I am worried about", "the deadline today."]),
+      evidence: evidence(),
+      semantic: decision({
+        evidenceNeed: "current",
+        purpose: "answer",
+        conversationIntent: "emotional_support",
+      }),
+    });
+    expect(externalCurrent.strategy).toBe("current_evidence");
+    expect(externalCurrent.requiresCurrentEvidence).toBe(true);
+  });
+
   it("does not ask for clarification when a revision request includes its source text", () => {
     const complete = resolveKinfolkGeneralAnswerRoute({
       message: "Please rewrite this note so it is warm and clear: I am following up about our meeting.",

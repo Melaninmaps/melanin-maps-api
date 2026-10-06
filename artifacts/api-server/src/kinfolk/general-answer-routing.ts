@@ -49,6 +49,13 @@ export type KinfolkGeneralAnswerRoute = Readonly<{
 
 const MAX_CLARIFICATION_LENGTH = 220;
 const WRITING_TRANSFORMATION_RE = /\b(?:rewrite|revise|edit|proofread|polish|rephrase)\b/i;
+const PERSONAL_CONVERSATIONAL_INTENTS = new Set<KinfolkConversationalIntent>([
+  "emotional_support",
+  "decision_support",
+  "planning",
+  "drafting",
+  "social_interpretation",
+]);
 
 function hasSelfContainedWritingInput(message: string): boolean {
   if (!WRITING_TRANSFORMATION_RE.test(message)) return false;
@@ -125,6 +132,7 @@ export function buildGenericAnswerRouteClassifierPrompt(): string {
     "Choose authoritative when an answer can materially affect health, law, finances, safety, or another high-consequence decision.",
     "Choose stable for explanations, everyday knowledge, or self-contained reasoning that does not depend on changing facts.",
     "Choose planning_or_writing for drafting, revising, organizing, brainstorming, or practical next-step help that can be completed without external verification.",
+    "A personal event, emotion, relationship, decision, plan, or document does not itself require current evidence. Choose current only when the turn actually depends on a changing external fact.",
     "Choose approved_memory_recall only when the member asks about information they explicitly saved and authorized Kinfolk to use. Do not infer, create, or broaden memory.",
     "Choose clarification only when one missing detail materially prevents a useful response; provide one short, focused clarificationQuestion. Do not ask a question when a safe, useful answer can be given without it.",
     "Choose unsafe_or_unverifiable only when the requested action is unsafe. Do not use it merely because you do not have sources; the server retrieves evidence after this classification.",
@@ -173,7 +181,19 @@ export function resolveKinfolkGeneralAnswerRoute(
 ): KinfolkGeneralAnswerRoute {
   const deterministicCurrent = requiresCurrentResearch(input.message);
   const highConsequence = input.evidence.risk === "high";
-  const semanticCurrent = input.semantic?.evidenceNeed === "current";
+  // A semantic classifier can describe a personal turn as "current" merely
+  // because it happened recently. Personal framing alone is not an external,
+  // changing fact. Deterministic current cues and high-consequence safeguards
+  // remain authoritative and cannot be weakened here.
+  const semanticCurrent =
+    input.semantic?.evidenceNeed === "current" &&
+    !(
+      !deterministicCurrent &&
+      !highConsequence &&
+      PERSONAL_CONVERSATIONAL_INTENTS.has(
+        input.semantic?.conversationIntent ?? "informational",
+      )
+    );
   const semanticAuthoritative =
     input.semantic?.evidenceNeed === "authoritative";
   const requiresCurrentEvidence = deterministicCurrent || semanticCurrent;
