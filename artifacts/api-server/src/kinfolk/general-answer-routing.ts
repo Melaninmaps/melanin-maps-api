@@ -56,6 +56,11 @@ const PERSONAL_CONVERSATIONAL_INTENTS = new Set<KinfolkConversationalIntent>([
   "drafting",
   "social_interpretation",
 ]);
+const PROVISIONAL_HELPFUL_RESPONSE_INTENTS = new Set<KinfolkConversationalIntent>([
+  "emotional_support",
+  "decision_support",
+  "social_interpretation",
+]);
 
 function hasSelfContainedWritingInput(message: string): boolean {
   if (!WRITING_TRANSFORMATION_RE.test(message)) return false;
@@ -133,6 +138,7 @@ export function buildGenericAnswerRouteClassifierPrompt(): string {
     "Choose stable for explanations, everyday knowledge, or self-contained reasoning that does not depend on changing facts.",
     "Choose planning_or_writing for drafting, revising, organizing, brainstorming, or practical next-step help that can be completed without external verification.",
     "A personal event, emotion, relationship, decision, plan, or document does not itself require current evidence. Choose current only when the turn actually depends on a changing external fact.",
+    "For emotional support, social interpretation, and low-stakes decision support, offer a safe provisional next step instead of asking for clarification when the turn already supports a useful response.",
     "Choose approved_memory_recall only when the member asks about information they explicitly saved and authorized Kinfolk to use. Do not infer, create, or broaden memory.",
     "Choose clarification only when one missing detail materially prevents a useful response; provide one short, focused clarificationQuestion. Do not ask a question when a safe, useful answer can be given without it.",
     "Choose unsafe_or_unverifiable only when the requested action is unsafe. Do not use it merely because you do not have sources; the server retrieves evidence after this classification.",
@@ -200,6 +206,12 @@ export function resolveKinfolkGeneralAnswerRoute(
   const requiresAuthoritativeEvidence =
     highConsequence || semanticAuthoritative;
   const purpose = input.semantic?.purpose ?? "answer";
+  const canOfferProvisionalHelpfulResponse =
+    input.semantic !== null &&
+    input.semantic !== undefined &&
+    PROVISIONAL_HELPFUL_RESPONSE_INTENTS.has(
+      input.semantic.conversationIntent,
+    );
   const selfContainedWriting = hasSelfContainedWritingInput(input.message);
 
   if (purpose === "unsafe_or_unverifiable") {
@@ -214,7 +226,9 @@ export function resolveKinfolkGeneralAnswerRoute(
   }
 
   if (
-    (purpose === "clarification" && !selfContainedWriting) ||
+    (purpose === "clarification" &&
+      !selfContainedWriting &&
+      !canOfferProvisionalHelpfulResponse) ||
     input.hasMateriallyMissingDetail === true
   ) {
     return {

@@ -342,6 +342,62 @@ describe("Kinfolk generic answer routing", () => {
     expect(externalCurrent.requiresCurrentEvidence).toBe(true);
   });
 
+  it("offers a useful first response for support and social turns before clarification", () => {
+    const cases: Array<{
+      intent: GenericAnswerRouteDecision["conversationIntent"];
+      message: string;
+    }> = [
+      {
+        intent: "emotional_support",
+        message: fixture([
+          "I received an outcome",
+          "that left me discouraged. What is one calm next step?",
+        ]),
+      },
+      {
+        intent: "decision_support",
+        message: fixture([
+          "I am choosing between two practical options.",
+          "Help me weigh the tradeoffs.",
+        ]),
+      },
+      {
+        intent: "social_interpretation",
+        message: fixture([
+          "Someone stopped replying after we made plans.",
+          "How can I check in without assuming the worst?",
+        ]),
+      },
+    ];
+
+    for (const item of cases) {
+      const result = resolveKinfolkGeneralAnswerRoute({
+        message: item.message,
+        evidence: evidence(),
+        semantic: decision({
+          evidenceNeed: "stable",
+          purpose: "clarification",
+          conversationIntent: item.intent,
+          clarificationQuestion: "What detail would help?",
+        }),
+      });
+      expect(result.strategy).toBe("stable_knowledge");
+      expect(result.requiresFocusedClarification).toBe(false);
+    }
+
+    const explicitlyMaterialGap = resolveKinfolkGeneralAnswerRoute({
+      message: "Help me decide what to do next.",
+      evidence: evidence(),
+      semantic: decision({
+        evidenceNeed: "stable",
+        purpose: "answer",
+        conversationIntent: "decision_support",
+      }),
+      hasMateriallyMissingDetail: true,
+    });
+    expect(explicitlyMaterialGap.strategy).toBe("focused_clarification");
+  });
+
   it("does not ask for clarification when a revision request includes its source text", () => {
     const complete = resolveKinfolkGeneralAnswerRoute({
       message: "Please rewrite this note so it is warm and clear: I am following up about our meeting.",
