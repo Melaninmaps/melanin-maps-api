@@ -53,6 +53,20 @@ describe("Kinfolk member-facing source relevance", () => {
     ], populationQuestion).map((source) => source.id)).toEqual(["census-population"]);
   });
 
+  it("rejects generic same-city status evidence that lacks the question's central terms", () => {
+    const question = "Can you plan tomorrow around what is open in Philadelphia?";
+    expect(sourceHasMemberQuestionRelevance({
+      title: "Philadelphia public-safety offices open after alert",
+      url: "https://www.phila.gov/safety/update",
+      evidenceText: "Public-safety update for Philadelphia residents.",
+    }, question)).toBe(false);
+    expect(sourceHasMemberQuestionRelevance({
+      title: "Philadelphia venues open tomorrow",
+      url: "https://www.phila.gov/visiting/open-tomorrow",
+      evidenceText: "Tomorrow's Philadelphia venue availability and hours.",
+    }, question)).toBe(true);
+  });
+
   it("keeps direct NIH medication discussion guidance when the medicine name is absent from its title", () => {
     const result = filterMemberFacingSources([
       {

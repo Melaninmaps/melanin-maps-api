@@ -62,11 +62,12 @@ export function sourceHasMemberQuestionRelevance(
     .normalize("NFKC")
     .toLowerCase();
   const matchingTerms = terms.filter((term) => haystack.includes(term));
-  // One word is enough only when that is genuinely all the member supplied
-  // (for example, a named place). Multi-word questions must match at least two
-  // substantive terms, preventing generic “article/image” search results from
-  // appearing below an unrelated answer.
-  const requiredMatches = terms.length >= 3 ? 2 : 1;
+  // A changing, multi-part question must have its central terms reflected in
+  // the source itself. A fixed two-word floor allowed a generic local alert to
+  // appear relevant to a same-city question about tomorrow's availability.
+  // Requiring at least half of the substantive terms remains topic-independent
+  // while preserving concise entity-only and two-term questions.
+  const requiredMatches = Math.max(1, Math.ceil(terms.length / 2));
   return matchingTerms.length >= requiredMatches;
 }
 
