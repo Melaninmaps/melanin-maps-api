@@ -28,6 +28,21 @@ describe("OpenAI Responses native Library research", () => {
     expect(result.documents).toHaveLength(2);
   });
 
+  it("asks for dated reputable reporting rather than celebrity estimate aggregators", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ output: [
+      { type: "message", content: [{ type: "output_text", text: "Forbes reports an estimate.", annotations: [{ type: "url_citation", url: "https://www.forbes.com/example/beyonce", title: "Forbes estimate" }] }] },
+    ] }), { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+    const provider = createOpenAiWebResearchProvider({ apiKey: "secret", baseUrl: "https://api.openai.example/v1" });
+    await provider.search({ query: "How much is Beyoncé worth?", allowedDomains: [], maxResults: 2 });
+    const body = JSON.parse(String(fetchMock.mock.calls[0]?.[1]?.body));
+
+    expect(body.input[1].content).toContain("How much is Beyoncé worth?");
+    expect(body.input[1].content).toMatch(/Forbes or Bloomberg/i);
+    expect(body.input[1].content).toMatch(/Exclude celebrity-estimate aggregators/i);
+    expect(body.input[1].content).toMatch(/estimates can vary/i);
+  });
+
   it("does not promote merely consulted URLs to cited evidence", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ output: [
       { type: "web_search_call", action: { sources: [{ url: "https://www.loc.gov/item/a", title: "Library of Congress" }] } },

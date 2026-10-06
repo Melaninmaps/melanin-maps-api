@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   hasRequestedArticleEvidence,
+  isPublicNetWorthEstimateRequest,
   isPreferredNameRecallRequest,
   requestedArticleSummaryUrl,
   requiresCurrentResearch,
@@ -85,6 +86,13 @@ describe("current research routing", () => {
     expect(isPreferredNameRecallRequest("What name should you call me?")).toBe(true);
     expect(isPreferredNameRecallRequest("How much is Beyoncé worth?")).toBe(false);
     expect(requiresCurrentResearch("What is open today in Philadelphia?")).toBe(true);
+  });
+
+  it("identifies public net-worth estimates without weakening stock or market-cap routes", () => {
+    expect(isPublicNetWorthEstimateRequest("How much is Beyoncé worth?")).toBe(true);
+    expect(isPublicNetWorthEstimateRequest("What is Beyoncé's net worth?")).toBe(true);
+    expect(isPublicNetWorthEstimateRequest("What is Apple's stock price?")).toBe(false);
+    expect(isPublicNetWorthEstimateRequest("What is Apple's market cap?")).toBe(false);
   });
 
   it("routes an explicit linked-article summary to current source retrieval", () => {

@@ -5,8 +5,13 @@ import type {
   ResearchProviderResult,
 } from "./types";
 import { canonicalizeContextualUrl } from "../kinfolk/contextual-url";
-
+import { isPublicNetWorthEstimateRequest } from "../kinfolk/current-research";
 const ALLOWED_MODELS = new Set(["gpt-5", "gpt-5-mini", "gpt-4o", "gpt-4o-mini"]);
+
+function currentEstimateResearchQuery(query: string): string {
+  if (!isPublicNetWorthEstimateRequest(query)) return query;
+  return `${query}\n\nFor this public net-worth estimate, retrieve directly relevant current financial reporting or wealth-estimate journalism (for example Forbes or Bloomberg). Exclude celebrity-estimate aggregators. Cite the source and its date, and make clear that estimates can vary.`;
+}
 
 export function boundedLibraryResearchModel(configuredModel?: string): string {
   return configuredModel && ALLOWED_MODELS.has(configuredModel)
@@ -93,7 +98,7 @@ export function createOpenAiWebResearchProvider(input: {
     name: "openai",
     async search({ query, allowedDomains, maxResults, signal }): Promise<ResearchProviderResult> {
       if (!input.apiKey || !input.baseUrl) throw new Error("OPENAI_LIBRARY_RESEARCH_NOT_CONFIGURED");
-      const providerQuery = enforceDiasporaFirstProviderQuery(query);
+      const providerQuery = enforceDiasporaFirstProviderQuery(currentEstimateResearchQuery(query));
       const concreteDomains = [...new Set(allowedDomains.filter((domain) => !domain.startsWith("*.")))].slice(0, 100);
       const response = await fetch(`${input.baseUrl.replace(/\/$/, "")}/responses`, {
         method: "POST",

@@ -374,6 +374,23 @@ describe("contextual research orchestrator", () => {
     expect(contextualEvidenceNeedsFailClosedResponse(currentPlan, result)).toBe(false);
   });
 
+  it("accepts one reputable financial estimate and rejects a celebrity estimate aggregator", async () => {
+    const estimatePlan = plan({ freshness: "current", evidenceNeeds: ["official_current", "platform_records"], retrievalQueries: ["How much is Beyoncé worth?"] });
+    const reputable = await orchestrateContextualResearch(estimatePlan, {
+      primaryProvider: { name: "openai", search: vi.fn().mockResolvedValue({ provider: "openai", status: "available", documents: [document(1, { title: "Beyoncé Is Now A Billionaire", url: "https://www.forbes.com/sites/example/beyonce-billionaire", content: "Forbes estimates Beyoncé's net worth at $1 billion." })] }) },
+      now: () => NOW,
+    });
+    expect(reputable).toMatchObject({ degraded: false, gaps: [] });
+    expect(reputable.external).toEqual([expect.objectContaining({ kind: "reporting", url: "https://www.forbes.com/sites/example/beyonce-billionaire" })]);
+
+    const aggregator = await orchestrateContextualResearch(estimatePlan, {
+      primaryProvider: { name: "openai", search: vi.fn().mockResolvedValue({ provider: "openai", status: "available", documents: [document(2, { title: "Beyoncé Knowles Net Worth", url: "https://www.celebritynetworth.com/beyonce", content: "Beyoncé net worth estimate." })] }) },
+      now: () => NOW,
+    });
+    expect(aggregator.degraded).toBe(true);
+    expect(contextualEvidenceNeedsFailClosedResponse(estimatePlan, aggregator)).toBe(true);
+  });
+
   it("fails closed for cultural consensus when apparent sources share one publisher identity", async () => {
     const consensusPlan = plan({
       taskMode: "cultural_consensus",

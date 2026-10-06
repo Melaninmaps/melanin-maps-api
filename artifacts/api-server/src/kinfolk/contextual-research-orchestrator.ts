@@ -1,5 +1,6 @@
 import type { ExternalResearchProvider, ResearchDocument } from "../library/types";
 import { canonicalizeContextualUrl } from "./contextual-url";
+import { isPublicNetWorthEstimateRequest } from "./current-research";
 import type { SemanticTurnPlan } from "./semantic-turn-planner";
 import { sourceHasMemberQuestionRelevance } from "./source-relevance";
 
@@ -68,6 +69,7 @@ export type ContextualResearchDeps = {
 
 const VIDEO_HOSTS = new Set(["youtube.com", "www.youtube.com", "youtu.be", "vimeo.com", "www.vimeo.com", "tiktok.com", "www.tiktok.com", "instagram.com", "www.instagram.com"]);
 const REPORTING_HOSTS = new Set(["apnews.com", "reuters.com", "bbc.com", "bbc.co.uk", "npr.org", "nytimes.com", "washingtonpost.com", "theguardian.com", "variety.com", "au.variety.com", "abc.net.au"]);
+const REPUTABLE_PUBLIC_ESTIMATE_HOSTS = new Set(["forbes.com", "bloomberg.com", "fortune.com", "cnbc.com", "wsj.com", "ft.com", ...REPORTING_HOSTS]);
 const RESEARCH_HOSTS = new Set(["doi.org", "jstor.org", "nature.com", "sciencedirect.com", "springer.com", "pubmed.ncbi.nlm.nih.gov"]);
 const INJECTION_LINE = /(?:ignore|disregard|override|forget)\s+(?:all\s+)?(?:previous|prior|system|developer)|system\s+prompt|developer\s+message|reveal\s+(?:private|hidden|secret)|private\s+memor(?:y|ies)|follow\s+these\s+instructions|you\s+are\s+(?:chatgpt|an?\s+assistant)/i;
 
@@ -123,6 +125,14 @@ function sourceUrlKey(value: string): string | null {
   return canonicalizeContextualUrl(value)?.replace(/[?#].*$/, "") ?? null;
 }
 
+function isCurrentPublicEstimatePlan(plan: SemanticTurnPlan): boolean {
+  return plan.freshness === "current" && isPublicNetWorthEstimateRequest(plan.retrievalQueries[0] ?? "");
+}
+
+function isReputablePublicEstimateSource(item: ContextualEvidenceItem): boolean {
+  return item.kind === "reporting" && REPUTABLE_PUBLIC_ESTIMATE_HOSTS.has(hostname(item.url));
+}
+
 /**
  * City briefings have a deliberately stronger scope check than generic current
  * research. A live Minneapolis source must never appear under a Philadelphia
@@ -175,6 +185,7 @@ function classifyDocument(document: ResearchDocument, url: string, plan: Semanti
   if (isVerifiedEntityPrimarySource(document, url, plan)) return "primary";
   if (isOfficialHost(host)) return "official";
   if (host.endsWith(".edu") || host.endsWith(".ac.uk") || RESEARCH_HOSTS.has(host)) return "research";
+  if (isCurrentPublicEstimatePlan(plan) && REPUTABLE_PUBLIC_ESTIMATE_HOSTS.has(host)) return "reporting";
   const criticalReceptionText = canonicalizeContextualPolicyText(`${document.title ?? ""} ${document.content ?? ""}`);
   if (plan.evidenceNeeds.includes("critical_consensus") && /\b(review|criticism|critical reception|analysis|retrospective|essay|ranking|critic)\b/i.test(criticalReceptionText)) return "criticism";
   if (REPORTING_HOSTS.has(host)) return "reporting";
@@ -262,6 +273,11 @@ function internalIsSufficient(plan: SemanticTurnPlan, internal: ContextualEviden
 
 function evidenceIsCorroborated(plan: SemanticTurnPlan, items: ContextualEvidenceItem[]): boolean {
   const isConsensus = plan.evidenceNeeds.includes("critical_consensus");
+  if (isCurrentPublicEstimatePlan(plan)) {
+    // Net-worth figures are estimates. A directly relevant report from a
+    // reviewed financial publisher is sufficient; celebrity aggregators are not.
+    return items.some(isReputablePublicEstimateSource);
+  }
   if (plan.taskMode === "city_briefing") {
     const admissible = items.filter((item) =>
       ["official", "reporting", "research", "reference"].includes(item.kind),
