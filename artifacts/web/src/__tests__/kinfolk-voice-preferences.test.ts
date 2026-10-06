@@ -15,6 +15,16 @@ describe("Kinfolk transcript review", () => {
     expect(composerValueFromTranscript(undefined)).toBe("");
     expect(composerValueFromTranscript("Kinfolk heard nothing special")).toBe("Kinfolk heard nothing special");
   });
+
+  it("keeps the original voice draft separate from an optional member-confirmed suggestion", () => {
+    const travel = readFileSync(new URL("../pages/travel.tsx", import.meta.url), "utf8");
+    expect(travel).toContain('form.append("regionalFlavor", prefs.regionalFlavor || "off")');
+    expect(travel).toContain("const originalText = data.meaningReview?.originalText?.trim() || transcript");
+    expect(travel).toContain("voiceTranscriptReview");
+    expect(travel).toContain("Use suggestion");
+    expect(travel).toContain("Keep original");
+    expect(travel).toContain("nothing is sent until you choose or edit text and press Send");
+  });
 });
 
 describe("Kinfolk web voice upload", () => {

@@ -13,8 +13,11 @@ describe("Kinfolk Community perspective client contract", () => {
     expect(webSource).toContain("kinfolk-community-perspective-opt-in");
     expect(webSource).toContain("Use approved public Community posts");
     expect(webSource).toContain("This does not share your chat. Community content is perspective, never evidence or a recommendation.");
-    expect(webSource).toContain("Save this to my private Kinfolk memory");
-    expect(webSource).toContain("includeCommunityPerspective }),");
+    // Memory remains a separate explicit-consent component; checking an obsolete
+    // button label here would couple Community opt-in to a memory UI string.
+    expect(webSource).toContain("KinfolkInlineMemoryConsent");
+    expect(webSource).toContain("inlineMemoryConsent: data.memoryConsentPlan");
+    expect(webSource).toContain("includeCommunityPerspective,");
     expect(webSource).toContain("kinfolk-community-perspective");
     expect(webSource).toContain("Community perspective");
     expect(webSource).toContain("unverified perspective, not as evidence or a recommendation");

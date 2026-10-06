@@ -4,13 +4,14 @@ import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const transcribe = vi.hoisted(() => vi.fn());
+const chatCreate = vi.hoisted(() => vi.fn());
 const createAudioUploadFile = vi.hoisted(() => vi.fn());
 const resolveOpenAIConfiguration = vi.hoisted(() => vi.fn());
 const resolveAudioOpenAIConfiguration = vi.hoisted(() => vi.fn());
 vi.mock("@workspace/integrations-openai-ai-server", () => ({
   openai: {
     audio: { transcriptions: { create: transcribe } },
-    chat: { completions: { create: vi.fn() } },
+    chat: { completions: { create: chatCreate } },
     responses: { create: vi.fn() },
   },
   resolveOpenAIConfiguration,
@@ -101,6 +102,9 @@ beforeEach(() => {
   );
   createAudioUploadFile.mockResolvedValue({ name: "voice.wav", type: "audio/wav" });
   transcribe.mockResolvedValue({ text: "hello Kinfolk" });
+  chatCreate.mockResolvedValue({
+    choices: [{ message: { content: JSON.stringify({ suggestedText: null, clarification: null }) } }],
+  });
 });
 
 afterEach(() => {
@@ -168,6 +172,39 @@ describe("actual Kinfolk transcription handler", () => {
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ transcript: "hello Kinfolk", audioRetained: false });
     expect(transcribe).toHaveBeenCalledTimes(1);
+  });
+
+  it("keeps the exact transcript as the draft and returns an optional reviewed suggestion", async () => {
+    transcribe.mockResolvedValue({ text: "can you put coffee lunch and the museum in my saturday list" });
+    chatCreate.mockResolvedValue({
+      choices: [{ message: { content: JSON.stringify({
+        suggestedText: "Can you put coffee, lunch, and the museum in my Saturday list?",
+        clarification: null,
+      }) } }],
+    });
+
+    const response = await request(app())
+      .post("/api/kinfolk/transcribe")
+      .field("regionalFlavor", "philadelphia")
+      .attach("audio", load("voice.wav"), { filename: "voice.wav", contentType: "audio/wav" });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      text: "can you put coffee lunch and the museum in my saturday list",
+      transcript: "can you put coffee lunch and the museum in my saturday list",
+      audioRetained: false,
+      meaningReview: {
+        originalText: "can you put coffee lunch and the museum in my saturday list",
+        suggestedText: "Can you put coffee, lunch, and the museum in my Saturday list?",
+        requiresConfirmation: true,
+        regionalLanguage: "member_selected",
+      },
+    });
+    expect(chatCreate).toHaveBeenCalledWith(
+      expect.objectContaining({ model: "gpt-4o-mini" }),
+      expect.anything(),
+    );
+    expect(JSON.stringify(chatCreate.mock.calls[0])).toContain("member explicitly selected Philadelphia regional language");
   });
 
   it("rejects JSON legacy voice with an explicit current-client error", async () => {

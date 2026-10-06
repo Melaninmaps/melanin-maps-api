@@ -409,6 +409,10 @@ import {
   validateKinfolkPreferenceUpdate,
 } from "../kinfolk/voice-personalization";
 import {
+  buildVoiceTranscriptMeaningPrompt,
+  parseVoiceTranscriptMeaningReview,
+} from "../kinfolk/transcript-meaning-review";
+import {
   buildKinfolkConversationModePrompt,
   buildKinfolkEmotionalCheckInContract,
   buildKinfolkFormalResponseContract,
@@ -13621,11 +13625,12 @@ const MAX_VOICE_PAYLOAD_BYTES = 4 * 1024 * 1024; // 4 MB binary cap for multipar
 import multer from "multer";
 const transcribeUpload = multer({
   storage: multer.memoryStorage(),
-  // A voice request carries one audio part plus optional duration and MIME
-  // metadata. Busboy's part accounting includes the multipart terminator in
-  // some runtimes, so retain the strict one-file/two-field caps while allowing
-  // one additional framing part for a valid native request.
-  limits: { fileSize: MAX_VOICE_PAYLOAD_BYTES, files: 1, fields: 2, parts: 4 },
+  // A voice request carries one audio part plus duration, MIME, and an
+  // ephemeral echo of the member's already-confirmed regional-language setting.
+  // Busboy's part accounting includes the multipart terminator in some
+  // runtimes, so retain the strict one-file/three-field caps while allowing one
+  // additional framing part for a valid native request.
+  limits: { fileSize: MAX_VOICE_PAYLOAD_BYTES, files: 1, fields: 3, parts: 5 },
   fileFilter: (_req, file, cb) => {
     // Expo's native Blob bridge can label a local recording
     // application/octet-stream even when its separately supplied mimeType is
@@ -13853,10 +13858,53 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
       });
     }
 
+    // The client may echo its separately saved regional-language choice solely
+    // for this one review suggestion. It cannot write or change preferences,
+    // and unknown/legacy values fail closed to Off. The raw transcript remains
+    // the composer default regardless of this hint.
+    const regionalFlavor = normalizeRegionalFlavor(req.body?.regionalFlavor);
+    const reviewPrompt = buildVoiceTranscriptMeaningPrompt({
+      transcript: transcriptText,
+      regionalFlavor,
+    });
+    let reviewContent: string | null = null;
+    if (resolveOpenAIConfiguration()) {
+      const reviewController = new AbortController();
+      const reviewTimeout = setTimeout(() => reviewController.abort(), 4_000);
+      try {
+        const review = await openai.chat.completions.create(
+          buildKinfolkChatCompletionRequest({
+            model: kinfolkModel("transcriptReview"),
+            maxOutputTokens: 220,
+            temperature: 0,
+            messages: [
+              { role: "system", content: reviewPrompt.system },
+              { role: "user", content: reviewPrompt.user },
+            ],
+          }) as ChatCompletionCreateParamsNonStreaming,
+          { signal: reviewController.signal },
+        );
+        reviewContent = review.choices[0]?.message?.content ?? null;
+      } catch {
+        // A suggestion is optional. Provider trouble must never discard an
+        // otherwise usable transcript or force the member to record again.
+      } finally {
+        clearTimeout(reviewTimeout);
+      }
+    }
+    const meaningReview = parseVoiceTranscriptMeaningReview({
+      transcript: transcriptText,
+      regionalFlavor,
+      modelContent: reviewContent,
+    });
+
     // `text` is the mobile contract and `transcript` is the web contract.
+    // Both retain the unmodified transcript. Any optional interpretation is a
+    // separately labeled, review-only proposal that cannot send itself.
     return void res.json({
       text: transcriptText,
       transcript: transcriptText,
+      meaningReview,
       audioRetained: false,
     });
   } catch (err: unknown) {

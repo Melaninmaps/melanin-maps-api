@@ -12,8 +12,11 @@ describe("Kinfolk life-intent route contract", () => {
     expect(routeSource).toContain("buildLifeIntentSourceQuery(message, lifeGuidance)");
     expect(routeSource).toContain("lifeGuidance.responseInstruction");
     expect(routeSource).toContain("followUpSuggestions = [...lifeGuidance.followUpSuggestions]");
-    expect(routeSource).toContain("sourceContext: lifeGuidance?.sourceContext ?? undefined");
-    expect(routeSource).toContain("sources: [");
+    // Current-evidence context deliberately takes precedence when a life-intent
+    // turn also needs live evidence; life guidance remains the safe fallback.
+    expect(routeSource).toContain("currentEvidenceSourceContext ??");
+    expect(routeSource).toContain("lifeGuidance?.sourceContext ??");
+    expect(routeSource).toContain("sources: memberFacingSources");
     expect(routeSource).toContain("provenanceNote:");
   });
 });

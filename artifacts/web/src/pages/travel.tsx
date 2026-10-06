@@ -1143,6 +1143,11 @@ function TravelPage() {
   // ── Voice input state ──────────────────────────────────────────────────────
   type VoiceState = "idle" | "notice" | "requesting" | "denied" | "unsupported" | "recording" | "processing";
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
+  const [voiceTranscriptReview, setVoiceTranscriptReview] = useState<{
+    originalText: string;
+    suggestedText: string;
+    clarification: string | null;
+  } | null>(null);
   const [recordingElapsed, setRecordingElapsed] = useState(0);
   const mediaRecorderRef        = useRef<MediaRecorder | null>(null);
   const pcmRecorderRef          = useRef<BrowserPcmVoiceRecorder | null>(null);
@@ -1320,6 +1325,7 @@ function TravelPage() {
       form.append("audio", blob, `kinfolk-voice.${ext}`);
       form.append("durationMs", String(durationMs));
       form.append("mimeType", mimeType);
+      form.append("regionalFlavor", prefs.regionalFlavor || "off");
 
       controller = new AbortController();
       transcriptionControllerRef.current = controller;
@@ -1342,12 +1348,33 @@ function TravelPage() {
         return;
       }
 
-      const data = await r.json() as { text?: string; audioRetained?: boolean };
+      const data = await r.json() as {
+        text?: string;
+        audioRetained?: boolean;
+        meaningReview?: {
+          originalText?: string;
+          suggestedText?: string | null;
+          clarification?: string | null;
+          requiresConfirmation?: boolean;
+        };
+      };
       const transcript = data.text?.trim() ?? "";
       if (!transcript) { setVoiceState("idle"); return; }
 
-      // Populate the composer with only the transcript for member review — never send automatically.
-      setInput(composerValueFromTranscript(transcript));
+      // The exact transcript is the draft. Any optional interpretation is
+      // separate and can only be applied by a deliberate member action.
+      const originalText = data.meaningReview?.originalText?.trim() || transcript;
+      setInput(composerValueFromTranscript(originalText));
+      const suggestedText = data.meaningReview?.suggestedText?.trim();
+      if (data.meaningReview?.requiresConfirmation && suggestedText && suggestedText !== originalText) {
+        setVoiceTranscriptReview({
+          originalText,
+          suggestedText,
+          clarification: data.meaningReview.clarification?.trim() || null,
+        });
+      } else {
+        setVoiceTranscriptReview(null);
+      }
       setVoiceState("idle");
 
       // Focus input so member can edit before sending
@@ -1367,7 +1394,7 @@ function TravelPage() {
       if (transcriptionControllerRef.current === controller) transcriptionControllerRef.current = null;
       audioChunksRef.current = [];
     }
-  }, []);
+  }, [prefs.regionalFlavor]);
 
   // ── Voice: stop recording and submit the captured clip ─────────────────────
   const stopRecording = useCallback(() => {
@@ -1753,6 +1780,7 @@ function TravelPage() {
     if (!trimmed || sending) return;
     const publicOrigin = exactRadiusOrigin.trim();
     setInput("");
+    setVoiceTranscriptReview(null);
     // An exact-radius origin is current-turn context only. Clear the browser
     // control immediately after capturing the request value; it is not added to
     // the message, continuity payload, profile, or Kinfolk memory.
@@ -2008,7 +2036,7 @@ function TravelPage() {
     activeChatControllerRef.current?.abort("new_chat");
     releaseAudio();
     autoSpokenMessageIdsRef.current.clear();
-    setSessionId(undefined); setMessages([]); setInput(""); setShowHistory(false); setPendingClarificationMsgId(null);
+    setSessionId(undefined); setMessages([]); setInput(""); setVoiceTranscriptReview(null); setShowHistory(false); setPendingClarificationMsgId(null);
   };
 
   // Library suggestions — track which message IDs have been responded to
@@ -2807,6 +2835,42 @@ function TravelPage() {
                   </div>
                 )}
 
+                {voiceTranscriptReview && (
+                  <div aria-live="polite" className="mb-3 max-w-3xl mx-auto rounded-2xl border border-[#CA922B]/30 bg-[#FFF8EC] px-4 py-3">
+                    <p className="text-xs leading-relaxed text-[#3A1F0E]/75">
+                      Kinfolk has an optional interpretation of your voice transcript. Your original words remain in the composer, and nothing is sent until you choose or edit text and press Send.
+                    </p>
+                    <p className="mt-1 text-xs leading-relaxed text-[#3A1F0E]/75"><strong>Suggested wording:</strong> {voiceTranscriptReview.suggestedText}</p>
+                    {voiceTranscriptReview.clarification && (
+                      <p className="mt-1 text-xs leading-relaxed text-[#3A1F0E]/60">{voiceTranscriptReview.clarification}</p>
+                    )}
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInput(voiceTranscriptReview.suggestedText);
+                          setVoiceTranscriptReview(null);
+                          setTimeout(() => inputRef.current?.focus(), 0);
+                        }}
+                        className="rounded-full bg-[#CA922B] px-3 py-1.5 text-[11px] font-semibold text-white hover:bg-[#B38024]"
+                      >
+                        Use suggestion
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInput(voiceTranscriptReview.originalText);
+                          setVoiceTranscriptReview(null);
+                          setTimeout(() => inputRef.current?.focus(), 0);
+                        }}
+                        className="rounded-full border border-[#3A1F0E]/15 bg-white px-3 py-1.5 text-[11px] font-semibold text-[#3A1F0E]/70 hover:border-[#CA922B]/40"
+                      >
+                        Keep original
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 <div className="mx-auto mb-2 flex max-w-3xl items-center justify-between gap-3">
                   <button
                     type="button"
@@ -2887,7 +2951,7 @@ function TravelPage() {
                     </button>
                   )}
 
-                  <textarea ref={inputRef} value={input} onChange={e => setInput(e.target.value)}
+                  <textarea ref={inputRef} value={input} onChange={e => { setInput(e.target.value); if (voiceTranscriptReview) setVoiceTranscriptReview(null); }}
                     data-testid="kinfolk-chat-input"
                     onKeyDown={handleKeyDown}
                     placeholder="Ask Kinfolk anything — businesses, safety, community, recommendations…"

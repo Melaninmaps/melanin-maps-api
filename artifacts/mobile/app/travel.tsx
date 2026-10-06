@@ -2027,6 +2027,11 @@ export default function TravelScreen() {
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [isTranscribingVoice, setIsTranscribingVoice] = useState(false);
   const [voiceInputStatus, setVoiceInputStatus] = useState<string | null>(null);
+  const [voiceTranscriptReview, setVoiceTranscriptReview] = useState<{
+    originalText: string;
+    suggestedText: string;
+    clarification: string | null;
+  } | null>(null);
   const [voiceRecordingElapsedSeconds, setVoiceRecordingElapsedSeconds] = useState(0);
   const primaryRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   // Native recorder state is authoritative. A pressed mic must not show a
@@ -2363,6 +2368,7 @@ export default function TravelScreen() {
     const attachedImages = [...kinfolkImages];
     const publicOrigin = exactRadiusOrigin.trim();
     setInputText("");
+    setVoiceTranscriptReview(null);
     // The origin is one-turn public context only. It is never shown in the
     // conversation, attached to memory, or kept in the composer after send.
     setExactRadiusOrigin("");
@@ -2409,12 +2415,28 @@ export default function TravelScreen() {
       form.append("audio", new FileSystem.File(uri));
       form.append("durationMs", String(durationMs));
       form.append("mimeType", mimeType);
+      form.append(
+        "regionalFlavor",
+        typeof preferences?.regionalFlavor === "string"
+          ? preferences.regionalFlavor
+          : "off",
+      );
       const response = await fetch(`${getApiBase()}/api/kinfolk/transcribe`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: form,
       });
-      const payload = await response.json().catch(() => ({})) as { text?: string; message?: string; error?: string };
+      const payload = await response.json().catch(() => ({})) as {
+        text?: string;
+        message?: string;
+        error?: string;
+        meaningReview?: {
+          originalText?: string;
+          suggestedText?: string | null;
+          clarification?: string | null;
+          requiresConfirmation?: boolean;
+        };
+      };
       if (!response.ok) {
         const recovery = payload.error === "AUDIO_UNREADABLE" || payload.error === "AUDIO_MIME_MISMATCH"
           ? "Kinfolk could not read that recording. Please try recording again; if it repeats, type your message and keep the conversation going."
@@ -2424,11 +2446,23 @@ export default function TravelScreen() {
         throw new Error(recovery);
       }
       if (!payload.text?.trim()) throw new Error("Kinfolk could not hear that clearly. Please try again or type your question.");
-      // Keep the native experience aligned with the web: transcription is a
-      // draft for member review, never an automatic message send. This lets a
-      // member correct a misheard name, place, or sensitive detail first.
-      setInputText(payload.text);
-      setVoiceInputStatus("Review your transcription, then tap Send when you’re ready.");
+      // The exact transcript remains the draft. A provider suggestion is shown
+      // separately and can only be used by a deliberate member tap; neither
+      // original nor suggestion is sent automatically.
+      const originalText = payload.meaningReview?.originalText?.trim() || payload.text.trim();
+      setInputText(originalText);
+      const suggestedText = payload.meaningReview?.suggestedText?.trim();
+      if (payload.meaningReview?.requiresConfirmation && suggestedText && suggestedText !== originalText) {
+        setVoiceTranscriptReview({
+          originalText,
+          suggestedText,
+          clarification: payload.meaningReview.clarification?.trim() || null,
+        });
+        setVoiceInputStatus("Review your original transcript. You can use Kinfolk’s optional wording or edit it before Send.");
+      } else {
+        setVoiceTranscriptReview(null);
+        setVoiceInputStatus("Review your transcription, then tap Send when you’re ready.");
+      }
     } catch (cause) {
       setVoiceInputStatus(null);
       Alert.alert("Voice Input", cause instanceof Error ? cause.message : "Recording error. Please try again or type your question.");
@@ -2438,7 +2472,7 @@ export default function TravelScreen() {
       setIsTranscribingVoice(false);
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
     }
-  }, [isRecordingVoice, primaryRecorder]);
+  }, [isRecordingVoice, preferences?.regionalFlavor, primaryRecorder]);
 
   const cancelPrimaryVoiceRecording = useCallback(async () => {
     if (!primaryRecorder.isRecording) return;
@@ -2896,6 +2930,39 @@ export default function TravelScreen() {
             <Text style={[styles.voiceInputStatusText, { color: colors.mutedForeground }]}>{voiceOutputStatus}</Text>
           </View>
         ) : null}
+        {voiceTranscriptReview ? (
+          <View style={[styles.voiceMeaningReview, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+            <Text style={[styles.voiceInputStatusText, { color: colors.text }]}>Kinfolk’s optional interpretation is ready for your review. It will not be sent unless you choose it and tap Send.</Text>
+            <Text style={[styles.voiceMeaningSuggestion, { color: colors.text }]}>Suggested wording: {voiceTranscriptReview.suggestedText}</Text>
+            {voiceTranscriptReview.clarification ? <Text style={[styles.voiceMeaningClarification, { color: colors.mutedForeground }]}>{voiceTranscriptReview.clarification}</Text> : null}
+            <View style={styles.voiceMeaningActions}>
+              <TouchableOpacity
+                onPress={() => {
+                  setInputText(voiceTranscriptReview.suggestedText);
+                  setVoiceTranscriptReview(null);
+                  setVoiceInputStatus("Suggestion added to your draft. Review or edit it, then tap Send when you’re ready.");
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Use Kinfolk's optional transcript interpretation"
+                style={[styles.voiceMeaningButton, { backgroundColor: colors.primary }]}
+              >
+                <Text style={styles.voiceMeaningButtonText}>Use suggestion</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setInputText(voiceTranscriptReview.originalText);
+                  setVoiceTranscriptReview(null);
+                  setVoiceInputStatus("Your original transcript is ready to review or edit before Send.");
+                }}
+                accessibilityRole="button"
+                accessibilityLabel="Keep my original transcript"
+                style={[styles.voiceMeaningButton, { borderColor: colors.border, borderWidth: 1 }]}
+              >
+                <Text style={[styles.voiceMeaningKeepText, { color: colors.text }]}>Keep original</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ) : null}
         {voiceInputStatus ? (
           <View style={[styles.voiceInputStatus, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
             {isRecordingVoice || isTranscribingVoice ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="mic-outline" size={15} color={colors.primary} />}
@@ -2984,7 +3051,10 @@ export default function TravelScreen() {
             placeholder="Or tell me anything…"
             placeholderTextColor={colors.mutedForeground}
             value={inputText}
-            onChangeText={setInputText}
+            onChangeText={(value) => {
+              setInputText(value);
+              if (voiceTranscriptReview) setVoiceTranscriptReview(null);
+            }}
             multiline
             returnKeyType="send"
             submitBehavior="submit"
@@ -3098,6 +3168,13 @@ const styles = StyleSheet.create({
   voicePillLabel: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   voiceInputStatus: { flexDirection: "row", alignItems: "center", gap: 8, borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 8 },
   voiceInputStatusText: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 12, lineHeight: 17 },
+  voiceMeaningReview: { gap: 8, borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 10 },
+  voiceMeaningSuggestion: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  voiceMeaningClarification: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  voiceMeaningActions: { flexDirection: "row", gap: 8, paddingBottom: 2 },
+  voiceMeaningButton: { borderRadius: 14, paddingHorizontal: 10, paddingVertical: 7 },
+  voiceMeaningButtonText: { color: "#FFF", fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  voiceMeaningKeepText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   voiceCancelButton: { borderWidth: 1, borderColor: "#FCA5A5", borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5 },
   voiceCancelButtonText: { color: "#B42318", fontFamily: "Inter_600SemiBold", fontSize: 11 },
   inputWrapper: { flexDirection: "row", alignItems: "flex-end", gap: 8, paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1 },

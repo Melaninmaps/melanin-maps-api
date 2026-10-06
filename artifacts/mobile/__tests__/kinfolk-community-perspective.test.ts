@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const travelSource = readFileSync(new URL("../app/travel.tsx", import.meta.url), "utf8");
 const hookSource = readFileSync(new URL("../hooks/useKinfolk.ts", import.meta.url), "utf8");
+const consentSource = readFileSync(new URL("../components/KinfolkInlineMemoryConsent.tsx", import.meta.url), "utf8");
 
 describe("mobile Kinfolk Community perspective", () => {
   it("requires an explicit, per-message opt-in before sending a Community perspective request", () => {
@@ -13,10 +14,13 @@ describe("mobile Kinfolk Community perspective", () => {
     expect(hookSource).toContain("includeCommunityPerspective: opts?.includeCommunityPerspective === true");
   });
 
-  it("uses explicit private-memory consent language and keeps the toggle opt-in", () => {
-    expect(travelSource).toContain("Save this to my private Kinfolk memory");
-    expect(travelSource).toContain('accessibilityLabel="Save this to my private Kinfolk memory"');
-    expect(travelSource).toContain("const [rememberThis, setRememberThis] = useState(false)");
+  it("uses item-level private-memory consent and keeps every save opt-in", () => {
+    expect(travelSource).toContain("KinfolkInlineMemoryConsent");
+    expect(consentSource).toContain("Nothing has been saved yet.");
+    expect(consentSource).toContain("Save only preferences and interests");
+    expect(consentSource).toContain("Choose individually");
+    expect(consentSource).toContain("Don’t save");
+    expect(consentSource).toContain("selectedIds: ids");
   });
 
   it("renders only a generic unverified-perspective disclosure, never raw Community post content", () => {
