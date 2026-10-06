@@ -292,6 +292,12 @@ import {
   resolvePublicSharedKinfolkSession,
 } from "../kinfolk/private-memory";
 import {
+  formatPreferredNameMemory,
+  normalizePreferredName,
+  parsePreferredNameMemory,
+  PREFERRED_NAME_MEMORY_PURPOSE,
+} from "../kinfolk/preferred-name-memory";
+import {
   buildPlanningDiscoveryFollowUp,
   buildConsentedPlanningContextPrompt,
   isConsentedPlanningMemoryRelevant,
@@ -5847,6 +5853,170 @@ function isSensitiveMemoryRelevant(
   );
 }
 
+async function findPreferredNameMemory(userId: string) {
+  const [memory] = await db
+    .select({
+      id: kinfolkPrivateMemoriesTable.id,
+      content: kinfolkPrivateMemoriesTable.content,
+      purpose: kinfolkPrivateMemoriesTable.purpose,
+      expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
+      updatedAt: kinfolkPrivateMemoriesTable.updatedAt,
+    })
+    .from(kinfolkPrivateMemoriesTable)
+    .where(
+      and(
+        eq(kinfolkPrivateMemoriesTable.userId, userId),
+        eq(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
+        isNull(kinfolkPrivateMemoriesTable.revokedAt),
+      ),
+    )
+    .orderBy(desc(kinfolkPrivateMemoriesTable.updatedAt))
+    .limit(1);
+  return memory ?? null;
+}
+
+// A preferred name is an explicit, revocable, owner-scoped memory. It never
+// reads or derives a value from a member profile, account, or authentication
+// record, and it deliberately remains available when ordinary chat continuity
+// is off.
+router.get("/kinfolk/preferred-name", async (req: Request, res: Response) => {
+  if (!isExplicitMemberMemoryEnabled()) {
+    return void res.status(403).json({ error: "Explicit Kinfolk memory is disabled." });
+  }
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  try {
+    const memory = await findPreferredNameMemory(req.user.id);
+    const name = memory ? parsePreferredNameMemory(memory) : null;
+    if (!memory || !name) return void res.json({ name: null, state: "not_saved" });
+    const paused = Boolean(memory.expiresAt && memory.expiresAt.getTime() <= Date.now());
+    res.json({ name, state: paused ? "paused" : "active", updatedAt: memory.updatedAt });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to read explicit preferred name");
+    res.status(500).json({ error: "Preferred name could not be loaded." });
+  }
+});
+
+router.put("/kinfolk/preferred-name", async (req: Request, res: Response) => {
+  if (!isExplicitMemberMemoryEnabled()) {
+    return void res.status(403).json({ error: "Explicit Kinfolk memory is disabled." });
+  }
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  const body = req.body as { name?: unknown; consent?: unknown };
+  const name = normalizePreferredName(body.name);
+  if (!name || body.consent !== true) {
+    return void res.status(400).json({
+      error: "Choose a preferred name and explicitly confirm before Kinfolk saves it.",
+      code: "PREFERRED_NAME_CONSENT_REQUIRED",
+    });
+  }
+  try {
+    const now = new Date();
+    await db
+      .update(kinfolkPrivateMemoriesTable)
+      .set({ revokedAt: now, updatedAt: now })
+      .where(
+        and(
+          eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+          eq(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
+          isNull(kinfolkPrivateMemoriesTable.revokedAt),
+        ),
+      );
+    const [memory] = await db
+      .insert(kinfolkPrivateMemoriesTable)
+      .values({
+        userId: req.user.id,
+        content: formatPreferredNameMemory(name),
+        purpose: PREFERRED_NAME_MEMORY_PURPOSE,
+        isSensitive: false,
+        expiresAt: null,
+      })
+      .returning({ id: kinfolkPrivateMemoriesTable.id, updatedAt: kinfolkPrivateMemoriesTable.updatedAt });
+    res.status(201).json({ name, state: "active", memoryId: memory?.id ?? null, updatedAt: memory?.updatedAt ?? now });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to save explicit preferred name");
+    res.status(500).json({ error: "Preferred name could not be saved." });
+  }
+});
+
+router.patch("/kinfolk/preferred-name/pause", async (req: Request, res: Response) => {
+  if (!isExplicitMemberMemoryEnabled()) {
+    return void res.status(403).json({ error: "Explicit Kinfolk memory is disabled." });
+  }
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  const paused = (req.body as { paused?: unknown }).paused;
+  if (typeof paused !== "boolean") {
+    return void res.status(400).json({ error: "A boolean paused value is required." });
+  }
+  try {
+    const memory = await findPreferredNameMemory(req.user.id);
+    const name = memory ? parsePreferredNameMemory(memory) : null;
+    if (!memory || !name) return void res.status(404).json({ error: "Preferred name not found." });
+    const now = new Date();
+    await db
+      .update(kinfolkPrivateMemoriesTable)
+      .set({ expiresAt: paused ? now : null, updatedAt: now })
+      .where(
+        and(
+          eq(kinfolkPrivateMemoriesTable.id, memory.id),
+          eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+          isNull(kinfolkPrivateMemoriesTable.revokedAt),
+        ),
+      );
+    res.json({ name, state: paused ? "paused" : "active", updatedAt: now });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to pause explicit preferred name");
+    res.status(500).json({ error: "Preferred name could not be updated." });
+  }
+});
+
+router.post("/kinfolk/preferred-name/revoke", async (req: Request, res: Response) => {
+  if (!isExplicitMemberMemoryEnabled()) {
+    return void res.status(403).json({ error: "Explicit Kinfolk memory is disabled." });
+  }
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  try {
+    const [revoked] = await db
+      .update(kinfolkPrivateMemoriesTable)
+      .set({ revokedAt: new Date(), updatedAt: new Date() })
+      .where(
+        and(
+          eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+          eq(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
+          isNull(kinfolkPrivateMemoriesTable.revokedAt),
+        ),
+      )
+      .returning({ id: kinfolkPrivateMemoriesTable.id });
+    if (!revoked) return void res.status(404).json({ error: "Preferred name not found." });
+    res.json({ ok: true, state: "revoked" });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to revoke explicit preferred name");
+    res.status(500).json({ error: "Preferred name could not be revoked." });
+  }
+});
+
+router.delete("/kinfolk/preferred-name", async (req: Request, res: Response) => {
+  if (!isExplicitMemberMemoryEnabled()) {
+    return void res.status(403).json({ error: "Explicit Kinfolk memory is disabled." });
+  }
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  try {
+    const deleted = await db
+      .delete(kinfolkPrivateMemoriesTable)
+      .where(
+        and(
+          eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+          eq(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
+        ),
+      )
+      .returning({ id: kinfolkPrivateMemoriesTable.id });
+    if (deleted.length === 0) return void res.status(404).json({ error: "Preferred name not found." });
+    res.json({ ok: true, state: "deleted" });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Failed to delete explicit preferred name");
+    res.status(500).json({ error: "Preferred name could not be deleted." });
+  }
+});
+
 router.get("/kinfolk/memories", async (req: Request, res: Response) => {
   if (!isKinfolkPrivateMemoryEnabled() && !isExplicitMemberMemoryEnabled()) {
     return void res.status(403).json({
@@ -5883,7 +6053,14 @@ router.get("/kinfolk/memories", async (req: Request, res: Response) => {
       )
       .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
       .limit(50);
-    res.json({ memories });
+    // Preferred names have their own explicit lifecycle controls. Keep them
+    // out of the generic editor so this narrow consent never becomes a freeform
+    // profile-memory mutation path.
+    res.json({
+      memories: memories.filter(
+        (memory) => memory.purpose !== PREFERRED_NAME_MEMORY_PURPOSE,
+      ),
+    });
   } catch (err) {
     req.log.error(
       safeKinfolkErrorMetadata(err),
@@ -6952,8 +7129,10 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const discoveryDesignationIds = explicitAllPlacesExpansion
     ? []
     : requiredDesignationIds;
-  const strictSourceBackedDiscovery =
-    strictGovernedDiscoveryV2 && discoveryDesignationIds.length > 0;
+  // A saved Black-owned Support Lens is an affirmative, strict ownership
+  // preference. It always requires an in-date documented-source receipt and
+  // has no automatic fallback to businesses outside that preference.
+  const strictSourceBackedDiscovery = discoveryDesignationIds.length > 0;
   const radiusMiles =
     strictSourceBackedDiscovery && requestsExactRadius(input.message)
       ? requestedRadiusMiles(input.message)
@@ -10435,7 +10614,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         : [];
     const relevantPrivateMemories = activePrivateMemories.filter(
       (memory) =>
-        (memory.purpose === "planning_context"
+        (memory.purpose === "preferred_name"
+          ? true
+          : memory.purpose === "planning_context"
           ? isConsentedPlanningMemoryRelevant(memory, message)
           : memory.purpose === "profile_context"
             ? isExplicitProfileMemoryRelevant(memory, message)

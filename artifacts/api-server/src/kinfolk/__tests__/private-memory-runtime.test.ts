@@ -67,6 +67,20 @@ describe("Kinfolk private-memory production control", () => {
     }])).toContain("must not change the factual answer");
   });
 
+  it("uses a preferred name only from the explicit owner-controlled record", () => {
+    const prompt = buildPrivateMemoryPromptBlock(true, [{
+      purpose: "preferred_name",
+      content: "Preferred name: J Money",
+    }]);
+    expect(prompt).toContain("PREFERRED MEMBER ADDRESS");
+    expect(prompt).toContain("J Money");
+    expect(prompt).not.toContain("[preferred_name]");
+    expect(buildPrivateMemoryPromptBlock(true, [{
+      purpose: "profile_context",
+      content: "Preferred name: J Money",
+    }])).not.toContain("PREFERRED MEMBER ADDRESS");
+  });
+
   it("honors the owner opt-out and fails closed when the setting cannot be read", async () => {
     await expect(resolveKinfolkMemoryAccess({
       runtimeEnabled: true,
@@ -150,6 +164,12 @@ describe("Kinfolk private-memory production control", () => {
     expect(source).toContain("answerMode: \"memory_help\"");
     expect(source).toContain("return resolveExplicitMemberMemoryAccess()");
     expect(source).toContain("if (!input.memoryEnabled) return undefined");
+    expect(source).toContain('router.put("/kinfolk/preferred-name"');
+    expect(source).toContain('router.patch("/kinfolk/preferred-name/pause"');
+    expect(source).toContain('router.post("/kinfolk/preferred-name/revoke"');
+    expect(source).toContain('router.delete("/kinfolk/preferred-name"');
+    expect(source).toContain("body.consent !== true");
+    expect(source).toContain("PREFERRED_NAME_MEMORY_PURPOSE");
 
     const chatRoute = source.slice(source.indexOf('router.post("/kinfolk/chat"'));
     const ownerSetting = chatRoute.indexOf("const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id)");

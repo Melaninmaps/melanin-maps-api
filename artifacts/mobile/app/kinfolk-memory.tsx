@@ -42,6 +42,11 @@ interface PrivateMemory {
   updatedAt?: string;
 }
 
+interface PreferredNameState {
+  name: string | null;
+  state: "active" | "paused" | "not_saved";
+}
+
 interface MemorySummary {
   favoriteCities: string[];
   favoriteCategories: string[];
@@ -80,6 +85,9 @@ export default function KinfolkMemoryScreen() {
   const [editing, setEditing] = useState<{ id: string; content: string; sensitiveConfirmationRequired: boolean } | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [preferredName, setPreferredName] = useState<PreferredNameState>({ name: null, state: "not_saved" });
+  const [preferredNameDraft, setPreferredNameDraft] = useState("");
+  const [updatingPreferredName, setUpdatingPreferredName] = useState(false);
 
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -90,10 +98,11 @@ export default function KinfolkMemoryScreen() {
       const base = getApiBase();
       if (!token || !base) { setLoading(false); return; }
       const headers = { Authorization: `Bearer ${token}` };
-      const [summaryRes, privateRes, continuityRes] = await Promise.all([
+      const [summaryRes, privateRes, continuityRes, preferredNameRes] = await Promise.all([
         fetch(`${base}/api/kinfolk/memory-summary`, { headers }),
         fetch(`${base}/api/kinfolk/memories`, { headers }),
         fetch(`${base}/api/kinfolk/continuity`, { headers }),
+        fetch(`${base}/api/kinfolk/preferred-name`, { headers }),
       ]);
       if (summaryRes.ok) setSummary((await summaryRes.json() as { summary: MemorySummary }).summary);
       if (privateRes.ok) setPrivateMemories((await privateRes.json() as { memories: PrivateMemory[] }).memories ?? []);
@@ -101,6 +110,14 @@ export default function KinfolkMemoryScreen() {
         const continuity = await continuityRes.json() as { enabled?: boolean; disclosureRequired?: boolean };
         setContinuityEnabled(continuity.enabled === true);
         setContinuityDisclosureRequired(continuity.disclosureRequired === true);
+      }
+      if (preferredNameRes.ok) {
+        const value = await preferredNameRes.json() as PreferredNameState;
+        setPreferredName({
+          name: typeof value.name === "string" ? value.name : null,
+          state: value.state === "active" || value.state === "paused" ? value.state : "not_saved",
+        });
+        setPreferredNameDraft(typeof value.name === "string" ? value.name : "");
       }
     } catch { setMemoryError("Could not load Kinfolk memory settings."); }
     finally { setLoading(false); }
@@ -165,6 +182,66 @@ export default function KinfolkMemoryScreen() {
     finally { setSavingEdit(false); }
   };
 
+  const savePreferredName = async () => {
+    if (!preferredNameDraft.trim() || updatingPreferredName) return;
+    setUpdatingPreferredName(true); setMemoryError("");
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Please sign in again before saving your preferred name.");
+      const response = await fetch(`${getApiBase()}/api/kinfolk/preferred-name`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ name: preferredNameDraft.trim(), consent: true }),
+      });
+      const body = await response.json().catch(() => ({})) as { name?: string; state?: PreferredNameState["state"]; error?: string };
+      if (!response.ok || !body.name) throw new Error(body.error ?? "Could not save your preferred name.");
+      setPreferredName({ name: body.name, state: "active" }); setPreferredNameDraft(body.name);
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (cause) { setMemoryError(cause instanceof Error ? cause.message : "Could not save your preferred name."); }
+    finally { setUpdatingPreferredName(false); }
+  };
+
+  const setPreferredNamePaused = async (paused: boolean) => {
+    setUpdatingPreferredName(true); setMemoryError("");
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Please sign in again before changing your preferred name.");
+      const response = await fetch(`${getApiBase()}/api/kinfolk/preferred-name/pause`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ paused }),
+      });
+      const body = await response.json().catch(() => ({})) as { name?: string; state?: PreferredNameState["state"]; error?: string };
+      if (!response.ok || !body.name || (body.state !== "active" && body.state !== "paused")) throw new Error(body.error ?? "Could not update your preferred name.");
+      setPreferredName({ name: body.name, state: body.state });
+    } catch (cause) { setMemoryError(cause instanceof Error ? cause.message : "Could not update your preferred name."); }
+    finally { setUpdatingPreferredName(false); }
+  };
+
+  const revokePreferredName = async () => {
+    setUpdatingPreferredName(true); setMemoryError("");
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Please sign in again before revoking your preferred name.");
+      const response = await fetch(`${getApiBase()}/api/kinfolk/preferred-name/revoke`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) throw new Error("Could not revoke your preferred name.");
+      setPreferredName({ name: null, state: "not_saved" }); setPreferredNameDraft("");
+    } catch (cause) { setMemoryError(cause instanceof Error ? cause.message : "Could not revoke your preferred name."); }
+    finally { setUpdatingPreferredName(false); }
+  };
+
+  const deletePreferredName = async () => {
+    setUpdatingPreferredName(true); setMemoryError("");
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Please sign in again before deleting your preferred name.");
+      const response = await fetch(`${getApiBase()}/api/kinfolk/preferred-name`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) throw new Error("Could not delete your preferred name.");
+      setPreferredName({ name: null, state: "not_saved" }); setPreferredNameDraft("");
+    } catch (cause) { setMemoryError(cause instanceof Error ? cause.message : "Could not delete your preferred name."); }
+    finally { setUpdatingPreferredName(false); }
+  };
+
   const resetKinfolk = () => {
     Alert.alert(
       "Start Kinfolk fresh?",
@@ -206,6 +283,21 @@ export default function KinfolkMemoryScreen() {
     <View style={[styles.header, { paddingTop: topPad + 12 }]}><TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/kinfolk-settings" as never)}><Feather name="arrow-left" size={22} color={colors.foreground} /></TouchableOpacity><Text style={[styles.headerTitle, { color: colors.foreground }]}>What KinfolkAI™ Knows</Text><View style={{ width: 40 }} /></View>
     {loading ? <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><ActivityIndicator size="large" color={colors.primary} /></View> : <ScrollView keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]}>
       <View style={[styles.hero, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}><View style={[styles.heroIcon, { backgroundColor: colors.primary }]}><Feather name="cpu" size={22} color="#fff" /></View><Text style={[styles.heroTitle, { color: colors.foreground }]}>Your KinfolkAI™ Memory</Text><Text style={[styles.heroDesc, { color: colors.mutedForeground }]}>Review what Kinfolk can use in future conversations. You can edit, delete, turn continuity off, or reset Kinfolk anytime.</Text></View>
+      <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>PREFERRED NAME</Text>
+      <View style={[styles.continuityCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View style={[styles.itemIcon, { backgroundColor: colors.primary + "18" }]}><Feather name="user" size={16} color={colors.primary} /></View>
+        <View style={styles.itemContent}>
+          <Text style={[styles.itemValue, { color: colors.foreground }]}>What should Kinfolk call you?</Text>
+          <Text style={[styles.noteTxt, { color: colors.mutedForeground }]}>This is separate from your account name. Kinfolk uses it only after you explicitly save it, and you can pause, revoke, or delete it here.</Text>
+          <TextInput value={preferredNameDraft} onChangeText={setPreferredNameDraft} maxLength={60} editable={!updatingPreferredName} placeholder="For example, J Money" placeholderTextColor={colors.mutedForeground} accessibilityLabel="Preferred name for Kinfolk" style={[styles.memoryInput, { minHeight: 42, marginTop: 10, color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]} />
+          <View style={styles.editActions}>
+            <TouchableOpacity disabled={updatingPreferredName || !preferredNameDraft.trim()} onPress={() => void savePreferredName()} style={[styles.smallPrimary, { backgroundColor: colors.primary, opacity: updatingPreferredName || !preferredNameDraft.trim() ? 0.55 : 1 }]}><Text style={styles.smallPrimaryText}>{updatingPreferredName ? "Saving…" : preferredName.name ? "Update name" : "Save name"}</Text></TouchableOpacity>
+            {preferredName.name ? <TouchableOpacity disabled={updatingPreferredName} onPress={() => void setPreferredNamePaused(preferredName.state !== "paused")}><Text style={[styles.cancelText, { color: colors.primary }]}>{preferredName.state === "paused" ? "Resume" : "Pause"}</Text></TouchableOpacity> : null}
+          </View>
+          {preferredName.name ? <View style={styles.editActions}><TouchableOpacity disabled={updatingPreferredName} onPress={() => void revokePreferredName()}><Text style={[styles.cancelText, { color: "#B42318" }]}>Revoke use</Text></TouchableOpacity><TouchableOpacity disabled={updatingPreferredName} onPress={() => void deletePreferredName()}><Text style={[styles.cancelText, { color: "#B42318" }]}>Delete permanently</Text></TouchableOpacity></View> : null}
+          {preferredName.state === "paused" ? <Text style={[styles.sensitiveNote, { color: colors.primary }]}>Paused — Kinfolk will not use this name until you resume it.</Text> : null}
+        </View>
+      </View>
       <View style={[styles.continuityCard, { backgroundColor: colors.card, borderColor: colors.border }]}><View style={{ flex: 1, paddingRight: 14 }}><Text style={[styles.itemValue, { color: colors.foreground }]}>Continue private context between chats</Text><Text style={[styles.noteTxt, { color: colors.mutedForeground }]}>When on, Kinfolk can retain useful non-sensitive preferences, plans, projects, goals, and conversations. Turning this off stops future use and retention; saved items stay until you delete or reset them.</Text></View><Switch value={continuityEnabled} disabled={updatingContinuity} onValueChange={(value) => void updateContinuity(value)} trackColor={{ false: colors.border, true: colors.primary + "99" }} thumbColor={continuityEnabled ? colors.primary : "#f5f5f5"} accessibilityLabel="Continue private context between chats" /></View>
       {!summary || buildItems(summary).length === 0 ? <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}><Feather name="inbox" size={36} color={colors.mutedForeground} style={{ marginBottom: 12 }} /><Text style={[styles.emptyTitle, { color: colors.foreground }]}>Your profile is empty</Text><Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>Complete your KinfolkAI™ setup to unlock personalized recommendations, trip briefings, and local intel tailored to you.</Text><TouchableOpacity activeOpacity={0.85} style={[styles.emptyBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/kinfolk-settings" as never)}><Text style={styles.emptyBtnTxt}>Set Up My Profile</Text></TouchableOpacity></View> : <><Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>WHAT I KNOW ABOUT YOU</Text><View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>{buildItems(summary).map((item, i, arr) => <React.Fragment key={item.label}><View style={styles.itemRow}><View style={[styles.itemIcon, { backgroundColor: item.color + "18" }]}><Feather name={item.icon} size={16} color={item.color} /></View><View style={styles.itemContent}><Text style={[styles.itemLabel, { color: colors.mutedForeground }]}>{item.label}</Text><Text style={[styles.itemValue, { color: colors.foreground }]}>{item.value}</Text></View></View>{i < arr.length - 1 && <View style={[styles.sep, { backgroundColor: colors.border, marginLeft: 60 }]} />}</React.Fragment>)}</View><TouchableOpacity activeOpacity={0.85} style={[styles.editBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/kinfolk-settings" as never)}><Feather name="edit-2" size={16} color="#fff" /><Text style={styles.editBtnTxt}>Edit My KinfolkAI™ Profile</Text></TouchableOpacity></>}
       <Text style={[styles.sectionTitle, { color: colors.mutedForeground, marginTop: 4 }]}>PRIVATE MEMORIES</Text>
