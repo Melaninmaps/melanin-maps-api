@@ -367,7 +367,15 @@ export function AIChatWidget() {
   const [fabOpacity] = useState(() => new Animated.Value(1));
 
   const onPrimaryKinfolkConversation = pathname === "/travel" || pathname.startsWith("/travel/");
-  const suppressed = onPrimaryKinfolkConversation || ["/onboarding", "/login", "/signup"].some((r) => pathname.startsWith(r));
+  // Settings is the place to make deliberate preference changes. The globally
+  // mounted floating pill must never cover a save action, a modal field, or a
+  // bottom row on smaller iPhones and Android devices.
+  const onSettingsRoute = ["/settings", "/kinfolk-settings", "/kinfolk-memory"].some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+  const suppressed = onPrimaryKinfolkConversation
+    || onSettingsRoute
+    || ["/onboarding", "/login", "/signup"].some((r) => pathname.startsWith(r));
 
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 

@@ -13,10 +13,10 @@ describe("mobile Kinfolk Community perspective", () => {
     expect(hookSource).toContain("includeCommunityPerspective: opts?.includeCommunityPerspective === true");
   });
 
-  it("uses explicit private-memory consent language and keeps the toggle opt-in", () => {
-    expect(travelSource).toContain("Save this to my private Kinfolk memory");
-    expect(travelSource).toContain('accessibilityLabel="Save this to my private Kinfolk memory"');
-    expect(travelSource).toContain("const [rememberThis, setRememberThis] = useState(false)");
+  it("uses the existing explicit private-memory consent component rather than a silent composer toggle", () => {
+    expect(travelSource).toContain("KinfolkInlineMemoryConsent");
+    expect(hookSource).toContain("inlineMemoryConsent");
+    expect(hookSource).toContain("memoryConsentPlan");
   });
 
   it("renders only a generic unverified-perspective disclosure, never raw Community post content", () => {

@@ -8,7 +8,7 @@ const travelSource = readFileSync(fileURLToPath(new URL("../app/travel.tsx", imp
 const hookSource = readFileSync(fileURLToPath(new URL("../hooks/useKinfolk.ts", import.meta.url)), "utf8");
 const detailSource = readFileSync(fileURLToPath(new URL("../app/business/[id].tsx", import.meta.url)), "utf8");
 const widgetSource = readFileSync(fileURLToPath(new URL("../components/AIChatWidget.tsx", import.meta.url)), "utf8");
-const settingsSource = readFileSync(fileURLToPath(new URL("../app/kinfolk-settings.tsx", import.meta.url)), "utf8");
+const settingsSource = readFileSync(fileURLToPath(new URL("../components/KinfolkSettingsControlCenter.tsx", import.meta.url)), "utf8");
 const disclosureSource = readFileSync(fileURLToPath(new URL("../components/KinfolkContinuityDisclosure.tsx", import.meta.url)), "utf8");
 const inlineMemoryConsentSource = readFileSync(fileURLToPath(new URL("../components/KinfolkInlineMemoryConsent.tsx", import.meta.url)), "utf8");
 
@@ -51,9 +51,9 @@ describe("Expo Kinfolk business demo cards", () => {
   });
 
   it("uses first-use disclosure and reversible mobile continuity", () => {
-    expect(settingsSource).toContain("const [continuityEnabled, setContinuityEnabled] = useState(false)");
+    expect(settingsSource).toContain("continuityEnabled: false");
     expect(settingsSource).toContain("/api/kinfolk/continuity");
-    expect(settingsSource).toContain('body: JSON.stringify({ enabled, ...(decision ? { decision } : {}) })');
+    expect(settingsSource).toContain("enabled: snapshot.continuityEnabled");
     expect(settingsSource).toContain("KinfolkContinuityDisclosure");
     expect(disclosureSource).toContain("Let Kinfolk remember");
     expect(disclosureSource).toContain("Keep memory off");
