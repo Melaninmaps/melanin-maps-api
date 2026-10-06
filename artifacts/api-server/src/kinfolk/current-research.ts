@@ -31,6 +31,13 @@ const NAMED_CUSTODY_STATUS_RE = /\b(?:is|are|will|did|does|when\s+(?:is|will)|ca
 const ARTICLE_SUMMARY_RE = /\b(?:summari[sz]e|summary)\b/i;
 const HTTPS_URL_RE = /https:\/\/[^\s<>'"`]+/i;
 
+// A member asking Kinfolk to repeat their own explicitly saved address is a
+// first-party memory recall, not a request for a fresh public fact. This stays
+// deliberately narrow: ordinary questions containing “today” still require
+// current evidence, while “What name should you call me?” can reach the
+// consent-gated preferred-name prompt block.
+const PREFERRED_NAME_RECALL_RE = /\b(?:what\s+name\s+should\s+you\s+call\s+me|what\s+do\s+you\s+call\s+me|what(?:'s|\s+is)\s+my\s+preferred\s+name|do\s+you\s+remember\s+(?:my|the)\s+(?:preferred\s+)?name)\b/i;
+
 /**
  * Returns an explicitly supplied public article URL only when the member asks
  * for a summary. The server later requires cited retrieval of this same source,
@@ -52,6 +59,7 @@ export function hasRequestedArticleEvidence(
 }
 
 export function requiresCurrentResearch(message: string): boolean {
+  if (PREFERRED_NAME_RECALL_RE.test(message)) return false;
   return CURRENT_RESEARCH_RE.test(message)
     || CHANGING_PUBLIC_STATISTIC_RE.test(message)
     || isCurrencyConversionRequest(message)

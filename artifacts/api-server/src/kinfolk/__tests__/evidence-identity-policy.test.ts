@@ -16,6 +16,7 @@ import { buildMemberProfile, buildSearchPlan } from "../lens-planner";
 import {
   buildIntentPolicyPrompt,
   classifyCulturalClaimMode,
+  classifyIntent,
   getEvidencePolicy,
   getQueryClass,
 } from "../intent-router";
@@ -114,6 +115,17 @@ describe("deterministic evidence route", () => {
     expect(route.allowedSources).toContain("reputable_current_reporting");
     expect(route.sourceGuidance).toMatch(/separate verified facts, the speaker's claim/i);
     expect(route.sourceGuidance).toMatch(/directly attributed on-record perspectives/i);
+  });
+
+  it("keeps explicit preferred-name recall conversational when it includes today", () => {
+    const message =
+      "What name should you call me? In one sentence, welcome me and give me one practical next step for today.";
+    expect(classifyIntent(message, false)).toBe("general_knowledge");
+    expect(routeEvidence(message)).toMatchObject({
+      domain: "general_knowledge",
+      retrievalRequirement: "none",
+      failClosed: false,
+    });
   });
 });
 

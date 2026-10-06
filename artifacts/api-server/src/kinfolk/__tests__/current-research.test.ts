@@ -68,6 +68,13 @@ describe("current research routing", () => {
     expect(requiresCurrentResearch(message)).toBe(false);
   });
 
+  it("keeps explicit preferred-name recall out of the current-research path", () => {
+    const personalPrompt =
+      "What name should you call me? In one sentence, welcome me and give me one practical next step for today.";
+    expect(requiresCurrentResearch(personalPrompt)).toBe(false);
+    expect(requiresCurrentResearch("What is open today in Philadelphia?")).toBe(true);
+  });
+
   it("routes an explicit linked-article summary to current source retrieval", () => {
     const message = "Please summarize this linked article about gas prices: https://example.com/news/gas-prices?ref=kinfolk";
     const requested = requestedArticleSummaryUrl(message);

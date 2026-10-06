@@ -19,6 +19,7 @@
  *   their criteria or acknowledge multiple defensible views without stock boilerplate.
  */
 
+import { requiresCurrentResearch } from "./current-research";
 import { isKinfolkPlatformPolicyQuestion } from "./request-classifier";
 
 // ─── Intent types ─────────────────────────────────────────────────────────────
@@ -286,8 +287,12 @@ export function classifyIntent(message: string, hasDestination: boolean): Kinfol
   // or recommendation cards. High-consequence routes above still take priority.
   if (isKinfolkPlatformPolicyQuestion(message)) return "general_knowledge";
 
-  // Current information (time-sensitive)
-  if (CURRENT_INFO_SIGNALS.some((re) => re.test(msg))) return "current_information";
+  // Current information (time-sensitive). Keep this aligned with the shared
+  // research gate so personal first-party memory recall containing “today”
+  // cannot become a stale-fact search.
+  if (CURRENT_INFO_SIGNALS.some((re) => re.test(msg)) && requiresCurrentResearch(message)) {
+    return "current_information";
+  }
 
   // Education discovery must precede business discovery so "colleges near me" and
   // "what HBCUs are in Pennsylvania" retain their specialized answer flow.
