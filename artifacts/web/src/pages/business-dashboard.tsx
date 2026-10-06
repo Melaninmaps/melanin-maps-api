@@ -23,6 +23,7 @@ type PromotionType = "priority_search" | "category_featured" | "city_featured" |
 type Promotion = { id: string; type: PromotionType; status: string; endsAt?: string | null };
 type ToolConfig = { type: PromotionType; name: string; description: string; priceCents: number; priceDisplay: string; durationDays: number; icon: string; tagline: string };
 type GrowthData = { activePromotions: Promotion[]; pendingPromotions: Promotion[]; catalogue: ToolConfig[] };
+type CommunityNeedInsight = { id: string; topicKey: string; topicLabel: string; memberCount: number; threshold: number; firstReachedAt: string };
 type GlobalRec = {
   id: string; country: string; city: string | null; businessName: string;
   website: string | null; socialMedia: string | null; type: string;
@@ -98,6 +99,7 @@ export default function BusinessDashboard() {
   const [globalLoading, setGlobalLoading] = useState(false);
   const [globalBadge, setGlobalBadge] = useState<string | null>(null);
   const [showGlobalForm, setShowGlobalForm] = useState(false);
+  const [communityNeeds, setCommunityNeeds] = useState<CommunityNeedInsight[]>([]);
   const [gCountry, setGCountry] = useState("");
   const [gCity, setGCity] = useState("");
   const [gName, setGName] = useState("");
@@ -121,6 +123,10 @@ export default function BusinessDashboard() {
   useEffect(() => {
     if (!selectedId) return;
     fetch(`${BASE}api/reviews?businessId=${selectedId}`, { credentials: "include" }).then((r) => r.json()).then((d) => setReviews(d.reviews ?? [])).catch(() => {});
+    fetch(`${BASE}api/businesses/${selectedId}/kinfolk-community-needs`, { credentials: "include" })
+      .then((r) => r.ok ? r.json() : { insights: [] })
+      .then((d: { insights?: CommunityNeedInsight[] }) => setCommunityNeeds(d.insights ?? []))
+      .catch(() => setCommunityNeeds([]));
   }, [selectedId]);
 
   useEffect(() => {
@@ -291,6 +297,26 @@ export default function BusinessDashboard() {
                       <StatCard label="Would Return" value={returnRate} icon={Users} color="#38A169" />
                       <StatCard label="Verified" value={selected.verified ? "✓ Yes" : "Pending"} icon={Shield} color={selected.verified ? "#38A169" : "#CA922B"} />
                     </div>
+
+                    {communityNeeds.length > 0 && (
+                      <section className="rounded-2xl border border-[#5B2D8E]/20 bg-[#5B2D8E]/[0.04] p-5" data-testid="kinfolk-community-needs-owner-insight">
+                        <div className="flex items-start gap-3">
+                          <div className="mt-0.5 rounded-xl bg-[#5B2D8E]/10 p-2"><MessageSquare className="h-4 w-4 text-[#5B2D8E]" /></div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-bold text-[#2B1507]">Private Kinfolk community needs</p>
+                            <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/55">Aggregate-only signals. No member identity, message, note, transcript, health detail, location, or account information is shown here.</p>
+                          </div>
+                        </div>
+                        <div className="mt-4 space-y-2">
+                          {communityNeeds.map((insight) => (
+                            <div key={insight.id} className="rounded-xl border border-[#5B2D8E]/15 bg-white px-3.5 py-3">
+                              <p className="text-sm font-semibold text-[#2B1507]">{insight.memberCount} community members asked for more help with {insight.topicLabel}.</p>
+                              <p className="mt-1 text-[11px] text-[#3A1F0E]/45">Threshold reached {new Date(insight.firstReachedAt).toLocaleDateString()}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </section>
+                    )}
 
                     <div className="bg-white rounded-2xl p-5 border border-[#3A1F0E]/10">
                       <p className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-3">Quick Actions</p>
