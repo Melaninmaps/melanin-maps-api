@@ -20,6 +20,7 @@
  */
 
 import { requiresCurrentResearch } from "./current-research";
+import { isImmediateMedicalEmergency } from "./emergency-medical-response";
 import { isKinfolkPlatformPolicyQuestion } from "./request-classifier";
 
 // ─── Intent types ─────────────────────────────────────────────────────────────
@@ -272,8 +273,13 @@ export function classifyIntent(message: string, hasDestination: boolean): Kinfol
       msg,
     );
 
-  // Safety emergency — absolute top priority
-  if (SAFETY_EMERGENCY_SIGNALS.some((re) => re.test(msg))) return "safety_emergency";
+  // Safety emergency — absolute top priority. Medical emergencies use a
+  // dedicated deterministic response before any retrieval or model work.
+  if (
+    isImmediateMedicalEmergency(message) ||
+    SAFETY_EMERGENCY_SIGNALS.some((re) => re.test(msg))
+  )
+    return "safety_emergency";
 
   // High-consequence regulated domains
   if (MEDICAL_SIGNALS.some((re) => re.test(msg)) && !isExplicitFoodVenueDiscovery)

@@ -53,6 +53,22 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).not.toContain("culturalLine = (prefs?.culturalInterests");
   });
 
+  it("returns an immediate medical emergency response before memory, quota, research, or model work", () => {
+    const emergencyResponse = chatRoute.indexOf(
+      "immediateMedicalEmergencyReply(message)",
+    );
+    const memoryPersistence = chatRoute.indexOf("persistExplicitMemberMemory({");
+    const genericClassifier = chatRoute.indexOf(
+      "buildGenericAnswerRouteClassifierPrompt()",
+    );
+
+    expect(emergencyResponse).toBeGreaterThan(-1);
+    expect(memoryPersistence).toBeGreaterThan(emergencyResponse);
+    expect(genericClassifier).toBeGreaterThan(emergencyResponse);
+    expect(chatRoute).toContain('intentClass: "safety_emergency"');
+    expect(chatRoute).toContain('answerMode: "immediate_medical_emergency"');
+  });
+
   it("uses one bounded generic answer route before contextual research and fails current turns closed without support", () => {
     const genericRoute = chatRoute.indexOf("buildGenericAnswerRouteClassifierPrompt()");
     const citedResearch = chatRoute.indexOf("const citedResearchRequired =");

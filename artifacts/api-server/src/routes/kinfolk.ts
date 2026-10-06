@@ -163,6 +163,7 @@ import {
   isLiveWeatherQuestion,
   resolveAuthoritativeWeather,
 } from "../kinfolk/authoritative-weather";
+import { immediateMedicalEmergencyReply } from "../kinfolk/emergency-medical-response";
 import { buildKinfolkCulturalLearningOpportunity } from "../kinfolk/cultural-learning-opportunity";
 import { buildImageCreationSafetyGuidance } from "../kinfolk/image-creation-safety";
 import { permittedIdentityContext as resolvePermittedIdentityContext } from "../kinfolk/permitted-identity-context";
@@ -7546,6 +7547,45 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   if (typeof publicOrigin === "string" && publicOrigin.length > 220) {
     res.status(400).json({
       error: "Exact-radius origin is too long. Please use a public place name or address under 220 characters.",
+    });
+    return;
+  }
+
+  // Possible immediate medical emergencies must not wait for memory lookup,
+  // quota accounting, web research, or model generation. This response is
+  // intentionally not stored as member memory or conversation history.
+  const emergencyMedicalReply = immediateMedicalEmergencyReply(message);
+  if (emergencyMedicalReply) {
+    res.status(200).json({
+      sessionId,
+      reply: emergencyMedicalReply,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: [],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "safety_emergency",
+      sources: [],
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "immediate_medical_emergency",
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "not_needed",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
     });
     return;
   }
