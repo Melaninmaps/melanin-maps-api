@@ -19,6 +19,16 @@ type EvidenceSourceKind =
   | "founder_directory"
   | "official_geocoder";
 type EligibilityStatus = "qualified" | "direct_name_only" | "review_hold" | "revoked";
+type WebsiteCleanupStatus = "identity_mismatch" | "unsafe_spam" | "inactive_broken";
+
+type WebsiteCleanupInput = Readonly<{
+  status: WebsiteCleanupStatus;
+  originalWebsite: string;
+  finalDestination: string | null;
+  evidenceSourceUrl: string;
+  evidenceSummary: string;
+  checkedAt: string;
+}>;
 
 type EvidenceInput = Readonly<{
   field: EvidenceField;
@@ -38,6 +48,7 @@ type ReviewInput = Readonly<{
   ownershipSourceExpiresAt?: string;
   reviewAfter?: string;
   evidence?: EvidenceInput[];
+  websiteCleanup?: WebsiteCleanupInput;
 }>;
 
 const OFFICIAL_SOCIAL_HOSTS = new Set([
@@ -78,6 +89,9 @@ const SOURCE_KINDS = new Set<EvidenceSourceKind>([
 const ELIGIBILITY_STATUSES = new Set<EligibilityStatus>([
   "qualified", "direct_name_only", "review_hold", "revoked",
 ]);
+const WEBSITE_CLEANUP_STATUSES = new Set<WebsiteCleanupStatus>([
+  "identity_mismatch", "unsafe_spam", "inactive_broken",
+]);
 const DESIGNATIONS = new Set(DIASPORA_OWNERSHIP_DESIGNATIONS.map((item) => item.toLocaleLowerCase("en-US")));
 
 function safeHttpsUrl(value: unknown, label: string): string {
@@ -89,6 +103,19 @@ function safeHttpsUrl(value: unknown, label: string): string {
     throw new Error(`${label} must be a valid HTTPS URL`);
   }
   if (parsed.protocol !== "https:") throw new Error(`${label} must use HTTPS`);
+  parsed.hash = "";
+  return parsed.toString();
+}
+
+function safeHttpUrl(value: unknown, label: string): string {
+  if (typeof value !== "string" || !value.trim()) throw new Error(`${label} is required`);
+  let parsed: URL;
+  try {
+    parsed = new URL(value.trim());
+  } catch {
+    throw new Error(`${label} must be a valid HTTP(S) URL`);
+  }
+  if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error(`${label} must use HTTP(S)`);
   parsed.hash = "";
   return parsed.toString();
 }
@@ -191,6 +218,33 @@ function validateEvidence(value: unknown, now: Date): EvidenceInput {
   };
 }
 
+function validateWebsiteCleanup(value: unknown, now: Date): WebsiteCleanupInput {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    throw new Error("websiteCleanup must be an object");
+  }
+  const raw = value as Record<string, unknown>;
+  if (!WEBSITE_CLEANUP_STATUSES.has(raw.status as WebsiteCleanupStatus)) {
+    throw new Error("websiteCleanup status is invalid");
+  }
+  const originalWebsite = safeHttpUrl(raw.originalWebsite, "websiteCleanup originalWebsite");
+  const finalDestination = raw.finalDestination == null || raw.finalDestination === ""
+    ? null
+    : safeHttpUrl(raw.finalDestination, "websiteCleanup finalDestination");
+  const evidenceSourceUrl = safeHttpsUrl(raw.evidenceSourceUrl, "websiteCleanup evidenceSourceUrl");
+  const evidenceSummary = normalizedText(raw.evidenceSummary, 4_000);
+  if (!evidenceSummary || evidenceSummary.length < 3) {
+    throw new Error("websiteCleanup evidenceSummary is required");
+  }
+  return {
+    status: raw.status as WebsiteCleanupStatus,
+    originalWebsite,
+    finalDestination,
+    evidenceSourceUrl,
+    evidenceSummary,
+    checkedAt: asTimestamp(raw.checkedAt, "websiteCleanup checkedAt", now, 1),
+  };
+}
+
 export function validateDocumentedDiscoveryReviewInput(value: unknown, now: Date): ReviewInput {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("request body must be an object");
   const raw = value as Record<string, unknown>;
@@ -209,6 +263,9 @@ export function validateDocumentedDiscoveryReviewInput(value: unknown, now: Date
   const evidence = Array.isArray(raw.evidence)
     ? raw.evidence.map((item) => validateEvidence(item, now))
     : [];
+  const websiteCleanup = raw.websiteCleanup == null
+    ? undefined
+    : validateWebsiteCleanup(raw.websiteCleanup, now);
   const counts = new Map<EvidenceField, number>();
   for (const item of evidence) counts.set(item.field, (counts.get(item.field) ?? 0) + 1);
   if ([...counts.values()].some((count) => count > 1)) throw new Error("submit at most one receipt per evidence field per decision");
@@ -231,7 +288,7 @@ export function validateDocumentedDiscoveryReviewInput(value: unknown, now: Date
     if (counts.has("map_pin") && !counts.has("address")) {
       throw new Error("map pin qualification requires a documented physical-address receipt");
     }
-  } else if (evidence.length > 0 || ownershipDesignations.length > 0 || ownershipSourceExpiresAt || reviewAfter) {
+  } else if ((evidence.length > 0 || ownershipDesignations.length > 0 || ownershipSourceExpiresAt || reviewAfter) && !websiteCleanup) {
     throw new Error("non-qualified decisions retain no active recommendation receipts; submit the review state only");
   }
 
@@ -242,6 +299,7 @@ export function validateDocumentedDiscoveryReviewInput(value: unknown, now: Date
     ownershipSourceExpiresAt,
     reviewAfter,
     evidence,
+    websiteCleanup,
   };
 }
 
@@ -311,8 +369,8 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
-      const existingBusiness = await client.query<{ id: string; name: string }>(
-        `SELECT id, name FROM businesses
+      const existingBusiness = await client.query<{ id: string; name: string; website: string | null }>(
+        `SELECT id, name, website FROM businesses
           WHERE id = $1 AND status NOT IN ('removed', 'deleted')
           FOR UPDATE`,
         [businessId],
@@ -321,6 +379,16 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
         await client.query("ROLLBACK");
         res.status(404).json({ error: "Business not found" });
         return;
+      }
+      if (input.websiteCleanup) {
+        const storedWebsite = existingBusiness.rows[0].website?.trim() ?? "";
+        const submittedWebsite = input.websiteCleanup.originalWebsite.trim();
+        const normalize = (value: string) => value.replace(/\/$/, "").toLocaleLowerCase("en-US");
+        if (!storedWebsite || normalize(storedWebsite) !== normalize(submittedWebsite)) {
+          await client.query("ROLLBACK");
+          res.status(409).json({ error: "websiteCleanup originalWebsite does not match the currently stored public website" });
+          return;
+        }
       }
       const prior = await client.query<{ state: Record<string, unknown> }>(
         `SELECT to_jsonb(e) AS state FROM business_discovery_eligibility e WHERE e.business_id = $1`,
@@ -346,7 +414,7 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
       // Enrich only fields that the active review receipt expressly supports.
       // This replaces an old directory/marketplace website with an official
       // domain and never guesses a social handle, address, or ownership label.
-      if (input.eligibilityStatus === "qualified") {
+      if (input.eligibilityStatus === "qualified" || input.websiteCleanup) {
         const evidenceByField = new Map((input.evidence ?? []).map((evidence) => [evidence.field, evidence]));
         const officialWebsite = evidenceByField.get("official_website")?.observedValue?.websiteUrl;
         const officialSocial = evidenceByField.get("official_social")?.observedValue?.profileUrl;
@@ -372,17 +440,20 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
         }
         await client.query(
           `UPDATE businesses
-              SET website = COALESCE($2, website),
-                  instagram = COALESCE($3, instagram),
-                  facebook = COALESCE($4, facebook),
-                  tiktok = COALESCE($5, tiktok),
-                  address = COALESCE($6, address),
-                  latitude = COALESCE($7::numeric, latitude),
-                  longitude = COALESCE($8::numeric, longitude),
+              SET website = CASE WHEN $2 THEN $3 ELSE COALESCE($3, website) END,
+                  instagram = COALESCE($4, instagram),
+                  facebook = COALESCE($5, facebook),
+                  tiktok = COALESCE($6, tiktok),
+                  address = COALESCE($7, address),
+                  latitude = COALESCE($8::numeric, latitude),
+                  longitude = COALESCE($9::numeric, longitude),
+                  website_cleanup_status = CASE WHEN $2 THEN $10 ELSE website_cleanup_status END,
+                  website_cleanup_at = CASE WHEN $2 THEN now() ELSE website_cleanup_at END,
                   updated_at = now()
             WHERE id = $1`,
           [
             businessId,
+            Boolean(input.websiteCleanup),
             profilePatch.website,
             profilePatch.instagram,
             profilePatch.facebook,
@@ -390,6 +461,22 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
             profilePatch.address,
             profilePatch.latitude,
             profilePatch.longitude,
+            input.websiteCleanup?.status ?? null,
+          ],
+        );
+      }
+      if (input.websiteCleanup) {
+        await client.query(
+          `INSERT INTO business_website_cleanup_audit_events (
+             id, business_id, original_website, final_destination, cleanup_status,
+             reason, evidence_source_url, evidence_summary, checked_at, actor_user_id
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9::timestamptz, $10)`,
+          [
+            randomUUID(), businessId, input.websiteCleanup.originalWebsite,
+            input.websiteCleanup.finalDestination, input.websiteCleanup.status,
+            input.decisionReason, input.websiteCleanup.evidenceSourceUrl,
+            JSON.stringify({ summary: input.websiteCleanup.evidenceSummary }),
+            input.websiteCleanup.checkedAt, actorId,
           ],
         );
       }

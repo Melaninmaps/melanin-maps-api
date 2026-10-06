@@ -6734,6 +6734,10 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
       () => ensureBusinessListingStatusAuditSchema(log, warn),
     ],
     [
+      "business website cleanup audit v1",
+      () => ensureBusinessWebsiteCleanupAuditSchema(log, warn),
+    ],
+    [
       "business permanent-deletion audit v1",
       () => ensureBusinessPermanentDeletionAuditSchema(log, warn),
     ],
@@ -17876,6 +17880,58 @@ async function ensureBusinessListingStatusAuditSchema(
     warn(
       `ensureBusinessListingStatusAuditSchema failed: ${err instanceof Error ? err.message : String(err)}`,
     );
+  }
+}
+
+// ── Website cleanup audit ───────────────────────────────────────────────────
+// A bad public URL is a contact-data defect, not by itself a reason to hide a
+// source-documented, social-first business. The current cleanup state supports
+// Admin review; the original URL and verification receipt are append-only.
+async function ensureBusinessWebsiteCleanupAuditSchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      ALTER TABLE businesses
+        ADD COLUMN IF NOT EXISTS website_cleanup_status TEXT,
+        ADD COLUMN IF NOT EXISTS website_cleanup_at TIMESTAMPTZ
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS business_website_cleanup_audit_events (
+        id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        business_id       TEXT NOT NULL,
+        original_website  TEXT NOT NULL,
+        final_destination TEXT,
+        cleanup_status    TEXT NOT NULL CHECK (cleanup_status IN ('identity_mismatch', 'unsafe_spam', 'inactive_broken')),
+        reason            TEXT NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 4000),
+        evidence_source_url TEXT NOT NULL,
+        evidence_summary  JSONB NOT NULL,
+        checked_at        TIMESTAMPTZ NOT NULL,
+        actor_user_id     TEXT,
+        created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS business_website_cleanup_audit_business_created_idx
+        ON business_website_cleanup_audit_events(business_id, created_at DESC)
+    `);
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION public.prevent_business_website_cleanup_audit_mutation()
+      RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        RAISE EXCEPTION 'business_website_cleanup_audit_events are immutable';
+      END;
+      $$;
+      DROP TRIGGER IF EXISTS business_website_cleanup_audit_immutable
+        ON business_website_cleanup_audit_events;
+      CREATE TRIGGER business_website_cleanup_audit_immutable
+        BEFORE UPDATE OR DELETE ON business_website_cleanup_audit_events
+        FOR EACH ROW EXECUTE FUNCTION public.prevent_business_website_cleanup_audit_mutation();
+    `);
+    log("ensureBusinessWebsiteCleanupAuditSchema: website-cleanup state and immutable receipts ready");
+  } catch (err: unknown) {
+    warn(`ensureBusinessWebsiteCleanupAuditSchema failed: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

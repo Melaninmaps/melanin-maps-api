@@ -9,6 +9,7 @@ function source(relativePath: string): string {
 const adminRoute = source("../routes/admin.ts");
 const businessRoutes = source("../routes/businesses.ts");
 const adminPublisher = source("../businesses/registerAdminPublishAndClaimRoutes.ts");
+const documentedDiscoveryReview = source("../businesses/registerDocumentedDiscoveryReviewRoutes.ts");
 const migrations = source("../lib/startup-migrations.ts");
 const businessSchema = source("../../../../lib/db/src/schema/businesses.ts");
 const adminScreen = source("../../../web/src/pages/admin.tsx");
@@ -184,6 +185,29 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Select this page");
   });
 
+  it("separates website cleanup from social-first public eligibility", () => {
+    for (const status of ["identity_mismatch", "unsafe_spam", "inactive_broken"]) {
+      expect(adminRoute).toContain(`website_cleanup_status', '') = '${status}'`);
+    }
+    expect(migrations).toContain("business_website_cleanup_audit_events");
+    expect(migrations).toContain("business_website_cleanup_audit_events are immutable");
+    expect(adminRoute).toContain("official_social_evidence_id IS NOT NULL");
+    expect(adminRoute).toContain("official_presence_unresolved");
+    expect(adminScreen).toContain("Website removed — identity mismatch");
+    expect(adminScreen).toContain("Website removed — unsafe/spam");
+    expect(adminScreen).toContain("Website removed — inactive/broken");
+    expect(adminScreen).toContain("Social-only public business");
+    expect(adminScreen).toContain("Official-presence unresolved");
+  });
+
+  it("clears a bad website only through an immutable audit receipt and leaves social-only qualification available", () => {
+    expect(documentedDiscoveryReview).toContain("websiteCleanup originalWebsite does not match the currently stored public website");
+    expect(documentedDiscoveryReview).toContain("SET website = CASE WHEN $2 THEN $3 ELSE COALESCE($3, website) END");
+    expect(documentedDiscoveryReview).toContain("INSERT INTO business_website_cleanup_audit_events");
+    expect(documentedDiscoveryReview).toContain("input.eligibilityStatus === \"qualified\" || input.websiteCleanup");
+    expect(documentedDiscoveryReview).toContain("official_social_evidence_id");
+  });
+
   it("scopes source-directory social review to the selected retained batch", () => {
     expect(adminRoute).toContain("sourceBatch?: unknown");
     expect(adminRoute).toContain("const sourceBatch = String(query.sourceBatch ?? \"\").trim().slice(0, 160)");
@@ -249,7 +273,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
       expect(businessRoutes).toContain(`businessesTable.${field}`);
     }
     expect(businessRoutes).toContain("sendDynamicJson(res, {");
-    expect(businessRoutes).toContain("const [publicBusiness] = await attachDocumentedOwnership([toPublicBusinessRecord(business)]);");
+    expect(businessRoutes).toContain("attachDocumentedOwnership(");
     expect(adminEditBusiness).toContain("public profile links are live now");
     expect(publicBusinessDetail).toContain("refetchOnWindowFocus: true");
     expect(mobileBusinessHook).toContain("useFocusEffect");

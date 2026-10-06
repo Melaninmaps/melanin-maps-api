@@ -50,6 +50,15 @@ function qualified(evidence: readonly unknown[] = baseEvidence) {
   };
 }
 
+const websiteCleanup = {
+  status: "identity_mismatch" as const,
+  originalWebsite: "https://unrelated.example/",
+  finalDestination: "https://unrelated.example/landing",
+  evidenceSourceUrl: "https://evidence.example/receipt/acme",
+  evidenceSummary: "The destination identifies an unrelated business.",
+  checkedAt: "2026-10-05T00:00:00.000Z",
+};
+
 describe("documented discovery review input", () => {
   it("requires ownership plus one official presence for a qualified decision", () => {
     const result = validateDocumentedDiscoveryReviewInput(qualified(), now);
@@ -104,6 +113,24 @@ describe("documented discovery review input", () => {
     }];
     expect(() => validateDocumentedDiscoveryReviewInput(qualified(socialOnly), now))
       .toThrow("official social profile must use an approved business-controlled social host");
+  });
+
+  it("allows an audited website cleanup while qualified official social remains active", () => {
+    const socialOnly = [baseEvidence[1], baseEvidence[3]];
+    const result = validateDocumentedDiscoveryReviewInput({ ...qualified(socialOnly), websiteCleanup }, now);
+    expect(result.eligibilityStatus).toBe("qualified");
+    expect(result.websiteCleanup).toMatchObject({ status: "identity_mismatch", originalWebsite: "https://unrelated.example/" });
+  });
+
+  it("allows a website-only cleanup with a reversible public hold when no valid official presence exists", () => {
+    const result = validateDocumentedDiscoveryReviewInput({
+      eligibilityStatus: "review_hold",
+      decisionReason: "Stored website is unrelated and no official social or replacement site is currently evidenced.",
+      websiteCleanup: { ...websiteCleanup, status: "unsafe_spam" as const },
+    }, now);
+    expect(result.eligibilityStatus).toBe("review_hold");
+    expect(result.evidence).toEqual([]);
+    expect(result.websiteCleanup?.status).toBe("unsafe_spam");
   });
 
   it("requires an address receipt before a sourced geocode can enable a pin", () => {

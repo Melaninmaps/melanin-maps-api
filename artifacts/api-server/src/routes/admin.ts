@@ -1094,6 +1094,26 @@ async function compileAdminBusinessInventoryFilters(
     filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NOT NULL");
   } else if (link === "website_missing") {
     filters.push("NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL");
+  } else if (link === "website_removed_identity_mismatch") {
+    filters.push("COALESCE(to_jsonb(businesses)->>'website_cleanup_status', '') = 'identity_mismatch'");
+  } else if (link === "website_removed_unsafe_spam") {
+    filters.push("COALESCE(to_jsonb(businesses)->>'website_cleanup_status', '') = 'unsafe_spam'");
+  } else if (link === "website_removed_inactive_broken") {
+    filters.push("COALESCE(to_jsonb(businesses)->>'website_cleanup_status', '') = 'inactive_broken'");
+  } else if (link === "social_only_public") {
+    filters.push(`NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL AND EXISTS (
+      SELECT 1 FROM business_discovery_eligibility social_only_eligibility
+       WHERE social_only_eligibility.business_id::text = businesses.id::text
+         AND social_only_eligibility.eligibility_status = 'qualified'
+         AND social_only_eligibility.official_social_evidence_id IS NOT NULL
+    )`);
+  } else if (link === "official_presence_unresolved") {
+    filters.push(`NOT EXISTS (
+      SELECT 1 FROM business_discovery_eligibility resolved_presence
+       WHERE resolved_presence.business_id::text = businesses.id::text
+         AND resolved_presence.eligibility_status = 'qualified'
+         AND (resolved_presence.official_website_evidence_id IS NOT NULL OR resolved_presence.official_social_evidence_id IS NOT NULL)
+    )`);
   } else if (link === "social_present") {
     // Keep the social-platform alternatives grouped. Without these parentheses a
     // preceding city, ownership, cohort, or archive predicate applied only to
@@ -1500,6 +1520,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       twitter: string | null;
       youtube: string | null;
       pinterest: string | null;
+      website_cleanup_status: string | null;
+      social_only_public: boolean;
+      official_presence_unresolved: boolean;
       created_at: string;
       needs_verification: boolean;
       enrichment_note: string | null;
@@ -1515,7 +1538,21 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       manus_created: boolean;
       }>(
        `SELECT id, name, category, subcategory, city, state, verified, black_owned, ownership_designations, status,
-              listing_status, is_duplicate, phone, website, instagram, tiktok, facebook, twitter, youtube, pinterest, created_at,
+              listing_status, is_duplicate, phone, website, instagram, tiktok, facebook, twitter, youtube, pinterest,
+              to_jsonb(businesses)->>'website_cleanup_status' AS website_cleanup_status,
+              CASE WHEN NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL AND EXISTS (
+                SELECT 1 FROM business_discovery_eligibility social_only_eligibility
+                 WHERE social_only_eligibility.business_id::text = businesses.id::text
+                   AND social_only_eligibility.eligibility_status = 'qualified'
+                   AND social_only_eligibility.official_social_evidence_id IS NOT NULL
+              ) THEN true ELSE false END AS social_only_public,
+              CASE WHEN EXISTS (
+                SELECT 1 FROM business_discovery_eligibility resolved_presence
+                 WHERE resolved_presence.business_id::text = businesses.id::text
+                   AND resolved_presence.eligibility_status = 'qualified'
+                   AND (resolved_presence.official_website_evidence_id IS NOT NULL OR resolved_presence.official_social_evidence_id IS NOT NULL)
+              ) THEN false ELSE true END AS official_presence_unresolved,
+              created_at,
               needs_verification, enrichment_note, address, latitude, longitude,
               to_jsonb(businesses)->>'data_source' AS data_source,
               to_jsonb(businesses)->>'research_source_label' AS research_source_label,
@@ -1649,6 +1686,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       twitter: b.twitter,
       youtube: b.youtube,
       pinterest: b.pinterest,
+      websiteCleanupStatus: b.website_cleanup_status,
+      socialOnlyPublic: b.social_only_public,
+      officialPresenceUnresolved: b.official_presence_unresolved,
       createdAt: b.created_at,
       needsVerification: b.needs_verification,
       hasMapPin:

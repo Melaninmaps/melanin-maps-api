@@ -316,6 +316,9 @@ type AdminBusiness = {
   isDuplicate: boolean;
   needsVerification: boolean;
   permanentlyClosed: boolean;
+  websiteCleanupStatus: "identity_mismatch" | "unsafe_spam" | "inactive_broken" | null;
+  socialOnlyPublic: boolean;
+  officialPresenceUnresolved: boolean;
   phone: string | null;
   website: string | null;
   instagram: string | null;
@@ -968,6 +971,8 @@ export default function Admin() {
     useState<DirectorySourceBatch>("");
   const [bizLinkFilter, setBizLinkFilter] = useState<
     "all" | "website_present" | "website_missing" | "social_present" | "social_missing" | "no_public_link"
+    | "website_removed_identity_mismatch" | "website_removed_unsafe_spam" | "website_removed_inactive_broken"
+    | "social_only_public" | "official_presence_unresolved"
   >("all");
   const [bizOwnershipFilter, setBizOwnershipFilter] = useState<"all" | "black" | "hispanic" | "no_tag">("all");
   const [bizAddedFrom, setBizAddedFrom] = useState("");
@@ -5051,8 +5056,13 @@ Selected: ${summary}`,
                   <option value="all">All contact-link records</option>
                   <option value="website_present">Has a website</option>
                   <option value="website_missing">Missing a website</option>
+                  <option value="website_removed_identity_mismatch">Website removed — identity mismatch</option>
+                  <option value="website_removed_unsafe_spam">Website removed — unsafe/spam</option>
+                  <option value="website_removed_inactive_broken">Website removed — inactive/broken</option>
                   <option value="social_present">Has any social media</option>
                   <option value="social_missing">No direct social URL saved (review queue)</option>
+                  <option value="social_only_public">Social-only public business</option>
+                  <option value="official_presence_unresolved">Official-presence unresolved</option>
                   <option value="no_public_link">No website or social media</option>
                 </select>
               </label>
@@ -5356,6 +5366,31 @@ Selected: ${summary}`,
                             {biz.permanentlyClosed && (
                               <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-600 text-xs font-bold">
                                 Perm. Closed
+                              </span>
+                            )}
+                            {biz.websiteCleanupStatus === "identity_mismatch" && (
+                              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
+                                Website removed — identity mismatch
+                              </span>
+                            )}
+                            {biz.websiteCleanupStatus === "unsafe_spam" && (
+                              <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold">
+                                Website removed — unsafe/spam
+                              </span>
+                            )}
+                            {biz.websiteCleanupStatus === "inactive_broken" && (
+                              <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-bold">
+                                Website removed — inactive/broken
+                              </span>
+                            )}
+                            {biz.socialOnlyPublic && (
+                              <span className="px-2 py-0.5 rounded-full bg-sky-100 text-sky-800 text-xs font-bold">
+                                Social-only public business
+                              </span>
+                            )}
+                            {biz.officialPresenceUnresolved && (
+                              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
+                                Official-presence unresolved
                               </span>
                             )}
                             {biz.needsVerification &&
