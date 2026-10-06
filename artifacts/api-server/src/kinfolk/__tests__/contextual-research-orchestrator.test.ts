@@ -116,11 +116,14 @@ describe("contextual research orchestrator", () => {
           "https://www.phila.gov/2026/09/28/philadelphia-public-notices/",
           "official",
         ),
-        item(
-          "Philadelphia local reporting",
-          "https://www.npr.org/philadelphia/current-reporting",
-          "reporting",
-        ),
+        {
+          ...item(
+            "Philadelphia local reporting",
+            "https://www.npr.org/philadelphia/current-reporting",
+            "reporting",
+          ),
+          excerpt: "Current Philadelphia public notices and travel conditions.",
+        },
       ],
       now: () => NOW,
     });
@@ -372,13 +375,43 @@ describe("contextual research orchestrator", () => {
   });
 
   it("accepts an official source for a current claim", async () => {
-    const currentPlan = plan({ freshness: "current", evidenceNeeds: ["official_current"] });
+    const currentPlan = plan({
+      freshness: "current",
+      evidenceNeeds: ["official_current"],
+      retrievalQueries: ["Current agency update"],
+    });
     const result = await orchestrateContextualResearch(currentPlan, {
-      searchLive: async () => [item("Official update", "https://agency.gov/update", "official")],
+      searchLive: async () => [item("Current agency update", "https://agency.gov/update", "official")],
       now: () => NOW,
     });
     expect(result.degraded).toBe(false);
     expect(contextualEvidenceNeedsFailClosedResponse(currentPlan, result)).toBe(false);
+  });
+
+  it("fails closed when a generic source repeats only the retrieval query metadata", async () => {
+    const currentPlan = plan({
+      freshness: "current",
+      evidenceNeeds: ["official_current"],
+      retrievalQueries: ["Can you plan tomorrow around what is open in Philadelphia?"],
+    });
+    const result = await orchestrateContextualResearch(currentPlan, {
+      primaryProvider: {
+        name: "openai",
+        search: vi.fn().mockResolvedValue({
+          documents: [document(1, {
+            title: "Philadelphia public-safety update",
+            url: "https://www.phila.gov/safety/update",
+            content: "Emergency-management notice for city residents.",
+          })],
+          provider: "openai",
+          status: "available",
+        }),
+      },
+      now: () => NOW,
+    });
+
+    expect(result.external).toEqual([]);
+    expect(contextualEvidenceNeedsFailClosedResponse(currentPlan, result)).toBe(true);
   });
 
   it("accepts one reputable financial estimate and rejects a celebrity estimate aggregator", async () => {

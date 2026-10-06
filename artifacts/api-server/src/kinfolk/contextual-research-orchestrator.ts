@@ -160,6 +160,21 @@ function cityBriefingScopeMatches(
   return haystack.includes(` ${normalizedCity} `);
 }
 
+function filterQuestionRelevantCurrentEvidence(
+  plan: SemanticTurnPlan,
+  items: ContextualEvidenceItem[],
+): ContextualEvidenceItem[] {
+  if (plan.freshness !== "current") return items;
+  const memberQuestion = plan.retrievalQueries[0] ?? "";
+  return items.filter((item) => sourceHasMemberQuestionRelevance({
+    title: item.title,
+    url: item.url,
+    // `supports` is server-authored retrieval metadata and can contain the
+    // member's question verbatim. It cannot prove that a source answers it.
+    evidenceText: item.excerpt,
+  }, memberQuestion));
+}
+
 function isOfficialHost(host: string): boolean {
   return host.endsWith(".gov") || host === "who.int" || host === "un.org";
 }
@@ -385,12 +400,12 @@ async function liveEvidence(plan: SemanticTurnPlan, deps: ContextualResearchDeps
   if (deps.searchLive) {
     const items = await deps.searchLive(queries, signal);
     throwIfAborted(signal);
-    return dedupe(items.flatMap((item) => {
+    return filterQuestionRelevantCurrentEvidence(plan, dedupe(items.flatMap((item) => {
       const normalized = normalizeItem(item, now);
       return normalized && allowedForPlan(plan, normalized) && cityBriefingScopeMatches(plan, normalized)
         ? [normalized]
         : [];
-    }));
+    })));
   }
 
   const documents: ContextualEvidenceItem[] = [];
@@ -423,13 +438,7 @@ async function liveEvidence(plan: SemanticTurnPlan, deps: ContextualResearchDeps
   // A current claim must be supported by sources about the member's actual
   // question. This prevents a generic city/business link from appearing beside
   // an unrelated population, price, policy, or other changing fact.
-  if (plan.freshness !== "current") return accepted;
-  const memberQuestion = plan.retrievalQueries[0] ?? "";
-  return accepted.filter((item) => sourceHasMemberQuestionRelevance({
-    title: item.title,
-    url: item.url,
-    evidenceText: `${item.excerpt} ${item.supports.join(" ")}`,
-  }, memberQuestion));
+  return filterQuestionRelevantCurrentEvidence(plan, accepted);
 }
 
 export function contextualEvidenceNeedsFailClosedResponse(plan: SemanticTurnPlan, bundle: ContextualEvidenceBundle): boolean {
@@ -475,7 +484,7 @@ export async function orchestrateContextualResearch(
             cityBriefingScopeMatches(plan, item) && sourceHasMemberQuestionRelevance({
               title: item.title,
               url: item.url,
-              evidenceText: `${item.excerpt} ${item.supports.join(" ")}`,
+              evidenceText: item.excerpt,
             }, memberQuestion),
           );
         }
