@@ -35,7 +35,7 @@ function ClassicTabLayout() {
 
   return (
     <Tabs
-      initialRouteName="community"
+      initialRouteName="map"
       screenOptions={{
         // Keep icon and label selection visible on light iOS surfaces. The
         // prior transparent blur made all eight destinations look alike.

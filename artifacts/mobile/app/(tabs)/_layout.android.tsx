@@ -35,7 +35,7 @@ export default function TabLayout() {
 
   return (
     <Tabs
-      initialRouteName="community"
+      initialRouteName="map"
       screenOptions={{
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.mutedForeground,
