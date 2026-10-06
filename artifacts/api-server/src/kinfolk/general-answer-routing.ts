@@ -35,6 +35,16 @@ export type KinfolkGeneralAnswerRoute = Readonly<{
 }>;
 
 const MAX_CLARIFICATION_LENGTH = 220;
+const WRITING_TRANSFORMATION_RE = /\b(?:rewrite|revise|edit|proofread|polish|rephrase)\b/i;
+
+function hasSelfContainedWritingInput(message: string): boolean {
+  if (!WRITING_TRANSFORMATION_RE.test(message)) return false;
+  const colon = message.indexOf(":");
+  if (colon >= 0 && message.slice(colon + 1).trim().split(/\s+/).length >= 3) {
+    return true;
+  }
+  return /[“"']\S[\s\S]{2,}?[”"']/.test(message);
+}
 
 function text(value: unknown, max = MAX_CLARIFICATION_LENGTH): string {
   return typeof value === "string" ? value.trim().slice(0, max) : "";
@@ -117,6 +127,7 @@ export function resolveKinfolkGeneralAnswerRoute(
   const requiresAuthoritativeEvidence =
     highConsequence || semanticAuthoritative;
   const purpose = input.semantic?.purpose ?? "answer";
+  const selfContainedWriting = hasSelfContainedWritingInput(input.message);
 
   if (purpose === "unsafe_or_unverifiable") {
     return {
@@ -130,7 +141,7 @@ export function resolveKinfolkGeneralAnswerRoute(
   }
 
   if (
-    purpose === "clarification" ||
+    (purpose === "clarification" && !selfContainedWriting) ||
     input.hasMateriallyMissingDetail === true
   ) {
     return {
@@ -142,6 +153,20 @@ export function resolveKinfolkGeneralAnswerRoute(
       clarificationQuestion:
         input.semantic?.clarificationQuestion ??
         "What detail would help me give you the most useful answer?",
+    };
+  }
+
+  // A transformation with its source text is already fully specified. Keep it
+  // out of unnecessary research and clarification paths; this changes wording,
+  // not the underlying claim, advice, or evidence.
+  if (selfContainedWriting && !requiresAuthoritativeEvidence) {
+    return {
+      strategy: "planning_or_writing",
+      requiresCurrentEvidence: false,
+      mayUseApprovedMemory: false,
+      requiresFocusedClarification: false,
+      shouldDecline: false,
+      clarificationQuestion: null,
     };
   }
 

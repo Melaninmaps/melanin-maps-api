@@ -253,6 +253,31 @@ describe("Kinfolk generic answer routing", () => {
     expect(high.strategy).toBe("current_evidence");
   });
 
+  it("does not ask for clarification when a revision request includes its source text", () => {
+    const complete = resolveKinfolkGeneralAnswerRoute({
+      message: "Please rewrite this note so it is warm and clear: I am following up about our meeting.",
+      evidence: evidence(),
+      semantic: decision({
+        evidenceNeed: "stable",
+        purpose: "clarification",
+        clarificationQuestion: "What should the note say?",
+      }),
+    });
+    const incomplete = resolveKinfolkGeneralAnswerRoute({
+      message: "Please rewrite this note so it is warm and clear.",
+      evidence: evidence(),
+      semantic: decision({
+        evidenceNeed: "stable",
+        purpose: "clarification",
+        clarificationQuestion: "What should the note say?",
+      }),
+    });
+
+    expect(complete.strategy).toBe("planning_or_writing");
+    expect(complete.requiresCurrentEvidence).toBe(false);
+    expect(incomplete.strategy).toBe("focused_clarification");
+  });
+
   it("requires evidence before a current-answer strategy can render an answer", () => {
     const current = resolveKinfolkGeneralAnswerRoute({
       message: "What is the latest verified status of this public program?",
