@@ -76,9 +76,12 @@ describe("Community, map, and primary Kinfolk regressions", () => {
     expect(travel).toContain("Linking.openSettings()");
     expect(travel).toContain("/api/kinfolk/transcribe");
     expect(travel).toContain('form.append("durationMs", String(durationMs))');
+    expect(travel).toContain('form.append(\n        "regionalFlavor"');
     expect(travel).toContain("Record a voice question for Kinfolk");
-    expect(travel).toContain("setInputText(payload.text)");
-    expect(travel).toContain("Review your transcription, then tap Send when you’re ready.");
+    expect(travel).toContain("const originalText = payload.meaningReview?.originalText?.trim() || payload.text.trim()");
+    expect(travel).toContain("voiceTranscriptReview");
+    expect(travel).toContain("Use suggestion");
+    expect(travel).toContain("Keep original");
     expect(travel).not.toContain("await handleSend(payload.text)");
   });
 

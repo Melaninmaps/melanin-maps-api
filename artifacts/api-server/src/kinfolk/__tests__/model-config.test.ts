@@ -12,6 +12,7 @@ describe("Kinfolk model configuration", () => {
     expect(kinfolkModel("webSearch", {})).toBe("gpt-5-mini");
     expect(kinfolkModel("libraryResearch", {})).toBe("gpt-4o-mini");
     expect(kinfolkModel("transcription", {})).toBe("whisper-1");
+    expect(kinfolkModel("transcriptReview", {})).toBe("gpt-4o-mini");
     expect(kinfolkModel("embedding", {})).toBe("text-embedding-3-small");
   });
 

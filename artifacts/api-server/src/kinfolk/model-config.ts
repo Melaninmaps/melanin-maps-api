@@ -3,7 +3,7 @@
  * Roles are allowlisted here; no call site reads a model environment variable
  * directly. Deployments can pin an approved provider model per role.
  */
-export type KinfolkModelRole = "staffDemo" | "fallback" | "webSearch" | "libraryResearch" | "transcription" | "embedding";
+export type KinfolkModelRole = "staffDemo" | "fallback" | "webSearch" | "libraryResearch" | "transcription" | "transcriptReview" | "embedding";
 
 const CHAT_MODELS = new Set(["gpt-5", "gpt-5-mini", "gpt-4.1", "gpt-4.1-mini", "gpt-4o", "gpt-4o-mini"]);
 const RESEARCH_MODELS = new Set(["gpt-5", "gpt-5-mini", "gpt-4o", "gpt-4o-mini"]);
@@ -25,6 +25,9 @@ const SETTINGS: Record<KinfolkModelRole, { env: string | null; fallback: string;
   // transcription. Keep the selection server-owned: recordings stay on the
   // existing private endpoint, with no retention or service change.
   transcription: { env: null, fallback: "whisper-1", allowed: TRANSCRIPTION_MODELS },
+  // A bounded review-only suggestion follows transcription. It may improve
+  // readability but can never submit, persist, or replace the raw transcript.
+  transcriptReview: { env: null, fallback: "gpt-4o-mini", allowed: CHAT_MODELS },
   // Semantic retrieval is an existing optional internal path, not a configurable
   // provider-readiness role. Keep its model centralized without inventing an
   // additional environment role beyond the five approved by this assignment.
