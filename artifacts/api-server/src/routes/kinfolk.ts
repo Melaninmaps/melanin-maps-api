@@ -9136,12 +9136,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
       // The generic answer route can recognize a changing fact even when a
       // legacy keyword classifier does not. Force its ordinary direct-answer
-      // plan through live evidence rather than allowing internal/Library-only
-      // grounding to answer a current claim.
-      if (
-        generalAnswerRoute.requiresCurrentEvidence &&
-        contextualPlan.taskMode === "direct_answer"
-      ) {
+      // plan through live evidence rather than allowing any semantic task mode
+      // to answer a current claim from internal, catalog, or model-only context.
+      if (generalAnswerRoute.requiresCurrentEvidence) {
         contextualPlan = {
           ...contextualPlan,
           freshness: "current",

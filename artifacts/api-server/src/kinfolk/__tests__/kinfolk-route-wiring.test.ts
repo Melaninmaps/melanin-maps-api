@@ -84,6 +84,15 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("hasApprovedRelevantMemory: isPreferredNameRecallRequest(message)");
   });
 
+  it("forces every semantic task mode with a current answer requirement through live evidence", () => {
+    expect(chatRoute).toContain("if (generalAnswerRoute.requiresCurrentEvidence) {");
+    expect(chatRoute).toContain('freshness: "current"');
+    expect(chatRoute).toContain('evidenceNeeds: ["official_current", "reputable_reporting"]');
+    expect(chatRoute).not.toContain(
+      'generalAnswerRoute.requiresCurrentEvidence &&\n        contextualPlan.taskMode === "direct_answer"',
+    );
+  });
+
   it("keeps qualified care navigation outside the ordinary ownership-scoped business catalog", () => {
     const careOverride = chatRoute.indexOf("const healthCareOverride = buildHealthCareOverride");
     const catalogFilter = chatRoute.indexOf("businessCatalog = healthCareOverride.suppressesGeneralBusinessCatalog");
