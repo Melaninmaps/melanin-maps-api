@@ -64,6 +64,17 @@ describe("Kinfolk voice preference defaults and validation", () => {
 });
 
 describe("Kinfolk regional and AAVE prompt wiring", () => {
+  it("keeps plain language as the default and never learns dialect from chat", () => {
+    const prompt = buildLanguagePersonalizationPrompt({
+      aaveLevel: 0,
+      regionalFlavor: "off",
+      destination: null,
+      intentClass: "general_knowledge",
+    });
+    expect(prompt).toContain("Plain language is the default");
+    expect(prompt).toContain("Never learn, store, mirror, or infer dialect");
+  });
+
   it("uses the destination only for follow-conversation-city and honors an explicit city instead", () => {
     expect(resolveRegionalLanguageProfile("off", "Philadelphia")?.id).toBeUndefined();
     expect(resolveRegionalLanguageProfile("follow_destination", "Philadelphia, PA")?.id).toBe("philadelphia");

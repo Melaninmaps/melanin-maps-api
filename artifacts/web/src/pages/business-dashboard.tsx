@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { BusinessOwnershipEditor } from "@/features/businesses/BusinessOwnershipEditor";
 import { BusinessExperienceEditor } from "@/features/businesses/BusinessExperienceEditor";
+import { BusinessVoiceProfileEditor } from "@/features/businesses/BusinessVoiceProfileEditor";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -321,6 +322,7 @@ export default function BusinessDashboard() {
 
                     <BusinessOwnershipEditor businessId={selected.id} />
                     <BusinessExperienceEditor business={selected} />
+                    <BusinessVoiceProfileEditor businessId={selected.id} />
 
                     <div>
                       <p className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-3">Recent Reviews</p>

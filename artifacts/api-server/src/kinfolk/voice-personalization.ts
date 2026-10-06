@@ -120,6 +120,9 @@ const HIGH_STAKES_INTENTS = new Set([
   "financial_regulated",
 ]);
 
+const LANGUAGE_CONSENT_BOUNDARY =
+  "LANGUAGE GOVERNANCE: Plain language is the default. Use regional or register guidance only when it appears in an explicit, active member setting or in an approved community-language record supplied by the server. Never learn, store, mirror, or infer dialect, identity, or language preference from ordinary chat.";
+
 export function isHighStakesLanguageContext(
   intentClass: string | null | undefined,
 ): boolean {
@@ -187,9 +190,10 @@ export function buildLanguagePersonalizationPrompt(options: {
   intentClass?: string | null;
 }): string {
   if (isHighStakesLanguageContext(options.intentClass)) {
-    return "HIGH-STAKES LANGUAGE OVERRIDE: Use calm, precise plain language. Do not use AAVE or regional slang, regardless of personalization settings.";
+    return `${LANGUAGE_CONSENT_BOUNDARY}\n\nHIGH-STAKES LANGUAGE OVERRIDE: Use calm, precise plain language. Do not use AAVE or regional slang, regardless of personalization settings.`;
   }
   return [
+    LANGUAGE_CONSENT_BOUNDARY,
     buildAaveRegisterPrompt(options.aaveLevel, options.intentClass),
     buildRegionalLanguagePrompt(options),
   ]

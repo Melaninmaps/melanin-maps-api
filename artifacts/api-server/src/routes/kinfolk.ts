@@ -153,6 +153,7 @@ import {
 } from "../kinfolk/current-research";
 import {
   buildGenericAnswerRouteClassifierPrompt,
+  buildKinfolkConversationalIntentPrompt,
   parseGenericAnswerRouteDecision,
   resolveKinfolkEvidenceOutcome,
   resolveKinfolkGeneralAnswerRoute,
@@ -8429,11 +8430,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     researchContextMessage = savedMemberResearchContext.question;
     savedMemberResearchContextTags = savedMemberResearchContext.appliedTags;
     // One bounded, topic-independent classifier identifies the answer work before
-    // retrieval. It sees only this turn, and a failed or malformed classifier
-    // response falls back to the existing deterministic safety/evidence route.
-    // It can strengthen an evidence requirement, never relax one.
+    // retrieval. It receives the current message and a short chat window, never
+    // profile, memory, location, directory, or community data. A failed or
+    // malformed response falls back to the deterministic route and can only
+    // strengthen an evidence requirement, never relax one.
     const evidenceRoute = classifyEvidenceRoute(message);
     let genericAnswerDecision = null;
+    const classifierConversationWindow = conversationHistoryForContext
+      .slice(-4)
+      .map((turn) => ({ role: turn.role, content: turn.content.slice(0, 500) }));
     try {
       const completion = await openai.chat.completions.create(
         buildKinfolkChatCompletionRequest({
@@ -8445,7 +8450,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               role: "system",
               content: buildGenericAnswerRouteClassifierPrompt(),
             },
-            { role: "user", content: message },
+            {
+              role: "user",
+              content: JSON.stringify({
+                currentMessage: message,
+                recentConversation: classifierConversationWindow,
+              }),
+            },
           ],
         }) as ChatCompletionCreateParamsNonStreaming,
         {
@@ -8475,6 +8486,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // answer its explicit recall turn. It does not read, create, or broaden memory.
       hasApprovedRelevantMemory: isPreferredNameRecallRequest(message),
     });
+    const conversationalIntentPrompt = buildKinfolkConversationalIntentPrompt(
+      genericAnswerDecision?.conversationIntent,
+    );
     // Current facts must never fall through to cached Library/static material
     // because optional contextual intelligence is disabled. The generic route
     // extends that guarantee beyond an enumerated topic list.
@@ -11033,7 +11047,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         (responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : "") +
         (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "") +
         (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
-    const systemPromptWithResponseFormat = `${systemPromptWithLibrary}\n\n${buildKinfolkFormalResponseContract()}`;
+    const systemPromptWithResponseFormat = `${systemPromptWithLibrary}\n\n${conversationalIntentPrompt}\n\n${buildKinfolkFormalResponseContract()}`;
 
     const continuityInstruction = conversationalResearchSubject.inheritedSubject
       ? `\n\n[Conversation continuity: The member's immediately preceding subject was “${conversationalResearchSubject.inheritedSubject}”. Answer this follow-up about that subject. Do not ask them to repeat it.]`
