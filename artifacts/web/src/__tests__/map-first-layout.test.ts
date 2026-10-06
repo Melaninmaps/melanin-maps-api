@@ -24,4 +24,10 @@ describe("map-first Web layout", () => {
     expect(mapSource).toContain('className="absolute inset-y-0 left-0 z-20 w-80 max-w-[calc(100%-3.5rem)] shadow-2xl"');
     expect(mapSource).toContain('map.fitBounds(bounds, { top: 84, right: 32, bottom: 48, left: 352 });');
   });
+
+  it("creates the map object after the Google Maps callback changes readiness", () => {
+    expect(mapSource).toContain("}, [gmLoaded, ready, isLoading, handoffQuery, navigate, requestMapDeviceLocation]);");
+    expect(mapSource).toContain("const map: GMap = new g.Map(mapDivRef.current");
+    expect(mapSource).toContain("setReady(true);");
+  });
 });

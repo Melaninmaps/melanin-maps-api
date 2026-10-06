@@ -1402,8 +1402,11 @@ export default function MapPage() {
     }
 
     return () => window.removeEventListener("error", onGmError, true);
+  // The Google callback changes gmLoaded after the first render. It must be a
+  // dependency so a successful script load actually creates the map object.
+  // `ready` remains here to preserve the existing marker pass.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, isLoading, handoffQuery, navigate, requestMapDeviceLocation]);
+  }, [gmLoaded, ready, isLoading, handoffQuery, navigate, requestMapDeviceLocation]);
 
   const selectBusiness = useCallback((id: string, biz: BizWithCoords, marker?: GMarker) => {
     setSelected(id);
