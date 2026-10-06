@@ -287,6 +287,7 @@ import {
   buildPrivateMemoryPromptBlock,
   isExplicitMemberMemoryEnabled,
   isKinfolkPrivateMemoryEnabled,
+  mergeActivePreferredNameForPrompt,
   resolveExplicitMemberMemoryAccess,
   resolveKinfolkMemoryAccess,
   resolvePublicSharedKinfolkSession,
@@ -10585,7 +10586,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // A member's direct remember command may be used even when production does
     // not retain ordinary chat sessions. Both paths still honor the same owner
     // opt-out, and only relevant selected facts reach the response prompt.
-    const explicitMemberMemoryEnabled = memoryEnabled;
+    const explicitMemberMemoryEnabled = isExplicitMemberMemoryEnabled();
     const memberMemoryEnabled = memoryEnabled;
     const activePrivateMemories = memberMemoryEnabled && req.user?.id
         ? await db
@@ -10628,9 +10629,21 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         (memory.purpose !== "companion_context" ||
           isCompanionMemoryRelevant(memory.content, message)),
     );
+    // Preferred names are an explicitly saved, revocable address choice. They
+    // remain usable while ordinary continuity is off, without admitting any
+    // other private memory into the prompt.
+    const activePreferredNameMemory =
+      explicitMemberMemoryEnabled && req.user?.id
+        ? await findPreferredNameMemory(req.user.id).catch(() => null)
+        : null;
+    const promptPrivateMemories = mergeActivePreferredNameForPrompt({
+      memories: relevantPrivateMemories,
+      preferredNameMemory: activePreferredNameMemory,
+      explicitMemoryEnabled: explicitMemberMemoryEnabled,
+    });
     const privateMemoryBlock = buildPrivateMemoryPromptBlock(
-      memberMemoryEnabled && !contextualEvidence,
-      contextualEvidence ? [] : relevantPrivateMemories,
+      promptPrivateMemories.length > 0 && !contextualEvidence,
+      contextualEvidence ? [] : promptPrivateMemories,
     );
 
     const contextualEvidenceDataBlock = contextualEvidence

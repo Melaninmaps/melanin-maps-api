@@ -77,6 +77,38 @@ export type PrivateMemoryForPrompt = {
   purpose: string;
 };
 
+export type PreferredNameMemoryForPrompt = PrivateMemoryForPrompt & {
+  expiresAt: Date | null;
+};
+
+/**
+ * A preferred name has its own explicit lifecycle and may be used as a narrow
+ * address choice even when broader continuity is disabled. The caller must
+ * already have scoped the record to the authenticated owner and excluded
+ * revoked rows.
+ */
+export function mergeActivePreferredNameForPrompt(input: {
+  memories: readonly PrivateMemoryForPrompt[];
+  preferredNameMemory: PreferredNameMemoryForPrompt | null;
+  explicitMemoryEnabled: boolean;
+  now?: Date;
+}): PrivateMemoryForPrompt[] {
+  const memories = [...input.memories];
+  const candidate = input.preferredNameMemory;
+  const now = input.now ?? new Date();
+  if (!input.explicitMemoryEnabled || !candidate ||
+      (candidate.expiresAt !== null && candidate.expiresAt <= now)) {
+    return memories;
+  }
+
+  const preferredName = parsePreferredNameMemory(candidate);
+  if (!preferredName) return memories;
+  if (memories.some((memory) => parsePreferredNameMemory(memory) === preferredName)) {
+    return memories;
+  }
+  return [...memories, { content: candidate.content, purpose: candidate.purpose }];
+}
+
 /**
  * Keep private content out of the provider prompt whenever the runtime control
  * is off. Callers must filter sensitive memories for relevance before passing

@@ -36,7 +36,7 @@ const HTTPS_URL_RE = /https:\/\/[^\s<>'"`]+/i;
 // deliberately narrow: ordinary questions containing “today” still require
 // current evidence, while “What name should you call me?” can reach the
 // consent-gated preferred-name prompt block.
-const PREFERRED_NAME_RECALL_RE = /\b(?:what\s+name\s+should\s+you\s+call\s+me|what\s+do\s+you\s+call\s+me|what(?:'s|\s+is)\s+my\s+preferred\s+name|do\s+you\s+remember\s+(?:my|the)\s+(?:preferred\s+)?name)\b/i;
+const PREFERRED_NAME_RECALL_RE = /\b(?:what\s+name\s+should\s+you\s+call\s+me|what\s+do\s+you\s+call\s+me|what(?:'s|\s+is)\s+my\s+preferred\s+name|do\s+you\s+remember\s+(?:my|the)\s+(?:preferred\s+)?name|(?:greet|address)\s+me\s+(?:(?:using|by)\s+)?(?:my\s+)?(?:saved\s+)?preferred\s+name|use\s+(?:my\s+)?(?:saved\s+)?preferred\s+name)\b/i;
 
 /**
  * Returns an explicitly supplied public article URL only when the member asks

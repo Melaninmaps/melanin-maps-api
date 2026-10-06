@@ -72,6 +72,9 @@ describe("current research routing", () => {
     const personalPrompt =
       "What name should you call me? In one sentence, welcome me and give me one practical next step for today.";
     expect(requiresCurrentResearch(personalPrompt)).toBe(false);
+    expect(requiresCurrentResearch(
+      "Please greet me using my saved preferred name, with a warm one-sentence pep talk for today.",
+    )).toBe(false);
     expect(requiresCurrentResearch("What is open today in Philadelphia?")).toBe(true);
   });
 

@@ -6,6 +6,7 @@ import {
   buildPrivateMemoryPromptBlock,
   isExplicitMemberMemoryEnabled,
   isKinfolkPrivateMemoryEnabled,
+  mergeActivePreferredNameForPrompt,
   resolveExplicitMemberMemoryAccess,
   resolveKinfolkMemoryAccess,
   resolvePublicSharedKinfolkSession,
@@ -79,6 +80,31 @@ describe("Kinfolk private-memory production control", () => {
       purpose: "profile_context",
       content: "Preferred name: J Money",
     }])).not.toContain("PREFERRED MEMBER ADDRESS");
+  });
+
+  it("adds an active explicit preferred name even when broader continuity has no memories", () => {
+    const promptMemories = mergeActivePreferredNameForPrompt({
+      memories: [],
+      preferredNameMemory: {
+        purpose: "preferred_name",
+        content: "Preferred name: MWM Test Address",
+        expiresAt: null,
+      },
+      explicitMemoryEnabled: true,
+      now: new Date("2026-10-06T00:00:00.000Z"),
+    });
+    expect(buildPrivateMemoryPromptBlock(true, promptMemories)).toContain("MWM Test Address");
+
+    expect(mergeActivePreferredNameForPrompt({
+      memories: [],
+      preferredNameMemory: {
+        purpose: "preferred_name",
+        content: "Preferred name: MWM Test Address",
+        expiresAt: new Date("2026-10-05T23:59:59.000Z"),
+      },
+      explicitMemoryEnabled: true,
+      now: new Date("2026-10-06T00:00:00.000Z"),
+    })).toEqual([]);
   });
 
   it("honors the owner opt-out and fails closed when the setting cannot be read", async () => {
@@ -183,6 +209,9 @@ describe("Kinfolk private-memory production control", () => {
     expect(memoryHelp).toBeLessThan(arithmetic);
     expect(ownerSetting).toBeLessThan(deterministicDiscovery);
     expect(ownerSetting).toBeLessThan(sessionRead);
+    expect(chatRoute).toContain("const activePreferredNameMemory =");
+    expect(chatRoute).toContain("const promptPrivateMemories = mergeActivePreferredNameForPrompt({");
+    expect(chatRoute).toContain("explicitMemoryEnabled: explicitMemberMemoryEnabled");
   });
 
   it("keeps public shares behind current owner consent without deleting share IDs", () => {
