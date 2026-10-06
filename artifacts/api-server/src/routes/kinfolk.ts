@@ -366,6 +366,7 @@ import {
   requiresDocumentedProximityCaveat,
 } from "../kinfolk/business-proximity";
 import {
+  buildCurrentEvidenceSourceContext,
   contextualEvidenceNeedsFailClosedResponse,
   orchestrateContextualResearch,
   type ContextualEvidenceBundle,
@@ -11656,6 +11657,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       ],
       researchContextMessage,
     );
+    const currentEvidenceSourceContext = requiresCurrentResearch(
+      researchContextMessage,
+    )
+      ? buildCurrentEvidenceSourceContext([
+          ...(contextualEvidence?.external ?? []),
+          ...(contextualEvidence?.media ?? []),
+        ])
+      : null;
     res.json({
       sessionId: finalSessionId,
       reply,
@@ -11705,6 +11714,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // Source relevance is server-authored guidance, not a model-generated
       // claim. Clients display it directly above the existing source links.
       sourceContext:
+        currentEvidenceSourceContext ??
         lifeGuidance?.sourceContext ??
         (contextualPlan?.taskMode === "city_briefing"
           ? contextualPlan.freshness === "stable"

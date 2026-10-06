@@ -392,6 +392,9 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("contextualResearchEnabled =\n      contextualIntelligenceEnabled || citedResearchRequired");
     expect(chatRoute).toContain("if (contextualResearchEnabled && !contextualPlan)");
     expect(chatRoute).toContain("!contextualResearchEnabled");
+    expect(chatRoute).toContain('intentClass === "general_knowledge" &&\n        requiresCurrentResearch(researchContextMessage)');
+    expect(chatRoute).toContain("!shouldResearchInLibrary");
+    expect(chatRoute).toContain("buildCurrentEvidenceSourceContext");
   });
 
   it("answers live weather from a server-owned source before generic current-research gating", () => {

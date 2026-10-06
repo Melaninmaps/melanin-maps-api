@@ -46,6 +46,12 @@ describe("Kinfolk decision and retrieval plan", () => {
       allowBusinessCards: false,
       requireEvidence: true,
     });
+    expect(plan("How much is Beyoncé worth?")).toMatchObject({
+      kind: "current_or_high_consequence",
+      retrieval: "existing_current_research",
+      allowBusinessCards: false,
+      requireEvidence: true,
+    });
     expect(plan("I found a breast lump. What should I do in Philadelphia?", "Philadelphia")).toMatchObject({
       kind: "current_or_high_consequence",
       allowBusinessCards: false,
