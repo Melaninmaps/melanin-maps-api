@@ -1,5 +1,22 @@
 import { canonicalizeContextualUrl } from "./contextual-url";
 
+// A time horizon alone does not make a member's own plan, draft, or schedule a
+// changing public fact. Keep this grammar intentionally about the requested
+// task rather than named people, places, or product categories. A separate
+// external-status or time-bound travel signal below still preserves live
+// research when the answer depends on changing outside conditions.
+const SELF_DIRECTED_PLANNING_OR_WRITING_RE = /(?:\b(?:help(?:\s+me)?|can you|could you|please|i\s+(?:need|want|have)\s+to)\s+(?:plan|organize|organise|schedule|prioriti[sz]e|prepare|draft|write|rewrite|revise|edit|brainstorm|outline)\b|\b(?:plan|organize|organise|schedule|prioriti[sz]e|prepare)\s+(?:my|our)\b|\b(?:draft|write|rewrite|revise|edit|brainstorm|outline)\s+(?:a|an|the|my|our|this|that)\b|\b(?:make|create)\s+(?:me\s+)?(?:a\s+)?(?:[\p{L}'’-]+\s+){0,3}(?:plan|schedule|routine|to[- ]?do(?:\s+list)?|task\s+list)\b)/iu;
+const TIME_HORIZON_RE = /\b(?:today|tonight|tomorrow|(?:this|next)\s+weekend|this\s+(?:week|month|year))\b/i;
+const EXTERNAL_STATUS_QUESTION_RE = /\b(?:what(?:'s|\s+is|\s+are)|when|where|who|is|are|will|does|do|can)\b[\s\S]{0,90}\b(?:open|closed|availability|available|hours?|schedule|scheduled|weather|temperature|price|prices|cost|costs|traffic|transit|delay|delays|outage|outages)\b/i;
+const TIME_BOUND_TRAVEL_RE = /\b(?:trip|travel|vacation|itinerary|flight|flights|hotel|hotels|reservation|reservations)\b/i;
+
+function isSelfDirectedPlanningWithOnlyTimeHorizon(message: string): boolean {
+  return TIME_HORIZON_RE.test(message)
+    && SELF_DIRECTED_PLANNING_OR_WRITING_RE.test(message)
+    && !EXTERNAL_STATUS_QUESTION_RE.test(message)
+    && !TIME_BOUND_TRAVEL_RE.test(message);
+}
+
 // A bare planning horizon such as "this week" is not itself a changing fact.
 // The semantic answer planner decides whether a plan also asks for live status,
 // availability, prices, or another external condition. Retaining "this week"
@@ -86,6 +103,7 @@ export function hasRequestedArticleEvidence(
 
 export function requiresCurrentResearch(message: string): boolean {
   if (isPreferredNameRecallRequest(message)) return false;
+  if (isSelfDirectedPlanningWithOnlyTimeHorizon(message)) return false;
   return CURRENT_RESEARCH_RE.test(message)
     || CHANGING_PUBLIC_STATISTIC_RE.test(message)
     || isCurrencyConversionRequest(message)

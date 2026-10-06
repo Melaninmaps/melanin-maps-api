@@ -63,6 +63,10 @@ describe("current research routing", () => {
   it.each([
     "Plan a one-day trip in Philadelphia",
     "Help me organize the first three steps of a project this week",
+    "Help me plan a calmer tomorrow morning",
+    "Help me schedule my work hours tomorrow",
+    "Draft a clear email to send tomorrow morning",
+    "Create me a simple routine for tonight",
     "Find live music in Atlanta",
     "Add a live comedy show to my ideas",
     "Show me living history museums",
@@ -75,6 +79,12 @@ describe("current research routing", () => {
     "Tell me about Beyoncé's early career",
   ])("does not mistake stable or entertainment language for freshness in %s", (message) => {
     expect(requiresCurrentResearch(message)).toBe(false);
+  });
+
+  it("preserves current research when a self-directed plan asks about changing outside conditions", () => {
+    expect(requiresCurrentResearch("Help me plan a trip to Atlanta tonight")).toBe(true);
+    expect(requiresCurrentResearch("Can you plan my day tomorrow around what is open in Philadelphia?")).toBe(true);
+    expect(requiresCurrentResearch("Help me plan tomorrow's flight options")).toBe(true);
   });
 
   it("keeps explicit preferred-name recall out of the current-research path", () => {

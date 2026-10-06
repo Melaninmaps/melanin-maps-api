@@ -270,6 +270,26 @@ describe("Kinfolk generic answer routing", () => {
     expect(high.strategy).toBe("current_evidence");
   });
 
+  it("routes a member's time-horizon plan directly but retains cited evidence for an external status within a plan", () => {
+    const personalPlan = resolveKinfolkGeneralAnswerRoute({
+      message: "Help me organize my tomorrow morning around three priorities.",
+      evidence: evidence(),
+      semantic: decision({ evidenceNeed: "stable", purpose: "planning_or_writing", conversationIntent: "planning" }),
+      hasApprovedRelevantMemory: true,
+    });
+    const externalStatus = resolveKinfolkGeneralAnswerRoute({
+      message: "Help me plan tomorrow around what is open in Philadelphia.",
+      evidence: evidence(),
+      semantic: decision({ evidenceNeed: "stable", purpose: "planning_or_writing", conversationIntent: "planning" }),
+      hasApprovedRelevantMemory: true,
+    });
+
+    expect(personalPlan.strategy).toBe("planning_or_writing");
+    expect(personalPlan.requiresCurrentEvidence).toBe(false);
+    expect(externalStatus.strategy).toBe("current_evidence");
+    expect(externalStatus.requiresCurrentEvidence).toBe(true);
+  });
+
   it("does not treat personal conversational intent as a current-evidence claim", () => {
     const cases: Array<{
       intent: GenericAnswerRouteDecision["conversationIntent"];
