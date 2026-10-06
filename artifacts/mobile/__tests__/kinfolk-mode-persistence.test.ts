@@ -7,7 +7,7 @@ const travelSource = readFileSync(
   "utf8",
 );
 const settingsSource = readFileSync(
-  fileURLToPath(new URL("../app/kinfolk-settings.tsx", import.meta.url)),
+  fileURLToPath(new URL("../components/KinfolkSettingsControlCenter.tsx", import.meta.url)),
   "utf8",
 );
 const preferencesSource = readFileSync(
@@ -45,9 +45,9 @@ describe("Kinfolk mobile conversation modes", () => {
     expect(settingsSource).toContain("CONVERSATION MODE");
     expect(settingsSource).toContain("Standard Kinfolk Voice");
     expect(settingsSource).toContain("Female Voice");
-    expect(settingsSource).toContain('kinfolkVoice: option.value === "female" ? "nova" : "onyx"');
-    expect(settingsSource).toContain("SAVED MEMORIES");
+    expect(settingsSource).toContain('voice: "nova"');
+    expect(settingsSource).toContain("Saved memories");
     expect(settingsSource).toContain('router.push("/kinfolk-memory" as never)');
-    expect(settingsSource).toContain("Ordinary chat is never silently saved.");
+    expect(settingsSource).toContain("Nothing here is created from ordinary chat");
   });
 });

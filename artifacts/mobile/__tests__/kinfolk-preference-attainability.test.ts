@@ -6,7 +6,7 @@ const tasteProfile = readFileSync(new URL("../app/travel.tsx", import.meta.url),
 const hook = readFileSync(new URL("../hooks/useUserPreferences.ts", import.meta.url), "utf8");
 const supportDropdowns = readFileSync(new URL("../components/SupportLensDropdowns.tsx", import.meta.url), "utf8");
 const culturalPreference = readFileSync(new URL("../app/cultural-preference.tsx", import.meta.url), "utf8");
-const kinfolkSettings = readFileSync(new URL("../app/kinfolk-settings.tsx", import.meta.url), "utf8");
+const kinfolkSettings = readFileSync(new URL("../components/KinfolkSettingsControlCenter.tsx", import.meta.url), "utf8");
 const identityOnboarding = readFileSync(new URL("../app/onboarding/identity.tsx", import.meta.url), "utf8");
 
 describe("mobile Kinfolk preference attainability", () => {

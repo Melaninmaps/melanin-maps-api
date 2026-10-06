@@ -16,6 +16,8 @@ describe("mobile Kinfolk Community perspective", () => {
 
   it("uses item-level private-memory consent and keeps every save opt-in", () => {
     expect(travelSource).toContain("KinfolkInlineMemoryConsent");
+    expect(hookSource).toContain("inlineMemoryConsent");
+    expect(hookSource).toContain("memoryConsentPlan");
     expect(consentSource).toContain("Nothing has been saved yet.");
     expect(consentSource).toContain("Save only preferences and interests");
     expect(consentSource).toContain("Choose individually");
