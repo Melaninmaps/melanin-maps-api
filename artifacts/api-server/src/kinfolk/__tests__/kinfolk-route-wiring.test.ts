@@ -53,6 +53,21 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).not.toContain("culturalLine = (prefs?.culturalInterests");
   });
 
+  it("uses one bounded generic answer route before contextual research and fails current turns closed without support", () => {
+    const genericRoute = chatRoute.indexOf("buildGenericAnswerRouteClassifierPrompt()");
+    const citedResearch = chatRoute.indexOf("const citedResearchRequired =");
+    const contextualPlan = chatRoute.indexOf("let contextualPlan: SemanticTurnPlan | null = cityBriefingPlan");
+    const evidenceGate = chatRoute.indexOf("const genericEvidenceOutcome = resolveKinfolkEvidenceOutcome({");
+
+    expect(genericRoute).toBeGreaterThan(-1);
+    expect(citedResearch).toBeGreaterThan(genericRoute);
+    expect(contextualPlan).toBeGreaterThan(citedResearch);
+    expect(evidenceGate).toBeGreaterThan(contextualPlan);
+    expect(chatRoute).toContain("generalAnswerRoute.requiresCurrentEvidence");
+    expect(chatRoute).toContain("TRUTHFUL_EVIDENCE_UNAVAILABLE_REPLY");
+    expect(chatRoute).toContain("hasApprovedRelevantMemory: isPreferredNameRecallRequest(message)");
+  });
+
   it("keeps qualified care navigation outside the ordinary ownership-scoped business catalog", () => {
     const careOverride = chatRoute.indexOf("const healthCareOverride = buildHealthCareOverride");
     const catalogFilter = chatRoute.indexOf("businessCatalog = healthCareOverride.suppressesGeneralBusinessCatalog");
@@ -228,7 +243,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(contextualPlan).toBeGreaterThan(cityBriefingPlan);
     expect(semanticPlanner).toBeGreaterThan(contextualPlan);
     expect(researchExecution).toBeGreaterThan(semanticPlanner);
-    expect(chatRoute).toContain('contextualPlan.taskMode === "city_briefing" ? 20_000 : 8_000');
+    expect(chatRoute).toContain("timeoutMs: contextualResearchTimeoutMs(contextualPlan)");
+    expect(orchestratorSource).toContain('if (plan.taskMode === "city_briefing") return 20_000');
     expect(chatRoute).toContain("I will not substitute a generic city description");
   });
 

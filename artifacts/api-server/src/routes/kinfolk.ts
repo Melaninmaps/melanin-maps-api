@@ -152,6 +152,12 @@ import {
   requiresCurrentResearch,
 } from "../kinfolk/current-research";
 import {
+  buildGenericAnswerRouteClassifierPrompt,
+  parseGenericAnswerRouteDecision,
+  resolveKinfolkEvidenceOutcome,
+  resolveKinfolkGeneralAnswerRoute,
+} from "../kinfolk/general-answer-routing";
+import {
   extractLiveWeatherLocation,
   isLiveWeatherQuestion,
   resolveAuthoritativeWeather,
@@ -162,6 +168,7 @@ import { permittedIdentityContext as resolvePermittedIdentityContext } from "../
 import {
   evidenceFailureReply,
   evidenceRoutePromptBlock,
+  TRUTHFUL_EVIDENCE_UNAVAILABLE_REPLY,
 } from "../kinfolk/evidence-runtime";
 import {
   buildRankedCatalogItinerary,
@@ -8421,15 +8428,64 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     });
     researchContextMessage = savedMemberResearchContext.question;
     savedMemberResearchContextTags = savedMemberResearchContext.appliedTags;
-    // Current facts and this narrow cultural current-events case must never fall
-    // through to a cached Library answer merely because optional adaptive
-    // contextual intelligence is disabled. They still use the existing cited
-    // provider path and preserve the same fail-closed evidence behavior.
-    const ordinaryAssistantRequest = isKinfolkOrdinaryAssistantRequest(message);
+    // One bounded, topic-independent classifier identifies the answer work before
+    // retrieval. It sees only this turn, and a failed or malformed classifier
+    // response falls back to the existing deterministic safety/evidence route.
+    // It can strengthen an evidence requirement, never relax one.
+    const evidenceRoute = classifyEvidenceRoute(message);
+    let genericAnswerDecision = null;
+    try {
+      const completion = await openai.chat.completions.create(
+        buildKinfolkChatCompletionRequest({
+          model: kinfolkModel("fallback"),
+          maxOutputTokens: 120,
+          temperature: 0,
+          messages: [
+            {
+              role: "system",
+              content: buildGenericAnswerRouteClassifierPrompt(),
+            },
+            { role: "user", content: message },
+          ],
+        }) as ChatCompletionCreateParamsNonStreaming,
+        {
+          signal: AbortSignal.any([
+            contextualRequestAbort.signal,
+            AbortSignal.timeout(1_800),
+          ]),
+        },
+      );
+      const content = completion.choices[0]?.message?.content ?? "{}";
+      try {
+        genericAnswerDecision = parseGenericAnswerRouteDecision(JSON.parse(content) as unknown);
+      } catch {
+        genericAnswerDecision = null;
+      }
+    } catch (error) {
+      req.log.debug(
+        { event: "KINFOLK_GENERIC_ANSWER_CLASSIFIER_UNAVAILABLE", pgCode: pgCode(error) },
+        "generic Kinfolk answer classifier unavailable",
+      );
+    }
+    const generalAnswerRoute = resolveKinfolkGeneralAnswerRoute({
+      message: researchContextMessage,
+      evidence: evidenceRoute,
+      semantic: genericAnswerDecision,
+      // This only permits the existing consent-gated preferred-name lifecycle to
+      // answer its explicit recall turn. It does not read, create, or broaden memory.
+      hasApprovedRelevantMemory: isPreferredNameRecallRequest(message),
+    });
+    // Current facts must never fall through to cached Library/static material
+    // because optional contextual intelligence is disabled. The generic route
+    // extends that guarantee beyond an enumerated topic list.
+    const ordinaryAssistantRequest =
+      generalAnswerRoute.strategy === "planning_or_writing" ||
+      isKinfolkOrdinaryAssistantRequest(message);
     const citedResearchRequired =
-      !ordinaryAssistantRequest &&
-      (requiresCurrentResearch(researchContextMessage) ||
-        culturalLearningOpportunity !== null);
+      generalAnswerRoute.requiresCurrentEvidence ||
+      (!ordinaryAssistantRequest &&
+        (requiresCurrentResearch(researchContextMessage) ||
+          culturalLearningOpportunity !== null));
     contextualResearchEnabled =
       contextualIntelligenceEnabled || citedResearchRequired;
 
@@ -8446,7 +8502,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     // Identity is permitted only from this current turn and is never persisted.
     const permittedIdentity = resolvePermittedIdentityContext(message);
-    const evidenceRoute = classifyEvidenceRoute(message);
 
     const destinationScope: ValidatedKinfolkCityScope | null =
       destination && destinationState
@@ -8508,6 +8563,43 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         sources: [],
         needsClarification: true,
         discoveryKind: earlyDecision.discoveryKind,
+        originalQuery: message,
+      });
+      return;
+    }
+
+    if (generalAnswerRoute.requiresFocusedClarification) {
+      res.json({
+        sessionId,
+        reply: generalAnswerRoute.clarificationQuestion,
+        recommendations: null,
+        itinerary: null,
+        followUpSuggestions: [],
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass: "clarification",
+        sources: [],
+        needsClarification: true,
+        originalQuery: message,
+      });
+      return;
+    }
+
+    if (generalAnswerRoute.shouldDecline) {
+      res.json({
+        sessionId,
+        reply:
+          "I can’t help with that request safely or responsibly. I can help with a safer alternative or a question supported by reliable information.",
+        recommendations: null,
+        itinerary: null,
+        followUpSuggestions: [],
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass: "general_knowledge",
+        sources: [],
+        needsClarification: false,
         originalQuery: message,
       });
       return;
@@ -8980,6 +9072,27 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           freshness: "current",
           evidenceNeeds: ["official_current", "reputable_reporting"],
           retrievalQueries: [...culturalLearningOpportunity.retrievalQueries],
+        };
+      }
+      // The generic answer route can recognize a changing fact even when a
+      // legacy keyword classifier does not. Force its ordinary direct-answer
+      // plan through live evidence rather than allowing internal/Library-only
+      // grounding to answer a current claim.
+      if (
+        generalAnswerRoute.requiresCurrentEvidence &&
+        contextualPlan.taskMode === "direct_answer"
+      ) {
+        contextualPlan = {
+          ...contextualPlan,
+          freshness: "current",
+          evidenceNeeds: ["official_current", "reputable_reporting"],
+          retrievalQueries: [
+            researchContextMessage,
+            ...contextualPlan.retrievalQueries.filter(
+              (query) =>
+                query.toLowerCase() !== researchContextMessage.toLowerCase(),
+            ),
+          ].slice(0, 3),
         };
       }
       if (
@@ -9754,7 +9867,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       ...(contextualEvidence?.external ?? []).map((source) => ({ url: source.url })),
       ...(contextualEvidence?.media ?? []).map((source) => ({ url: source.url })),
     ];
-    const failClosedReply = evidenceFailureReply({
+    const routeEvidenceFailureReply = evidenceFailureReply({
       route: evidenceRoute,
       medicalContextBlock: healthEvidenceBlock,
       hasLiveWebEvidence,
@@ -9764,6 +9877,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         articleEvidenceSources,
       ),
     });
+    const genericEvidenceOutcome = resolveKinfolkEvidenceOutcome({
+      route: generalAnswerRoute,
+      hasSupportingEvidence: hasLiveWebEvidence,
+    });
+    const failClosedReply =
+      routeEvidenceFailureReply ??
+      (genericEvidenceOutcome === "decline" &&
+      generalAnswerRoute.requiresCurrentEvidence
+        ? TRUTHFUL_EVIDENCE_UNAVAILABLE_REPLY
+        : null);
     if (failClosedReply) {
       res.json({
         sessionId,
@@ -10875,7 +10998,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         : "";
     const leanGeneralChat = canUseLeanGeneralChat({
       intentClass,
-      requiresCurrentEvidence: requiresCurrentResearch(researchContextMessage),
+      requiresCurrentEvidence: generalAnswerRoute.requiresCurrentEvidence,
       hasLocation: Boolean(destination),
       hasImages: verifiedImageUrls.length > 0,
       hasContextualResearch:
@@ -10891,7 +11014,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const responseDepth = resolveKinfolkResponseDepth({
       message,
       intentClass,
-      requiresCurrentEvidence: requiresCurrentResearch(researchContextMessage),
+      requiresCurrentEvidence: generalAnswerRoute.requiresCurrentEvidence,
       isTravelPlanning: travelPlanning,
       hasLocation: Boolean(destination),
       hasContextualResearch: Boolean(contextualEvidence) || Boolean(communityHashtagContext.promptBlock),
@@ -11699,9 +11822,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       ],
       researchContextMessage,
     );
-    const currentEvidenceSourceContext = requiresCurrentResearch(
-      researchContextMessage,
-    )
+    const currentEvidenceSourceContext = generalAnswerRoute.requiresCurrentEvidence
       ? buildCurrentEvidenceSourceContext([
           ...(contextualEvidence?.external ?? []),
           ...(contextualEvidence?.media ?? []),
