@@ -62,6 +62,7 @@ describe("current research routing", () => {
 
   it.each([
     "Plan a one-day trip in Philadelphia",
+    "Help me organize the first three steps of a project this week",
     "Find live music in Atlanta",
     "Add a live comedy show to my ideas",
     "Show me living history museums",
