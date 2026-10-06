@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildPreferredNameRecallReply,
   formatPreferredNameMemory,
   normalizePreferredName,
   parsePreferredNameMemory,
@@ -26,5 +27,20 @@ describe("explicit preferred-name memory", () => {
         content: "Preferred name: J Money",
       }),
     ).toBeNull();
+  });
+
+  it("answers an explicit recall with only the saved preferred name", () => {
+    expect(buildPreferredNameRecallReply({
+      name: "MWM QA",
+      includeWelcome: false,
+    })).toBe("I'll call you MWM QA.");
+    expect(buildPreferredNameRecallReply({
+      name: "MWM QA",
+      includeWelcome: true,
+    })).toContain("Welcome, MWM QA");
+    expect(buildPreferredNameRecallReply({
+      name: "<script>",
+      includeWelcome: false,
+    })).toBeNull();
   });
 });

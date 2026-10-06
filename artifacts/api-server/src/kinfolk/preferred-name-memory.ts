@@ -22,6 +22,23 @@ export function formatPreferredNameMemory(name: string): string {
   return `${PREFIX}${name}`;
 }
 
+/**
+ * The member's direct request to recall their chosen address is answered by a
+ * narrow server-owned sentence instead of depending on model phrasing. It uses
+ * only the validated, owner-scoped preferred name; it never reads profile or
+ * broader private-memory content.
+ */
+export function buildPreferredNameRecallReply(input: {
+  name: unknown;
+  includeWelcome: boolean;
+}): string | null {
+  const name = normalizePreferredName(input.name);
+  if (!name) return null;
+  return input.includeWelcome
+    ? `Welcome, ${name}; choose one small next step and give it your full attention.`
+    : `I'll call you ${name}.`;
+}
+
 export function parsePreferredNameMemory(input: {
   purpose: string;
   content: string;

@@ -147,6 +147,7 @@ import {
 import { routeEvidence as classifyEvidenceRoute } from "../kinfolk/evidence-route";
 import {
   hasRequestedArticleEvidence,
+  isPreferredNameRecallRequest,
   requestedArticleSummaryUrl,
   requiresCurrentResearch,
 } from "../kinfolk/current-research";
@@ -293,6 +294,7 @@ import {
   resolvePublicSharedKinfolkSession,
 } from "../kinfolk/private-memory";
 import {
+  buildPreferredNameRecallReply,
   formatPreferredNameMemory,
   normalizePreferredName,
   parsePreferredNameMemory,
@@ -10617,7 +10619,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const relevantPrivateMemories = activePrivateMemories.filter(
       (memory) =>
         (memory.purpose === "preferred_name"
-          ? true
+          ? explicitMemberMemoryEnabled
           : memory.purpose === "planning_context"
           ? isConsentedPlanningMemoryRelevant(memory, message)
           : memory.purpose === "profile_context"
@@ -10645,6 +10647,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       promptPrivateMemories.length > 0 && !contextualEvidence,
       contextualEvidence ? [] : promptPrivateMemories,
     );
+    const activePreferredName = promptPrivateMemories
+      .map(parsePreferredNameMemory)
+      .find((name): name is string => Boolean(name));
+    const preferredNameRecallReply =
+      !contextualEvidence && isPreferredNameRecallRequest(message)
+        ? buildPreferredNameRecallReply({
+            name: activePreferredName,
+            includeWelcome: /\b(?:greet|welcome)\b/i.test(message),
+          })
+        : null;
 
     const contextualEvidenceDataBlock = contextualEvidence
       ? buildUntrustedEvidenceDataBlock([
@@ -11162,6 +11174,23 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     });
     if (protectedReply.blocked) {
       reply = protectedReply.reply;
+      contextualStructuredContent = null;
+      contextualMediaLinks = [];
+      contextualRelatedConnections = [];
+      recommendations = null;
+      followUpSuggestions = [];
+      smartPromotion = null;
+      taskAction = null;
+      itinerary = null;
+      proposedModelDestination = null;
+    }
+
+    // A direct request to recall an active preferred name is a stable,
+    // first-party preference interaction. Make that narrow result dependable
+    // rather than relying on a model to decide whether to repeat the saved
+    // address; current questions still use their existing evidence path.
+    if (!protectedReply.blocked && preferredNameRecallReply) {
+      reply = preferredNameRecallReply;
       contextualStructuredContent = null;
       contextualMediaLinks = [];
       contextualRelatedConnections = [];

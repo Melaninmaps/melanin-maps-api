@@ -212,6 +212,10 @@ describe("Kinfolk private-memory production control", () => {
     expect(chatRoute).toContain("const activePreferredNameMemory =");
     expect(chatRoute).toContain("const promptPrivateMemories = mergeActivePreferredNameForPrompt({");
     expect(chatRoute).toContain("explicitMemoryEnabled: explicitMemberMemoryEnabled");
+    expect(chatRoute).toContain("const activePreferredName = promptPrivateMemories");
+    expect(chatRoute).toContain("isPreferredNameRecallRequest(message)");
+    expect(chatRoute).toContain("buildPreferredNameRecallReply({");
+    expect(chatRoute).toContain("memory.purpose === \"preferred_name\"\n          ? explicitMemberMemoryEnabled");
   });
 
   it("keeps public shares behind current owner consent without deleting share IDs", () => {

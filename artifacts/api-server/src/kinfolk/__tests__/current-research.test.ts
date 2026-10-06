@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   hasRequestedArticleEvidence,
+  isPreferredNameRecallRequest,
   requestedArticleSummaryUrl,
   requiresCurrentResearch,
 } from "../current-research";
@@ -75,6 +76,8 @@ describe("current research routing", () => {
     expect(requiresCurrentResearch(
       "Please greet me using my saved preferred name, with a warm one-sentence pep talk for today.",
     )).toBe(false);
+    expect(isPreferredNameRecallRequest("What name should you call me?")).toBe(true);
+    expect(isPreferredNameRecallRequest("How much is Beyoncé worth?")).toBe(false);
     expect(requiresCurrentResearch("What is open today in Philadelphia?")).toBe(true);
   });
 
