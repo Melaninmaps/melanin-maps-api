@@ -45,8 +45,24 @@ const OFFICIAL_SOCIAL_HOSTS = new Set([
   "www.instagram.com",
   "facebook.com",
   "www.facebook.com",
+  "m.facebook.com",
+  "web.facebook.com",
   "tiktok.com",
   "www.tiktok.com",
+  "linkedin.com",
+  "www.linkedin.com",
+  "youtube.com",
+  "www.youtube.com",
+  "youtu.be",
+  "x.com",
+  "www.x.com",
+  "twitter.com",
+  "www.twitter.com",
+  "threads.net",
+  "www.threads.net",
+  "pinterest.com",
+  "www.pinterest.com",
+  "bsky.app",
 ]);
 const NON_OFFICIAL_WEBSITE_HOSTS = [
   "yelp.", "yellowpages.", "google.", "g.page", "bing.", "tripadvisor.",
@@ -136,7 +152,7 @@ function validateEvidence(value: unknown, now: Date): EvidenceInput {
   if (raw.field === "official_social") {
     const profileUrl = safeHttpsUrl(observedValue.profileUrl, "official social profile URL");
     if (!OFFICIAL_SOCIAL_HOSTS.has(hostOf(profileUrl))) {
-      throw new Error("official social profile must be Instagram, Facebook, or TikTok");
+      throw new Error("official social profile must use an approved business-controlled social host");
     }
     if (
       raw.sourceKind !== "founder_directory"
@@ -350,6 +366,9 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
           if (host.endsWith("instagram.com")) profilePatch.instagram = officialSocial;
           if (host.endsWith("facebook.com")) profilePatch.facebook = officialSocial;
           if (host.endsWith("tiktok.com")) profilePatch.tiktok = officialSocial;
+          // LinkedIn, YouTube, and other approved social receipts remain in the
+          // immutable eligibility evidence even though the legacy profile table
+          // has no matching URL columns. They are still complete presence proof.
         }
         await client.query(
           `UPDATE businesses
