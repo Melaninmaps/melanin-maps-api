@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  applyPreferredNameAddress,
   buildPreferredNameRecallReply,
   formatPreferredNameMemory,
   normalizePreferredName,
@@ -27,6 +28,17 @@ describe("explicit preferred-name memory", () => {
         content: "Preferred name: J Money",
       }),
     ).toBeNull();
+  });
+
+  it("adds the active exact address to an ordinary reply without duplicating it", () => {
+    expect(applyPreferredNameAddress({
+      name: "Kinfolk QA Nova 260",
+      reply: "Start with one small task you can finish today.",
+    })).toBe("Kinfolk QA Nova 260 — Start with one small task you can finish today.");
+    expect(applyPreferredNameAddress({
+      name: "Kinfolk QA Nova 260",
+      reply: "Kinfolk QA Nova 260, start with one small task today.",
+    })).toBe("Kinfolk QA Nova 260, start with one small task today.");
   });
 
   it("answers an explicit recall with only the saved preferred name", () => {

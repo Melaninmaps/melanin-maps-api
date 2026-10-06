@@ -39,6 +39,39 @@ export function buildPreferredNameRecallReply(input: {
     : `I'll call you ${name}.`;
 }
 
+/**
+ * Ordinary, stable responses should honor an active chosen address even when a
+ * model omits it. This is deliberately a final presentation safeguard rather
+ * than a memory lookup: callers must already have resolved one active,
+ * owner-scoped preferred-name row and decided that the current turn is safe
+ * for a casual address.
+ */
+export function applyPreferredNameAddress(input: {
+  name: unknown;
+  reply: string;
+}): string {
+  const name = normalizePreferredName(input.name);
+  const reply = input.reply.trim();
+  if (!name || !reply) return reply;
+
+  const normalizedName = name.normalize("NFKC").toLocaleLowerCase();
+  const normalizedReply = reply.normalize("NFKC").toLocaleLowerCase();
+  let index = normalizedReply.indexOf(normalizedName);
+  while (index >= 0) {
+    const before = normalizedReply[index - 1] ?? "";
+    const after = normalizedReply[index + normalizedName.length] ?? "";
+    if (
+      !/[\p{L}\p{M}\p{N}]/u.test(before) &&
+      !/[\p{L}\p{M}\p{N}]/u.test(after)
+    ) {
+      return reply;
+    }
+    index = normalizedReply.indexOf(normalizedName, index + 1);
+  }
+
+  return `${name} — ${reply}`;
+}
+
 export function parsePreferredNameMemory(input: {
   purpose: string;
   content: string;

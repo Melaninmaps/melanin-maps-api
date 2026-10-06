@@ -303,6 +303,7 @@ import {
   resolvePublicSharedKinfolkSession,
 } from "../kinfolk/private-memory";
 import {
+  applyPreferredNameAddress,
   buildPreferredNameRecallReply,
   formatPreferredNameMemory,
   normalizePreferredName,
@@ -5990,13 +5991,16 @@ router.post("/kinfolk/preferred-name/revoke", async (req: Request, res: Response
   }
   if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
   try {
+    const memory = await findPreferredNameMemory(req.user.id);
+    if (!memory) return void res.status(404).json({ error: "Preferred name not found." });
+    const now = new Date();
     const [revoked] = await db
       .update(kinfolkPrivateMemoriesTable)
-      .set({ revokedAt: new Date(), updatedAt: new Date() })
+      .set({ revokedAt: now, updatedAt: now })
       .where(
         and(
+          eq(kinfolkPrivateMemoriesTable.id, memory.id),
           eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
-          eq(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
           isNull(kinfolkPrivateMemoriesTable.revokedAt),
         ),
       )
@@ -6015,12 +6019,14 @@ router.delete("/kinfolk/preferred-name", async (req: Request, res: Response) => 
   }
   if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
   try {
+    const memory = await findPreferredNameMemory(req.user.id);
+    if (!memory) return void res.status(404).json({ error: "Preferred name not found." });
     const deleted = await db
       .delete(kinfolkPrivateMemoriesTable)
       .where(
         and(
+          eq(kinfolkPrivateMemoriesTable.id, memory.id),
           eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
-          eq(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
         ),
       )
       .returning({ id: kinfolkPrivateMemoriesTable.id });
@@ -11079,7 +11085,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       maxOutputTokens: resolveKinfolkOutputTokenBudget(modelPolicy, responseDepth),
     };
     const systemPromptWithLibrary = leanGeneralChat
-      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${temporalContext}\n\n${responseDepthPrompt}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
+      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${temporalContext}${privateMemoryBlock}\n\n${responseDepthPrompt}${responseFeedbackPrompt ? `\n\n${responseFeedbackPrompt}` : ""}`
       : (!contextualHighConsequence && libraryGroundingBlock
           ? `${systemPrompt}\n\n${libraryGroundingBlock}`
           : systemPrompt) +
@@ -11378,6 +11384,19 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       taskAction = null;
       itinerary = null;
       proposedModelDestination = null;
+    }
+
+    // A chosen address is an explicit, narrow member preference. For an
+    // ordinary stable answer, make it dependable if a provider disregards the
+    // server-authorized prompt instruction. Current, high-consequence, and
+    // blocked responses keep their existing evidence and safety contracts.
+    if (
+      !protectedReply.blocked &&
+      !preferredNameRecallReply &&
+      activePreferredName &&
+      generalAnswerRoute.strategy === "stable_knowledge"
+    ) {
+      reply = applyPreferredNameAddress({ name: activePreferredName, reply });
     }
 
     // An offer is visible only after repeated activity-oriented questions about

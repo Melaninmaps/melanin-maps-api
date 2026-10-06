@@ -215,7 +215,34 @@ describe("Kinfolk private-memory production control", () => {
     expect(chatRoute).toContain("const activePreferredName = promptPrivateMemories");
     expect(chatRoute).toContain("isPreferredNameRecallRequest(message)");
     expect(chatRoute).toContain("buildPreferredNameRecallReply({");
+    expect(chatRoute).toContain("buildLeanGeneralChatPrompt(conversationVoiceMode)");
+    expect(chatRoute).toContain("${privateMemoryBlock}");
+    expect(chatRoute).toContain("applyPreferredNameAddress({ name: activePreferredName, reply })");
+    expect(chatRoute).toContain('generalAnswerRoute.strategy === "stable_knowledge"');
     expect(chatRoute).toContain("memory.purpose === \"preferred_name\"\n          ? explicitMemberMemoryEnabled");
+  });
+
+  it("keeps revoke and delete scoped to the selected active preferred-name row", () => {
+    const routeFile = resolve(
+      dirname(fileURLToPath(import.meta.url)),
+      "../../routes/kinfolk.ts",
+    );
+    const source = readFileSync(routeFile, "utf8");
+    const revokeRoute = source.slice(
+      source.indexOf('router.post("/kinfolk/preferred-name/revoke"'),
+      source.indexOf('router.delete("/kinfolk/preferred-name"'),
+    );
+    const deleteRoute = source.slice(
+      source.indexOf('router.delete("/kinfolk/preferred-name"'),
+      source.indexOf('router.get("/kinfolk/memories"'),
+    );
+
+    for (const route of [revokeRoute, deleteRoute]) {
+      expect(route).toContain("const memory = await findPreferredNameMemory(req.user.id)");
+      expect(route).toContain("eq(kinfolkPrivateMemoriesTable.id, memory.id)");
+      expect(route).toContain("eq(kinfolkPrivateMemoriesTable.userId, req.user.id)");
+    }
+    expect(deleteRoute).not.toContain("eq(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE)");
   });
 
   it("keeps public shares behind current owner consent without deleting share IDs", () => {
