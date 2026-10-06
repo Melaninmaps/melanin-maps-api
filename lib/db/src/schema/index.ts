@@ -83,6 +83,7 @@ export * from "./business-nominations";
 export * from "./hidden-gem-nominations";
 export * from "./saved-jobs";
 export * from "./business-identity";
+export * from "./business-kinfolk-voice-profiles";
 export * from "./business-broadcasts";
 export * from "./community-health";
 export * from "./journal-insights";

@@ -129,6 +129,28 @@ export function getProtectedAdminAccessRecoveryStatus():
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
+    // Owner-confirmed inputs for future business-facing Kinfolk drafts. This is
+    // additive schema only: no member, directory, language, or profile data is
+    // copied into the table at deploy time.
+    name: "business_kinfolk_voice_profiles_v1",
+    sql: `CREATE TABLE IF NOT EXISTS business_kinfolk_voice_profiles (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      business_id VARCHAR(255) NOT NULL UNIQUE REFERENCES businesses(id) ON DELETE CASCADE,
+      owner_user_id VARCHAR(255) NOT NULL REFERENCES users(id),
+      tones JSONB NOT NULL DEFAULT '[]'::jsonb,
+      language_preference TEXT,
+      audience_guidance TEXT,
+      words_to_use JSONB NOT NULL DEFAULT '[]'::jsonb,
+      words_to_avoid JSONB NOT NULL DEFAULT '[]'::jsonb,
+      signature_phrases JSONB NOT NULL DEFAULT '[]'::jsonb,
+      owner_confirmed_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS business_kinfolk_voice_profiles_owner_updated_idx
+      ON business_kinfolk_voice_profiles (owner_user_id, updated_at DESC);`,
+  },
+  {
     // Retain every member and waitlist record while allowing an administrator
     // to suspend access or remove test accounts from the normal presentation
     // view. This intentionally contains no DELETE statement.
