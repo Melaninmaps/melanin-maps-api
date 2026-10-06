@@ -369,6 +369,13 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("businessInventoryQueryRef.current");
   });
 
+  it("keeps selections through search and filters until an administrator explicitly clears them", () => {
+    expect(adminScreen).not.toContain("setBusinessInventoryPage(1);\n    setSelectedBusinessIds(new Set());\n    void loadBusinesses(query);");
+    expect(adminScreen).toContain("const clearBusinessSelection = () => {");
+    expect(adminScreen).toContain("onClick={clearBusinessSelection}");
+    expect(adminScreen).toContain("Clear selection ({selectedVisibleBusinessCount})");
+  });
+
   it("keeps archive, duplicate, and live status boundaries independent from each intake cohort", () => {
     expect(adminRoute).toContain("Provenance narrows the selected inventory scope");
     expect(adminRoute).toContain("listing_status = 'archived' AND COALESCE(is_duplicate, false) = false");

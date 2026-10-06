@@ -2528,7 +2528,6 @@ export default function Admin() {
     setBizSort(query.sort);
     setBusinessInventoryPageSize(query.pageSize);
     setBusinessInventoryPage(1);
-    setSelectedBusinessIds(new Set());
     void loadBusinesses(query);
   };
 
@@ -2593,6 +2592,9 @@ export default function Admin() {
       selectableBusinessRows.forEach((business) => next.delete(business.id));
       return next;
     });
+  };
+  const clearBusinessSelection = () => {
+    setSelectedBusinessIds(new Set());
   };
 
   const updateSelectedBusinessListingStatus = async (
@@ -5137,6 +5139,15 @@ Selected: ${summary}`,
                     <option value={500}>500</option>
                   </select>
                 </label>
+                <button
+                  type="button"
+                  onClick={clearBusinessSelection}
+                  disabled={selectedVisibleBusinessCount === 0}
+                  className="rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-1.5 text-xs font-bold text-[#3A1F0E]/70 transition-colors hover:border-[#CA922B]/50 disabled:cursor-not-allowed disabled:opacity-50"
+                  title="Clear all selected business records"
+                >
+                  Clear selection ({selectedVisibleBusinessCount})
+                </button>
                 {bizStatusFilter === "duplicates" ? (
                   <>
                     <button
