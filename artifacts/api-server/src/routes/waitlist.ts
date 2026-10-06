@@ -6,6 +6,13 @@ import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, s
 import { runWeeklyNudge } from "../lib/nudgeScheduler";
 import { isAdmin } from "../lib/adminAuth";
 import { isApprovalRequired } from "../lib/approvalGate";
+import {
+  assertActiveReferralCodeForWaitlistSignup,
+  attributeConfirmedWaitlistReferral,
+  getOrCreateWaitlistReferralProfile,
+  ReferralCodeUnavailableError,
+  ReferralCodeValidationError,
+} from "../lib/waitlistReferralLedger";
 
 const router: IRouter = Router();
 
@@ -99,7 +106,7 @@ function parseStoredCityNomination(raw: unknown): { city: string; state: string 
 
 router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) => {
   try {
-    const { email, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referralCode, referredBy, familyEmails, cityNomination, previewChoice, utmSource, utmMedium, utmCampaign, niche, platforms, safetyPriorities, signupSource } = req.body as {
+    const { email, firstName, lastName, city, state, isBusinessOwner, websiteUrl, referredBy, familyEmails, cityNomination, previewChoice, utmSource, utmMedium, utmCampaign, niche, platforms, safetyPriorities, signupSource } = req.body as {
       email?: string;
       firstName?: string;
       lastName?: string;
@@ -107,7 +114,6 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       state?: string;
       isBusinessOwner?: boolean;
       websiteUrl?: string;
-      referralCode?: string;
       referredBy?: string;
       familyEmails?: string[];
       cityNomination?: string;
@@ -134,13 +140,30 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
 
     const normalizedCity = normalizeWaitlistCity(city);
     const normalizedState = normalizeWaitlistState(state);
-    const namePrefix = firstName?.trim().toUpperCase().replace(/[^A-Z]/g, "").slice(0, 8)
-      || email.split("@")[0].toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
-    const digits = Math.floor(1000 + Math.random() * 9000);
-    const code = referralCode ?? `MWM-${namePrefix}-${digits}`;
     const primaryEmail = email.toLowerCase().trim();
     const source = resolveWaitlistSignupSource(signupSource);
     const testerAccessActive = await hasActiveTesterEntitlement(primaryEmail);
+    const submittedReferralCode = typeof referredBy === "string" && referredBy.trim()
+      ? referredBy.trim()
+      : null;
+
+    // An invite code is checked before creating a signup, then checked again
+    // under a row lock during attribution. This avoids accepting a mistyped or
+    // inactive code while retaining the database as the final authority.
+    if (submittedReferralCode) {
+      try {
+        await assertActiveReferralCodeForWaitlistSignup({
+          rawCode: submittedReferralCode,
+          referredEmail: primaryEmail,
+        });
+      } catch (error) {
+        if (error instanceof ReferralCodeValidationError || error instanceof ReferralCodeUnavailableError) {
+          res.status(400).json({ error: "That referral code is unavailable. Please check it and try again." });
+          return;
+        }
+        throw error;
+      }
+    }
 
     // Validate and deduplicate family emails
     const validFamilyEmails = Array.isArray(familyEmails)
@@ -200,8 +223,10 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
           state: normalizedState,
           isBusinessOwner: Boolean(isBusinessOwner),
           websiteUrl: websiteUrl?.trim() || null,
-          referralCode: code,
-          referredBy: referredBy ?? null,
+          // Never accept a client-proposed ownership code here. The ledger
+          // allocates a unique server-owned code after the signup succeeds.
+          referralCode: null,
+          referredBy: null,
           status: testerAccessActive ? "approved" : "pending",
           approvedAt: testerAccessActive ? new Date() : null,
           familyGroupId,
@@ -252,7 +277,44 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       referralCode: waitlistTable.referralCode,
     }).from(waitlistTable).where(eq(waitlistTable.email, primaryEmail)).limit(1);
     const entryId = insertedEntry?.id ?? null;
-    const canonicalReferralCode = insertedEntry?.referralCode ?? code;
+    if (!entryId) throw new Error("Waitlist signup was not available after creation");
+
+    const referralProfile = await getOrCreateWaitlistReferralProfile({
+      waitlistSignupId: entryId,
+      email: primaryEmail,
+    });
+    const canonicalReferralCode = referralProfile.referralCode;
+
+    if (created && submittedReferralCode) {
+      try {
+        const attribution = await attributeConfirmedWaitlistReferral({
+          rawCode: submittedReferralCode,
+          referredWaitlistSignupId: entryId,
+          referredEmail: primaryEmail,
+        });
+        if (attribution?.milestoneReached && attribution.milestoneOwnerEmail) {
+          // The durable milestone ledger ensures this is sent only once. An
+          // in-app notification is also recorded whenever the referrer already
+          // has an account; this email covers waitlist-only referrers.
+          sendReferralMilestoneUpdate(
+            attribution.milestoneOwnerEmail,
+            null,
+            attribution.confirmedCount,
+            null,
+            null,
+            0,
+            attribution.referralCode,
+          ).catch((error: unknown) =>
+            req.log.error({ error, entryId }, "Failed to send five-referral milestone email"),
+          );
+        }
+      } catch (error) {
+        // A code owner can retire a code between preflight and attribution.
+        // Preserve the confirmed signup and record the failed attribution for
+        // operator review rather than guessing an alternate referrer.
+        req.log.error({ error, entryId }, "Waitlist referral attribution could not be finalized");
+      }
+    }
     const allEntriesForPosition = await db
       .select({ id: waitlistTable.id })
       .from(waitlistTable)
@@ -264,20 +326,32 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
     if (created && validFamilyEmails.length > 0 && familyGroupId) {
       for (const fe of validFamilyEmails) {
         try {
-          const feCode = fe.replace(/[@.]/g, "").toUpperCase().slice(0, 8);
           await db
             .insert(waitlistTable)
             .values({
               email: fe,
               familyGroupId,
-              referredBy: canonicalReferralCode,
-              referralCode: feCode,
+              // Family additions are not a completed independent referral
+              // claim, so they do not increment a referrer's confirmed count.
+              referredBy: null,
+              referralCode: null,
               status: "pending",
               signupSources: source,
             })
             .onConflictDoNothing();
+          const [familyEntry] = await db
+            .select({ id: waitlistTable.id })
+            .from(waitlistTable)
+            .where(eq(waitlistTable.email, fe))
+            .limit(1);
+          const familyProfile = familyEntry
+            ? await getOrCreateWaitlistReferralProfile({
+                waitlistSignupId: familyEntry.id,
+                email: fe,
+              })
+            : null;
           const [{ total: feTotal }] = await db.select({ total: count() }).from(waitlistTable);
-          sendWaitlistConfirmation(fe, Number(feTotal), feCode, "there")
+          sendWaitlistConfirmation(fe, Number(feTotal), familyProfile?.referralCode ?? "MWM-INVITE", "there")
             .catch((err: unknown) => req.log.error({ err, email: fe }, "Failed to send family member confirmation"));
           familyAdded++;
         } catch (err) {
@@ -291,7 +365,7 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
     const cleanLast = lastName?.trim() || null;
     if (created && !testerAccessActive) {
       sendWaitlistConfirmation(cleanEmail, position, canonicalReferralCode, cleanFirst ?? "there", cleanLast ?? undefined)
-        .then(() => db.update(waitlistTable).set({ welcomeEmailSent: true }).where(eq(waitlistTable.referralCode, canonicalReferralCode)))
+        .then(() => db.update(waitlistTable).set({ welcomeEmailSent: true }).where(eq(waitlistTable.id, entryId)))
         .catch((err: unknown) => req.log.error({ err }, "Failed to send waitlist confirmation email"));
       sendWelcomeEmail(cleanEmail, cleanFirst)
         .catch((err: unknown) => req.log.error({ err }, "Failed to send welcome email"));
@@ -300,44 +374,6 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       // waitlist email that says access is still awaiting approval.
       sendWelcomeEmail(cleanEmail, cleanFirst)
         .catch((err: unknown) => req.log.error({ err }, "Failed to send tester welcome email"));
-    }
-
-    // Fire referral milestone update to the referrer when someone joins via their code
-    if (created && referredBy?.trim()) {
-      const referrerCode = referredBy.trim().toUpperCase();
-      (async () => {
-        try {
-          const [referrer] = await db
-            .select()
-            .from(waitlistTable)
-            .where(eq(waitlistTable.referralCode, referrerCode))
-            .limit(1);
-          if (!referrer?.email) return;
-          const [{ total: referralCount }] = await db
-            .select({ total: count() })
-            .from(waitlistTable)
-            .where(eq(waitlistTable.referredBy, referrerCode));
-          let cityTotal = 0;
-          if (referrer.city) {
-            const [{ total: ct }] = await db
-              .select({ total: count() })
-              .from(waitlistTable)
-              .where(eq(waitlistTable.city, referrer.city));
-            cityTotal = Number(ct);
-          }
-          await sendReferralMilestoneUpdate(
-            referrer.email,
-            referrer.firstName,
-            Number(referralCount),
-            cleanFirst,
-            referrer.city,
-            cityTotal,
-            referrerCode,
-          );
-        } catch (err) {
-          req.log.error({ err }, "Failed to send referral milestone update");
-        }
-      })();
     }
 
     res.status(201).json({
@@ -395,12 +431,18 @@ router.get("/waitlist/my-entry", async (req: Request, res: Response) => {
 
     if (!entry) { res.json({ entry: null }); return; }
 
-    const [{ referrals }] = await db
-      .select({ referrals: count() })
-      .from(waitlistTable)
-      .where(eq(waitlistTable.referredBy, entry.referralCode ?? ""));
+    // A member receives only an aggregate of confirmed distinct signups. The
+    // ledger deliberately does not expose the referred people's identities.
+    const referralsResult = await pool.query<{ referrals: string }>(
+      `SELECT COUNT(*)::text AS referrals
+         FROM waitlist_referral_attributions attribution
+         JOIN waitlist_referral_codes code ON code.id = attribution.referral_code_id
+        WHERE code.owner_email_lower = lower(trim($1))
+          AND attribution.confirmed_at IS NOT NULL`,
+      [user.email],
+    );
 
-    res.json({ entry: { ...entry, referralCount: Number(referrals) } });
+    res.json({ entry: { ...entry, referralCount: Number(referralsResult.rows[0]?.referrals ?? 0) } });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch user waitlist entry");
     res.status(500).json({ error: "Failed to fetch entry" });

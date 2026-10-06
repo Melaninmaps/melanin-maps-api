@@ -927,6 +927,95 @@ const MIGRATIONS: { name: string; sql: string }[] = [
       ADD COLUMN IF NOT EXISTS safety_priorities TEXT`,
   },
   {
+    // Referral codes are a durable ledger, not a mutable profile attribute.
+    // The normalized-code unique index is the final authority when two members
+    // attempt to save the same code simultaneously. Retired rows deliberately
+    // remain reserved so an old shared link can never be reassigned.
+    name: "waitlist_referral_ledger_v1",
+    sql: `
+      CREATE TABLE IF NOT EXISTS waitlist_referral_codes (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        normalized_code VARCHAR(64) NOT NULL UNIQUE,
+        display_code VARCHAR(64) NOT NULL,
+        owner_email_lower VARCHAR(320) NOT NULL,
+        owner_user_id VARCHAR(255) REFERENCES users(id) ON DELETE RESTRICT,
+        owner_waitlist_signup_id VARCHAR(255) REFERENCES waitlist_signups(id) ON DELETE RESTRICT,
+        status VARCHAR(16) NOT NULL DEFAULT 'active'
+          CHECK (status IN ('active', 'retired', 'blocked')),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        retired_at TIMESTAMPTZ
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS waitlist_referral_codes_active_owner_email_idx
+        ON waitlist_referral_codes(owner_email_lower) WHERE status = 'active';
+      CREATE UNIQUE INDEX IF NOT EXISTS waitlist_referral_codes_active_owner_user_idx
+        ON waitlist_referral_codes(owner_user_id)
+        WHERE status = 'active' AND owner_user_id IS NOT NULL;
+
+      CREATE TABLE IF NOT EXISTS waitlist_referral_attributions (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        referral_code_id UUID NOT NULL REFERENCES waitlist_referral_codes(id) ON DELETE RESTRICT,
+        referred_waitlist_signup_id VARCHAR(255) NOT NULL UNIQUE
+          REFERENCES waitlist_signups(id) ON DELETE RESTRICT,
+        confirmed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS waitlist_referral_attributions_code_idx
+        ON waitlist_referral_attributions(referral_code_id, confirmed_at DESC);
+
+      CREATE TABLE IF NOT EXISTS waitlist_referral_milestones (
+        referral_code_id UUID NOT NULL REFERENCES waitlist_referral_codes(id) ON DELETE RESTRICT,
+        milestone INTEGER NOT NULL,
+        reached_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        PRIMARY KEY (referral_code_id, milestone)
+      );
+
+      -- Reserve historical codes before the new write path accepts any custom
+      -- code. If legacy rows conflict, the code remains reserved and the user
+      -- record wins over a waitlist-only row; no claimed code becomes reusable.
+      WITH historical_codes AS (
+        SELECT u.referral_code AS code, u.email, u.id AS user_id, 1 AS precedence
+          FROM users u
+         WHERE u.referral_code IS NOT NULL AND trim(u.referral_code) <> ''
+        UNION ALL
+        SELECT w.referral_code AS code, w.email, NULL::VARCHAR AS user_id, 2 AS precedence
+          FROM waitlist_signups w
+         WHERE w.referral_code IS NOT NULL AND trim(w.referral_code) <> ''
+      ), unique_codes AS (
+        SELECT DISTINCT ON (upper(trim(code)))
+          upper(trim(code)) AS normalized_code,
+          lower(trim(email)) AS owner_email_lower,
+          user_id,
+          precedence
+        FROM historical_codes
+        WHERE code IS NOT NULL AND trim(code) <> ''
+        ORDER BY upper(trim(code)), precedence, lower(trim(email))
+      ), ranked_codes AS (
+        SELECT *, ROW_NUMBER() OVER (
+          PARTITION BY owner_email_lower
+          ORDER BY precedence, normalized_code
+        ) AS owner_code_rank
+        FROM unique_codes
+      )
+      INSERT INTO waitlist_referral_codes
+        (normalized_code, display_code, owner_email_lower, owner_user_id, status, retired_at)
+      SELECT
+        normalized_code,
+        normalized_code,
+        owner_email_lower,
+        user_id,
+        CASE WHEN owner_code_rank = 1 THEN 'active' ELSE 'retired' END,
+        CASE WHEN owner_code_rank = 1 THEN NULL ELSE NOW() END
+      FROM ranked_codes
+      ON CONFLICT (normalized_code) DO NOTHING;
+
+      UPDATE waitlist_referral_codes AS code
+         SET owner_waitlist_signup_id = waitlist.id
+        FROM waitlist_signups AS waitlist
+       WHERE code.owner_waitlist_signup_id IS NULL
+         AND lower(trim(waitlist.email)) = code.owner_email_lower;
+    `,
+  },
+  {
     // One shared email-keyed queue keeps a non-identifying history of the
     // entry points that have submitted the same email (web / iOS / Android).
     // Existing records remain intact and simply start with an empty history.

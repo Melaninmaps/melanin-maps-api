@@ -1244,6 +1244,16 @@ export default function Profile() {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
+  const [referralProfile, setReferralProfile] = useState<{
+    referralCode: string;
+    referralCount: number;
+  } | null>(null);
+  const [referralCodeDraft, setReferralCodeDraft] = useState("");
+  const [referralCodeCheck, setReferralCodeCheck] = useState<
+    "idle" | "checking" | "available" | "taken" | "invalid"
+  >("idle");
+  const [referralCodeSaving, setReferralCodeSaving] = useState(false);
+  const referralCodeCheckTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Community Impact ───────────────────────────────────────────────────────
   const [impact, setImpact] = useState<{
@@ -1361,6 +1371,20 @@ export default function Profile() {
           setSafetyAlertPolice(d.safetyAlertPolice ?? true);
           setSafetyAlertIce(d.safetyAlertIce ?? true);
           setSafetyAlertRadius(d.safetyAlertRadiusMiles ?? 5);
+        }
+      })
+      .catch(() => {});
+    // Referral codes and counts are owner-scoped. The response deliberately
+    // contains no referred-member identities, only the aggregate confirmed count.
+    fetch(`${base}/api/referrals/my-code`, { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.referralCode) {
+          setReferralProfile({
+            referralCode: d.referralCode,
+            referralCount: d.referralCount ?? 0,
+          });
+          setReferralCodeDraft(d.referralCode);
         }
       })
       .catch(() => {});
@@ -1530,6 +1554,77 @@ export default function Profile() {
       /* silent */
     } finally {
       setSafetySettingsLoading(false);
+    }
+  };
+
+  const checkReferralCode = (raw: string) => {
+    const clean = raw.toUpperCase().replace(/[^A-Z0-9-]/g, "").slice(0, 10);
+    setReferralCodeDraft(clean);
+    if (referralCodeCheckTimer.current) clearTimeout(referralCodeCheckTimer.current);
+    if (!clean) {
+      setReferralCodeCheck("idle");
+      return;
+    }
+    if (clean.length < 3 || !/^[A-Z0-9](?:[A-Z0-9-]*[A-Z0-9])?$/.test(clean)) {
+      setReferralCodeCheck("invalid");
+      return;
+    }
+    setReferralCodeCheck("checking");
+    referralCodeCheckTimer.current = setTimeout(async () => {
+      try {
+        const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+        const response = await fetch(
+          `${base}/api/referrals/check-code/${encodeURIComponent(clean)}`,
+          { credentials: "include" },
+        );
+        const data = await response.json() as { available?: boolean };
+        setReferralCodeCheck(data.available ? "available" : "taken");
+      } catch {
+        setReferralCodeCheck("idle");
+      }
+    }, 350);
+  };
+
+  const saveReferralCode = async () => {
+    if (referralCodeCheck !== "available" || referralCodeSaving) return;
+    setReferralCodeSaving(true);
+    try {
+      const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+      const response = await fetch(`${base}/api/referrals/my-code`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: referralCodeDraft }),
+      });
+      const data = await response.json() as {
+        referralCode?: string;
+        referralCount?: number;
+        error?: string;
+      };
+      if (!response.ok || !data.referralCode) {
+        toast({
+          title: "Could not save referral code",
+          description: data.error ?? "Try a different code.",
+          variant: "destructive",
+        });
+        setReferralCodeCheck("taken");
+        return;
+      }
+      setReferralProfile({
+        referralCode: data.referralCode,
+        referralCount: data.referralCount ?? referralProfile?.referralCount ?? 0,
+      });
+      setReferralCodeDraft(data.referralCode);
+      setReferralCodeCheck("available");
+      toast({ title: "Referral code saved" });
+    } catch {
+      toast({
+        title: "Could not save referral code",
+        description: "Please check your connection and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setReferralCodeSaving(false);
     }
   };
 
@@ -2470,6 +2565,59 @@ export default function Profile() {
                   </>
                 )}
               </button>
+            </div>
+
+            <div data-testid="profile-referral-code-settings" className="rounded-2xl border border-[#CA922B]/25 bg-[#FAF6EF] p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="font-semibold text-sm text-[#3A1F0E] flex items-center gap-2">
+                    <Link2 className="w-4 h-4 text-[#CA922B]" /> Your referral code
+                  </div>
+                  <p className="text-xs text-[#3A1F0E]/60 mt-1">
+                    Share your code. Your count includes only confirmed, distinct waitlist signups.
+                  </p>
+                </div>
+                <div className="rounded-xl bg-white px-3 py-2 text-right ring-1 ring-[#3A1F0E]/5">
+                  <div className="font-mono text-sm font-bold tracking-wide text-[#2B1507]">
+                    {referralProfile?.referralCode ?? "Loading…"}
+                  </div>
+                  <div className="mt-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#9A6717]">
+                    {referralProfile?.referralCount ?? 0} confirmed
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <div className="min-w-0 flex-1">
+                  <label htmlFor="profile-referral-code" className="sr-only">Choose a referral code</label>
+                  <Input
+                    id="profile-referral-code"
+                    data-testid="profile-referral-code-input"
+                    value={referralCodeDraft}
+                    onChange={(event) => checkReferralCode(event.target.value)}
+                    maxLength={10}
+                    autoCapitalize="characters"
+                    spellCheck={false}
+                    placeholder="MEA-PARKS"
+                    className="h-11 bg-white font-mono uppercase tracking-wide text-[#3A1F0E] placeholder:text-[#3A1F0E]/35"
+                  />
+                  <p aria-live="polite" className="mt-1.5 text-xs font-medium">
+                    {referralCodeCheck === "checking" && <span className="text-[#9A6717]">Checking…</span>}
+                    {referralCodeCheck === "available" && <span className="text-emerald-700">Available</span>}
+                    {referralCodeCheck === "taken" && <span className="text-red-700">Already taken—try another</span>}
+                    {referralCodeCheck === "invalid" && <span className="text-red-700">Use 3–10 letters, numbers, or hyphens.</span>}
+                    {referralCodeCheck === "idle" && <span className="text-[#3A1F0E]/50">3–10 characters; letters, numbers, and hyphens.</span>}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  data-testid="profile-referral-code-save"
+                  onClick={saveReferralCode}
+                  disabled={referralCodeCheck !== "available" || referralCodeSaving}
+                  className="h-11 shrink-0 rounded-xl bg-[#2B1507] px-5 text-white hover:bg-[#3A1F0E]"
+                >
+                  {referralCodeSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : "Save code"}
+                </Button>
+              </div>
             </div>
 
             {/* Change Password */}
