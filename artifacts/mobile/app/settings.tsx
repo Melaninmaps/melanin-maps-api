@@ -56,7 +56,7 @@ export default function SettingsScreen() {
     {
       title: "App Settings",
       rows: [
-        { id: "kinfolk", icon: "message-circle", label: "KinfolkAI™", sub: "Tone, memory, preferences, and private controls", route: "/kinfolk-settings" },
+        { id: "kinfolk", icon: "message-circle", label: "Kinfolk Settings", sub: "Conversation mode, voice, memories, and preferences", route: "/kinfolk-settings" },
         { id: "notifications", icon: "bell", label: "Notifications", sub: "Alerts and reminders", route: "/notifications-settings" },
         { id: "video-sources", icon: "play-circle", label: "Video Sources", sub: "Choose YouTube, TikTok, Twitch, Snapchat & more", route: "/social-video-preferences" },
         { id: "privacy", icon: "shield", label: "Privacy & Safety", sub: "Visibility and data", route: "/privacy" },

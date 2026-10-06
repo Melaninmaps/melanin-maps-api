@@ -24,16 +24,14 @@ describe("Kinfolk mobile conversation modes", () => {
     expect(preferencesSource).toContain('personalityMode: "community"');
   });
 
-  it("restores the saved mode without exposing an inline selector in the composer", () => {
+  it("restores, exposes, and persists the saved mode inside the chat", () => {
     expect(travelSource).toContain("const savedVoiceMode = preferences?.personalityMode");
     expect(travelSource).toContain("setVoiceMode(savedVoiceMode as typeof voiceMode)");
-    const composerControls = travelSource.slice(
-      travelSource.indexOf("{showComposerControls && <>"),
-      travelSource.indexOf("{voiceInputStatus ?"),
-    );
-    expect(travelSource).toContain("Memory & privacy");
-    expect(composerControls).not.toContain("Kinfolk Voices™");
-    expect(composerControls).not.toContain("updatePreferences({ personalityMode: v.id })");
+    expect(travelSource).toContain("Conversation Mode");
+    expect(travelSource).toContain("Style only");
+    expect(travelSource).toContain("accessibilityRole=\"radio\"");
+    expect(travelSource).toContain("updatePreferences({ personalityMode: mode.id })");
+    expect(travelSource).toContain("Your saved memories and voice were left unchanged.");
   });
 
   it("uses server-supported preference values rather than silently rejected aliases", () => {
@@ -41,5 +39,15 @@ describe("Kinfolk mobile conversation modes", () => {
     expect(settingsSource).toContain('value: "concise", label: "Direct"');
     expect(settingsSource).toContain('value: "lots", label: "Many"');
     expect(settingsSource).toContain('value: "playful", label: "Witty"');
+  });
+
+  it("keeps voice delivery separate from conversation mode and links to saved-memory management", () => {
+    expect(settingsSource).toContain("CONVERSATION MODE");
+    expect(settingsSource).toContain("Standard Kinfolk Voice");
+    expect(settingsSource).toContain("Female Voice");
+    expect(settingsSource).toContain('kinfolkVoice: option.value === "female" ? "nova" : "onyx"');
+    expect(settingsSource).toContain("SAVED MEMORIES");
+    expect(settingsSource).toContain('router.push("/kinfolk-memory" as never)');
+    expect(settingsSource).toContain("Ordinary chat is never silently saved.");
   });
 });

@@ -58,7 +58,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import KinfolkTonePreference from "@/components/kinfolk/KinfolkTonePreference";
+import { KinfolkExperienceSettings } from "@/components/kinfolk/KinfolkExperienceSettings";
 import { SocialVideoPreferences } from "@/features/profile/SocialVideoPreferences";
 import { BusinessSupportPreferences } from "@/features/profile/BusinessSupportPreferences";
 import { MemberContextPreferences } from "@/features/profile/MemberContextPreferences";
@@ -826,8 +826,8 @@ const PROFILE_SETTINGS_FOLDERS: ReadonlyArray<{
   },
   {
     id: "kinfolk",
-    title: "Kinfolk preferences",
-    description: "Voice, memory controls, and recommendation preferences",
+    title: "Kinfolk Settings",
+    description: "Conversation mode, voice, memories, and recommendation preferences",
   },
   {
     id: "community",
@@ -2588,8 +2588,12 @@ export default function Profile() {
           </div>
         </div>
 
-        <div id="profile-settings-folder-kinfolk" role="tabpanel" aria-label="Kinfolk preference settings" hidden={activeSettingsFolder !== "kinfolk"} className="mt-8">
+        <div id="profile-settings-folder-kinfolk" role="tabpanel" aria-label="Kinfolk Settings" hidden={activeSettingsFolder !== "kinfolk"} className="mt-8">
+          <KinfolkExperienceSettings />
+
+          <div className="mt-8">
           <SocialVideoPreferences />
+          </div>
 
           <div className="mt-8">
             <MemberContextPreferences />
@@ -2622,7 +2626,7 @@ export default function Profile() {
               {kinfolkPrefs.personalityMode && (
                 <div>
                   <div className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50 mb-2">
-                    Kinfolk Voice
+                      Conversation Mode
                   </div>
                   <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#CA922B]/10 text-[#CA922B] text-xs font-bold border border-[#CA922B]/20 capitalize">
                     {kinfolkPrefs.personalityMode.replace(/_/g, " ")}
@@ -2733,11 +2737,6 @@ export default function Profile() {
                 )}
             </div>
           )}
-        </div>
-
-        {/* ── Kinfolk Voice Preference ────────────────────────────────────── */}
-        <div className="mt-8">
-          <KinfolkTonePreference initialValue={null} />
         </div>
         </div>
 

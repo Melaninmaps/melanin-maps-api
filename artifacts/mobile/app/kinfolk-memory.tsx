@@ -63,7 +63,7 @@ interface MemorySummary {
   lifestyleServices: string[];
 }
 
-const MODE_LABELS: Record<string, string> = { community: "Community guide", professional: "Professional mode", local: "Local insider", home: "Home & comfort", neighborhood_guide: "Neighborhood guide" };
+const MODE_LABELS: Record<string, string> = { community: "Big Cousin", best_friend: "Best Friend", business_manager: "Business Manager", professor: "Professor", neighborhood_guide: "Neighborhood guide" };
 const COMPANION_LABELS: Record<string, string> = { solo: "Solo explorer", partner: "With a partner", family: "Family trips", group: "Group travels", friends: "Friends crew" };
 
 function companionLabel(memory: PrivateMemory): string | null {
@@ -271,7 +271,7 @@ export default function KinfolkMemoryScreen() {
     if (s.travelCompanion) items.push({ icon: "users", label: "Travel Crew", value: COMPANION_LABELS[s.travelCompanion] ?? s.travelCompanion, color: "#DB2777" });
     if (s.tripStyle?.length) items.push({ icon: "star", label: "Trip Vibes", value: s.tripStyle.slice(0, 3).join(", "), color: "#D97706" });
     if (s.dietaryNotes) items.push({ icon: "coffee", label: "Dietary Notes", value: s.dietaryNotes, color: "#0891B2" });
-    if (s.personalityMode) items.push({ icon: "settings", label: "KinfolkAI Voice", value: MODE_LABELS[s.personalityMode] ?? s.personalityMode, color: colors.primary });
+    if (s.personalityMode) items.push({ icon: "settings", label: "Conversation Mode", value: MODE_LABELS[s.personalityMode] ?? s.personalityMode, color: colors.primary });
     if (s.culturalInterests?.length) items.push({ icon: "heart", label: "Cultural Interests", value: s.culturalInterests.slice(0, 4).join(", "), color: "#BE185D" });
     if (s.diasporaCountries?.length) items.push({ icon: "globe", label: "Diaspora Connection", value: s.diasporaCountries.slice(0, 4).join(", "), color: "#065F46" });
     if (s.lifestyleServices?.length) items.push({ icon: "tag", label: "Lifestyle Services", value: s.lifestyleServices.slice(0, 4).join(", "), color: "#6D28D9" });

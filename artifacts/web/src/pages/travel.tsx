@@ -294,7 +294,7 @@ function resolveActiveCommunicationStyle(
   return "friendly";
 }
 const PERSONALITY_MODES: Array<{ id: KinfolkMode; label: string }> = [
-  { id: "community", label: "Just Big Cousin" },
+  { id: "community", label: "Big Cousin" },
   { id: "professor", label: "Professor" },
   { id: "business_manager", label: "Business Manager" },
   { id: "best_friend", label: "Best Friend" },

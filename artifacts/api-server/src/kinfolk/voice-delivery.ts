@@ -4,10 +4,11 @@ import {
 } from "./conversation-mode";
 
 /**
- * A single server-owned Kinfolk base voice. Clients may choose how Kinfolk
- * delivers an answer, but never the underlying provider voice or a real-person
- * imitation. The environment values are intentionally never returned by API
- * responses or shipped to web/mobile bundles.
+ * The server owns all provider and model choices. Members can choose only the
+ * two approved product speakers below through their persisted preference; a
+ * request body can never select a provider voice or a real-person imitation.
+ * Environment values are intentionally never returned by API responses or
+ * shipped to web/mobile bundles.
  */
 export const KINFOLK_TTS_PROVIDER_ENV = "KINFOLK_TTS_PROVIDER";
 export const KINFOLK_TTS_MODEL_ENV = "KINFOLK_TTS_MODEL";
@@ -32,7 +33,7 @@ export type KinfolkSpeechConfiguration = Readonly<{
 
 export type KinfolkVoiceDelivery = Readonly<{
   mode: KinfolkConversationMode;
-  label: "Just Big Cousin" | "Professor" | "Business Manager" | "Best Friend";
+  label: "Big Cousin" | "Professor" | "Business Manager" | "Best Friend";
   styleInstruction: string;
 }>;
 
@@ -73,6 +74,21 @@ export function resolveKinfolkSpeechConfiguration(
 }
 
 /**
+ * Resolve the member-facing speaker from an already persisted, API-validated
+ * preference. `shimmer` is mapped to the approved Female Voice for existing
+ * members who selected it in earlier UI; other values retain the server-owned
+ * standard voice. This function deliberately never receives request-body data.
+ */
+export function resolveMemberKinfolkSpeechVoice(
+  configuration: KinfolkSpeechConfiguration,
+  persistedVoice: unknown,
+): KinfolkSpeechConfiguration["baseVoice"] {
+  return persistedVoice === "nova" || persistedVoice === "shimmer"
+    ? "nova"
+    : configuration.baseVoice;
+}
+
+/**
  * Mode affects delivery only. It never changes factual accuracy, source rules,
  * safety behavior, or the underlying server-owned voice identity.
  */
@@ -106,7 +122,7 @@ export function resolveKinfolkVoiceDelivery(
     default:
       return {
         mode: "community",
-        label: "Just Big Cousin",
+        label: "Big Cousin",
         styleInstruction:
           "Speak in English with a warm, grounded, steady conversational cadence. Sound like a capable older cousin who is direct, caring, and easy to understand; never imitate an accent or perform a stereotype.",
       };

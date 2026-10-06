@@ -6,6 +6,7 @@ import {
   KINFOLK_TTS_MODEL_ENV,
   KINFOLK_TTS_PROVIDER_ENV,
   normalizeKinfolkSpeechRequest,
+  resolveMemberKinfolkSpeechVoice,
   resolveKinfolkSpeechConfiguration,
   resolveKinfolkVoiceDelivery,
 } from "../voice-delivery";
@@ -38,8 +39,13 @@ describe("Kinfolk server-owned voice delivery", () => {
     } as NodeJS.ProcessEnv)).toBeNull();
   });
 
-  it("uses the same base-voice policy while varying only the four delivery profiles", () => {
-    expect(resolveKinfolkVoiceDelivery("community")).toMatchObject({ label: "Just Big Cousin" });
+  it("uses a persisted, approved speaker choice while varying only the four delivery profiles", () => {
+    const config = resolveKinfolkSpeechConfiguration({} as NodeJS.ProcessEnv)!;
+    expect(resolveMemberKinfolkSpeechVoice(config, "nova")).toBe("nova");
+    expect(resolveMemberKinfolkSpeechVoice(config, "shimmer")).toBe("nova");
+    expect(resolveMemberKinfolkSpeechVoice(config, "untrusted-client-voice")).toBe(config.baseVoice);
+    expect(resolveMemberKinfolkSpeechVoice(config, undefined)).toBe(config.baseVoice);
+    expect(resolveKinfolkVoiceDelivery("community")).toMatchObject({ label: "Big Cousin" });
     expect(resolveKinfolkVoiceDelivery("professor")).toMatchObject({ label: "Professor" });
     expect(resolveKinfolkVoiceDelivery("business_manager")).toMatchObject({ label: "Business Manager" });
     expect(resolveKinfolkVoiceDelivery("best_friend")).toMatchObject({ label: "Best Friend" });

@@ -34,6 +34,7 @@ interface BehaviorSettings {
 
 interface VoicePrefs {
   personalityMode: string;
+  kinfolkVoice: string;
   communicationStyle: string;
   emojiLevel: string;
   humorLevel: string;
@@ -45,6 +46,7 @@ const BEHAVIOR_DEFAULTS: BehaviorSettings = {
 
 const VOICE_DEFAULTS: VoicePrefs = {
   personalityMode: "community",
+  kinfolkVoice: "onyx",
   communicationStyle: "friendly",
   emojiLevel: "some",
   humorLevel: "light",
@@ -58,10 +60,10 @@ const CAPABILITIES = [
 ];
 
 const VOICE_MODES: { value: string; label: string; desc: string; icon: "zap" | "briefcase" | "book-open" | "heart" }[] = [
-  { value: "community", label: "Just Big Cousin", desc: "Warm, grounded, conversational, and direct", icon: "zap" },
-  { value: "professor", label: "Professor", desc: "Clear teaching, context, and the why behind it", icon: "book-open" },
-  { value: "business_manager", label: "Business Manager", desc: "Priorities, risks, decisions, and next actions", icon: "briefcase" },
-  { value: "best_friend", label: "Best Friend", desc: "Supportive, candid, natural, and honest", icon: "heart" },
+  { value: "community", label: "Big Cousin", desc: "Warm, grounded, practical", icon: "zap" },
+  { value: "best_friend", label: "Best Friend", desc: "Encouraging, candid, celebratory", icon: "heart" },
+  { value: "business_manager", label: "Business Manager", desc: "Direct, organized, action-oriented", icon: "briefcase" },
+  { value: "professor", label: "Professor", desc: "Clear, educational, evidence-aware", icon: "book-open" },
 ];
 
 const COMM_STYLES: { value: string; label: string }[] = [
@@ -106,8 +108,11 @@ function normalizeVoicePrefs(raw: Partial<VoicePrefs>): VoicePrefs {
     : HUMOR_LEVELS.some((level) => level.value === raw.humorLevel)
       ? raw.humorLevel!
       : VOICE_DEFAULTS.humorLevel;
+  const kinfolkVoice = raw.kinfolkVoice === "nova" || raw.kinfolkVoice === "shimmer"
+    ? raw.kinfolkVoice
+    : "onyx";
 
-  return { personalityMode, communicationStyle, emojiLevel, humorLevel };
+  return { personalityMode, kinfolkVoice, communicationStyle, emojiLevel, humorLevel };
 }
 
 export default function KinfolkSettingsScreen() {
@@ -306,7 +311,7 @@ export default function KinfolkSettingsScreen() {
           <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/privacy" as never)}>
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>KinfolkAI™</Text>
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>Kinfolk Settings</Text>
           <View style={{ width: 40 }} />
         </View>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
@@ -326,7 +331,7 @@ export default function KinfolkSettingsScreen() {
         <TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/privacy" as never)}>
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>KinfolkAI™</Text>
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Kinfolk Settings</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -365,9 +370,10 @@ export default function KinfolkSettingsScreen() {
           ))}
         </View>
 
-        {/* Voice Mode */}
-        <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>VOICE MODE</Text>
+        {/* Conversation mode */}
+        <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>CONVERSATION MODE</Text>
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.cardIntro, { color: colors.mutedForeground }]}>Changes how Kinfolk communicates, not facts, sources, safety behavior, current-information requirements, or recommendation rules.</Text>
           {VOICE_MODES.map((vm, i) => {
             const selected = voice.personalityMode === vm.value;
             return (
@@ -392,6 +398,60 @@ export default function KinfolkSettingsScreen() {
               </React.Fragment>
             );
           })}
+        </View>
+
+        <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>VOICE</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.cardIntro, { color: colors.mutedForeground }]}>Voice changes audio delivery only. The same speaker works with every Conversation Mode.</Text>
+          {[
+            { value: "standard", label: "Standard Kinfolk Voice", desc: "The familiar Kinfolk speaker" },
+            { value: "female", label: "Female Voice", desc: "A female-presenting Kinfolk speaker for audio replies" },
+          ].map((option, index) => {
+            const selected = option.value === "female"
+              ? voice.kinfolkVoice === "nova" || voice.kinfolkVoice === "shimmer"
+              : voice.kinfolkVoice !== "nova" && voice.kinfolkVoice !== "shimmer";
+            return <React.Fragment key={option.value}>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                style={styles.optionRow}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+                accessibilityLabel={option.label}
+                onPress={() => updateVoice({ kinfolkVoice: option.value === "female" ? "nova" : "onyx" })}
+              >
+                <View style={[styles.rowIcon, { backgroundColor: selected ? colors.primary + "20" : colors.secondary }]}>
+                  <Feather name={option.value === "female" ? "user" : "volume-2"} size={16} color={selected ? colors.primary : colors.mutedForeground} />
+                </View>
+                <View style={styles.rowContent}>
+                  <Text style={[styles.rowLabel, { color: colors.foreground }]}>{option.label}</Text>
+                  <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>{option.desc}</Text>
+                </View>
+                <View style={[styles.radio, { borderColor: selected ? colors.primary : colors.border }]}>
+                  {selected && <View style={[styles.radioDot, { backgroundColor: colors.primary }]} />}
+                </View>
+              </TouchableOpacity>
+              {index === 0 && <View style={[styles.sep, { backgroundColor: colors.border, marginLeft: 60 }]} />}
+            </React.Fragment>;
+          })}
+        </View>
+
+        <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>SAVED MEMORIES</Text>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity
+            accessibilityLabel="Manage saved Kinfolk memories"
+            activeOpacity={0.8}
+            style={styles.optionRow}
+            onPress={() => router.push("/kinfolk-memory" as never)}
+          >
+            <View style={[styles.rowIcon, { backgroundColor: colors.primary + "16" }]}>
+              <Feather name="lock" size={16} color={colors.primary} />
+            </View>
+            <View style={styles.rowContent}>
+              <Text style={[styles.rowLabel, { color: colors.foreground }]}>Review saved memories</Text>
+              <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>See each explicit item, including your preferred name; pause, resume, or delete it anytime. Ordinary chat is never silently saved.</Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
         </View>
 
         <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>VOICE CHECK</Text>
@@ -622,6 +682,7 @@ const styles = StyleSheet.create({
   heroDesc: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21, textAlign: "center" },
   sectionTitle: { fontSize: 11, fontFamily: "Inter_600SemiBold", letterSpacing: 0.8, marginBottom: 8 },
   card: { borderRadius: 16, borderWidth: 1, overflow: "hidden", marginBottom: 24 },
+  cardIntro: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 2, fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18 },
   sep: { height: 1 },
   capRow: { flexDirection: "row", alignItems: "flex-start", gap: 14, paddingHorizontal: 16, paddingVertical: 14 },
   capIcon: { width: 32, height: 32, borderRadius: 8, alignItems: "center", justifyContent: "center", marginTop: 1 },

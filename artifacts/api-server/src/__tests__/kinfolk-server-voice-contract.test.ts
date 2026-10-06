@@ -16,11 +16,13 @@ const webSource = readFileSync(
 );
 
 describe("Kinfolk server-owned voice cross-client contract", () => {
-  it("does not honor a client-selected provider voice", () => {
+  it("does not honor a client-selected provider voice and resolves only stored approved preferences", () => {
     expect(routeSource).toContain('router.post("/kinfolk/speak"');
     expect(routeSource).toContain("resolveKinfolkSpeechConfiguration()");
+    expect(routeSource).toContain("resolveMemberKinfolkSpeechVoice(");
+    expect(routeSource).toContain("voicePreferences?.kinfolkVoice");
     expect(routeSource).toContain("textToSpeechWithStyle({");
-    expect(routeSource).toContain("voice: speechConfig.baseVoice");
+    expect(routeSource).toContain("voice: memberSpeaker");
     expect(routeSource).not.toContain("const { text, voice: requestedVoice }");
   });
 
@@ -38,7 +40,7 @@ describe("Kinfolk server-owned voice cross-client contract", () => {
     expect(mobileSource).not.toContain("VOICE_OPTIONS");
     expect(webSource).toContain("mode: kinfolkMode");
     expect(webSource).not.toContain("KINFOLK_VOICE_OPTIONS");
-    expect(webSource).toContain("Just Big Cousin");
+    expect(webSource).toContain("Big Cousin");
   });
 
   it("uses the dedicated audio configuration resolver for every voice endpoint", () => {

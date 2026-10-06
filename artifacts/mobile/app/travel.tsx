@@ -116,10 +116,10 @@ const WELCOME_HEADLINE = "Kinfolk here — let's map it out.";
 
 // ─── Kinfolk Voices™ constants ────────────────────────────────────────────────
 const KINFOLK_VOICES = [
-  { id: "community", icon: "🤎", label: "Big Cousin", desc: "Warm, grounded, conversational", requiresPaid: false },
-  { id: "professor", icon: "🎓", label: "Professor", desc: "Clear teaching and context", requiresPaid: false },
-  { id: "business_manager", icon: "💼", label: "Business Manager", desc: "Priorities, risks, and next actions", requiresPaid: false },
-  { id: "best_friend", icon: "✨", label: "Best Friend", desc: "Supportive, candid, and natural", requiresPaid: false },
+  { id: "community", icon: "🤎", label: "Big Cousin", desc: "Warm, grounded, practical", requiresPaid: false },
+  { id: "professor", icon: "🎓", label: "Professor", desc: "Clear, educational, evidence-aware", requiresPaid: false },
+  { id: "business_manager", icon: "💼", label: "Business Manager", desc: "Direct, organized, action-oriented", requiresPaid: false },
+  { id: "best_friend", icon: "✨", label: "Best Friend", desc: "Encouraging, candid, celebratory", requiresPaid: false },
 ] as const;
 
 const COMM_STYLES = [
@@ -2711,6 +2711,43 @@ export default function TravelScreen() {
         </View>
       )}
 
+      {isAuthenticated && (
+        <View style={[styles.conversationModeRail, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+          <View style={styles.conversationModeHeading}>
+            <Ionicons name="chatbubble-ellipses-outline" size={14} color={colors.primary} />
+            <Text style={[styles.conversationModeLabel, { color: colors.foreground }]}>Conversation Mode</Text>
+            <Text style={[styles.conversationModeHint, { color: colors.mutedForeground }]}>Style only</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.conversationModeOptions}>
+            {KINFOLK_VOICES.map((mode) => {
+              const selected = voiceMode === mode.id;
+              return <TouchableOpacity
+                key={mode.id}
+                activeOpacity={0.82}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+                accessibilityLabel={`Use ${mode.label} conversation mode`}
+                style={[styles.conversationModeChip, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? colors.primary + "16" : colors.background }]}
+                onPress={() => {
+                  if (selected) return;
+                  const previous = voiceMode;
+                  setVoiceMode(mode.id);
+                  void updatePreferences({ personalityMode: mode.id }).then((saved) => {
+                    if (!saved) {
+                      setVoiceMode(previous);
+                      Alert.alert("Conversation Mode was not changed", "Please try again. Your saved memories and voice were left unchanged.");
+                    }
+                  });
+                }}
+              >
+                <Text style={styles.conversationModeEmoji}>{mode.icon}</Text>
+                <Text style={[styles.conversationModeChipText, { color: selected ? colors.primary : colors.mutedForeground }]}>{mode.label}</Text>
+              </TouchableOpacity>;
+            })}
+          </ScrollView>
+        </View>
+      )}
+
       {/* Personalization banner */}
       {hasProfile && messages.length === 0 && (
         <View style={[styles.personalBanner, { backgroundColor: colors.primary + "12", borderBottomColor: colors.primary + "25" }]}>
@@ -3023,6 +3060,14 @@ const styles = StyleSheet.create({
   headerCenter: { flex: 1 },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 18, color: "#FFFFFF" },
   headerSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: "#ffffff99" },
+  conversationModeRail: { borderBottomWidth: StyleSheet.hairlineWidth, paddingTop: 8 },
+  conversationModeHeading: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingBottom: 7 },
+  conversationModeLabel: { fontFamily: "Inter_700Bold", fontSize: 11 },
+  conversationModeHint: { fontFamily: "Inter_400Regular", fontSize: 10 },
+  conversationModeOptions: { paddingHorizontal: 14, paddingBottom: 10, gap: 7 },
+  conversationModeChip: { flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderRadius: 18, paddingHorizontal: 10, paddingVertical: 7 },
+  conversationModeEmoji: { fontSize: 12 },
+  conversationModeChipText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 4 },
   headerIconBtn: { padding: 6, borderRadius: 20 },
   headerActionRail: { flexDirection: "row", flexWrap: "wrap", gap: 7, paddingHorizontal: 16, paddingBottom: 11, paddingTop: 1, borderTopWidth: StyleSheet.hairlineWidth },

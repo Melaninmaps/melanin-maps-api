@@ -410,6 +410,7 @@ import { normalizeKinfolkTaskAction } from "../kinfolk/task-action-contract";
 import {
   KINFOLK_VOICE_PREVIEW_TEXT,
   normalizeKinfolkSpeechRequest,
+  resolveMemberKinfolkSpeechVoice,
   resolveKinfolkSpeechConfiguration,
   resolveKinfolkVoiceDelivery,
 } from "../kinfolk/voice-delivery";
@@ -13410,11 +13411,18 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
   const speakText = chars < text.length ? text.slice(0, 597) + "…" : text;
 
   try {
-    const [userRow] = await db
-      .select({ memberType: usersTable.memberType })
-      .from(usersTable)
-      .where(eq(usersTable.id, req.user.id))
-      .limit(1);
+    const [[userRow], [voicePreferences]] = await Promise.all([
+      db
+        .select({ memberType: usersTable.memberType })
+        .from(usersTable)
+        .where(eq(usersTable.id, req.user.id))
+        .limit(1),
+      db
+        .select({ kinfolkVoice: userPreferencesTable.kinfolkVoice })
+        .from(userPreferencesTable)
+        .where(eq(userPreferencesTable.userId, req.user.id))
+        .limit(1),
+    ]);
     const tier = getTierFromMemberType(userRow?.memberType);
     const usage = await checkVoiceUsage(req.user.id, tier);
     if (!usage.allowed) {
@@ -13428,10 +13436,14 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
     }
 
     let ttsTimer: ReturnType<typeof setTimeout> | undefined;
+    const memberSpeaker = resolveMemberKinfolkSpeechVoice(
+      speechConfig,
+      voicePreferences?.kinfolkVoice,
+    );
     const audioBuffer = await Promise.race([
       textToSpeechWithStyle({
         text: speakText,
-        voice: speechConfig.baseVoice,
+        voice: memberSpeaker,
         format: "wav",
         model: speechConfig.model,
         styleInstruction: delivery.styleInstruction,
@@ -13491,9 +13503,18 @@ router.post("/kinfolk/voice-preview", async (req: Request, res: Response) => {
   }
   const delivery = resolveKinfolkVoiceDelivery(normalizeKinfolkSpeechRequest(req.body).mode);
   try {
+    const [voicePreferences] = await db
+      .select({ kinfolkVoice: userPreferencesTable.kinfolkVoice })
+      .from(userPreferencesTable)
+      .where(eq(userPreferencesTable.userId, req.user.id))
+      .limit(1);
+    const memberSpeaker = resolveMemberKinfolkSpeechVoice(
+      speechConfig,
+      voicePreferences?.kinfolkVoice,
+    );
     const audioBuffer = await textToSpeechWithStyle({
       text: KINFOLK_VOICE_PREVIEW_TEXT,
-      voice: speechConfig.baseVoice,
+      voice: memberSpeaker,
       format: "wav",
       model: speechConfig.model,
       styleInstruction: delivery.styleInstruction,
