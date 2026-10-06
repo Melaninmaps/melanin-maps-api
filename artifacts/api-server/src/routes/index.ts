@@ -28,6 +28,7 @@ import groupsRouter from "./groups";
 import adminRouter from "./admin";
 import businessIngestRouter from "./business-ingest";
 import kinfolkRouter, { probeKinfolkAI } from "./kinfolk";
+import kinfolkPrivatePlacesRouter from "./kinfolk-private-places";
 import wishlistRouter from "./wishlist";
 import claimsRouter from "./claims";
 import notificationsRouter from "./notifications";
@@ -280,6 +281,9 @@ router.use(adminRouter);
 router.use(businessIngestRouter);
 router.use(libraryGrowthAdminRouter);
 router.use(kinfolkRouter);
+// Private Places is a separately consented, encrypted member feature. It is
+// not a Kinfolk chat or ordinary-memory route and remains disabled by default.
+router.use(kinfolkPrivatePlacesRouter);
 router.use(kinfolkTasksRouter);
 router.use(wishlistRouter);
 router.use(claimsRouter);

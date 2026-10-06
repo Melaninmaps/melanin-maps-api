@@ -29,6 +29,7 @@ export * from "./business-invites";
 export * from "./user-preferences";
 export * from "./kinfolk-sessions";
 export * from "./kinfolk-private-memories";
+export * from "./kinfolk-private-places";
 export * from "./founder-product-knowledge";
 export * from "./kinfolk-feedback";
 export * from "./kinfolk-response-feedback";
