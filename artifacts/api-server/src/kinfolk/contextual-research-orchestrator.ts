@@ -26,6 +26,31 @@ export type ContextualEvidenceBundle = {
   degradedReason: string | null;
 };
 
+function displayEvidenceDate(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date.toISOString().slice(0, 10);
+}
+
+/**
+ * Build a concise, server-authored freshness receipt for a current answer. The
+ * existing clients render this sourceContext directly above their linked source
+ * list, so this preserves compatibility with already-installed mobile builds.
+ */
+export function buildCurrentEvidenceSourceContext(
+  items: ReadonlyArray<Pick<ContextualEvidenceItem, "title" | "publishedAt" | "retrievedAt">>,
+): string | null {
+  if (items.length === 0) return null;
+  const checkedOn = displayEvidenceDate(
+    items.map((item) => item.retrievedAt).find((value) => Boolean(value)),
+  ) ?? "the current check";
+  const datedSources = items.slice(0, 3).map((item) => {
+    const date = displayEvidenceDate(item.publishedAt) ?? displayEvidenceDate(item.retrievedAt);
+    return date ? `${item.title} (${item.publishedAt ? "published/updated" : "retrieved"} ${date})` : item.title;
+  });
+  return `Current evidence checked ${checkedOn}. Source dates: ${datedSources.join("; ")}. Linked sources are shown below; financial estimates and public status can change.`;
+}
+
 export type ContextualResearchDeps = {
   searchInternal?: (queries: string[], signal?: AbortSignal) => Promise<ContextualEvidenceItem[]>;
   searchLive?: (queries: string[], signal?: AbortSignal) => Promise<ContextualEvidenceItem[]>;

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ExternalResearchProvider, ResearchDocument } from "../../library/types";
 import {
+  buildCurrentEvidenceSourceContext,
   contextualEvidenceNeedsFailClosedResponse,
   orchestrateContextualResearch,
   type ContextualEvidenceItem,
@@ -55,6 +56,14 @@ function document(index: number, overrides: Partial<ResearchDocument> = {}): Res
 }
 
 describe("contextual research orchestrator", () => {
+  it("formats member-visible source and freshness metadata for a current answer", () => {
+    expect(buildCurrentEvidenceSourceContext([
+      item("Current financial report", "https://reporting.example.com/financial", "reporting"),
+    ])).toBe(
+      "Current evidence checked 2025-06-01. Source dates: Current financial report (published/updated 2025-05-31). Linked sources are shown below; financial estimates and public status can change.",
+    );
+  });
+
   it("stops after sufficient approved internal evidence and makes zero live calls", async () => {
     const order: string[] = [];
     const searchLive = vi.fn(async () => { order.push("live"); return []; });

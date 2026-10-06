@@ -79,6 +79,20 @@ describe("Kinfolk evidence runtime", () => {
     })).toBeNull();
   });
 
+  it("never replaces an unavailable current net-worth answer with a remembered estimate", () => {
+    const route = routeEvidence("How much is Beyoncé worth?");
+    expect(route).toMatchObject({
+      domain: "current_information",
+      retrievalRequirement: "web_required",
+      failClosed: true,
+    });
+    expect(evidenceFailureReply({
+      route,
+      medicalContextBlock: "",
+      hasLiveWebEvidence: false,
+    })).toBe(TRUTHFUL_EVIDENCE_UNAVAILABLE_REPLY);
+  });
+
   it("never summarizes a different article when the requested linked source was unavailable", () => {
     expect(evidenceFailureReply({
       route: routeEvidence("Summarize this article: https://example.com/gas-prices"),
