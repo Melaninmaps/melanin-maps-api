@@ -27,10 +27,12 @@ import { startCityRequestFlush, stopCityRequestFlush } from "./lib/cityRequestTr
 import { startLibraryGrowthWorker, stopLibraryGrowthWorker, setGrowthWorkerLogger } from "./lib/library-growth-worker";
 import { seedLibraryStarterTopics } from "./library/seedLibraryStarterTopics";
 import { seedLibraryStarterEntries } from "./library/seedLibraryStarterEntries";
+import { isExplicitFeatureReleaseMode } from "./lib/explicitFeatureReleaseMode";
 
 const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);
 const host = process.env["HOST"]?.trim() || undefined;
+const explicitFeatureReleaseMode = isExplicitFeatureReleaseMode();
 
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
@@ -110,16 +112,20 @@ async function initStripe() {
 })();
 
 try {
-  if (process.env.DIRECTORY_REVIEW_ENABLED === "1" &&
-      (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
-    throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
+  if (explicitFeatureReleaseMode) {
+    logger.info("Explicit feature release mode: skipping boot-time schema and publication writers");
+  } else {
+    if (process.env.DIRECTORY_REVIEW_ENABLED === "1" &&
+        (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
+      throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
+    }
+    if (directoryReviewPool) {
+      await bootstrapDirectoryReviewSchema(directoryReviewPool);
+      logger.info("Isolated directory review schema ready");
+    }
+    await ensureRequiredSafetyReportSchema(pool);
+    logger.info("Required safety report schema ready");
   }
-  if (directoryReviewPool) {
-    await bootstrapDirectoryReviewSchema(directoryReviewPool);
-    logger.info("Isolated directory review schema ready");
-  }
-  await ensureRequiredSafetyReportSchema(pool);
-  logger.info("Required safety report schema ready");
 } catch (error) {
   logger.fatal({ error }, "Required safety report schema failed — server will not accept traffic");
   await pool.end().catch(() => undefined);
@@ -127,16 +133,18 @@ try {
 }
 
 try {
-  const directoryReviewEnabled = assertDirectoryReviewLocalStaging(process.env);
-  if (directoryReviewEnabled && (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
-    throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
+  if (!explicitFeatureReleaseMode) {
+    const directoryReviewEnabled = assertDirectoryReviewLocalStaging(process.env);
+    if (directoryReviewEnabled && (process.env.DIRECTORY_REVIEW_SIGNING_SECRET?.length ?? 0) < 32) {
+      throw new Error("DIRECTORY_REVIEW_SIGNING_SECRET must contain at least 32 characters when directory review is enabled.");
+    }
+    await ensureRequiredPublicationSchema(
+      false,
+      logger,
+    );
+    logger.info("Required publication schema ready before traffic acceptance");
+    await ensureCommunityFeedReadSchema(logger);
   }
-  await ensureRequiredPublicationSchema(
-    false,
-    logger,
-  );
-  logger.info("Required publication schema ready before traffic acceptance");
-  await ensureCommunityFeedReadSchema(logger);
 } catch (error) {
   for (const detail of publicationSchemaFailureLogLines(error)) {
     logger.error(detail);
@@ -163,6 +171,12 @@ const onListening = (err?: Error) => {
   // Accessible at GET /api/pool-audit (x-cron-secret auth).
   // Emits SLOW_QUERY and POOL_GROWTH_DETECTED warnings to Railway logs.
   initPoolInstrumentation(pool, getPool);
+  if (explicitFeatureReleaseMode) {
+    logger.info(
+      "Explicit feature release mode: skipping automatic startup writers, seeds, publishers, and workers",
+    );
+    return;
+  }
   if (directoryReviewPool) startDirectoryPublicationWorker(directoryReviewPool, pool);
 
   // Route monitor log events through pino so they appear in Railway's log stream.
