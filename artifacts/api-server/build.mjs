@@ -5,13 +5,15 @@ import { build as esbuild } from "esbuild";
 import esbuildPluginPino from "esbuild-plugin-pino";
 import { rm, copyFile, cp, readFile, mkdir, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import { packageKinfolkReadinessFixture } from "./readiness-assets.mjs";
 
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
 
 const artifactDir = path.dirname(fileURLToPath(import.meta.url));
+const webAppDir = path.resolve(artifactDir, "..", "web");
+const webDistDir = path.resolve(webAppDir, "dist", "public");
 
 // Generate src/generated/spaHtml.ts BEFORE esbuild runs so it can be bundled.
 // Generate src/generated/buildIdentity.ts BEFORE esbuild runs so the git SHA
@@ -41,7 +43,7 @@ async function generateBuildIdentity() {
 }
 
 async function generateSpaHtml() {
-  const htmlSrc = path.resolve(artifactDir, "web-static", "index.html");
+  const htmlSrc = path.resolve(webDistDir, "index.html");
   const genDir = path.resolve(artifactDir, "src", "generated");
   const genFile = path.resolve(genDir, "spaHtml.ts");
   try {
@@ -57,6 +59,17 @@ async function generateSpaHtml() {
       `// AUTO-GENERATED — fallback when web-static/index.html is absent\nexport const SPA_HTML = "";\n`);
     console.warn("SPA html fallback written:", e.message);
   }
+}
+
+// Production is served by api-server, but its browser UI is authored in the
+// workspace web app. Build that source in the same release command so a pinned
+// Railway API deployment cannot report the new SHA while serving stale assets
+// from artifacts/api-server/web-static.
+function buildCurrentWebAssets() {
+  execFileSync("pnpm", ["run", "build"], {
+    cwd: webAppDir,
+    stdio: "inherit",
+  });
 }
 
 async function buildAll() {
@@ -254,7 +267,9 @@ async function writeBuildIdentity(distDir) {
   console.log("BUILD_IDENTITY written:", JSON.stringify(identity));
 }
 
-generateBuildIdentity()
+Promise.resolve()
+  .then(() => buildCurrentWebAssets())
+  .then(() => generateBuildIdentity())
   .then(() => generateSpaHtml())
   .then(() => buildAll())
   .then(() =>
@@ -266,11 +281,10 @@ generateBuildIdentity()
   .then(() => packageKinfolkReadinessFixture(artifactDir))
   .then(() => console.log("Kinfolk readiness fixture copied to dist/assets/readiness/"))
   .then(() => {
-    const webStaticSrc = path.resolve(artifactDir, "web-static");
     const webStaticDst = path.resolve(artifactDir, "dist/public");
-    return cp(webStaticSrc, webStaticDst, { recursive: true });
+    return cp(webDistDir, webStaticDst, { recursive: true });
   })
-  .then(() => console.log("Web static files copied to dist/public/"))
+  .then(() => console.log("Current web build copied to dist/public/"))
   .then(() => writeBuildIdentity(path.resolve(artifactDir, "dist")))
   .catch((err) => {
     console.error(err);
