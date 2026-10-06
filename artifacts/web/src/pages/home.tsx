@@ -185,10 +185,11 @@ export default function Home() {
   const { data: auth } = useGetCurrentAuthUser();
   const [, navigate] = useLocation();
 
-  // Authenticated members begin with the visual Discover experience.
+  // The authenticated front door is map-first. Discover remains available as
+  // its own tab, while the map stays the dominant first surface.
   useEffect(() => {
     if (auth?.user) {
-      navigate("/discover", { replace: true });
+      navigate("/map", { replace: true });
     }
   }, [auth?.user, navigate]);
 

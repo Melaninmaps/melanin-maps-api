@@ -1627,7 +1627,7 @@ export default function MapPage() {
     const showingDestinations = legendFilter === "destinations";
 
     return (
-      <div className="w-80 shrink-0 flex flex-col border-r border-[#3A1F0E]/10 bg-white overflow-hidden">
+      <div className="h-full w-full flex flex-col border-r border-[#3A1F0E]/10 bg-white overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b border-[#3A1F0E]/8 shrink-0">
           <div className="flex items-center justify-between mb-3">
@@ -2268,12 +2268,9 @@ export default function MapPage() {
       {showAddPlace && (
         <AddPlaceModal initialSearch={search} onClose={() => setShowAddPlace(false)} />
       )}
-    <div className="flex h-[calc(100vh-64px)] overflow-hidden bg-[#FAF6EF]">
-      {/* Sidebar — only visible when open */}
-      {sidebarOpen && renderSidebar()}
-
+    <div data-testid="map-first-shell" className="relative h-[calc(100vh-64px)] overflow-hidden bg-[#FAF6EF]">
       {/* ── Map ── */}
-      <div className="flex-1 min-w-0 relative">
+      <div data-testid="map-canvas-shell" className="relative h-full w-full">
         {/* A directory handoff has its own governed result layer. Do not keep
             that explicit search behind the unrelated all-business-pin fetch. */}
         {(!ready || (isLoading && !handoffQuery)) && (
@@ -2366,6 +2363,19 @@ export default function MapPage() {
             map. Its data, typed search, and underlying filters remain intact:
             members can still search markets, HBCUs, cultural places, events,
             and every other supported category by name or need. */}
+
+        {/* The panel layers over the full canvas rather than becoming a flex
+            sibling. Search and results remain available without shrinking the
+            initial map-first surface. */}
+        {sidebarOpen && (
+          <aside
+            data-testid="map-sidebar-overlay"
+            className="absolute inset-y-0 left-0 z-20 w-80 max-w-[calc(100%-3.5rem)] shadow-2xl"
+            aria-label="Map search and results"
+          >
+            {renderSidebar()}
+          </aside>
+        )}
       </div>
     </div>
     </>

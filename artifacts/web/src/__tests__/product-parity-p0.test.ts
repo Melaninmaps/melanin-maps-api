@@ -81,11 +81,11 @@ describe("bounded cross-platform website repairs", () => {
     expect(community).toContain("Community guidance");
   });
 
-  it("opens members on Discover and repairs legacy website routes", () => {
+  it("opens members on the map and repairs legacy website routes", () => {
     const home = source("../pages/home.tsx");
     const app = source("../App.tsx");
     const layout = source("../components/layout.tsx");
-    expect(home).toContain('navigate("/discover", { replace: true })');
+    expect(home).toContain('navigate("/map", { replace: true })');
     expect(app).toContain('<Route path="/businesses/submit"><Redirect to="/submit-business" /></Route>');
     expect(app).toContain('<Route path="/health-hub"><Redirect to="/wellness" /></Route>');
     expect(layout).not.toContain('{ href: "/connections", label: "Connections" }');
