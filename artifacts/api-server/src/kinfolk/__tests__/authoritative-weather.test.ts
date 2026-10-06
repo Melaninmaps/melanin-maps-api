@@ -17,6 +17,7 @@ describe("authoritative live weather", () => {
     expect(isLiveWeatherQuestion("What is the weather in Jamison PA?")).toBe(true);
     expect(isLiveWeatherQuestion("Will it rain in Jamison tonight?")).toBe(true);
     expect(isLiveWeatherQuestion("Why is the sun so hot?")).toBe(false);
+    expect(isLiveWeatherQuestion("Are there official weather advisories in Philadelphia today?")).toBe(false);
   });
 
   it("uses an explicitly named city before a conversational city hint", () => {

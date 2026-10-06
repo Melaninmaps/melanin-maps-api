@@ -185,6 +185,13 @@ function buildAnswer(place: OpenMeteoPlace, forecast: OpenMeteoForecast): Author
  * about a hot/cold experience as a weather lookup.
  */
 export function isLiveWeatherQuestion(message: string): boolean {
+  // An alert, watch, warning, or advisory is a public-safety status question,
+  // not a request for a forecast. It must continue to the generic current-
+  // evidence route, where Kinfolk can cite the relevant official authority or
+  // fail closed instead of implying that a clear forecast means no alert exists.
+  if (/\b(?:advisories?|alerts?|warnings?|watches)\b/i.test(message)) {
+    return false;
+  }
   return /\b(weather|forecast|rain|raining|umbrella|temperature|degrees|snow|snowing|storm|wind|windy|humid|sunny|cloudy|will it rain)\b/i.test(message)
     || /\bwhat\s+(?:should|do)\s+i\s+(?:wear|bring|pack)\b/i.test(message);
 }
