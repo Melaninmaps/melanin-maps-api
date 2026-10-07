@@ -20,7 +20,7 @@
  */
 
 import { requiresCurrentResearch } from "./current-research";
-import { isImmediateMedicalEmergency } from "./emergency-medical-response";
+import { isImmediateMedicalEmergency, isImmediateSafetyEmergency } from "./emergency-medical-response";
 import { isKinfolkPlatformPolicyQuestion } from "./request-classifier";
 
 // ─── Intent types ─────────────────────────────────────────────────────────────
@@ -220,10 +220,6 @@ const FINANCIAL_SIGNALS = [
 
 // Emergency routing requires concrete immediate-danger language. Everyday
 // phrases such as “help me draft…” or “help me prepare…” remain conversational.
-const SAFETY_EMERGENCY_SIGNALS = [
-  /\b(?:911|call 911|call the police|i(?:'m| am) in danger|being followed|someone is following(?: me)?|someone (?:is )?trying to break into|domestic violence|being abused|sexual assault|being attacked|shooting|been shot|stabbed|fire|flood|evacuat(?:e|ion)|missing person|kidnap(?:ped|ping)?|human trafficking|suicid(?:e|al)?|self[ -]?harm|overdos(?:e|ing)|unconscious|not breathing)\b/i,
-];
-
 const CURRENT_INFO_SIGNALS = [
   /\b(current|right now|today|this week|this month|tonight|tomorrow|this weekend|latest|recent|hours|open|closed|operating hours|visa|visa requirement|entry requirement|travel advisory|travel warning|border|customs|vaccination requirement|covid|pandemic|breaking|news|election|poll|event|concert|festival|game|match|score|weather|forecast|storm|hurricane|earthquake|price|cost|rate|today's|current rate|exchange rate)\b/i,
 ];
@@ -285,10 +281,11 @@ export function classifyIntent(message: string, hasDestination: boolean): Kinfol
     );
 
   // Safety emergency — absolute top priority. Medical emergencies use a
-  // dedicated deterministic response before any retrieval or model work.
+  // dedicated deterministic response before any retrieval or model work; the
+  // same shared boundary covers other concrete immediate-danger signals.
   if (
     isImmediateMedicalEmergency(message) ||
-    SAFETY_EMERGENCY_SIGNALS.some((re) => re.test(msg))
+    isImmediateSafetyEmergency(message)
   )
     return "safety_emergency";
 

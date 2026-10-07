@@ -180,7 +180,10 @@ import {
   isLiveWeatherQuestion,
   resolveAuthoritativeWeather,
 } from "../kinfolk/authoritative-weather";
-import { immediateMedicalEmergencyReply } from "../kinfolk/emergency-medical-response";
+import {
+  immediateMedicalEmergencyReply,
+  immediateSafetyEmergencyReply,
+} from "../kinfolk/emergency-medical-response";
 import { buildKinfolkCulturalLearningOpportunity } from "../kinfolk/cultural-learning-opportunity";
 import { buildImageCreationSafetyGuidance } from "../kinfolk/image-creation-safety";
 import {
@@ -8138,6 +8141,45 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       needsClarification: false,
       originalQuery: message,
       answerMode: "immediate_medical_emergency",
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "not_needed",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
+    });
+    return;
+  }
+
+  // Other concrete immediate-danger signals need the same deterministic, no-
+  // provider path. An evidence-unavailable reply would be unsafe during an
+  // active break-in, assault, fire, or similar emergency.
+  const emergencySafetyReply = immediateSafetyEmergencyReply(message);
+  if (emergencySafetyReply) {
+    res.status(200).json({
+      sessionId,
+      reply: emergencySafetyReply,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: [],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "safety_emergency",
+      sources: [],
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "immediate_safety_emergency",
       structuredContent: null,
       mediaLinks: [],
       relatedConnections: [],
