@@ -338,13 +338,23 @@ export default function KinfolkVoicePreflightScreen() {
         const payload = await response.json().catch(() => ({})) as { message?: string; error?: string };
         throw new Error(payload.message?.trim() || payload.error?.trim() || `HTTP ${response.status}`);
       }
-      const payload = await response.json() as { audio?: string; format?: string };
+      const payload = await response.json() as {
+        audio?: string;
+        format?: string;
+        speakerProfile?: "standard" | "female";
+        speakerLabel?: string;
+      };
       if (!payload.audio || !payload.format) throw new Error("Kinfolk returned no playable audio payload.");
       const file = new FileSystem.File(FileSystem.Paths.cache, `kinfolk-voice-preflight-${Date.now()}.${payload.format}`);
       file.write(payload.audio, { encoding: FileSystem.EncodingType.Base64 });
       playbackFileRef.current = file;
       setPlaybackUri(file.uri);
-      updateStage("speech_created", "passed", "Kinfolk returned speech audio and the temporary playback file was prepared.");
+      const speakerLabel = payload.speakerProfile === "female"
+        ? "Female Voice"
+        : payload.speakerProfile === "standard"
+          ? "Standard Kinfolk Voice"
+          : "the saved Kinfolk Voice";
+      updateStage("speech_created", "passed", `Kinfolk returned ${speakerLabel} speech audio and the temporary playback file was prepared.`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unknown speech error.";
       updateStage("speech_created", "failed", voicePreflightFailure("speech_created", `Kinfolk could not create speech audio: ${message}`));
@@ -472,7 +482,7 @@ export default function KinfolkVoicePreflightScreen() {
         <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.preflightPrompt, { color: colors.foreground }]}>Say this after recording starts:</Text>
           <Text style={[styles.promptQuote, { color: colors.primary }]}>{VOICE_PREFLIGHT_PROMPT}</Text>
-          <Text style={[styles.cardHint, { color: colors.mutedForeground }]}>Record, stop, review the transcript, send, prepare Kinfolk speech, and tap Play. Repeat a fresh attempt for each route and for all five consecutive voice turns.</Text>
+          <Text style={[styles.cardHint, { color: colors.mutedForeground }]}>Your saved Kinfolk Settings Voice controls the speaker for this test. Record, stop, review the transcript, send, prepare Kinfolk speech, and tap Play. Repeat with Standard Kinfolk Voice and Female Voice on each route, then complete five consecutive normal voice turns.</Text>
           {!recorderState.isRecording ? (
             <TouchableOpacity
               onPress={() => void startPreflight()}
@@ -564,7 +574,7 @@ export default function KinfolkVoicePreflightScreen() {
           <Feather name="clipboard" size={17} color="#A16207" />
           <View style={{ flex: 1 }}>
             <Text style={styles.manualTitle}>Required device gate</Text>
-            <Text style={styles.manualText}>Run and retain a successful attempt on phone speaker, wired headphones, and Bluetooth/car audio. Then test permission denied → Settings enabled, weak network → retry, background during playback → return, cancel recording, and five consecutive normal voice turns. This screen logs stages; a human tester must confirm that sound was actually heard on each physical route.</Text>
+            <Text style={styles.manualText}>Run and retain a successful Standard Kinfolk Voice and Female Voice attempt on phone speaker, wired headphones, and Bluetooth/car audio. Then test permission denied → Settings enabled, weak network → retry, background during playback → return, cancel recording, and five consecutive normal voice turns. This screen logs stages; a human tester must confirm that sound was actually heard on each physical route.</Text>
           </View>
         </View>
       </ScrollView>
