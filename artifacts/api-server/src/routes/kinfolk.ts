@@ -3,6 +3,7 @@ import {
   openai,
   resolveOpenAIConfiguration,
 } from "@workspace/integrations-openai-ai-server";
+import { generateImageBuffer } from "@workspace/integrations-openai-ai-server/image";
 import {
   audioOpenai,
   createAudioUploadFile,
@@ -175,6 +176,11 @@ import {
 import { immediateMedicalEmergencyReply } from "../kinfolk/emergency-medical-response";
 import { buildKinfolkCulturalLearningOpportunity } from "../kinfolk/cultural-learning-opportunity";
 import { buildImageCreationSafetyGuidance } from "../kinfolk/image-creation-safety";
+import {
+  KINFOLK_IMAGE_CREATION_LABEL,
+  createKinfolkImageGenerationRateLimiter,
+  decideKinfolkImageCreation,
+} from "../kinfolk/image-generation-policy";
 import {
   KinfolkQuestionImageError,
   normalizeKinfolkQuestionImageAssetIds,
@@ -7955,6 +7961,64 @@ router.post("/kinfolk/arrival-awareness", async (req: Request, res: Response) =>
     officialLinks: briefing.officialLinks,
     unavailable: briefing.unavailable,
   });
+});
+
+// ─── POST /api/kinfolk/images/generate ──────────────────────────────────────
+// Creates an intentionally constrained decorative visual. The image stays in
+// the response body only: no object storage, member memory, profile, business,
+// chat attachment, or analytics record is created by this route.
+const kinfolkImageGenerationLimiter = createKinfolkImageGenerationRateLimiter();
+router.post("/kinfolk/images/generate", async (req: Request, res: Response) => {
+  if (!req.user?.id) {
+    return void res.status(401).json({ error: "Authentication required", code: "AUTH_REQUIRED" });
+  }
+
+  const body = req.body as Record<string, unknown>;
+  const decision = decideKinfolkImageCreation({
+    brief: body.brief,
+    providerDisclosureAccepted: body.providerDisclosureAccepted,
+    noRealPersonOrPrivateInfoConfirmed: body.noRealPersonOrPrivateInfoConfirmed,
+  });
+  if (!decision.ok) {
+    return void res.status(400).json({ error: decision.error, code: decision.code });
+  }
+  if (!resolveOpenAIConfiguration()) {
+    return void res.status(503).json({
+      error: "Kinfolk image creation is unavailable right now.",
+      code: "KINFOLK_IMAGE_PROVIDER_UNAVAILABLE",
+    });
+  }
+
+  const retryAfterSeconds = kinfolkImageGenerationLimiter.claim(req.user.id);
+  if (retryAfterSeconds !== null) {
+    res.set("Retry-After", String(retryAfterSeconds));
+    return void res.status(429).json({
+      error: `Please wait ${retryAfterSeconds} seconds before creating another image.`,
+      code: "KINFOLK_IMAGE_RATE_LIMITED",
+    });
+  }
+
+  try {
+    const image = await generateImageBuffer(decision.prompt, "1024x1024");
+    if (image.length === 0) throw new Error("KINFOLK_IMAGE_EMPTY_RESPONSE");
+    res.set("Cache-Control", "no-store");
+    return void res.status(201).json({
+      imageDataUrl: `data:image/png;base64,${image.toString("base64")}`,
+      contentLabel: KINFOLK_IMAGE_CREATION_LABEL,
+      providerDisclosure: decision.providerDisclosure,
+      persistent: false,
+      shareable: false,
+      memorySaved: false,
+    });
+  } catch (err) {
+    // Do not include the member's brief, generated image, provider response, or
+    // credentials in logs. The server-owned metadata is intentionally bounded.
+    req.log.error(safeKinfolkErrorMetadata(err), "Kinfolk image creation unavailable");
+    return void res.status(503).json({
+      error: "Kinfolk could not create that visual right now. Nothing was saved.",
+      code: "KINFOLK_IMAGE_GENERATION_UNAVAILABLE",
+    });
+  }
 });
 
 router.post("/kinfolk/chat", async (req: Request, res: Response) => {

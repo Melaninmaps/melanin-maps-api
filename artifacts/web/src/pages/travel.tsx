@@ -1020,6 +1020,13 @@ function TravelPage() {
   const [pendingImageConsent, setPendingImageConsent] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [showImageCreation, setShowImageCreation] = useState(false);
+  const [imageCreationBrief, setImageCreationBrief] = useState("");
+  const [providerDisclosureAccepted, setProviderDisclosureAccepted] = useState(false);
+  const [noRealPersonOrPrivateInfoConfirmed, setNoRealPersonOrPrivateInfoConfirmed] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [imageCreationError, setImageCreationError] = useState<string | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<{ dataUrl: string; label: string } | null>(null);
   const [includeCommunityPerspective, setIncludeCommunityPerspective] = useState(false);
   const [showMemoryManager, setShowMemoryManager] = useState(false);
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
@@ -1798,6 +1805,44 @@ function TravelPage() {
     }
   }, []);
 
+  const createKinfolkImage = useCallback(async () => {
+    if (generatingImage) return;
+    setGeneratingImage(true);
+    setImageCreationError(null);
+    try {
+      const response = await fetch(`${BASE}api/kinfolk/images/generate`, {
+        method: "POST",
+        headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
+        credentials: "include",
+        body: JSON.stringify({
+          brief: imageCreationBrief,
+          providerDisclosureAccepted,
+          noRealPersonOrPrivateInfoConfirmed,
+        }),
+      });
+      const body = await response.json().catch(() => ({})) as {
+        imageDataUrl?: string;
+        contentLabel?: string;
+        error?: string;
+      };
+      if (!response.ok || !body.imageDataUrl) {
+        throw new Error(body.error ?? "Kinfolk could not create that visual right now.");
+      }
+      setGeneratedImage({
+        dataUrl: body.imageDataUrl,
+        label: body.contentLabel ?? "AI-generated visual",
+      });
+      setShowImageCreation(false);
+      setImageCreationBrief("");
+      setProviderDisclosureAccepted(false);
+      setNoRealPersonOrPrivateInfoConfirmed(false);
+    } catch (cause) {
+      setImageCreationError(cause instanceof Error ? cause.message : "Kinfolk could not create that visual right now.");
+    } finally {
+      setGeneratingImage(false);
+    }
+  }, [generatingImage, imageCreationBrief, providerDisclosureAccepted, noRealPersonOrPrivateInfoConfirmed]);
+
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
@@ -2064,7 +2109,7 @@ function TravelPage() {
     activeChatControllerRef.current?.abort("new_chat");
     releaseAudio();
     autoSpokenMessageIdsRef.current.clear();
-    setSessionId(undefined); setMessages([]); setInput(""); setVoiceTranscriptReview(null); setShowHistory(false); setPendingClarificationMsgId(null);
+    setSessionId(undefined); setMessages([]); setInput(""); setVoiceTranscriptReview(null); setShowHistory(false); setPendingClarificationMsgId(null); setGeneratedImage(null);
   };
 
   // Library suggestions — track which message IDs have been responded to
@@ -3027,6 +3072,48 @@ function TravelPage() {
                   </div>
                 </div>}
 
+                {showImageCreation && <div role="dialog" aria-modal="true" aria-label="Create an original visual with Kinfolk" className="mb-3 mx-auto max-w-3xl rounded-2xl border border-[#8D5C17]/25 bg-[#FFF9ED] p-4 text-sm text-[#3A1F0E] shadow-sm">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-bold">Create an original visual</p>
+                      <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/75">Kinfolk can create a decorative illustration—not a person, realistic photo, logo, document, or text-bearing flyer.</p>
+                    </div>
+                    <button type="button" onClick={() => { setShowImageCreation(false); setImageCreationError(null); }} aria-label="Close image creation" className="rounded-full p-1 text-[#3A1F0E]/55 hover:bg-white"><X size={16} /></button>
+                  </div>
+                  <textarea
+                    value={imageCreationBrief}
+                    onChange={(event) => setImageCreationBrief(event.target.value)}
+                    maxLength={600}
+                    rows={3}
+                    placeholder="Example: A warm abstract storefront-inspired pattern in gold, terracotta, and deep green."
+                    className="mt-3 w-full resize-none rounded-xl border border-[#3A1F0E]/15 bg-white p-3 text-xs leading-5 text-[#3A1F0E] placeholder:text-[#3A1F0E]/35 focus:border-[#CA922B]/60 focus:outline-none"
+                  />
+                  <label className="mt-3 flex items-start gap-2 text-xs leading-5 text-[#3A1F0E]/70">
+                    <input type="checkbox" checked={providerDisclosureAccepted} onChange={(event) => setProviderDisclosureAccepted(event.target.checked)} className="mt-1" />
+                    I understand this brief is sent once to Kinfolk&apos;s configured image provider to create the visual. The result stays in this session and is not saved to Kinfolk memory.
+                  </label>
+                  <label className="mt-2 flex items-start gap-2 text-xs leading-5 text-[#3A1F0E]/70">
+                    <input type="checkbox" checked={noRealPersonOrPrivateInfoConfirmed} onChange={(event) => setNoRealPersonOrPrivateInfoConfirmed(event.target.checked)} className="mt-1" />
+                    My request contains no real person, personal image, private information, or real-world claim.
+                  </label>
+                  {imageCreationError && <p role="alert" className="mt-2 text-xs text-red-700">{imageCreationError}</p>}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button type="button" onClick={() => { setShowImageCreation(false); setImageCreationError(null); }} className="rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-xs font-bold">Cancel</button>
+                    <button type="button" onClick={() => void createKinfolkImage()} disabled={generatingImage || imageCreationBrief.trim().length < 12 || !providerDisclosureAccepted || !noRealPersonOrPrivateInfoConfirmed} className="inline-flex items-center gap-2 rounded-xl bg-[#8D5C17] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">
+                      {generatingImage ? <Loader2 size={14} className="animate-spin" /> : <Sparkles size={14} />}
+                      Create visual
+                    </button>
+                  </div>
+                </div>}
+
+                {generatedImage && <div className="mb-3 mx-auto max-w-3xl overflow-hidden rounded-2xl border border-[#8D5C17]/20 bg-[#FFF9ED] p-3 shadow-sm">
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div><p className="text-xs font-bold text-[#3A1F0E]">{generatedImage.label}</p><p className="text-[11px] text-[#3A1F0E]/65">Created for this session only. It is not saved, posted, or added to Kinfolk memory.</p></div>
+                    <button type="button" onClick={() => setGeneratedImage(null)} className="rounded-full p-1 text-[#3A1F0E]/55 hover:bg-white" aria-label="Dismiss generated visual"><X size={16} /></button>
+                  </div>
+                  <img src={generatedImage.dataUrl} alt="AI-generated decorative visual" className="max-h-80 w-full rounded-xl object-contain bg-white" />
+                </div>}
+
                 {imageAttachments.length > 0 && <div className="mb-2 flex max-w-3xl gap-2 mx-auto">
                   {imageAttachments.map((attachment) => <div key={attachment.assetId} className="relative"><img src={attachment.previewUrl} alt="Ready to ask Kinfolk about" className="h-20 w-20 rounded-xl object-cover" /><button onClick={() => void removeKinfolkImage(attachment)} aria-label="Remove image" className="absolute -right-1 -top-1 rounded-full bg-[#2B1507] p-1 text-white"><X size={11} /></button></div>)}
                 </div>}
@@ -3051,6 +3138,7 @@ function TravelPage() {
 
                 <div className="flex items-end gap-2 max-w-3xl mx-auto">
                   <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) { setImageError(null); setPendingImageConsent(file); } event.target.value = ""; }} />
+                  {isLoggedIn && <button data-testid="kinfolk-image-create" type="button" onClick={() => { setShowImageCreation(true); setImageCreationError(null); }} disabled={sending || uploadingImage} aria-label="Create an original visual" title="Create an original visual" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-[#CA922B]/10 border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] flex items-center justify-center disabled:opacity-40 shrink-0"><Sparkles size={16} /></button>}
                   {isLoggedIn && <button data-testid="kinfolk-image-upload" onClick={() => imageInputRef.current?.click()} disabled={uploadingImage || imageAttachments.length >= 2 || sending} aria-label="Add an image" title="Ask Kinfolk about an image" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-[#CA922B]/10 border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] flex items-center justify-center disabled:opacity-40 shrink-0">{uploadingImage ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={16} />}</button>}
                   {/* Microphone button */}
                   {isLoggedIn && (
