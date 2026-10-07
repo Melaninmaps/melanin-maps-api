@@ -74,6 +74,15 @@ function displayCityName(value: string): string {
     .join(" ");
 }
 
+function isSafeUnregisteredDestinationCandidate(value: string): boolean {
+  const normalized = value.trim();
+  return (
+    /[A-Z]/.test(normalized) &&
+    !/^(?:not|no|never|don't|do not)\b/i.test(normalized) &&
+    !/\b(?:recommend|recommendation)\b/i.test(normalized)
+  );
+}
+
 function extractUnregisteredDestination(message: string): string | null {
   // General place questions must resolve their named city before the caller can
   // fall back to a prior private-session destination. This is intentionally not
@@ -92,7 +101,13 @@ function extractUnregisteredDestination(message: string): string | null {
   ];
   for (const pattern of patterns) {
     const match = message.match(pattern)?.[1]?.trim();
-    if (match && match.length >= 3) return displayCityName(match);
+    if (
+      match &&
+      match.length >= 3 &&
+      isSafeUnregisteredDestinationCandidate(match)
+    ) {
+      return displayCityName(match);
+    }
   }
   return null;
 }

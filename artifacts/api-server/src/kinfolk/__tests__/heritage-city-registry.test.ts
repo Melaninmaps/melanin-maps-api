@@ -170,6 +170,14 @@ describe("turn geography and enabled-session continuity", () => {
     });
   });
 
+  it("does not infer a destination from a no-recommendation boundary", () => {
+    expect(resolveTurnGeography(
+      "I am relocating to a new city. Do not recommend businesses or places.",
+      null,
+    )).toBeNull();
+    expect(resolveTurnGeography("Please do not recommend businesses.", null)).toBeNull();
+  });
+
   it("prefers an explicit destination over another city mentioned in the request", () => {
     expect(
       resolveTurnGeography("I am traveling from Philadelphia to Atlanta", null),
