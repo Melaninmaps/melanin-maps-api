@@ -2044,6 +2044,13 @@ export default function TravelScreen() {
   const [voiceMode, setVoiceMode] = useState<"community" | "professor" | "business_manager" | "best_friend">("community");
   const [kinfolkImages, setKinfolkImages] = useState<Array<{ assetId: string; previewUri: string }>>([]);
   const [uploadingKinfolkImage, setUploadingKinfolkImage] = useState(false);
+  const [showImageCreation, setShowImageCreation] = useState(false);
+  const [imageCreationBrief, setImageCreationBrief] = useState("");
+  const [providerDisclosureAccepted, setProviderDisclosureAccepted] = useState(false);
+  const [noRealPersonOrPrivateInfoConfirmed, setNoRealPersonOrPrivateInfoConfirmed] = useState(false);
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [imageCreationError, setImageCreationError] = useState<string | null>(null);
+  const [generatedImage, setGeneratedImage] = useState<{ dataUrl: string; label: string } | null>(null);
   const [includeCommunityPerspective, setIncludeCommunityPerspective] = useState(false);
   const [voiceOutput, setVoiceOutput] = useState(false);
   const [showComposerControls, setShowComposerControls] = useState(false);
@@ -2379,6 +2386,39 @@ export default function TravelScreen() {
     );
   }, [kinfolkImages.length, uploadingKinfolkImage, uploadKinfolkImage]);
 
+  const createKinfolkImage = useCallback(async () => {
+    if (generatingImage) return;
+    if (!isAuthenticated) {
+      Alert.alert("Sign in to create a visual", "Create or sign in to make an original Kinfolk visual.");
+      return;
+    }
+    setGeneratingImage(true);
+    setImageCreationError(null);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const response = await fetch(`${getApiBase()}/api/kinfolk/images/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({
+          brief: imageCreationBrief,
+          providerDisclosureAccepted,
+          noRealPersonOrPrivateInfoConfirmed,
+        }),
+      });
+      const body = await response.json().catch(() => ({})) as { imageDataUrl?: string; contentLabel?: string; error?: string };
+      if (!response.ok || !body.imageDataUrl) throw new Error(body.error ?? "Kinfolk could not create that visual right now.");
+      setGeneratedImage({ dataUrl: body.imageDataUrl, label: body.contentLabel ?? "AI-generated visual" });
+      setShowImageCreation(false);
+      setImageCreationBrief("");
+      setProviderDisclosureAccepted(false);
+      setNoRealPersonOrPrivateInfoConfirmed(false);
+    } catch (cause) {
+      setImageCreationError(cause instanceof Error ? cause.message : "Kinfolk could not create that visual right now.");
+    } finally {
+      setGeneratingImage(false);
+    }
+  }, [generatingImage, imageCreationBrief, isAuthenticated, noRealPersonOrPrivateInfoConfirmed, providerDisclosureAccepted]);
+
   const startPrimaryVoiceRecording = useCallback(async () => {
     if (Platform.OS === "web" || primaryRecorder.isRecording || isTranscribingVoice) return;
     if (!isAuthenticated) {
@@ -2684,6 +2724,7 @@ export default function TravelScreen() {
 
   const handleNewSession = useCallback(() => {
     startNewSession();
+    setGeneratedImage(null);
   }, [startNewSession]);
 
   const handleCompareToggle = useCallback((biz: TravelBusiness) => {
@@ -3097,7 +3138,28 @@ export default function TravelScreen() {
         ) : null}
 
         {/* Input row */}
+        {generatedImage ? (
+          <View style={{ backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingHorizontal: 16, paddingVertical: 10 }}>
+            <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 7 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 12 }}>{generatedImage.label}</Text>
+                <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 10, lineHeight: 14, marginTop: 2 }}>Created for this session only. It is not saved, posted, or added to Kinfolk memory.</Text>
+              </View>
+              <TouchableOpacity onPress={() => setGeneratedImage(null)} accessibilityLabel="Dismiss generated visual" hitSlop={8}><Ionicons name="close-circle-outline" size={21} color={colors.mutedForeground} /></TouchableOpacity>
+            </View>
+            <Image source={{ uri: generatedImage.dataUrl }} resizeMode="contain" accessibilityLabel="AI-generated decorative visual" style={{ width: "100%", height: 220, borderRadius: 14, backgroundColor: colors.background }} />
+          </View>
+        ) : null}
         <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: insets.bottom + 8 }]}>
+          <TouchableOpacity
+            style={[styles.voiceOutputBtn, { backgroundColor: colors.background, borderColor: colors.border, opacity: isLoading ? 0.4 : 1 }]}
+            onPress={() => { setShowImageCreation(true); setImageCreationError(null); }}
+            disabled={isLoading}
+            accessibilityLabel="Create an original Kinfolk visual"
+            activeOpacity={0.75}
+          >
+            <Ionicons name="sparkles-outline" size={18} color={colors.mutedForeground} />
+          </TouchableOpacity>
           <TouchableOpacity
             style={[styles.voiceOutputBtn, { backgroundColor: colors.background, borderColor: colors.border, opacity: uploadingKinfolkImage || kinfolkImages.length >= 2 ? 0.4 : 1 }]}
             onPress={() => void pickKinfolkImage()}
@@ -3211,6 +3273,57 @@ export default function TravelScreen() {
         isAuthenticated={isAuthenticated}
         colors={colors}
       />
+
+      <Modal visible={showImageCreation} transparent animationType="slide" onRequestClose={() => { setShowImageCreation(false); setImageCreationError(null); }}>
+        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#00000066" }}>
+          <View style={{ maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.card, paddingHorizontal: 20, paddingTop: 18, paddingBottom: Math.max(insets.bottom, 18) }}>
+            <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 17 }}>Create an original visual</Text>
+                <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginTop: 5 }}>Kinfolk can create a decorative illustration—not a person, realistic photo, logo, document, or text-bearing flyer.</Text>
+              </View>
+              <TouchableOpacity onPress={() => { setShowImageCreation(false); setImageCreationError(null); }} accessibilityLabel="Close image creation" hitSlop={8}><Ionicons name="close" size={22} color={colors.mutedForeground} /></TouchableOpacity>
+            </View>
+            <TextInput
+              value={imageCreationBrief}
+              onChangeText={setImageCreationBrief}
+              maxLength={600}
+              multiline
+              placeholder="Example: A warm abstract storefront-inspired pattern in gold, terracotta, and deep green."
+              placeholderTextColor={colors.mutedForeground}
+              accessibilityLabel="Describe the original visual"
+              style={{ minHeight: 92, marginTop: 16, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.background, color: colors.text, padding: 12, fontFamily: "Inter_400Regular", fontSize: 13, textAlignVertical: "top" }}
+            />
+            <TouchableOpacity
+              onPress={() => setProviderDisclosureAccepted((value) => !value)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: providerDisclosureAccepted }}
+              accessibilityLabel="Confirm image provider disclosure"
+              style={{ flexDirection: "row", alignItems: "flex-start", gap: 9, marginTop: 14 }}
+            >
+              <Ionicons name={providerDisclosureAccepted ? "checkbox" : "square-outline"} size={20} color={providerDisclosureAccepted ? colors.primary : colors.mutedForeground} />
+              <Text style={{ flex: 1, color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 }}>I understand this brief is sent once to Kinfolk’s configured image provider. The result stays in this session and is not saved to Kinfolk memory.</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => setNoRealPersonOrPrivateInfoConfirmed((value) => !value)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: noRealPersonOrPrivateInfoConfirmed }}
+              accessibilityLabel="Confirm no real person or private information"
+              style={{ flexDirection: "row", alignItems: "flex-start", gap: 9, marginTop: 11 }}
+            >
+              <Ionicons name={noRealPersonOrPrivateInfoConfirmed ? "checkbox" : "square-outline"} size={20} color={noRealPersonOrPrivateInfoConfirmed ? colors.primary : colors.mutedForeground} />
+              <Text style={{ flex: 1, color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 }}>My request contains no real person, personal image, private information, or real-world claim.</Text>
+            </TouchableOpacity>
+            {imageCreationError ? <Text accessibilityRole="alert" style={{ color: "#B42318", fontFamily: "Inter_500Medium", fontSize: 12, lineHeight: 17, marginTop: 10 }}>{imageCreationError}</Text> : null}
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}>
+              <TouchableOpacity onPress={() => { setShowImageCreation(false); setImageCreationError(null); }} style={{ flex: 1, minHeight: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: "center", justifyContent: "center" }}><Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 13 }}>Cancel</Text></TouchableOpacity>
+              <TouchableOpacity onPress={() => void createKinfolkImage()} disabled={generatingImage || imageCreationBrief.trim().length < 12 || !providerDisclosureAccepted || !noRealPersonOrPrivateInfoConfirmed} style={{ flex: 1, minHeight: 44, borderRadius: 12, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", opacity: generatingImage || imageCreationBrief.trim().length < 12 || !providerDisclosureAccepted || !noRealPersonOrPrivateInfoConfirmed ? 0.45 : 1 }}>
+                {generatingImage ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ color: "#fff", fontFamily: "Inter_700Bold", fontSize: 13 }}>Create visual</Text>}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
