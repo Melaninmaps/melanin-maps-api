@@ -34,6 +34,7 @@ export * from "./kinfolk-feedback";
 export * from "./kinfolk-response-feedback";
 export * from "./kinfolk-community-need-insights";
 export * from "./canonical-mwm-owner-attachment-audit";
+export * from "./business-owner-onboarding";
 export * from "./kinfolk-answer-plans";
 export * from "./kinfolk-task-lists";
 export * from "./kinfolk-tasks";

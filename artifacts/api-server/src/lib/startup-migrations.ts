@@ -326,6 +326,23 @@ const MIGRATIONS: { name: string; sql: string }[] = [
     END $$;`,
   },
   {
+    name: "business_owner_onboarding_v1",
+    sql: `CREATE TABLE IF NOT EXISTS business_owner_onboarding (
+      business_id VARCHAR(255) PRIMARY KEY REFERENCES businesses(id) ON DELETE CASCADE,
+      last_updated_by_user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+      identity_reviewed BOOLEAN NOT NULL DEFAULT FALSE,
+      offerings JSONB NOT NULL DEFAULT '[]'::jsonb,
+      pricing JSONB NOT NULL DEFAULT '{"model":"not_listed","detail":""}'::jsonb,
+      availability JSONB NOT NULL DEFAULT '{"useWeeklySchedule":false,"note":""}'::jsonb,
+      media JSONB NOT NULL DEFAULT '{"confirmedRights":false,"confirmedReview":false}'::jsonb,
+      communication JSONB NOT NULL DEFAULT '{"channels":[],"responseWindow":""}'::jsonb,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS business_owner_onboarding_updated_idx
+      ON business_owner_onboarding (last_updated_by_user_id, updated_at DESC);`,
+  },
+  {
     name: "user_preferences_recommendation_life_stage_v1",
     sql: `ALTER TABLE user_preferences
       ADD COLUMN IF NOT EXISTS recommendation_life_stage VARCHAR(20) NOT NULL DEFAULT 'unspecified';
@@ -6557,6 +6574,24 @@ export async function ensureCanonicalMwmOwnerAttachmentAuditSchema(logger?: Logg
     "SELECT business_id, target_user_id, actor_user_id, action, prior_state, next_state FROM canonical_mwm_owner_attachment_audit LIMIT 0",
   );
   log("Canonical Mapping With Melanin owner audit schema is ready");
+}
+
+export async function ensureBusinessOwnerOnboardingSchema(logger?: Logger): Promise<void> {
+  const log = (msg: string) =>
+    logger ? logger.info(msg) : console.log(`[business-owner-onboarding-schema] ${msg}`);
+  const migration = MIGRATIONS.find(
+    (entry) => entry.name === "business_owner_onboarding_v1",
+  );
+  if (!migration) {
+    throw new Error("Business owner onboarding migration definition is missing.");
+  }
+
+  await pool.query(migration.sql);
+  // Only structural verification; this does not seed, publish, or update a business row.
+  await pool.query(
+    "SELECT business_id, last_updated_by_user_id, offerings, pricing, availability, media, communication FROM business_owner_onboarding LIMIT 0",
+  );
+  log("Business owner onboarding schema is ready");
 }
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {

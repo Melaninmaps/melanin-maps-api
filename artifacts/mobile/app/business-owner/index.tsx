@@ -124,6 +124,14 @@ export default function BusinessOwnerHome() {
 
   const sections: AdminSection[] = [
     {
+      id: "owner-onboarding",
+      icon: "check-square",
+      label: "Owner Launch Checklist",
+      sub: "Private identity, offerings, pricing, media, and contact preferences",
+      color: "#2D7A4F",
+      route: "/business-owner/onboarding",
+    },
+    {
       id: "identity",
       icon: "user",
       label: "Business Identity",
