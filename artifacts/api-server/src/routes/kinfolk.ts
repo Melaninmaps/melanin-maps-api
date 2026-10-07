@@ -179,6 +179,7 @@ import { permittedIdentityContext as resolvePermittedIdentityContext } from "../
 import {
   evidenceFailureReply,
   evidenceRoutePromptBlock,
+  TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY,
   TRUTHFUL_EVIDENCE_UNAVAILABLE_REPLY,
 } from "../kinfolk/evidence-runtime";
 import {
@@ -9864,9 +9865,70 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       return;
     }
 
+    // An explicit article summary has its own source boundary: only the exact
+    // public URL can support it. Handle that boundary before the broader
+    // current-claim corroboration gate so a missing article can never degrade
+    // into a generic evidence warning, and a retrieved article is not rejected
+    // merely because unrelated topic reporting is unavailable.
+    const requestedArticleUrl = requestedArticleSummaryUrl(message);
+    const requestedArticleEvidenceAvailable = hasRequestedArticleEvidence(
+      requestedArticleUrl,
+      [
+        ...(contextualEvidence?.external ?? []).map((source) => ({ url: source.url })),
+        ...(contextualEvidence?.media ?? []).map((source) => ({ url: source.url })),
+      ],
+    );
+    if (requestedArticleUrl && !requestedArticleEvidenceAvailable) {
+      recordKinfolkTelemetry({
+        requestId: _kinfolkReqId,
+        questionClass: intentClass,
+        status: 200,
+        degraded: true,
+        degradedReason: "requested_article_exact_source_unavailable",
+        providerStatus: null,
+        latencyMs: Date.now() - _kinfolkStartedAt,
+        taskMode: contextualPlan?.taskMode ?? null,
+        retrievalState: "not_used",
+        sourceCount: 0,
+      });
+      res.status(200).json({
+        sessionId,
+        reply: TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY,
+        recommendations: null,
+        itinerary: null,
+        followUpSuggestions: ["Try the summary again later"],
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass,
+        sources: [],
+        needsClarification: false,
+        originalQuery: message,
+        answerMode: "article_source_unavailable",
+        structuredContent: null,
+        mediaLinks: [],
+        relatedConnections: [],
+        researchStatus: {
+          usedInternal: false,
+          usedLiveWeb: false,
+          degraded: true,
+          web: {
+            attempted: liveWebOutcome?.attempted ?? false,
+            state: liveWebOutcome?.state ?? "unavailable",
+            provider: liveWebOutcome?.provider ?? null,
+            fallbackUsed: liveWebOutcome?.fallbackUsed ?? false,
+            partial: liveWebOutcome?.partial ?? false,
+          },
+          asOf: new Date().toISOString(),
+        },
+      });
+      return;
+    }
+
     if (
       contextualPlan &&
       contextualEvidence &&
+      !requestedArticleUrl &&
       contextualEvidenceNeedsFailClosedResponse(
         contextualPlan,
         contextualEvidence,
@@ -10343,7 +10405,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       (contextualEvidence?.external.length ?? 0) +
         (contextualEvidence?.media.length ?? 0) >
         0;
-    const requestedArticleUrl = requestedArticleSummaryUrl(message);
     const articleEvidenceSources = [
       ...healthRetrievalSources
         .filter((source) => source.source === "kinfolk_web")
@@ -10356,10 +10417,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       medicalContextBlock: healthEvidenceBlock,
       hasLiveWebEvidence,
       message,
-      requestedArticleEvidenceAvailable: hasRequestedArticleEvidence(
-        requestedArticleUrl,
-        articleEvidenceSources,
-      ),
+      requestedArticleEvidenceAvailable:
+        requestedArticleEvidenceAvailable ||
+        hasRequestedArticleEvidence(requestedArticleUrl, articleEvidenceSources),
     });
     const genericEvidenceOutcome = resolveKinfolkEvidenceOutcome({
       route: generalAnswerRoute,

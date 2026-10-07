@@ -91,8 +91,26 @@ export function isPublicNetWorthEstimateRequest(message: string): boolean {
 export function requestedArticleSummaryUrl(message: string): string | null {
   if (!ARTICLE_SUMMARY_RE.test(message)) return null;
   const raw = message.match(HTTPS_URL_RE)?.[0]?.replace(/[),.;!?]+$/, "") ?? "";
-  const safeUrl = canonicalizeContextualUrl(raw);
-  return safeUrl ? safeUrl.replace(/[?#].*$/, "") : null;
+  return articleSourceUrlKey(raw);
+}
+
+/**
+ * Normalizes only equivalent transport variants for a member-selected source.
+ * Query strings, fragments, and a terminal path slash do not identify a
+ * different article; hostname and every non-terminal path segment must still
+ * match exactly. This prevents a provider's harmless URL canonicalization from
+ * turning an exact article retrieval into a false negative.
+ */
+function articleSourceUrlKey(value: string): string | null {
+  const safeUrl = canonicalizeContextualUrl(value);
+  if (!safeUrl) return null;
+  const parsed = new URL(safeUrl);
+  parsed.search = "";
+  parsed.hash = "";
+  if (parsed.pathname !== "/") {
+    parsed.pathname = parsed.pathname.replace(/\/+$/, "");
+  }
+  return parsed.toString();
 }
 
 export function hasRequestedArticleEvidence(
@@ -100,7 +118,10 @@ export function hasRequestedArticleEvidence(
   sources: ReadonlyArray<{ url: string }>,
 ): boolean {
   if (!requestedUrl) return true;
-  return sources.some((source) => canonicalizeContextualUrl(source.url)?.replace(/[?#].*$/, "") === requestedUrl);
+  const requestedKey = articleSourceUrlKey(requestedUrl);
+  return requestedKey !== null && sources.some(
+    (source) => articleSourceUrlKey(source.url) === requestedKey,
+  );
 }
 
 export function requiresCurrentResearch(message: string): boolean {

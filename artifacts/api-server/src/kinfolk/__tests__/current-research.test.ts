@@ -117,6 +117,20 @@ describe("current research routing", () => {
     expect(hasRequestedArticleEvidence(requested, [{ url: "https://example.com/another-story" }])).toBe(false);
   });
 
+  it("treats a provider's terminal-slash URL canonicalization as the same exact article", () => {
+    const requested = requestedArticleSummaryUrl(
+      "Summarize this article: https://www.nasa.gov/news-release/example-story/",
+    );
+
+    expect(requested).toBe("https://www.nasa.gov/news-release/example-story");
+    expect(hasRequestedArticleEvidence(requested, [{
+      url: "https://www.nasa.gov/news-release/example-story",
+    }])).toBe(true);
+    expect(hasRequestedArticleEvidence(requested, [{
+      url: "https://www.nasa.gov/news-release/a-different-story",
+    }])).toBe(false);
+  });
+
   it("does not accept a non-public or non-summary URL as an article request", () => {
     expect(requestedArticleSummaryUrl("Open https://example.com/news/gas-prices")).toBeNull();
     expect(requestedArticleSummaryUrl("Summarize https://localhost/private")).toBeNull();

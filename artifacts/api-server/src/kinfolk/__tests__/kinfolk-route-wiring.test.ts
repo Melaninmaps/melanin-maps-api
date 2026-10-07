@@ -135,6 +135,16 @@ describe("Kinfolk chat static wiring", () => {
     expect(routeSource).toContain("same-publisher or related-story substitute");
   });
 
+  it("handles an unavailable requested article before generic corroboration and lets an exact source summarize alone", () => {
+    const articleGuard = chatRoute.indexOf("requested_article_exact_source_unavailable");
+    const corroborationGate = chatRoute.indexOf("contextualEvidenceNeedsFailClosedResponse(");
+
+    expect(articleGuard).toBeGreaterThan(-1);
+    expect(articleGuard).toBeLessThan(corroborationGate);
+    expect(chatRoute).toContain("TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY");
+    expect(chatRoute).toContain("!requestedArticleUrl &&");
+  });
+
   it("ranks the governed travel catalog with canonical age assurance and explicit preferences before prompting", () => {
     const ageContext = chatRoute.indexOf("await loadKinfolkMemberContext(req.user.id, intentClass, message)");
     const audienceFilter = chatRoute.indexOf("businessCatalog = rankGovernedBusinessesForMember(businessCatalog");
