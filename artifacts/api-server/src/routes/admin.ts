@@ -54,6 +54,11 @@ import {
 } from "../directoryIntake/sourceBackedDirectoryIntake";
 import { buildMinnesotaLegacyCanonicalReconciliations } from "../directoryIntake/mnBlackDirectoryLegacyCanonicalReconciliation";
 import { CITY_SAFETY_SOURCE_REGISTRY } from "../kinfolk/city-safety-briefing-v1";
+import {
+  archiveActionForReason,
+  archiveStateForReason,
+  isDirectoryArchiveReasonCode,
+} from "../businesses/directoryReconciliationPolicy";
 
 const router: IRouter = Router();
 
@@ -897,6 +902,7 @@ type AdminBusinessInventoryQuery = Readonly<{
   sourceBatch?: unknown;
   status?: unknown;
   link?: unknown;
+  reconciliation?: unknown;
   ownership?: unknown;
   addedFrom?: unknown;
   addedTo?: unknown;
@@ -905,6 +911,8 @@ type AdminBusinessInventoryQuery = Readonly<{
 
 type AdminBusinessInventoryFilters = Readonly<{
   status: string;
+  reconciliation: string;
+  reconciliationLedgerAvailable: boolean;
   sort: "added_desc" | "name_asc";
   orderBy: string;
   where: string;
@@ -936,6 +944,7 @@ async function compileAdminBusinessInventoryFilters(
   const sourceBatch = String(query.sourceBatch ?? "").trim().slice(0, 160);
   const status = String(query.status ?? "active");
   const link = String(query.link ?? "all");
+  const reconciliation = String(query.reconciliation ?? "all").trim();
   const ownership = String(query.ownership ?? "all");
   const addedFrom = String(query.addedFrom ?? "").trim();
   const addedTo = String(query.addedTo ?? "").trim();
@@ -1018,6 +1027,10 @@ async function compileAdminBusinessInventoryFilters(
       FROM public.public_businesses AS current_kinfolk
      WHERE ${mwmDiasporaPromotionSqlPredicate("current_kinfolk.id")}
   )`;
+  const reconciliationLedgerProbe = await pool.query<{ table_name: string | null }>(
+    "SELECT to_regclass('public.business_directory_reconciliation_ledger') AS table_name",
+  );
+  const reconciliationLedgerAvailable = Boolean(reconciliationLedgerProbe.rows[0]?.table_name);
   const filters: string[] = [];
   const filterParams: unknown[] = [];
   const addFilter = (clause: string, value: string) => {
@@ -1129,6 +1142,30 @@ async function compileAdminBusinessInventoryFilters(
   } else if (link === "no_public_link") {
     filters.push("(NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(instagram, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(tiktok, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(facebook, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(twitter, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(youtube, '')), '') IS NULL AND NULLIF(BTRIM(COALESCE(pinterest, '')), '') IS NULL)");
   }
+  if (reconciliation !== "all") {
+    if (!reconciliationLedgerAvailable) {
+      // Do not pretend an unavailable migration is an evidence conclusion.
+      // An explicit reconciliation filter returns no rows until the ledger is
+      // installed, while the normal Admin inventory remains usable.
+      filters.push("FALSE");
+    } else if (reconciliation === "unreviewed") {
+      filters.push("EXISTS (SELECT 1 FROM business_directory_reconciliation_ledger ledger WHERE ledger.business_id::text = businesses.id::text AND ledger.reconciliation_state = 'unreviewed')");
+    } else if (reconciliation === "qualified") {
+      filters.push("EXISTS (SELECT 1 FROM business_directory_reconciliation_ledger ledger WHERE ledger.business_id::text = businesses.id::text AND ledger.reconciliation_state = 'reviewed_qualified')");
+    } else if (reconciliation === "requires_reconciliation") {
+      filters.push("EXISTS (SELECT 1 FROM business_directory_reconciliation_ledger ledger WHERE ledger.business_id::text = businesses.id::text AND ledger.reconciliation_state = 'requires_reconciliation')");
+    } else if (reconciliation === "reversible_public_hold") {
+      filters.push("EXISTS (SELECT 1 FROM business_directory_reconciliation_ledger ledger WHERE ledger.business_id::text = businesses.id::text AND ledger.reconciliation_state = 'reversible_public_hold')");
+    } else if (reconciliation === "official_presence_unverified") {
+      filters.push("EXISTS (SELECT 1 FROM business_directory_reconciliation_ledger ledger WHERE ledger.business_id::text = businesses.id::text AND ledger.reason_code = 'official_presence_unverified')");
+    } else if (reconciliation === "ownership_unverified") {
+      filters.push("EXISTS (SELECT 1 FROM business_directory_reconciliation_ledger ledger WHERE ledger.business_id::text = businesses.id::text AND ledger.reason_code = 'ownership_unverified')");
+    } else if (reconciliation === "identity_conflict") {
+      filters.push("EXISTS (SELECT 1 FROM business_directory_reconciliation_ledger ledger WHERE ledger.business_id::text = businesses.id::text AND ledger.reason_code = 'identity_conflict')");
+    } else if (reconciliation === "duplicate_candidate") {
+      filters.push("EXISTS (SELECT 1 FROM business_directory_reconciliation_ledger ledger WHERE ledger.business_id::text = businesses.id::text AND ledger.reason_code = 'duplicate_candidate')");
+    }
+  }
   if (/^\d{4}-\d{2}-\d{2}$/.test(addedFrom)) {
     addFilter("created_at >= ?::date", addedFrom);
   }
@@ -1138,6 +1175,8 @@ async function compileAdminBusinessInventoryFilters(
 
   return {
     status,
+    reconciliation,
+    reconciliationLedgerAvailable,
     sort,
     orderBy,
     where: filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "",
@@ -1456,6 +1495,8 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       : DEFAULT_INVENTORY_PAGE_SIZE;
     const {
       status,
+      reconciliation,
+      reconciliationLedgerAvailable,
       sort,
       orderBy,
       where,
@@ -1483,6 +1524,22 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
         : status === "all"
           ? "TRUE"
           : liveInventoryWhere;
+    const reconciliationJoin = reconciliationLedgerAvailable
+      ? "LEFT JOIN business_directory_reconciliation_ledger ledger ON ledger.business_id::text = businesses.id::text"
+      : "";
+    const reconciliationColumns = reconciliationLedgerAvailable
+      ? `COALESCE(ledger.reconciliation_state, 'unreviewed') AS reconciliation_state,
+              COALESCE(ledger.reason_code, 'unreviewed') AS reconciliation_reason_code,
+              COALESCE(ledger.presence_status, 'unreviewed') AS reconciliation_presence_status,
+              COALESCE(ledger.ownership_status, 'unreviewed') AS reconciliation_ownership_status,
+              COALESCE(ledger.recommended_action, 'retain') AS reconciliation_recommended_action,
+              ledger.reviewed_at AS reconciliation_reviewed_at,`
+      : `'unreviewed'::text AS reconciliation_state,
+              'unreviewed'::text AS reconciliation_reason_code,
+              'unreviewed'::text AS reconciliation_presence_status,
+              'unreviewed'::text AS reconciliation_ownership_status,
+              'retain'::text AS reconciliation_recommended_action,
+              NULL::timestamptz AS reconciliation_reviewed_at,`;
     const [
       businesses,
       inventoryCount,
@@ -1498,6 +1555,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       services,
       cohortCounts,
       manusCreatedCount,
+      reconciliationAccountedCount,
     ] = await Promise.all([
       pool.query<{
       id: string;
@@ -1523,6 +1581,12 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       website_cleanup_status: string | null;
       social_only_public: boolean;
       official_presence_unresolved: boolean;
+      reconciliation_state: string;
+      reconciliation_reason_code: string;
+      reconciliation_presence_status: string;
+      reconciliation_ownership_status: string;
+      reconciliation_recommended_action: string;
+      reconciliation_reviewed_at: string | null;
       created_at: string;
       needs_verification: boolean;
       enrichment_note: string | null;
@@ -1552,6 +1616,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
                    AND resolved_presence.eligibility_status = 'qualified'
                    AND (resolved_presence.official_website_evidence_id IS NOT NULL OR resolved_presence.official_social_evidence_id IS NOT NULL)
               ) THEN false ELSE true END AS official_presence_unresolved,
+              ${reconciliationColumns}
               created_at,
               needs_verification, enrichment_note, address, latitude, longitude,
               to_jsonb(businesses)->>'data_source' AS data_source,
@@ -1566,6 +1631,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
               END AS intake_cohort,
               CASE WHEN ${manusCreatedPredicate} THEN true ELSE false END AS manus_created
        FROM businesses
+       ${reconciliationJoin}
        ${where}
        ORDER BY ${orderBy}
        LIMIT $${filterParams.length + 1}
@@ -1650,6 +1716,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
           WHERE ${inventoryScopeWhere}
             AND ${manusCreatedPredicate}`,
       ),
+      reconciliationLedgerAvailable
+        ? pool.query<{ total: string }>("SELECT COUNT(*)::text AS total FROM business_directory_reconciliation_ledger")
+        : Promise.resolve({ rows: [{ total: "0" }] }),
     ]);
     const inventoryTotal = Number(inventoryCount.rows[0]?.total ?? 0);
     const liveInventoryTotal = Number(liveInventoryCount.rows[0]?.total ?? 0);
@@ -1660,6 +1729,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const permanentlyClosedTotal = Number(permanentlyClosedCount.rows[0]?.total ?? 0);
     const needsReviewTotal = Number(needsReviewCount.rows[0]?.total ?? 0);
     const filteredTotal = Number(filteredCount.rows[0]?.total ?? 0);
+    const reconciliationAccountedTotal = Number(reconciliationAccountedCount.rows[0]?.total ?? 0);
     const intakeCohortCounts = cohortCounts.rows[0] ?? {
       protected_historical_cohort: "0",
       user_national_master: "0",
@@ -1689,6 +1759,12 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       websiteCleanupStatus: b.website_cleanup_status,
       socialOnlyPublic: b.social_only_public,
       officialPresenceUnresolved: b.official_presence_unresolved,
+      reconciliationState: b.reconciliation_state,
+      reconciliationReasonCode: b.reconciliation_reason_code,
+      reconciliationPresenceStatus: b.reconciliation_presence_status,
+      reconciliationOwnershipStatus: b.reconciliation_ownership_status,
+      reconciliationRecommendedAction: b.reconciliation_recommended_action,
+      reconciliationReviewedAt: b.reconciliation_reviewed_at,
       createdAt: b.created_at,
       needsVerification: b.needs_verification,
       hasMapPin:
@@ -1746,6 +1822,8 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       kinfolkRecommendableTotal,
       permanentlyClosedTotal,
       needsReviewTotal,
+      reconciliationLedgerAvailable,
+      reconciliationAccountedTotal,
       filteredTotal,
       page,
       pageSize,
@@ -1755,6 +1833,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       inventoryIsTruncated: filteredTotal > result.length,
       appliedFilters: {
         status,
+        reconciliation,
         cities: cityFilters,
         category: String(req.query.category ?? "").trim(),
         subcategory: String(req.query.subcategory ?? "").trim(),
@@ -1819,10 +1898,11 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
     res.status(403).json({ error: "Forbidden" });
     return;
   }
-  const { ids, listingStatus, reason } = req.body as {
+  const { ids, listingStatus, reason, reconciliationReasonCode } = req.body as {
     ids?: unknown;
     listingStatus?: unknown;
     reason?: unknown;
+    reconciliationReasonCode?: unknown;
   };
   const uniqueIds = Array.isArray(ids)
     ? [...new Set(ids.filter((id): id is string => typeof id === "string" && id.trim().length > 0))]
@@ -1840,6 +1920,13 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
   if (normalizedReason.length < 3 || normalizedReason.length > 1_000) {
     res.status(400).json({
       error: "A 3–1,000 character administrator reason is required to remove or restore listings.",
+    });
+    return;
+  }
+  const removing = listingStatus === "archived";
+  if (removing && !isDirectoryArchiveReasonCode(reconciliationReasonCode)) {
+    res.status(400).json({
+      error: "Archiving requires one documented reason code: confirmed_closed, confirmed_duplicate, confirmed_fraud_or_unsafe, or documented_safety_or_legal_removal.",
     });
     return;
   }
@@ -1869,7 +1956,37 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
       return;
     }
 
-    const removing = listingStatus === "archived";
+    const reconciliationRows: {
+      rows: Array<{
+        business_id: string;
+        reason_code: string;
+        state: Record<string, unknown>;
+      }>;
+    } = removing
+      ? await client.query<{
+          business_id: string;
+          reason_code: string;
+          state: Record<string, unknown>;
+        }>(
+          `SELECT business_id, reason_code,
+                  to_jsonb(business_directory_reconciliation_ledger) AS state
+             FROM business_directory_reconciliation_ledger
+            WHERE business_id = ANY($1::text[])
+            FOR UPDATE`,
+          [uniqueIds],
+        )
+      : { rows: [] };
+    if (removing && reconciliationRows.rows.length !== uniqueIds.length) {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "Directory reconciliation has not accounted for every selected record. Record a concrete review decision before archiving." });
+      return;
+    }
+    if (removing && reconciliationRows.rows.some((row) => row.reason_code !== reconciliationReasonCode)) {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "Archive reason code must match the record’s documented reconciliation decision. Missing presence or ownership evidence is not an archive reason." });
+      return;
+    }
+    const reconciliationByBusinessId = new Map(reconciliationRows.rows.map((row) => [row.business_id, row]));
     if (!removing && currentResult.rows.some((row) => row.listing_status !== "archived")) {
       await client.query("ROLLBACK");
       res.status(409).json({
@@ -1938,6 +2055,36 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
         beforeState,
         afterState: nextState,
       });
+      if (removing && isDirectoryArchiveReasonCode(reconciliationReasonCode)) {
+        const beforeReconciliation = reconciliationByBusinessId.get(current.id)?.state ?? {};
+        const archivedLedger = await client.query<{ state: Record<string, unknown> }>(
+          `UPDATE business_directory_reconciliation_ledger
+              SET reconciliation_state = $1,
+                  recommended_action = $2,
+                  reviewed_at = now(),
+                  reviewed_by = $3,
+                  updated_at = now()
+            WHERE business_id = $4
+          RETURNING to_jsonb(business_directory_reconciliation_ledger) AS state`,
+          [
+            archiveStateForReason(reconciliationReasonCode),
+            archiveActionForReason(reconciliationReasonCode),
+            req.user?.id ?? null,
+            current.id,
+          ],
+        );
+        await client.query(
+          `INSERT INTO business_directory_reconciliation_audit_events (
+             id, business_id, action, actor_user_id, reason_code, reason,
+             evidence_receipt_ids, before_state, after_state
+           ) VALUES ($1, $2, 'archive', $3, $4, $5, '[]'::jsonb, $6::jsonb, $7::jsonb)`,
+          [
+            randomUUID(), current.id, req.user?.id ?? null, reconciliationReasonCode,
+            normalizedReason, JSON.stringify(beforeReconciliation),
+            JSON.stringify(archivedLedger.rows[0]?.state ?? {}),
+          ],
+        );
+      }
     }
     await client.query("COMMIT");
     req.log?.info(
@@ -2086,9 +2233,10 @@ router.patch(
       return;
     }
     const id = Array.isArray(req.params.id) ? req.params.id[0] ?? "" : req.params.id;
-    const { listingStatus, reason } = req.body as {
+    const { listingStatus, reason, reconciliationReasonCode } = req.body as {
       listingStatus?: string;
       reason?: string;
+      reconciliationReasonCode?: unknown;
     };
     const ALLOWED = ["live_unclaimed", "live_claimed", "archived", "staged"];
     if (typeof listingStatus !== "string" || !ALLOWED.includes(listingStatus)) {
@@ -2102,6 +2250,13 @@ router.patch(
       res.status(400).json({
         error:
           "A 3–1,000 character administrator reason is required to remove or restore a listing.",
+      });
+      return;
+    }
+    const removing = listingStatus === "archived";
+    if (removing && !isDirectoryArchiveReasonCode(reconciliationReasonCode)) {
+      res.status(400).json({
+        error: "Archiving requires one documented reason code: confirmed_closed, confirmed_duplicate, confirmed_fraud_or_unsafe, or documented_safety_or_legal_removal.",
       });
       return;
     }
@@ -2130,6 +2285,21 @@ router.patch(
         return;
       }
 
+      const priorReconciliation = removing
+        ? await client.query<{ reason_code: string; state: Record<string, unknown> }>(
+            `SELECT reason_code, to_jsonb(business_directory_reconciliation_ledger) AS state
+               FROM business_directory_reconciliation_ledger
+              WHERE business_id = $1
+              FOR UPDATE`,
+            [id],
+          )
+        : { rows: [] };
+      if (removing && priorReconciliation.rows[0]?.reason_code !== reconciliationReasonCode) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "Archive reason code must match the record’s documented reconciliation decision. Missing presence or ownership evidence is not an archive reason." });
+        return;
+      }
+
       const beforeState = {
         listingStatus: current.listing_status,
         status: current.status,
@@ -2137,7 +2307,6 @@ router.patch(
         featured: current.featured,
         promotedUntil: current.promoted_until,
       };
-      const removing = listingStatus === "archived";
       let restoredFrom: typeof beforeState | null = null;
 
       if (!removing) {
@@ -2194,6 +2363,35 @@ router.patch(
         beforeState,
         afterState: nextState,
       });
+      if (removing && isDirectoryArchiveReasonCode(reconciliationReasonCode)) {
+        const archivedLedger = await client.query<{ state: Record<string, unknown> }>(
+          `UPDATE business_directory_reconciliation_ledger
+              SET reconciliation_state = $1,
+                  recommended_action = $2,
+                  reviewed_at = now(),
+                  reviewed_by = $3,
+                  updated_at = now()
+            WHERE business_id = $4
+          RETURNING to_jsonb(business_directory_reconciliation_ledger) AS state`,
+          [
+            archiveStateForReason(reconciliationReasonCode),
+            archiveActionForReason(reconciliationReasonCode),
+            req.user?.id ?? null,
+            id,
+          ],
+        );
+        await client.query(
+          `INSERT INTO business_directory_reconciliation_audit_events (
+             id, business_id, action, actor_user_id, reason_code, reason,
+             evidence_receipt_ids, before_state, after_state
+           ) VALUES ($1, $2, 'archive', $3, $4, $5, '[]'::jsonb, $6::jsonb, $7::jsonb)`,
+          [
+            randomUUID(), id, req.user?.id ?? null, reconciliationReasonCode,
+            normalizedReason, JSON.stringify(priorReconciliation.rows[0]?.state ?? {}),
+            JSON.stringify(archivedLedger.rows[0]?.state ?? {}),
+          ],
+        );
+      }
       await client.query("COMMIT");
       req.log?.info(
         { id, listingStatus: nextState.listingStatus, action: removing ? "remove" : "restore" },
