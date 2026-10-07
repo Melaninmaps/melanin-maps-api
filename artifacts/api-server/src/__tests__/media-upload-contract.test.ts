@@ -51,6 +51,13 @@ beforeEach(() => {
   vi.stubEnv("NODE_ENV", "test");
   vi.stubEnv("OBJECT_STORAGE_CREDENTIAL_MODE", "adc");
   vi.stubEnv("DEFAULT_OBJECT_STORAGE_BUCKET_ID", "private-media-test");
+  vi.stubEnv("KINFOLK_MEDIA_BUCKET_ID", "kinfolk-question-media-test");
+  vi.stubEnv("KINFOLK_GOOGLE_SERVICE_ACCOUNT_JSON", JSON.stringify({
+    type: "service_account",
+    project_id: "kinfolk-media-test",
+    client_email: "kinfolk-media@example.test",
+    private_key: "not-used-by-this-unit-test",
+  }));
   vi.stubEnv("PUBLIC_MEDIA_BUCKET_ID", "public-media-test");
   vi.stubEnv("MEDIA_PUBLICATION_MODE", "bucket_iam");
   vi.stubEnv("MEDIA_PUBLIC_BASE_URL", "https://cdn.example.test/community");
@@ -90,9 +97,26 @@ describe("media readiness access", () => {
       ready: true,
       purpose: "kinfolk_question",
       privateBucketConfigured: true,
+      kinfolkQuestionBucketConfigured: true,
       publicBucketConfigured: false,
     });
     expect(response.body.blockers).toEqual([]);
+  });
+
+  it("fails Kinfolk-question readiness closed when its isolated credential is absent", async () => {
+    vi.stubEnv("KINFOLK_GOOGLE_SERVICE_ACCOUNT_JSON", "");
+
+    const response = await request(createTestApp(workingFile()))
+      .get("/api/media/readiness?purpose=kinfolk_question");
+
+    expect(response.status).toBe(503);
+    expect(response.body).toMatchObject({
+      ready: false,
+      purpose: "kinfolk_question",
+      credentialMode: "invalid",
+      kinfolkQuestionBucketConfigured: true,
+    });
+    expect(response.body.blockers).toContain("Object-storage credential mode is invalid or incomplete.");
   });
 });
 
@@ -188,6 +212,20 @@ describe("POST /api/media/upload error contract", () => {
     expect(response.body.url).toBeUndefined();
     expect(file.save).toHaveBeenCalledOnce();
     expect(file.makePublic).not.toHaveBeenCalled();
+  });
+
+  it("fails closed rather than falling back to the general private bucket for Kinfolk question images", async () => {
+    vi.stubEnv("KINFOLK_MEDIA_BUCKET_ID", "");
+    const file = workingFile();
+
+    const response = await request(createTestApp(file))
+      .post("/api/media/upload?purpose=kinfolk_question")
+      .field("kinfolkVisionConsent", "true")
+      .attach("file", Buffer.from("jpeg bytes"), { filename: "question.jpg", contentType: "image/jpeg" });
+
+    expect(response.status).toBe(503);
+    expect(response.body.code).toBe(MEDIA_UPLOAD_ERROR_CODES.STORAGE_NOT_CONFIGURED);
+    expect(file.save).not.toHaveBeenCalled();
   });
 
   it("deletes the object and fails closed when asset tracking cannot be persisted", async () => {

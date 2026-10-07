@@ -1,5 +1,5 @@
 import { pool } from "@workspace/db";
-import { objectStorageClient } from "../lib/objectStorage";
+import { kinfolkQuestionImageStorageClient } from "../lib/objectStorage";
 
 const MAX_KINFOLK_QUESTION_IMAGES = 2;
 const KINFOLK_QUESTION_IMAGE_RETENTION_MS = 15 * 60 * 1000;
@@ -44,7 +44,9 @@ export function normalizeKinfolkQuestionImageAssetIds(value: unknown): string[] 
 }
 
 function privateBucketId(): string | null {
-  return process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID?.trim() || null;
+  // Kinfolk question images must never be mixed with general private media.
+  // There is intentionally no fallback to DEFAULT_OBJECT_STORAGE_BUCKET_ID.
+  return process.env.KINFOLK_MEDIA_BUCKET_ID?.trim() || null;
 }
 
 function asDate(value: Date | string): Date | null {
@@ -114,7 +116,7 @@ export async function resolveConsentedKinfolkQuestionImages(input: {
     );
   }
 
-  const storageClient = input.storageClient ?? (objectStorageClient as unknown as PrivateStorageClient);
+  const storageClient = input.storageClient ?? (kinfolkQuestionImageStorageClient as unknown as PrivateStorageClient);
   try {
     return await Promise.all(assetIds.map(async (id) => {
       const row = byId.get(id)!;
@@ -171,7 +173,7 @@ async function deleteQuestionImageRows(
   const bucketId = privateBucketId();
   if (!bucketId) return { deleted: 0, pending: rows.length };
 
-  const client = storageClient ?? (objectStorageClient as unknown as PrivateStorageClient);
+  const client = storageClient ?? (kinfolkQuestionImageStorageClient as unknown as PrivateStorageClient);
   const deletedIds: string[] = [];
   for (const row of rows) {
     try {
