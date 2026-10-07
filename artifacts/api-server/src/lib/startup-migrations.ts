@@ -6618,6 +6618,7 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
   // This creates only encrypted Private Places structure. It never enables the
   // capability, geocodes an address, or creates a member record at startup.
   await ensureKinfolkPrivatePlacesSchema(log, warn);
+  await ensureKinfolkTemporaryStaysSchema(log, warn);
 
   // This narrowly scoped, founder-authorized recovery runs outside the generic
   // seed guard. It is required to repair the fixed tester roster when a
@@ -18490,5 +18491,35 @@ export async function ensureKinfolkPrivatePlacesSchema(
     // Do not include driver data: a database error must never echo a ciphertext
     // envelope, an address-derived query, or any raw request payload to logs.
     warn("ensureKinfolkPrivatePlacesSchema failed");
+  }
+}
+
+/** Creates encrypted-only Temporary Stays structure; no data is seeded or enabled. */
+export async function ensureKinfolkTemporaryStaysSchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS kinfolk_temporary_stays (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id VARCHAR(100) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        label VARCHAR(80) NOT NULL,
+        encrypted_payload TEXT NOT NULL CHECK (char_length(encrypted_payload) > 32),
+        encryption_key_version VARCHAR(32) NOT NULL,
+        geocode_provider VARCHAR(32) NOT NULL DEFAULT 'google_maps',
+        geocoded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        disclosure_version VARCHAR(64) NOT NULL,
+        is_active BOOLEAN NOT NULL DEFAULT true,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        CONSTRAINT kinfolk_temporary_stays_owner_label_key UNIQUE (user_id, label)
+      );
+      CREATE INDEX IF NOT EXISTS kinfolk_temporary_stays_owner_active_idx
+        ON kinfolk_temporary_stays (user_id, is_active, updated_at DESC);
+    `);
+    log("ensureKinfolkTemporaryStaysSchema: encrypted temporary-stay structure ready");
+  } catch (_error: unknown) {
+    warn("ensureKinfolkTemporaryStaysSchema failed");
   }
 }

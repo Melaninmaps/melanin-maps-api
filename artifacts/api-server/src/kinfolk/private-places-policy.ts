@@ -14,6 +14,9 @@ export type PrivatePlacePayload = Readonly<{
   latitude: number;
   longitude: number;
   googleFormattedAddress: string;
+  /** Optional encrypted-only fields used exclusively by Temporary Stays. */
+  arrivalDate?: string;
+  departureDate?: string;
 }>;
 
 type ParsedKey = Readonly<{ version: string; key: Buffer }>;
@@ -121,7 +124,20 @@ export function openPrivatePlace(
     if (!exactAddress || !googleFormattedAddress || !Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude === undefined || longitude === undefined || Math.abs(latitude) > 90 || Math.abs(longitude) > 180) {
       throw new Error("PRIVATE_PLACES_DECRYPTION_INVALID");
     }
-    return { exactAddress, googleFormattedAddress, latitude, longitude };
+    const arrivalDate = typeof parsed.arrivalDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.arrivalDate)
+      ? parsed.arrivalDate
+      : undefined;
+    const departureDate = typeof parsed.departureDate === "string" && /^\d{4}-\d{2}-\d{2}$/.test(parsed.departureDate)
+      ? parsed.departureDate
+      : undefined;
+    return {
+      exactAddress,
+      googleFormattedAddress,
+      latitude,
+      longitude,
+      ...(arrivalDate ? { arrivalDate } : {}),
+      ...(departureDate ? { departureDate } : {}),
+    };
   } catch (error) {
     if (error instanceof Error && error.message.startsWith("PRIVATE_PLACES_")) throw error;
     throw new Error("PRIVATE_PLACES_DECRYPTION_INVALID");
