@@ -475,8 +475,8 @@ describe("contextual research orchestrator", () => {
     const result = await orchestrateContextualResearch(historicalRatePlan, {
       searchLive: async () => [item(
         "Historical JPY to USD exchange rate in 2020",
-        "https://www.xe.com/currencytables/?from=JPY&date=2020-01-01",
-        "reference",
+        "https://fred.stlouisfed.org/data/EXJPUS",
+        "official",
       )],
       now: () => NOW,
     });

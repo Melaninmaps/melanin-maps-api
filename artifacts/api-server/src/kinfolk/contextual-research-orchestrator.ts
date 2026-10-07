@@ -73,7 +73,7 @@ export type ContextualResearchDeps = {
 const VIDEO_HOSTS = new Set(["youtube.com", "www.youtube.com", "youtu.be", "vimeo.com", "www.vimeo.com", "tiktok.com", "www.tiktok.com", "instagram.com", "www.instagram.com"]);
 const REPORTING_HOSTS = new Set(["apnews.com", "reuters.com", "bbc.com", "bbc.co.uk", "npr.org", "nytimes.com", "washingtonpost.com", "theguardian.com", "variety.com", "au.variety.com", "abc.net.au"]);
 const REPUTABLE_PUBLIC_ESTIMATE_HOSTS = new Set(["forbes.com", "bloomberg.com", "fortune.com", "cnbc.com", "wsj.com", "ft.com", ...REPORTING_HOSTS]);
-const ESTABLISHED_EXCHANGE_RATE_HOSTS = new Set(["xe.com", "wise.com", "oanda.com", "x-rates.com", "ecb.europa.eu", "federalreserve.gov", "bankofcanada.ca", "bankofengland.co.uk", "boj.or.jp", "imf.org", "worldbank.org"]);
+const ESTABLISHED_EXCHANGE_RATE_HOSTS = new Set(["xe.com", "wise.com", "oanda.com", "x-rates.com", "ecb.europa.eu", "federalreserve.gov", "fred.stlouisfed.org", "bankofcanada.ca", "bankofengland.co.uk", "boj.or.jp", "imf.org", "worldbank.org"]);
 const RESEARCH_HOSTS = new Set(["doi.org", "jstor.org", "nature.com", "sciencedirect.com", "springer.com", "pubmed.ncbi.nlm.nih.gov"]);
 const INJECTION_LINE = /(?:ignore|disregard|override|forget)\s+(?:all\s+)?(?:previous|prior|system|developer)|system\s+prompt|developer\s+message|reveal\s+(?:private|hidden|secret)|private\s+memor(?:y|ies)|follow\s+these\s+instructions|you\s+are\s+(?:chatgpt|an?\s+assistant)/i;
 
