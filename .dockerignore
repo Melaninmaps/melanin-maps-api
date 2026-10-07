@@ -1,0 +1,10 @@
+# Generated during the Railway/Nixpacks build. Keeping these out of the
+# Docker context prevents the final source-copy layer from overwriting fresh
+# Web and API assets with repository snapshots.
+artifacts/web/dist/
+artifacts/api-server/dist/
+artifacts/api-server/web-static/
+
+# Dependencies are restored from the locked workspace during the build.
+node_modules/
+**/node_modules/
