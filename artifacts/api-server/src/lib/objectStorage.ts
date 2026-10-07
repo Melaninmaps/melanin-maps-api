@@ -34,7 +34,11 @@ export function getObjectStorageCredentialMode(): ObjectStorageCredentialMode {
     throw new ObjectStorageConfigurationError("OBJECT_STORAGE_CREDENTIAL_MODE is not supported.");
   }
   if (process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim()) return "service_account_json";
-  if (process.env.REPL_ID || process.env.REPLIT_DEPLOYMENT || process.env.REPLIT_DOMAINS) return "replit_sidecar";
+  // A legacy REPLIT_DOMAINS value can survive a source migration to Railway.
+  // It describes an application hostname, not a running local Replit sidecar.
+  // Only actual Replit runtime identity markers are sufficient to select the
+  // loopback sidecar credential exchange.
+  if (process.env.REPL_ID || process.env.REPLIT_DEPLOYMENT) return "replit_sidecar";
   return "adc";
 }
 

@@ -310,6 +310,16 @@ describe("object storage credential portability", () => {
     expect(getObjectStorageCredentialMode()).toBe("service_account_json");
   });
 
+  it("does not mistake a legacy Replit domain value for a live local sidecar on Railway", () => {
+    vi.stubEnv("REPL_ID", "");
+    vi.stubEnv("REPLIT_DEPLOYMENT", "");
+    vi.stubEnv("REPLIT_DOMAINS", "legacy.mappingwithmelanin.replit.app");
+    vi.stubEnv("OBJECT_STORAGE_CREDENTIAL_MODE", "");
+    vi.stubEnv("GOOGLE_SERVICE_ACCOUNT_JSON", "");
+
+    expect(getObjectStorageCredentialMode()).toBe("adc");
+  });
+
   it("preserves automatic Replit sidecar selection when Replit metadata is present", () => {
     vi.stubEnv("OBJECT_STORAGE_CREDENTIAL_MODE", "");
     vi.stubEnv("GOOGLE_SERVICE_ACCOUNT_JSON", "");
