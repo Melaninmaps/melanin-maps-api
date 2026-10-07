@@ -154,6 +154,24 @@ describe("POST /api/media/upload error contract", () => {
     ]);
   });
 
+  it("uses the private bucket even when public delivery configuration is unavailable", async () => {
+    vi.stubEnv("PUBLIC_MEDIA_BUCKET_ID", "");
+    vi.stubEnv("MEDIA_PUBLIC_BASE_URL", "");
+    vi.stubEnv("MEDIA_PUBLICATION_MODE", "object_acl");
+    const file = workingFile();
+
+    const response = await request(createTestApp(file))
+      .post("/api/media/upload?purpose=kinfolk_question")
+      .field("kinfolkVisionConsent", "true")
+      .attach("file", Buffer.from("jpeg bytes"), { filename: "question.jpg", contentType: "image/jpeg" });
+
+    expect(response.status).toBe(201);
+    expect(response.body.assetId).toEqual(expect.any(String));
+    expect(response.body.url).toBeUndefined();
+    expect(file.save).toHaveBeenCalledOnce();
+    expect(file.makePublic).not.toHaveBeenCalled();
+  });
+
   it("deletes the object and fails closed when asset tracking cannot be persisted", async () => {
     const file = workingFile();
     const recordAsset = vi.fn<(values: readonly unknown[]) => Promise<unknown>>()

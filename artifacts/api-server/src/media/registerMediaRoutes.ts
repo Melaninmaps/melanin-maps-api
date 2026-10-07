@@ -389,7 +389,12 @@ async function handleMediaUpload(
   const isPrivate = purpose === "kinfolk_question" || purpose === "business_submission";
   const delivery = getPublicDeliveryConfiguration();
   const bucketId = isPrivate ? process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID?.trim() || null : delivery.bucketId;
-  const configurationBlocker = isPrivate && !bucketId ? "DEFAULT_OBJECT_STORAGE_BUCKET_ID is required." : delivery.blocker;
+  // Private Kinfolk question images do not use a public CDN or publication URL.
+  // A missing public-delivery setting must not make the member's separately
+  // configured private bucket unavailable.
+  const configurationBlocker = isPrivate
+    ? (!bucketId ? "DEFAULT_OBJECT_STORAGE_BUCKET_ID is required." : null)
+    : delivery.blocker;
   if (!bucketId || configurationBlocker) {
     logUploadFailure(req, "error", {
       event: "media_upload_failed",
