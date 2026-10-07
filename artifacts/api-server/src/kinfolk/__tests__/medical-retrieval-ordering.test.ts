@@ -23,4 +23,12 @@ describe("Kinfolk medical retrieval ordering", () => {
     expect(contextualGateIndex).toBeGreaterThan(deferralIndex);
     expect(healthRetrievalIndex).toBeGreaterThan(contextualGateIndex);
   });
+
+  it("counts retrieved NIH authority when applying the generic evidence outcome", () => {
+    expect(routeSource).toContain("const hasAuthoritativeHealthEvidence = hasRetrievedMedicalEvidence(");
+    expect(routeSource).toContain(
+      "hasAuthoritativeHealthEvidence ||\n      healthRetrievalSources.some(",
+    );
+    expect(routeSource).toContain("hasSupportingEvidence: hasLiveWebEvidence");
+  });
 });

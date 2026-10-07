@@ -198,6 +198,7 @@ import { permittedIdentityContext as resolvePermittedIdentityContext } from "../
 import {
   evidenceFailureReply,
   evidenceRoutePromptBlock,
+  hasRetrievedMedicalEvidence,
   TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY,
   TRUTHFUL_EVIDENCE_UNAVAILABLE_REPLY,
 } from "../kinfolk/evidence-runtime";
@@ -10547,7 +10548,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     // Medical and live/current claims fail closed when retrieval did not produce
     // claim-relevant authority. A model is never asked to fill these evidence gaps.
+    const hasAuthoritativeHealthEvidence = hasRetrievedMedicalEvidence(
+      healthEvidenceBlock,
+    );
     const hasLiveWebEvidence =
+      hasAuthoritativeHealthEvidence ||
       healthRetrievalSources.some(
         (source) => source.source === "kinfolk_web",
       ) ||
