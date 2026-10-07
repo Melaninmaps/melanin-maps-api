@@ -17,6 +17,7 @@ const STOP_WORDS = new Set([
 
 const MEDICAL_DISCUSSION_RE = /\b(?:anemia|anaemia|menopause|perimenopause|fertility|fibroid|endometriosis|pcos|breast\s+cancer|mammogram|medication|medicine|prescription|prescribed|drug|dose|dosage|side\s+effect|pharmacist)\b/i;
 const ACUTE_FIRST_AID_RE = /\b(?:burn(?:ed|t)?|scald(?:ed|ing)?|sprain(?:ed)?|strain(?:ed)?|laceration|open\s+wound|cut(?:\s+on)?|fracture|broken\s+bone|concussion|frostbite|poisoning)\b/i;
+const ACUTE_SOURCE_TOPIC_RE = /\b(?:burn(?:s|ed|t)?|scald(?:s|ed|ing)?|sprain(?:s|ed)?|strain(?:s|ed)?|laceration(?:s)?|wound(?:s)?|cut(?:s)?|fracture(?:s)?|broken\s+bone(?:s)?|concussion(?:s)?|frostbite|poisoning)\b/i;
 
 function isDirectMedicalDiscussionSource(
   source: MemberFacingSourceCandidate,
@@ -25,10 +26,15 @@ function isDirectMedicalDiscussionSource(
   // NIH MedlinePlus links added by the health-retrieval layer are authoritative
   // care-discussion material. A medication name may not appear in a source title,
   // and an acute-injury question can include practical terms absent from a neutral
-  // condition title. Exact token overlap alone must not hide this direct authority.
+  // condition title. For acute injuries, however, the returned authority still
+  // must name the injury topic rather than merely being a generic NIH page.
+  const sourceNamesAcuteTopic = ACUTE_SOURCE_TOPIC_RE.test(
+    `${source.title ?? ""} ${source.url ?? ""}`,
+  );
   return (
     source.label === "NIH MedlinePlus" &&
-    (MEDICAL_DISCUSSION_RE.test(message) || ACUTE_FIRST_AID_RE.test(message))
+    (MEDICAL_DISCUSSION_RE.test(message) ||
+      (ACUTE_FIRST_AID_RE.test(message) && sourceNamesAcuteTopic))
   );
 }
 

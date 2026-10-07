@@ -112,4 +112,23 @@ describe("Kinfolk member-facing source relevance", () => {
 
     expect(result.map((source) => source.id)).toEqual(["medlineplus-burns"]);
   });
+
+  it("does not render a generic NIH page as evidence for a specific sprain", () => {
+    const result = filterMemberFacingSources([
+      {
+        id: "medlineplus-sprains-and-strains",
+        label: "NIH MedlinePlus",
+        title: "Sprains and Strains",
+        url: "https://medlineplus.gov/sprainsandstrains.html",
+      },
+      {
+        id: "medlineplus-travelers-health",
+        label: "NIH MedlinePlus",
+        title: "Traveler's Health",
+        url: "https://medlineplus.gov/travelershealth.html",
+      },
+    ], "I sprained my ankle yesterday. What general first-aid steps should I consider?");
+
+    expect(result.map((source) => source.id)).toEqual(["medlineplus-sprains-and-strains"]);
+  });
 });

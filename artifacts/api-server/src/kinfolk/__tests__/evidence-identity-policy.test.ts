@@ -344,7 +344,7 @@ describe("neutral research and health planning", () => {
       "minor burns and scalds first aid",
     );
     expect(extractHealthTopic("I sprained my ankle yesterday; what should I ask a clinician?")).toBe(
-      "acute injury first aid",
+      "sprains and strains",
     );
   });
 
