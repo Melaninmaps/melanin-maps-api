@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 import { routeEvidence } from "../evidence-route";
-import { deterministicArithmeticAnswer, planSemanticTurn } from "../semantic-turn-planner";
+import {
+  deterministicArithmeticAnswer,
+  hasResolvedImmediateArithmeticFollowUp,
+  planSemanticTurn,
+} from "../semantic-turn-planner";
 
 describe("semantic turn planner", () => {
   it.each([
@@ -165,6 +169,32 @@ describe("semantic turn planner", () => {
       expect(classify).not.toHaveBeenCalled();
     },
   );
+
+  it("resolves only the immediate arithmetic antecedent", () => {
+    const arithmeticHistory = [
+      { role: "user" as const, content: "10 + 10" },
+      { role: "assistant" as const, content: "20" },
+    ];
+    expect(
+      hasResolvedImmediateArithmeticFollowUp(
+        "How did you get that?",
+        arithmeticHistory,
+      ),
+    ).toBe(true);
+    expect(
+      hasResolvedImmediateArithmeticFollowUp(
+        "Who won that conflict?",
+        arithmeticHistory,
+      ),
+    ).toBe(false);
+    expect(
+      hasResolvedImmediateArithmeticFollowUp("How did you get that?", [
+        ...arithmeticHistory,
+        { role: "user", content: "Tell me about Philadelphia" },
+        { role: "assistant", content: "Philadelphia has a rich history." },
+      ]),
+    ).toBe(false);
+  });
 
   it("does not let older arithmetic suppress clarification for an unrelated conflict", async () => {
     const classify = vi.fn().mockResolvedValue({

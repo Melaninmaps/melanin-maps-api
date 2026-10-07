@@ -392,6 +392,7 @@ import {
 } from "../kinfolk/contextual-intelligence-mode";
 import {
   deterministicArithmeticAnswer,
+  hasResolvedImmediateArithmeticFollowUp,
   planSemanticTurn,
   resolveConversationalResearchSubject,
   type KinfolkTaskMode,
@@ -9080,7 +9081,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         "generic Kinfolk answer classifier unavailable",
       );
     }
-    const generalAnswerRoute = resolveKinfolkGeneralAnswerRoute({
+    const resolvedImmediateArithmeticFollowUp =
+      hasResolvedImmediateArithmeticFollowUp(
+        message,
+        conversationHistoryForContext,
+      );
+    const classifiedGeneralAnswerRoute = resolveKinfolkGeneralAnswerRoute({
       message: researchContextMessage,
       evidence: evidenceRoute,
       semantic: genericAnswerDecision,
@@ -9088,6 +9094,20 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // answer its explicit recall turn. It does not read, create, or broaden memory.
       hasApprovedRelevantMemory: isPreferredNameRecallRequest(message),
     });
+    // A current-session arithmetic reference is fully resolved by the immediately
+    // preceding user/assistant exchange. Defer it to the semantic planner rather
+    // than asking the generic classifier's redundant clarification; the bounded
+    // ephemeral session is never written to member memory or the database.
+    const generalAnswerRoute =
+      resolvedImmediateArithmeticFollowUp &&
+      classifiedGeneralAnswerRoute.requiresFocusedClarification
+        ? {
+            ...classifiedGeneralAnswerRoute,
+            strategy: "stable_knowledge" as const,
+            requiresFocusedClarification: false,
+            clarificationQuestion: null,
+          }
+        : classifiedGeneralAnswerRoute;
     // This only frames a current answer for a member who is sharing an emotion or
     // asking for support. It neither reads nor writes memory; crisis wording stays
     // with the existing deterministic emergency and safety policies.

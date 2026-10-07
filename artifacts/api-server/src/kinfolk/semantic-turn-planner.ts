@@ -128,6 +128,26 @@ function basePlan(input: SemanticPlannerInput): SemanticTurnPlan {
   };
 }
 
+/**
+ * Resolves only the immediate, bounded arithmetic antecedent in a current
+ * conversation. It does not create memory or make older calculations available
+ * to unrelated turns.
+ */
+export function hasResolvedImmediateArithmeticFollowUp(
+  message: string,
+  history?: SemanticPlannerInput["history"],
+): boolean {
+  const recent = history?.slice(-2) ?? [];
+  const immediateArithmeticExchange = recent.length === 2
+    && recent[0]?.role === "user"
+    && /\b-?\d+(?:\.\d+)?\s*[+\-*/]\s*-?\d+(?:\.\d+)?\b/.test(recent[0].content)
+    && recent[1]?.role === "assistant"
+    && /\b-?\d+(?:\.\d+)?\b/.test(recent[1].content);
+  const arithmeticReferentialFollowUp = /\b(that|the answer|the result|how did you get|what was|what is)\b/i.test(message)
+    && !/\b(conflict|dispute|contest|battle|case|version|person|place)\b/i.test(message);
+  return immediateArithmeticExchange && arithmeticReferentialFollowUp;
+}
+
 function ambiguous(message: string, plan: SemanticTurnPlan, history?: SemanticPlannerInput["history"]): boolean {
   if (plan.taskMode === "high_consequence" || plan.taskMode === "recipe_options" || plan.taskMode === "recipe_instructions") return false;
   const words = message.trim().split(/\s+/);
@@ -139,20 +159,9 @@ function ambiguous(message: string, plan: SemanticTurnPlan, history?: SemanticPl
     && words.length <= 8
     && !/[A-Z][\p{L}'’-]+.*[A-Z][\p{L}'’-]+/u.test(message)
     && !/[\d][\d\s+*/().-]*[\d]/.test(message);
-  // Only the immediately preceding user/assistant exchange may establish an
-  // arithmetic antecedent, and the current question must refer to its answer.
-  // An older calculation must never suppress clarification for a new conflict,
-  // person, place, or other unrelated subject.
-  const recent = history?.slice(-2) ?? [];
-  const immediateArithmeticExchange = recent.length === 2
-    && recent[0]?.role === "user"
-    && /\b-?\d+(?:\.\d+)?\s*[+\-*/]\s*-?\d+(?:\.\d+)?\b/.test(recent[0].content)
-    && recent[1]?.role === "assistant"
-    && /\b-?\d+(?:\.\d+)?\b/.test(recent[1].content);
-  const arithmeticReferentialFollowUp = plan.taskMode === "direct_answer"
-    && /\b(that|the answer|the result|how did you get|what was|what is)\b/i.test(message)
-    && !/\b(conflict|dispute|contest|battle|case|version|person|place)\b/i.test(message);
-  const hasImmediateArithmeticAntecedent = immediateArithmeticExchange && arithmeticReferentialFollowUp;
+  const hasImmediateArithmeticAntecedent =
+    plan.taskMode === "direct_answer" &&
+    hasResolvedImmediateArithmeticFollowUp(message, history);
   return !hasImmediateArithmeticAntecedent && (referential || underspecifiedQuestion);
 }
 
