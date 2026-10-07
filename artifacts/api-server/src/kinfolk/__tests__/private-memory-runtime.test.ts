@@ -189,7 +189,9 @@ describe("Kinfolk private-memory production control", () => {
     expect(source).toContain("isExplicitMemberMemoryCapabilityQuestion(message)");
     expect(source).toContain("answerMode: \"memory_help\"");
     expect(source).toContain("return resolveExplicitMemberMemoryAccess()");
-    expect(source).toContain("if (!input.memoryEnabled) return undefined");
+    expect(source).toContain("if (!input.memoryEnabled) {");
+    expect(source).toContain("const currentEphemeralSession = readEphemeralKinfolkSession(");
+    expect(source).toContain("currentEphemeralSession ? input.sessionId : undefined");
     expect(source).toContain('router.put("/kinfolk/preferred-name"');
     expect(source).toContain('router.patch("/kinfolk/preferred-name/pause"');
     expect(source).toContain('router.post("/kinfolk/preferred-name/revoke"');

@@ -6985,7 +6985,32 @@ async function persistDeterministicDiscoveryTurn(input: {
   destination: string;
   vibes: string[];
 }): Promise<string | undefined> {
-  if (!input.memoryEnabled) return undefined;
+  if (!input.memoryEnabled) {
+    const currentEphemeralSession = readEphemeralKinfolkSession(
+      input.userId,
+      input.sessionId,
+    );
+    const timestamp = new Date().toISOString();
+    return writeEphemeralKinfolkSession(
+      {
+        userId: input.userId,
+        messages: [
+          ...(currentEphemeralSession?.messages ?? []),
+          { role: "user", content: input.message, timestamp },
+          {
+            role: "assistant",
+            content: input.reply,
+            recommendations: input.recommendations,
+            followUpSuggestions: input.followUpSuggestions,
+            sources: input.sources,
+            timestamp,
+          },
+        ],
+        destination: input.destination,
+      },
+      currentEphemeralSession ? input.sessionId : undefined,
+    );
+  }
   try {
     const [currentSession] = input.sessionId
       ? await db
