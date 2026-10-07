@@ -3,6 +3,7 @@ import {
   buildKinfolkConversationModeInstruction,
   buildKinfolkConversationModePrompt,
   buildKinfolkEmotionalCheckInContract,
+  buildKinfolkModeIsolationContract,
   buildKinfolkNaturalConversationContract,
   isKinfolkFormalDocumentRequest,
   normalizeKinfolkConversationMode,
@@ -56,6 +57,19 @@ describe("Kinfolk conversation modes", () => {
     expect(buildKinfolkConversationModeInstruction("best_friend")).toContain("here is the move");
     expect(buildKinfolkConversationModeInstruction("professor")).toContain("Answer, Why it matters, and Practice line");
     expect(buildKinfolkConversationModeInstruction("business_manager")).toContain("Priority, Decision, and Next action");
+  });
+
+  it("makes the same delivery-only isolation boundary mandatory for every mode", () => {
+    const boundary = buildKinfolkModeIsolationContract();
+    expect(boundary).toContain("must not change the factual answer");
+    expect(boundary).toContain("current-information routing");
+    expect(boundary).toContain("safety or emergency behavior");
+    expect(boundary).toContain("must not create, pause, resume, revoke, delete");
+    expect(boundary).toContain("selected TTS speaker identity");
+
+    for (const mode of ["community", "professor", "business_manager", "best_friend"] as const) {
+      expect(buildKinfolkConversationModePrompt(mode)).toContain(boundary);
+    }
   });
 
   it("requires natural reference resolution without inventing prior history or dialect", () => {

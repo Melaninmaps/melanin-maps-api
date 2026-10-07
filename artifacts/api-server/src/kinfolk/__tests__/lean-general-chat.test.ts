@@ -62,6 +62,18 @@ describe("lean general Kinfolk chat", () => {
     expect(buildLeanGeneralChatPrompt("professional")).toContain("Big Cousin mode");
   });
 
+  it("keeps current evidence, safety, memory, and speaker boundaries invariant across every lean mode", () => {
+    for (const mode of ["community", "professor", "business_manager", "best_friend"] as const) {
+      const prompt = buildLeanGeneralChatPrompt(mode);
+      expect(prompt).toContain("MODE ISOLATION — NON-NEGOTIABLE");
+      expect(prompt).toContain("must not change the factual answer");
+      expect(prompt).toContain("current-information routing");
+      expect(prompt).toContain("must not create, pause, resume, revoke, delete");
+      expect(prompt).toContain("selected TTS speaker identity");
+      expect(prompt).toContain("hydrogen fusion in the sun's core");
+    }
+  });
+
   it("keeps the solar-science core factual across all four conversational voices", () => {
     for (const mode of ["community", "best_friend", "professor", "business_manager"]) {
       const prompt = buildLeanGeneralChatPrompt(mode);

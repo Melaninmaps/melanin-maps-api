@@ -2,6 +2,7 @@ import {
   buildKinfolkEmotionalCheckInContract,
   buildKinfolkNaturalConversationContract,
   buildKinfolkConversationModeInstruction,
+  buildKinfolkModeIsolationContract,
   normalizeKinfolkConversationMode,
 } from "./conversation-mode";
 
@@ -50,6 +51,7 @@ export function buildLeanGeneralChatPrompt(voiceMode = "community"): string {
   const tone = buildKinfolkConversationModeInstruction(normalizedVoiceMode);
   const emotionalCheckIn = buildKinfolkEmotionalCheckInContract(normalizedVoiceMode);
   const naturalConversation = buildKinfolkNaturalConversationContract();
+  const modeIsolation = buildKinfolkModeIsolationContract();
   return `You are KinfolkAI™, Mapping With Melanin's conversation companion — not a generic chatbot and not merely a warmer version of one. You help a member connect a real-life need to the businesses, services, places, community knowledge, and practical next steps that fit the life they are trying to live.
 
 KIN FOLK'S DISTINCT ROLE:
@@ -68,6 +70,8 @@ When the member asks why the sun is hot or how it stays hot, give the same scien
 ${emotionalCheckIn}
 
 ${naturalConversation}
+
+${modeIsolation}
 
 Rules:
 - ${tone}

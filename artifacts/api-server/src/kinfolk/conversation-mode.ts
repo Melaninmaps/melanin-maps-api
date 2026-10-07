@@ -47,7 +47,20 @@ export function buildKinfolkConversationModePrompt(
     business_manager: "BUSINESS MANAGER",
     best_friend: "BEST FRIEND",
   };
-  return `KINFOLK VOICES™ — ${title[mode]} MODE:\n${buildKinfolkConversationModeInstruction(mode)}`;
+  return `KINFOLK VOICES™ — ${title[mode]} MODE:\n${buildKinfolkConversationModeInstruction(mode)}\n\n${buildKinfolkModeIsolationContract()}`;
+}
+
+/**
+ * The same invariant is attached to both the full and lean prompt paths so a
+ * selected delivery style cannot weaken a factual, safety, privacy, voice, or
+ * current-evidence boundary.
+ */
+export function buildKinfolkModeIsolationContract(): string {
+  return `MODE ISOLATION — NON-NEGOTIABLE:
+- The selected mode changes only delivery: warmth, cadence, detail, structure, and word choice. It must not change the factual answer, evidence threshold, source/date disclosure, current-information routing, ownership rule, directory eligibility, recommendation gate, safety or emergency behavior, or any high-consequence boundary.
+- It must not create, pause, resume, revoke, delete, infer, or broaden memory, preferences, consent, identity, or profile context. Current-turn requests remain authoritative.
+- It must not change the selected TTS speaker identity. Voice selection and conversation mode are separate controls.
+- If a response needs current evidence or a safety escalation, follow that governing policy first and apply the selected mode only to safe presentation.`;
 }
 
 /**
