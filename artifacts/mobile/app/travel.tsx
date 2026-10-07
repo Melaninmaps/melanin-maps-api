@@ -2010,7 +2010,7 @@ export default function TravelScreen() {
   const [inputText, setInputText] = useState(searchHandoff?.trim() ?? "");
   const [exactRadiusOrigin, setExactRadiusOrigin] = useState("");
   const [voiceMode, setVoiceMode] = useState<"community" | "professor" | "business_manager" | "best_friend">("community");
-  const [kinfolkImages, setKinfolkImages] = useState<string[]>([]);
+  const [kinfolkImages, setKinfolkImages] = useState<Array<{ assetId: string; previewUri: string }>>([]);
   const [uploadingKinfolkImage, setUploadingKinfolkImage] = useState(false);
   const [includeCommunityPerspective, setIncludeCommunityPerspective] = useState(false);
   const [voiceOutput, setVoiceOutput] = useState(false);
@@ -2265,25 +2265,53 @@ export default function TravelScreen() {
     if (stoppedReply) setVoiceInputStatus("Kinfolk stopped. Finish your thought and send it when you’re ready.");
   }, [interruptCurrentReply, stopServerVoice]);
 
+  const uploadKinfolkImage = useCallback(async (asset: ImagePicker.ImagePickerAsset) => {
+    setUploadingKinfolkImage(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const form = new FormData();
+      form.append("file", { uri: asset.uri, name: asset.fileName ?? `kinfolk-${Date.now()}.jpg`, type: asset.mimeType ?? "image/jpeg" } as never);
+      form.append("kinfolkVisionConsent", "true");
+      const response = await fetch(`${getApiBase()}/api/media/upload?purpose=kinfolk_question`, { method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: form });
+      const body = await response.json().catch(() => ({})) as { assetId?: string; error?: string };
+      if (!response.ok || !body.assetId) throw new Error(body.error ?? "Could not prepare that private image.");
+      setKinfolkImages((items) => items.some((item) => item.assetId === body.assetId)
+        ? items
+        : [...items, { assetId: body.assetId!, previewUri: asset.uri }].slice(0, 2));
+    } catch (cause) { Alert.alert("Image upload failed", cause instanceof Error ? cause.message : "Please try again."); }
+    finally { setUploadingKinfolkImage(false); }
+  }, []);
+
+  const removeKinfolkImage = useCallback(async (attachment: { assetId: string; previewUri: string }) => {
+    setKinfolkImages((items) => items.filter((item) => item.assetId !== attachment.assetId));
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const response = await fetch(`${getApiBase()}/api/media/kinfolk-question/${encodeURIComponent(attachment.assetId)}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) throw new Error("private image deletion deferred");
+    } catch {
+      Alert.alert("Private image removal", "The image was removed from this screen and will expire shortly from private processing.");
+    }
+  }, []);
+
   const pickKinfolkImage = useCallback(async () => {
     if (uploadingKinfolkImage || kinfolkImages.length >= 2) return;
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!permission.granted) { Alert.alert("Photo access needed", "Allow photo access to ask Kinfolk about an image. You can still type any question."); return; }
     const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.82, allowsMultipleSelection: false });
-    if (result.canceled || !result.assets[0]) return;
-    setUploadingKinfolkImage(true);
-    try {
-      const asset = result.assets[0];
-      const token = await SecureStore.getItemAsync("auth_session_token");
-      const form = new FormData();
-      form.append("file", { uri: asset.uri, name: asset.fileName ?? `kinfolk-${Date.now()}.jpg`, type: asset.mimeType ?? "image/jpeg" } as never);
-      const response = await fetch(`${getApiBase()}/api/media/upload?purpose=kinfolk_question`, { method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: form });
-      const body = await response.json().catch(() => ({})) as { url?: string; error?: string };
-      if (!response.ok || !body.url) throw new Error(body.error ?? "Could not upload that image.");
-      setKinfolkImages((items) => items.includes(body.url!) ? items : [...items, body.url!].slice(0, 2));
-    } catch (cause) { Alert.alert("Image upload failed", cause instanceof Error ? cause.message : "Please try again."); }
-    finally { setUploadingKinfolkImage(false); }
-  }, [kinfolkImages.length, uploadingKinfolkImage]);
+    const asset = result.assets?.[0];
+    if (result.canceled || !asset) return;
+    Alert.alert(
+      "Use this image for this answer?",
+      "Kinfolk will review this image only to answer your current question. It is sent to Kinfolk’s AI provider for that answer, is not used to train Kinfolk, is not saved as memory, and is deleted after the answer. If interrupted, the private upload expires within 15 minutes.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Use image for this answer", onPress: () => void uploadKinfolkImage(asset) },
+      ],
+    );
+  }, [kinfolkImages.length, uploadingKinfolkImage, uploadKinfolkImage]);
 
   const startPrimaryVoiceRecording = useCallback(async () => {
     if (Platform.OS === "web" || primaryRecorder.isRecording || isTranscribingVoice) return;
@@ -2360,7 +2388,8 @@ export default function TravelScreen() {
     // A typed follow-up should never wait behind a speaking or loading turn.
     // The hook cancels the old request; this stops any server-owned playback.
     stopServerVoice("member_new_turn");
-    const attachedImages = [...kinfolkImages];
+    const attachedImagePreviews = kinfolkImages.map((attachment) => attachment.previewUri);
+    const attachedImageAssetIds = kinfolkImages.map((attachment) => attachment.assetId);
     const publicOrigin = exactRadiusOrigin.trim();
     setInputText("");
     // The origin is one-turn public context only. It is never shown in the
@@ -2370,7 +2399,9 @@ export default function TravelScreen() {
     armAutoSpeech();
     await sendMessage(msg, {
       voiceMode,
-      imageUrls: attachedImages,
+      imageUrls: attachedImagePreviews,
+      imageAssetIds: attachedImageAssetIds,
+      imageVisionConsent: attachedImageAssetIds.length > 0,
       includeCommunityPerspective,
       publicOrigin: publicOrigin || undefined,
     });
@@ -2886,7 +2917,7 @@ export default function TravelScreen() {
               <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, color: colors.mutedForeground, marginTop: 1 }}>This does not share your chat. Community content is perspective, never evidence or a recommendation.</Text>
             </View>
           </TouchableOpacity>
-          {kinfolkImages.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>{kinfolkImages.map((url) => <View key={url} style={{ marginRight: 8 }}><Image source={{ uri: url }} style={{ width: 74, height: 74, borderRadius: 12 }} accessibilityLabel="Ready to ask Kinfolk about" /><TouchableOpacity onPress={() => setKinfolkImages((items) => items.filter((item) => item !== url))} style={{ position: "absolute", top: -4, right: -4, backgroundColor: colors.primary, borderRadius: 12, padding: 3 }}><Ionicons name="close" size={12} color="#FFF" /></TouchableOpacity></View>)}</ScrollView>}
+          {kinfolkImages.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>{kinfolkImages.map((attachment) => <View key={attachment.assetId} style={{ marginRight: 8 }}><Image source={{ uri: attachment.previewUri }} style={{ width: 74, height: 74, borderRadius: 12 }} accessibilityLabel="Ready to ask Kinfolk about" /><TouchableOpacity onPress={() => void removeKinfolkImage(attachment)} accessibilityLabel="Remove private image" style={{ position: "absolute", top: -4, right: -4, backgroundColor: colors.primary, borderRadius: 12, padding: 3 }}><Ionicons name="close" size={12} color="#FFF" /></TouchableOpacity></View>)}</ScrollView>}
         </View>
         </>}
 
