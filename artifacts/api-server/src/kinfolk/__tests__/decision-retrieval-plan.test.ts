@@ -94,4 +94,18 @@ describe("Kinfolk decision and retrieval plan", () => {
       requireEvidence: false,
     });
   });
+
+  it.each([
+    "It's going to be a busy day today at work—any tips for not getting overwhelmed?",
+    "Help me organize my budget for this week without getting stressed.",
+    "I need to reflect on a disagreement with my partner tonight. How can I start the conversation?",
+    "Explain this study concept in a way I can remember tomorrow.",
+  ])("keeps stable self-directed coaching direct and uncited: %s", (message) => {
+    expect(plan(message)).toMatchObject({
+      kind: "general_assistant",
+      retrieval: "none",
+      allowBusinessCards: false,
+      requireEvidence: false,
+    });
+  });
 });

@@ -6,16 +6,30 @@ import { canonicalizeContextualUrl } from "./contextual-url";
 // external-status or time-bound travel signal below still preserves live
 // research when the answer depends on changing outside conditions.
 const SELF_DIRECTED_PLANNING_OR_WRITING_RE = /(?:\b(?:help(?:\s+me)?|can you|could you|please|i\s+(?:need|want|have)\s+to)\s+(?:plan|organize|organise|schedule|prioriti[sz]e|prepare|draft|write|rewrite|revise|edit|brainstorm|outline)\b|\b(?:plan|organize|organise|schedule|prioriti[sz]e|prepare)\s+(?:my|our)\b|\b(?:draft|write|rewrite|revise|edit|brainstorm|outline)\s+(?:a|an|the|my|our|this|that)\b|\b(?:make|create)\s+(?:me\s+)?(?:a\s+)?(?:[\p{L}'’-]+\s+){0,3}(?:plan|schedule|routine|to[- ]?do(?:\s+list)?|task\s+list)\b)/iu;
+// Everyday coaching, self-organization, reflection, and explanation requests
+// often use a personal time word such as "today" or "tomorrow." Those words
+// describe the member's own context, not an external fact for Kinfolk to look
+// up. Keep this task-based rather than person/place based so it covers ordinary
+// conversation without weakening live evidence for weather, prices, hours, and
+// other truly changing claims.
+const STABLE_SELF_DIRECTED_SUPPORT_RE = /\b(?:overwhelm(?:ed|ing)?|stress(?:ed|ful)?|anx(?:ious|iety)|busy\s+(?:day|week|schedule|work(?:day)?|workload)|workload|focus|motivat(?:e|ed|ion)|burn(?:ed|out)|self[ -]?care|cope|calm(?:er|ing)?|relationship|partner|friendship|reflect(?:ion)?|communicat(?:e|ion)|conflict|boundar(?:y|ies)|study(?:ing)?|learn(?:ing)?|explain|understand|budget(?:ing)?|organize|organise|prioriti[sz]e|routine|habit|life\s+(?:organization|organising|organizing)|tips?\s+for|advice\s+(?:for|on)|help\s+(?:me\s+)?(?:handle|manage|deal\s+with))\b/iu;
 const TIME_HORIZON_RE = /\b(?:today|tonight|tomorrow|(?:this|next)\s+weekend|this\s+(?:week|month|year))\b/i;
 const EXTERNAL_STATUS_DEPENDENCY_RE = /\b(?:current(?:ly)?|latest|updates?|availability|available|open|closed|weather|temperature|price|prices|cost|costs|traffic|transit|delay|delays|outage|outages|(?:opening|business|venue|location|site|facility|office|store|service|event)\s+hours?)\b/i;
 const EXTERNAL_STATUS_QUESTION_RE = /\b(?:what(?:'s|\s+is|\s+are)|when|where|who|is|are|will|does|do|can)\b[\s\S]{0,90}\b(?:open|closed|availability|available|hours?|schedule|scheduled|weather|temperature|price|prices|cost|costs|traffic|transit|delay|delays|outage|outages)\b/i;
 const TIME_BOUND_TRAVEL_RE = /\b(?:trip|travel|vacation|itinerary|flight|flights|hotel|hotels|reservation|reservations)\b/i;
+const MATERIAL_CURRENT_FACT_RE = /\b(?:current(?:ly)?|latest|recent|updates?|fresh(?:ness)?|as[- ]of|right now|open[- ]now|availability|available|hours?|weather|temperature|price|prices|cost|costs|traffic|transit|delay|delays|outage|outages|breaking|news|election|redistricting|closing|closed|recall|alert|deadline|law|policy|regulation)\b/i;
 
 function isSelfDirectedPlanningWithOnlyTimeHorizon(message: string): boolean {
   return TIME_HORIZON_RE.test(message)
     && SELF_DIRECTED_PLANNING_OR_WRITING_RE.test(message)
     && !EXTERNAL_STATUS_QUESTION_RE.test(message)
     && !EXTERNAL_STATUS_DEPENDENCY_RE.test(message)
+    && !TIME_BOUND_TRAVEL_RE.test(message);
+}
+
+function isStableSelfDirectedSupportWithNoCurrentFact(message: string): boolean {
+  return STABLE_SELF_DIRECTED_SUPPORT_RE.test(message)
+    && !MATERIAL_CURRENT_FACT_RE.test(message)
     && !TIME_BOUND_TRAVEL_RE.test(message);
 }
 
@@ -127,6 +141,7 @@ export function hasRequestedArticleEvidence(
 export function requiresCurrentResearch(message: string): boolean {
   if (isPreferredNameRecallRequest(message)) return false;
   if (isSelfDirectedPlanningWithOnlyTimeHorizon(message)) return false;
+  if (isStableSelfDirectedSupportWithNoCurrentFact(message)) return false;
   return CURRENT_RESEARCH_RE.test(message)
     || CHANGING_PUBLIC_STATISTIC_RE.test(message)
     || isCurrencyConversionRequest(message)

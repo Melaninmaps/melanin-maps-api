@@ -42,6 +42,11 @@ const CURRENT_WORDS = /\b(current|currently|recent|recently|latest|today|today's
 
 // Named works can retain their culture domain even when the turn contains only a title.
 const KNOWN_CULTURE_WORK_SIGNALS = /\bSinners\b/i;
+// A member organizing their own household budget is asking for general life
+// organization, not a regulated investment, credit, tax, or price claim. This
+// remains intentionally narrow; financial advice and any current price/rate
+// request continue to use the protected financial evidence route.
+const PERSONAL_BUDGET_ORGANIZATION_RE = /\b(?:help(?:\s+me)?|can you|could you|please|i\s+(?:need|want))?\s*(?:organize|organise|plan|create|make|set\s+up|track|review|manage)\s+(?:my|our|a|the)?\s*(?:household\s+|personal\s+)?budget\b/i;
 
 const HIGH_STAKES = new Set<KinfolkIntent>([
   "medical_health",
@@ -145,7 +150,9 @@ export function routeEvidence(message: string): EvidenceRoute {
   // Keep the evidence route aligned with the chat-route freshness guard,
   // including concise named-person custody or release questions.
   const liveWebRequired = requiresCurrentResearch(cleanMessage);
-  const domain = semanticDomain(cleanMessage, liveWebRequired);
+  const domain = PERSONAL_BUDGET_ORGANIZATION_RE.test(cleanMessage) && !liveWebRequired
+    ? "general_knowledge"
+    : semanticDomain(cleanMessage, liveWebRequired);
   const claimMode = classifyCulturalClaimMode(cleanMessage);
   const baseRisk = getEvidencePolicy(domain).consequence;
   const risk: Consequence = liveWebRequired && baseRisk === "low" ? "medium" : baseRisk;

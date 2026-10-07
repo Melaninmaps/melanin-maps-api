@@ -67,6 +67,11 @@ describe("current research routing", () => {
     "Help me schedule my work hours tomorrow",
     "Draft a clear email to send tomorrow morning",
     "Create me a simple routine for tonight",
+    "It's going to be a busy day today at work—any tips for not getting overwhelmed?",
+    "I feel overwhelmed by my workload today. Help me reset and choose one next step.",
+    "Help me organize my budget for this week without getting stressed.",
+    "I need to reflect on a disagreement with my partner tonight. How can I start the conversation?",
+    "Explain this study concept in a way I can remember tomorrow.",
     "Find live music in Atlanta",
     "Add a live comedy show to my ideas",
     "Show me living history museums",
@@ -87,6 +92,17 @@ describe("current research routing", () => {
     expect(requiresCurrentResearch("Help me plan tomorrow's flight options")).toBe(true);
     expect(requiresCurrentResearch("Plan my museum visit tomorrow around the current opening hours.")).toBe(true);
     expect(requiresCurrentResearch("Plan a visit tomorrow around the venue opening hours.")).toBe(true);
+  });
+
+  it.each([
+    "What are the opening hours for the library today?",
+    "What is the current price of a Philadelphia day pass?",
+    "What is the latest news on this transit outage?",
+    "What law takes effect this month?",
+    "Help me plan my day tomorrow around what is open in Philadelphia.",
+    "Help me keep calm today while I plan around live train delays.",
+  ])("keeps materially current external facts on cited research: %s", (message) => {
+    expect(requiresCurrentResearch(message)).toBe(true);
   });
 
   it("keeps explicit preferred-name recall out of the current-research path", () => {
