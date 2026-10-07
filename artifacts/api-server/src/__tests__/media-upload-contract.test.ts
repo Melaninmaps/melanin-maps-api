@@ -338,6 +338,27 @@ describe("object storage credential portability", () => {
     expect(getObjectStorageCredentialMode()).toBe("adc");
   });
 
+  it("fails closed on Railway without a mounted ADC binding or service-account credential", () => {
+    vi.stubEnv("REPL_ID", "");
+    vi.stubEnv("REPLIT_DEPLOYMENT", "");
+    vi.stubEnv("RAILWAY_ENVIRONMENT", "production");
+    vi.stubEnv("OBJECT_STORAGE_CREDENTIAL_MODE", "adc");
+    vi.stubEnv("GOOGLE_APPLICATION_CREDENTIALS", "");
+    vi.stubEnv("GOOGLE_SERVICE_ACCOUNT_JSON", "");
+
+    expect(() => getObjectStorageCredentialMode()).toThrow(
+      "Railway ADC requires GOOGLE_APPLICATION_CREDENTIALS"
+    );
+  });
+
+  it("allows Railway ADC only with an explicit mounted credential binding", () => {
+    vi.stubEnv("RAILWAY_ENVIRONMENT", "production");
+    vi.stubEnv("OBJECT_STORAGE_CREDENTIAL_MODE", "adc");
+    vi.stubEnv("GOOGLE_APPLICATION_CREDENTIALS", "/var/run/secrets/google/application.json");
+
+    expect(getObjectStorageCredentialMode()).toBe("adc");
+  });
+
   it("preserves automatic Replit sidecar selection when Replit metadata is present", () => {
     vi.stubEnv("OBJECT_STORAGE_CREDENTIAL_MODE", "");
     vi.stubEnv("GOOGLE_SERVICE_ACCOUNT_JSON", "");

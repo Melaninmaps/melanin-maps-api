@@ -25,10 +25,23 @@ export class ObjectStorageConfigurationError extends Error {
 let _client: Storage | null = null;
 let _clientError: Error | null = null;
 
+function assertRailwayAdcBinding(mode: ObjectStorageCredentialMode): void {
+  if (
+    mode === "adc" &&
+    process.env.RAILWAY_ENVIRONMENT?.trim() &&
+    !process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim()
+  ) {
+    throw new ObjectStorageConfigurationError(
+      "Railway ADC requires GOOGLE_APPLICATION_CREDENTIALS, or configure GOOGLE_SERVICE_ACCOUNT_JSON instead."
+    );
+  }
+}
+
 export function getObjectStorageCredentialMode(): ObjectStorageCredentialMode {
   const configured = process.env.OBJECT_STORAGE_CREDENTIAL_MODE?.trim().toLowerCase();
   if (configured) {
     if (configured === "adc" || configured === "service_account_json" || configured === "replit_sidecar") {
+      assertRailwayAdcBinding(configured);
       return configured;
     }
     throw new ObjectStorageConfigurationError("OBJECT_STORAGE_CREDENTIAL_MODE is not supported.");
@@ -39,6 +52,7 @@ export function getObjectStorageCredentialMode(): ObjectStorageCredentialMode {
   // Only actual Replit runtime identity markers are sufficient to select the
   // loopback sidecar credential exchange.
   if (process.env.REPL_ID || process.env.REPLIT_DEPLOYMENT) return "replit_sidecar";
+  assertRailwayAdcBinding("adc");
   return "adc";
 }
 
