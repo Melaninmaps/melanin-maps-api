@@ -200,6 +200,22 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Official-presence unresolved");
   });
 
+  it("accounts for every business with concrete reconciliation states and audit receipts", () => {
+    expect(migrations).toContain("business_directory_reconciliation_ledger_v1");
+    expect(migrations).toContain("business_directory_reconciliation_ledger");
+    expect(migrations).toContain("business_directory_reconciliation_ledger_seed");
+    expect(migrations).toContain("business_directory_reconciliation_audit_events are immutable");
+    expect(migrations).toContain("INSERT INTO business_directory_reconciliation_ledger");
+    expect(adminRoute).toContain("reconciliationLedgerAvailable");
+    expect(adminRoute).toContain("reconciliationAccountedTotal");
+    expect(adminRoute).toContain("official_presence_unverified");
+    expect(adminRoute).toContain("ownership_unverified");
+    expect(adminRoute).toContain("Archive reason code must match the record’s documented reconciliation decision");
+    expect(adminScreen).toContain("Reconciliation status");
+    expect(adminScreen).toContain("Reconciliation ledger:");
+    expect(adminScreen).toContain("Missing ownership, website, social, or map evidence is not an archive reason");
+  });
+
   it("clears a bad website only through an immutable audit receipt and leaves social-only qualification available", () => {
     expect(documentedDiscoveryReview).toContain("websiteCleanup originalWebsite does not match the currently stored public website");
     expect(documentedDiscoveryReview).toContain("SET website = CASE WHEN $2 THEN $3 ELSE COALESCE($3, website) END");

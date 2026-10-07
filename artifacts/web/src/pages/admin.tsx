@@ -319,6 +319,12 @@ type AdminBusiness = {
   websiteCleanupStatus: "identity_mismatch" | "unsafe_spam" | "inactive_broken" | null;
   socialOnlyPublic: boolean;
   officialPresenceUnresolved: boolean;
+  reconciliationState: string;
+  reconciliationReasonCode: string;
+  reconciliationPresenceStatus: string;
+  reconciliationOwnershipStatus: string;
+  reconciliationRecommendedAction: string;
+  reconciliationReviewedAt: string | null;
   phone: string | null;
   website: string | null;
   instagram: string | null;
@@ -344,6 +350,17 @@ type AdminBusiness = {
     createdAt: string;
   } | null;
 };
+
+type BusinessReconciliationFilter =
+  | "all"
+  | "unreviewed"
+  | "qualified"
+  | "requires_reconciliation"
+  | "reversible_public_hold"
+  | "official_presence_unverified"
+  | "ownership_unverified"
+  | "identity_conflict"
+  | "duplicate_candidate";
 
 type CategoryWaitlistEntry = {
   id: number;
@@ -974,6 +991,8 @@ export default function Admin() {
     | "website_removed_identity_mismatch" | "website_removed_unsafe_spam" | "website_removed_inactive_broken"
     | "social_only_public" | "official_presence_unresolved"
   >("all");
+  const [bizReconciliationFilter, setBizReconciliationFilter] =
+    useState<BusinessReconciliationFilter>("all");
   const [bizOwnershipFilter, setBizOwnershipFilter] = useState<"all" | "black" | "hispanic" | "no_tag">("all");
   const [bizAddedFrom, setBizAddedFrom] = useState("");
   const [bizAddedTo, setBizAddedTo] = useState("");
@@ -997,6 +1016,8 @@ export default function Admin() {
   const [businessPermanentlyClosedTotal, setBusinessPermanentlyClosedTotal] =
     useState(0);
   const [businessNeedsReviewTotal, setBusinessNeedsReviewTotal] = useState(0);
+  const [businessReconciliationAccountedTotal, setBusinessReconciliationAccountedTotal] = useState(0);
+  const [businessReconciliationLedgerAvailable, setBusinessReconciliationLedgerAvailable] = useState(false);
   const [businessInventoryFilteredTotal, setBusinessInventoryFilteredTotal] =
     useState(0);
   const [businessInventoryPage, setBusinessInventoryPage] = useState(1);
@@ -1022,6 +1043,7 @@ export default function Admin() {
     intakeCohort: "all" as IntakeCohort,
     sourceBatch: "" as DirectorySourceBatch,
     link: "all" as typeof bizLinkFilter,
+    reconciliation: "all" as BusinessReconciliationFilter,
     ownership: "all" as typeof bizOwnershipFilter,
     addedFrom: "",
     addedTo: "",
@@ -1186,6 +1208,7 @@ export default function Admin() {
       intakeCohort: bizIntakeCohortFilter,
       sourceBatch: bizSourceBatchFilter,
       link: bizLinkFilter,
+      reconciliation: bizReconciliationFilter,
       ownership: bizOwnershipFilter,
       addedFrom: bizAddedFrom,
       addedTo: bizAddedTo,
@@ -1199,6 +1222,7 @@ export default function Admin() {
     bizIntakeCohortFilter,
     bizSourceBatchFilter,
     bizLinkFilter,
+    bizReconciliationFilter,
     bizOwnershipFilter,
     bizSearch,
     bizSort,
@@ -1291,6 +1315,7 @@ export default function Admin() {
     intakeCohort?: IntakeCohort;
     sourceBatch?: DirectorySourceBatch;
     link?: typeof bizLinkFilter;
+    reconciliation?: BusinessReconciliationFilter;
     ownership?: typeof bizOwnershipFilter;
     addedFrom?: string;
     addedTo?: string;
@@ -1306,6 +1331,7 @@ export default function Admin() {
     const intakeCohortValue = next.intakeCohort ?? current.intakeCohort;
     const sourceBatchValue = next.sourceBatch ?? current.sourceBatch;
     const linkValue = next.link ?? current.link;
+    const reconciliationValue = next.reconciliation ?? current.reconciliation;
     const ownershipValue = next.ownership ?? current.ownership;
     const addedFromValue = next.addedFrom ?? current.addedFrom;
     const addedToValue = next.addedTo ?? current.addedTo;
@@ -1326,6 +1352,7 @@ export default function Admin() {
     if (intakeCohortValue !== "all") params.set("intakeCohort", intakeCohortValue);
     if (sourceBatchValue) params.set("sourceBatch", sourceBatchValue);
     if (linkValue !== "all") params.set("link", linkValue);
+    if (reconciliationValue !== "all") params.set("reconciliation", reconciliationValue);
     if (ownershipValue !== "all") params.set("ownership", ownershipValue);
     if (addedFromValue) params.set("addedFrom", addedFromValue);
     if (addedToValue) params.set("addedTo", addedToValue);
@@ -1406,6 +1433,12 @@ export default function Admin() {
         );
         setBusinessNeedsReviewTotal(
           typeof data.needsReviewTotal === "number" ? data.needsReviewTotal : 0,
+        );
+        setBusinessReconciliationLedgerAvailable(data.reconciliationLedgerAvailable === true);
+        setBusinessReconciliationAccountedTotal(
+          typeof data.reconciliationAccountedTotal === "number"
+            ? data.reconciliationAccountedTotal
+            : 0,
         );
         setBusinessInventoryFilteredTotal(
           typeof data.filteredTotal === "number"
@@ -2478,6 +2511,7 @@ export default function Admin() {
     if (bizIntakeCohortFilter !== "all") params.set("intakeCohort", bizIntakeCohortFilter);
     if (bizSourceBatchFilter) params.set("sourceBatch", bizSourceBatchFilter);
     if (bizLinkFilter !== "all") params.set("link", bizLinkFilter);
+    if (bizReconciliationFilter !== "all") params.set("reconciliation", bizReconciliationFilter);
     if (bizOwnershipFilter !== "all") params.set("ownership", bizOwnershipFilter);
     if (bizAddedFrom) params.set("addedFrom", bizAddedFrom);
     if (bizAddedTo) params.set("addedTo", bizAddedTo);
@@ -2495,6 +2529,7 @@ export default function Admin() {
     intakeCohort?: IntakeCohort;
     sourceBatch?: DirectorySourceBatch;
     link?: typeof bizLinkFilter;
+    reconciliation?: BusinessReconciliationFilter;
     ownership?: typeof bizOwnershipFilter;
     addedFrom?: string;
     addedTo?: string;
@@ -2514,6 +2549,7 @@ export default function Admin() {
       intakeCohort: requestedIntakeCohort,
       sourceBatch: next.sourceBatch ?? bizSourceBatchFilter,
       link: next.link ?? bizLinkFilter,
+      reconciliation: next.reconciliation ?? bizReconciliationFilter,
       ownership: next.ownership ?? bizOwnershipFilter,
       addedFrom: next.addedFrom ?? bizAddedFrom,
       addedTo: next.addedTo ?? bizAddedTo,
@@ -2527,6 +2563,7 @@ export default function Admin() {
     setBizIntakeCohortFilter(query.intakeCohort);
     setBizSourceBatchFilter(query.sourceBatch);
     setBizLinkFilter(query.link);
+    setBizReconciliationFilter(query.reconciliation);
     setBizOwnershipFilter(query.ownership);
     setBizAddedFrom(query.addedFrom);
     setBizAddedTo(query.addedTo);
@@ -2548,6 +2585,7 @@ export default function Admin() {
       intakeCohort: "all",
       sourceBatch: "",
       link: "all",
+      reconciliation: "all",
       ownership: "all",
       addedFrom: "",
       addedTo: "",
@@ -2614,6 +2652,20 @@ export default function Admin() {
         : `Why should these ${ids.length} business profile${ids.length === 1 ? "" : "s"} be removed from public discovery? This is reversible. Their profiles, research, source links, Kinfolk context, media, and audit history remain preserved.`,
     )?.trim();
     if (!reason) return;
+    const reconciliationReasonCode = restoring
+      ? undefined
+      : window.prompt(
+        "Enter the documented archive reason code exactly: confirmed_closed, confirmed_duplicate, confirmed_fraud_or_unsafe, or documented_safety_or_legal_removal. Missing ownership, website, social, or map evidence is not an archive reason.",
+      )?.trim();
+    if (!restoring && ![
+      "confirmed_closed",
+      "confirmed_duplicate",
+      "confirmed_fraud_or_unsafe",
+      "documented_safety_or_legal_removal",
+    ].includes(reconciliationReasonCode ?? "")) {
+      window.alert("No archive action was taken. A documented archive reason code is required.");
+      return;
+    }
     if (
       !window.confirm(
         restoring
@@ -2628,7 +2680,7 @@ export default function Admin() {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids, listingStatus, reason }),
+        body: JSON.stringify({ ids, listingStatus, reason, reconciliationReasonCode }),
       });
       const body = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) {
@@ -5067,6 +5119,25 @@ Selected: ${summary}`,
                 </select>
               </label>
               <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                Reconciliation status
+                <select
+                  value={bizReconciliationFilter}
+                  onChange={(event) => applyBusinessInventoryFilters({ reconciliation: event.target.value as BusinessReconciliationFilter })}
+                  className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]"
+                  aria-label="Filter businesses by concrete reconciliation state"
+                >
+                  <option value="all">All reconciliation states</option>
+                  <option value="unreviewed">Unreviewed</option>
+                  <option value="qualified">Qualified — source ownership + official presence</option>
+                  <option value="requires_reconciliation">Requires reconciliation</option>
+                  <option value="reversible_public_hold">Reversible public hold</option>
+                  <option value="official_presence_unverified">Official presence unverified</option>
+                  <option value="ownership_unverified">Ownership unverified</option>
+                  <option value="identity_conflict">Identity conflict</option>
+                  <option value="duplicate_candidate">Duplicate candidate</option>
+                </select>
+              </label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                 Order results
                 <select
                   value={bizSort}
@@ -5099,6 +5170,11 @@ Selected: ${summary}`,
 
             <p className="-mt-2 mb-5 text-xs text-[#3A1F0E]/50">
               Filters combine within the selected inventory tab: select one or more cities, then add business type, documented ownership tag, source cohort or directory batch, website/social, date, and name/key-phrase filters. “No direct social URL saved” is a review queue, not proof that a business has no social presence. Archive vault + a cohort shows only archived records from that cohort. A selected directory batch independently limits both Live inventory and Archive vault to that retained source scope. Ownership filters use only recorded labels; they never infer identity. Put one phrase in quotes to require those words together, for example “full wash and detangle”.
+            </p>
+            <p className="-mt-3 mb-5 rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-900">
+              {businessReconciliationLedgerAvailable
+                ? `Reconciliation ledger: ${businessReconciliationAccountedTotal.toLocaleString()} of ${businessInventoryTotal.toLocaleString()} inventory records are explicitly accounted for. Filter by a concrete reason code before taking a reconciliation action.`
+                : "Reconciliation ledger migration is pending. Existing inventory remains visible, but reconciliation filters intentionally return no records until the ledger is available."}
             </p>
 
             {bizStatusFilter === "permanently_closed" && (
@@ -5391,6 +5467,15 @@ Selected: ${summary}`,
                             {biz.officialPresenceUnresolved && (
                               <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
                                 Official-presence unresolved
+                              </span>
+                            )}
+                            {biz.reconciliationState === "unreviewed" ? (
+                              <span className="px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 text-xs font-bold">
+                                Reconciliation: unreviewed
+                              </span>
+                            ) : (
+                              <span className="px-2 py-0.5 rounded-full bg-violet-100 text-violet-800 text-xs font-bold">
+                                Reconciliation: {biz.reconciliationReasonCode.replace(/_/g, " ")}
                               </span>
                             )}
                             {biz.needsVerification &&

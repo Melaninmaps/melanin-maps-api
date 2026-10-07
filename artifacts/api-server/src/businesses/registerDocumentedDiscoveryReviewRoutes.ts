@@ -4,6 +4,14 @@ import { pool } from "@workspace/db";
 import { DIASPORA_OWNERSHIP_DESIGNATIONS } from "@workspace/constants";
 import { isAdmin } from "../lib/adminAuth";
 import { DOCUMENTED_DISCOVERY_POLICY_VERSION } from "./documentedDiscoveryEligibility";
+import {
+  type DirectoryReconciliationAction,
+  type DirectoryReconciliationOwnershipStatus,
+  type DirectoryReconciliationPresenceStatus,
+  type DirectoryReconciliationReasonCode,
+  type DirectoryReconciliationState,
+  isDirectoryReconciliationReasonCode,
+} from "./directoryReconciliationPolicy";
 
 type EvidenceField =
   | "identity"
@@ -44,6 +52,8 @@ type EvidenceInput = Readonly<{
 type ReviewInput = Readonly<{
   eligibilityStatus: EligibilityStatus;
   decisionReason: string;
+  reconciliationReasonCode: DirectoryReconciliationReasonCode;
+  batchReference?: string;
   ownershipDesignations?: string[];
   ownershipSourceExpiresAt?: string;
   reviewAfter?: string;
@@ -93,6 +103,12 @@ const WEBSITE_CLEANUP_STATUSES = new Set<WebsiteCleanupStatus>([
   "identity_mismatch", "unsafe_spam", "inactive_broken",
 ]);
 const DESIGNATIONS = new Set(DIASPORA_OWNERSHIP_DESIGNATIONS.map((item) => item.toLocaleLowerCase("en-US")));
+const OFFICIAL_PRESENCE_SOURCE_KINDS = new Set<EvidenceSourceKind>([
+  "business_official", "owner_official",
+]);
+const IDENTITY_MATCHING_SIGNALS = new Set([
+  "business_name", "city", "phone", "address", "official_email_domain", "owner_name", "direct_official_link",
+]);
 
 function safeHttpsUrl(value: unknown, label: string): string {
   if (typeof value !== "string" || !value.trim()) throw new Error(`${label} is required`);
@@ -151,6 +167,19 @@ function normalizedText(value: unknown, maxLength: number): string | null {
   return result ? result.slice(0, maxLength) : null;
 }
 
+function requireOfficialPresenceIdentity(
+  observedValue: Record<string, unknown>,
+  field: "official website" | "official social",
+): void {
+  const matchingSignals = Array.isArray(observedValue.matchingSignals)
+    ? [...new Set(observedValue.matchingSignals.filter((value): value is string => typeof value === "string")
+      .map((value) => value.trim()).filter((value) => IDENTITY_MATCHING_SIGNALS.has(value)))]
+    : [];
+  if (observedValue.identityMatch !== true || matchingSignals.length === 0) {
+    throw new Error(`${field} evidence requires identityMatch: true and at least one concrete matching signal`);
+  }
+}
+
 function validateEvidence(value: unknown, now: Date): EvidenceInput {
   if (!value || typeof value !== "object" || Array.isArray(value)) {
     throw new Error("evidence entries must be objects");
@@ -171,22 +200,29 @@ function validateEvidence(value: unknown, now: Date): EvidenceInput {
   if (JSON.stringify(observedValue).length > 16_000) throw new Error("evidence observedValue is too large");
 
   if (raw.field === "official_website") {
+    if (!OFFICIAL_PRESENCE_SOURCE_KINDS.has(raw.sourceKind as EvidenceSourceKind)) {
+      throw new Error("official website evidence must be captured from the business or owner-controlled presence");
+    }
     const websiteUrl = safeHttpsUrl(observedValue.websiteUrl, "official website URL");
     if (isDirectoryOrMarketplaceUrl(websiteUrl) || OFFICIAL_SOCIAL_HOSTS.has(hostOf(websiteUrl))) {
       throw new Error("official website may not be a directory, marketplace, or social profile");
     }
+    requireOfficialPresenceIdentity(observedValue, "official website");
   }
   if (raw.field === "official_social") {
+    if (!OFFICIAL_PRESENCE_SOURCE_KINDS.has(raw.sourceKind as EvidenceSourceKind)) {
+      throw new Error("official social evidence must be captured from the business or owner-controlled social profile");
+    }
     const profileUrl = safeHttpsUrl(observedValue.profileUrl, "official social profile URL");
     if (!OFFICIAL_SOCIAL_HOSTS.has(hostOf(profileUrl))) {
       throw new Error("official social profile must use an approved business-controlled social host");
     }
-    if (
-      raw.sourceKind !== "founder_directory"
-      && (isDirectoryOrMarketplaceUrl(sourceUrl) || OFFICIAL_SOCIAL_HOSTS.has(hostOf(sourceUrl)))
-    ) {
-      throw new Error("official social evidence must be observed from an official website or approved source, not a directory or the social profile itself");
+    if (isDirectoryOrMarketplaceUrl(sourceUrl)) {
+      throw new Error("official social evidence may not use a directory or marketplace URL as its proof source");
     }
+    // The social profile itself is valid evidence when its identity is checked;
+    // social-first businesses are not required to maintain a separate domain.
+    requireOfficialPresenceIdentity(observedValue, "official social");
   }
   if (raw.field === "address") {
     const address = normalizedText(observedValue.address, 300);
@@ -276,6 +312,20 @@ export function validateDocumentedDiscoveryReviewInput(value: unknown, now: Date
   const reviewAfter = raw.reviewAfter == null
     ? undefined
     : futureTimestamp(raw.reviewAfter, "reviewAfter", now);
+  const defaultReasonCode: DirectoryReconciliationReasonCode = eligibilityStatus === "qualified"
+    ? websiteCleanup
+      ? (`website_removed_${websiteCleanup.status}` as DirectoryReconciliationReasonCode)
+      : counts.has("official_social") && !counts.has("official_website")
+        ? "social_only_public_business"
+        : "source_ownership_and_official_presence_verified"
+    : "official_presence_unverified";
+  const reconciliationReasonCode = raw.reconciliationReasonCode == null
+    ? defaultReasonCode
+    : String(raw.reconciliationReasonCode).trim();
+  if (!isDirectoryReconciliationReasonCode(reconciliationReasonCode)) {
+    throw new Error("reconciliationReasonCode is invalid");
+  }
+  const batchReference = normalizedText(raw.batchReference, 160) ?? undefined;
 
   if (eligibilityStatus === "qualified") {
     if (!counts.has("ownership") || (!counts.has("official_website") && !counts.has("official_social"))) {
@@ -295,11 +345,65 @@ export function validateDocumentedDiscoveryReviewInput(value: unknown, now: Date
   return {
     eligibilityStatus,
     decisionReason,
+    reconciliationReasonCode,
+    batchReference,
     ownershipDesignations,
     ownershipSourceExpiresAt,
     reviewAfter,
     evidence,
     websiteCleanup,
+  };
+}
+
+function directoryReconciliationOutcome(input: ReviewInput): Readonly<{
+  state: DirectoryReconciliationState;
+  reasonCode: DirectoryReconciliationReasonCode;
+  presenceStatus: DirectoryReconciliationPresenceStatus;
+  ownershipStatus: DirectoryReconciliationOwnershipStatus;
+  recommendedAction: DirectoryReconciliationAction;
+}> {
+  const evidenceByField = new Map((input.evidence ?? []).map((evidence) => [evidence.field, evidence]));
+  const hasWebsite = evidenceByField.has("official_website");
+  const hasSocial = evidenceByField.has("official_social");
+  const presenceStatus: DirectoryReconciliationPresenceStatus = hasWebsite && hasSocial
+    ? "valid_website_and_social"
+    : hasWebsite
+      ? "valid_website"
+      : hasSocial
+        ? "valid_social"
+        : input.websiteCleanup
+          ? (`website_removed_${input.websiteCleanup.status}` as DirectoryReconciliationPresenceStatus)
+          : "official_presence_unverified";
+  const ownershipEvidence = evidenceByField.get("ownership");
+  const ownershipStatus: DirectoryReconciliationOwnershipStatus = input.eligibilityStatus === "qualified"
+    ? (ownershipEvidence?.sourceKind === "business_official" || ownershipEvidence?.sourceKind === "owner_official")
+      ? "officially_stated"
+      : "source_documented"
+    : input.reconciliationReasonCode === "identity_conflict"
+      ? "ownership_conflict"
+      : "ownership_unverified";
+  if (input.eligibilityStatus === "qualified") {
+    return {
+      state: "reviewed_qualified",
+      reasonCode: input.reconciliationReasonCode,
+      presenceStatus,
+      ownershipStatus,
+      recommendedAction: "qualify_kinfolk_current",
+    };
+  }
+  const archiveActionByReason: Partial<Record<DirectoryReconciliationReasonCode, DirectoryReconciliationAction>> = {
+    confirmed_closed: "archive_confirmed_closed",
+    confirmed_duplicate: "archive_confirmed_duplicate",
+    confirmed_fraud_or_unsafe: "archive_confirmed_fraud_or_unsafe",
+    documented_safety_or_legal_removal: "archive_documented_safety_or_legal",
+  };
+  const archiveAction = archiveActionByReason[input.reconciliationReasonCode];
+  return {
+    state: archiveAction ? "reversible_public_hold" : "requires_reconciliation",
+    reasonCode: input.reconciliationReasonCode,
+    presenceStatus,
+    ownershipStatus,
+    recommendedAction: archiveAction ?? "reconcile",
   };
 }
 
@@ -392,6 +496,13 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
       }
       const prior = await client.query<{ state: Record<string, unknown> }>(
         `SELECT to_jsonb(e) AS state FROM business_discovery_eligibility e WHERE e.business_id = $1`,
+        [businessId],
+      );
+      const priorReconciliation = await client.query<{ state: Record<string, unknown> }>(
+        `SELECT to_jsonb(ledger) AS state
+           FROM business_directory_reconciliation_ledger ledger
+          WHERE ledger.business_id = $1
+          FOR UPDATE`,
         [businessId],
       );
       const evidenceIds = new Map<EvidenceField, string>();
@@ -537,12 +648,53 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
           JSON.stringify(existing), JSON.stringify(next.rows[0]?.state ?? {}),
         ],
       );
+      const reconciliation = directoryReconciliationOutcome(input);
+      const reconciliationEvidenceIds = [...evidenceIds.values()];
+      const reconciliationNext = await client.query<{ state: Record<string, unknown> }>(
+        `INSERT INTO business_directory_reconciliation_ledger (
+           business_id, reconciliation_state, reason_code, presence_status,
+           ownership_status, recommended_action, evidence_receipt_ids,
+           batch_reference, reviewed_at, reviewed_by, updated_at
+         ) VALUES (
+           $1, $2, $3, $4, $5, $6, $7::jsonb, $8, now(), $9, now()
+         ) ON CONFLICT (business_id) DO UPDATE SET
+           reconciliation_state = EXCLUDED.reconciliation_state,
+           reason_code = EXCLUDED.reason_code,
+           presence_status = EXCLUDED.presence_status,
+           ownership_status = EXCLUDED.ownership_status,
+           recommended_action = EXCLUDED.recommended_action,
+           evidence_receipt_ids = EXCLUDED.evidence_receipt_ids,
+           batch_reference = EXCLUDED.batch_reference,
+           reviewed_at = now(),
+           reviewed_by = EXCLUDED.reviewed_by,
+           updated_at = now()
+         RETURNING to_jsonb(business_directory_reconciliation_ledger) AS state`,
+        [
+          businessId, reconciliation.state, reconciliation.reasonCode,
+          reconciliation.presenceStatus, reconciliation.ownershipStatus,
+          reconciliation.recommendedAction, JSON.stringify(reconciliationEvidenceIds),
+          input.batchReference ?? null, actorId,
+        ],
+      );
+      await client.query(
+        `INSERT INTO business_directory_reconciliation_audit_events (
+           id, business_id, action, actor_user_id, reason_code, reason,
+           evidence_receipt_ids, before_state, after_state
+         ) VALUES ($1, $2, 'review', $3, $4, $5, $6::jsonb, $7::jsonb, $8::jsonb)`,
+        [
+          randomUUID(), businessId, actorId, reconciliation.reasonCode,
+          input.decisionReason, JSON.stringify(reconciliationEvidenceIds),
+          JSON.stringify(priorReconciliation.rows[0]?.state ?? {}),
+          JSON.stringify(reconciliationNext.rows[0]?.state ?? {}),
+        ],
+      );
       await client.query("COMMIT");
       res.json({
         ok: true,
         businessId,
         policyVersion: DOCUMENTED_DISCOVERY_POLICY_VERSION,
         eligibility: next.rows[0]?.state ?? null,
+        reconciliation: reconciliationNext.rows[0]?.state ?? null,
         message: input.eligibilityStatus === "qualified"
           ? "Profile is qualified for documented recommendation surfaces until its next evidence review."
           : "Profile is retained for direct named lookup and excluded from ordinary recommendation surfaces.",

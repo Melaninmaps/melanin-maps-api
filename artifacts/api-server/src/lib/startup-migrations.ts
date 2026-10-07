@@ -5688,6 +5688,116 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
         ON founder_source_identity_review_queue (status, created_at);`,
   },
   {
+    // Every retained business receives a concrete reconciliation record. This
+    // ledger is a system of record for evidence-based review—not a publication
+    // switch—and the initial backfill changes no business profile or listing
+    // lifecycle. Immutable events keep the reason code and evidence references
+    // available after later corrections.
+    name: "business_directory_reconciliation_ledger_v1",
+    sql: `CREATE TABLE IF NOT EXISTS business_directory_reconciliation_ledger (
+      business_id          varchar(255) PRIMARY KEY REFERENCES businesses(id) ON DELETE RESTRICT,
+      reconciliation_state text NOT NULL CHECK (reconciliation_state IN (
+        'unreviewed', 'reviewed_retain', 'reviewed_qualified',
+        'requires_reconciliation', 'reversible_public_hold',
+        'archived_confirmed_closed', 'archived_confirmed_duplicate',
+        'archived_confirmed_fraud_or_unsafe', 'archived_documented_safety_or_legal'
+      )),
+      reason_code          text NOT NULL CHECK (reason_code IN (
+        'unreviewed', 'source_ownership_and_official_presence_verified',
+        'official_presence_unverified', 'ownership_unverified', 'identity_conflict',
+        'address_conflict', 'phone_conflict', 'duplicate_candidate',
+        'confirmed_closed', 'confirmed_duplicate', 'confirmed_fraud_or_unsafe',
+        'documented_safety_or_legal_removal', 'website_removed_identity_mismatch',
+        'website_removed_unsafe_spam', 'website_removed_inactive_broken',
+        'social_only_public_business'
+      )),
+      presence_status      text NOT NULL CHECK (presence_status IN (
+        'unreviewed', 'valid_website', 'valid_social', 'valid_website_and_social',
+        'official_presence_unverified', 'website_removed_identity_mismatch',
+        'website_removed_unsafe_spam', 'website_removed_inactive_broken'
+      )),
+      ownership_status     text NOT NULL CHECK (ownership_status IN (
+        'unreviewed', 'source_documented', 'officially_stated',
+        'ownership_unverified', 'ownership_conflict'
+      )),
+      recommended_action   text NOT NULL CHECK (recommended_action IN (
+        'retain', 'qualify_kinfolk_current', 'reconcile', 'reversible_public_hold',
+        'archive_confirmed_closed', 'archive_confirmed_duplicate',
+        'archive_confirmed_fraud_or_unsafe', 'archive_documented_safety_or_legal'
+      )),
+      evidence_receipt_ids jsonb NOT NULL DEFAULT '[]'::jsonb,
+      source_reference_ids jsonb NOT NULL DEFAULT '[]'::jsonb,
+      batch_reference      text,
+      reviewed_at          timestamptz,
+      reviewed_by          varchar(255),
+      created_at           timestamptz NOT NULL DEFAULT now(),
+      updated_at           timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS business_directory_reconciliation_state_reason_idx
+      ON business_directory_reconciliation_ledger (reconciliation_state, reason_code, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS business_directory_reconciliation_presence_ownership_idx
+      ON business_directory_reconciliation_ledger (presence_status, ownership_status, updated_at DESC);
+
+    CREATE TABLE IF NOT EXISTS business_directory_reconciliation_audit_events (
+      id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      business_id          varchar(255) NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+      action               text NOT NULL CHECK (action IN ('initialize', 'review', 'archive', 'restore')),
+      actor_user_id        varchar(255),
+      reason_code          text NOT NULL,
+      reason               text NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 4000),
+      evidence_receipt_ids jsonb NOT NULL DEFAULT '[]'::jsonb,
+      before_state         jsonb NOT NULL DEFAULT '{}'::jsonb,
+      after_state          jsonb NOT NULL DEFAULT '{}'::jsonb,
+      created_at           timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS business_directory_reconciliation_audit_business_idx
+      ON business_directory_reconciliation_audit_events (business_id, created_at DESC);
+    CREATE OR REPLACE FUNCTION public.prevent_business_directory_reconciliation_audit_mutation()
+    RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+      RAISE EXCEPTION 'business_directory_reconciliation_audit_events are immutable';
+    END;
+    $$;
+    DROP TRIGGER IF EXISTS business_directory_reconciliation_audit_immutable
+      ON business_directory_reconciliation_audit_events;
+    CREATE TRIGGER business_directory_reconciliation_audit_immutable
+      BEFORE UPDATE OR DELETE ON business_directory_reconciliation_audit_events
+      FOR EACH ROW EXECUTE FUNCTION public.prevent_business_directory_reconciliation_audit_mutation();
+
+    INSERT INTO business_directory_reconciliation_ledger (
+      business_id, reconciliation_state, reason_code, presence_status,
+      ownership_status, recommended_action, evidence_receipt_ids, source_reference_ids
+    )
+    SELECT b.id, 'unreviewed', 'unreviewed', 'unreviewed', 'unreviewed', 'retain',
+           '[]'::jsonb,
+           jsonb_strip_nulls(jsonb_build_array(
+             NULLIF(BTRIM(COALESCE(b.source_url, '')), ''),
+             NULLIF(BTRIM(COALESCE(b.research_source_url, '')), '')
+           ))
+      FROM businesses b
+    ON CONFLICT (business_id) DO NOTHING;
+
+    CREATE OR REPLACE FUNCTION public.seed_business_directory_reconciliation_ledger()
+    RETURNS trigger
+    LANGUAGE plpgsql
+    AS $$
+    BEGIN
+      INSERT INTO business_directory_reconciliation_ledger (
+        business_id, reconciliation_state, reason_code, presence_status,
+        ownership_status, recommended_action, source_reference_ids
+      ) VALUES (
+        NEW.id::text, 'unreviewed', 'unreviewed', 'unreviewed',
+        'unreviewed', 'retain', '[]'::jsonb
+      ) ON CONFLICT (business_id) DO NOTHING;
+      RETURN NEW;
+    END;
+    $$;
+    DROP TRIGGER IF EXISTS business_directory_reconciliation_ledger_seed ON businesses;
+    CREATE TRIGGER business_directory_reconciliation_ledger_seed
+      AFTER INSERT ON businesses
+      FOR EACH ROW EXECUTE FUNCTION public.seed_business_directory_reconciliation_ledger();`,
+  },
+  {
     // Private, explicit consent only. Existing members remain opted out until
     // they make a choice in Kinfolk setup or Settings.
     name: "user_preferences_member_context_default_consent_v1",

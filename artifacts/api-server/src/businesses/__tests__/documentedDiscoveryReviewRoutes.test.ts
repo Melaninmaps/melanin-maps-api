@@ -27,7 +27,11 @@ const baseEvidence = [
     sourceUrl: "https://acme.example/",
     observedAt: "2026-10-05T00:00:00.000Z",
     confidence: "high",
-    observedValue: { websiteUrl: "https://acme.example/" },
+    observedValue: {
+      websiteUrl: "https://acme.example/",
+      identityMatch: true,
+      matchingSignals: ["business_name", "city"],
+    },
   },
   {
     field: "official_social",
@@ -35,7 +39,11 @@ const baseEvidence = [
     sourceUrl: "https://acme.example/contact",
     observedAt: "2026-10-05T00:00:00.000Z",
     confidence: "high",
-    observedValue: { profileUrl: "https://www.instagram.com/acme/" },
+    observedValue: {
+      profileUrl: "https://www.instagram.com/acme/",
+      identityMatch: true,
+      matchingSignals: ["business_name"],
+    },
   },
 ] as const;
 
@@ -69,27 +77,34 @@ describe("documented discovery review input", () => {
       .toThrow("official website or official social receipt");
   });
 
-  it("accepts a founder-directory official social receipt without requiring a website link", () => {
+  it("accepts an identity-matched direct official social receipt without requiring a website link", () => {
     const socialOnly = [baseEvidence[1], {
       field: "official_social" as const,
-      sourceKind: "founder_directory" as const,
-      sourceUrl: "https://founder-directory.example/listing/acme",
+      sourceKind: "business_official" as const,
+      sourceUrl: "https://www.instagram.com/acme/",
       observedAt: "2026-10-05T00:00:00.000Z",
       confidence: "high" as const,
-      observedValue: { profileUrl: "https://www.instagram.com/acme/" },
+      observedValue: {
+        profileUrl: "https://www.instagram.com/acme/",
+        identityMatch: true,
+        matchingSignals: ["business_name", "city"],
+      },
     }];
-    expect(validateDocumentedDiscoveryReviewInput(qualified(socialOnly), now).eligibilityStatus).toBe("qualified");
+    expect(validateDocumentedDiscoveryReviewInput(qualified(socialOnly), now)).toMatchObject({
+      eligibilityStatus: "qualified",
+      reconciliationReasonCode: "social_only_public_business",
+    });
   });
 
   it("accepts an identity-matching LinkedIn or YouTube business profile as complete official-social evidence", () => {
     for (const profileUrl of ["https://www.linkedin.com/company/acme/", "https://www.youtube.com/@acme", "https://m.facebook.com/acme/"]) {
       const socialOnly = [baseEvidence[1], {
         field: "official_social" as const,
-        sourceKind: "founder_directory" as const,
-        sourceUrl: "https://founder-directory.example/listing/acme",
+        sourceKind: "business_official" as const,
+        sourceUrl: profileUrl,
         observedAt: "2026-10-05T00:00:00.000Z",
         confidence: "high" as const,
-        observedValue: { profileUrl },
+        observedValue: { profileUrl, identityMatch: true, matchingSignals: ["business_name"] },
       }];
       expect(validateDocumentedDiscoveryReviewInput(qualified(socialOnly), now).eligibilityStatus).toBe("qualified");
     }
@@ -105,14 +120,31 @@ describe("documented discovery review input", () => {
   it("rejects a generic directory as official-social proof", () => {
     const socialOnly = [baseEvidence[1], {
       field: "official_social" as const,
-      sourceKind: "founder_directory" as const,
-      sourceUrl: "https://founder-directory.example/listing/acme",
+      sourceKind: "business_official" as const,
+      sourceUrl: "https://www.instagram.com/acme/",
       observedAt: "2026-10-05T00:00:00.000Z",
       confidence: "high" as const,
-      observedValue: { profileUrl: "https://www.yelp.com/biz/acme" },
+      observedValue: {
+        profileUrl: "https://www.yelp.com/biz/acme",
+        identityMatch: true,
+        matchingSignals: ["business_name"],
+      },
     }];
     expect(() => validateDocumentedDiscoveryReviewInput(qualified(socialOnly), now))
       .toThrow("official social profile must use an approved business-controlled social host");
+  });
+
+  it("rejects an otherwise direct social profile when no identity-matching signal is recorded", () => {
+    const socialOnly = [baseEvidence[1], {
+      field: "official_social" as const,
+      sourceKind: "business_official" as const,
+      sourceUrl: "https://www.instagram.com/acme/",
+      observedAt: "2026-10-05T00:00:00.000Z",
+      confidence: "high" as const,
+      observedValue: { profileUrl: "https://www.instagram.com/acme/" },
+    }];
+    expect(() => validateDocumentedDiscoveryReviewInput(qualified(socialOnly), now))
+      .toThrow("official social evidence requires identityMatch: true");
   });
 
   it("allows an audited website cleanup while qualified official social remains active", () => {
