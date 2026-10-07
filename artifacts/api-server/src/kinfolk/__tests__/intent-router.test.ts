@@ -34,6 +34,15 @@ describe("medical_health classification", () => {
     });
   });
 
+  it.each([
+    "What are the first-aid steps for a minor kitchen burn?",
+    "How should I care for a scalded hand?",
+    "What should I do about a sprained ankle?",
+    "How do I clean a cut on my finger?",
+  ])("routes acute-injury health requests through medical evidence: %s", (query) => {
+    expect(classifyIntent(query, false)).toBe("medical_health");
+  });
+
   it("blocks community data as proof for medical queries", () => {
     const policy = getEvidencePolicy("medical_health");
     expect(policy.blockCommunityAsProof).toBe(true);

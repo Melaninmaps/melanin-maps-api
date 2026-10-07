@@ -48,6 +48,9 @@ export interface HealthRetrievalResult {
 }
 
 const CONDITION_PATTERNS: Array<[RegExp, string]> = [
+  [/\b(?:minor(?:\s+\w{1,12})?\s+burn|burn(?:ed|t)?\s+(?:skin|hand|finger|arm|leg|foot)|scald(?:ed|ing)?)\b/i, "minor burns and scalds first aid"],
+  [/\b(?:laceration|open\s+wound|cut(?:\s+on)?\s+(?:my|the)\s+(?:hand|finger|arm|leg|foot))\b/i, "minor cuts and wounds first aid"],
+  [/\b(?:sprain(?:ed)?|strain(?:ed)?|fracture|broken\s+bone|concussion|frostbite|poisoning)\b/i, "acute injury first aid"],
   [/\b(?:anemia|anaemia|iron(?:[-\s]+deficien(?:t|cy))?)\b/i, "anemia iron deficiency"],
   [/\b(?:menopause|perimenopause)\b/i, "menopause"],
   [/\b(?:fertility|infertil(?:ity|e)|ivf)\b/i, "fertility infertility"],

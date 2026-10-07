@@ -44,6 +44,19 @@ describe("deterministic evidence route", () => {
     expect(route.sourceGuidance).toMatch(/condition-first/i);
   });
 
+  it.each([
+    "What are the first-aid steps for a minor kitchen burn?",
+    "How should I care for a scalded hand?",
+    "What should I do about a sprained ankle?",
+  ])("routes acute injury wording to authoritative medical evidence: %s", (message) => {
+    expect(routeEvidence(message)).toMatchObject({
+      domain: "medical_health",
+      risk: "high",
+      retrievalRequirement: "authoritative",
+      failClosed: true,
+    });
+  });
+
   it("routes best rapper-turned-actor as evaluative culture with evidence and no boilerplate", () => {
     const route = routeEvidence("Who is the best rapper-turned-actor?");
 

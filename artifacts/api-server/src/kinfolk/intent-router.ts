@@ -195,6 +195,10 @@ const MEDICAL_SIGNALS = [
   /\b(symptom|symptoms|diagnosis|diagnos|treatment|treat|medication|medicine|drug|prescription|dose|dosage|side effect|clinical|therapy|therapist|psychiatrist|psychologist|disorder|syndrome|disease|illness|cancer|tumor|diabetes|hypertension|blood pressure|cholesterol|immuniz|vaccin|allerg|asthma|arthritis|menopause|pregnancy|prenatal|postnatal|postpartum|fertility|infertil|ivf|ivf treatment|miscarriage|stillbirth|hiv|aids|sti|std|herpes|chlamydia|gonorrhea|syphilis|depression|anxiety|bipolar|schizophrenia|ptsd|adhd|autism|eating disorder|anorexia|bulimia|obesity|bmi|stroke|heart attack|cardiac|kidney|liver|pancreas|thyroid|hormone|surgery|surgical|anesthesia|hospital|emergency room|er|urgent care|nurse|doctor|physician|specialist|oncologist|cardiologist|neurologist|dermatologist|gynecologist|ob.gyn|obstetrician|pediatrician|hospice|palliative|clinical trial|health insurance|medicaid|medicare)\b/i,
 ];
 
+// Acute first-aid requests may otherwise resemble an ordinary household question.
+// The qualifiers avoid treating culinary uses of “burn” as medical requests.
+const ACUTE_INJURY_MEDICAL_SIGNAL = /\b(?:first[\s-]?aid|minor(?:\s+\w{1,12})?\s+burn|burn(?:ed|t)?\s+(?:skin|hand|finger|arm|leg|foot)|scald(?:ed|ing)?|laceration|open\s+wound|sprain(?:ed)?|strain(?:ed)?|fracture|broken\s+bone|concussion|frostbite|poisoning|cut(?:\s+on)?\s+(?:my|the)\s+(?:hand|finger|arm|leg|foot))\b/i;
+
 const LEGAL_SIGNALS = [
   /\b(lawsuit|sue|suing|court|judge|attorney|lawyer|legal|rights|contract|agreement|lease|tenant|landlord|eviction|discrimination|discriminated|discriminating|discriminatory|harassment|civil rights|employment law|labor law|copyright|trademark|patent|intellectual property|immigration|visa|asylum|deportation|citizenship|naturalization|divorce|custody|child support|alimony|will|trust|estate|probate|bankruptcy|debt|garnishment|arrest|warrant|bail|criminal|felony|misdemeanor|prison|parole|probation|restraining order|protective order|wrongful termination|workplace violation|wage theft|hostile work|retaliation)\b/i,
   // Travel policy phrases — must route to legal regardless of destination signal.
@@ -282,7 +286,7 @@ export function classifyIntent(message: string, hasDestination: boolean): Kinfol
     return "safety_emergency";
 
   // High-consequence regulated domains
-  if (MEDICAL_SIGNALS.some((re) => re.test(msg)) && !isExplicitFoodVenueDiscovery)
+  if ((MEDICAL_SIGNALS.some((re) => re.test(msg)) || ACUTE_INJURY_MEDICAL_SIGNAL.test(msg)) && !isExplicitFoodVenueDiscovery)
     return "medical_health";
   if (LEGAL_SIGNALS.some((re) => re.test(msg))) return "legal_regulated";
   if (FINANCIAL_SIGNALS.some((re) => re.test(msg)) && !isExplicitFoodVenueDiscovery)
