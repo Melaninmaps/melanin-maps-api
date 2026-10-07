@@ -49,4 +49,11 @@ describe("mobile Kinfolk conversation-first visuals", () => {
     expect(travelSource).toContain("kinfolkWorkingElapsedSeconds(kinfolkRequestStartedAt)");
     expect(travelSource).toContain("isLoading && kinfolkRequestStartedAt !== null");
   });
+
+  it("keeps an imperfect voice transcript member-controlled before the shared Kinfolk send path", () => {
+    expect(travelSource).toContain("const originalText = payload.meaningReview?.originalText?.trim() || payload.text.trim()");
+    expect(travelSource).toContain("setInputText(originalText)");
+    expect(travelSource).toContain("Review your transcription, then tap Send when you’re ready.");
+    expect(travelSource).toContain("await sendMessage(msg, {");
+  });
 });

@@ -142,6 +142,7 @@ export function buildGenericAnswerRouteClassifierPrompt(): string {
     "Choose stable for explanations, everyday knowledge, or self-contained reasoning that does not depend on changing facts.",
     "Choose planning_or_writing for drafting, revising, organizing, brainstorming, or practical next-step help that can be completed without external verification.",
     "A personal event, emotion, relationship, decision, plan, or document does not itself require current evidence. Choose current only when the turn actually depends on a changing external fact.",
+    "Recognize ordinary, indirect, and transcript-like descriptions of emotion or support needs without requiring exact keywords. Do not diagnose or infer an emotion when the turn is an ordinary non-emotional question.",
     "For emotional support, social interpretation, and low-stakes decision support, offer a safe provisional next step instead of asking for clarification when the turn already supports a useful response.",
     "Choose approved_memory_recall only when the member asks about information they explicitly saved and authorized Kinfolk to use. Do not infer, create, or broaden memory.",
     "Choose clarification only when one missing detail materially prevents a useful response; provide one short, focused clarificationQuestion. Do not ask a question when a safe, useful answer can be given without it.",

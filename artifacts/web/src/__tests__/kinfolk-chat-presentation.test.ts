@@ -105,6 +105,13 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).toContain("kinfolkWorkingElapsedLabel(responseElapsedSeconds)");
   });
 
+  it("keeps an imperfect voice transcript member-controlled before the normal Kinfolk chat path", () => {
+    expect(travelPageSource).toContain("const originalText = data.meaningReview?.originalText?.trim() || transcript");
+    expect(travelPageSource).toContain("setInput(composerValueFromTranscript(originalText))");
+    expect(travelPageSource).toContain("nothing is sent until you choose or edit text and press Send");
+    expect(travelPageSource).toContain("body: JSON.stringify({ sessionId, message: trimmed");
+  });
+
   it("does not render per-message cultural or provenance notes while keeping the bottom AI disclaimer", () => {
     expect(travelPageSource).not.toContain('data-testid="kinfolk-provenance-note"');
     expect(travelPageSource).not.toContain('data-testid="kinfolk-source-note"');

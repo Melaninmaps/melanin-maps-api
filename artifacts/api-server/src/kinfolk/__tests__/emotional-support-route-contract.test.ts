@@ -20,10 +20,18 @@ describe("Kinfolk emotional support route contract", () => {
     expect(route).toContain("It neither reads nor writes memory");
   });
 
-  it("places the bounded support contract after evidence and safety controls", () => {
+  it("places the bounded support contract after deterministic emergency controls and mode isolation", () => {
+    const emergencyMedical = route.indexOf("immediateMedicalEmergencyReply(message)");
+    const emergencySafety = route.indexOf("immediateSafetyEmergencyReply(message)");
+    const emotionalGuidance = route.indexOf("const emotionalSupportGuidance = resolveEmotionalSupportGuidance({");
+
+    expect(emergencyMedical).toBeGreaterThan(-1);
+    expect(emergencySafety).toBeGreaterThan(emergencyMedical);
+    expect(emotionalGuidance).toBeGreaterThan(emergencySafety);
     expect(generalRouting).toContain("buildEmotionalSupportResponseContract");
     expect(generalRouting).toContain("emotionalSupportGuidance: EmotionalSupportGuidance | null = null");
     expect(generalRouting).toContain("if (emotionalSupportContract) return emotionalSupportContract;");
     expect(generalRouting).toContain("Do not diagnose");
+    expect(generalRouting).toContain("indirect, and transcript-like descriptions of emotion");
   });
 });
