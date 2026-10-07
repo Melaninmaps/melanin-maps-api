@@ -95,6 +95,14 @@ describe("current research routing", () => {
     expect(requiresCurrentResearch(message)).toBe(true);
   });
 
+  it.each([
+    "What are the official requirements to renew a U.S. passport?",
+    "What is the current Roth IRA contribution limit?",
+    "What are the eligibility rules for a government-issued identity document replacement?",
+  ])("treats regulated public rules as changing external facts: %s", (message) => {
+    expect(requiresCurrentResearch(message)).toBe(true);
+  });
+
   it("keeps explicit preferred-name recall out of the current-research path", () => {
     const personalPrompt =
       "What name should you call me? In one sentence, welcome me and give me one practical next step for today.";

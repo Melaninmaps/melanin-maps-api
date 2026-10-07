@@ -130,6 +130,17 @@ describe("deterministic evidence route", () => {
     expect(route.sourceGuidance).toMatch(/directly attributed on-record perspectives/i);
   });
 
+  it("routes a government-document renewal through current legal evidence", () => {
+    const route = routeEvidence("What are the official requirements to renew a U.S. passport?");
+    expect(route).toMatchObject({
+      domain: "legal_regulated",
+      risk: "high",
+      retrievalRequirement: "web_required",
+      failClosed: true,
+    });
+    expect(route.allowedSources).toContain("official_public_source");
+  });
+
   it("keeps explicit preferred-name recall conversational when it includes today", () => {
     const message =
       "What name should you call me? In one sentence, welcome me and give me one practical next step for today.";

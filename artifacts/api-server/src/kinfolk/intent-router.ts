@@ -207,6 +207,13 @@ const LEGAL_SIGNALS = [
   /\b(visa requirements?|entry requirements?|travel documents?|documentation requirements?|border requirements?|border crossing|entry policy|travel policy|work permit|residence permit|tourist visa|business visa|travel authorization|travel ban|country requirements?|passport requirements?|visa extension|visa extensions|extend my stay|extending (?:my |your |their )?stay|extension documents?|stay extension|overstay|overstaying|immigration requirements?|consulate appointment|embassy appointment)\b/i,
 ];
 
+// Government-issued document actions change through rules and official processes,
+// even when a member does not use a conventional legal word such as "visa" or
+// "legal." Require both the regulated-document subject and an action/rule term so
+// ordinary shopping (for example, a passport holder) stays conversational.
+const REGULATED_DOCUMENT_SUBJECT_RE = /\b(?:passport|travel documents?|identity documents?|government[-\s]?issued (?:id|identification)|driver'?s? licen[cs]e|permit|immigration documents?)\b/i;
+const REGULATED_DOCUMENT_ACTION_RE = /\b(?:renew(?:al)?|replace(?:ment)?|apply|application|eligibility|requirements?|expir(?:e|ation)|validity|extension|status)\b/i;
+
 const FINANCIAL_SIGNALS = [
   /\b(invest|investing|investment|stock|bonds|mutual fund|401k|ira|roth|pension|retirement|portfolio|dividend|crypto|bitcoin|ethereum|nft|tax|taxes|tax return|irs|deduction|audit|credit score|credit report|loan|mortgage|refinance|interest rate|apr|heloc|debt|bankruptcy|budget|financial plan|wealth|net worth|income|expense|savings|compound interest|index fund|etf|brokerage)\b/i,
 ];
@@ -288,7 +295,10 @@ export function classifyIntent(message: string, hasDestination: boolean): Kinfol
   // High-consequence regulated domains
   if ((MEDICAL_SIGNALS.some((re) => re.test(msg)) || ACUTE_INJURY_MEDICAL_SIGNAL.test(msg)) && !isExplicitFoodVenueDiscovery)
     return "medical_health";
-  if (LEGAL_SIGNALS.some((re) => re.test(msg))) return "legal_regulated";
+  if (
+    LEGAL_SIGNALS.some((re) => re.test(msg)) ||
+    (REGULATED_DOCUMENT_SUBJECT_RE.test(msg) && REGULATED_DOCUMENT_ACTION_RE.test(msg))
+  ) return "legal_regulated";
   if (FINANCIAL_SIGNALS.some((re) => re.test(msg)) && !isExplicitFoodVenueDiscovery)
     return "financial_regulated";
 

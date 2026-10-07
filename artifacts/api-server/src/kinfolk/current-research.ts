@@ -15,11 +15,19 @@ const WHAT_IS_OPEN_RE = /\bwhat(?:'s|\s+is)\s+open\b/i;
 const OPEN_NOW_RE = /\bopen[-\s]?now\b/i;
 const LIVE_DISCOVERY_RE = /\b(?:live|real[- ]?time|up[- ]?to[- ]?date)\b/i;
 
+// Official eligibility, filing, renewal, and contribution rules are externally
+// maintained facts. Detect the regulated subject plus a rule/action, rather than
+// a list of sample questions, so source retrieval is required even when a member
+// omits words such as "today" or "latest."
+const REGULATED_PUBLIC_SUBJECT_RE = /\b(?:passport|travel documents?|identity documents?|government[-\s]?issued (?:id|identification)|driver'?s? licen[cs]e|permit|immigration|citizenship|tax|irs|roth\s+ira|ira|401\s*\(?k\)?|retirement account|social security|medicare|medicaid)\b/i;
+const REGULATED_PUBLIC_ACTION_RE = /\b(?:requirements?|eligibility|renew(?:al)?|replace(?:ment)?|apply|application|fil(?:e|ing)|deadline|contribution(?:\s+limit)?|limit|limits|deduction|credit|threshold|benefit|benefits)\b/i;
+
 function hasChangingExternalFact(message: string): boolean {
   if (
     INTRINSIC_CHANGING_EXTERNAL_FACT_RE.test(message)
     || EXPLICIT_CURRENT_STATUS_RE.test(message)
     || CURRENT_NAMED_UPDATE_RE.test(message)
+    || (REGULATED_PUBLIC_SUBJECT_RE.test(message) && REGULATED_PUBLIC_ACTION_RE.test(message))
   ) return true;
 
   // Operating hours and schedules are current only when they describe a place,

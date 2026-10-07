@@ -75,6 +75,18 @@ describe("legal_regulated classification", () => {
     expect(policy.consequence).toBe("high");
     expect(policy.citationMode).toBe("required");
   });
+
+  it.each([
+    "What are the official requirements to renew a U.S. passport?",
+    "How do I replace a government-issued identity document?",
+    "What is the eligibility process for an immigration document extension?",
+  ])("treats regulated document actions as legal even without a legal keyword: %s", (query) => {
+    expect(classifyIntent(query, false)).toBe("legal_regulated");
+  });
+
+  it("does not treat ordinary passport-related shopping as a legal request", () => {
+    expect(classifyIntent("Where can I buy a passport holder?", false)).not.toBe("legal_regulated");
+  });
 });
 
 // ─── Financial ────────────────────────────────────────────────────────────────
