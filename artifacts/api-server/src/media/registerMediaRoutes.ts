@@ -227,17 +227,23 @@ function publicObjectUrl(configuration: PublicDeliveryConfiguration, objectKey: 
   return `https://storage.googleapis.com/${encodeURIComponent(configuration.bucketId!)}/${encodedKey}`;
 }
 
-export function getMediaUploadReadiness(): Record<string, unknown> {
+export function getMediaUploadReadiness(purpose?: string): Record<string, unknown> {
   const storage = getObjectStorageDiagnostics();
   const delivery = getPublicDeliveryConfiguration();
   const privateBucketConfigured = Boolean(process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID?.trim());
+  const isPrivateKinfolkQuestion = purpose === "kinfolk_question";
   const blockers = [
     ...(storage.configured ? [] : ["Object-storage credential mode is invalid or incomplete."]),
-    ...(delivery.blocker ? [delivery.blocker] : []),
-    ...(privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private uploads."]),
+    ...(isPrivateKinfolkQuestion
+      ? (privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private uploads."])
+      : [
+          ...(delivery.blocker ? [delivery.blocker] : []),
+          ...(privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private uploads."]),
+        ]),
   ];
   return {
     ready: blockers.length === 0,
+    purpose: purpose ?? null,
     credentialMode: storage.credentialMode,
     publicDeliveryMode: delivery.mode,
     publicBucketConfigured: Boolean(delivery.bucketId),
@@ -274,7 +280,8 @@ export function registerMediaRoutes(app: Express, options: RegisterMediaRouteOpt
       res.status(401).json({ error: "Authentication required", code: "AUTH_REQUIRED", requestId });
       return;
     }
-    const readiness = getMediaUploadReadiness();
+    const purpose = typeof req.query.purpose === "string" ? req.query.purpose : undefined;
+    const readiness = getMediaUploadReadiness(purpose);
     res.status(readiness.ready ? 200 : 503).json({ ...readiness, requestId });
   });
 

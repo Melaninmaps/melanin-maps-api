@@ -76,6 +76,24 @@ describe("media readiness access", () => {
     });
     expect(JSON.stringify(response.body)).not.toContain("bucket");
   });
+
+  it("reports private Kinfolk-question readiness without requiring a public delivery bucket", async () => {
+    vi.stubEnv("PUBLIC_MEDIA_BUCKET_ID", "");
+    vi.stubEnv("MEDIA_PUBLIC_BASE_URL", "");
+    vi.stubEnv("MEDIA_PUBLICATION_MODE", "object_acl");
+
+    const response = await request(createTestApp(workingFile()))
+      .get("/api/media/readiness?purpose=kinfolk_question");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      ready: true,
+      purpose: "kinfolk_question",
+      privateBucketConfigured: true,
+      publicBucketConfigured: false,
+    });
+    expect(response.body.blockers).toEqual([]);
+  });
 });
 
 describe("POST /api/media/upload error contract", () => {
