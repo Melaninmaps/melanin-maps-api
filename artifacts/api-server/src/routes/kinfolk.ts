@@ -158,8 +158,8 @@ import {
 import { routeEvidence as classifyEvidenceRoute } from "../kinfolk/evidence-route";
 import {
   hasRequestedArticleEvidence,
+  inspectArticleSummaryRequest,
   isPreferredNameRecallRequest,
-  requestedArticleSummaryUrl,
   requiresCurrentResearch,
   temporalEvidencePolicy,
 } from "../kinfolk/current-research";
@@ -200,6 +200,7 @@ import {
 } from "../kinfolk/question-image-assets";
 import { permittedIdentityContext as resolvePermittedIdentityContext } from "../kinfolk/permitted-identity-context";
 import {
+  articleSummaryFailureReply,
   evidenceFailureReply,
   evidenceRoutePromptBlock,
   hasRetrievedMedicalEvidence,
@@ -8201,6 +8202,46 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     return;
   }
 
+  // A linked-article request must name a public HTTPS source before it can
+  // enter memory, model, or retrieval work. This is intentionally after both
+  // emergency gates so immediate safety language always takes precedence.
+  const articleSummaryRequest = inspectArticleSummaryRequest(message);
+  if (articleSummaryRequest.state === "unsupported_link") {
+    const articleFailureReply = articleSummaryFailureReply("unsupported_link");
+    res.status(200).json({
+      sessionId,
+      reply: articleFailureReply ?? TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: ["Share the original public article link"],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "general_knowledge",
+      sources: [],
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "article_link_unsupported",
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: true,
+        web: {
+          attempted: false,
+          state: "not_needed",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
+    });
+    return;
+  }
+
   // Resolve the server flag and the authenticated member's own setting before
   // any session/history lookup. A settings-read failure disables memory for this
   // request rather than risking reinjection or persistence after an opt-out.
@@ -9981,7 +10022,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         // A source from “Summarize with Kinfolk” is retrieved separately from
         // ordinary topic research. The orchestrator only admits an exact URL
         // match, never a same-publisher or related-story substitute.
-        requestedArticleUrl: requestedArticleSummaryUrl(message),
+        requestedArticleUrl: articleSummaryRequest.url,
         timeoutMs: contextualResearchTimeoutMs(contextualPlan),
         signal: contextualRequestAbort.signal,
       });
@@ -10071,7 +10112,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // current-claim corroboration gate so a missing article can never degrade
     // into a generic evidence warning, and a retrieved article is not rejected
     // merely because unrelated topic reporting is unavailable.
-    const requestedArticleUrl = requestedArticleSummaryUrl(message);
+    const requestedArticleUrl = articleSummaryRequest.url;
     const requestedArticleEvidenceAvailable = hasRequestedArticleEvidence(
       requestedArticleUrl,
       [
@@ -10085,12 +10126,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const deferContextualEvidenceGateToHealthRetrieval =
       evidenceRoute.domain === "medical_health";
     if (requestedArticleUrl && !requestedArticleEvidenceAvailable) {
+      const articleSummaryState = contextualEvidence?.articleSummaryState ?? "provider_unavailable";
+      const articleFailureReply = articleSummaryFailureReply(articleSummaryState)
+        ?? TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY;
       recordKinfolkTelemetry({
         requestId: _kinfolkReqId,
         questionClass: intentClass,
         status: 200,
         degraded: true,
-        degradedReason: "requested_article_exact_source_unavailable",
+        degradedReason: `requested_article_${articleSummaryState}`,
         providerStatus: null,
         latencyMs: Date.now() - _kinfolkStartedAt,
         taskMode: contextualPlan?.taskMode ?? null,
@@ -10099,10 +10143,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       });
       res.status(200).json({
         sessionId,
-        reply: TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY,
+        reply: articleFailureReply,
         recommendations: null,
         itinerary: null,
-        followUpSuggestions: ["Try the summary again later"],
+        followUpSuggestions: articleSummaryState === "paywall_or_login"
+          ? ["Open the original source or share accessible text"]
+          : ["Try the summary again later"],
         smartPromotion: null,
         taskAction: null,
         libraryAction: null,
@@ -10110,7 +10156,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         sources: [],
         needsClarification: false,
         originalQuery: message,
-        answerMode: "article_source_unavailable",
+        answerMode: `article_${articleSummaryState}`,
         structuredContent: null,
         mediaLinks: [],
         relatedConnections: [],

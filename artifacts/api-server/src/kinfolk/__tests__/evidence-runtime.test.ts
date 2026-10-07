@@ -2,9 +2,14 @@ import { describe, expect, it } from "vitest";
 import { routeEvidence } from "../evidence-route";
 import { permittedIdentityContext } from "../permitted-identity-context";
 import {
+  TRUTHFUL_ARTICLE_SUMMARY_EXTRACTION_FAILED_REPLY,
+  TRUTHFUL_ARTICLE_SUMMARY_INACCESSIBLE_REPLY,
+  TRUTHFUL_ARTICLE_SUMMARY_PAYWALL_REPLY,
   TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY,
+  TRUTHFUL_ARTICLE_SUMMARY_UNSUPPORTED_LINK_REPLY,
   TRUTHFUL_EVIDENCE_UNAVAILABLE_REPLY,
   TRUTHFUL_MEDICAL_EVIDENCE_UNAVAILABLE_REPLY,
+  articleSummaryFailureReply,
   evidenceFailureReply,
   evidenceRoutePromptBlock,
   hasRetrievedMedicalEvidence,
@@ -100,6 +105,20 @@ describe("Kinfolk evidence runtime", () => {
       hasLiveWebEvidence: true,
       requestedArticleEvidenceAvailable: false,
     })).toBe(TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY);
+  });
+
+  it("uses a clear, static reply for each exact article failure without echoing source text", () => {
+    expect(articleSummaryFailureReply("unsupported_link"))
+      .toBe(TRUTHFUL_ARTICLE_SUMMARY_UNSUPPORTED_LINK_REPLY);
+    expect(articleSummaryFailureReply("paywall_or_login"))
+      .toBe(TRUTHFUL_ARTICLE_SUMMARY_PAYWALL_REPLY);
+    expect(articleSummaryFailureReply("extraction_failed"))
+      .toBe(TRUTHFUL_ARTICLE_SUMMARY_EXTRACTION_FAILED_REPLY);
+    expect(articleSummaryFailureReply("inaccessible"))
+      .toBe(TRUTHFUL_ARTICLE_SUMMARY_INACCESSIBLE_REPLY);
+    expect(articleSummaryFailureReply("provider_unavailable"))
+      .toBe(TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY);
+    expect(articleSummaryFailureReply("available")).toBeNull();
   });
 
   it("governs evaluative cultural prompts by criteria without an inline cultural label", () => {

@@ -3,6 +3,7 @@ import { canonicalizeContextualUrl } from "./contextual-url";
 import {
   isPublicNetWorthEstimateRequest,
   temporalEvidencePolicy,
+  type ArticleSummaryRetrievalState,
 } from "./current-research";
 import type { SemanticTurnPlan } from "./semantic-turn-planner";
 import { sourceHasMemberQuestionRelevance } from "./source-relevance";
@@ -25,6 +26,8 @@ export type ContextualEvidenceBundle = {
   internal: ContextualEvidenceItem[];
   external: ContextualEvidenceItem[];
   media: ContextualEvidenceItem[];
+  /** Exact linked-article state, never sourced from a related story. */
+  articleSummaryState: ArticleSummaryRetrievalState;
   gaps: string[];
   degraded: boolean;
   degradedReason: string | null;
@@ -126,7 +129,13 @@ function sourceIdentity(url: string): string {
 }
 
 function sourceUrlKey(value: string): string | null {
-  return canonicalizeContextualUrl(value)?.replace(/[?#].*$/, "") ?? null;
+  const safeUrl = canonicalizeContextualUrl(value);
+  if (!safeUrl) return null;
+  const parsed = new URL(safeUrl);
+  parsed.search = "";
+  parsed.hash = "";
+  if (parsed.pathname !== "/") parsed.pathname = parsed.pathname.replace(/\/+$/, "");
+  return parsed.toString();
 }
 
 function isCurrentPublicEstimatePlan(plan: SemanticTurnPlan): boolean {
@@ -390,16 +399,27 @@ async function searchProvider(
   }), maxResults);
 }
 
+const ARTICLE_ACCESS_GATE_RE = /\b(?:subscribe|subscription|sign[ -]?in|log[ -]?in|register)\b[^\n]{0,80}\b(?:to|for)\b[^\n]{0,32}\b(?:continue|read|access|view)\b|\b(?:full\s+(?:article|story)|this\s+(?:article|content))\b[^\n]{0,80}\b(?:subscriber|member)s?\b/i;
+
+type ExactArticleEvidenceResult = Readonly<{
+  items: ContextualEvidenceItem[];
+  state: Extract<ArticleSummaryRetrievalState,
+    "not_requested" | "available" | "paywall_or_login" | "extraction_failed" | "inaccessible" | "provider_unavailable">;
+}>;
+
 async function exactArticleEvidence(
   plan: SemanticTurnPlan,
   deps: ContextualResearchDeps,
   now: string,
   signal: AbortSignal,
-): Promise<ContextualEvidenceItem[]> {
+): Promise<ExactArticleEvidenceResult> {
   const requestedUrl = typeof deps.requestedArticleUrl === "string"
     ? sourceUrlKey(deps.requestedArticleUrl)
     : null;
-  if (!requestedUrl || (!deps.primaryProvider && !deps.fallbackProvider)) return [];
+  if (!requestedUrl) return { items: [], state: "not_requested" };
+  if (!deps.primaryProvider && !deps.fallbackProvider) {
+    return { items: [], state: "provider_unavailable" };
+  }
 
   const sourceHost = new URL(requestedUrl).hostname.toLowerCase();
   const query = [
@@ -410,26 +430,43 @@ async function exactArticleEvidence(
   const providers = [deps.primaryProvider, deps.fallbackProvider].filter(
     (provider): provider is ExternalResearchProvider => Boolean(provider),
   );
+  let providerReturned = false;
+  let sawPaywallOrLogin = false;
+  let sawExtractionFailure = false;
 
   for (const provider of providers) {
     try {
-      const retrieved = await searchProvider(
-        provider,
-        plan,
+      throwIfAborted(signal);
+      const result = await provider.search({
         query,
-        [requestedUrl],
-        3,
-        now,
+        allowedDomains: [sourceHost],
+        maxResults: 3,
         signal,
-        [sourceHost],
+      });
+      throwIfAborted(signal);
+      providerReturned = true;
+      const exactDocuments = result.documents.filter(
+        (document) => sourceUrlKey(document.url) === requestedUrl,
       );
-      const exact = retrieved.filter((item) => sourceUrlKey(item.url) === requestedUrl);
-      if (exact.length > 0) return exact.slice(0, 1);
+      for (const document of exactDocuments) {
+        const content = canonicalizeContextualPolicyText(document.content ?? "");
+        if (ARTICLE_ACCESS_GATE_RE.test(content)) {
+          sawPaywallOrLogin = true;
+          continue;
+        }
+        const normalized = fromDocument(document, [requestedUrl], now, plan);
+        if (normalized && normalized.excerpt.trim()) {
+          return { items: [normalized], state: "available" };
+        }
+        sawExtractionFailure = true;
+      }
     } catch (error) {
       if (signal.aborted) throw error;
     }
   }
-  return [];
+  if (sawPaywallOrLogin) return { items: [], state: "paywall_or_login" };
+  if (sawExtractionFailure) return { items: [], state: "extraction_failed" };
+  return { items: [], state: providerReturned ? "inaccessible" : "provider_unavailable" };
 }
 
 async function liveEvidence(plan: SemanticTurnPlan, deps: ContextualResearchDeps, now: string, signal: AbortSignal): Promise<ContextualEvidenceItem[]> {
@@ -503,6 +540,9 @@ export async function orchestrateContextualResearch(
 
   let internal: ContextualEvidenceItem[] = [];
   let external: ContextualEvidenceItem[] = [];
+  let articleSummaryState: ArticleSummaryRetrievalState = deps.requestedArticleUrl
+    ? "provider_unavailable"
+    : "not_requested";
   let providerUnavailable = false;
 
   try {
@@ -531,12 +571,20 @@ export async function orchestrateContextualResearch(
       }
     }
 
-    if (!controller.signal.aborted && !internalIsSufficient(plan, internal)) {
+    // A member's linked-article request has a stricter source boundary than
+    // stable internal knowledge. Even a sufficient Library result must never
+    // suppress retrieval of the exact public URL they asked to summarize.
+    if (
+      !controller.signal.aborted &&
+      (Boolean(deps.requestedArticleUrl) || !internalIsSufficient(plan, internal))
+    ) {
       try {
-        const exactArticle = await runWithinDeadline(
+        const exactArticleResult = await runWithinDeadline(
           exactArticleEvidence(plan, deps, now, controller.signal),
           controller.signal,
         );
+        articleSummaryState = exactArticleResult.state;
+        const exactArticle = exactArticleResult.items;
         try {
           const live = await runWithinDeadline(
             liveEvidence(plan, deps, now, controller.signal),
@@ -584,6 +632,7 @@ export async function orchestrateContextualResearch(
     internal,
     external: nonMediaExternal,
     media,
+    articleSummaryState,
     gaps,
     degraded: providerUnavailable || gaps.length > 0,
     degradedReason: providerUnavailable

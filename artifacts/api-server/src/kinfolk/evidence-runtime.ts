@@ -1,5 +1,6 @@
 import type { EvidenceRoute } from "./evidence-route";
 import type { PermittedIdentityContext } from "./permitted-identity-context";
+import type { ArticleSummaryRetrievalState } from "./current-research";
 import { buildMedicalDiscussionGuide } from "./medical-discussion-guide";
 
 export const TRUTHFUL_EVIDENCE_UNAVAILABLE_REPLY =
@@ -10,6 +11,39 @@ export const TRUTHFUL_MEDICAL_EVIDENCE_UNAVAILABLE_REPLY =
 
 export const TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY =
   "I can’t retrieve cited content for that linked article right now, so I won’t summarize a similar story from memory. Please open the original source or try the summary again later.";
+
+export const TRUTHFUL_ARTICLE_SUMMARY_UNSUPPORTED_LINK_REPLY =
+  "I can summarize a public HTTPS article link, but this link is not a supported public article URL. Please share the original article page rather than a local, private, or non-HTTPS link.";
+
+export const TRUTHFUL_ARTICLE_SUMMARY_PAYWALL_REPLY =
+  "That article appears to require a subscription or sign-in. I can’t read locked text, so I won’t guess at a summary. You can open the article yourself or share accessible text you want help understanding.";
+
+export const TRUTHFUL_ARTICLE_SUMMARY_EXTRACTION_FAILED_REPLY =
+  "I reached that article but could not extract enough cited text to summarize it accurately. I won’t fill the gap from a headline or a related story; please try again later or open the original source.";
+
+export const TRUTHFUL_ARTICLE_SUMMARY_INACCESSIBLE_REPLY =
+  "I couldn’t access the exact linked article. It may be unavailable, private, removed, or blocked to public retrieval, so I won’t substitute another story.";
+
+/** Returns only a static, source-specific reply; no linked page text is echoed. */
+export function articleSummaryFailureReply(
+  state: ArticleSummaryRetrievalState,
+): string | null {
+  switch (state) {
+    case "unsupported_link":
+      return TRUTHFUL_ARTICLE_SUMMARY_UNSUPPORTED_LINK_REPLY;
+    case "paywall_or_login":
+      return TRUTHFUL_ARTICLE_SUMMARY_PAYWALL_REPLY;
+    case "extraction_failed":
+      return TRUTHFUL_ARTICLE_SUMMARY_EXTRACTION_FAILED_REPLY;
+    case "inaccessible":
+      return TRUTHFUL_ARTICLE_SUMMARY_INACCESSIBLE_REPLY;
+    case "provider_unavailable":
+      return TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY;
+    case "not_requested":
+    case "available":
+      return null;
+  }
+}
 
 export function hasRetrievedMedicalEvidence(contextBlock: string): boolean {
   return /RETRIEVED FROM NIH MEDLINEPLUS/i.test(contextBlock)

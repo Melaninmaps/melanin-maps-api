@@ -85,6 +85,31 @@ describe("contextual research orchestrator", () => {
     expect(result).toMatchObject({ degraded: false, external: [], media: [] });
   });
 
+  it("retrieves the exact requested article even when stable internal evidence is sufficient", async () => {
+    const requestedArticleUrl = "https://www.britannica.com/event/example-article";
+    const search = vi.fn().mockResolvedValue({
+      documents: [document(1, {
+        title: "Exact article",
+        url: requestedArticleUrl,
+        content: "This exact article contains enough source text for a safe and useful summary.",
+      })],
+      provider: "openai",
+      status: "available",
+    });
+    const result = await orchestrateContextualResearch(plan(), {
+      searchInternal: async () => [item("Library", "https://example.com/internal", "library_published")],
+      primaryProvider: { name: "openai", search },
+      requestedArticleUrl,
+      now: () => NOW,
+    });
+
+    expect(search).toHaveBeenCalled();
+    expect(result.articleSummaryState).toBe("available");
+    expect(result.external).toContainEqual(expect.objectContaining({
+      url: requestedArticleUrl,
+    }));
+  });
+
   it("runs live retrieval only after insufficient internal evidence and exposes degradation", async () => {
     const order: string[] = [];
     const result = await orchestrateContextualResearch(plan({ evidenceNeeds: ["primary_cultural", "critical_consensus"] }), {
@@ -200,6 +225,7 @@ describe("contextual research orchestrator", () => {
     expect(result.external).not.toContainEqual(expect.objectContaining({
       title: "Related story",
     }));
+    expect(result.articleSummaryState).toBe("available");
   });
 
   it("preserves retrieved exact article evidence when ordinary topic research fails", async () => {
@@ -258,6 +284,58 @@ describe("contextual research orchestrator", () => {
     });
 
     expect(search).toHaveBeenCalledTimes(1);
+    expect(result.external).toEqual([]);
+    expect(result.articleSummaryState).toBe("inaccessible");
+  });
+
+  it.each([
+    [
+      "paywall_or_login",
+      "This article is for subscribers. Sign in to continue reading.",
+    ],
+    ["extraction_failed", ""],
+  ] as const)("classifies an exact article %s without using a related story", async (expectedState, content) => {
+    const requestedArticleUrl = "https://www.britannica.com/event/example-article";
+    const result = await orchestrateContextualResearch(plan({
+      freshness: "current",
+      evidenceNeeds: ["official_current"],
+      retrievalQueries: [],
+    }), {
+      primaryProvider: {
+        name: "openai",
+        search: vi.fn().mockResolvedValue({
+          documents: [document(1, {
+            title: "Exact article",
+            url: requestedArticleUrl,
+            content,
+          })],
+          provider: "openai",
+          status: "available",
+        }),
+      },
+      requestedArticleUrl,
+      now: () => NOW,
+    });
+
+    expect(result.articleSummaryState).toBe(expectedState);
+    expect(result.external).toEqual([]);
+  });
+
+  it("reports an unavailable provider rather than guessing about an exact article", async () => {
+    const result = await orchestrateContextualResearch(plan({
+      freshness: "current",
+      evidenceNeeds: ["official_current"],
+      retrievalQueries: [],
+    }), {
+      primaryProvider: {
+        name: "openai",
+        search: vi.fn().mockRejectedValue(new Error("provider unavailable")),
+      },
+      requestedArticleUrl: "https://www.britannica.com/event/example-article",
+      now: () => NOW,
+    });
+
+    expect(result.articleSummaryState).toBe("provider_unavailable");
     expect(result.external).toEqual([]);
   });
 

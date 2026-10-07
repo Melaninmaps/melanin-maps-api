@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   hasRequestedArticleEvidence,
+  inspectArticleSummaryRequest,
   isPublicNetWorthEstimateRequest,
   isPreferredNameRecallRequest,
   requestedArticleSummaryUrl,
@@ -182,5 +183,23 @@ describe("current research routing", () => {
   it("does not accept a non-public or non-summary URL as an article request", () => {
     expect(requestedArticleSummaryUrl("Open https://example.com/news/gas-prices")).toBeNull();
     expect(requestedArticleSummaryUrl("Summarize https://localhost/private")).toBeNull();
+  });
+
+  it("classifies only unsupported linked summaries before provider or memory work", () => {
+    expect(inspectArticleSummaryRequest(
+      "Summarize https://news.example.org/accessible-article",
+    )).toEqual({
+      state: "ready",
+      url: "https://news.example.org/accessible-article",
+    });
+    expect(inspectArticleSummaryRequest(
+      "Summarize http://news.example.org/old-article",
+    )).toEqual({ state: "unsupported_link", url: null });
+    expect(inspectArticleSummaryRequest(
+      "Please summarize www.example.org/article",
+    )).toEqual({ state: "unsupported_link", url: null });
+    expect(inspectArticleSummaryRequest(
+      "Open https://news.example.org/article",
+    )).toEqual({ state: "not_requested", url: null });
   });
 });

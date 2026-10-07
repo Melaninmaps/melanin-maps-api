@@ -171,18 +171,24 @@ describe("Kinfolk chat static wiring", () => {
 
   it("passes an explicit article source into exact-source retrieval", () => {
     expect(chatRoute).toContain(
-      "requestedArticleUrl: requestedArticleSummaryUrl(message)",
+      "requestedArticleUrl: articleSummaryRequest.url",
     );
     expect(routeSource).toContain("same-publisher or related-story substitute");
   });
 
-  it("handles an unavailable requested article before generic corroboration and lets an exact source summarize alone", () => {
-    const articleGuard = chatRoute.indexOf("requested_article_exact_source_unavailable");
+  it("handles every requested article failure before memory or generic corroboration", () => {
+    const unsupportedLinkGuard = chatRoute.indexOf("article_link_unsupported");
+    const explicitMemory = chatRoute.indexOf("persistExplicitMemberMemory({");
+    const articleGuard = chatRoute.indexOf("requested_article_${articleSummaryState}");
     const corroborationGate = chatRoute.indexOf("contextualEvidenceNeedsFailClosedResponse(");
 
+    expect(unsupportedLinkGuard).toBeGreaterThan(-1);
+    expect(unsupportedLinkGuard).toBeLessThan(explicitMemory);
     expect(articleGuard).toBeGreaterThan(-1);
     expect(articleGuard).toBeLessThan(corroborationGate);
-    expect(chatRoute).toContain("TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY");
+    expect(chatRoute).toContain("inspectArticleSummaryRequest(message)");
+    expect(chatRoute).toContain("articleSummaryFailureReply(articleSummaryState)");
+    expect(chatRoute).toContain("articleSummaryState === \"paywall_or_login\"");
     expect(chatRoute).toContain("!requestedArticleUrl &&");
   });
 

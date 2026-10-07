@@ -174,7 +174,21 @@ const INTRINSIC_CURRENT_LEADERSHIP_STATUS_RE = /\b(?:who\s+(?:is|are)\s+(?:the\s
 const INTRINSIC_CURRENT_PUBLIC_EVENT_STATUS_RE = /\b(?:is|are|will|when|where|what\s+time)\b[\s\S]{0,90}\b(?:tour(?:ing|\s+dates?)?|concerts?|events?|games?|appearances?|showtimes?|schedule)\b|\b(?:upcoming|next)\s+(?:tour|concert|event|game|appearance|show)\b/iu;
 
 const ARTICLE_SUMMARY_RE = /\b(?:summari[sz]e|summary)\b/i;
-const HTTPS_URL_RE = /https:\/\/[^\s<>'"`]+/i;
+const ARTICLE_LINK_CANDIDATE_RE = /(?:https?:\/\/|www\.)[^\s<>'"`]+/i;
+
+export type ArticleSummaryRetrievalState =
+  | "not_requested"
+  | "available"
+  | "unsupported_link"
+  | "paywall_or_login"
+  | "extraction_failed"
+  | "inaccessible"
+  | "provider_unavailable";
+
+export type ArticleSummaryRequest = Readonly<{
+  state: "not_requested" | "ready" | "unsupported_link";
+  url: string | null;
+}>;
 
 // A member asking Kinfolk to repeat their own explicitly saved address is a
 // first-party memory recall, not a request for a fresh public fact. This stays
@@ -198,9 +212,24 @@ export function isPublicNetWorthEstimateRequest(message: string): boolean {
  * so Kinfolk cannot summarize a merely similar story from model recall.
  */
 export function requestedArticleSummaryUrl(message: string): string | null {
-  if (!ARTICLE_SUMMARY_RE.test(message)) return null;
-  const raw = message.match(HTTPS_URL_RE)?.[0]?.replace(/[),.;!?]+$/, "") ?? "";
-  return articleSourceUrlKey(raw);
+  return inspectArticleSummaryRequest(message).url;
+}
+
+/**
+ * Distinguishes an ordinary request to summarize a linked article from a link
+ * that must not enter retrieval at all. The route returns a static, clear
+ * response for unsupported links before memory, providers, or model work.
+ */
+export function inspectArticleSummaryRequest(message: string): ArticleSummaryRequest {
+  if (!ARTICLE_SUMMARY_RE.test(message)) {
+    return { state: "not_requested", url: null };
+  }
+  const raw = message.match(ARTICLE_LINK_CANDIDATE_RE)?.[0]?.replace(/[),.;!?]+$/, "") ?? "";
+  if (!raw) return { state: "not_requested", url: null };
+  const url = articleSourceUrlKey(raw);
+  return url
+    ? { state: "ready", url }
+    : { state: "unsupported_link", url: null };
 }
 
 /**
