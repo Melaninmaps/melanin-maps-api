@@ -16,6 +16,7 @@ const STOP_WORDS = new Set([
 ]);
 
 const MEDICAL_DISCUSSION_RE = /\b(?:anemia|anaemia|menopause|perimenopause|fertility|fibroid|endometriosis|pcos|breast\s+cancer|mammogram|medication|medicine|prescription|prescribed|drug|dose|dosage|side\s+effect|pharmacist)\b/i;
+const ACUTE_FIRST_AID_RE = /\b(?:burn(?:ed|t)?|scald(?:ed|ing)?|sprain(?:ed)?|strain(?:ed)?|laceration|open\s+wound|cut(?:\s+on)?|fracture|broken\s+bone|concussion|frostbite|poisoning)\b/i;
 
 function isDirectMedicalDiscussionSource(
   source: MemberFacingSourceCandidate,
@@ -23,8 +24,12 @@ function isDirectMedicalDiscussionSource(
 ): boolean {
   // NIH MedlinePlus links added by the health-retrieval layer are authoritative
   // care-discussion material. A medication name may not appear in a source title,
-  // so exact token overlap alone can incorrectly hide the relevant link.
-  return MEDICAL_DISCUSSION_RE.test(message) && source.label === "NIH MedlinePlus";
+  // and an acute-injury question can include practical terms absent from a neutral
+  // condition title. Exact token overlap alone must not hide this direct authority.
+  return (
+    source.label === "NIH MedlinePlus" &&
+    (MEDICAL_DISCUSSION_RE.test(message) || ACUTE_FIRST_AID_RE.test(message))
+  );
 }
 
 function normalizedTokens(value: string): string[] {
@@ -87,7 +92,8 @@ export function sourceHasMemberQuestionRelevance(
 /**
  * Never render a source merely because it was returned by an unrelated lookup.
  * Fresh-fact answers accept only live-web evidence with visible, question-related
- * support; if none survives, the route's existing fail-closed answer is used.
+ * support, except directly relevant NIH MedlinePlus clinical authority returned
+ * by the dedicated health-retrieval layer.
  */
 export function filterMemberFacingSources(
   sources: ReadonlyArray<MemberFacingSourceCandidate>,
@@ -97,8 +103,14 @@ export function filterMemberFacingSources(
   const seen = new Set<string>();
   return sources.filter((source) => {
     if (!source.id || seen.has(source.id)) return false;
-    if (currentFact && source.label !== "web_search" && source.label !== "kinfolk_web") return false;
-    if (!sourceHasMemberQuestionRelevance(source, message) && !isDirectMedicalDiscussionSource(source, message)) return false;
+    const directMedicalEvidence = isDirectMedicalDiscussionSource(source, message);
+    if (
+      currentFact &&
+      source.label !== "web_search" &&
+      source.label !== "kinfolk_web" &&
+      !directMedicalEvidence
+    ) return false;
+    if (!sourceHasMemberQuestionRelevance(source, message) && !directMedicalEvidence) return false;
     seen.add(source.id);
     return true;
   });

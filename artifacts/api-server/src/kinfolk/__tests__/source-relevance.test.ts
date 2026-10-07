@@ -93,4 +93,23 @@ describe("Kinfolk member-facing source relevance", () => {
 
     expect(result.map((source) => source.id)).toEqual(["medlineplus-medication-questions"]);
   });
+
+  it("keeps direct NIH burn evidence when first-aid wording enters the current-evidence path", () => {
+    const result = filterMemberFacingSources([
+      {
+        id: "medlineplus-burns",
+        label: "NIH MedlinePlus",
+        title: "Burns",
+        url: "https://medlineplus.gov/burns.html",
+      },
+      {
+        id: "unrelated-local-business",
+        label: "library",
+        title: "Philadelphia business licensing",
+        url: "https://www.phila.gov/services/business-self-employment/",
+      },
+    ], "What are general first-aid steps for a minor kitchen burn?");
+
+    expect(result.map((source) => source.id)).toEqual(["medlineplus-burns"]);
+  });
 });
