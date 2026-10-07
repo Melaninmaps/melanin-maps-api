@@ -63,6 +63,12 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(serverStartup).toContain("Directory reconciliation ledger schema ready before traffic acceptance");
   });
 
+  it("projects only reconciliation fields so the established inventory date order stays unambiguous", () => {
+    expect(adminRoute).toContain("SELECT business_id, reconciliation_state, reason_code, presence_status,");
+    expect(adminRoute).toContain("FROM business_directory_reconciliation_ledger");
+    expect(adminRoute).not.toContain("LEFT JOIN business_directory_reconciliation_ledger ledger ON");
+  });
+
   it("bounds exact source receipt enrichment and reports its remaining work separately from new profiles", () => {
     expect(adminRoute).toContain("selectSourceBackedEnrichmentBatch");
     expect(adminRoute).toContain("exactEnrichmentCursor");

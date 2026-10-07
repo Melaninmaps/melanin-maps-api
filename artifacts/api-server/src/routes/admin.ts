@@ -1524,8 +1524,15 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
         : status === "all"
           ? "TRUE"
           : liveInventoryWhere;
+    // Project only the reconciliation fields used by this listing query. The
+    // ledger has its own created_at/updated_at columns, so joining the full
+    // table would make the established Admin date filter and sort ambiguous.
     const reconciliationJoin = reconciliationLedgerAvailable
-      ? "LEFT JOIN business_directory_reconciliation_ledger ledger ON ledger.business_id::text = businesses.id::text"
+      ? `LEFT JOIN (
+           SELECT business_id, reconciliation_state, reason_code, presence_status,
+                  ownership_status, recommended_action, reviewed_at
+             FROM business_directory_reconciliation_ledger
+         ) ledger ON ledger.business_id::text = businesses.id::text`
       : "";
     const reconciliationColumns = reconciliationLedgerAvailable
       ? `COALESCE(ledger.reconciliation_state, 'unreviewed') AS reconciliation_state,
