@@ -111,6 +111,12 @@ describe("Kinfolk chat static wiring", () => {
     );
   });
 
+  it("discloses a qualified partial answer in the server response rather than trusting model prose", () => {
+    expect(chatRoute).toContain("const memberFacingReply = contextualPartialEvidenceSourceContext");
+    expect(chatRoute).toContain("Evidence note: ${contextualPartialEvidenceSourceContext}");
+    expect(chatRoute).toContain("reply: memberFacingReply");
+  });
+
   it("keeps qualified care navigation outside the ordinary ownership-scoped business catalog", () => {
     const careOverride = chatRoute.indexOf("const healthCareOverride = buildHealthCareOverride");
     const catalogFilter = chatRoute.indexOf("businessCatalog = healthCareOverride.suppressesGeneralBusinessCatalog");

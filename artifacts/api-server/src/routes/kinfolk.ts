@@ -12531,9 +12531,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             ...(contextualEvidence?.media ?? []),
           ])
         : null);
+    const memberFacingReply = contextualPartialEvidenceSourceContext
+      ? `${reply}\n\nEvidence note: ${contextualPartialEvidenceSourceContext}`
+      : reply;
     res.json({
       sessionId: finalSessionId,
-      reply,
+      reply: memberFacingReply,
       // Private response metadata for the current member only. It is never used
       // for profile identity, business eligibility, ranking, or promotion.
       memberContextApplied: savedMemberResearchContextTags,

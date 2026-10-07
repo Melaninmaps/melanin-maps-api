@@ -466,6 +466,25 @@ describe("contextual research orchestrator", () => {
     expect(contextualEvidenceNeedsFailClosedResponse(genericCurrentPlan, generic)).toBe(true);
   });
 
+  it("accepts a directly relevant rate from an established financial service", async () => {
+    const currentRatePlan = plan({
+      freshness: "current",
+      evidenceNeeds: ["official_current", "platform_records"],
+      retrievalQueries: ["What is 792 yen in U.S. dollars today?"],
+    });
+    const result = await orchestrateContextualResearch(currentRatePlan, {
+      searchLive: async () => [item(
+        "JPY to USD live exchange rate",
+        "https://www.mtfxgroup.com/tools/mtfx-rate-calculator/jpy-to-usd-rate",
+        "reference",
+      )],
+      now: () => NOW,
+    });
+
+    expect(result).toMatchObject({ degraded: false, gaps: [] });
+    expect(contextualEvidenceNeedsFailClosedResponse(currentRatePlan, result)).toBe(false);
+  });
+
   it("retrieves a historical conversion as historical evidence rather than substituting today's rate", async () => {
     const historicalRatePlan = plan({
       freshness: "historical",
