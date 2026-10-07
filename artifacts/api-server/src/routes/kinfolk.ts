@@ -439,8 +439,9 @@ import { buildKinfolkCurrentTurnCorrectionInstruction } from "../kinfolk/current
 import { normalizeKinfolkTaskAction } from "../kinfolk/task-action-contract";
 import {
   KINFOLK_VOICE_PREVIEW_TEXT,
+  buildKinfolkSpeechInstruction,
   normalizeKinfolkSpeechRequest,
-  resolveMemberKinfolkSpeechVoice,
+  resolveMemberKinfolkSpeakerProfile,
   resolveKinfolkSpeechConfiguration,
   resolveKinfolkVoiceDelivery,
 } from "../kinfolk/voice-delivery";
@@ -14147,17 +14148,17 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
     }
 
     let ttsTimer: ReturnType<typeof setTimeout> | undefined;
-    const memberSpeaker = resolveMemberKinfolkSpeechVoice(
+    const speakerProfile = resolveMemberKinfolkSpeakerProfile(
       speechConfig,
       voicePreferences?.kinfolkVoice,
     );
     const audioBuffer = await Promise.race([
       textToSpeechWithStyle({
         text: speakText,
-        voice: memberSpeaker,
+        voice: speakerProfile.voice,
         format: "wav",
         model: speechConfig.model,
-        styleInstruction: delivery.styleInstruction,
+        styleInstruction: buildKinfolkSpeechInstruction(delivery, speakerProfile),
       }),
       new Promise<never>((_resolve, reject) => {
         ttsTimer = setTimeout(() => reject(new Error("TTS_TIMEOUT")), 15_000);
@@ -14182,6 +14183,8 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
       format: "wav",
       contentType: "audio/wav",
       bytes: audioBuffer.length,
+      speakerProfile: speakerProfile.id,
+      speakerLabel: speakerProfile.label,
       deliveryMode: delivery.mode,
       deliveryLabel: delivery.label,
       charsUsed: newUsed,
@@ -14219,16 +14222,16 @@ router.post("/kinfolk/voice-preview", async (req: Request, res: Response) => {
       .from(userPreferencesTable)
       .where(eq(userPreferencesTable.userId, req.user.id))
       .limit(1);
-    const memberSpeaker = resolveMemberKinfolkSpeechVoice(
+    const speakerProfile = resolveMemberKinfolkSpeakerProfile(
       speechConfig,
       voicePreferences?.kinfolkVoice,
     );
     const audioBuffer = await textToSpeechWithStyle({
       text: KINFOLK_VOICE_PREVIEW_TEXT,
-      voice: memberSpeaker,
+      voice: speakerProfile.voice,
       format: "wav",
       model: speechConfig.model,
-      styleInstruction: delivery.styleInstruction,
+      styleInstruction: buildKinfolkSpeechInstruction(delivery, speakerProfile),
     });
     if (!Buffer.isBuffer(audioBuffer) || audioBuffer.length === 0) {
       return void res.status(503).json({ error: "TTS_UNAVAILABLE", message: "Kinfolk could not create a voice preview right now." });
@@ -14236,6 +14239,8 @@ router.post("/kinfolk/voice-preview", async (req: Request, res: Response) => {
     res.json({
       audio: audioBuffer.toString("base64"),
       format: "wav",
+      speakerProfile: speakerProfile.id,
+      speakerLabel: speakerProfile.label,
       deliveryMode: delivery.mode,
       deliveryLabel: delivery.label,
     });

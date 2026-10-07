@@ -19,10 +19,12 @@ describe("Kinfolk server-owned voice cross-client contract", () => {
   it("does not honor a client-selected provider voice and resolves only stored approved preferences", () => {
     expect(routeSource).toContain('router.post("/kinfolk/speak"');
     expect(routeSource).toContain("resolveKinfolkSpeechConfiguration()");
-    expect(routeSource).toContain("resolveMemberKinfolkSpeechVoice(");
+    expect(routeSource).toContain("resolveMemberKinfolkSpeakerProfile(");
     expect(routeSource).toContain("voicePreferences?.kinfolkVoice");
     expect(routeSource).toContain("textToSpeechWithStyle({");
-    expect(routeSource).toContain("voice: memberSpeaker");
+    expect(routeSource).toContain("voice: speakerProfile.voice");
+    expect(routeSource).toContain("buildKinfolkSpeechInstruction(delivery, speakerProfile)");
+    expect(routeSource).toContain("speakerProfile: speakerProfile.id");
     expect(routeSource).not.toContain("const { text, voice: requestedVoice }");
   });
 

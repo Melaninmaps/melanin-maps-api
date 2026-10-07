@@ -28,6 +28,8 @@ describe("unified Web Kinfolk settings", () => {
     expect(settingsSource).toContain("Professor");
     expect(settingsSource).toContain("Standard Kinfolk Voice");
     expect(settingsSource).toContain("Female Voice");
+    expect(settingsSource).toContain("warm, grounded, confident adult woman's synthetic voice");
+    expect(settingsSource).toContain("same speaker across every mode");
     expect(settingsSource).toContain("Saved Memories");
     expect(settingsSource).toContain("KinfolkMemoryManager");
   });

@@ -395,7 +395,9 @@ export function KinfolkExperienceSettings() {
                   )}
                 </span>
                 <span className="mt-1 block text-xs leading-5 text-[#3A1F0E]/55">
-                  A female-presenting Kinfolk speaker for audio replies.
+                  A warm, grounded, confident adult woman's synthetic voice: natural,
+                  clear, steady, and compassionate without vagueness. It remains the
+                  same speaker across every mode.
                 </span>
               </button>
             </div>
