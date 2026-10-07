@@ -85,16 +85,20 @@ declare const __BUILD_AT__: string;
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
 const apiPackageDir = path.resolve(_dirname, "..");
+// build.mjs produces dist/public in the same layer as dist/index.mjs. Prefer
+// it in compiled runtimes: a later source-copy layer can replace web-static
+// with a repository snapshot while the compiled output remains current.
+const compiledWebPublicDir = path.join(_dirname, "public");
 const webPublicDir = path.join(apiPackageDir, "web-static");
 
 // Read SPA html once at startup — avoids sendFile path-resolution issues.
-// Serve only the reviewed Vite output. dist/public is a legacy snapshot that
-// can survive in an image/cache after its index has become stale; choosing it
-// first pairs a current API with an older browser bundle.
+// Serve the compiled Vite output before development fallbacks. This keeps the
+// SPA index and its hashed JavaScript/CSS assets from the same build.
 const cwd = process.cwd();
 const SPA_SEARCH_DIRS = [
-  path.join(apiPackageDir, "web-static"),                                // Docker or API package root
-  path.join(cwd, "artifacts", "api-server", "web-static"),              // repository-root Nixpacks build
+  compiledWebPublicDir,                                                     // current compiled API bundle
+  path.join(apiPackageDir, "web-static"),                                  // API-package development fallback
+  path.join(cwd, "artifacts", "api-server", "web-static"),              // repository-root development fallback
 ];
 
 // Use bundled HTML (embedded at build time) as primary; file-system read as a
