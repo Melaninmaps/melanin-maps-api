@@ -33,6 +33,9 @@ describe("Kinfolk current-turn correction contract", () => {
     "Rewrite this text message to be lighter and warmer.",
     "Help me say that to my wife more gently.",
     "That missed the point. Make the email shorter and less formal.",
+    "Please polish the previous draft for an executive audience.",
+    "Shorten it to a text-message length while keeping the key ask.",
+    "Make the response more persuasive without changing the facts.",
   ])("treats a drafting or conversation-coaching revision as current-turn guidance: %s", (message) => {
     const instruction = buildKinfolkCurrentTurnCorrectionInstruction({
       message,

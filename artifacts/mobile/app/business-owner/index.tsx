@@ -132,6 +132,14 @@ export default function BusinessOwnerHome() {
       route: "/business-owner/identity",
     },
     {
+      id: "kinfolk-voice",
+      icon: "mic",
+      label: "Business Voice & Drafts",
+      sub: "Set owner-approved draft guidance and review editable drafts",
+      color: "#5E3B87",
+      route: "/business-owner/kinfolk-voice",
+    },
+    {
       id: "broadcasts",
       icon: "send",
       label: "Send Broadcast",

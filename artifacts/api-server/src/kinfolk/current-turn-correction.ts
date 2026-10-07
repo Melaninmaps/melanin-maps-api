@@ -3,8 +3,16 @@ export type KinfolkCorrectionHistoryMessage = Readonly<{
   content: string;
 }>;
 
-const REVISION_REQUEST = /\b(?:make|rewrite|reword|rephrase|edit|change|adjust|try)\b[\s\S]{0,90}\b(?:it|that|this|the (?:email|draft|message|answer|response))\b/i;
-const REVISION_DIRECTION = /\b(?:(?:more|less)\s+(?:formal|professional|casual|light|lighter|warm|warmth|direct|brief|short|concise|detailed|friendly|firm|gentle)|(?:be|sound|feel)\s+(?:formal|professional|casual|light|lighter|warm|direct|brief|short|concise|detailed|friendly|firm|gentle)|warmer|shorter|longer|clearer|friendlier|gentler|more direct)\b/i;
+const REVISION_TARGET = "(?:it|that|this|the (?:email|draft|message|answer|response)|(?:the )?(?:previous|last) (?:email|draft|message|answer|response))";
+const REVISION_REQUEST = new RegExp(
+  `\\b(?:make|rewrite|reword|rephrase|edit|change|adjust|try)\\b[\\s\\S]{0,90}\\b${REVISION_TARGET}\\b`,
+  "i",
+);
+const DIRECT_REVISION_REQUEST = new RegExp(
+  `\\b(?:rewrite|reword|rephrase|edit|proofread|polish|shorten|expand|tighten)\\b[\\s\\S]{0,90}\\b${REVISION_TARGET}\\b`,
+  "i",
+);
+const REVISION_DIRECTION = /\b(?:(?:more|less)\s+(?:formal|professional|casual|light|lighter|warm|warmth|direct|brief|short|concise|detailed|friendly|firm|gentle|persuasive|confident|accessible)|(?:be|sound|feel)\s+(?:formal|professional|casual|light|lighter|warm|direct|brief|short|concise|detailed|friendly|firm|gentle|persuasive|confident|accessible)|warmer|shorter|longer|clearer|friendlier|gentler|more direct|more persuasive)\b/i;
 const CORRECTION_SIGNAL = /\b(?:that(?:'s| is) (?:not|wrong)|you (?:missed|misunderstood|got) (?:the point|that|it|this)|i meant|not what i asked|try again)\b/i;
 const CONVERSATION_COACHING_REVISION = /\b(?:help me say|say that|put that)\b[\s\S]{0,90}\b(?:more|less)\s+(?:gently|gentle|warmly|warm|directly|direct|clearly|clear)\b/i;
 
@@ -22,6 +30,7 @@ export function buildKinfolkCurrentTurnCorrectionInstruction(input: Readonly<{
 
   const isRevision =
     CORRECTION_SIGNAL.test(message) ||
+    DIRECT_REVISION_REQUEST.test(message) ||
     (REVISION_REQUEST.test(message) && REVISION_DIRECTION.test(message)) ||
     (/(?:make|rewrite|reword|rephrase|edit|change|adjust)\b/i.test(message) && REVISION_DIRECTION.test(message)) ||
     CONVERSATION_COACHING_REVISION.test(message);
