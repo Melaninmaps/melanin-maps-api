@@ -149,6 +149,7 @@ import {
   type GovernedKinfolkBusiness,
   type ValidatedKinfolkCityScope,
 } from "../kinfolk/governedBusinessRepository";
+import { shouldLoadKinfolkHomeCatalog } from "../kinfolk/home-catalog-gate";
 import { matchesDocumentedDesignationScope } from "../kinfolk/designation-predicate-policy";
 import {
   namedBusinessPromptBlock,
@@ -10948,10 +10949,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
-    // A home fallback requires an exact city plus two-letter state. Missing state
-    // does not widen the query; a registered city may supply its canonical state.
+    // A home fallback is limited to an explicit discovery or travel-planning turn.
+    // Ordinary conversation must not read a member's home catalog merely because
+    // no current-turn city was named.
+    const homeCatalogAllowed = shouldLoadKinfolkHomeCatalog({
+      broadCatalogAllowed,
+      decisionRoute: earlyDecision.route,
+    });
     if (
-      broadCatalogAllowed &&
+      homeCatalogAllowed &&
       !destination &&
       req.user?.id &&
       !businessCatalog.length

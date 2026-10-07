@@ -42,6 +42,13 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).not.toMatch(/(?:FROM|JOIN)\s+(?:public\.)?businesses\s+b\b/i);
   });
 
+  it("does not load a home catalog for ordinary no-location chat", () => {
+    expect(routeSource).toContain("shouldLoadKinfolkHomeCatalog");
+    expect(chatRoute).toContain("const homeCatalogAllowed = shouldLoadKinfolkHomeCatalog({");
+    expect(chatRoute).toContain('decisionRoute: earlyDecision.route');
+    expect(chatRoute).toContain("homeCatalogAllowed &&");
+  });
+
   it("wires current-turn identity, evidence routing, strict parsing, and itinerary normalization", () => {
     expect(chatRoute).toContain("resolvePermittedIdentityContext(message)");
     expect(chatRoute).toContain("classifyEvidenceRoute(message)");
