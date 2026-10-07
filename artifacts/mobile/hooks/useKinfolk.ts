@@ -240,7 +240,17 @@ export function useKinfolk() {
 
   const sendMessage = useCallback(async (
     text: string,
-    opts?: { vibes?: string[]; voiceMode?: "community" | "professor" | "business_manager" | "best_friend"; imageUrls?: string[]; includeCommunityPerspective?: boolean; publicOrigin?: string },
+    opts?: {
+      vibes?: string[];
+      voiceMode?: "community" | "professor" | "business_manager" | "best_friend";
+      /** Device-local previews, retained only in this rendered conversation. */
+      imageUrls?: string[];
+      /** Private server asset references for one consented visual answer. */
+      imageAssetIds?: string[];
+      imageVisionConsent?: boolean;
+      includeCommunityPerspective?: boolean;
+      publicOrigin?: string;
+    },
   ): Promise<void> => {
     // A new member turn always wins. Abort the prior fetch without adding an
     // artificial error bubble, so Kinfolk feels interruptible like a real chat.
@@ -287,7 +297,8 @@ export function useKinfolk() {
           message: text,
           vibes: opts?.vibes ?? [],
           voiceMode: opts?.voiceMode ?? "community",
-          imageUrls: opts?.imageUrls ?? [],
+          imageAssetIds: opts?.imageAssetIds ?? [],
+          imageVisionConsent: opts?.imageVisionConsent === true,
           includeCommunityPerspective: opts?.includeCommunityPerspective === true,
           cityHint,
           publicOrigin: opts?.publicOrigin?.trim() || undefined,
