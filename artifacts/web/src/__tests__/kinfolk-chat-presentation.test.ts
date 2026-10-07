@@ -12,6 +12,7 @@ import {
   KinfolkSourceLinks,
   KinfolkStaffDemoBadge,
   KINFOLK_RESPONSE_STATUS_STAGES,
+  kinfolkWorkingElapsedLabel,
   responseStatusForElapsedTime,
   safeExternalSourceHref,
   safeLibraryHref,
@@ -92,6 +93,16 @@ describe("Kinfolk chat presentation", () => {
     expect(responseStatusForElapsedTime(1_500)).toBe("Connecting the conversation…");
     expect(responseStatusForElapsedTime(4_000)).toBe("Putting your answer together…");
     expect(KINFOLK_RESPONSE_STATUS_STAGES.join(" ").toLowerCase()).not.toMatch(/search|web|source/);
+  });
+
+  it("shows a local elapsed working indicator without claiming research or recommendations", () => {
+    expect(kinfolkWorkingElapsedLabel(0)).toBe("Kinfolk is working… 0s");
+    expect(kinfolkWorkingElapsedLabel(2.9)).toBe("Kinfolk is working… 2s");
+    expect(kinfolkWorkingElapsedLabel(-2)).toBe("Kinfolk is working… 0s");
+    expect(travelPageSource).toContain('data-testid="kinfolk-working-elapsed"');
+    expect(travelPageSource).toContain("responseElapsedSeconds");
+    expect(travelPageSource).toContain("responseElapsedTimerRef");
+    expect(travelPageSource).toContain("kinfolkWorkingElapsedLabel(responseElapsedSeconds)");
   });
 
   it("does not render per-message cultural or provenance notes while keeping the bottom AI disclaimer", () => {

@@ -34,6 +34,7 @@ import {
   KinfolkItinerary as KinfolkItineraryRenderer,
   KinfolkSourceLinks,
   KinfolkStaffDemoBadge,
+  kinfolkWorkingElapsedLabel,
   safeExternalSourceHref,
   KINFOLK_RESPONSE_STATUS_DELAYS_MS,
   KINFOLK_RESPONSE_STATUS_STAGES,
@@ -1016,6 +1017,7 @@ function TravelPage() {
   const [responseStatus, setResponseStatus] = useState<(typeof KINFOLK_RESPONSE_STATUS_STAGES)[number]>(
     KINFOLK_RESPONSE_STATUS_STAGES[0],
   );
+  const [responseElapsedSeconds, setResponseElapsedSeconds] = useState(0);
   const [kinfolkMode, setKinfolkMode] = useState<KinfolkMode>("community");
   const [imageAttachments, setImageAttachments] = useState<Array<{ assetId: string; previewUrl: string }>>([]);
   const [pendingImageConsent, setPendingImageConsent] = useState<File | null>(null);
@@ -1077,16 +1079,24 @@ function TravelPage() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const responseStatusTimersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
+  const responseElapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeChatControllerRef = useRef<AbortController | null>(null);
 
   const clearResponseStatusTimers = useCallback((resetStatus = true) => {
     responseStatusTimersRef.current.forEach(clearTimeout);
     responseStatusTimersRef.current = [];
+    if (responseElapsedTimerRef.current) clearInterval(responseElapsedTimerRef.current);
+    responseElapsedTimerRef.current = null;
+    setResponseElapsedSeconds(0);
     if (resetStatus) setResponseStatus(KINFOLK_RESPONSE_STATUS_STAGES[0]);
   }, []);
 
   const startResponseStatusTimers = useCallback(() => {
     clearResponseStatusTimers();
+    const startedAt = Date.now();
+    responseElapsedTimerRef.current = setInterval(() => {
+      setResponseElapsedSeconds(Math.max(0, Math.floor((Date.now() - startedAt) / 1_000)));
+    }, 250);
     responseStatusTimersRef.current = [
       setTimeout(
         () => setResponseStatus(KINFOLK_RESPONSE_STATUS_STAGES[1]),
@@ -2953,7 +2963,11 @@ function TravelPage() {
                       <div className="flex gap-1">
                         {[0,1,2].map(i => <div key={i} className="w-1.5 h-1.5 rounded-full bg-[#CA922B] animate-bounce" style={{ animationDelay: `${i * 150}ms` }} />)}
                       </div>
-                      <span data-testid="kinfolk-response-status" aria-live="polite" className="text-xs text-[#3A1F0E]/55 italic ml-1">{responseStatus}</span>
+                      <span data-testid="kinfolk-response-status" role="status" aria-live="polite" aria-label="Kinfolk is working" className="text-xs text-[#3A1F0E]/55 italic ml-1">
+                        <span data-testid="kinfolk-working-elapsed" aria-hidden="true">{kinfolkWorkingElapsedLabel(responseElapsedSeconds)}</span>
+                        <span aria-hidden="true"> · </span>
+                        {responseStatus}
+                      </span>
                     </div>
                   </div>
                 )}

@@ -210,6 +210,8 @@ export function useKinfolk() {
   const messagesRef = useRef<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  /** Client-request timing only; never a claim about server-side research. */
+  const [requestStartedAt, setRequestStartedAt] = useState<number | null>(null);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
   const [kinfolkContinuityEnabled, setKinfolkContinuityEnabled] = useState(false);
   const [kinfolkContinuityDisclosureRequired, setKinfolkContinuityDisclosureRequired] = useState(false);
@@ -232,6 +234,7 @@ export function useKinfolk() {
     activeRequestRef.current = null;
     requestGenerationRef.current += 1;
     setIsLoading(false);
+    setRequestStartedAt(null);
     return true;
   }, []);
 
@@ -264,6 +267,7 @@ export function useKinfolk() {
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, userMsg]);
+    setRequestStartedAt(Date.now());
     setIsLoading(true);
     let timedOut = false;
 
@@ -432,6 +436,7 @@ export function useKinfolk() {
       if (requestGeneration === requestGenerationRef.current) {
         activeRequestRef.current = null;
         setIsLoading(false);
+        setRequestStartedAt(null);
       }
     }
   }, [sessionId]);
@@ -641,6 +646,7 @@ export function useKinfolk() {
     messages,
     sessionId,
     isLoading,
+    requestStartedAt,
     sessions,
     kinfolkContinuityEnabled,
     kinfolkContinuityDisclosureRequired,

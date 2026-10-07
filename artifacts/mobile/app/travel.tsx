@@ -48,6 +48,7 @@ import * as ImagePicker from "expo-image-picker";
 import { getApiBase } from "@/lib/api";
 import { openExternalUrl } from "@/lib/safeLinking";
 import { businessClarificationContinuation } from "@/lib/businessClarificationContinuation";
+import { kinfolkWorkingElapsedSeconds, kinfolkWorkingElapsedLabel } from "@/lib/kinfolkWorkingIndicator";
 import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
 import { KinfolkCompanionMemoryOfferCard } from "@/components/KinfolkCompanionMemoryOffer";
 import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDisclosure";
@@ -1155,7 +1156,7 @@ const umStyles = StyleSheet.create({
 });
 
 // ─── Sub-component: Typing indicator ─────────────────────────────────────────
-function TypingIndicator({ colors }: { colors: ReturnType<typeof useColors> }) {
+function TypingIndicator({ colors, elapsedSeconds }: { colors: ReturnType<typeof useColors>; elapsedSeconds: number }) {
   const [dot1] = useState(() => new Animated.Value(0));
   const [dot2] = useState(() => new Animated.Value(0));
   const [dot3] = useState(() => new Animated.Value(0));
@@ -1184,6 +1185,13 @@ function TypingIndicator({ colors }: { colors: ReturnType<typeof useColors> }) {
         {[dot1, dot2, dot3].map((d, i) => (
           <Animated.View key={i} style={[tyStyles.dot, { backgroundColor: colors.mutedForeground, transform: [{ translateY: d }] }]} />
         ))}
+        <Text
+          testID="kinfolk-working-indicator"
+          accessibilityLiveRegion="polite"
+          style={[tyStyles.status, { color: colors.mutedForeground }]}
+        >
+          {kinfolkWorkingElapsedLabel(elapsedSeconds)}
+        </Text>
       </View>
     </View>
   );
@@ -1193,6 +1201,7 @@ const tyStyles = StyleSheet.create({
   avatar: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   bubble: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 16, borderTopLeftRadius: 4, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1 },
   dot: { width: 7, height: 7, borderRadius: 4 },
+  status: { fontFamily: "Inter_400Regular", fontSize: 12, marginLeft: 3 },
 });
 
 // ─── Sub-component: Welcome Screen ───────────────────────────────────────────
@@ -2022,7 +2031,7 @@ export default function TravelScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
-  const { messages, sessionId, isLoading, sessions, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent } = useKinfolk();
+  const { messages, sessionId, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent } = useKinfolk();
   const { preferences, update: updatePreferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
   const { isAuthenticated } = useAuth();
@@ -2031,6 +2040,7 @@ export default function TravelScreen() {
   const { q: searchHandoff } = useLocalSearchParams<{ q?: string }>();
   const [inputText, setInputText] = useState(searchHandoff?.trim() ?? "");
   const [exactRadiusOrigin, setExactRadiusOrigin] = useState("");
+  const [kinfolkWorkingSeconds, setKinfolkWorkingSeconds] = useState(0);
   const [voiceMode, setVoiceMode] = useState<"community" | "professor" | "business_manager" | "best_friend">("community");
   const [kinfolkImages, setKinfolkImages] = useState<string[]>([]);
   const [uploadingKinfolkImage, setUploadingKinfolkImage] = useState(false);
@@ -2084,6 +2094,17 @@ export default function TravelScreen() {
   const [showHeaderActions, setShowHeaderActions] = useState(false);
   const { flatListRef, isAtBottom, onUserSend, onScroll: onChatScroll, onContentSizeChange: onChatContentSizeChange, scrollToBottom } = useKinfolkChatScroll();
   const [kinfolkOk, setKinfolkOk] = useState<boolean | null>(null); // null = checking
+
+  useEffect(() => {
+    if (!isLoading || kinfolkRequestStartedAt === null) {
+      setKinfolkWorkingSeconds(0);
+      return;
+    }
+    const updateElapsed = () => setKinfolkWorkingSeconds(kinfolkWorkingElapsedSeconds(kinfolkRequestStartedAt));
+    updateElapsed();
+    const ticker = setInterval(updateElapsed, 250);
+    return () => clearInterval(ticker);
+  }, [isLoading, kinfolkRequestStartedAt]);
 
   // Keep this screen aligned with the saved Kinfolk Voice used by the floating
   // assistant and the website. A member can still switch modes for the current
@@ -2882,7 +2903,7 @@ export default function TravelScreen() {
               onChipPress={(t) => void handleSend(t)}
             />
           ) : null}
-          ListFooterComponent={isLoading ? <TypingIndicator colors={colors} /> : null}
+          ListFooterComponent={isLoading && kinfolkRequestStartedAt !== null ? <TypingIndicator colors={colors} elapsedSeconds={kinfolkWorkingSeconds} /> : null}
           showsVerticalScrollIndicator={false}
           onScroll={onChatScroll}
           scrollEventThrottle={16}

@@ -72,6 +72,15 @@ export function responseStatusForElapsedTime(elapsedMs: number): (typeof KINFOLK
   return KINFOLK_RESPONSE_STATUS_STAGES[0];
 }
 
+/**
+ * This is a local stopwatch only. The chat response is not streamed with
+ * server-side work phases, so it must never claim that Kinfolk is researching
+ * or finding recommendations before the completed response proves that work.
+ */
+export function kinfolkWorkingElapsedLabel(elapsedSeconds: number): string {
+  return `Kinfolk is working… ${Math.max(0, Math.floor(elapsedSeconds))}s`;
+}
+
 export function isStaffDemoExperience(
   experience: KinfolkStaffDemoExperience | null | undefined,
 ): boolean {

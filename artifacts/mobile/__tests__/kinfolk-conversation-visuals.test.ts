@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { kinfolkWorkingElapsedSeconds, kinfolkWorkingElapsedLabel } from "../lib/kinfolkWorkingIndicator";
 
 const travelSource = readFileSync(
   new URL("../app/travel.tsx", import.meta.url),
@@ -36,5 +37,16 @@ describe("mobile Kinfolk conversation-first visuals", () => {
     expect(travelSource).not.toContain("Save this as a specific note");
     expect(travelSource).toContain("Manage private Kinfolk memory");
     expect(travelSource).toContain("Use approved public Community posts");
+  });
+
+  it("shows a request elapsed indicator without inventing research or recommendation phases", () => {
+    expect(kinfolkWorkingElapsedSeconds(1_000, 4_900)).toBe(3);
+    expect(kinfolkWorkingElapsedSeconds(4_900, 1_000)).toBe(0);
+    expect(kinfolkWorkingElapsedLabel(0)).toBe("Kinfolk is working… 0s");
+    expect(kinfolkWorkingElapsedLabel(5.8)).toBe("Kinfolk is working… 5s");
+    expect(travelSource).toContain('testID="kinfolk-working-indicator"');
+    expect(travelSource).toContain("kinfolkRequestStartedAt");
+    expect(travelSource).toContain("kinfolkWorkingElapsedSeconds(kinfolkRequestStartedAt)");
+    expect(travelSource).toContain("isLoading && kinfolkRequestStartedAt !== null");
   });
 });
