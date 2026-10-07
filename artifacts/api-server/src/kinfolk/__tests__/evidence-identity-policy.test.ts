@@ -98,7 +98,7 @@ describe("deterministic evidence route", () => {
   });
 
   it.each(["current", "recent", "latest", "today"])(
-    "requires live web for the freshness term %s",
+    "requires live web when the freshness context asks for external updates: %s",
     (term) => {
       expect(routeEvidence(`${term} Sinners cast updates`).retrievalRequirement).toBe("web_required");
     },

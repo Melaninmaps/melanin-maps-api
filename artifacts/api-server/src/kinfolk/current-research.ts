@@ -1,43 +1,42 @@
 import { canonicalizeContextualUrl } from "./contextual-url";
 
-// A time horizon alone does not make a member's own plan, draft, or schedule a
-// changing public fact. Keep this grammar intentionally about the requested
-// task rather than named people, places, or product categories. A separate
-// external-status or time-bound travel signal below still preserves live
-// research when the answer depends on changing outside conditions.
-const SELF_DIRECTED_PLANNING_OR_WRITING_RE = /(?:\b(?:help(?:\s+me)?|can you|could you|please|i\s+(?:need|want|have)\s+to)\s+(?:plan|organize|organise|schedule|prioriti[sz]e|prepare|draft|write|rewrite|revise|edit|brainstorm|outline)\b|\b(?:plan|organize|organise|schedule|prioriti[sz]e|prepare)\s+(?:my|our)\b|\b(?:draft|write|rewrite|revise|edit|brainstorm|outline)\s+(?:a|an|the|my|our|this|that)\b|\b(?:make|create)\s+(?:me\s+)?(?:a\s+)?(?:[\p{L}'’-]+\s+){0,3}(?:plan|schedule|routine|to[- ]?do(?:\s+list)?|task\s+list)\b)/iu;
-// Everyday coaching, self-organization, reflection, and explanation requests
-// often use a personal time word such as "today" or "tomorrow." Those words
-// describe the member's own context, not an external fact for Kinfolk to look
-// up. Keep this task-based rather than person/place based so it covers ordinary
-// conversation without weakening live evidence for weather, prices, hours, and
-// other truly changing claims.
-const STABLE_SELF_DIRECTED_SUPPORT_RE = /\b(?:overwhelm(?:ed|ing)?|stress(?:ed|ful)?|anx(?:ious|iety)|busy\s+(?:day|week|schedule|work(?:day)?|workload)|workload|focus|motivat(?:e|ed|ion)|burn(?:ed|out)|self[ -]?care|cope|calm(?:er|ing)?|relationship|partner|friendship|reflect(?:ion)?|communicat(?:e|ion)|conflict|boundar(?:y|ies)|study(?:ing)?|learn(?:ing)?|explain|understand|budget(?:ing)?|organize|organise|prioriti[sz]e|routine|habit|life\s+(?:organization|organising|organizing)|tips?\s+for|advice\s+(?:for|on)|help\s+(?:me\s+)?(?:handle|manage|deal\s+with))\b/iu;
+// A temporal word tells Kinfolk when a member is thinking or planning, not
+// whether a fact outside the conversation has changed. Research is therefore
+// a positive classification: it needs a changing external fact, an operating
+// status tied to an external entity, or a time-bound request to select one.
 const TIME_HORIZON_RE = /\b(?:today|tonight|tomorrow|(?:this|next)\s+weekend|this\s+(?:week|month|year))\b/i;
-const EXTERNAL_STATUS_DEPENDENCY_RE = /\b(?:current(?:ly)?|latest|updates?|availability|available|open|closed|weather|temperature|price|prices|cost|costs|traffic|transit|delay|delays|outage|outages|(?:opening|business|venue|location|site|facility|office|store|service|event)\s+hours?)\b/i;
-const EXTERNAL_STATUS_QUESTION_RE = /\b(?:what(?:'s|\s+is|\s+are)|when|where|who|is|are|will|does|do|can)\b[\s\S]{0,90}\b(?:open|closed|availability|available|hours?|schedule|scheduled|weather|temperature|price|prices|cost|costs|traffic|transit|delay|delays|outage|outages)\b/i;
-const TIME_BOUND_TRAVEL_RE = /\b(?:trip|travel|vacation|itinerary|flight|flights|hotel|hotels|reservation|reservations)\b/i;
-const MATERIAL_CURRENT_FACT_RE = /\b(?:current(?:ly)?|latest|recent|updates?|fresh(?:ness)?|as[- ]of|right now|open[- ]now|availability|available|hours?|weather|temperature|price|prices|cost|costs|traffic|transit|delay|delays|outage|outages|breaking|news|election|redistricting|closing|closed|recall|alert|deadline|law|policy|regulation)\b/i;
+const INTRINSIC_CHANGING_EXTERNAL_FACT_RE = /\b(?:weather|forecast|temperature|rain|snow|wind|air\s+quality|availability|available|outage|outages|traffic|transit|delay|delays|cancellations?|breaking\s+news|news|election|redistricting|officeholder|law|laws|policy|regulation|regulations?|recall|alert|alerts?|deadline|deadlines?|price|prices|cost|costs|gas\s+prices?|interest\s+rates?|exchange\s+rates?|market\s+price|stock\s+price|showtimes?)\b/i;
+const EXPLICIT_CURRENT_STATUS_RE = /\b(?:current|recent|latest|today|live)\s+(?:status|updates?)\b/i;
+const CURRENT_NAMED_UPDATE_RE = /\b(?:current|recent|latest|today|live)\s+(?!i\b|we\b|my\b|our\b)[A-Z][\p{L}'’-]{1,}(?:\s+[\p{L}\d'’-]+){0,5}\s+(?:status|updates?)\b/iu;
+const OPERATING_STATUS_RE = /\b(?:open|closed|close|closing|opening|hours?|schedule|scheduled|availability|available)\b/i;
+const EXTERNAL_ENTITY_RE = /\b(?:business|restaurant|cafe|store|shop|dry\s+cleaner|venue|gallery|location|library|museum|office|service|clinic|school|airport|flight|train|bus|transit|hotel|reservation|trip|travel|vacation|itinerary|event|concert|game|show|movie|site|website|place)\b/i;
+const EXTERNAL_DISCOVERY_ACTION_RE = /\b(?:find|search|recommend|give|choose|select|book|reserve|visit|go\s+to|eat\s+at|plan)\b/i;
+const WHAT_IS_OPEN_RE = /\bwhat(?:'s|\s+is)\s+open\b/i;
+const OPEN_NOW_RE = /\bopen[-\s]?now\b/i;
+const LIVE_DISCOVERY_RE = /\b(?:live|real[- ]?time|up[- ]?to[- ]?date)\b/i;
 
-function isSelfDirectedPlanningWithOnlyTimeHorizon(message: string): boolean {
-  return TIME_HORIZON_RE.test(message)
-    && SELF_DIRECTED_PLANNING_OR_WRITING_RE.test(message)
-    && !EXTERNAL_STATUS_QUESTION_RE.test(message)
-    && !EXTERNAL_STATUS_DEPENDENCY_RE.test(message)
-    && !TIME_BOUND_TRAVEL_RE.test(message);
+function hasChangingExternalFact(message: string): boolean {
+  if (
+    INTRINSIC_CHANGING_EXTERNAL_FACT_RE.test(message)
+    || EXPLICIT_CURRENT_STATUS_RE.test(message)
+    || CURRENT_NAMED_UPDATE_RE.test(message)
+  ) return true;
+
+  // Operating hours and schedules are current only when they describe a place,
+  // service, event, or direct "what is open" query—not a member's own workday.
+  if (
+    OPERATING_STATUS_RE.test(message)
+    && (EXTERNAL_ENTITY_RE.test(message) || WHAT_IS_OPEN_RE.test(message) || OPEN_NOW_RE.test(message))
+  ) {
+    return true;
+  }
+
+  // A time-bound selection of an outside place or trip needs live availability;
+  // a personal plan with the same time horizon remains a direct answer.
+  return (TIME_HORIZON_RE.test(message) || LIVE_DISCOVERY_RE.test(message))
+    && EXTERNAL_DISCOVERY_ACTION_RE.test(message)
+    && EXTERNAL_ENTITY_RE.test(message);
 }
-
-function isStableSelfDirectedSupportWithNoCurrentFact(message: string): boolean {
-  return STABLE_SELF_DIRECTED_SUPPORT_RE.test(message)
-    && !MATERIAL_CURRENT_FACT_RE.test(message)
-    && !TIME_BOUND_TRAVEL_RE.test(message);
-}
-
-// A bare planning horizon such as "this week" is not itself a changing fact.
-// The semantic answer planner decides whether a plan also asks for live status,
-// availability, prices, or another external condition. Retaining "this week"
-// here would force harmless organizing and drafting requests through research.
-const CURRENT_RESEARCH_RE = /\b(today|tonight|tomorrow|current(?:ly)?|latest|recent|updates?|availability|fresh(?:ness)?|(?:this |next )?weekend|this month|this year|right now|as[- ]of|open[- ]now|what(?:'s| is) open|live (?:travel|trip|recommendations?|updates?|availability)|real[- ]time|up[- ]to[- ]date|hours?|breaking|news|election|redistricting|closing|closed|recall|alert|schedule|weather|price|deadline|law|policy|regulation)\b/i;
 
 // Population is a changing public statistic even when the member does not say
 // “current.” A yearless answer from model memory is misleading, so it requires
@@ -50,7 +49,7 @@ const CHANGING_PUBLIC_STATISTIC_RE = /\b(?:how many\s+(?:people|residents)\s+liv
 // requires both a recognized currency unit and a conversion request so a stable
 // history question about a currency is not over-routed.
 const CURRENCY_UNIT_RE = /\b(?:usd|us\s*dollars?|dollars?|eur|euros?|gbp|pounds?|sterling|try|turkish\s*lira|lira|cad|canadian\s*dollars?|aud|australian\s*dollars?|jpy|yen|cny|yuan|rmb|inr|rupees?|mxn|pesos?|brl|reais?|zar|rand|ngn|naira|kes|shillings?)\b/i;
-const CURRENCY_CONVERSION_REQUEST_RE = /\b(?:convert(?:ed|ing|s|ion)?|exchange|rate|how\s+much(?:\s+(?:is|are))?|what(?:'s|\s+is)\s+(?:the\s+)?(?:value|equivalent)|(?:value|worth)\s+in|how\s+many\s+(?:[\p{L}$]+\s+){0,3}(?:make|equals?|is))\b/iu;
+const CURRENCY_CONVERSION_REQUEST_RE = /\b(?:convert(?:ed|ing|s|ion)?|exchange|rate|how\s+much(?:\s+(?:is|are))?|what(?:'s|\s+is)\s+(?:the\s+)?(?:value|equivalent)|what(?:'s|\s+is)\s+(?:[\p{L}\d$,.]+\s+){1,8}in\s+(?:[\p{L}$]+)|(?:value|worth)\s+in|how\s+many\s+(?:[\p{L}$]+\s+){0,3}(?:make|equals?|is))\b/iu;
 
 function isCurrencyConversionRequest(message: string): boolean {
   return CURRENCY_UNIT_RE.test(message) && CURRENCY_CONVERSION_REQUEST_RE.test(message);
@@ -140,9 +139,7 @@ export function hasRequestedArticleEvidence(
 
 export function requiresCurrentResearch(message: string): boolean {
   if (isPreferredNameRecallRequest(message)) return false;
-  if (isSelfDirectedPlanningWithOnlyTimeHorizon(message)) return false;
-  if (isStableSelfDirectedSupportWithNoCurrentFact(message)) return false;
-  return CURRENT_RESEARCH_RE.test(message)
+  return hasChangingExternalFact(message)
     || CHANGING_PUBLIC_STATISTIC_RE.test(message)
     || isCurrencyConversionRequest(message)
     || NAMED_CUSTODY_STATUS_RE.test(message)

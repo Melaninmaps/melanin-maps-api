@@ -46,7 +46,7 @@ const KNOWN_CULTURE_WORK_SIGNALS = /\bSinners\b/i;
 // organization, not a regulated investment, credit, tax, or price claim. This
 // remains intentionally narrow; financial advice and any current price/rate
 // request continue to use the protected financial evidence route.
-const PERSONAL_BUDGET_ORGANIZATION_RE = /\b(?:help(?:\s+me)?|can you|could you|please|i\s+(?:need|want))?\s*(?:organize|organise|plan|create|make|set\s+up|track|review|manage)\s+(?:my|our|a|the)?\s*(?:household\s+|personal\s+)?budget\b/i;
+const PERSONAL_BUDGET_ORGANIZATION_RE = /\b(?:help(?:\s+me)?|can you|could you|should\s+i|do\s+i\s+need\s+to|please|i\s+(?:need|want))?\s*(?:organize|organise|plan|create|make|set\s+up|track|review|manage)\s+(?:my|our|a|the)?\s*(?:household\s+|personal\s+)?budget\b/i;
 
 const HIGH_STAKES = new Set<KinfolkIntent>([
   "medical_health",

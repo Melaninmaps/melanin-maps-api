@@ -100,12 +100,29 @@ describe("Kinfolk decision and retrieval plan", () => {
     "Help me organize my budget for this week without getting stressed.",
     "I need to reflect on a disagreement with my partner tonight. How can I start the conversation?",
     "Explain this study concept in a way I can remember tomorrow.",
+    "I have a busy day at work today. How do I not get overwhelmed?",
+    "Today I feel stressed about money.",
+    "Should I make a budget today?",
   ])("keeps stable self-directed coaching direct and uncited: %s", (message) => {
     expect(plan(message)).toMatchObject({
       kind: "general_assistant",
       retrieval: "none",
       allowBusinessCards: false,
       requireEvidence: false,
+    });
+  });
+
+  it.each([
+    "What time does the dry cleaner near me close today?",
+    "Help me find a restaurant for tonight.",
+    "Will the Iran war affect gas prices this week?",
+    "What is the current interest rate today?",
+  ])("keeps changing external facts on current evidence: %s", (message) => {
+    expect(plan(message)).toMatchObject({
+      kind: "current_or_high_consequence",
+      retrieval: "existing_current_research",
+      allowBusinessCards: false,
+      requireEvidence: true,
     });
   });
 });
