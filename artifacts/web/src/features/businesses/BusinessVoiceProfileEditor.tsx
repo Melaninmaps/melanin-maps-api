@@ -48,6 +48,11 @@ export function BusinessVoiceProfileEditor({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [draftKind, setDraftKind] = useState("caption");
+  const [draftRequest, setDraftRequest] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [editableDraft, setEditableDraft] = useState("");
+  const [draftMessage, setDraftMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let active = true;
@@ -127,6 +132,36 @@ export function BusinessVoiceProfileEditor({
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function requestDraft() {
+    setDrafting(true);
+    setDraftMessage(null);
+    try {
+      const response = await authenticatedFetch(
+        `${BASE}api/businesses/${businessId}/kinfolk-drafts`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            kind: draftKind,
+            request: draftRequest,
+            ownerRequested: true,
+          }),
+        },
+      );
+      const payload = (await response.json()) as { draft?: string; error?: string };
+      if (!response.ok)
+        throw new Error(payload.error ?? "Could not prepare an editable draft.");
+      setEditableDraft(payload.draft ?? "");
+      setDraftMessage("Editable draft ready. Review and revise it before any use.");
+    } catch (error) {
+      setDraftMessage(
+        error instanceof Error ? error.message : "Could not prepare an editable draft.",
+      );
+    } finally {
+      setDrafting(false);
     }
   }
 
@@ -274,6 +309,61 @@ export function BusinessVoiceProfileEditor({
           {saving ? "Saving…" : "Save Business Voice Profile"}
         </button>
       </div>
+      <section className="mt-6 border-t border-[#3A1F0E]/10 pt-5">
+        <h3 className="font-serif text-base font-bold text-[#2B1507]">
+          Request an editable draft
+        </h3>
+        <p className="mt-1 text-sm text-[#3A1F0E]/60">
+          Kinfolk uses only your saved Business Voice Profile and this request. It never posts, sends, replies, or changes your business record.
+        </p>
+        <label className="mt-3 block text-sm font-bold text-[#2B1507]">
+          Draft type
+          <select
+            value={draftKind}
+            onChange={(event) => setDraftKind(event.target.value)}
+            className="mt-1 w-full rounded-xl border border-[#3A1F0E]/20 bg-[#FAF6EF] p-3 text-sm font-normal"
+          >
+            <option value="caption">Caption</option>
+            <option value="flyer_copy">Flyer copy</option>
+            <option value="review_reply">Review reply</option>
+            <option value="customer_message">Customer message</option>
+          </select>
+        </label>
+        <label className="mt-3 block text-sm font-bold text-[#2B1507]">
+          What should this draft say?
+          <textarea
+            value={draftRequest}
+            maxLength={1200}
+            onChange={(event) => setDraftRequest(event.target.value)}
+            placeholder="Provide the facts and intent you want in this draft."
+            className="mt-1 min-h-24 w-full rounded-xl border border-[#3A1F0E]/20 bg-[#FAF6EF] p-3 text-sm font-normal"
+          />
+        </label>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <p role="status" className="text-sm font-medium text-[#6A3B1E]">
+            {draftMessage}
+          </p>
+          <button
+            type="button"
+            disabled={drafting || !draftRequest.trim()}
+            onClick={() => void requestDraft()}
+            className="inline-flex min-h-10 items-center justify-center gap-2 rounded-full bg-[#5E3B87] px-5 text-sm font-bold text-white disabled:opacity-50"
+          >
+            {drafting && <Loader2 className="h-4 w-4 animate-spin" />}
+            {drafting ? "Preparing…" : "Prepare editable draft"}
+          </button>
+        </div>
+        {editableDraft && (
+          <label className="mt-4 block text-sm font-bold text-[#2B1507]">
+            Editable draft — owner review required
+            <textarea
+              value={editableDraft}
+              onChange={(event) => setEditableDraft(event.target.value)}
+              className="mt-1 min-h-36 w-full rounded-xl border border-[#5E3B87]/30 bg-[#FAF6EF] p-3 text-sm font-normal"
+            />
+          </label>
+        )}
+      </section>
     </section>
   );
 }

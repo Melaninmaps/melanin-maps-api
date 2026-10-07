@@ -35,4 +35,18 @@ describe("Business Voice Profile ownership boundary", () => {
       routerIndex.indexOf("router.use(businessVoiceProfileRouter)"),
     ).toBeGreaterThan(routerIndex.indexOf("router.use(requireAuth)"));
   });
+
+  it("keeps owner-requested drafting editable-only and outside member or business mutation paths", () => {
+    const draftStart = route.indexOf('"/businesses/:businessId/kinfolk-drafts"');
+    const draftRoute = route.slice(draftStart);
+    expect(draftStart).toBeGreaterThan(-1);
+    expect(draftRoute).toContain("requireApprovedBusinessOwner");
+    expect(draftRoute).toContain("sanitizeBusinessDraftRequest");
+    expect(draftRoute).toContain("owner_confirmed_at IS NOT NULL");
+    expect(draftRoute).toContain("Editable draft — owner review required");
+    expect(draftRoute).toContain('Cache-Control", "no-store');
+    expect(draftRoute).not.toMatch(/(?:INSERT INTO|UPDATE|DELETE FROM)\s+businesses/i);
+    expect(draftRoute).not.toMatch(/(?:community_posts|reviews|directory)/i);
+    expect(draftRoute).not.toMatch(/\.post\(|\.send\(|\.reply\(/i);
+  });
 });

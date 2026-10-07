@@ -1,6 +1,18 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import {
+  openai,
+  resolveOpenAIConfiguration,
+} from "@workspace/integrations-openai-ai-server";
 import { pool } from "@workspace/db";
-import { sanitizeBusinessVoiceProfile } from "../kinfolk/business-voice-profile";
+import {
+  sanitizeBusinessVoiceProfile,
+  type SanitizedBusinessVoiceProfile,
+} from "../kinfolk/business-voice-profile";
+import {
+  buildOwnerRequestedDraftPrompt,
+  normalizeEditableBusinessDraft,
+  sanitizeBusinessDraftRequest,
+} from "../kinfolk/business-owner-drafting";
 
 const router: IRouter = Router();
 
@@ -116,6 +128,76 @@ router.put(
     );
     req.log.info({ businessId: business.id }, "Business Voice Profile saved");
     res.json({ business, profile: result.rows[0] });
+  },
+);
+
+router.post(
+  "/businesses/:businessId/kinfolk-drafts",
+  async (req: Request, res: Response) => {
+    const business = await requireApprovedBusinessOwner(req, res);
+    if (!business) return;
+
+    const draftRequest = sanitizeBusinessDraftRequest(
+      req.body as Record<string, unknown>,
+    );
+    if (!draftRequest.ok) {
+      res.status(400).json({ error: draftRequest.error });
+      return;
+    }
+
+    const result = await pool.query<SanitizedBusinessVoiceProfile>(
+      `SELECT tones, language_preference AS "languagePreference",
+              audience_guidance AS "audienceGuidance",
+              words_to_use AS "wordsToUse", words_to_avoid AS "wordsToAvoid",
+              signature_phrases AS "signaturePhrases"
+         FROM business_kinfolk_voice_profiles
+        WHERE business_id = $1
+          AND owner_confirmed_at IS NOT NULL
+        LIMIT 1`,
+      [business.id],
+    );
+    const profile = result.rows[0] ?? null;
+    if (!profile) {
+      res.status(409).json({
+        error:
+          "Save and confirm a Business Voice Profile before requesting a draft.",
+      });
+      return;
+    }
+    if (!resolveOpenAIConfiguration()) {
+      res.status(503).json({ error: "Business drafting is unavailable right now." });
+      return;
+    }
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-5-mini",
+        messages: [
+          {
+            role: "system",
+            content: buildOwnerRequestedDraftPrompt(profile, draftRequest.request),
+          },
+        ],
+        temperature: 0.4,
+        max_tokens: 700,
+      });
+      const draft = normalizeEditableBusinessDraft(
+        completion.choices[0]?.message?.content,
+      );
+      if (!draft) {
+        res.status(502).json({ error: "Business drafting returned no editable text." });
+        return;
+      }
+      res.setHeader("Cache-Control", "no-store");
+      res.json({
+        kind: draftRequest.request.kind,
+        label: "Editable draft — owner review required",
+        draft,
+      });
+    } catch {
+      req.log.warn({ businessId: business.id }, "Business voice drafting unavailable");
+      res.status(503).json({ error: "Business drafting is unavailable right now." });
+    }
   },
 );
 
