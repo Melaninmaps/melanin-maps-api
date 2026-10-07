@@ -339,6 +339,15 @@ describe("neutral research and health planning", () => {
     );
   });
 
+  it("uses neutral first-aid evidence topics for acute injury wording", () => {
+    expect(extractHealthTopic("What are general first-aid steps for a minor kitchen burn?")).toBe(
+      "minor burns and scalds first aid",
+    );
+    expect(extractHealthTopic("I sprained my ankle yesterday; what should I ask a clinician?")).toBe(
+      "acute injury first aid",
+    );
+  });
+
   it("treats a reported breast change as a neutral symptom topic instead of a diagnosis", () => {
     expect(extractHealthTopic("I found a lump in my breast")).toBe(
       "breast change or lump",

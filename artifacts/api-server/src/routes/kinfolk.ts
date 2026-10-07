@@ -9990,6 +9990,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         ...(contextualEvidence?.media ?? []).map((source) => ({ url: source.url })),
       ],
     );
+    // Medical questions have a dedicated NIH MedlinePlus retrieval below. Do not
+    // let the generic contextual-corroboration gate reject them before that
+    // authoritative, condition-specific evidence is retrieved and evaluated.
+    const deferContextualEvidenceGateToHealthRetrieval =
+      evidenceRoute.domain === "medical_health";
     if (requestedArticleUrl && !requestedArticleEvidenceAvailable) {
       recordKinfolkTelemetry({
         requestId: _kinfolkReqId,
@@ -10041,6 +10046,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       contextualPlan &&
       contextualEvidence &&
       !requestedArticleUrl &&
+      !deferContextualEvidenceGateToHealthRetrieval &&
       contextualEvidenceNeedsFailClosedResponse(
         contextualPlan,
         contextualEvidence,
