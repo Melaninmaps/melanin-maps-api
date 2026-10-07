@@ -647,6 +647,7 @@ function AiMessageBubble({
   msg, onFeedback, onQuickReply, onWishlist, wishlistedNames,
   compareMode, compareSelectedNames, onCompareToggle,
   onConfirmTaskAction, onDismissTaskAction, onSpeak,
+  spokenVoiceText,
   colors,
 }: {
   msg: ChatMessage;
@@ -659,7 +660,8 @@ function AiMessageBubble({
   onCompareToggle: (biz: TravelBusiness) => void;
   onConfirmTaskAction: (msgId: string, action: TaskAction) => void;
   onDismissTaskAction: (msgId: string) => void;
-  onSpeak: (content: string) => void;
+  onSpeak: (messageId: string, content: string) => void;
+  spokenVoiceText: { messageId: string; content: string; phase: "preparing" | "playing" | "finished" } | null;
   colors: ReturnType<typeof useColors>;
 }) {
   const recs = msg.recommendations;
@@ -667,6 +669,7 @@ function AiMessageBubble({
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [dismissedPromo, setDismissedPromo] = useState(false);
   const [clarificationAnswered, setClarificationAnswered] = useState(false);
+  const visibleSpokenText = spokenVoiceText?.messageId === msg.id ? spokenVoiceText : null;
 
   const toggleSection = (s: string) => setExpandedSection((p) => (p === s ? null : s));
 
@@ -681,6 +684,25 @@ function AiMessageBubble({
         {/* Reply text */}
         <View style={[aiStyles.bubble, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text selectable style={[aiStyles.bubbleText, { color: colors.text }]}>{msg.content}</Text>
+          {visibleSpokenText ? (
+            <View
+              testID="kinfolk-visible-spoken-text"
+              accessible
+              accessibilityLabel={visibleSpokenText.phase === "playing"
+                ? "Kinfolk audio is playing. The exact spoken text is visible."
+                : "Kinfolk spoken text remains visible."}
+              style={{ marginTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingTop: 8 }}
+            >
+              <Text style={[aiStyles.copyLabel, { color: colors.mutedForeground }]}>
+                {visibleSpokenText.phase === "playing"
+                  ? "Audio is playing — spoken text"
+                  : visibleSpokenText.phase === "finished"
+                    ? "Audio finished — spoken text"
+                    : "Preparing audio — spoken text"}
+              </Text>
+              <Text selectable style={[aiStyles.bubbleText, { color: colors.text, marginTop: 3 }]}>{visibleSpokenText.content}</Text>
+            </View>
+          ) : null}
           <TouchableOpacity
             style={aiStyles.copyBtn}
             onPress={() => void Clipboard.setStringAsync(msg.content)}
@@ -693,7 +715,7 @@ function AiMessageBubble({
           {Platform.OS !== "web" ? (
             <TouchableOpacity
               style={aiStyles.speakBtn}
-              onPress={() => onSpeak(msg.content)}
+              onPress={() => onSpeak(msg.id, msg.content)}
               accessibilityLabel="Listen to this Kinfolk reply"
               activeOpacity={0.7}
             >
@@ -2024,6 +2046,11 @@ export default function TravelScreen() {
   // TTS has separate receipt, playback, and completion stages. Keep this
   // visible so a member never has to guess whether Listen failed or is loading.
   const [voiceOutputStatus, setVoiceOutputStatus] = useState<string | null>(null);
+  const [spokenVoiceText, setSpokenVoiceText] = useState<{
+    messageId: string;
+    content: string;
+    phase: "preparing" | "playing" | "finished";
+  } | null>(null);
   const [isRecordingVoice, setIsRecordingVoice] = useState(false);
   const [isTranscribingVoice, setIsTranscribingVoice] = useState(false);
   const [voiceInputStatus, setVoiceInputStatus] = useState<string | null>(null);
@@ -2103,13 +2130,19 @@ export default function TravelScreen() {
     if (serverVoicePlayer.playing || serverVoicePlayer.isLoaded) serverVoicePlayer.pause();
     setVoiceAudioUri(undefined);
     setPlayingVoice(false);
+    setSpokenVoiceText(null);
   }, [serverVoicePlayer]);
 
-  const playServerVoice = useCallback(async (content: string, source: "auto" | "manual") => {
+  const playServerVoice = useCallback(async (
+    content: string,
+    source: "auto" | "manual",
+    messageId: string,
+  ) => {
     if (!content.trim() || appStateRef.current !== "active") return;
     const request = autoSpeechGuardRef.current.begin();
     let queued = false;
     setPlayingVoice(true);
+    setSpokenVoiceText(null);
     setVoiceOutputStatus("Preparing voice…");
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
@@ -2140,6 +2173,7 @@ export default function TravelScreen() {
         format?: string;
         contentType?: string;
         bytes?: number;
+        spokenText?: string;
       };
       if (
         !payload.audio
@@ -2147,8 +2181,10 @@ export default function TravelScreen() {
         || typeof payload.bytes !== "number"
         || payload.bytes < 256
         || !payload.contentType?.startsWith("audio/")
+        || !payload.spokenText?.trim()
       ) throw new Error("Kinfolk did not return playable audio.");
       if (!autoSpeechGuardRef.current.canPlay(request)) return;
+      setSpokenVoiceText({ messageId, content: payload.spokenText, phase: "preparing" });
       const temporaryFile = new FileSystem.File(
         FileSystem.Paths.cache,
         `kinfolk-primary-${Date.now()}.${payload.format}`,
@@ -2162,11 +2198,13 @@ export default function TravelScreen() {
       if (request.signal.aborted) return;
       const message = cause instanceof Error ? cause.message : "Kinfolk audio could not start.";
       setVoiceOutputStatus("Voice unavailable — try Listen again.");
+      setSpokenVoiceText(null);
       Alert.alert("Voice playback unavailable", `${message} You can still read the reply and try Listen again.`);
     } finally {
       if (!queued) {
         autoSpeechGuardRef.current.finish(request);
         setPlayingVoice(false);
+        setSpokenVoiceText(null);
       }
     }
   }, [voiceMode]);
@@ -2193,6 +2231,7 @@ export default function TravelScreen() {
         serverVoicePlayer.volume = 1;
         serverVoicePlayer.play();
         setVoiceOutputStatus("Speaking…");
+        setSpokenVoiceText((current) => current ? { ...current, phase: "playing" } : current);
         queuedVoicePlaybackRef.current = null;
         autoSpeechGuardRef.current.finish(request);
       } catch {
@@ -2217,6 +2256,7 @@ export default function TravelScreen() {
   useEffect(() => {
     if (playingVoice && serverVoicePlayer.isLoaded && !serverVoicePlayer.playing && !queuedVoicePlaybackRef.current) {
       setVoiceOutputStatus("Voice finished. Tap Listen to play it again.");
+      setSpokenVoiceText((current) => current ? { ...current, phase: "finished" } : current);
       const timer = setTimeout(() => setPlayingVoice(false), 0);
       return () => clearTimeout(timer);
     }
@@ -2237,7 +2277,7 @@ export default function TravelScreen() {
     const last = messages[messages.length - 1];
     if (!request || !last || last.role !== "assistant" || !autoSpeechGuardRef.current.canPlay(request)) return;
     pendingAutoSpeechRef.current = null;
-    void playServerVoice(last.content, "auto");
+    void playServerVoice(last.content, "auto", last.id);
   }, [messages, isLoading, playServerVoice, voiceOutput]);
 
   useEffect(() => {
@@ -2256,12 +2296,12 @@ export default function TravelScreen() {
     };
   }, [stopServerVoice]);
 
-  const speakManually = useCallback((content: string) => {
+  const speakManually = useCallback((messageId: string, content: string) => {
     if (playingVoice) {
       stopServerVoice("manual_stop");
       return;
     }
-    void playServerVoice(content, "manual");
+    void playServerVoice(content, "manual", messageId);
   }, [playServerVoice, playingVoice, stopServerVoice]);
 
   const interruptKinfolk = useCallback(() => {
@@ -2639,6 +2679,7 @@ export default function TravelScreen() {
           onConfirmTaskAction={handleConfirmTaskAction}
           onDismissTaskAction={handleDismissTaskAction}
           onSpeak={speakManually}
+          spokenVoiceText={spokenVoiceText}
           colors={colors}
         />
         {item.inlineMemoryConsent && <KinfolkInlineMemoryConsent
@@ -2657,7 +2698,7 @@ export default function TravelScreen() {
         />}
       </View>
     );
-  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction, speakManually, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, loadKinfolkContinuity]);
+  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction, speakManually, spokenVoiceText, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, loadKinfolkContinuity]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>

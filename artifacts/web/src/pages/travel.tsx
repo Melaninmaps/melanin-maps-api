@@ -29,6 +29,7 @@ import {
   hasItineraryDays,
   isSerializedItineraryContent,
   KinfolkAssistantText,
+  KinfolkSpokenText,
   KinfolkContextualContent,
   KinfolkItinerary as KinfolkItineraryRenderer,
   KinfolkSourceLinks,
@@ -1101,6 +1102,11 @@ function TravelPage() {
   // TTS state
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [voiceStatus, setVoiceStatus] = useState<Record<string, string>>({});
+  const [spokenText, setSpokenText] = useState<{
+    messageId: string;
+    content: string;
+    phase: "preparing" | "playing" | "finished" | "unavailable";
+  } | null>(null);
   // Tracks which assistant message ID has pending clarification steps to offer.
   // Null when no clarifier is active. Cleared on any answer or skip.
   const [pendingClarificationMsgId, setPendingClarificationMsgId] = useState<string | null>(null);
@@ -1130,6 +1136,7 @@ function TravelPage() {
       voiceGuardRef.current.invalidate("page_hidden");
       releaseAudio();
       setPlayingId(null);
+      setSpokenText(null);
     };
     const handleVisibilityChange = () => {
       pageForegroundRef.current = document.visibilityState === "visible";
@@ -1590,25 +1597,31 @@ function TravelPage() {
       releaseAudio();
       setPlayingId(null);
       setVoiceStatus(prev => ({ ...prev, [msgId]: "" }));
+      setSpokenText(current => current?.messageId === msgId
+        && (current.phase === "preparing" || current.phase === "playing")
+        ? null
+        : current);
       return;
     }
     if (!pageForegroundRef.current || document.visibilityState !== "visible") return;
     const request = voiceGuardRef.current.begin();
     releaseAudio();
     setPlayingId(msgId);
-    setVoiceStatus(prev => ({ ...prev, [msgId]: source === "auto" ? "Preparing voice…" : "" }));
+    setSpokenText(null);
+    setVoiceStatus(prev => ({ ...prev, [msgId]: "Preparing voice…" }));
     try {
       const r = await fetch(`${BASE}api/kinfolk/speak`, {
         method: "POST", credentials: "include",
         headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify({ text: content.slice(0, 600), mode: kinfolkMode, requestId: msgId }),
+        body: JSON.stringify({ text: content, mode: kinfolkMode, requestId: msgId }),
         signal: request.signal,
       });
       if (!voiceGuardRef.current.canPlay(request)) return;
       if (!r.ok) throw new Error("TTS request failed");
-      const d = await r.json() as { audio?: string };
+      const d = await r.json() as { audio?: string; spokenText?: string };
       if (!voiceGuardRef.current.canPlay(request)) return;
-      if (!d.audio) throw new Error("No audio returned");
+      if (!d.audio || !d.spokenText?.trim()) throw new Error("No audio or spoken text returned");
+      setSpokenText({ messageId: msgId, content: d.spokenText, phase: "preparing" });
       const bytes = Uint8Array.from(atob(d.audio), char => char.charCodeAt(0));
       const url = URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
       if (!voiceGuardRef.current.canPlay(request)) {
@@ -1623,6 +1636,9 @@ function TravelPage() {
         releaseAudio();
         setPlayingId(null);
         setVoiceStatus(prev => ({ ...prev, [msgId]: "" }));
+        setSpokenText(current => current?.messageId === msgId
+          ? { ...current, phase: "finished" }
+          : current);
       };
       audio.onended = finish;
       audio.onerror = () => {
@@ -1630,6 +1646,9 @@ function TravelPage() {
         releaseAudio();
         setPlayingId(null);
         setVoiceStatus(prev => ({ ...prev, [msgId]: "Tap Listen" }));
+        setSpokenText(current => current?.messageId === msgId
+          ? { ...current, phase: "unavailable" }
+          : current);
       };
       if (!voiceGuardRef.current.canPlay(request)) {
         releaseAudio();
@@ -1640,13 +1659,19 @@ function TravelPage() {
         releaseAudio();
         return;
       }
-      setVoiceStatus(prev => ({ ...prev, [msgId]: "" }));
+      setSpokenText(current => current?.messageId === msgId
+        ? { ...current, phase: "playing" }
+        : current);
+      setVoiceStatus(prev => ({ ...prev, [msgId]: "Speaking…" }));
     } catch {
       if (!voiceGuardRef.current.isCurrent(request)) return;
       voiceGuardRef.current.finish(request);
       releaseAudio();
       setPlayingId(null);
       setVoiceStatus(prev => ({ ...prev, [msgId]: "Tap Listen" }));
+      setSpokenText(current => current?.messageId === msgId
+        ? { ...current, phase: "unavailable" }
+        : current);
     }
   }, [playingId, kinfolkMode, releaseAudio]);
 
@@ -2597,6 +2622,9 @@ function TravelPage() {
                             <KinfolkStaffDemoBadge experience={msg.experience} />
                             {msg.content && (!hasItineraryDays(msg.itinerary) || !isSerializedItineraryContent(msg.content)) && (
                               <KinfolkAssistantText content={msg.content} />
+                            )}
+                            {spokenText?.messageId === msg.id && (
+                              <KinfolkSpokenText content={spokenText.content} phase={spokenText.phase} />
                             )}
                           </>
                         ) : (

@@ -51,6 +51,17 @@ describe("Community, map, and primary Kinfolk regressions", () => {
     expect(travel).toContain('playsInSilentMode: true');
   });
 
+  it("keeps the exact spoken reply text visible in the active message during and after playback", () => {
+    const travel = source("app/travel.tsx");
+    expect(travel).toContain("spokenText?: string");
+    expect(travel).toContain("setSpokenVoiceText({ messageId, content: payload.spokenText, phase: \"preparing\" })");
+    expect(travel).toContain('testID="kinfolk-visible-spoken-text"');
+    expect(travel).toContain("Audio is playing — spoken text");
+    expect(travel).toContain("Audio finished — spoken text");
+    expect(travel).toContain("onSpeak(msg.id, msg.content)");
+    expect(travel).toContain("spokenVoiceText={spokenVoiceText}");
+  });
+
   it("does not erase successfully loaded pins after a transient business refresh failure", () => {
     const businesses = source("hooks/useBusinesses.ts");
     expect(businesses).toContain("lastSuccessfulBusinessesRef");

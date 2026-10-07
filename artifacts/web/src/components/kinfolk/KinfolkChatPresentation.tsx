@@ -97,6 +97,37 @@ export function KinfolkAssistantText({ content }: { content: string }) {
   );
 }
 
+/**
+ * Audio replies are intentionally bounded for reliable, allowance-aware TTS.
+ * This presents the exact returned speech text next to the complete answer so
+ * a member can read the same words during or after playback.
+ */
+export function KinfolkSpokenText({
+  content,
+  phase,
+}: {
+  content: string;
+  phase: "preparing" | "playing" | "finished" | "unavailable";
+}) {
+  const label = phase === "playing"
+    ? "Audio is playing — spoken text"
+    : phase === "finished"
+      ? "Audio finished — spoken text"
+      : phase === "unavailable"
+        ? "Audio unavailable — spoken text returned"
+        : "Audio is ready — spoken text";
+  return (
+    <aside
+      data-testid="kinfolk-spoken-text"
+      className="mt-3 rounded-xl border border-[#CA922B]/25 bg-[#CA922B]/5 p-3 text-xs text-[#3A1F0E]/70"
+      aria-live="polite"
+    >
+      <p className="font-semibold text-[#3A1F0E]">{label}</p>
+      <p className="mt-1 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">{content}</p>
+    </aside>
+  );
+}
+
 export function hasItineraryDays(itinerary: KinfolkItinerary | null | undefined): boolean {
   return Array.isArray(itinerary?.days) && itinerary.days.length > 0;
 }

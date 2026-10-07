@@ -14348,6 +14348,9 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
       format: "wav",
       contentType: "audio/wav",
       bytes: audioBuffer.length,
+      // The client renders this exact bounded text alongside audio playback.
+      // It never needs to infer which portion of a longer visual reply was spoken.
+      spokenText: speakText,
       speakerProfile: speakerProfile.id,
       speakerLabel: speakerProfile.label,
       deliveryMode: delivery.mode,

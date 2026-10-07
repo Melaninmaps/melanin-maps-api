@@ -8,6 +8,7 @@ import {
   isSerializedItineraryContent,
   KinfolkAssistantText,
   KinfolkItinerary,
+  KinfolkSpokenText,
   KinfolkSourceLinks,
   KinfolkStaffDemoBadge,
   KINFOLK_RESPONSE_STATUS_STAGES,
@@ -50,6 +51,35 @@ describe("Kinfolk chat presentation", () => {
     expect(markup).toContain("break-words");
     expect(markup).toContain(content);
     expect(markup).not.toContain("dangerouslySetInnerHTML");
+  });
+
+  it("keeps the exact bounded audio text visibly available during and after playback", () => {
+    const spoken = "First sentence. Second sentence.";
+    const playing = renderToStaticMarkup(React.createElement(KinfolkSpokenText, {
+      content: spoken,
+      phase: "playing",
+    }));
+    const finished = renderToStaticMarkup(React.createElement(KinfolkSpokenText, {
+      content: spoken,
+      phase: "finished",
+    }));
+    const unavailable = renderToStaticMarkup(React.createElement(KinfolkSpokenText, {
+      content: spoken,
+      phase: "unavailable",
+    }));
+
+    expect(playing).toContain('data-testid="kinfolk-spoken-text"');
+    expect(playing).toContain("Audio is playing — spoken text");
+    expect(playing).toContain(spoken);
+    expect(finished).toContain("Audio finished — spoken text");
+    expect(finished).toContain(spoken);
+    expect(unavailable).toContain("Audio unavailable — spoken text returned");
+    expect(unavailable).toContain(spoken);
+    expect(travelPageSource).toContain("spokenText?: string");
+    expect(travelPageSource).toContain("body: JSON.stringify({ text: content, mode: kinfolkMode, requestId: msgId })");
+    expect(travelPageSource).toContain("<KinfolkSpokenText content={spokenText.content} phase={spokenText.phase} />");
+    expect(travelPageSource).toContain('phase: "unavailable"');
+    expect(travelPageSource).not.toContain("text: content.slice(0, 600)");
   });
 
   it("uses only truthful elapsed-time status copy and never claims a search", () => {

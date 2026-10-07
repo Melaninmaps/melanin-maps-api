@@ -103,6 +103,7 @@ describe("Kinfolk server-owned voice delivery", () => {
     expect(routeSource).toContain("audioBuffer.length < 256");
     expect(routeSource).toContain('contentType: "audio/wav"');
     expect(routeSource).toContain("bytes: audioBuffer.length");
+    expect(routeSource).toContain("spokenText: speakText");
     expect(routeSource).toContain("speakerProfile: speakerProfile.id");
     expect(routeSource).toContain("speakerLabel: speakerProfile.label");
     expect(routeSource).toContain("safeKinfolkErrorMetadata(err)");
