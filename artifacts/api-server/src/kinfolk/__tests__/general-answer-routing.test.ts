@@ -94,6 +94,16 @@ describe("Kinfolk generic answer routing", () => {
       .toContain("Do not diagnose");
   });
 
+  it("lets a current-turn emotional-support contract refine warmth without changing safety or memory boundaries", () => {
+    const prompt = buildKinfolkConversationalIntentPrompt("emotional_support", {
+      need: "vent",
+      likelyEmotion: "overwhelmed",
+    });
+    expect(prompt).toContain("member may want to be heard");
+    expect(prompt).toContain("Existing emergency and self-harm escalation rules always win");
+    expect(prompt).toContain("Do not silently save");
+  });
+
   const classes: Array<{
     name: string;
     messages: readonly string[];

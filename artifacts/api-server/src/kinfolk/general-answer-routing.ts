@@ -1,5 +1,9 @@
 import { requiresCurrentResearch } from "./current-research";
 import type { EvidenceRoute } from "./evidence-route";
+import {
+  buildEmotionalSupportResponseContract,
+  type EmotionalSupportGuidance,
+} from "./emotional-support";
 
 /**
  * The single, member-facing purpose selected for a Kinfolk turn. This is an
@@ -153,7 +157,12 @@ export function buildGenericAnswerRouteClassifierPrompt(): string {
  */
 export function buildKinfolkConversationalIntentPrompt(
   intent: KinfolkConversationalIntent | null | undefined,
+  emotionalSupportGuidance: EmotionalSupportGuidance | null = null,
 ): string {
+  const emotionalSupportContract = buildEmotionalSupportResponseContract(
+    emotionalSupportGuidance,
+  );
+  if (emotionalSupportContract) return emotionalSupportContract;
   switch (intent) {
     case "emotional_support":
       return "CONVERSATIONAL INTENT — EMOTIONAL SUPPORT: Begin with calm acknowledgment, then offer a grounded next step if useful. Do not diagnose, claim to feel the member's emotions, overpromise, or turn ordinary distress into an emergency without supported signs.";

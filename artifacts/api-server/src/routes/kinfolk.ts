@@ -168,6 +168,7 @@ import {
   resolveKinfolkEvidenceOutcome,
   resolveKinfolkGeneralAnswerRoute,
 } from "../kinfolk/general-answer-routing";
+import { resolveEmotionalSupportGuidance } from "../kinfolk/emotional-support";
 import {
   extractLiveWeatherLocation,
   isLiveWeatherQuestion,
@@ -9055,8 +9056,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // answer its explicit recall turn. It does not read, create, or broaden memory.
       hasApprovedRelevantMemory: isPreferredNameRecallRequest(message),
     });
+    // This only frames a current answer for a member who is sharing an emotion or
+    // asking for support. It neither reads nor writes memory; crisis wording stays
+    // with the existing deterministic emergency and safety policies.
+    const emotionalSupportGuidance = resolveEmotionalSupportGuidance({
+      message,
+      semanticIntent: genericAnswerDecision?.conversationIntent,
+    });
     const conversationalIntentPrompt = buildKinfolkConversationalIntentPrompt(
       genericAnswerDecision?.conversationIntent,
+      emotionalSupportGuidance,
     );
     // Current facts must never fall through to cached Library/static material
     // because optional contextual intelligence is disabled. The generic route
