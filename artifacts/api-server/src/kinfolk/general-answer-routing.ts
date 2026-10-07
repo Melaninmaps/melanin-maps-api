@@ -1,4 +1,4 @@
-import { requiresCurrentResearch } from "./current-research";
+import { requiresTimeSpecificResearch } from "./current-research";
 import type { EvidenceRoute } from "./evidence-route";
 import {
   buildEmotionalSupportResponseContract,
@@ -194,7 +194,10 @@ export function resolveKinfolkGeneralAnswerRoute(
     hasMateriallyMissingDetail?: boolean;
   }>,
 ): KinfolkGeneralAnswerRoute {
-  const deterministicCurrent = requiresCurrentResearch(input.message);
+  // This gate covers both live and explicitly historical external facts. The
+  // field name is retained for response compatibility, but the evidence policy
+  // independently determines the requested fact's freshness and threshold.
+  const deterministicCurrent = requiresTimeSpecificResearch(input.message);
   const highConsequence = input.evidence.risk === "high";
   // A semantic classifier can describe a personal turn as "current" merely
   // because it happened recently. Personal framing alone is not an external,

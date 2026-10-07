@@ -1,5 +1,5 @@
 import type { EvidenceRoute } from "./evidence-route";
-import { requiresCurrentResearch } from "./current-research";
+import { temporalEvidencePolicy } from "./current-research";
 
 export type KinfolkTaskMode = "direct_answer" | "recipe_options" | "recipe_instructions" | "cultural_consensus" | "ranked_perspectives" | "entity_explorer" | "local_discovery" | "travel_plan" | "city_briefing" | "high_consequence" | "clarification";
 export type CandidateMeaning = { label: string; domain: string; confidence: number; evidenceQuery: string | null };
@@ -8,7 +8,7 @@ export type SemanticTurnPlan = {
   namedEntities: Array<{ text: string; type: string | null }>;
   candidateMeanings: CandidateMeaning[]; resolvedMeaning: string | null; confidence: number;
   needsClarification: boolean; clarificationQuestion: string | null;
-  freshness: "stable" | "current" | "mixed";
+  freshness: "stable" | "current" | "historical" | "mixed";
   evidenceNeeds: Array<"approved_internal" | "official_current" | "primary_cultural" | "reputable_reporting" | "critical_consensus" | "creator_media" | "platform_records">;
   retrievalQueries: string[]; answerPerspective: "factual" | "evaluative" | "mixed";
   identityContextUsed: string[];
@@ -32,7 +32,6 @@ export type ConversationalResearchSubject = Readonly<{
 }>;
 
 const cap = (value: unknown, max: number): string => typeof value === "string" ? value.trim().slice(0, max) : "";
-const current = (message: string) => requiresCurrentResearch(message);
 const recipe = (message: string) => /\b(recipe|cook|cooking|bake|baking|roast|braise|grill|fry|ingredients?|dish|meal|beef|chicken|pork|fish|rice|pasta|soup|stew|cake|bread)\b/i.test(message);
 const culturalConflict = (message: string) => /\b(diss|feud|rap battle)\b/i.test(message)
   || /\b(?:won|winner|between)\b.{0,40}\bbeef\b|\bbeef\b.{0,40}\b(?:between|winner)\b/i.test(message);
@@ -111,15 +110,16 @@ function basePlan(input: SemanticPlannerInput): SemanticTurnPlan {
     : isCulturalConsensus ? "cultural_consensus"
     : input.evidenceRoute.domain === "business_discovery" ? "local_discovery"
     : evaluative ? "ranked_perspectives" : entity ? "entity_explorer" : "direct_answer";
-  const fresh = current(message);
+  const temporalPolicy = temporalEvidencePolicy(message);
+  const freshness = temporalPolicy.freshness;
   return {
     taskMode: mode, primaryDomain: input.evidenceRoute.domain,
     namedEntities: entity ? [{ text: message, type: null }] : [],
     candidateMeanings: [], resolvedMeaning: entity ? message : null, confidence: entity || isRecipe || high(input.evidenceRoute) ? 0.9 : 0.8,
-    needsClarification: false, clarificationQuestion: null, freshness: fresh ? "current" : "stable",
+    needsClarification: false, clarificationQuestion: null, freshness,
     evidenceNeeds: high(input.evidenceRoute) ? ["official_current"]
       : isRecipe ? ["approved_internal", "creator_media"]
-      : fresh || isTravelPlan || input.evidenceRoute.domain === "business_discovery" ? ["official_current", "platform_records"]
+      : freshness !== "stable" || isTravelPlan || input.evidenceRoute.domain === "business_discovery" ? ["official_current", "platform_records"]
       : evaluative || isCulturalConsensus ? ["primary_cultural", "critical_consensus"]
       : entity ? ["approved_internal", "primary_cultural"]
       : ["approved_internal"],

@@ -5,6 +5,8 @@ import {
   isPreferredNameRecallRequest,
   requestedArticleSummaryUrl,
   requiresCurrentResearch,
+  requiresTimeSpecificResearch,
+  temporalEvidencePolicy,
 } from "../current-research";
 
 describe("current research routing", () => {
@@ -110,6 +112,40 @@ describe("current research routing", () => {
     expect(isPublicNetWorthEstimateRequest("What is Beyoncé's net worth?")).toBe(true);
     expect(isPublicNetWorthEstimateRequest("What is Apple's stock price?")).toBe(false);
     expect(isPublicNetWorthEstimateRequest("What is Apple's market cap?")).toBe(false);
+  });
+
+  it("separates a conversion fact's freshness, evidence threshold, and calculation eligibility", () => {
+    const currentConversion = temporalEvidencePolicy("What is 792 yen in U.S. dollars today?");
+    const historicalConversion = temporalEvidencePolicy("How much was 792 yen in dollars in 2020?");
+    const merchantPayment = temporalEvidencePolicy("Do nearby restaurants accept yen?");
+    const stableMath = temporalEvidencePolicy("What does compound interest mean?");
+
+    expect(currentConversion).toMatchObject({
+      requestedFact: "currency_conversion",
+      freshness: "current",
+      evidenceStandard: "single_authoritative_or_reliable",
+      calculationEligible: true,
+    });
+    expect(historicalConversion).toMatchObject({
+      requestedFact: "currency_conversion",
+      freshness: "historical",
+      evidenceStandard: "single_authoritative_or_reliable",
+      calculationEligible: true,
+    });
+    expect(merchantPayment).toMatchObject({
+      requestedFact: "merchant_payment_policy",
+      freshness: "current",
+      evidenceStandard: "single_authoritative",
+      calculationEligible: false,
+    });
+    expect(stableMath).toMatchObject({
+      requestedFact: "stable",
+      freshness: "stable",
+      evidenceStandard: "none",
+      calculationEligible: false,
+    });
+    expect(requiresCurrentResearch("How much was 792 yen in dollars in 2020?")).toBe(false);
+    expect(requiresTimeSpecificResearch("How much was 792 yen in dollars in 2020?")).toBe(true);
   });
 
   it("routes an explicit linked-article summary to current source retrieval", () => {

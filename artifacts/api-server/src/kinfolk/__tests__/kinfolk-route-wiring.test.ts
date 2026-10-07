@@ -100,10 +100,12 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).not.toContain("public_url = ANY($2::text[])");
   });
 
-  it("forces every semantic task mode with a current answer requirement through live evidence", () => {
+  it("forces every semantic task mode with a time-specific answer requirement through the matching evidence path", () => {
     expect(chatRoute).toContain("if (generalAnswerRoute.requiresCurrentEvidence) {");
-    expect(chatRoute).toContain('freshness: "current"');
+    expect(chatRoute).toContain("freshness: temporalEvidencePolicy(researchContextMessage).freshness");
     expect(chatRoute).toContain('evidenceNeeds: ["official_current", "reputable_reporting"]');
+    expect(chatRoute).toContain("resolveKinfolkAlwaysHelpPlan({");
+    expect(chatRoute).toContain("buildKinfolkEvidenceRecoveryReply({");
     expect(chatRoute).not.toContain(
       'generalAnswerRoute.requiresCurrentEvidence &&\n        contextualPlan.taskMode === "direct_answer"',
     );

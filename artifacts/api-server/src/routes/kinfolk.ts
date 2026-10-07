@@ -160,7 +160,13 @@ import {
   isPreferredNameRecallRequest,
   requestedArticleSummaryUrl,
   requiresCurrentResearch,
+  temporalEvidencePolicy,
 } from "../kinfolk/current-research";
+import {
+  buildKinfolkEvidenceRecoveryReply,
+  buildKinfolkPartialEvidenceInstruction,
+  resolveKinfolkAlwaysHelpPlan,
+} from "../kinfolk/always-help-fallback";
 import {
   buildGenericAnswerRouteClassifierPrompt,
   buildKinfolkConversationalIntentPrompt,
@@ -9666,14 +9672,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           retrievalQueries: [...culturalLearningOpportunity.retrievalQueries],
         };
       }
-      // The generic answer route can recognize a changing fact even when a
-      // legacy keyword classifier does not. Force its ordinary direct-answer
-      // plan through live evidence rather than allowing any semantic task mode
-      // to answer a current claim from internal, catalog, or model-only context.
+      // The generic answer route can recognize a time-specific fact even when a
+      // legacy keyword classifier does not. Preserve the requested freshness
+      // rather than treating every external fact as a same-day consensus claim.
       if (generalAnswerRoute.requiresCurrentEvidence) {
         contextualPlan = {
           ...contextualPlan,
-          freshness: "current",
+          freshness: temporalEvidencePolicy(researchContextMessage).freshness,
           evidenceNeeds: ["official_current", "reputable_reporting"],
           retrievalQueries: [
             researchContextMessage,
@@ -9829,6 +9834,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // fallback; the orchestrator bounds both latency and document/query counts.
     let contextualEvidence: ContextualEvidenceBundle | null = null;
     let liveWebOutcome: WebSearchOutcome | null = null;
+    let contextualPartialEvidenceInstruction: string | null = null;
+    let contextualPartialEvidenceSourceContext: string | null = null;
     if (contextualPlan) {
       const contextualTrace = {
         primaryAttempted: false,
@@ -10092,7 +10099,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             : `• Official alert check: ${arrivalSafety.evidence.slice(0, 2).map((item) => `${item.title}: ${item.summary}`).join(" ")}`
           : `• Official alert check: I could not complete the ${destination} official-alert check right now. Use the linked city and transit sources before you go.`;
         const recoveryReply = [
-          `I could not complete the broader live ${destination} briefing from enough independent public reporting, so I am not going to fill the gaps with generic travel advice. Here is the current arrival check I could verify:`,
+          `I could not complete the broader live ${destination} briefing from enough independent public reporting. I will not substitute a generic city description and am not going to fill the gaps with generic travel advice. Here is the current arrival check I could verify:`,
           arrivalWeather ? arrivalWeather.reply : `• Weather: I could not load a current ${destination} forecast in this check. Use the linked official local alerts and your travel provider before departure.`,
           safetyCheck,
         ].join("\n\n");
@@ -10144,64 +10151,95 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         });
         return;
       }
-      recordKinfolkTelemetry({
-        requestId: _kinfolkReqId,
-        questionClass: intentClass,
-        status: 200,
-        degraded: true,
-        degradedReason: "evidence_not_corroborated",
-        providerStatus: null,
-        latencyMs: Date.now() - _kinfolkStartedAt,
-        taskMode: contextualPlan.taskMode,
-        retrievalState: acceptedEvidence.length > 0 ? "degraded" : "not_used",
-        sourceCount: acceptedEvidence.length,
-      });
-      res.status(200).json({
-        sessionId,
-        reply:
-          contextualPlan.taskMode === "city_briefing"
-            ? "I could not complete a current briefing from enough independent official and news-reporting sources. I will not substitute a generic city description for current safety, civic, or travel information. Try the current search again shortly, or ask me for stable background separately."
-            : "I found some background information, but I could not verify the claim or consensus with enough independent, reliable sources. I would rather tell you that clearly than guess. Try again shortly or ask for the stable background instead.",
-        recommendations: null,
-        itinerary: null,
-        followUpSuggestions: [
-          "Show me the stable background",
-          "Try the current search again",
-        ],
-        smartPromotion: null,
-        taskAction: null,
-        libraryAction: null,
-        intentClass,
-        sources: acceptedEvidence.map((source) => ({
-          id: source.url,
-          label: source.kind,
-          title: source.title,
-          url: source.url,
-        })),
-        needsClarification: false,
-        originalQuery: message,
-        answerMode: contextualPlan.taskMode,
-        structuredContent: null,
-        mediaLinks: [],
-        relatedConnections: [],
-        researchStatus: {
-          usedInternal: contextualEvidence.internal.length > 0,
-          usedLiveWeb:
-            contextualEvidence.external.length +
-              contextualEvidence.media.length >
+      const temporalPolicy = temporalEvidencePolicy(researchContextMessage);
+      const requestedConsensus = contextualPlan.evidenceNeeds.includes(
+        "critical_consensus",
+      );
+      const protectedBoundary =
+        decisionPlan.retrieval === "governed_business_catalog"
+          ? "business_promotion" as const
+          : highConsequenceEvidence
+            ? "safety" as const
+            : null;
+      const alwaysHelpRecovery = resolveKinfolkAlwaysHelpPlan({
+        temporalPolicy,
+        requiresEvidence: true,
+        hasSupportingEvidence: false,
+        // Internal Library content may provide stable context, but never a
+        // partial answer to a live or historical external fact. Only directly
+        // relevant live evidence can support the limited recovery below.
+        hasRelevantPartialEvidence:
+          !requestedConsensus &&
+          contextualEvidence.external.length + contextualEvidence.media.length >
             0,
-          degraded: true,
-          web: {
-            attempted: liveWebOutcome?.attempted ?? false,
-            state: liveWebOutcome?.state ?? "unavailable",
-            provider: liveWebOutcome?.provider ?? null,
-            fallbackUsed: liveWebOutcome?.fallbackUsed ?? false,
-            partial: liveWebOutcome?.partial ?? false,
-          },
-          asOf: new Date().toISOString(),
-        },
+        requiresClarification: false,
+        protectedBoundary,
       });
-      return;
+      if (alwaysHelpRecovery.action === "provide_qualified_partial") {
+        contextualPartialEvidenceInstruction =
+          buildKinfolkPartialEvidenceInstruction(temporalPolicy);
+        contextualPartialEvidenceSourceContext =
+          "A directly relevant source is linked below, but it does not fully corroborate this answer. Kinfolk is showing only the supported portion and naming the remaining uncertainty.";
+      } else {
+        recordKinfolkTelemetry({
+          requestId: _kinfolkReqId,
+          questionClass: intentClass,
+          status: 200,
+          degraded: true,
+          degradedReason: "evidence_not_corroborated",
+          providerStatus: null,
+          latencyMs: Date.now() - _kinfolkStartedAt,
+          taskMode: contextualPlan.taskMode,
+          retrievalState: acceptedEvidence.length > 0 ? "degraded" : "not_used",
+          sourceCount: acceptedEvidence.length,
+        });
+        res.status(200).json({
+          sessionId,
+          reply: buildKinfolkEvidenceRecoveryReply({
+            temporalPolicy,
+            requestedConsensus,
+          }),
+          recommendations: null,
+          itinerary: null,
+          followUpSuggestions: [
+            "Show me the stable background",
+            "Try the current search again",
+          ],
+          smartPromotion: null,
+          taskAction: null,
+          libraryAction: null,
+          intentClass,
+          sources: acceptedEvidence.map((source) => ({
+            id: source.url,
+            label: source.kind,
+            title: source.title,
+            url: source.url,
+          })),
+          needsClarification: false,
+          originalQuery: message,
+          answerMode: contextualPlan.taskMode,
+          structuredContent: null,
+          mediaLinks: [],
+          relatedConnections: [],
+          researchStatus: {
+            usedInternal: contextualEvidence.internal.length > 0,
+            usedLiveWeb:
+              contextualEvidence.external.length +
+                contextualEvidence.media.length >
+              0,
+            degraded: true,
+            web: {
+              attempted: liveWebOutcome?.attempted ?? false,
+              state: liveWebOutcome?.state ?? "unavailable",
+              provider: liveWebOutcome?.provider ?? null,
+              fallbackUsed: liveWebOutcome?.fallbackUsed ?? false,
+              partial: liveWebOutcome?.partial ?? false,
+            },
+            asOf: new Date().toISOString(),
+          },
+        });
+        return;
+      }
     }
 
     // ── Temperature selection (spec §5.4) ────────────────────────────────────
@@ -11435,13 +11473,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           })
         : null;
 
-    const contextualEvidenceDataBlock = contextualEvidence
-      ? buildUntrustedEvidenceDataBlock([
-          ...contextualEvidence.internal,
-          ...contextualEvidence.external,
-          ...contextualEvidence.media,
-        ])
-      : "";
+    const contextualEvidenceDataBlock = [
+      contextualEvidence
+        ? buildUntrustedEvidenceDataBlock([
+            ...contextualEvidence.internal,
+            ...contextualEvidence.external,
+            ...contextualEvidence.media,
+          ])
+        : "",
+      contextualPartialEvidenceInstruction ?? "",
+    ].filter(Boolean).join("\n\n");
     const imageCreationSafetyGuidance = buildImageCreationSafetyGuidance(message);
     const cityBriefingPromptBlock =
       contextualPlan?.taskMode === "city_briefing" && destination
@@ -12482,12 +12523,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       ],
       researchContextMessage,
     );
-    const currentEvidenceSourceContext = generalAnswerRoute.requiresCurrentEvidence
-      ? buildCurrentEvidenceSourceContext([
-          ...(contextualEvidence?.external ?? []),
-          ...(contextualEvidence?.media ?? []),
-        ])
-      : null;
+    const currentEvidenceSourceContext =
+      contextualPartialEvidenceSourceContext ??
+      (generalAnswerRoute.requiresCurrentEvidence
+        ? buildCurrentEvidenceSourceContext([
+            ...(contextualEvidence?.external ?? []),
+            ...(contextualEvidence?.media ?? []),
+          ])
+        : null);
     res.json({
       sessionId: finalSessionId,
       reply,

@@ -316,6 +316,17 @@ describe("Kinfolk generic answer routing", () => {
     }
   });
 
+  it("requires external evidence for a historical conversion instead of falling back to stale model knowledge", () => {
+    const route = resolveKinfolkGeneralAnswerRoute({
+      message: "How much was 792 yen in dollars in 2020?",
+      evidence: evidence(),
+      semantic: decision({ evidenceNeed: "stable", purpose: "answer" }),
+    });
+
+    expect(route.strategy).toBe("current_evidence");
+    expect(route.requiresCurrentEvidence).toBe(true);
+  });
+
   it("does not treat personal conversational intent as a current-evidence claim", () => {
     const cases: Array<{
       intent: GenericAnswerRouteDecision["conversationIntent"];

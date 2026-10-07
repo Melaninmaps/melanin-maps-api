@@ -50,9 +50,97 @@ const CHANGING_PUBLIC_STATISTIC_RE = /\b(?:how many\s+(?:people|residents)\s+liv
 // history question about a currency is not over-routed.
 const CURRENCY_UNIT_RE = /\b(?:usd|us\s*dollars?|dollars?|eur|euros?|gbp|pounds?|sterling|try|turkish\s*lira|lira|cad|canadian\s*dollars?|aud|australian\s*dollars?|jpy|yen|cny|yuan|rmb|inr|rupees?|mxn|pesos?|brl|reais?|zar|rand|ngn|naira|kes|shillings?)\b/i;
 const CURRENCY_CONVERSION_REQUEST_RE = /\b(?:convert(?:ed|ing|s|ion)?|exchange|rate|how\s+much(?:\s+(?:is|are))?|what(?:'s|\s+is)\s+(?:the\s+)?(?:value|equivalent)|what(?:'s|\s+is)\s+(?:[\p{L}\d$,.]+\s+){1,8}in\s+(?:[\p{L}$]+)|(?:value|worth)\s+in|how\s+many\s+(?:[\p{L}$]+\s+){0,3}(?:make|equals?|is))\b/iu;
+const HISTORICAL_RATE_RE = /\b(?:historical(?:ly)?|in|during|as\s+of)\s+(?:the\s+)?(?:19|20)\d{2}\b|\b(?:last\s+year|years?\s+ago|at\s+that\s+time)\b/i;
+const MERCHANT_PAYMENT_POLICY_RE = /\b(?:accepts?|accepted|take|pay(?:ment)?\s+(?:method|methods|option|options)|can\s+i\s+pay)\b[\s\S]{0,80}\b(?:cash|card|credit|debit|usd|dollars?|eur|euros?|gbp|pounds?|jpy|yen|cny|yuan|rmb|inr|rupees?|mxn|pesos?)\b/i;
 
-function isCurrencyConversionRequest(message: string): boolean {
+export type TemporalEvidencePolicy = Readonly<{
+  requestedFact:
+    | "currency_conversion"
+    | "merchant_payment_policy"
+    | "operating_status"
+    | "public_estimate"
+    | "changing_public_fact"
+    | "stable";
+  freshness: "current" | "historical" | "stable";
+  evidenceStandard:
+    | "single_authoritative_or_reliable"
+    | "single_authoritative"
+    | "independent_corroboration"
+    | "none";
+  calculationEligible: boolean;
+}>;
+
+export function isCurrencyConversionRequest(message: string): boolean {
   return CURRENCY_UNIT_RE.test(message) && CURRENCY_CONVERSION_REQUEST_RE.test(message);
+}
+
+/**
+ * Separates the requested fact from its freshness and source threshold. A
+ * time-sensitive fact is not automatically a consensus question: a directly
+ * relevant authoritative or established market source can be enough for a
+ * deterministic conversion or a published operating/payment policy.
+ */
+export function temporalEvidencePolicy(message: string): TemporalEvidencePolicy {
+  if (isCurrencyConversionRequest(message)) {
+    return {
+      requestedFact: "currency_conversion",
+      freshness: HISTORICAL_RATE_RE.test(message) ? "historical" : "current",
+      evidenceStandard: "single_authoritative_or_reliable",
+      calculationEligible: true,
+    };
+  }
+  if (MERCHANT_PAYMENT_POLICY_RE.test(message)) {
+    return {
+      requestedFact: "merchant_payment_policy",
+      freshness: "current",
+      evidenceStandard: "single_authoritative",
+      calculationEligible: false,
+    };
+  }
+  if (
+    OPERATING_STATUS_RE.test(message) &&
+    (EXTERNAL_ENTITY_RE.test(message) || WHAT_IS_OPEN_RE.test(message) || OPEN_NOW_RE.test(message))
+  ) {
+    return {
+      requestedFact: "operating_status",
+      freshness: "current",
+      evidenceStandard: "single_authoritative",
+      calculationEligible: false,
+    };
+  }
+  if (isPublicNetWorthEstimateRequest(message)) {
+    return {
+      requestedFact: "public_estimate",
+      freshness: "current",
+      evidenceStandard: "single_authoritative_or_reliable",
+      calculationEligible: false,
+    };
+  }
+  if (
+    hasChangingExternalFact(message) ||
+    CHANGING_PUBLIC_STATISTIC_RE.test(message) ||
+    NAMED_CUSTODY_STATUS_RE.test(message) ||
+    INTRINSIC_CURRENT_FINANCIAL_STATUS_RE.test(message) ||
+    INTRINSIC_CURRENT_LEADERSHIP_STATUS_RE.test(message) ||
+    INTRINSIC_CURRENT_PUBLIC_EVENT_STATUS_RE.test(message)
+  ) {
+    return {
+      requestedFact: "changing_public_fact",
+      freshness: "current",
+      evidenceStandard: "independent_corroboration",
+      calculationEligible: false,
+    };
+  }
+  return {
+    requestedFact: "stable",
+    freshness: "stable",
+    evidenceStandard: "none",
+    calculationEligible: false,
+  };
+}
+
+export function requiresTimeSpecificResearch(message: string): boolean {
+  return temporalEvidencePolicy(message).freshness !== "stable";
 }
 
 /**
@@ -139,12 +227,6 @@ export function hasRequestedArticleEvidence(
 
 export function requiresCurrentResearch(message: string): boolean {
   if (isPreferredNameRecallRequest(message)) return false;
-  return hasChangingExternalFact(message)
-    || CHANGING_PUBLIC_STATISTIC_RE.test(message)
-    || isCurrencyConversionRequest(message)
-    || NAMED_CUSTODY_STATUS_RE.test(message)
-    || INTRINSIC_CURRENT_FINANCIAL_STATUS_RE.test(message)
-    || INTRINSIC_CURRENT_LEADERSHIP_STATUS_RE.test(message)
-    || INTRINSIC_CURRENT_PUBLIC_EVENT_STATUS_RE.test(message)
+  return temporalEvidencePolicy(message).freshness === "current"
     || requestedArticleSummaryUrl(message) !== null;
 }

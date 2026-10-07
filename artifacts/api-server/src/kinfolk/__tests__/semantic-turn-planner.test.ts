@@ -123,6 +123,15 @@ describe("semantic turn planner", () => {
     });
   });
 
+  it("preserves historical conversion freshness instead of substituting a current rate", async () => {
+    const message = "How much was 792 yen in dollars in 2020?";
+    await expect(planSemanticTurn({ message, evidenceRoute: routeEvidence(message) })).resolves.toMatchObject({
+      taskMode: "direct_answer",
+      freshness: "historical",
+      evidenceNeeds: ["official_current", "platform_records"],
+    });
+  });
+
   it("keeps a contextual follow-up after arithmetic out of the clarification/Library path", async () => {
     expect(deterministicArithmeticAnswer("10 + 10")).toBe("20");
     const classify = vi.fn();

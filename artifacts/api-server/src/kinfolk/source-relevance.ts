@@ -1,4 +1,7 @@
-import { requiresCurrentResearch } from "./current-research";
+import {
+  isCurrencyConversionRequest,
+  requiresCurrentResearch,
+} from "./current-research";
 
 export type MemberFacingSourceCandidate = Readonly<{
   id: string;
@@ -61,6 +64,16 @@ export function sourceHasMemberQuestionRelevance(
   const haystack = `${source.title ?? ""} ${source.evidenceText ?? ""} ${source.url ?? ""}`
     .normalize("NFKC")
     .toLowerCase();
+  // A conversion source can correctly identify the pair with ISO symbols while
+  // the member uses local names (for example, a currency unit rather than its
+  // three-letter code). This domain-neutral marker prevents a relevant rate
+  // source from being discarded solely for that surface-form mismatch.
+  if (
+    isCurrencyConversionRequest(message) &&
+    /\b(?:exchange\s+rate|currency\s+conversion|currency\s+converter|foreign\s+exchange|fx\s+rate)\b/i.test(haystack)
+  ) {
+    return true;
+  }
   const matchingTerms = terms.filter((term) => haystack.includes(term));
   // A changing, multi-part question must have its central terms reflected in
   // the source itself. A fixed two-word floor allowed a generic local alert to

@@ -53,6 +53,14 @@ describe("Kinfolk member-facing source relevance", () => {
     ], populationQuestion).map((source) => source.id)).toEqual(["census-population"]);
   });
 
+  it("keeps a rate source when its ISO notation differs from the member's currency wording", () => {
+    expect(sourceHasMemberQuestionRelevance({
+      title: "JPY to USD exchange rate",
+      url: "https://www.xe.com/currencyconverter/convert/?Amount=792&From=JPY&To=USD",
+      evidenceText: "Current currency conversion and exchange rate.",
+    }, "What is 792 yen in U.S. dollars today?")).toBe(true);
+  });
+
   it("rejects generic same-city status evidence that lacks the question's central terms", () => {
     const question = "Can you plan tomorrow around what is open in Philadelphia?";
     expect(sourceHasMemberQuestionRelevance({

@@ -1,6 +1,9 @@
 import type { ExternalResearchProvider, ResearchDocument } from "../library/types";
 import { canonicalizeContextualUrl } from "./contextual-url";
-import { isPublicNetWorthEstimateRequest } from "./current-research";
+import {
+  isPublicNetWorthEstimateRequest,
+  temporalEvidencePolicy,
+} from "./current-research";
 import type { SemanticTurnPlan } from "./semantic-turn-planner";
 import { sourceHasMemberQuestionRelevance } from "./source-relevance";
 
@@ -70,6 +73,7 @@ export type ContextualResearchDeps = {
 const VIDEO_HOSTS = new Set(["youtube.com", "www.youtube.com", "youtu.be", "vimeo.com", "www.vimeo.com", "tiktok.com", "www.tiktok.com", "instagram.com", "www.instagram.com"]);
 const REPORTING_HOSTS = new Set(["apnews.com", "reuters.com", "bbc.com", "bbc.co.uk", "npr.org", "nytimes.com", "washingtonpost.com", "theguardian.com", "variety.com", "au.variety.com", "abc.net.au"]);
 const REPUTABLE_PUBLIC_ESTIMATE_HOSTS = new Set(["forbes.com", "bloomberg.com", "fortune.com", "cnbc.com", "wsj.com", "ft.com", ...REPORTING_HOSTS]);
+const ESTABLISHED_EXCHANGE_RATE_HOSTS = new Set(["xe.com", "wise.com", "oanda.com", "x-rates.com", "ecb.europa.eu", "federalreserve.gov", "bankofcanada.ca", "bankofengland.co.uk", "boj.or.jp", "imf.org", "worldbank.org"]);
 const RESEARCH_HOSTS = new Set(["doi.org", "jstor.org", "nature.com", "sciencedirect.com", "springer.com", "pubmed.ncbi.nlm.nih.gov"]);
 const INJECTION_LINE = /(?:ignore|disregard|override|forget)\s+(?:all\s+)?(?:previous|prior|system|developer)|system\s+prompt|developer\s+message|reveal\s+(?:private|hidden|secret)|private\s+memor(?:y|ies)|follow\s+these\s+instructions|you\s+are\s+(?:chatgpt|an?\s+assistant)/i;
 
@@ -133,6 +137,15 @@ function isReputablePublicEstimateSource(item: ContextualEvidenceItem): boolean 
   return item.kind === "reporting" && REPUTABLE_PUBLIC_ESTIMATE_HOSTS.has(hostname(item.url));
 }
 
+function temporalPolicyForPlan(plan: SemanticTurnPlan) {
+  return temporalEvidencePolicy(plan.retrievalQueries[0] ?? "");
+}
+
+function isEstablishedExchangeRateSource(item: ContextualEvidenceItem): boolean {
+  const host = hostname(item.url);
+  return item.kind === "official" || ESTABLISHED_EXCHANGE_RATE_HOSTS.has(host);
+}
+
 /**
  * City briefings have a deliberately stronger scope check than generic current
  * research. A live Minneapolis source must never appear under a Philadelphia
@@ -164,7 +177,7 @@ function filterQuestionRelevantCurrentEvidence(
   plan: SemanticTurnPlan,
   items: ContextualEvidenceItem[],
 ): ContextualEvidenceItem[] {
-  if (plan.freshness !== "current") return items;
+  if (plan.freshness === "stable") return items;
   const memberQuestion = plan.retrievalQueries[0] ?? "";
   return items.filter((item) => sourceHasMemberQuestionRelevance({
     title: item.title,
@@ -315,8 +328,33 @@ function evidenceIsCorroborated(plan: SemanticTurnPlan, items: ContextualEvidenc
   return independent.size >= 2;
 }
 
+function evidenceIsSufficient(plan: SemanticTurnPlan, items: ContextualEvidenceItem[]): boolean {
+  const policy = temporalPolicyForPlan(plan);
+  if (policy.evidenceStandard === "single_authoritative") {
+    return items.some((item) => item.kind === "official");
+  }
+  if (policy.evidenceStandard === "single_authoritative_or_reliable") {
+    if (policy.requestedFact === "currency_conversion") {
+      return items.some(isEstablishedExchangeRateSource);
+    }
+    if (policy.requestedFact === "public_estimate") {
+      return items.some(isReputablePublicEstimateSource);
+    }
+  }
+  return evidenceIsCorroborated(plan, items);
+}
+
 function needsCorroboration(plan: SemanticTurnPlan): boolean {
-  return plan.freshness === "current" || plan.evidenceNeeds.some((need) => need === "official_current" || need === "platform_records" || need === "critical_consensus");
+  return temporalPolicyForPlan(plan).evidenceStandard === "independent_corroboration"
+    || plan.taskMode === "city_briefing"
+    || plan.evidenceNeeds.includes("critical_consensus");
+}
+
+function requiresEvidenceGate(plan: SemanticTurnPlan): boolean {
+  return plan.freshness !== "stable"
+    || plan.evidenceNeeds.some((need) =>
+      need === "official_current" || need === "platform_records" || need === "critical_consensus",
+    );
 }
 
 export function contextualResearchTimeoutMs(plan: SemanticTurnPlan): number {
@@ -324,7 +362,7 @@ export function contextualResearchTimeoutMs(plan: SemanticTurnPlan): number {
   // Native web search often needs longer than a stable-answer turn to retrieve
   // and cite current public evidence. Keep this bounded, while allowing the
   // Tavily fallback a chance to run if the primary provider is unavailable.
-  if (plan.freshness === "current") return 15_000;
+  if (plan.freshness === "current" || plan.freshness === "historical") return 15_000;
   return 8_000;
 }
 
@@ -425,7 +463,7 @@ async function liveEvidence(plan: SemanticTurnPlan, deps: ContextualResearchDeps
 
     const accepted = dedupe(documents);
     const primaryInsufficient = primary.length === 0
-      || (needsCorroboration(plan) && !evidenceIsCorroborated(plan, accepted));
+      || (requiresEvidenceGate(plan) && !evidenceIsSufficient(plan, accepted));
     if (primaryInsufficient && deps.fallbackProvider && documents.length < 8) {
       const fallback = await searchProvider(deps.fallbackProvider, plan, query, queries, 8 - documents.length, now, signal);
       documents.push(...fallback);
@@ -442,7 +480,7 @@ async function liveEvidence(plan: SemanticTurnPlan, deps: ContextualResearchDeps
 }
 
 export function contextualEvidenceNeedsFailClosedResponse(plan: SemanticTurnPlan, bundle: ContextualEvidenceBundle): boolean {
-  return (needsCorroboration(plan) || plan.taskMode === "entity_explorer") && bundle.gaps.length > 0;
+  return (requiresEvidenceGate(plan) || plan.taskMode === "entity_explorer") && bundle.gaps.length > 0;
 }
 
 export async function orchestrateContextualResearch(
@@ -478,7 +516,7 @@ export async function orchestrateContextualResearch(
         // Published Library material can provide stable background, but it may
         // never stand in for a changing fact or render as an unrelated link.
         // Keep it only when its title/excerpt actually concerns this turn.
-        if (plan.freshness === "current") {
+        if (plan.freshness !== "stable") {
           const memberQuestion = plan.retrievalQueries[0] ?? "";
           internal = internal.filter((item) =>
             cityBriefingScopeMatches(plan, item) && sourceHasMemberQuestionRelevance({
@@ -529,7 +567,7 @@ export async function orchestrateContextualResearch(
   const nonMediaExternal = external.filter((item) => item.kind !== "creator");
   const gaps: string[] = [];
   if (!internal.length && !external.length) gaps.push("No source-backed evidence was available.");
-  if (needsCorroboration(plan) && !evidenceIsCorroborated(plan, [...internal, ...external])) {
+  if (requiresEvidenceGate(plan) && !evidenceIsSufficient(plan, [...internal, ...external])) {
     gaps.push("The claim or consensus could not be corroborated.");
   }
   if (plan.taskMode === "entity_explorer" && !internal.some((item) => item.kind === "library_published")) {

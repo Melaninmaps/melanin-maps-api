@@ -68,6 +68,7 @@ describe("contextual research orchestrator", () => {
   it("gives current research a bounded provider window without delaying stable turns", () => {
     expect(contextualResearchTimeoutMs(plan())).toBe(8_000);
     expect(contextualResearchTimeoutMs(plan({ freshness: "current" }))).toBe(15_000);
+    expect(contextualResearchTimeoutMs(plan({ freshness: "historical" }))).toBe(15_000);
     expect(contextualResearchTimeoutMs(plan({ freshness: "current", taskMode: "city_briefing" }))).toBe(20_000);
   });
 
@@ -429,6 +430,59 @@ describe("contextual research orchestrator", () => {
     });
     expect(aggregator.degraded).toBe(true);
     expect(contextualEvidenceNeedsFailClosedResponse(estimatePlan, aggregator)).toBe(true);
+  });
+
+  it("accepts one established rate source for a conversion without weakening general-current corroboration", async () => {
+    const currentRatePlan = plan({
+      freshness: "current",
+      evidenceNeeds: ["official_current", "platform_records"],
+      retrievalQueries: ["What is 792 yen in U.S. dollars today?"],
+    });
+    const result = await orchestrateContextualResearch(currentRatePlan, {
+      searchLive: async () => [item(
+        "JPY to USD exchange rate",
+        "https://www.xe.com/currencyconverter/convert/?Amount=792&From=JPY&To=USD",
+        "reference",
+      )],
+      now: () => NOW,
+    });
+
+    expect(result).toMatchObject({ degraded: false, gaps: [] });
+    expect(contextualEvidenceNeedsFailClosedResponse(currentRatePlan, result)).toBe(false);
+
+    const genericCurrentPlan = plan({
+      freshness: "current",
+      evidenceNeeds: ["official_current"],
+      retrievalQueries: ["What changed in the current public program?"],
+    });
+    const generic = await orchestrateContextualResearch(genericCurrentPlan, {
+      searchLive: async () => [item(
+        "Program summary",
+        "https://reference.example.com/current-program",
+        "reference",
+      )],
+      now: () => NOW,
+    });
+    expect(contextualEvidenceNeedsFailClosedResponse(genericCurrentPlan, generic)).toBe(true);
+  });
+
+  it("retrieves a historical conversion as historical evidence rather than substituting today's rate", async () => {
+    const historicalRatePlan = plan({
+      freshness: "historical",
+      evidenceNeeds: ["official_current", "platform_records"],
+      retrievalQueries: ["How much was 792 yen in dollars in 2020?"],
+    });
+    const result = await orchestrateContextualResearch(historicalRatePlan, {
+      searchLive: async () => [item(
+        "Historical JPY to USD exchange rate in 2020",
+        "https://www.xe.com/currencytables/?from=JPY&date=2020-01-01",
+        "reference",
+      )],
+      now: () => NOW,
+    });
+
+    expect(result).toMatchObject({ degraded: false, gaps: [] });
+    expect(contextualEvidenceNeedsFailClosedResponse(historicalRatePlan, result)).toBe(false);
   });
 
   it("fails closed for cultural consensus when apparent sources share one publisher identity", async () => {
