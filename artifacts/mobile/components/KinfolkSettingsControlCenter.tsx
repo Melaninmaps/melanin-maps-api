@@ -368,7 +368,9 @@ export default function KinfolkSettingsControlCenter() {
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <VoiceRow colors={colors} selected={draft.voice === "onyx"} disabled={saving} label="Standard Kinfolk Voice" description="The familiar Kinfolk speaker across every mode." onPress={() => replaceDraft({ ...draft, voice: "onyx" })} />
         <Line colors={colors} />
-        <VoiceRow colors={colors} selected={draft.voice === "nova" || draft.voice === "shimmer"} disabled={saving} label="Female Voice" description="A female-presenting Kinfolk speaker across every mode." onPress={() => replaceDraft({ ...draft, voice: "nova" })} />
+        <VoiceRow colors={colors} selected={draft.voice === "nova" || draft.voice === "shimmer"} disabled={saving} label="Female Voice" description="Warm, grounded, confident adult woman's synthetic voice — natural, clear, steady, and compassionate without vagueness across every mode." onPress={() => replaceDraft({ ...draft, voice: "nova" })} />
+        <Line colors={colors} />
+        <TouchableOpacity disabled={saving} style={styles.row} activeOpacity={0.8} accessibilityLabel="Run Voice Preflight" onPress={() => router.push("/kinfolk-voice-preflight" as never)}><Icon colors={colors} name="mic" /><View style={styles.grow}><Text style={[styles.rowTitle, { color: colors.foreground }]}>Run Voice Preflight</Text><Text style={[styles.rowSub, { color: colors.mutedForeground }]}>Check microphone, transcript review, and audible playback for your saved voice on this device.</Text></View><Feather name="chevron-right" color={colors.mutedForeground} size={18} /></TouchableOpacity>
       </View>
 
       <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>COMMUNICATION DETAILS</Text>

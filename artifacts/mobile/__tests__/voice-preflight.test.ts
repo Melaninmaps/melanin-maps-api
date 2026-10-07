@@ -59,10 +59,13 @@ describe("Kinfolk Voice Preflight", () => {
     expect(preflight).toContain("audio route");
     expect(preflight).toContain("The text is not copied into the technical log");
     expect(preflight).toContain("five consecutive normal voice turns");
+    expect(preflight).toContain('speakerProfile?: "standard" | "female"');
+    expect(preflight).toContain('payload.speakerProfile === "female"');
+    expect(preflight).toContain("Standard Kinfolk Voice and Female Voice");
   });
 
   it("keeps the screen reachable from Kinfolk settings and registered in native navigation", () => {
-    const settings = source("app/kinfolk-settings.tsx");
+    const settings = source("components/KinfolkSettingsControlCenter.tsx");
     const layout = source("app/_layout.tsx");
     expect(settings).toContain("Run Voice Preflight");
     expect(settings).toContain('router.push("/kinfolk-voice-preflight" as never)');
