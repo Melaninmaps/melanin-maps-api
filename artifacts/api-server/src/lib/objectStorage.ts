@@ -24,6 +24,8 @@ export class ObjectStorageConfigurationError extends Error {
 
 let _client: Storage | null = null;
 let _clientError: Error | null = null;
+let _kinfolkQuestionImageClient: Storage | null = null;
+let _kinfolkQuestionImageClientError: Error | null = null;
 
 function assertRailwayAdcBinding(mode: ObjectStorageCredentialMode): void {
   if (
@@ -62,10 +64,12 @@ type ServiceAccountCredentials = {
   projectId?: string;
 };
 
-function readServiceAccountCredentials(): ServiceAccountCredentials {
-  const rawCredentials = process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
+function parseServiceAccountCredentials(
+  rawCredentials: string | undefined,
+  variableName: string,
+): ServiceAccountCredentials {
   if (!rawCredentials) {
-    throw new ObjectStorageConfigurationError("GOOGLE_SERVICE_ACCOUNT_JSON is required for service-account mode.");
+    throw new ObjectStorageConfigurationError(`${variableName} is required for service-account mode.`);
   }
 
   let parsed: unknown;
@@ -73,10 +77,10 @@ function readServiceAccountCredentials(): ServiceAccountCredentials {
     parsed = JSON.parse(rawCredentials);
   } catch {
     // Do not include a parser error: it may echo a fragment of the secret value.
-    throw new ObjectStorageConfigurationError("GOOGLE_SERVICE_ACCOUNT_JSON is not valid JSON.");
+    throw new ObjectStorageConfigurationError(`${variableName} is not valid JSON.`);
   }
   if (!parsed || typeof parsed !== "object") {
-    throw new ObjectStorageConfigurationError("GOOGLE_SERVICE_ACCOUNT_JSON must contain a credential object.");
+    throw new ObjectStorageConfigurationError(`${variableName} must contain a credential object.`);
   }
 
   const credential = parsed as Record<string, unknown>;
@@ -87,7 +91,7 @@ function readServiceAccountCredentials(): ServiceAccountCredentials {
     typeof credential.private_key !== "string" ||
     !credential.private_key
   ) {
-    throw new ObjectStorageConfigurationError("GOOGLE_SERVICE_ACCOUNT_JSON is missing required service-account fields.");
+    throw new ObjectStorageConfigurationError(`${variableName} is missing required service-account fields.`);
   }
   return {
     clientEmail: credential.client_email,
@@ -96,6 +100,30 @@ function readServiceAccountCredentials(): ServiceAccountCredentials {
       ? credential.project_id
       : undefined,
   };
+}
+
+function readServiceAccountCredentials(): ServiceAccountCredentials {
+  return parseServiceAccountCredentials(
+    process.env.GOOGLE_SERVICE_ACCOUNT_JSON?.trim(),
+    "GOOGLE_SERVICE_ACCOUNT_JSON",
+  );
+}
+
+function readKinfolkQuestionImageCredentials(): ServiceAccountCredentials {
+  return parseServiceAccountCredentials(
+    process.env.KINFOLK_GOOGLE_SERVICE_ACCOUNT_JSON?.trim(),
+    "KINFOLK_GOOGLE_SERVICE_ACCOUNT_JSON",
+  );
+}
+
+function createServiceAccountStorageClient(credential: ServiceAccountCredentials): Storage {
+  return new Storage({
+    credentials: {
+      client_email: credential.clientEmail,
+      private_key: credential.privateKey,
+    },
+    projectId: credential.projectId ?? process.env.GOOGLE_CLOUD_PROJECT ?? process.env.GCLOUD_PROJECT,
+  });
 }
 
 function createStorageClient(): Storage {
@@ -122,13 +150,7 @@ function createStorageClient(): Storage {
 
   if (mode === "service_account_json") {
     const credential = readServiceAccountCredentials();
-    return new Storage({
-      credentials: {
-        client_email: credential.clientEmail,
-        private_key: credential.privateKey,
-      },
-      projectId: credential.projectId ?? process.env.GOOGLE_CLOUD_PROJECT ?? process.env.GCLOUD_PROJECT,
-    });
+    return createServiceAccountStorageClient(credential);
   }
 
   // Application Default Credentials supports Railway workload identity and the
@@ -153,6 +175,21 @@ function getClient(): Storage {
   return _client;
 }
 
+function getKinfolkQuestionImageClient(): Storage {
+  if (_kinfolkQuestionImageClientError) throw _kinfolkQuestionImageClientError;
+  if (!_kinfolkQuestionImageClient) {
+    try {
+      _kinfolkQuestionImageClient = createServiceAccountStorageClient(readKinfolkQuestionImageCredentials());
+    } catch (err: unknown) {
+      _kinfolkQuestionImageClientError = err instanceof Error
+        ? err
+        : new ObjectStorageConfigurationError("Kinfolk image storage could not be initialized.");
+      throw _kinfolkQuestionImageClientError;
+    }
+  }
+  return _kinfolkQuestionImageClient;
+}
+
 export function getObjectStorageDiagnostics(): { credentialMode: ObjectStorageCredentialMode | "invalid"; configured: boolean } {
   try {
     const credentialMode = getObjectStorageCredentialMode();
@@ -163,9 +200,26 @@ export function getObjectStorageDiagnostics(): { credentialMode: ObjectStorageCr
   }
 }
 
+export function getKinfolkQuestionImageStorageDiagnostics(): { credentialMode: "service_account_json" | "invalid"; configured: boolean } {
+  try {
+    readKinfolkQuestionImageCredentials();
+    return { credentialMode: "service_account_json", configured: true };
+  } catch {
+    return { credentialMode: "invalid", configured: false };
+  }
+}
+
 export const objectStorageClient: Storage = new Proxy({} as Storage, {
   get(_target, prop) {
     const client = getClient();
+    const value = (client as never as Record<string | symbol, unknown>)[prop];
+    return typeof value === "function" ? value.bind(client) : value;
+  },
+});
+
+export const kinfolkQuestionImageStorageClient: Storage = new Proxy({} as Storage, {
+  get(_target, prop) {
+    const client = getKinfolkQuestionImageClient();
     const value = (client as never as Record<string | symbol, unknown>)[prop];
     return typeof value === "function" ? value.bind(client) : value;
   },

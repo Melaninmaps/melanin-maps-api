@@ -2,7 +2,9 @@ import { type Express, type Request, type Response } from "express";
 import multer from "multer";
 import { randomUUID } from "crypto";
 import {
+  getKinfolkQuestionImageStorageDiagnostics,
   getObjectStorageDiagnostics,
+  kinfolkQuestionImageStorageClient,
   objectStorageClient,
   ObjectStorageConfigurationError,
 } from "../lib/objectStorage";
@@ -221,6 +223,10 @@ function getPublicDeliveryConfiguration(): PublicDeliveryConfiguration {
   return { mode, bucketId: dedicatedPublicBucketId, publicBaseUrl, blocker: null };
 }
 
+function getKinfolkQuestionImageBucketId(): string | null {
+  return process.env.KINFOLK_MEDIA_BUCKET_ID?.trim() || null;
+}
+
 function publicObjectUrl(configuration: PublicDeliveryConfiguration, objectKey: string): string {
   const encodedKey = objectKey.split("/").map(encodeURIComponent).join("/");
   if (configuration.publicBaseUrl) return `${configuration.publicBaseUrl}/${encodedKey}`;
@@ -228,14 +234,17 @@ function publicObjectUrl(configuration: PublicDeliveryConfiguration, objectKey: 
 }
 
 export function getMediaUploadReadiness(purpose?: string): Record<string, unknown> {
-  const storage = getObjectStorageDiagnostics();
   const delivery = getPublicDeliveryConfiguration();
   const privateBucketConfigured = Boolean(process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID?.trim());
+  const kinfolkQuestionBucketConfigured = Boolean(getKinfolkQuestionImageBucketId());
   const isPrivateKinfolkQuestion = purpose === "kinfolk_question";
+  const storage = isPrivateKinfolkQuestion
+    ? getKinfolkQuestionImageStorageDiagnostics()
+    : getObjectStorageDiagnostics();
   const blockers = [
     ...(storage.configured ? [] : ["Object-storage credential mode is invalid or incomplete."]),
     ...(isPrivateKinfolkQuestion
-      ? (privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private uploads."])
+      ? (kinfolkQuestionBucketConfigured ? [] : ["KINFOLK_MEDIA_BUCKET_ID is required for private Kinfolk image uploads."])
       : [
           ...(delivery.blocker ? [delivery.blocker] : []),
           ...(privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private uploads."]),
@@ -248,6 +257,7 @@ export function getMediaUploadReadiness(purpose?: string): Record<string, unknow
     publicDeliveryMode: delivery.mode,
     publicBucketConfigured: Boolean(delivery.bucketId),
     privateBucketConfigured,
+    kinfolkQuestionBucketConfigured,
     publicBaseConfigured: Boolean(delivery.publicBaseUrl),
     blockers,
   };
@@ -260,6 +270,8 @@ async function bestEffortDelete(file: StorageFile): Promise<void> {
 
 export function registerMediaRoutes(app: Express, options: RegisterMediaRouteOptions = {}): void {
   const storageClient = options.storageClient ?? objectStorageClient as unknown as StorageClient;
+  const kinfolkQuestionStorageClient = options.storageClient
+    ?? kinfolkQuestionImageStorageClient as unknown as StorageClient;
   const recordAsset = options.recordAsset ?? (async (values: readonly unknown[]) => pool.query(
     `INSERT INTO media_assets
        (id, uploader_id, purpose, mime_type, byte_size, object_key,
@@ -306,7 +318,7 @@ export function registerMediaRoutes(app: Express, options: RegisterMediaRouteOpt
         );
         return;
       }
-      void handleMediaUpload(req, res, requestId, storageClient, recordAsset);
+      void handleMediaUpload(req, res, requestId, storageClient, kinfolkQuestionStorageClient, recordAsset);
     });
   });
 
@@ -341,6 +353,7 @@ async function handleMediaUpload(
   res: Response,
   requestId: string,
   storageClient: StorageClient,
+  kinfolkQuestionStorageClient: StorageClient,
   recordAsset: (values: readonly unknown[]) => Promise<unknown>,
 ): Promise<void> {
   const user = (req as Request & { user?: { id?: string } }).user;
@@ -393,14 +406,30 @@ async function handleMediaUpload(
     return;
   }
 
-  const isPrivate = purpose === "kinfolk_question" || purpose === "business_submission";
+  const isKinfolkQuestion = purpose === "kinfolk_question";
+  const isPrivate = isKinfolkQuestion || purpose === "business_submission";
   const delivery = getPublicDeliveryConfiguration();
-  const bucketId = isPrivate ? process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID?.trim() || null : delivery.bucketId;
+  const activeStorageClient = isKinfolkQuestion ? kinfolkQuestionStorageClient : storageClient;
+  const storageDiagnostics = isKinfolkQuestion
+    ? getKinfolkQuestionImageStorageDiagnostics()
+    : getObjectStorageDiagnostics();
+  // Kinfolk question images are isolated from all other private media. They can
+  // never fall back to the general object-storage bucket because this runtime
+  // identity is intentionally scoped to the dedicated Kinfolk media bucket.
+  const bucketId = isKinfolkQuestion
+    ? getKinfolkQuestionImageBucketId()
+    : isPrivate
+    ? process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID?.trim() || null
+    : delivery.bucketId;
   // Private Kinfolk question images do not use a public CDN or publication URL.
   // A missing public-delivery setting must not make the member's separately
   // configured private bucket unavailable.
   const configurationBlocker = isPrivate
-    ? (!bucketId ? "DEFAULT_OBJECT_STORAGE_BUCKET_ID is required." : null)
+    ? (!bucketId
+      ? isKinfolkQuestion
+        ? "KINFOLK_MEDIA_BUCKET_ID is required for private Kinfolk image uploads."
+        : "DEFAULT_OBJECT_STORAGE_BUCKET_ID is required."
+      : null)
     : delivery.blocker;
   if (!bucketId || configurationBlocker) {
     logUploadFailure(req, "error", {
@@ -408,7 +437,7 @@ async function handleMediaUpload(
       requestId,
       code: MEDIA_UPLOAD_ERROR_CODES.STORAGE_NOT_CONFIGURED,
       purpose,
-      credentialMode: getObjectStorageDiagnostics().credentialMode,
+      credentialMode: storageDiagnostics.credentialMode,
       publicationMode: delivery.mode,
       configurationBlocker,
     }, "Media upload storage configuration is incomplete");
@@ -431,7 +460,7 @@ async function handleMediaUpload(
   let storageFile: StorageFile;
 
   try {
-    storageFile = storageClient.bucket(bucketId).file(objectKey);
+    storageFile = activeStorageClient.bucket(bucketId).file(objectKey);
     await storageFile.save(req.file.buffer, { contentType: mime });
   } catch (error: unknown) {
     const authFailure = error instanceof ObjectStorageConfigurationError || isProviderAuthError(error);
@@ -443,7 +472,7 @@ async function handleMediaUpload(
       purpose,
       mime,
       byteSize: req.file.size,
-      credentialMode: getObjectStorageDiagnostics().credentialMode,
+      credentialMode: storageDiagnostics.credentialMode,
       ...providerErrorDetails(error),
     }, authFailure ? "Media storage authentication failed" : "Media storage save failed");
     respondWithError(res, 502, code, authFailure ? "Media storage authentication failed. Contact support with the request ID." : "The media provider could not save this file. Try again or contact support with the request ID.", requestId);

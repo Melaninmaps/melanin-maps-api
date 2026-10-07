@@ -8,7 +8,7 @@ vi.mock("@workspace/db", () => ({
 }));
 
 vi.mock("../../lib/objectStorage", () => ({
-  objectStorageClient: {
+  kinfolkQuestionImageStorageClient: {
     bucket: () => ({
       file: () => ({ delete: deleteObject }),
     }),
@@ -31,6 +31,7 @@ describe("Kinfolk private question image policy", () => {
     deleteObject.mockReset();
     deleteObject.mockResolvedValue(undefined);
     vi.stubEnv("DEFAULT_OBJECT_STORAGE_BUCKET_ID", "kinfolk-private-test");
+    vi.stubEnv("KINFOLK_MEDIA_BUCKET_ID", "kinfolk-question-media-test");
   });
 
   it("accepts only distinct bounded UUID asset references", () => {
@@ -96,6 +97,26 @@ describe("Kinfolk private question image policy", () => {
     })).rejects.toMatchObject({
       code: "VISION_IMAGES_INVALID",
       status: 400,
+    } satisfies Partial<KinfolkQuestionImageError>);
+  });
+
+  it("does not fall back to general private storage when the dedicated Kinfolk bucket is unavailable", async () => {
+    vi.stubEnv("KINFOLK_MEDIA_BUCKET_ID", "");
+    query.mockResolvedValueOnce({
+      rows: [{
+        id: FIRST_ASSET,
+        object_key: "media-uploads/kinfolk-private/member-a/image.jpg",
+        retention_expires_at: new Date(Date.now() + 60_000),
+      }],
+    });
+
+    await expect(resolveConsentedKinfolkQuestionImages({
+      userId: "member-a",
+      assetIds: [FIRST_ASSET],
+      explicitVisionConsent: true,
+    })).rejects.toMatchObject({
+      code: "VISION_IMAGES_UNAVAILABLE",
+      status: 503,
     } satisfies Partial<KinfolkQuestionImageError>);
   });
 
