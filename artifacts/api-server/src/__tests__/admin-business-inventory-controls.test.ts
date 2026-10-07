@@ -11,6 +11,7 @@ const businessRoutes = source("../routes/businesses.ts");
 const adminPublisher = source("../businesses/registerAdminPublishAndClaimRoutes.ts");
 const documentedDiscoveryReview = source("../businesses/registerDocumentedDiscoveryReviewRoutes.ts");
 const migrations = source("../lib/startup-migrations.ts");
+const serverStartup = source("../index.ts");
 const businessSchema = source("../../../../lib/db/src/schema/businesses.ts");
 const adminScreen = source("../../../web/src/pages/admin.tsx");
 const adminAddBusiness = source("../../../web/src/components/AdminAddBusiness.tsx");
@@ -53,6 +54,13 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("live ·");
     expect(adminScreen).toContain("archived ·");
     expect(adminScreen).toContain("duplicates");
+  });
+
+  it("initializes the schema-only reconciliation ledger before explicit feature releases accept traffic", () => {
+    expect(migrations).toContain("business_directory_reconciliation_ledger_v1");
+    expect(migrations).toContain("ensureDirectoryReconciliationLedgerSchema");
+    expect(serverStartup).toContain("await ensureDirectoryReconciliationLedgerSchema(logger)");
+    expect(serverStartup).toContain("Directory reconciliation ledger schema ready before traffic acceptance");
   });
 
   it("bounds exact source receipt enrichment and reports its remaining work separately from new profiles", () => {

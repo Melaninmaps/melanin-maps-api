@@ -6692,6 +6692,27 @@ export async function ensureCanonicalMwmOwnerAttachmentAuditSchema(logger?: Logg
   log("Canonical Mapping With Melanin owner audit schema is ready");
 }
 
+// Explicit feature-release mode intentionally skips the broad migration runner.
+// This narrow, idempotent gate is intentionally outside that runner because the
+// Business Admin must never show reconciliation controls without the ledger that
+// protects the archive boundary. Its migration only adds internal reconciliation
+// rows and audit structure; it does not alter any business profile or lifecycle.
+export async function ensureDirectoryReconciliationLedgerSchema(logger?: Logger): Promise<void> {
+  const log = (msg: string) =>
+    logger ? logger.info(msg) : console.log(`[directory-reconciliation-ledger] ${msg}`);
+  const migration = MIGRATIONS.find(
+    (entry) => entry.name === "business_directory_reconciliation_ledger_v1",
+  );
+  if (!migration) {
+    throw new Error("Directory reconciliation ledger migration definition is missing.");
+  }
+  await pool.query(migration.sql);
+  await pool.query(
+    "SELECT business_id, reconciliation_state, reason_code, recommended_action FROM business_directory_reconciliation_ledger LIMIT 0",
+  );
+  log("Directory reconciliation ledger schema is ready");
+}
+
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
   const log = (msg: string) =>
     logger ? logger.info(msg) : console.log(`[startup-migrations] ${msg}`);

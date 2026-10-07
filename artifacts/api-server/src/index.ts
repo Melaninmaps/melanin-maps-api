@@ -7,6 +7,7 @@ import { startBuild97Monitor, stopBuild97Monitor } from "./lib/build97Monitor";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
 import {
+  ensureDirectoryReconciliationLedgerSchema,
   ensureCommunityFeedReadSchema,
   ensureRequiredPublicationSchema,
   publicationSchemaFailureLogLines,
@@ -116,6 +117,11 @@ async function initStripe() {
 })();
 
 try {
+  // The reconciliation ledger is a schema-only safety gate. It must be ready
+  // even when explicit feature-release mode correctly suppresses broad startup
+  // writers, publishers, and enrichment work.
+  await ensureDirectoryReconciliationLedgerSchema(logger);
+  logger.info("Directory reconciliation ledger schema ready before traffic acceptance");
   if (explicitFeatureReleaseMode) {
     logger.info("Explicit feature release mode: skipping boot-time schema and publication writers");
   } else {
