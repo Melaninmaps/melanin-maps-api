@@ -90,6 +90,16 @@ describe("Kinfolk chat static wiring", () => {
     );
   });
 
+  it("uses consented owner-scoped image assets rather than browser signed URLs", () => {
+    expect(chatRoute).toContain("imageAssetIds = []");
+    expect(chatRoute).toContain("imageVisionConsent = false");
+    expect(chatRoute).toContain("resolveConsentedKinfolkQuestionImages");
+    expect(chatRoute).toContain("purgeKinfolkQuestionImages");
+    expect(chatRoute).toContain("explicitVisionConsent: imageVisionConsent === true");
+    expect(chatRoute).toContain("Please add the image again so Kinfolk can use it privately for this answer.");
+    expect(chatRoute).not.toContain("public_url = ANY($2::text[])");
+  });
+
   it("forces every semantic task mode with a current answer requirement through live evidence", () => {
     expect(chatRoute).toContain("if (generalAnswerRoute.requiresCurrentEvidence) {");
     expect(chatRoute).toContain('freshness: "current"');

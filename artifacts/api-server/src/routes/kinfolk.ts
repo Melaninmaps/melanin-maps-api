@@ -175,6 +175,12 @@ import {
 import { immediateMedicalEmergencyReply } from "../kinfolk/emergency-medical-response";
 import { buildKinfolkCulturalLearningOpportunity } from "../kinfolk/cultural-learning-opportunity";
 import { buildImageCreationSafetyGuidance } from "../kinfolk/image-creation-safety";
+import {
+  KinfolkQuestionImageError,
+  normalizeKinfolkQuestionImageAssetIds,
+  purgeKinfolkQuestionImages,
+  resolveConsentedKinfolkQuestionImages,
+} from "../kinfolk/question-image-assets";
 import { permittedIdentityContext as resolvePermittedIdentityContext } from "../kinfolk/permitted-identity-context";
 import {
   evidenceFailureReply,
@@ -7972,6 +7978,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     vibes = [],
     voiceMode: requestedVoiceMode,
     imageUrls = [],
+    imageAssetIds = [],
+    imageVisionConsent = false,
     cityHint,
     publicOrigin,
     includeCommunityPerspective,
@@ -7983,7 +7991,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     message: string;
     vibes?: string[];
     voiceMode?: string;
+    /** Legacy signed image URLs are intentionally no longer accepted. */
     imageUrls?: unknown;
+    imageAssetIds?: unknown;
+    imageVisionConsent?: unknown;
     cityHint?: unknown;
     publicOrigin?: unknown;
     includeCommunityPerspective?: unknown;
@@ -8441,36 +8452,57 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   }
 
   const requestedImageUrls = normalizeKinfolkImageUrls(imageUrls);
-  if (Array.isArray(imageUrls) && imageUrls.length > 2) {
+  if (requestedImageUrls.length > 0) {
+    res.status(400).json({
+      error: "Please add the image again so Kinfolk can use it privately for this answer.",
+      code: "VISION_IMAGES_INVALID",
+    });
+    return;
+  }
+  const requestedImageAssetIds = normalizeKinfolkQuestionImageAssetIds(imageAssetIds);
+  if (
+    (Array.isArray(imageAssetIds) && imageAssetIds.length > 2) ||
+    (Array.isArray(imageAssetIds) && requestedImageAssetIds.length !== imageAssetIds.length)
+  ) {
     res
       .status(400)
       .json({ error: "Kinfolk can review up to two images at a time." });
     return;
   }
   let verifiedImageUrls: string[] = [];
-  if (requestedImageUrls.length > 0) {
-    const imageAssets = await pool
-      .query<{ public_url: string }>(
-        `SELECT public_url
-         FROM media_assets
-        WHERE uploader_id = $1
-          AND purpose = 'kinfolk_question'
-          AND status = 'ready'
-          AND mime_type LIKE 'image/%'
-          AND public_url = ANY($2::text[])`,
-        [req.user.id, requestedImageUrls],
-      )
-      .catch(() => ({ rows: [] as { public_url: string }[] }));
-    const owned = new Set(imageAssets.rows.map((row) => row.public_url));
-    if (contextualRequestAbort.signal.aborted) return;
-    verifiedImageUrls = requestedImageUrls.filter((url) => owned.has(url));
-    if (verifiedImageUrls.length !== requestedImageUrls.length) {
-      res.status(400).json({
-        error:
-          "One or more images are invalid, expired, or do not belong to this account.",
-      });
+  if (requestedImageAssetIds.length > 0) {
+    const imageOwnerId = req.user?.id;
+    if (!imageOwnerId) {
+      res.status(401).json({ error: "Authentication required for private image review." });
       return;
     }
+    try {
+      verifiedImageUrls = await resolveConsentedKinfolkQuestionImages({
+        userId: imageOwnerId,
+        assetIds: requestedImageAssetIds,
+        explicitVisionConsent: imageVisionConsent === true,
+      });
+    } catch (error) {
+      const imageError = error instanceof KinfolkQuestionImageError
+        ? error
+        : new KinfolkQuestionImageError(
+            "Private image review is temporarily unavailable. Please try again later.",
+            503,
+            "VISION_IMAGES_UNAVAILABLE",
+          );
+      res.status(imageError.status).json({ error: imageError.message, code: imageError.code });
+      return;
+    }
+    if (contextualRequestAbort.signal.aborted) return;
+    // The local preview remains on the member's device. As soon as this turn
+    // completes, private objects are deleted rather than retained in chat
+    // history; the expiry worker covers abandoned uploads and interrupted turns.
+    res.once("finish", () => {
+      void purgeKinfolkQuestionImages({
+        userId: imageOwnerId,
+        assetIds: requestedImageAssetIds,
+      });
+    });
   }
 
   if (

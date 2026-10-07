@@ -6267,10 +6267,11 @@ export async function ensureRequiredPublicationSchema(
   await ensureHotelStayIngestionSchema(log, strictWarn);
   await ensureCanonicalRecordLocations(log, strictWarn);
   await ensureMediaAndClaimsSchema(log, strictWarn);
+  await ensureKinfolkQuestionImagePrivacySchema(log, strictWarn);
   await ensureCommunityBusinessSubmissionsSchema(log, strictWarn);
 
   const sharedTables = [
-    "business_publication_identities",
+  "business_publication_identities",
     "business_review_items",
     "canonical_record_locations",
     "community_business_submissions",
@@ -6893,6 +6894,10 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
     // media_assets, entity_media_assets, business_claim_requests tables +
     // owner_claim_status / added_via / added_by_member_id columns on businesses.
     ["media and claims schema v1", () => ensureMediaAndClaimsSchema(log, warn)],
+    [
+      "kinfolk private question image retention v1",
+      () => ensureKinfolkQuestionImagePrivacySchema(log, warn),
+    ],
     // ── Reversible public-discovery removal audit ─────────────────────────
     // An administrator may remove a business from public discovery and restore
     // it later. The business row and its linked evidence are never deleted.
@@ -18013,6 +18018,44 @@ async function ensureMediaAndClaimsSchema(
   } catch (err: unknown) {
     warn(
       `ensureMediaAndClaimsSchema failed: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+}
+
+/**
+ * Kinfolk question images are not public media or chat history. They are held
+ * privately only long enough to complete a member-consented visual question,
+ * then deleted by the request lifecycle or the bounded expiry worker.
+ */
+export async function ensureKinfolkQuestionImagePrivacySchema(
+  log: (msg: string) => void,
+  warn: (msg: string) => void,
+): Promise<void> {
+  try {
+    await pool.query(`
+      ALTER TABLE media_assets
+        ADD COLUMN IF NOT EXISTS vision_consent_granted_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS retention_expires_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ
+    `);
+    // Legacy signed-URL uploads were never consented under this feature's
+    // current contract. Expire them; do not retrofit or infer consent.
+    await pool.query(`
+      UPDATE media_assets
+         SET retention_expires_at = COALESCE(retention_expires_at, created_at)
+       WHERE purpose = 'kinfolk_question'
+         AND status = 'ready'
+         AND retention_expires_at IS NULL
+    `);
+    await pool.query(`
+      CREATE INDEX IF NOT EXISTS media_assets_kinfolk_question_cleanup_idx
+          ON media_assets (retention_expires_at)
+       WHERE purpose = 'kinfolk_question' AND status = 'ready'
+    `);
+    log("ensureKinfolkQuestionImagePrivacySchema: private image retention ready");
+  } catch (err: unknown) {
+    warn(
+      `ensureKinfolkQuestionImagePrivacySchema failed: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
 }

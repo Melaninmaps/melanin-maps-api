@@ -1016,7 +1016,8 @@ function TravelPage() {
     KINFOLK_RESPONSE_STATUS_STAGES[0],
   );
   const [kinfolkMode, setKinfolkMode] = useState<KinfolkMode>("community");
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
+  const [imageAttachments, setImageAttachments] = useState<Array<{ assetId: string; previewUrl: string }>>([]);
+  const [pendingImageConsent, setPendingImageConsent] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
   const [includeCommunityPerspective, setIncludeCommunityPerspective] = useState(false);
@@ -1758,24 +1759,44 @@ function TravelPage() {
   }, [messages, sending]);
 
   const uploadKinfolkImage = useCallback(async (file: File) => {
-    if (imageUrls.length >= 2 || uploadingImage) return;
+    if (imageAttachments.length >= 2 || uploadingImage) return;
     setUploadingImage(true);
     setImageError(null);
     try {
       const form = new FormData();
       form.append("file", file);
+      form.append("kinfolkVisionConsent", "true");
       const response = await fetch(`${BASE}api/media/upload?purpose=kinfolk_question`, {
         method: "POST", credentials: "include", body: form,
       });
-      const body = await response.json().catch(() => ({})) as { url?: string; error?: string };
-      if (!response.ok || !body.url) throw new Error(body.error ?? "Could not upload that image.");
-      setImageUrls((items) => items.includes(body.url!) ? items : [...items, body.url!].slice(0, 2));
+      const body = await response.json().catch(() => ({})) as { assetId?: string; error?: string };
+      if (!response.ok || !body.assetId) throw new Error(body.error ?? "Could not prepare that private image.");
+      const previewUrl = URL.createObjectURL(file);
+      setImageAttachments((items) => items.some((item) => item.assetId === body.assetId)
+        ? items
+        : [...items, { assetId: body.assetId!, previewUrl }].slice(0, 2));
     } catch (cause) {
       setImageError(cause instanceof Error ? cause.message : "Could not upload that image.");
     } finally {
       setUploadingImage(false);
     }
-  }, [imageUrls.length, uploadingImage]);
+  }, [imageAttachments.length, uploadingImage]);
+
+  const removeKinfolkImage = useCallback(async (attachment: { assetId: string; previewUrl: string }) => {
+    setImageAttachments((items) => items.filter((item) => item.assetId !== attachment.assetId));
+    URL.revokeObjectURL(attachment.previewUrl);
+    try {
+      await fetch(`${BASE}api/media/kinfolk-question/${encodeURIComponent(attachment.assetId)}`, {
+        method: "DELETE",
+        headers: kinfolkAuthHeaders(),
+        credentials: "include",
+      });
+    } catch {
+      // The server-side expiry worker is the privacy backstop if the network
+      // drops before this explicit member deletion reaches the API.
+      setImageError("The image was removed from this screen and will expire shortly from private processing.");
+    }
+  }, []);
 
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
@@ -1789,7 +1810,8 @@ function TravelPage() {
     setExactRadiusOrigin("");
     if (inputRef.current) { inputRef.current.style.height = "auto"; }
 
-    const attachedImages = [...imageUrls];
+    const attachedImagePreviews = imageAttachments.map((attachment) => attachment.previewUrl);
+    const attachedImageAssetIds = imageAttachments.map((attachment) => attachment.assetId);
     const conversationContext = messages.slice(-6).map((message) => ({
       role: message.role,
       content: message.content,
@@ -1798,7 +1820,7 @@ function TravelPage() {
     const recentLocation = [...messages]
       .reverse()
       .find((message) => message.location?.city)?.location?.city;
-    const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: trimmed, timestamp: new Date().toISOString(), imageUrls: attachedImages };
+    const userMsg: Message = { id: crypto.randomUUID(), role: "user", content: trimmed, timestamp: new Date().toISOString(), imageUrls: attachedImagePreviews };
     requestConversationScroll("send");
     setMessages(prev => [...prev, userMsg]);
     // Status stages describe only local elapsed request time. Clear any prior
@@ -1820,7 +1842,7 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/chat`, {
         method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include",
-        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageUrls: attachedImages, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageAssetIds: attachedImageAssetIds, imageVisionConsent: attachedImageAssetIds.length > 0, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
         signal: controller.signal,
       });
 
@@ -1908,7 +1930,7 @@ function TravelPage() {
         : "Kinfolk is having trouble answering that right now. Try again.";
 
       if (data.sessionId && data.sessionId !== sessionId) { setSessionId(data.sessionId); loadSessions(); }
-      setImageUrls([]);
+      setImageAttachments([]);
       if (data.sensitiveMemoryConfirmation?.confirmationRequired === true) {
         setPendingSensitiveMemory({
           content: trimmed,
@@ -1988,8 +2010,12 @@ function TravelPage() {
       if (activeChatControllerRef.current === controller) activeChatControllerRef.current = null;
       clearResponseStatusTimers();
       setSending(false);
+      // This deliberately clears only pending assets. The user-message preview
+      // above stays local to this browser tab; the API purges the private object
+      // after its response (or the bounded expiry worker handles interruption).
+      setImageAttachments([]);
     }
-  }, [sending, sessionId, loadSessions, imageUrls, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, exactRadiusOrigin]);
+  }, [sending, sessionId, loadSessions, imageAttachments, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, exactRadiusOrigin]);
 
   // Change the depth of an existing answer (Show more / Show less).
   // Records the event server-side and updates the local message state optimistically.
@@ -2992,8 +3018,17 @@ function TravelPage() {
                   </div>
                 )}
 
-                {imageUrls.length > 0 && <div className="mb-2 flex max-w-3xl gap-2 mx-auto">
-                  {imageUrls.map((url) => <div key={url} className="relative"><img src={url} alt="Ready to ask Kinfolk about" className="h-20 w-20 rounded-xl object-cover" /><button onClick={() => setImageUrls((items) => items.filter((item) => item !== url))} aria-label="Remove image" className="absolute -right-1 -top-1 rounded-full bg-[#2B1507] p-1 text-white"><X size={11} /></button></div>)}
+                {pendingImageConsent && <div role="dialog" aria-modal="true" aria-label="Use an image with Kinfolk" className="mb-3 mx-auto max-w-3xl rounded-2xl border border-[#8D5C17]/25 bg-[#FFF9ED] p-4 text-sm text-[#3A1F0E] shadow-sm">
+                  <p className="font-bold">Use this image for this answer?</p>
+                  <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/75">Kinfolk will review this image only to answer your current question. It is sent to Kinfolk&apos;s AI provider for that answer, is not used to train Kinfolk, is not saved as memory, and is deleted after the answer. If the answer is interrupted, the private upload expires within 15 minutes.</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button type="button" onClick={() => setPendingImageConsent(null)} className="rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-xs font-bold">Cancel</button>
+                    <button type="button" onClick={() => { const file = pendingImageConsent; setPendingImageConsent(null); void uploadKinfolkImage(file); }} className="rounded-xl bg-[#8D5C17] px-3 py-2 text-xs font-bold text-white">Use image for this answer</button>
+                  </div>
+                </div>}
+
+                {imageAttachments.length > 0 && <div className="mb-2 flex max-w-3xl gap-2 mx-auto">
+                  {imageAttachments.map((attachment) => <div key={attachment.assetId} className="relative"><img src={attachment.previewUrl} alt="Ready to ask Kinfolk about" className="h-20 w-20 rounded-xl object-cover" /><button onClick={() => void removeKinfolkImage(attachment)} aria-label="Remove image" className="absolute -right-1 -top-1 rounded-full bg-[#2B1507] p-1 text-white"><X size={11} /></button></div>)}
                 </div>}
                 {imageError && <p className="mb-2 max-w-3xl mx-auto text-xs text-red-600">{imageError}</p>}
 
@@ -3015,8 +3050,8 @@ function TravelPage() {
                 )}
 
                 <div className="flex items-end gap-2 max-w-3xl mx-auto">
-                  <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) void uploadKinfolkImage(file); event.target.value = ""; }} />
-                  {isLoggedIn && <button data-testid="kinfolk-image-upload" onClick={() => imageInputRef.current?.click()} disabled={uploadingImage || imageUrls.length >= 2 || sending} aria-label="Add an image" title="Ask Kinfolk about an image" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-[#CA922B]/10 border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] flex items-center justify-center disabled:opacity-40 shrink-0">{uploadingImage ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={16} />}</button>}
+                  <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) { setImageError(null); setPendingImageConsent(file); } event.target.value = ""; }} />
+                  {isLoggedIn && <button data-testid="kinfolk-image-upload" onClick={() => imageInputRef.current?.click()} disabled={uploadingImage || imageAttachments.length >= 2 || sending} aria-label="Add an image" title="Ask Kinfolk about an image" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-[#CA922B]/10 border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] flex items-center justify-center disabled:opacity-40 shrink-0">{uploadingImage ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={16} />}</button>}
                   {/* Microphone button */}
                   {isLoggedIn && (
                     <button

@@ -28,6 +28,10 @@ import { startLibraryGrowthWorker, stopLibraryGrowthWorker, setGrowthWorkerLogge
 import { seedLibraryStarterTopics } from "./library/seedLibraryStarterTopics";
 import { seedLibraryStarterEntries } from "./library/seedLibraryStarterEntries";
 import { isExplicitFeatureReleaseMode } from "./lib/explicitFeatureReleaseMode";
+import {
+  startKinfolkQuestionImageRetentionScheduler,
+  stopKinfolkQuestionImageRetentionScheduler,
+} from "./kinfolk/question-image-assets";
 
 const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);
@@ -225,6 +229,7 @@ const onListening = (err?: Error) => {
       startCityHealthAlertScheduler().catch((err) =>
         logger.error({ err }, "City health alert scheduler startup failed"),
       );
+      startKinfolkQuestionImageRetentionScheduler(logger);
     })
     .catch((err) => {
       // Top-level migration runner rejected — lease columns may be absent.
@@ -279,6 +284,7 @@ function gracefulShutdown(signal: string) {
     stopBuild97Monitor();
     stopCityRequestFlush();
     stopLibraryGrowthWorker();
+    stopKinfolkQuestionImageRetentionScheduler();
     try {
       // Drain the app's own pool (max:8) first.
       await pool.end();

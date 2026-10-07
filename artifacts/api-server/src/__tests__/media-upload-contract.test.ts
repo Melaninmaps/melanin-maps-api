@@ -117,6 +117,43 @@ describe("POST /api/media/upload error contract", () => {
     ]);
   });
 
+  it("requires explicit per-answer consent before accepting a Kinfolk question image", async () => {
+    const file = workingFile();
+    const response = await request(createTestApp(file))
+      .post("/api/media/upload?purpose=kinfolk_question")
+      .attach("file", Buffer.from("jpeg bytes"), { filename: "question.jpg", contentType: "image/jpeg" });
+
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe(MEDIA_UPLOAD_ERROR_CODES.VISION_CONSENT_REQUIRED);
+    expect(file.save).not.toHaveBeenCalled();
+    expect(file.getSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it("returns only an asset reference for a consented Kinfolk image", async () => {
+    const file = workingFile();
+    const recordAsset = vi.fn<(values: readonly unknown[]) => Promise<unknown>>().mockResolvedValue(undefined);
+    const response = await request(createTestApp(file, true, recordAsset))
+      .post("/api/media/upload?purpose=kinfolk_question")
+      .field("kinfolkVisionConsent", "true")
+      .attach("file", Buffer.from("jpeg bytes"), { filename: "question.jpg", contentType: "image/jpeg" });
+
+    expect(response.status).toBe(201);
+    expect(response.body.assetId).toEqual(expect.any(String));
+    expect(response.body.url).toBeUndefined();
+    expect(response.body.expiresAt).toEqual(expect.any(String));
+    expect(file.getSignedUrl).not.toHaveBeenCalled();
+    expect(file.makePublic).not.toHaveBeenCalled();
+    expect(recordAsset).toHaveBeenCalledWith([
+      response.body.assetId,
+      "media-contract-user",
+      "kinfolk_question",
+      "image/jpeg",
+      expect.any(Number),
+      expect.stringContaining("media-uploads/kinfolk-private/media-contract-user/"),
+      null,
+    ]);
+  });
+
   it("deletes the object and fails closed when asset tracking cannot be persisted", async () => {
     const file = workingFile();
     const recordAsset = vi.fn<(values: readonly unknown[]) => Promise<unknown>>()

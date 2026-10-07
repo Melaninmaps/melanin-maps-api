@@ -7,6 +7,10 @@ import {
   ObjectStorageConfigurationError,
 } from "../lib/objectStorage";
 import { pool } from "@workspace/db";
+import {
+  normalizeKinfolkQuestionImageAssetIds,
+  purgeKinfolkQuestionImages,
+} from "../kinfolk/question-image-assets";
 
 const IMAGE_MIMES = new Set([
   "image/jpeg",
@@ -37,6 +41,7 @@ const ALLOWED_PURPOSES = new Set([
 export const MEDIA_UPLOAD_ERROR_CODES = {
   FILE_REQUIRED: "MEDIA_FILE_REQUIRED",
   PURPOSE_UNSUPPORTED: "MEDIA_PURPOSE_UNSUPPORTED",
+  VISION_CONSENT_REQUIRED: "MEDIA_VISION_CONSENT_REQUIRED",
   UNSUPPORTED_TYPE: "MEDIA_UNSUPPORTED_TYPE",
   SIZE_LIMIT: "MEDIA_SIZE_LIMIT",
   STORAGE_NOT_CONFIGURED: "MEDIA_STORAGE_NOT_CONFIGURED",
@@ -252,8 +257,12 @@ export function registerMediaRoutes(app: Express, options: RegisterMediaRouteOpt
   const recordAsset = options.recordAsset ?? (async (values: readonly unknown[]) => pool.query(
     `INSERT INTO media_assets
        (id, uploader_id, purpose, mime_type, byte_size, object_key,
-        public_url, status, created_at)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,'ready',NOW())
+        public_url, status, created_at, vision_consent_granted_at, retention_expires_at)
+     VALUES (
+       $1,$2,$3,$4,$5,$6,$7,'ready',NOW(),
+       CASE WHEN $3 = 'kinfolk_question' THEN NOW() ELSE NULL END,
+       CASE WHEN $3 = 'kinfolk_question' THEN NOW() + INTERVAL '15 minutes' ELSE NULL END
+     )
      ON CONFLICT (id) DO NOTHING`,
     [...values],
   ));
@@ -293,6 +302,31 @@ export function registerMediaRoutes(app: Express, options: RegisterMediaRouteOpt
       void handleMediaUpload(req, res, requestId, storageClient, recordAsset);
     });
   });
+
+  app.delete("/api/media/kinfolk-question/:assetId", (req: Request, res: Response) => {
+    const requestId = getRequestId(req, res);
+    const user = (req as Request & { user?: { id?: string } }).user;
+    if (!user?.id) {
+      res.status(401).json({ error: "Authentication required", code: "AUTH_REQUIRED", requestId });
+      return;
+    }
+    const assetIds = normalizeKinfolkQuestionImageAssetIds([req.params.assetId]);
+    if (assetIds.length !== 1) {
+      respondWithError(res, 400, MEDIA_UPLOAD_ERROR_CODES.PURPOSE_UNSUPPORTED, "Invalid private image reference.", requestId);
+      return;
+    }
+    void purgeKinfolkQuestionImages({
+      userId: user.id,
+      assetIds,
+      storageClient,
+    }).then(() => {
+      // Do not disclose whether another asset exists: this endpoint is only a
+      // member-controlled deletion request for their own private question image.
+      res.status(204).end();
+    }).catch(() => {
+      respondWithError(res, 503, MEDIA_UPLOAD_ERROR_CODES.STORAGE_SAVE_FAILED, "The private image could not be removed yet. Please try again.", requestId);
+    });
+  });
 }
 
 async function handleMediaUpload(
@@ -315,6 +349,16 @@ async function handleMediaUpload(
   const purpose = (req.query["purpose"] as string) ?? "general";
   if (!ALLOWED_PURPOSES.has(purpose)) {
     respondWithError(res, 400, MEDIA_UPLOAD_ERROR_CODES.PURPOSE_UNSUPPORTED, "Unsupported upload purpose.", requestId);
+    return;
+  }
+  if (purpose === "kinfolk_question" && req.body?.kinfolkVisionConsent !== "true") {
+    respondWithError(
+      res,
+      400,
+      MEDIA_UPLOAD_ERROR_CODES.VISION_CONSENT_REQUIRED,
+      "Choose whether to share the image with Kinfolk for this answer before uploading it.",
+      requestId,
+    );
     return;
   }
 
@@ -394,9 +438,14 @@ async function handleMediaUpload(
     return;
   }
 
-  let url: string;
+  let url: string | null;
   try {
-    if (isPrivate) {
+    if (purpose === "kinfolk_question") {
+      // The browser gets a local preview only. A short-lived signed URL is
+      // created server-side for the active, consented model request and is never
+      // returned to the browser or stored in the conversation.
+      url = null;
+    } else if (isPrivate) {
       const [signedUrl] = await storageFile.getSignedUrl({ action: "read", expires: Date.now() + 15 * 60 * 1000 });
       url = signedUrl;
     } else {
@@ -439,7 +488,7 @@ async function handleMediaUpload(
 
   const fileType = isVideo ? "video" : isImage ? "image" : "document";
   res.status(201).json({
-    url,
+    ...(url ? { url } : {}),
     assetId,
     type: fileType,
     requestId,
