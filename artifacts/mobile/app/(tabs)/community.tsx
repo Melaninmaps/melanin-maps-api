@@ -345,7 +345,7 @@ export default function CommunityScreen() {
     inputRef.current?.focus();
   };
 
-  const { groups, isLoading: groupsLoading, refetch: refetchGroups } = useGroups();
+  const { groups, isLoading: groupsLoading, error: groupsError, refetch: refetchGroups } = useGroups();
   const [eventsTimeFilter, setEventsTimeFilter] = useState("Upcoming");
   const { events, isLoading: eventsLoading, refetch: refetchEvents } = useEvents();
 
@@ -566,8 +566,11 @@ export default function CommunityScreen() {
 
   const filteredPosts = posts;
 
+  // The endpoint is already membership-scoped; keep the explicit second gate at
+  // the UI boundary so a stale response cannot surface a group after departure.
+  const memberGroups = groups.filter((group) => group.isMember === true);
   const filteredGroups =
-    groupCategory === "all" ? groups : groups.filter((g) => g.category === groupCategory);
+    groupCategory === "all" ? memberGroups : memberGroups.filter((g) => g.category === groupCategory);
 
   const pickAndUploadMedia = async (kind: "image" | "video") => {
     if (Platform.OS === "web") { Alert.alert("Not supported", "Media uploads are available on the mobile app."); return; }
@@ -969,77 +972,95 @@ export default function CommunityScreen() {
       ) : activeTab === "Circles ⭐" ? (
         <CirclesTab colors={colors} router={router} isAuthenticated={isAuthenticated} isPaidMember={isPaidMember} bottomPad={bottomPad} />
       ) : activeTab === "My Groups" ? (
-        <View style={{ flex: 1 }}>
-          {/* Category filter */}
+        <View style={styles.myGroupsContainer}>
           <FlatList
-        keyboardDismissMode="on-drag"
-            horizontal
-            data={GROUP_CATEGORIES}
-            keyExtractor={(c) => c.value}
-            showsHorizontalScrollIndicator={false}
-            style={[styles.categoryScroll, { borderBottomColor: colors.border }]}
-            contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 8 }}
-            renderItem={({ item }) => (
-              <TouchableOpacity activeOpacity={0.85}
-                style={[
-                  styles.categoryChip,
-                  {
-                    backgroundColor: groupCategory === item.value ? colors.primary : colors.secondary,
-                    borderColor: groupCategory === item.value ? colors.primary : colors.border,
-                  },
-                ]}
-                onPress={() => setGroupCategory(item.value)}
-              >
-                <Text style={[styles.categoryChipText, { color: groupCategory === item.value ? "#FFFFFF" : colors.foreground }]}>
-                  {item.label}
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
-
-          <TouchableOpacity
-            activeOpacity={0.8}
-            style={[styles.composeBar, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 4 }]}
-            onPress={() => {
-              if (!isAuthenticated) {
-                setUpgradeFeature("Community Groups");
-                setShowUpgrade(true);
-                return;
-              }
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              setShowCreateGroup(true);
-            }}
-          >
-            <View style={[styles.composeBarAvatar, { backgroundColor: colors.primary + "18" }]}>
-              <Feather name="users" size={15} color={colors.primary} />
-            </View>
-            <Text style={[styles.composeBarPlaceholder, { color: colors.mutedForeground }]}>
-              Start a new group for your community
-            </Text>
-            <View style={[styles.composeBarAtBadge, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "25" }]}>
-              <Feather name="plus" size={13} color={colors.primary} />
-            </View>
-          </TouchableOpacity>
-
-          <FlatList
-        keyboardDismissMode="on-drag"
+            keyboardDismissMode="on-drag"
             data={filteredGroups}
-            keyExtractor={(g) => String(g.id)}
+            keyExtractor={(group) => String(group.id)}
             style={{ flex: 1 }}
             contentContainerStyle={[styles.groupsList, { paddingBottom: bottomPad + 100, flexGrow: 1 }]}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing || groupsLoading} onRefresh={() => void refetchGroups()} tintColor={colors.primary} />}
+            ListHeaderComponent={
+              <View style={styles.myGroupsHeader}>
+                <Text style={[styles.myGroupsTitle, { color: colors.foreground }]}>Your groups</Text>
+                <Text style={[styles.myGroupsDescription, { color: colors.mutedForeground }]}>Only groups you currently belong to appear here.</Text>
+                <ScrollView
+                  keyboardDismissMode="on-drag"
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.myGroupsCategories}
+                  accessibilityLabel="Filter your groups by category"
+                >
+                  {GROUP_CATEGORIES.map((category) => (
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      key={category.value}
+                      style={[
+                        styles.categoryChip,
+                        {
+                          backgroundColor: groupCategory === category.value ? colors.primary : colors.secondary,
+                          borderColor: groupCategory === category.value ? colors.primary : colors.border,
+                        },
+                      ]}
+                      onPress={() => setGroupCategory(category.value)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected: groupCategory === category.value }}
+                      accessibilityLabel={`Show ${category.label} groups`}
+                    >
+                      <Text style={[styles.categoryChipText, { color: groupCategory === category.value ? "#FFFFFF" : colors.foreground }]}>
+                        {category.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                <TouchableOpacity
+                  activeOpacity={0.8}
+                  style={[styles.composeBar, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 4 }]}
+                  onPress={() => {
+                    if (!isAuthenticated) {
+                      setUpgradeFeature("Community Groups");
+                      setShowUpgrade(true);
+                      return;
+                    }
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setShowCreateGroup(true);
+                  }}
+                  accessibilityLabel="Start a new community group"
+                >
+                  <View style={[styles.composeBarAvatar, { backgroundColor: colors.primary + "18" }]}>
+                    <Feather name="users" size={15} color={colors.primary} />
+                  </View>
+                  <Text style={[styles.composeBarPlaceholder, { color: colors.mutedForeground }]}>Start a new group for your community</Text>
+                  <View style={[styles.composeBarAtBadge, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "25" }]}>
+                    <Feather name="plus" size={13} color={colors.primary} />
+                  </View>
+                </TouchableOpacity>
+              </View>
+            }
             ListEmptyComponent={
               groupsLoading ? (
-                <View style={styles.empty}>
+                <View testID="my-groups-loading" style={styles.empty}>
                   <ActivityIndicator size="large" color={colors.primary} />
                 </View>
+              ) : groupsError ? (
+                <View testID="my-groups-recovery" style={styles.empty}>
+                  <Feather name="wifi-off" size={40} color={colors.mutedForeground} />
+                  <Text style={[styles.emptyTitle, { color: colors.foreground }]}>My Groups needs to reconnect</Text>
+                  <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{groupsError}</Text>
+                  <TouchableOpacity
+                    style={[styles.retryBtn, { borderColor: colors.primary }]}
+                    onPress={() => void refetchGroups()}
+                    accessibilityLabel="Retry loading My Groups"
+                  >
+                    <Feather name="refresh-cw" size={15} color={colors.primary} />
+                    <Text style={[styles.retryTxt, { color: colors.primary }]}>Try again</Text>
+                  </TouchableOpacity>
+                </View>
               ) : (
-                <View style={styles.empty}>
-                  <Feather name="users" size={40} color={colors.muted} />
-                  <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>You have not joined any groups yet</Text>
-                  <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                    Groups you currently belong to will appear here.
-                  </Text>
+                <View testID="my-groups-empty" style={styles.empty}>
+                  <Feather name="users" size={40} color={colors.mutedForeground} />
+                  <Text style={[styles.emptyTitle, { color: colors.foreground }]}>You have not joined any groups yet</Text>
+                  <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Groups you currently belong to will appear here.</Text>
                 </View>
               )
             }
@@ -1050,8 +1071,6 @@ export default function CommunityScreen() {
               />
             )}
           />
-
-          {/* Create group FAB */}
           <TouchableOpacity
             style={[styles.fab, { backgroundColor: colors.primary, bottom: bottomPad + 90 }]}
             activeOpacity={0.85}
@@ -1064,6 +1083,7 @@ export default function CommunityScreen() {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
               setShowCreateGroup(true);
             }}
+            accessibilityLabel="Start a new community group"
           >
             <Feather name="plus" size={24} color="#FFFFFF" />
           </TouchableOpacity>
@@ -2562,6 +2582,11 @@ const styles = StyleSheet.create({
   categoryScroll: { borderBottomWidth: 1, maxHeight: 54 },
   categoryChip: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20, borderWidth: 1 },
   categoryChipText: { fontFamily: "Inter_500Medium", fontSize: 12 },
+  myGroupsContainer: { flex: 1 },
+  myGroupsHeader: { paddingTop: 14, paddingHorizontal: 16, paddingBottom: 10 },
+  myGroupsTitle: { fontFamily: "Inter_700Bold", fontSize: 18 },
+  myGroupsDescription: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginTop: 3 },
+  myGroupsCategories: { gap: 8, paddingTop: 12, paddingBottom: 10 },
   groupsList: { paddingHorizontal: 16, paddingTop: 12, gap: 12 },
   groupCard: {
     flexDirection: "row",
