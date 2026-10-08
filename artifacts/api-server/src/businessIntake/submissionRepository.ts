@@ -6,6 +6,14 @@ import type {
   CommunityReportedOwnership,
   SubmissionSocialProfiles,
 } from "./types";
+import {
+  highConfidenceBusinessDuplicateReasons,
+  normalizeBusinessPhone,
+  normalizeOfficialSocialProfileForPlatform,
+  normalizeOfficialWebsiteDomain,
+  type BusinessDuplicateMatchReason,
+  type BusinessIdentityInput,
+} from "../businesses/businessDuplicateIdentity";
 
 export type SubmissionStatus = "pending_review" | "published" | "declined" | "needs_info";
 
@@ -62,6 +70,7 @@ export interface CreateSubmissionResult {
 export interface PublishedDuplicate {
   id: string;
   name: string;
+  matchReasons: BusinessDuplicateMatchReason[];
 }
 
 export interface DecisionInput {
@@ -141,21 +150,58 @@ export class SubmissionRepository {
   }
 
   async findPublishedDuplicate(input: CommunityBusinessSubmissionInput): Promise<PublishedDuplicate | null> {
-    const result = await this.database.query<PublishedDuplicate>(
-      `SELECT id, name
-       FROM public_businesses
-       WHERE lower(trim(name)) = lower(trim($1))
-         AND lower(trim(city)) = lower(trim($2))
-         AND (
-           NULLIF(trim($3), '') IS NULL
-           OR NULLIF(trim(address), '') IS NULL
-           OR lower(trim(address)) = lower(trim($3))
-         )
-       ORDER BY created_at ASC
-       LIMIT 1`,
-      [input.name, input.city, input.address ?? null],
+    const socials = input.socialProfiles ?? {};
+    const identityInput: BusinessIdentityInput = {
+      name: input.name,
+      address: input.address,
+      city: input.city,
+      state: input.state,
+      phone: input.phone,
+      website: input.website,
+      instagram: socials.instagram,
+      facebook: socials.facebook,
+      tiktok: socials.tiktok,
+      youtube: socials.youtube,
+    };
+    const socialNeedles = [
+      normalizeOfficialSocialProfileForPlatform("instagram", socials.instagram),
+      normalizeOfficialSocialProfileForPlatform("facebook", socials.facebook),
+      normalizeOfficialSocialProfileForPlatform("tiktok", socials.tiktok),
+      normalizeOfficialSocialProfileForPlatform("youtube", socials.youtube),
+    ].map((value) => value ?? "");
+    const result = await this.database.query<BusinessIdentityInput & { id: string; name: string }>(
+      `SELECT id, name, address, city, state, phone, website,
+              instagram, facebook, tiktok, youtube
+         FROM public_businesses
+        WHERE (
+          (LOWER(TRIM(name)) = LOWER(TRIM($1))
+            AND LOWER(TRIM(city)) = LOWER(TRIM($2))
+            AND LOWER(TRIM(COALESCE(state, ''))) = LOWER(TRIM(COALESCE($3, ''))))
+          OR ($4 <> '' AND REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') LIKE '%' || $4 || '%')
+          OR ($5 <> '' AND LOWER(COALESCE(website, '')) LIKE '%' || $5 || '%')
+          OR ($6 <> '' AND LOWER(COALESCE(instagram, '')) LIKE '%' || $6 || '%')
+          OR ($7 <> '' AND LOWER(COALESCE(facebook, '')) LIKE '%' || $7 || '%')
+          OR ($8 <> '' AND LOWER(COALESCE(tiktok, '')) LIKE '%' || $8 || '%')
+          OR ($9 <> '' AND LOWER(COALESCE(youtube, '')) LIKE '%' || $9 || '%')
+        )
+        ORDER BY created_at ASC
+        LIMIT 50`,
+      [
+        input.name,
+        input.city,
+        input.state ?? "",
+        normalizeBusinessPhone(input.phone) ?? "",
+        normalizeOfficialWebsiteDomain(input.website) ?? "",
+        ...socialNeedles,
+      ],
     );
-    return result.rows[0] ?? null;
+    for (const candidate of result.rows) {
+      const matchReasons = highConfidenceBusinessDuplicateReasons(identityInput, candidate);
+      if (matchReasons.length > 0) {
+        return { id: candidate.id, name: candidate.name, matchReasons };
+      }
+    }
+    return null;
   }
 
   private async validateOwnedMedia(
