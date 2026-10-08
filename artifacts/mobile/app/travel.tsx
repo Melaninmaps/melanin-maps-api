@@ -2596,6 +2596,7 @@ export default function TravelScreen() {
     setIsRecordingVoice(false);
     setIsTranscribingVoice(true);
     setVoiceInputStatus("Turning your words into text…");
+    let temporaryRecordingUri: string | null = null;
     try {
       const durationMs = primaryRecordingStartedAtRef.current === null
         ? 0
@@ -2604,6 +2605,7 @@ export default function TravelScreen() {
       if (primaryRecorder.isRecording) await primaryRecorder.stop();
       const uri = primaryRecorder.uri;
       if (!uri) throw new Error("No recording was captured. Please try again or type your question.");
+      temporaryRecordingUri = uri;
       const ext = (uri.split(".").pop() ?? "m4a").toLowerCase();
       const mimeType = ({
         m4a: "audio/mp4",
@@ -2676,6 +2678,10 @@ export default function TravelScreen() {
       primaryRecordingStartedAtRef.current = null;
       setVoiceRecordingElapsedSeconds(0);
       setIsTranscribingVoice(false);
+      if (temporaryRecordingUri) {
+        const temporaryFile = new FileSystem.File(temporaryRecordingUri);
+        try { if (temporaryFile.exists) temporaryFile.delete(); } catch { /* cache cleanup is best effort */ }
+      }
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
     }
   }, [isRecordingVoice, preferences?.regionalFlavor, primaryRecorder]);

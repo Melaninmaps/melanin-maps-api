@@ -47,6 +47,24 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(travel).toContain("cancelPrimaryVoiceRecording()");
   });
 
+  it("recovers an externally interrupted widget recording without uploading partial audio", () => {
+    expect(widget).toContain("useAudioRecorderState");
+    expect(widget).toContain("const recorderState = useAudioRecorderState(recorder, 250)");
+    expect(widget).toContain("voiceRecordingObservedRef");
+    expect(widget).toContain("voiceStopRequestedRef");
+    expect(widget).toContain("Recording was interrupted. Your draft was restored.");
+    expect(widget).toContain("removeTemporaryVoiceRecording(recorder.uri)");
+    expect(widget).toContain("if (recorder.getStatus().isRecording || voiceStopRequestedRef.current) return");
+  });
+
+  it("removes raw voice recordings after every transcription attempt", () => {
+    expect(widget).toContain("let temporaryRecordingUri: string | null = null");
+    expect(widget).toContain("removeTemporaryVoiceRecording(temporaryRecordingUri)");
+    expect(travel).toContain("let temporaryRecordingUri: string | null = null");
+    expect(travel).toContain("new FileSystem.File(temporaryRecordingUri)");
+    expect(travel).toContain("if (temporaryFile.exists) temporaryFile.delete()");
+  });
+
   it("does not silently persist a mobile reminder proposal and preserves its due date on explicit save", () => {
     expect(widget).toContain("taskAction: taskAction ?? null");
     expect(widget).not.toContain("if (taskAction && token)");

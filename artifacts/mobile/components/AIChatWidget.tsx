@@ -11,6 +11,7 @@ import {
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
   RecordingPresets,
+  useAudioRecorderState,
 } from "expo-audio";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { NativeScrollEvent, NativeSyntheticEvent ,
@@ -339,10 +340,13 @@ export function AIChatWidget() {
   const [aaveLevel, setAaveLevel] = useState<number>(0);
   const [aaveSaving, setAaveSaving] = useState(false);
   const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
+  const recorderState = useAudioRecorderState(recorder, 250);
   const player = useAudioPlayer(listenUri);
   const playerStatus = useAudioPlayerStatus(player);
   const recordingStartedAtRef = useRef<number | null>(null);
   const recordingDraftRef = useRef("");
+  const voiceStopRequestedRef = useRef(false);
+  const voiceRecordingObservedRef = useRef(false);
   const [recordingElapsedSeconds, setRecordingElapsedSeconds] = useState(0);
   const listRef = useRef<FlatList>(null);
   const openRef = useRef(false);
@@ -383,6 +387,16 @@ export function AIChatWidget() {
     || ["/onboarding", "/login", "/signup"].some((r) => pathname.startsWith(r));
 
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  const removeTemporaryVoiceRecording = useCallback((uri: string | null) => {
+    if (!uri) return;
+    try {
+      const file = new FileSystem.File(uri);
+      if (file.exists) file.delete();
+    } catch {
+      // Cache cleanup is best effort and must never block transcript recovery.
+    }
+  }, []);
 
   const startPulse = useCallback(() => {
     Animated.loop(
@@ -483,7 +497,13 @@ export function AIChatWidget() {
       }
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
       await recorder.prepareToRecordAsync();
+      voiceStopRequestedRef.current = false;
+      voiceRecordingObservedRef.current = false;
       recorder.record();
+      await new Promise<void>((resolve) => setTimeout(resolve, 80));
+      if (!recorder.getStatus().isRecording) {
+        throw new Error("Your phone did not begin recording. Check microphone access and try again.");
+      }
       recordingStartedAtRef.current = Date.now();
       recordingDraftRef.current = input;
       setRecordingElapsedSeconds(0);
@@ -505,8 +525,10 @@ export function AIChatWidget() {
 
   const stopVoice = useCallback(async () => {
     if (!recorder.isRecording) return;
+    voiceStopRequestedRef.current = true;
     setIsRecording(false);
     setVoiceInputStatus("Turning your words into text…");
+    let temporaryRecordingUri: string | null = null;
     try {
       const durationMs = recordingStartedAtRef.current === null
         ? 0
@@ -519,6 +541,7 @@ export function AIChatWidget() {
         Alert.alert("Voice Input", "No recording was captured. Please try again or type your question.");
         return;
       }
+      temporaryRecordingUri = uri;
 
       const base = getApiBase();
       const token = await getToken();
@@ -581,12 +604,16 @@ export function AIChatWidget() {
     } finally {
       recordingStartedAtRef.current = null;
       setRecordingElapsedSeconds(0);
+      removeTemporaryVoiceRecording(temporaryRecordingUri);
+      voiceRecordingObservedRef.current = false;
+      voiceStopRequestedRef.current = false;
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
     }
-  }, [recorder]);
+  }, [recorder, removeTemporaryVoiceRecording]);
 
   const discardVoiceRecording = useCallback(async () => {
     if (!recorder.isRecording) return;
+    voiceStopRequestedRef.current = true;
     setIsRecording(false);
     const draft = recordingDraftRef.current;
     setInput(draft);
@@ -594,17 +621,16 @@ export function AIChatWidget() {
     try {
       await recorder.stop();
       const uri = recorder.uri;
-      if (uri) {
-        const file = new FileSystem.File(uri);
-        try { file.delete(); } catch { /* cache cleanup best effort */ }
-      }
+      removeTemporaryVoiceRecording(uri);
     } catch { /* discard is intentionally quiet */ }
     finally {
       recordingStartedAtRef.current = null;
       setRecordingElapsedSeconds(0);
+      voiceRecordingObservedRef.current = false;
+      voiceStopRequestedRef.current = false;
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
     }
-  }, [recorder]);
+  }, [recorder, removeTemporaryVoiceRecording]);
 
   useEffect(() => {
     if (!isRecording || recordingStartedAtRef.current === null) return;
@@ -624,6 +650,30 @@ export function AIChatWidget() {
       clearTimeout(limit);
     };
   }, [isRecording, stopVoice]);
+
+  // Calls, route changes, and media-service resets can stop native recording
+  // without invoking the member's Stop action. Restore the untouched draft,
+  // remove the captured raw file, and leave a clear retry state—never upload a
+  // partial recording after that interruption.
+  useEffect(() => {
+    if (recorderState.isRecording) {
+      voiceRecordingObservedRef.current = true;
+      return;
+    }
+    if (!isRecording || !voiceRecordingObservedRef.current || voiceStopRequestedRef.current) return;
+    const timeout = setTimeout(() => {
+      if (recorder.getStatus().isRecording || voiceStopRequestedRef.current) return;
+      removeTemporaryVoiceRecording(recorder.uri);
+      recordingStartedAtRef.current = null;
+      voiceRecordingObservedRef.current = false;
+      setIsRecording(false);
+      setRecordingElapsedSeconds(0);
+      setInput(recordingDraftRef.current);
+      setVoiceInputStatus("Recording was interrupted. Your draft was restored. Tap the microphone to try again.");
+      void setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+    }, 350);
+    return () => clearTimeout(timeout);
+  }, [isRecording, recorder, recorderState.isRecording, removeTemporaryVoiceRecording]);
 
   useEffect(() => {
     if (!isAuthenticated) {
