@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { BusinessOwnershipEditor } from "@/features/businesses/BusinessOwnershipEditor";
 import { BusinessExperienceEditor } from "@/features/businesses/BusinessExperienceEditor";
 import { BusinessVoiceProfileEditor } from "@/features/businesses/BusinessVoiceProfileEditor";
+import { BusinessServiceOfferingsEditor } from "@/components/BusinessServiceOfferingsEditor";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -348,6 +349,7 @@ export default function BusinessDashboard() {
 
                     <BusinessOwnershipEditor businessId={selected.id} />
                     <BusinessExperienceEditor business={selected} />
+                    <BusinessServiceOfferingsEditor businessId={selected.id} admin={false} />
                     <BusinessVoiceProfileEditor businessId={selected.id} />
 
                     <div>
