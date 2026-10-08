@@ -58,6 +58,9 @@ describe("mobile Kinfolk conversation-first visuals", () => {
     expect(travelSource).toContain('keyboardShouldPersistTaps="handled"');
     expect(travelSource).toContain("automaticallyAdjustKeyboardInsets={Platform.OS === \"ios\"}");
     expect(travelSource).toContain("onFocus={() => scrollToBottom(true)}");
+    expect(travelSource).toContain("const accepted = await sendMessage(msg, {");
+    expect(travelSource).toContain("if (accepted) {");
+    expect(travelSource).toContain("Keyboard.dismiss();");
     expect(travelSource).toContain("contentCol: { flex: 1, minWidth: 0 }");
     expect(travelSource).toContain("chatContent: { paddingTop: 16, paddingBottom: 24, flexGrow: 1 }");
   });

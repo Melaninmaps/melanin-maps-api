@@ -257,7 +257,7 @@ export function useKinfolk() {
       includeCommunityPerspective?: boolean;
       publicOrigin?: string;
     },
-  ): Promise<void> => {
+  ): Promise<boolean> => {
     // A new member turn always wins. Abort the prior fetch without adding an
     // artificial error bubble, so Kinfolk feels interruptible like a real chat.
     activeRequestRef.current?.abort();
@@ -310,7 +310,7 @@ export function useKinfolk() {
         signal: controller.signal,
       }).finally(() => clearTimeout(chatTimeout));
 
-      if (requestGeneration !== requestGenerationRef.current) return;
+      if (requestGeneration !== requestGenerationRef.current) return false;
       if (res.ok) {
         const data = (await res.json()) as {
           sessionId?: string;
@@ -396,6 +396,7 @@ export function useKinfolk() {
         };
         setPendingRetryText(null); // clear retry on success
         setMessages((prev) => [...prev, aiMsg]);
+        return true;
       } else if (res.status === 503) {
         // KINFOLK_BUSY or KINFOLK_RATE_LIMITED — temporary, user question preserved for retry
         const errData = await res.json().catch(() => ({})) as { code?: string };
@@ -412,6 +413,7 @@ export function useKinfolk() {
         };
         setMessages((prev) => [...prev, aiMsg]);
         if (isBusy) setPendingRetryText(text);
+        return false;
       } else if (res.status === 429) {
         const errData = await res.json().catch(() => ({})) as { code?: string; used?: number; limit?: number };
         const isLimit = errData.code === "KINFOLK_LIMIT_REACHED";
@@ -425,6 +427,7 @@ export function useKinfolk() {
           limitReached: isLimit,
         };
         setMessages((prev) => [...prev, aiMsg]);
+        return false;
       } else {
         const aiMsg: ChatMessage = {
           id: makeId(),
@@ -433,10 +436,11 @@ export function useKinfolk() {
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, aiMsg]);
+        return false;
       }
     } catch (err: unknown) {
-      if (requestGeneration !== requestGenerationRef.current) return;
-      if (err instanceof Error && err.name === "AbortError" && !timedOut) return;
+      if (requestGeneration !== requestGenerationRef.current) return false;
+      if (err instanceof Error && err.name === "AbortError" && !timedOut) return false;
       const isTimeout = timedOut;
       const aiMsg: ChatMessage = {
         id: makeId(),
@@ -447,6 +451,7 @@ export function useKinfolk() {
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiMsg]);
+      return false;
     } finally {
       if (requestGeneration === requestGenerationRef.current) {
         activeRequestRef.current = null;
