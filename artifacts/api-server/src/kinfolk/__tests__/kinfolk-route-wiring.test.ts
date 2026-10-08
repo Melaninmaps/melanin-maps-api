@@ -612,7 +612,7 @@ describe("Kinfolk chat static wiring", () => {
   });
 
   it("loads a prior conversation only for an explicit owner-scoped active-session handoff", () => {
-    const handoffStart = chatRoute.indexOf("let crossSessionHandoffMessages");
+    const handoffStart = chatRoute.indexOf("let crossSessionHandoff:");
     const handoffEnd = chatRoute.indexOf("const existingMessages", handoffStart);
     const handoffBlock = chatRoute.slice(handoffStart, handoffEnd);
 
@@ -622,7 +622,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(handoffBlock).toContain("isNull(kinfolkSessionsTable.archivedAt)");
     expect(handoffBlock).toContain("resolveExplicitCrossSessionHandoff");
     expect(handoffBlock).toContain(".orderBy(desc(kinfolkSessionsTable.updatedAt))");
-    expect(chatRoute).toContain("messages: crossSessionHandoffMessages ?? existingMessages");
+    expect(chatRoute).toContain("crossSessionHandoff?.scope");
+    expect(chatRoute).toContain("conversationHandoff: conversationContextScope?.handoff ?? null");
   });
 });
 

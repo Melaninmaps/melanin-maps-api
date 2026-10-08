@@ -9362,7 +9362,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // active, owner-scoped session carrying a return-later marker contribute its
     // bounded thread. The resumed answer stays in this new session; no prior
     // messages are copied into it and no profile memory is created.
-    let crossSessionHandoffMessages: SessionMessage[] | null = null;
+    let crossSessionHandoff: ReturnType<typeof resolveExplicitCrossSessionHandoff> = null;
     if (
       memoryEnabled &&
       sessionPersistenceAvailable &&
@@ -9387,14 +9387,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           )
           .orderBy(desc(kinfolkSessionsTable.updatedAt))
           .limit(12);
-        const crossSessionHandoff = resolveExplicitCrossSessionHandoff({
+        crossSessionHandoff = resolveExplicitCrossSessionHandoff({
           sessions: recentOwnerSessions.map((session) => ({
             id: session.id,
             messages: session.messages ?? [],
           })),
           currentMessage: message,
         });
-        crossSessionHandoffMessages = crossSessionHandoff?.scope.messages ?? null;
       } catch (err) {
         // An unavailable optional history read must never broaden context or
         // block ordinary chat. It only makes this explicit resume unavailable.
@@ -9415,8 +9414,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // short follow-up, may reuse the bounded recent thread.
     const conversationContextScope = staffAuditPolicy
       ? null
-      : resolveConversationContextScope({
-          messages: crossSessionHandoffMessages ?? existingMessages,
+      : crossSessionHandoff?.scope
+        ?? resolveConversationContextScope({
+          messages: existingMessages,
           currentMessage: message,
         });
     const scopedConversationMessages =
