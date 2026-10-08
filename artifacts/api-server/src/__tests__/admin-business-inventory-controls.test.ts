@@ -61,6 +61,9 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(migrations).toContain("ensureDirectoryReconciliationLedgerSchema");
     expect(serverStartup).toContain("await ensureDirectoryReconciliationLedgerSchema(logger)");
     expect(serverStartup).toContain("Directory reconciliation ledger schema ready before traffic acceptance");
+    expect(migrations).toContain("export async function ensureBusinessWebsiteCleanupAuditSchema");
+    expect(serverStartup).toContain("await ensureBusinessWebsiteCleanupAuditSchema(");
+    expect(serverStartup).toContain("Website cleanup audit schema ready before traffic acceptance");
   });
 
   it("projects only reconciliation fields so the established inventory date order stays unambiguous", () => {

@@ -7,6 +7,7 @@ import { startBuild97Monitor, stopBuild97Monitor } from "./lib/build97Monitor";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
 import {
+  ensureBusinessWebsiteCleanupAuditSchema,
   ensureDirectoryReconciliationLedgerSchema,
   ensureCommunityFeedReadSchema,
   ensureKinfolkQuestionImageSchemaOnly,
@@ -153,6 +154,14 @@ try {
   // writers, publishers, and enrichment work.
   await ensureDirectoryReconciliationLedgerSchema(logger);
   logger.info("Directory reconciliation ledger schema ready before traffic acceptance");
+  // Website cleanup is likewise a schema-only safety control. It is required
+  // for an evidence-bound removal of a bad public URL, and it never changes a
+  // business row by itself.
+  await ensureBusinessWebsiteCleanupAuditSchema(
+    (message) => logger.info(message),
+    (message) => logger.warn(message),
+  );
+  logger.info("Website cleanup audit schema ready before traffic acceptance");
   if (explicitFeatureReleaseMode) {
     logger.info("Explicit feature release mode: skipping boot-time schema and publication writers");
   } else {
