@@ -57,7 +57,7 @@ type MediaUploadErrorCode = typeof MEDIA_UPLOAD_ERROR_CODES[keyof typeof MEDIA_U
 type PublicationMode = "object_acl" | "bucket_iam";
 
 type StorageFile = {
-  save(data: Buffer, options: { contentType: string }): Promise<unknown>;
+  save(data: Buffer, options: { contentType: string; resumable?: boolean }): Promise<unknown>;
   makePublic(): Promise<unknown>;
   getSignedUrl(options: { action: "read"; expires: number }): Promise<[string]>;
   delete?(options?: { ignoreNotFound?: boolean }): Promise<unknown>;
@@ -487,7 +487,12 @@ async function handleMediaUpload(
 
   try {
     storageFile = activeStorageClient.bucket(bucketId).file(objectKey);
-    await storageFile.save(req.file.buffer, { contentType: mime });
+    // Kinfolk question images are capped at 5 MB. Use GCS multipart upload for
+    // this bounded, one-answer object rather than creating a resumable-upload
+    // session; the image remains private and server-scoped either way.
+    await storageFile.save(req.file.buffer, isKinfolkQuestion
+      ? { contentType: mime, resumable: false }
+      : { contentType: mime });
   } catch (error: unknown) {
     const authFailure = error instanceof ObjectStorageConfigurationError || isProviderAuthError(error);
     const code = authFailure ? MEDIA_UPLOAD_ERROR_CODES.STORAGE_AUTH_FAILED : MEDIA_UPLOAD_ERROR_CODES.STORAGE_SAVE_FAILED;

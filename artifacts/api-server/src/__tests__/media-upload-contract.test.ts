@@ -183,6 +183,7 @@ describe("POST /api/media/upload error contract", () => {
     expect(response.body.assetId).toEqual(expect.any(String));
     expect(response.body.url).toBeUndefined();
     expect(response.body.expiresAt).toEqual(expect.any(String));
+    expect(file.save).toHaveBeenCalledWith(expect.any(Buffer), { contentType: "image/jpeg", resumable: false });
     expect(file.getSignedUrl).not.toHaveBeenCalled();
     expect(file.makePublic).not.toHaveBeenCalled();
     expect(recordAsset).toHaveBeenCalledWith([
