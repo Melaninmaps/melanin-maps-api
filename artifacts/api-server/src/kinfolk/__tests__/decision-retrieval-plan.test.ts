@@ -112,6 +112,18 @@ describe("Kinfolk decision and retrieval plan", () => {
     });
   });
 
+  it("does not authorize business cards for an emotional turn with a stale city", () => {
+    expect(plan(
+      "I'm overwhelmed with a big project that could help people, but I feel discouraged sometimes.",
+      "Philadelphia",
+    )).toMatchObject({
+      kind: "general_assistant",
+      retrieval: "none",
+      allowBusinessCards: false,
+      requireEvidence: false,
+    });
+  });
+
   it.each([
     "What time does the dry cleaner near me close today?",
     "Help me find a restaurant for tonight.",

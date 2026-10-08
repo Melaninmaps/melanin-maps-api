@@ -51,9 +51,20 @@ const NIGHTLIFE_RE =
   /\b(nightlife|night life|bars?|clubs?|lounge|late[- ]night|entertainment|concert|music|party)\b/i;
 const TRAVEL_RE =
   /\b(heading\s+to|going\s+to|traveling|travelling|visit|visiting|trip|weekend getaway|staying\s+(?:in|at)|hotel|spots? in|things to do)\b/i;
-// "brunch" is intentionally excluded — handled by the brunch-specific block above.
-const BUSINESS_RE =
-  /\b(find|recommend|locate|where|businesses?|laundromats?|laundry|grocer(?:y|ies)|salons?|hotels?|restaurants?)\b/i;
+// A place/category word describes many ordinary conversations. It becomes a
+// discovery intent only when the member also asks to find, compare, or choose
+// a place. This prevents a discussion about a member's own business, dinner,
+// hotel stay, or trip from becoming a directory query.
+const BUSINESS_CATEGORY_RE =
+  /\b(businesses?|laundromats?|laundry|grocer(?:y|ies)|salons?|hotels?)\b/i;
+const DISCOVERY_ACTION_RE =
+  /\b(?:find|recommend|locate|search(?:\s+for)?|show|browse|looking\s+for|help\s+me\s+find|tell\s+me\s+about|where\s+can\s+(?:i|we)|where\s+should\s+(?:i|we)|what|which|any\s+good|need|want)\b/i;
+const CATEGORY_LOCATION_RE =
+  /\b(?:food|restaurant|restaurants|eat|eating|dining|dinner|lunch|breakfast|cafe|caf[eé]|coffee|bakery|meal|spots?|nightlife|night life|bars?|clubs?|lounge|late[- ]night|entertainment|concert|music|party|businesses?|laundromats?|laundry|grocer(?:y|ies)|salons?|hotels?)\b[\s\S]{0,48}\b(?:in|near|around|at)\b/i;
+const TRAVEL_PLANNING_RE =
+  /\b(?:itinerary|things to do|what (?:should|can) (?:i|we) do|plan (?:me |my |our |a )?(?:day|days|trip|visit|getaway|weekend|vacation)|recommend|where (?:should|can) (?:i|we) go)\b/i;
+const DAY_PLAN_RE =
+  /\bplan (?:me |my |our |a )?(?:day|days)\b/i;
 
 // Pure cultural/informational brunch phrases that should fall through to general_knowledge.
 // "Tell me about brunch as a cultural tradition" should NOT become a discovery request.
@@ -95,6 +106,19 @@ function cleanLocation(raw: string | undefined): string | null {
   return value.length >= 2 && value.length <= 60 ? value : null;
 }
 
+function hasExplicitDiscoveryIntent(input: {
+  text: string;
+  hasBusinessSubject: boolean;
+}): boolean {
+  const hasCategory =
+    FOOD_RE.test(input.text) ||
+    NIGHTLIFE_RE.test(input.text) ||
+    BUSINESS_CATEGORY_RE.test(input.text) ||
+    input.hasBusinessSubject;
+  return hasCategory &&
+    (DISCOVERY_ACTION_RE.test(input.text) || CATEGORY_LOCATION_RE.test(input.text));
+}
+
 /**
  * @param resolvedDestination — pass the already-resolved city from
  * `extractCityFromUserMessage` / `sessionDestination` so alias lookups
@@ -109,6 +133,13 @@ export function classifyKinfolkRequest(
   const lower = text.toLowerCase();
   const businessSubject = deriveBusinessSubject(text);
   const normalizedBusinessSubject = businessSubject !== null;
+  const explicitDiscoveryIntent = hasExplicitDiscoveryIntent({
+    text,
+    hasBusinessSubject: normalizedBusinessSubject,
+  });
+  const explicitTravelPlanningIntent =
+    (TRAVEL_RE.test(text) && TRAVEL_PLANNING_RE.test(text)) ||
+    DAY_PLAN_RE.test(text);
   // Use server-resolved city (alias-aware) when available; fall back to regex.
   const location = resolvedDestination
     ? resolvedDestination
@@ -201,7 +232,7 @@ export function classifyKinfolkRequest(
 
   // Nightlife is a more specific discovery intent than a generic business
   // subject and must be resolved before the broad business-subject matcher.
-  if (NIGHTLIFE_RE.test(lower) && location) {
+  if (NIGHTLIFE_RE.test(lower) && explicitDiscoveryIntent && location) {
     return {
       route: "business_discovery",
       discoveryKind: "nightlife",
@@ -213,8 +244,10 @@ export function classifyKinfolkRequest(
     };
   }
 
-  // Food/travel/business phrases outrank general knowledge and pop culture.
-  if ((FOOD_RE.test(lower) || BUSINESS_RE.test(lower) || normalizedBusinessSubject) && location) {
+  // A directory search requires both a category and an affirmative discovery
+  // request. A stale city must not turn ordinary personal conversation into a
+  // business recommendation.
+  if (explicitDiscoveryIntent && location) {
     return {
       route: "business_discovery",
       discoveryKind: FOOD_RE.test(lower) ? "food" : "business",
@@ -226,7 +259,7 @@ export function classifyKinfolkRequest(
     };
   }
 
-  if (TRAVEL_RE.test(lower) && location) {
+  if (explicitTravelPlanningIntent && location) {
     return {
       route: "travel_planning",
       discoveryKind: "travel",
@@ -240,11 +273,7 @@ export function classifyKinfolkRequest(
 
   // Never answer an under-specified discovery request as though it were clear.
   if (
-    (FOOD_RE.test(lower) ||
-      NIGHTLIFE_RE.test(lower) ||
-      BUSINESS_RE.test(lower) ||
-      normalizedBusinessSubject ||
-      TRAVEL_RE.test(lower)) &&
+    (explicitDiscoveryIntent || explicitTravelPlanningIntent) &&
     !location
   ) {
     const missingLocationClarification = businessSubject?.key === "salon"

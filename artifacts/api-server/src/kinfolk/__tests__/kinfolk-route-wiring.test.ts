@@ -49,6 +49,15 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("homeCatalogAllowed &&");
   });
 
+  it("keeps a prior session destination and catalog out of unrelated conversation", () => {
+    expect(chatRoute).toContain("conversationContextScope?.messages.length");
+    expect(chatRoute).toContain("const catalogRequestedForTurn =");
+    expect(chatRoute).toContain("decisionPlan.allowBusinessCards ||");
+    expect(chatRoute).toContain("const promptBusinessContextAllowed =");
+    expect(chatRoute).toContain("businessCatalog: promptBusinessCatalog");
+    expect(chatRoute).toContain("catalogSource: promptCatalogSource");
+  });
+
   it("wires current-turn identity, evidence routing, strict parsing, and itinerary normalization", () => {
     expect(chatRoute).toContain("resolvePermittedIdentityContext(message)");
     expect(chatRoute).toContain("classifyEvidenceRoute(message)");
