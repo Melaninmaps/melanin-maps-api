@@ -370,6 +370,10 @@ import {
 } from "../kinfolk/explicit-member-memory";
 import { isOrdinaryContinuityMemoryRelevant } from "../kinfolk/ordinary-continuity-memory";
 import {
+  buildConversationResumePreview,
+  resolveConversationContextScope,
+} from "../kinfolk/conversation-handoff";
+import {
   MAX_ACTIVE_KINFOLK_PRIVATE_NOTES,
   resolvePrivateMemoryCapacity,
   resolvePrivateMemoryState,
@@ -6043,7 +6047,12 @@ router.get("/kinfolk/sessions/:id", async (req: Request, res: Response) => {
       res.status(404).json({ error: "Session not found" });
       return;
     }
-    res.json({ session });
+    res.json({
+      session,
+      // A short current-session marker lets a member deliberately resume a
+      // deferred thread. It never expands into profile memory or other chats.
+      resumePreview: buildConversationResumePreview(session.messages ?? []),
+    });
   } catch (err) {
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to fetch session");
     res.status(500).json({ error: "Failed to fetch session" });
@@ -9352,8 +9361,19 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const existingMessages: SessionMessage[] = staffAuditPolicy
       ? boundedEphemeralConversation(conversationContext)
       : currentSession?.messages ?? ephemeralSession?.messages ?? [];
+    // A saved session never becomes model context merely because it exists.
+    // Only an explicit return-later marker plus an explicit resume, or a direct
+    // short follow-up, may reuse the bounded recent thread.
+    const conversationContextScope = staffAuditPolicy
+      ? null
+      : resolveConversationContextScope({
+          messages: existingMessages,
+          currentMessage: message,
+        });
+    const scopedConversationMessages =
+      conversationContextScope?.messages ?? existingMessages;
     const conversationHistoryForContext: Array<{ role: "user" | "assistant"; content: string }> = buildKinfolkHistory(
-      existingMessages,
+      scopedConversationMessages,
       modelPolicy,
     ).map((entry) => ({
       role: entry.role === "assistant" ? "assistant" : "user",
@@ -12159,7 +12179,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Standard remains exactly last 8 / 400 chars; staff demo uses last 12 / 1200.
     const historyMessages = contextualEvidence
       ? []
-      : buildKinfolkHistory(existingMessages, modelPolicy);
+      : buildKinfolkHistory(scopedConversationMessages, modelPolicy);
 
     // ── Library topic grounding (non-blocking enrichment) ────────────────────
     // Load structured Library topic data when the user asks about a library topic.
@@ -12655,12 +12675,17 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       content: message,
       timestamp,
     };
-    const newAiMsg: SessionMessage = {
+    const newAiMsg: SessionMessage & {
+      conversationHandoff?: { kind: "return_later"; requestedAt: string };
+    } = {
       role: "assistant",
       content: reply,
       recommendations: recommendations ?? undefined,
       followUpSuggestions,
       companionMemoryOffer,
+      conversationHandoff: conversationContextScope?.handoffRequested
+        ? { kind: "return_later", requestedAt: timestamp }
+        : undefined,
       timestamp: new Date().toISOString(),
     };
     const updatedMessages = [...existingMessages, newUserMsg, newAiMsg];
@@ -13056,6 +13081,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     res.json({
       sessionId: finalSessionId,
       reply: memberFacingReply,
+      // Short, client-safe session-only status. It never includes a model
+      // prompt, a private-memory record, or text from another conversation.
+      conversationHandoff: conversationContextScope?.handoff ?? null,
       // Private response metadata for the current member only. It is never used
       // for profile identity, business eligibility, ranking, or promotion.
       memberContextApplied: savedMemberResearchContextTags,

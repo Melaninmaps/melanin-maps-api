@@ -52,4 +52,12 @@ describe("web Kinfolk conversation-first visuals", () => {
     expect(presentationSource).toContain("Updated ");
     expect(presentationSource).not.toContain('Research: {[researchStatus.usedInternal');
   });
+
+  it("shows a private, explicit handoff only when the session API returns one", () => {
+    expect(travelPageSource).toContain('data-testid="kinfolk-conversation-handoff"');
+    expect(travelPageSource).toContain("Conversation resumed");
+    expect(travelPageSource).toContain("Conversation saved");
+    expect(travelPageSource).toContain("setConversationHandoff(data.conversationHandoff ?? null)");
+    expect(travelPageSource).toContain("resumePreview?: ConversationHandoffStatus | null");
+  });
 });

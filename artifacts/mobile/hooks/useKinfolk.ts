@@ -190,6 +190,10 @@ export type ChatMessage = {
   /** Server decision metadata; clients fail closed when cards are not authorized. */
   responseMeta?: KinfolkResponseMeta | null;
 };
+type ConversationHandoffStatus = {
+  state: "saved" | "resumed";
+  summary: string;
+};
 
 export type SessionSummary = {
   id: string;
@@ -210,6 +214,7 @@ export function useKinfolk() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const messagesRef = useRef<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [conversationHandoff, setConversationHandoff] = useState<ConversationHandoffStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   /** Client-request timing only; never a claim about server-side research. */
   const [requestStartedAt, setRequestStartedAt] = useState<number | null>(null);
@@ -337,6 +342,7 @@ export function useKinfolk() {
           locationSource?: string | null;
           companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
           responseMeta?: KinfolkResponseMeta | null;
+          conversationHandoff?: ConversationHandoffStatus | null;
           sensitiveMemoryConfirmation?: {
             confirmationRequired?: boolean;
             purpose?: string;
@@ -345,6 +351,7 @@ export function useKinfolk() {
         };
 
         if (data.sessionId) setSessionId(data.sessionId);
+        setConversationHandoff(data.conversationHandoff ?? null);
         const inlineMemoryConsent: ChatMessage["inlineMemoryConsent"] = data.memoryConsentPlan
           ? { message: text, plan: data.memoryConsentPlan, sessionId: data.sessionId ?? sessionId }
           : null;
@@ -577,8 +584,10 @@ export function useKinfolk() {
       if (res.ok) {
         const data = (await res.json()) as {
           session: { id: string; messages: { role: string; content: string; recommendations?: unknown; resultView?: unknown; followUpSuggestions?: string[]; companionMemoryOffer?: KinfolkCompanionMemoryOffer | null; timestamp: string }[] };
+          resumePreview?: ConversationHandoffStatus | null;
         };
         setSessionId(id);
+        setConversationHandoff(data.resumePreview ?? null);
         setMessages(
           data.session.messages.map((m) => ({
             id: makeId(),
@@ -600,6 +609,7 @@ export function useKinfolk() {
   const startNewSession = useCallback(() => {
     setMessages([]);
     setSessionId(null);
+    setConversationHandoff(null);
   }, []);
 
   const confirmTaskAction = useCallback(async (messageId: string, action: TaskAction): Promise<boolean> => {
@@ -657,6 +667,7 @@ export function useKinfolk() {
   return {
     messages,
     sessionId,
+    conversationHandoff,
     isLoading,
     requestStartedAt,
     sessions,

@@ -220,6 +220,10 @@ interface Message {
   /** Server decision metadata; the client fails closed for unauthorized cards. */
   responseMeta?: KinfolkResponseMeta | null;
 }
+type ConversationHandoffStatus = {
+  state: "saved" | "resumed";
+  summary: string;
+};
 interface Session {
   id: string;
   title: string;
@@ -1043,6 +1047,7 @@ function TravelPage() {
   const [includeCommunityPerspective, setIncludeCommunityPerspective] = useState(false);
   const [showMemoryManager, setShowMemoryManager] = useState(false);
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
+  const [conversationHandoff, setConversationHandoff] = useState<ConversationHandoffStatus | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [kinfolkContinuityEnabled, setKinfolkContinuityEnabled] = useState(false);
@@ -2066,6 +2071,7 @@ function TravelPage() {
 
       const data = await r.json() as {
         sessionId?: string; reply?: string;
+        conversationHandoff?: ConversationHandoffStatus | null;
         recommendations?: Recommendations | null;
         resultView?: ConversationalBusinessResultView | null;
         /** Structured itinerary payload is additive to legacy recommendations. */
@@ -2121,6 +2127,7 @@ function TravelPage() {
         : "Kinfolk is having trouble answering that right now. Try again.";
 
       if (data.sessionId && data.sessionId !== sessionId) { setSessionId(data.sessionId); loadSessions(); }
+      setConversationHandoff(data.conversationHandoff ?? null);
       setImageAttachments([]);
       if (data.sensitiveMemoryConfirmation?.confirmationRequired === true) {
         setPendingSensitiveMemory({
@@ -2244,8 +2251,8 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/sessions/${id}`, { credentials: "include", headers: kinfolkAuthHeaders() });
       if (!r.ok) return;
-      const d = await r.json() as { session: { id: string; messages: Message[] } };
-      setSessionId(d.session.id); setMessages(d.session.messages ?? []);
+      const d = await r.json() as { session: { id: string; messages: Message[] }; resumePreview?: ConversationHandoffStatus | null };
+      setSessionId(d.session.id); setMessages(d.session.messages ?? []); setConversationHandoff(d.resumePreview ?? null);
       setShowHistory(false);
     } catch { /* ignore */ }
   }, []);
@@ -2260,7 +2267,7 @@ function TravelPage() {
     setPlayingId(null);
     setPausedId(null);
     autoSpokenMessageIdsRef.current.clear();
-    setSessionId(undefined); setMessages([]); setInput(""); setVoiceTranscriptReview(null); setShowHistory(false); setPendingClarificationMsgId(null); setGeneratedImage(null);
+    setSessionId(undefined); setMessages([]); setConversationHandoff(null); setInput(""); setVoiceTranscriptReview(null); setShowHistory(false); setPendingClarificationMsgId(null); setGeneratedImage(null);
   };
 
   // Library suggestions — track which message IDs have been responded to
@@ -2725,6 +2732,12 @@ function TravelPage() {
                   </section>
                 )}
 
+                {conversationHandoff && (
+                  <aside data-testid="kinfolk-conversation-handoff" role="status" className="mb-3 rounded-xl border border-[#CA922B]/30 bg-[#FFF8EC] px-4 py-3 text-xs text-[#6B4415]">
+                    <p className="font-semibold">{conversationHandoff.state === "resumed" ? "Conversation resumed" : "Conversation saved"}</p>
+                    <p className="mt-1 leading-5">{conversationHandoff.summary}</p>
+                  </aside>
+                )}
                 {messages.map(msg => (
                   <div key={msg.id} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                     {msg.role === "assistant" && (

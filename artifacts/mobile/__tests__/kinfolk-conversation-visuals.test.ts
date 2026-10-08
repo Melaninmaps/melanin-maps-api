@@ -61,4 +61,11 @@ describe("mobile Kinfolk conversation-first visuals", () => {
     expect(travelSource).toContain("msg.followUpSuggestions.map((s, i) => (");
     expect(travelSource).toContain("onPress={() => onQuickReply(s)}");
   });
+
+  it("renders a member-controlled session handoff banner", () => {
+    expect(travelSource).toContain('testID="kinfolk-conversation-handoff"');
+    expect(travelSource).toContain("Conversation resumed");
+    expect(travelSource).toContain("Conversation saved");
+    expect(travelSource).toContain("conversationHandoff");
+  });
 });

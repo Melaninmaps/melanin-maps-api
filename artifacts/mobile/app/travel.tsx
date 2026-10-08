@@ -2034,7 +2034,7 @@ export default function TravelScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
-  const { messages, sessionId, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent } = useKinfolk();
+  const { messages, sessionId, conversationHandoff, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent } = useKinfolk();
   const { preferences, update: updatePreferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
   const { isAuthenticated } = useAuth();
@@ -2972,12 +2972,21 @@ export default function TravelScreen() {
           keyExtractor={(item) => item.id}
           renderItem={renderMessage}
           contentContainerStyle={styles.chatContent}
-          ListHeaderComponent={messages.length === 0 ? (
-            <WelcomeScreen
-              colors={colors}
-              onChipPress={(t) => void handleSend(t)}
-            />
-          ) : null}
+          ListHeaderComponent={(
+            <View>
+              {conversationHandoff && (
+                <View testID="kinfolk-conversation-handoff" style={{ marginHorizontal: 16, marginBottom: 10, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: `${colors.primary}50`, backgroundColor: colors.secondary }}>
+                  <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 13 }}>
+                    {conversationHandoff.state === "resumed" ? "Conversation resumed" : "Conversation saved"}
+                  </Text>
+                  <Text style={{ color: colors.foreground, marginTop: 4, fontSize: 12, lineHeight: 18 }}>{conversationHandoff.summary}</Text>
+                </View>
+              )}
+              {messages.length === 0 && (
+                <WelcomeScreen colors={colors} onChipPress={(t) => void handleSend(t)} />
+              )}
+            </View>
+          )}
           ListFooterComponent={isLoading && kinfolkRequestStartedAt !== null ? <TypingIndicator colors={colors} elapsedSeconds={kinfolkWorkingSeconds} /> : null}
           showsVerticalScrollIndicator={false}
           onScroll={onChatScroll}
