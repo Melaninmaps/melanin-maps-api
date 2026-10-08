@@ -64,6 +64,42 @@ describe("conversational governed business result view", () => {
     expect(block).toContain("followUpSuggestions: deterministicFollowUps");
   });
 
+  it("keeps documented ownership separate from MWM listing verification", () => {
+    const view = buildConversationalBusinessResultView({
+      businesses: [{
+        id: "documented-business",
+        recordType: "business" as const,
+        name: "Documented Coffee",
+        category: "Food & Drink",
+        subcategory: "Coffee shop",
+        description: "A coffee listing.",
+        city: "Philadelphia",
+        stateCode: "PA",
+        detailUrl: "/businesses/documented-business",
+        website: null,
+        phone: null,
+        verified: false,
+        claimed: false,
+        matchReasons: ["ownership designation"],
+        provenance: "mwm_public_business" as const,
+        ownershipStatus: "documented" as const,
+        ownershipEvidence: {
+          sourceUrl: "https://directory.example/documented-coffee",
+          sourceLabel: "Source directory",
+          capturedAt: "2026-10-08T00:00:00.000Z",
+        },
+      }],
+      subjectLabel: "coffee shops",
+    });
+
+    expect(view.cards[0]).toMatchObject({
+      verified: false,
+      claimed: false,
+      ownershipStatus: "documented",
+      ownershipEvidence: { sourceLabel: "Source directory" },
+    });
+  });
+
   it("shows one actionable card for duplicate display candidates without changing records", () => {
     const businesses = [
       {

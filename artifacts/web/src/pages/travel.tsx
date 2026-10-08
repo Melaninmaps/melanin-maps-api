@@ -803,10 +803,11 @@ function ConversationalBusinessCards({ view }: { view: ConversationalBusinessRes
             <div className="flex items-start justify-between gap-3">
               <h3 className="text-sm font-bold text-[#3A1F0E]">{card.title}</h3>
               <span className="shrink-0 rounded-full bg-[#FAF6EF] px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-[#7A4B16]">
-                {businessTrustLabel(card)}
+                Listing: {businessTrustLabel(card)}
               </span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-[#3A1F0E]/75">{card.supportingText}</p>
+            {card.ownershipStatus === "documented" && <p data-testid="kinfolk-ownership-documented" className="mt-2 rounded-lg bg-[#EEF8F0] px-2 py-1 text-[11px] font-semibold text-emerald-800">Ownership: documented by source.</p>}
             {card.ownershipStatus === "not_documented" && <p className="mt-2 rounded-lg bg-[#FFF8EC] px-2 py-1 text-[11px] font-semibold text-[#7A4B16]">Ownership not documented — not an ownership-matched recommendation.</p>}
             {card.ownershipStatus === "not_matched" && <p className="mt-2 rounded-lg bg-[#FFF8EC] px-2 py-1 text-[11px] font-semibold text-[#7A4B16]">Not ownership-matched — shown only because you chose to broaden this search.</p>}
             <p className="mt-2 text-[11px] text-[#3A1F0E]/60">{card.matchReason}</p>

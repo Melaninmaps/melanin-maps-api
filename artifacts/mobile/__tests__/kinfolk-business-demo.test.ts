@@ -23,6 +23,10 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(travelSource).toContain("Claimed · Not MWM verified");
     expect(travelSource).toContain("Unclaimed · Not MWM verified");
     expect(travelSource).toContain("MWM verified");
+    expect(travelSource).toContain('card.ownershipStatus === "documented"');
+    expect(travelSource).toContain("Ownership: documented by source.");
+    expect(travelSource).toContain('testID="kinfolk-ownership-documented"');
+    expect(travelSource).toContain("Listing: {businessTrustLabel(card)}");
     expect(travelSource).toContain("Why it surfaced:");
     expect(travelSource).toContain("Ownership not documented — not an ownership-matched recommendation.");
     expect(travelSource).toContain("Not ownership-matched — shown only because you chose to broaden this search.");
