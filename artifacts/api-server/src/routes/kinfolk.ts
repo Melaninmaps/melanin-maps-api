@@ -218,6 +218,7 @@ import {
   rankTravelCatalogForMember,
   type KinfolkItinerary,
 } from "../kinfolk/itinerary-response";
+import { inspectProactiveTravelSuggestion } from "../kinfolk/proactive-travel-suggestions";
 
 // ── Living Library lazy singleton instances ────────────────────────────────────
 // Created once on first research request; degrade gracefully when Tavily key is absent.
@@ -9128,6 +9129,79 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // malformed response falls back to the deterministic route and can only
     // strengthen an evidence requirement, never relax one.
     const evidenceRoute = classifyEvidenceRoute(message);
+    // Resolve a city named in the current message before any optional model
+    // classification. A session destination is only a fallback for established
+    // routes; the consent-first travel offer below requires a current-turn city.
+    const sessionDestination =
+      currentSession?.destination ?? ephemeralSession?.destination ?? null;
+    const turnGeography = resolveTurnGeography(message, sessionDestination);
+    const destination = turnGeography?.city ?? null;
+    const locationSource = turnGeography?.source ?? null;
+    const destinationState =
+      turnGeography?.state ?? getHeritageCity(destination)?.state ?? null;
+    const destinationScope: ValidatedKinfolkCityScope | null =
+      destination && destinationState
+        ? { city: destination, stateCode: destinationState }
+        : null;
+    const proactiveTravelSuggestion =
+      verifiedImageUrls.length === 0
+        ? inspectProactiveTravelSuggestion({
+            message,
+            destination: turnGeography?.currentTurn ? destination : null,
+            requiresCurrentEvidence:
+              requiresCurrentResearch(message) ||
+              [
+                "medical_health",
+                "legal_regulated",
+                "financial_regulated",
+                "safety_emergency",
+              ].includes(evidenceRoute.domain),
+          })
+        : { kind: "none" as const };
+    if (proactiveTravelSuggestion.kind !== "none") {
+      const isTravelOffer = proactiveTravelSuggestion.kind === "offer";
+      res.status(200).json({
+        sessionId,
+        reply: proactiveTravelSuggestion.reply,
+        recommendations: null,
+        itinerary: null,
+        resultView: null,
+        followUpSuggestions: proactiveTravelSuggestion.followUpSuggestions,
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass: isTravelOffer ? "travel_planning" : "general_knowledge",
+        sources: [],
+        needsClarification: false,
+        originalQuery: message,
+        answerMode: isTravelOffer
+          ? "travel_suggestion_offer"
+          : "travel_suggestion_declined",
+        responseMeta: {
+          schemaVersion: 1,
+          planKind: "general_assistant",
+          answerMode: "conversation",
+          retrieval: "none",
+          allowBusinessCards: false,
+          evidenceRequired: false,
+          requiresClarification: false,
+        },
+        researchStatus: {
+          usedInternal: false,
+          usedLiveWeb: false,
+          degraded: false,
+          web: {
+            attempted: false,
+            state: "not_needed",
+            provider: null,
+            fallbackUsed: false,
+            partial: false,
+          },
+          asOf: new Date().toISOString(),
+        },
+      });
+      return;
+    }
     let genericAnswerDecision = null;
     const classifierConversationWindow = conversationHistoryForContext
       .slice(-4)
@@ -9234,24 +9308,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       !isPrivateImageTurn &&
       (contextualIntelligenceEnabled || citedResearchRequired);
 
-    // Resolve current-turn geography before session continuity. A city explicitly
-    // named now is authoritative and may change an enabled session's destination.
-    // Session fallback remains inside the existing private-memory/runtime gate.
-    const sessionDestination =
-      currentSession?.destination ?? ephemeralSession?.destination ?? null;
-    const turnGeography = resolveTurnGeography(message, sessionDestination);
-    const destination = turnGeography?.city ?? null;
-    const locationSource = turnGeography?.source ?? null;
-    const destinationState =
-      turnGeography?.state ?? getHeritageCity(destination)?.state ?? null;
-
     // Identity is permitted only from this current turn and is never persisted.
     const permittedIdentity = resolvePermittedIdentityContext(message);
-
-    const destinationScope: ValidatedKinfolkCityScope | null =
-      destination && destinationState
-        ? { city: destination, stateCode: destinationState }
-        : null;
     const namedBusinessResolution = await resolveNamedBusinessTurn({
       message,
       scope: destinationScope,

@@ -124,6 +124,12 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).not.toContain("Searching Black");
   });
 
+  it("sends a consent-first travel category chip as the member’s next explicit turn", () => {
+    expect(travelPageSource).toContain("msg.followUpSuggestions.map((s, i) => (");
+    expect(travelPageSource).toContain("onClick={() => send(s)}");
+    expect(travelPageSource).not.toContain("followUpSuggestions[0]");
+  });
+
   it("renders an opt-in companion note without changing primary profile data", () => {
     expect(travelPageSource).toContain("KinfolkCompanionMemoryOfferCard");
     expect(travelPageSource).toContain("companionMemoryOffer: data.companionMemoryOffer ?? null");

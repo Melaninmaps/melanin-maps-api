@@ -56,4 +56,9 @@ describe("mobile Kinfolk conversation-first visuals", () => {
     expect(travelSource).toContain("Review your transcription, then tap Send when you’re ready.");
     expect(travelSource).toContain("await sendMessage(msg, {");
   });
+
+  it("sends a consent-first travel category chip only when the member taps it", () => {
+    expect(travelSource).toContain("msg.followUpSuggestions.map((s, i) => (");
+    expect(travelSource).toContain("onPress={() => onQuickReply(s)}");
+  });
 });
