@@ -12371,7 +12371,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const continuityInstruction = conversationalResearchSubject.inheritedSubject
       ? `\n\n[Conversation continuity: The member's immediately preceding subject was “${conversationalResearchSubject.inheritedSubject}”. Answer this follow-up about that subject. Do not ask them to repeat it.]`
       : "";
-    const currentUserText = `${message}${continuityInstruction}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}`;
+    const explicitResumeInstruction =
+      conversationContextScope?.handoff?.state === "resumed"
+        ? "\n\n[This member explicitly resumed the bounded private thread above. Use its supported details to answer a clear follow-up directly; do not say that prior context is unavailable or ask them to repeat a detail already present there.]"
+        : "";
+    const currentUserText = `${message}${continuityInstruction}${explicitResumeInstruction}${vibes.length ? `\n\n[My vibes for this trip: ${vibes.join(", ")}]` : ""}`;
     const currentUserContent: Parameters<
       typeof openai.chat.completions.create
     >[0]["messages"][number]["content"] =
