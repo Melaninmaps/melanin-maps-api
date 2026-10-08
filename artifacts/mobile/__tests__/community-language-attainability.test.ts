@@ -2,13 +2,14 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-const mobileSettings = readFileSync(fileURLToPath(new URL("../app/kinfolk-settings.tsx", import.meta.url)), "utf8");
+const mobileSettings = readFileSync(fileURLToPath(new URL("../components/KinfolkSettingsControlCenter.tsx", import.meta.url)), "utf8");
 const proposalScreen = readFileSync(fileURLToPath(new URL("../app/community-language.tsx", import.meta.url)), "utf8");
 const rootLayout = readFileSync(fileURLToPath(new URL("../app/_layout.tsx", import.meta.url)), "utf8");
 
 describe("mobile community-language attainability", () => {
   it("keeps the contribution screen reachable from Kinfolk settings", () => {
     expect(mobileSettings).toContain('router.push("/community-language" as never)');
+    expect(mobileSettings).toContain("It never changes Kinfolk automatically or becomes memory.");
     expect(rootLayout).toContain('name="community-language"');
   });
 
