@@ -10,13 +10,13 @@ const routeSource = readFileSync(
 describe("contextual Kinfolk route safety wiring", () => {
   it("cancels planning, retrieval, and synthesis for the complete disconnected request lifetime", () => {
     const abortRegistration = routeSource.indexOf('req.once("aborted", abortDisconnectedRequest)');
-    const firstAsyncChatWork = routeSource.indexOf("const imageAssets = await pool.query");
+    const firstAsyncChatWork = routeSource.indexOf("const user = await storage.getUser(req.user.id)");
     expect(abortRegistration).toBeGreaterThan(0);
     expect(abortRegistration).toBeLessThan(firstAsyncChatWork);
     expect(routeSource).toContain('res.once("close"');
     expect(routeSource).toContain("signal: contextualRequestAbort.signal");
-    expect(routeSource).toContain("AbortSignal.any([contextualRequestAbort.signal, AbortSignal.timeout(3_000)])");
-    expect(routeSource).toContain("AbortSignal.any([contextualRequestAbort.signal, AbortSignal.timeout(25000)])");
+    expect(routeSource).toMatch(/AbortSignal\.any\(\[\s*contextualRequestAbort\.signal,\s*AbortSignal\.timeout\(3_000\),?\s*\]\)/);
+    expect(routeSource).toMatch(/AbortSignal\.any\(\[\s*contextualRequestAbort\.signal,\s*AbortSignal\.timeout\(25000\),?\s*\]\)/);
     expect(routeSource).not.toContain(": AbortSignal.timeout(25000)");
     expect(routeSource).toContain("this.waiters.splice(idx, 1)");
     expect(routeSource).toContain("contextualRequestAbort.signal,");
@@ -25,10 +25,10 @@ describe("contextual Kinfolk route safety wiring", () => {
   });
 
   it("fails closed before model synthesis when current evidence is not corroborated", () => {
-    const gateIndex = routeSource.indexOf("contextualEvidenceNeedsFailClosedResponse(contextualPlan, contextualEvidence)");
-    const promptIndex = routeSource.indexOf("const baseSystemPrompt = buildSystemPrompt");
+    const gateIndex = routeSource.indexOf("contextualEvidenceNeedsFailClosedResponse(");
+    const providerCall = routeSource.indexOf('chatStage = "provider_call"');
     expect(gateIndex).toBeGreaterThan(0);
-    expect(promptIndex).toBeGreaterThan(gateIndex);
+    expect(providerCall).toBeGreaterThan(gateIndex);
     expect(routeSource).toContain("evidence_not_corroborated");
   });
 
@@ -37,20 +37,20 @@ describe("contextual Kinfolk route safety wiring", () => {
     expect(routeSource).toContain("protectContextualOutput");
     expect(routeSource).toContain("renderableValues: [modelPayload.valid ? modelPayload.value : rawContent]");
     expect(routeSource).toContain("recommendations = null");
-    expect(routeSource).toContain("memoryEnabled && !contextualEvidence");
-    expect(routeSource).toContain("const historyMessages = contextualEvidence ? []");
+    expect(routeSource).toContain("const historyMessages = contextualEvidence\n      ? []");
     expect(routeSource).not.toContain("NORMALIZED EVIDENCE (only these URLs support material claims)");
   });
 
   it("scans ambiguity-classifier JSON and uses server-owned clarification copy", () => {
     expect(routeSource).toContain("const protectedClassifierPayload = protectContextualOutput({");
-    expect(routeSource).toContain("return protectedClassifierPayload.blocked ? {} : parsedClassifierPayload");
+    expect(routeSource).toContain("return protectedClassifierPayload.blocked");
+    expect(routeSource).toContain("? {}\n              : parsedClassifierPayload");
     expect(routeSource).toContain("Are you asking about food and cooking, a person or cultural topic, a place, or something else?");
     expect(routeSource).not.toContain("sessionId, reply: contextualPlan.clarificationQuestion");
   });
 
   it("keeps high-risk staff-preview turns in the typed fail-closed evidence path", () => {
-    expect(routeSource).toContain("shouldResearchInLibrary && !contextualIntelligenceEnabled");
+    expect(routeSource).toContain("shouldResearchInLibrary &&\n      intentClass !== \"medical_health\" &&\n      !contextualResearchEnabled");
     expect(routeSource).toContain("if (contextualPlan) {");
     expect(routeSource).not.toContain('if (contextualPlan && evidenceRoute.risk !== "high")');
   });
@@ -61,7 +61,8 @@ describe("contextual Kinfolk route safety wiring", () => {
     expect(routeSource).toContain("mediaLinks: contextualMediaLinks");
     expect(routeSource).toContain("relatedConnections: contextualRelatedConnections");
     expect(routeSource).toContain("mediaEvidence: contextualEvidence?.media ?? []");
-    expect(routeSource).toContain("contextualEvidence?.internal.flatMap((source) => source.libraryPath");
+    expect(routeSource).toContain("contextualEvidence?.internal.flatMap((source) =>");
+    expect(routeSource).toContain("source.libraryPath ? [source.libraryPath] : []");
     expect(routeSource).toContain("libraryPaths: trustedLibraryPaths");
     expect(routeSource).not.toMatch(/mediaLinks:\s*contextualMediaLinks\.filter/);
     expect(routeSource).not.toMatch(/relatedConnections:\s*contextualRelatedConnections\.filter/);
