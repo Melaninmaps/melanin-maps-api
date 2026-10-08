@@ -12366,7 +12366,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         `\n\n${responseDepthPrompt}` +
         (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "") +
         (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
-    const systemPromptWithResponseFormat = `${systemPromptWithLibrary}\n\n${conversationalIntentPrompt}\n\n${buildKinfolkFormalResponseContract()}`;
+    const explicitResumeResponsePolicy =
+      conversationContextScope?.handoff?.state === "resumed"
+        ? "\n\nEXPLICIT RESUMED THREAD: The member deliberately resumed only the bounded private thread supplied in this conversation. Answer a clear follow-up directly with details supported by that thread. Do not ask a confirmation question or request repetition when the thread already answers the member's question."
+        : "";
+    const systemPromptWithResponseFormat = `${systemPromptWithLibrary}${explicitResumeResponsePolicy}\n\n${conversationalIntentPrompt}\n\n${buildKinfolkFormalResponseContract()}`;
 
     const continuityInstruction = conversationalResearchSubject.inheritedSubject
       ? `\n\n[Conversation continuity: The member's immediately preceding subject was “${conversationalResearchSubject.inheritedSubject}”. Answer this follow-up about that subject. Do not ask them to repeat it.]`

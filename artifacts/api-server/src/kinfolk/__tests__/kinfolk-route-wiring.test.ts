@@ -628,6 +628,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain(": historyMessages");
     expect(chatRoute).toContain("This member explicitly resumed the bounded private thread above");
     expect(chatRoute).toContain("do not say that prior context is unavailable");
+    expect(chatRoute).toContain("EXPLICIT RESUMED THREAD");
+    expect(chatRoute).toContain("Do not ask a confirmation question or request repetition");
   });
 
   it("persists an explicit return-later marker before generic or provider routing", () => {
