@@ -19,7 +19,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { CATEGORY_GROUPS, getCategoryGroup, isLiveCategory, type CategoryGroup } from "@/constants/categories";
-import { OWNERSHIP_DESIGNATIONS } from "@workspace/constants";
+import { OWNERSHIP_DESIGNATIONS, validateBusinessStreetAddress } from "@workspace/constants";
 import { OwnershipDesignationPicker } from "@/components/OwnershipDesignationPicker";
 import { useAuth } from "@/lib/auth";
 
@@ -423,9 +423,10 @@ export default function ListBusinessScreen() {
     const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
     const token = await SecureStore.getItemAsync("auth_session_token");
     if (!token) throw new Error("Sign in with your approved community account to submit a business.");
+    const addressValidation = validateBusinessStreetAddress(form.address);
     const params = new URLSearchParams({
       name: form.name.trim(),
-      address: form.address.trim(),
+      address: addressValidation.normalized ?? "",
       city: form.city.trim(),
       state: form.state.trim(),
       ...(form.website.trim() ? { website: form.website.trim() } : {}),
@@ -538,7 +539,7 @@ export default function ListBusinessScreen() {
     if (step === 1) return form.name.trim().length > 0 && form.category.length > 0;
     if (step === 2) return isOwnerIntent
       ? form.city.trim().length > 0
-      : form.address.trim().length > 0 && form.city.trim().length > 0 && form.state.trim().length > 0;
+      : validateBusinessStreetAddress(form.address).isUsable && form.city.trim().length > 0 && form.state.trim().length > 0;
     if (step === 3) return !isOwnerIntent || (
       form.ownerName.trim().length >= 2
       && form.ownerBusinessEmail.includes("@")
@@ -897,6 +898,7 @@ export default function ListBusinessScreen() {
                     value={form.address}
                     onChangeText={update("address")}
                     placeholder="123 Main Street"
+                    hint="Use a street number and street name. A precise address enables a map pin only after an audited geocode."
                     colors={colors}
                   />
 

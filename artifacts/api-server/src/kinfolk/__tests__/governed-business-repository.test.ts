@@ -39,6 +39,7 @@ const AMINA_ROW = {
   ownership_badges: ["black-owned"],
   community_values: [],
   audiences_served: [],
+  community_vibes: [],
   vibes: [],
   accessibility_features: [],
   community_initiatives: [],
@@ -186,7 +187,7 @@ describe("governed Kinfolk business repository", () => {
     },
   );
 
-  it("keeps every public listing in the temporary Kinfolk catalog without treating provenance as ownership evidence", async () => {
+  it("uses documented eligibility for the Kinfolk catalog without treating provenance as ownership evidence", async () => {
     const pool = { query: vi.fn().mockResolvedValue({ rows: [] }) };
     await createGovernedKinfolkBusinessRepository(pool).findDestinationCatalog({
       city: "Allentown",
@@ -198,7 +199,9 @@ describe("governed Kinfolk business repository", () => {
     expect(sql).not.toContain("completed_cohort_directory_discovery_receipts");
     expect(sql).not.toContain("national_diaspora_master_18294");
     expect(sql).not.toContain("source_backed_held_live");
-    expect(sql).toContain("AND TRUE");
+    expect(sql).toContain("public.business_discovery_eligibility AS documented_eligibility");
+    expect(sql).toContain("documented_eligibility.eligibility_status = 'qualified'");
+    expect(sql).toContain("documented_eligibility.official_website_evidence_id IS NOT NULL");
     expect(sql).not.toContain("jsonb_array_elements_text");
   });
 
@@ -232,6 +235,18 @@ describe("governed Kinfolk business repository", () => {
       ["american", "southern", "cuisine", "african", "dining"],
       50,
     ]);
+  });
+
+  it("uses approved aggregate community vibes for preference discovery without treating them as official business facts", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [{ ...AMINA_ROW, community_vibes: ["hood-classic"] }] }) };
+    const results = await createGovernedKinfolkBusinessRepository(pool).findByPreferenceTerms(
+      { city: "Philadelphia", stateCode: "PA" },
+      ["hood classic"],
+    );
+    expect(results[0]).toMatchObject({ communityVibes: ["hood-classic"] });
+    const [sql] = pool.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("public.approved_business_vibes AS community_vibe");
+    expect(sql).toContain("string_agg(community_vibe.vibe_key, ' ')");
   });
 
   it("requires every documented Support Lens designation for preference expansion", async () => {
@@ -688,7 +703,7 @@ describe("governed Kinfolk business repository", () => {
       phone: row.phone, website: row.website, verified, claimed: false,
       blackOwned: false, ownershipClaim: null, tags: [], specialties: [], profileStatus: null,
       story: null, missionStatement: null, whyStarted: null, whatCustomersShouldKnow: null,
-      ownershipBadges: [], communityValues: [], audiencesServed: [], vibes: [],
+      ownershipBadges: [], communityValues: [], audiencesServed: [], communityVibes: [], vibes: [],
       accessibilityFeatures: [], communityInitiatives: [], growthGoals: [],
       audienceType: null, environmentTags: [], amenityTags: [], matchReasons: [], identityReasons: [],
     });

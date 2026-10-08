@@ -77,6 +77,8 @@ export type GovernedKinfolkBusiness = Readonly<{
   ownershipBadges: string[];
   communityValues: string[];
   audiencesServed: string[];
+  /** Moderated aggregate member signals; never owner-supplied profile facts. */
+  communityVibes?: string[];
   vibes: string[];
   accessibilityFeatures: string[];
   communityInitiatives: string[];
@@ -142,6 +144,7 @@ type BusinessRow = {
   ownership_badges: unknown;
   community_values: unknown;
   audiences_served: unknown;
+  community_vibes: unknown;
   vibes: unknown;
   accessibility_features: unknown;
   community_initiatives: unknown;
@@ -250,6 +253,12 @@ const CANONICAL_SELECT = `
   COALESCE(bi.community_values, '[]'::jsonb) AS community_values,
   COALESCE(bi.audiences_served, '[]'::jsonb) AS audiences_served,
   COALESCE(NULLIF(b.vibes, '[]'::jsonb), bi.vibes, '[]'::jsonb) AS vibes,
+  -- Aggregate, moderated member feedback is separate from official profile facts.
+  COALESCE((
+    SELECT array_agg(DISTINCT community_vibe.vibe_key ORDER BY community_vibe.vibe_key)
+    FROM public.approved_business_vibes AS community_vibe
+    WHERE community_vibe.business_id::text = b.id::text
+  ), ARRAY[]::text[]) AS community_vibes,
   COALESCE(bi.accessibility_features, '[]'::jsonb) AS accessibility_features,
   COALESCE(bi.community_initiatives, '[]'::jsonb) AS community_initiatives,
   COALESCE(bi.growth_goals, '[]'::jsonb) AS growth_goals,
@@ -371,6 +380,7 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     ownershipBadges: stringArray(row.ownership_badges),
     communityValues: stringArray(row.community_values),
     audiencesServed: stringArray(row.audiences_served),
+    communityVibes: stringArray(row.community_vibes),
     vibes: stringArray(row.vibes),
     accessibilityFeatures: stringArray(row.accessibility_features),
     communityInitiatives: stringArray(row.community_initiatives),
@@ -496,6 +506,9 @@ function subjectMatchReasons(
     ...business.specialties.flatMap((specialty) =>
       fieldMatches(specialty, "specialty"),
     ),
+    ...((business.communityVibes ?? []).some((vibe) => (subject.vibeKeys ?? []).includes(vibe))
+      ? ["community vibe"]
+      : []),
     ...(allowSourceBackedTagEvidence &&
     matchesDocumentedSourceTaxonomyTag(business, subject)
       ? ["source-backed service tag"]
@@ -787,6 +800,12 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
                 SELECT 1
                 FROM jsonb_array_elements_text(COALESCE(b.vibes, '[]'::jsonb)) AS vibe(value)
                 WHERE lower(regexp_replace(vibe.value, '[^a-z0-9]+', '_', 'g')) = ANY($6::text[])
+              )
+              OR EXISTS (
+                SELECT 1
+                FROM public.approved_business_vibes AS community_vibe
+                WHERE community_vibe.business_id::text = b.id::text
+                  AND lower(regexp_replace(community_vibe.vibe_key, '[^a-z0-9]+', '_', 'g')) = ANY($6::text[])
               ) THEN 0
             ELSE 1
           END,
@@ -879,6 +898,11 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
             COALESCE(bi.community_values, '[]'::jsonb)::text,
             COALESCE(bi.audiences_served, '[]'::jsonb)::text,
             COALESCE(NULLIF(b.vibes, '[]'::jsonb), bi.vibes, '[]'::jsonb)::text,
+            COALESCE((
+              SELECT string_agg(community_vibe.vibe_key, ' ')
+              FROM public.approved_business_vibes AS community_vibe
+              WHERE community_vibe.business_id::text = b.id::text
+            ), ''),
             COALESCE(bi.environment_tags, '[]'::jsonb)::text,
             COALESCE(bi.amenity_tags, '[]'::jsonb)::text
           )) ~ ('(^|[^a-z0-9])' || preference.token || '([^a-z0-9]|$)')

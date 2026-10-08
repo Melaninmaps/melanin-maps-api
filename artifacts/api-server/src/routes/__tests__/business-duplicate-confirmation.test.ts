@@ -43,6 +43,14 @@ describe("community business duplicate confirmation", () => {
     expect(adminIntake).not.toContain("These are different — proceed anyway");
   });
 
+  it("uses the shared normalized street-address validator in both address-entry flows", () => {
+    expect(identityPolicy).toContain('import { normalizeBusinessStreetAddress } from "@workspace/constants"');
+    expect(identityPolicy).toContain("export const normalizeBusinessAddress = normalizeBusinessStreetAddress");
+    expect(adminIntake).toContain("validateBusinessStreetAddress(address)");
+    expect(mobileIntake).toContain("validateBusinessStreetAddress(form.address)");
+    expect(mobileIntake).toContain("address: addressValidation.normalized ?? \"\"");
+  });
+
   it("requires a member confirmation only after exact identity evidence", () => {
     expect(mobileIntake).toContain("checkPotentialDuplicates");
     expect(mobileIntake).toContain("/api/businesses/duplicate-check?");

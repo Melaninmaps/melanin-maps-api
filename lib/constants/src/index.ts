@@ -27,6 +27,13 @@ export {
 } from "./library-research-format";
 export type { LibraryResearchBlock } from "./library-research-format";
 
+// ── Business street-address validation ────────────────────────────────────
+export {
+  normalizeBusinessStreetAddress,
+  validateBusinessStreetAddress,
+} from "./business-address";
+export type { BusinessStreetAddressValidation } from "./business-address";
+
 // ── Business discovery normalization ───────────────────────────────────────
 export {
   BUSINESS_SEARCH_NORMALIZATION_VERSION,

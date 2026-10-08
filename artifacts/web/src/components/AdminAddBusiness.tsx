@@ -15,6 +15,7 @@ import {
   VIBES_BY_CATEGORY,
   VIBE_ELIGIBLE_CATEGORIES,
   OWNERSHIP_DESIGNATIONS,
+  validateBusinessStreetAddress,
 } from "@workspace/constants";
 
 const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -157,13 +158,18 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
 
   async function checkDuplicates(): Promise<boolean> {
     if (!name.trim() && !address.trim()) return true;
+    const addressValidation = validateBusinessStreetAddress(address);
+    if (address.trim() && !addressValidation.isUsable) {
+      setError("Enter a usable street address with a street number, or leave it blank for a searchable no-pin profile.");
+      return false;
+    }
     setCheckingDup(true);
     try {
       const params = new URLSearchParams();
       if (name.trim()) params.set("name", name.trim());
       if (city.trim()) params.set("city", city.trim());
       if (state.trim()) params.set("state", state.trim());
-      if (address.trim()) params.set("address", address.trim());
+      if (addressValidation.normalized) params.set("address", addressValidation.normalized);
       if (phone.trim()) params.set("phone", phone.trim());
       if (website.trim()) params.set("website", website.trim());
       if (instagram.trim()) params.set("instagram", instagram.trim());
