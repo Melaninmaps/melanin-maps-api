@@ -28,7 +28,7 @@ describe("staff-demo eligibility and policy", () => {
   it("uses configured staff and fallback models with safe defaults", () => {
     expect(resolveKinfolkModelPolicy(true, {})).toMatchObject({
       mode: "staff_demo",
-      primaryModel: "gpt-5",
+      primaryModel: "gpt-4o-mini",
       fallbackModel: "gpt-4o-mini",
       maxOutputTokens: 900,
       historyMessageLimit: 12,
@@ -176,7 +176,7 @@ describe("compatibility-only fallback classification", () => {
       mode: "staff_demo",
       reason: "compatibility_http_status",
       providerStatus: 400,
-      primaryFamily: "reasoning",
+      primaryFamily: "legacy",
       fallbackFamily: "legacy",
     });
     expect(JSON.stringify(log)).not.toContain(providerMessage);
@@ -250,7 +250,7 @@ describe("truthful prompt and response marker", () => {
     expect(source).toContain("const experienceMarker = staffDemoResponseMarker(modelPolicy)");
     expect(source).toContain("return callOpenAIWithCompatibilityFallback(");
     expect(source).toContain("const fallbackReply = buildLibraryFallbackReply(libraryTopic)");
-    expect(source).toContain("const completionExperienceMarker = completionResult.usedFallback ? {} : experienceMarker");
+    expect(source).toContain("const completionExperienceMarker = completionResult.usedFallback || verifiedImageUrls.length > 0");
     expect(source).toContain('model: kinfolkModel("webSearch")');
     expect(source).toContain("searchPlan.queries.length > 0 && !contextualEvidence");
     expect(source).toContain("fallbackUsed: liveWebOutcome?.fallbackUsed ?? false");

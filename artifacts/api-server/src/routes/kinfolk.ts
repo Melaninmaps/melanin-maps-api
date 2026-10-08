@@ -389,6 +389,7 @@ import {
   resolveKinfolkProbeModel,
   staffDemoPromptBlock,
   staffDemoResponseMarker,
+  type KinfolkChatResponseFormat,
   type KinfolkModelPolicy,
 } from "../kinfolk/staff-demo-policy";
 import {
@@ -1154,6 +1155,7 @@ async function callOpenAIWithRetry(
   maxOutputTokens: number,
   /** Temperature override for entity-factual (≤0.2) and culture-opinion (≤0.5) modes. */
   temperature?: number,
+  responseFormat?: KinfolkChatResponseFormat,
 ): Promise<
   Extract<
     Awaited<ReturnType<typeof openai.chat.completions.create>>,
@@ -1175,6 +1177,7 @@ async function callOpenAIWithRetry(
           maxOutputTokens,
           messages,
           temperature,
+          responseFormat,
         }) as ChatCompletionCreateParamsNonStreaming,
         { signal },
       );
@@ -1245,6 +1248,7 @@ async function callOpenAIWithCompatibilityFallback(
   policy: KinfolkModelPolicy,
   requestId: string,
   temperature?: number,
+  responseFormat?: KinfolkChatResponseFormat,
 ): Promise<{
   completion: Awaited<ReturnType<typeof callOpenAIWithRetry>>;
   usedFallback: boolean;
@@ -1256,6 +1260,7 @@ async function callOpenAIWithCompatibilityFallback(
       policy.primaryModel,
       policy.maxOutputTokens,
       temperature,
+      responseFormat,
     );
     return { completion, usedFallback: false };
   } catch (error) {
@@ -1288,6 +1293,7 @@ async function callOpenAIWithCompatibilityFallback(
       policy.fallbackModel,
       policy.maxOutputTokens,
       temperature,
+      responseFormat,
     );
     return { completion, usedFallback: true };
   }
@@ -11894,6 +11900,34 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             })),
           ]
         : currentUserText;
+    // Vision turns are deliberately simpler than the general chat envelope:
+    // private image review returns one visible-fact reply only. Use the stable
+    // compatibility model for active testers too, avoiding a reasoning-model
+    // completion that can spend its bounded output budget before emitting JSON.
+    const visionResponseFormat: KinfolkChatResponseFormat | undefined =
+      verifiedImageUrls.length > 0
+        ? {
+            type: "json_schema",
+            json_schema: {
+              name: "kinfolk_visible_image_answer",
+              strict: true,
+              schema: {
+                type: "object",
+                properties: { reply: { type: "string" } },
+                required: ["reply"],
+                additionalProperties: false,
+              },
+            },
+          }
+        : undefined;
+    const responseModelPolicyForCall: KinfolkModelPolicy =
+      verifiedImageUrls.length > 0
+        ? {
+            ...responseModelPolicy,
+            primaryModel: kinfolkModel("fallback"),
+            fallbackModel: null,
+          }
+        : responseModelPolicy;
     const aiMessages: Parameters<
       typeof openai.chat.completions.create
     >[0]["messages"] = [
@@ -11948,9 +11982,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               contextualRequestAbort.signal,
               AbortSignal.timeout(25000),
             ]),
-            responseModelPolicy,
+            responseModelPolicyForCall,
             _kinfolkReqId,
             resolverTemperature,
+            visionResponseFormat,
           );
         },
         contextualRequestAbort.signal,
@@ -12025,7 +12060,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const completion = completionResult.completion;
     // The client quality badge is evidence about this answer, not merely account
     // eligibility. Omit it for compatibility-model and server-only fallbacks.
-    const completionExperienceMarker = completionResult.usedFallback
+    const completionExperienceMarker = completionResult.usedFallback || verifiedImageUrls.length > 0
       ? {}
       : experienceMarker;
 

@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 const startup = readFileSync(fileURLToPath(new URL("../index.ts", import.meta.url)), "utf8");
 const migrations = readFileSync(fileURLToPath(new URL("../lib/startup-migrations.ts", import.meta.url)), "utf8");
+const kinfolkRoute = readFileSync(fileURLToPath(new URL("../routes/kinfolk.ts", import.meta.url)), "utf8");
 
 describe("Kinfolk private image schema bootstrap", () => {
   it("runs only an idempotent schema prerequisite before accepting configured image traffic", () => {
@@ -25,5 +26,13 @@ describe("Kinfolk private image schema bootstrap", () => {
     expect(bootstrap).toBeLessThan(listen);
     expect(gate).toBeGreaterThan(-1);
     expect(gate).toBeLessThan(bootstrap);
+  });
+
+  it("uses a structured, compatibility-model response for a private image turn", () => {
+    expect(kinfolkRoute).toContain('name: "kinfolk_visible_image_answer"');
+    expect(kinfolkRoute).toContain('primaryModel: kinfolkModel("fallback")');
+    expect(kinfolkRoute).toContain("responseModelPolicyForCall");
+    expect(kinfolkRoute).toContain("visionResponseFormat");
+    expect(kinfolkRoute).toContain("additionalProperties: false");
   });
 });
