@@ -141,6 +141,17 @@ describe("classifyKinfolkRequest — uncommon exact service protection", () => {
 });
 
 describe("classifyKinfolkRequest — general current-affairs protection", () => {
+  it("fails closed with a governed clarification for a ZIP-only restaurant search", () => {
+    expect(classifyKinfolkRequest("Find a Black-owned restaurant near 19150")).toMatchObject({
+      route: "clarification",
+      discoveryKind: "food",
+      location: null,
+      reason: "discovery_request_postal_code_requires_confirmed_city",
+    });
+    expect(classifyKinfolkRequest("Find a Black-owned restaurant near 19150").clarification)
+      .toMatch(/city|neighborhood/i);
+  });
+
   it("answers a direct city-location question without forcing a directory search", () => {
     expect(classifyKinfolkRequest("where is aspen?", "Aspen")).toMatchObject({
       route: "general_knowledge",
