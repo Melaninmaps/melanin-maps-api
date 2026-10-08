@@ -56,6 +56,7 @@ import {
 } from "../businesses/mapCoordinateIntegrity";
 import {
   mwmDiasporaPromotionSqlPredicate,
+  mwmPublicDirectorySqlPredicate,
 } from "../businesses/mwmCoreDiscoveryPolicy";
 import { documentedDiscoveryEligibilitySqlPredicate } from "../businesses/documentedDiscoveryEligibility";
 import {
@@ -404,6 +405,13 @@ function mwmDiasporaPromotionCondition() {
   )}`;
 }
 
+/** General directory visibility is source-backed but never an ownership claim. */
+function mwmPublicDirectoryCondition() {
+  return sql<boolean>`${sql.raw(
+    mwmPublicDirectorySqlPredicate('"businesses"."id"'),
+  )}`;
+}
+
 /**
  * A narrow direct-lookup escape hatch. It is intentionally limited to a
  * member-entered, plausible business name after promotion search returned no
@@ -670,16 +678,16 @@ router.get("/businesses", async (req: Request, res: Response) => {
         const conditions = [];
         const designationConditions: any[] = [];
         const promotionCondition = mwmDiasporaPromotionCondition();
-        const defaultDiscoveryCondition = promotionCondition;
-        // Every ordinary directory browse remains in the documented Diaspora
-        // catalog. A member can clear a saved designation preference, but not
-        // convert category/map/discovery into an all-public listing search.
+        const generalDirectoryCondition = mwmPublicDirectoryCondition();
+        // General directory browse can include a source-receipted canonical
+        // listing with official presence but no ownership claim. A map/geo
+        // request and every explicit ownership filter remain in the stricter
+        // documented Diaspora catalog.
 
         // One canonical database function enforces active/live lifecycle, duplicate,
         // permanent-hide, demo-source/name/description, and reserved test-phone rules.
         const publicVisibilityCondition = publicBusinessVisibilityCondition();
         conditions.push(publicVisibilityCondition);
-        conditions.push(defaultDiscoveryCondition);
 
         if (category && typeof category === "string" && category !== "All") {
           const categoryValues = categoryFilterStorageValues(category);
@@ -768,6 +776,11 @@ router.get("/businesses", async (req: Request, res: Response) => {
           );
         }
         conditions.push(...designationConditions);
+        conditions.push(
+          hasGeoFilter || designationFilterIds.length > 0
+            ? promotionCondition
+            : generalDirectoryCondition,
+        );
 
         const requestedVibes = typeof vibesParam === "string"
           ? [...new Set(
@@ -1225,7 +1238,9 @@ router.get("/businesses", async (req: Request, res: Response) => {
 
             const fuzzyConditions = [
               publicBusinessVisibilityCondition(),
-              mwmDiasporaPromotionCondition(),
+              hasGeoFilter || designationFilterIds.length > 0
+                ? mwmDiasporaPromotionCondition()
+                : mwmPublicDirectoryCondition(),
             ];
             if (city && typeof city === "string" && city.trim()) {
               fuzzyConditions.push(

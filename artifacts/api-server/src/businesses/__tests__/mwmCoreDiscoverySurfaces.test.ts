@@ -28,6 +28,13 @@ describe("documented Discovery surface coverage", () => {
     expect(discoverySources.businessDirectory).toContain('"map"');
   });
 
+  it("keeps source-backed general browse separate from Kinfolk and map promotion", () => {
+    expect(discoverySources.businessDirectory).toContain("mwmPublicDirectorySqlPredicate");
+    expect(discoverySources.businessDirectory).toContain("hasGeoFilter || designationFilterIds.length > 0");
+    expect(discoverySources.businessDirectory).toContain("mwmDiasporaPromotionSqlPredicate");
+    expect(discoverySources.kinfolk).not.toContain("mwmPublicDirectorySqlPredicate");
+  });
+
   it("keeps the gate out of detail, claim, moderation, and contribution paths", () => {
     const businesses = discoverySources.businessDirectory;
     expect(businesses).toContain("This applies only to public directory discovery");
