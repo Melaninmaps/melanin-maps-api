@@ -160,13 +160,14 @@ const SUBJECTS: readonly SubjectDefinition[] = [
     key: "salon",
     label: "salons",
     match:
-      /\b(?:hair|salons?|hair stylists?|hairdressers?|hair color|wash and style)\b/i,
+      /\b(?:hair|salons?|hair stylists?|hairdressers?|hair color|wash and style|silk presses?)\b/i,
     searchTerms: [
       "salon",
       "hair salon",
       "hair stylist",
       "hair color",
       "wash and style",
+      "silk press",
     ],
   },
   {

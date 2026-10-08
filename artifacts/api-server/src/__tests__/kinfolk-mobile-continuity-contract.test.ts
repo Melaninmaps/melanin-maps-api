@@ -21,9 +21,12 @@ describe("Kinfolk mobile continuity contract", () => {
     expect(source).toContain("ephemeralDiscoverySession?.messages ?? boundedEphemeralConversation(input.conversationContext);");
   });
 
-  it("does not stop a broad salon request before governed inventory is searched", () => {
-    expect(source).not.toContain("const clarificationSteps = businessDiscoveryClarification({");
-    expect(source).toContain("const discoveryResult = await discoverLocalBusinesses({");
+  it("offers a broad-salon refinement only after governed inventory is searched", () => {
+    const discoveryIndex = source.indexOf("const discoveryResult = await discoverLocalBusinesses({");
+    const clarificationIndex = source.indexOf("const postResultClarificationSteps = businessDiscoveryClarification({");
+    expect(discoveryIndex).toBeGreaterThan(-1);
+    expect(clarificationIndex).toBeGreaterThan(discoveryIndex);
+    expect(source).toContain("clarificationSteps:\n      postResultClarificationSteps.length > 0");
   });
 
   it("keeps provider implementation details out of member-facing source notes", () => {

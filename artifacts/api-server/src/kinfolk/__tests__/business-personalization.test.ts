@@ -246,6 +246,8 @@ describe("Kinfolk business personalization", () => {
     ["HVAC in Phoenix", "hvac"],
     ["Can you find me a stylist in Philadelphia", "salon"],
     ["Find natural hair in Philadelphia", "locs"],
+    ["I need a stylist who specializes in silk presses in Philadelphia", "salon"],
+    ["Find someone who does starter locs in Philadelphia", "locs"],
     ["auto repair in Philadelphia", "auto_repair"],
     ["Find a therapist in DC", "therapist"],
     ["things to do in Philadelphia", "activity"],

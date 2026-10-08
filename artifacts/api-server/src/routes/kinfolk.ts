@@ -8144,6 +8144,15 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
         resultView.followUp,
         ...(planningFollowUp ? [planningFollowUp] : []),
       ];
+  // A broad salon search always completes against governed inventory first.
+  // The optional service choices arrive with that completed result so members
+  // can narrow a later turn without treating all hair needs as interchangeable.
+  const postResultClarificationSteps = businessDiscoveryClarification({
+    message: input.message,
+    subjectKey: subject.key,
+    ageBand,
+    city: scope.city,
+  });
   const responseSources = [
     ...discoveryResult.sources.map(({ title, url }) => ({ title, url })),
     ...citySafetySources,
@@ -8203,6 +8212,10 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       : discoveryResult.sourceNote,
     educationalStatus: discoveryResult.educationalStatus,
     discovery: discoveryResult.discovery,
+    clarificationSteps:
+      postResultClarificationSteps.length > 0
+        ? postResultClarificationSteps
+        : undefined,
     needsClarification: false,
     originalQuery: messageForPersistence,
     location: {
