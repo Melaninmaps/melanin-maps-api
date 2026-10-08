@@ -1,3 +1,5 @@
+import { normalizeOfficialWebsiteDomain } from "./businessDuplicateIdentity";
+
 export const ADMIN_PROFILE_BLOCKED_FIELDS = new Set([
   "blackOwned", "verified", "verifiedDesignations", "listingStatus", "status", "profileStatus",
   "isDuplicate", "duplicateOfId", "permanentlyHidden", "latitude", "longitude",
@@ -14,13 +16,13 @@ export const ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS = new Set([
 ]);
 
 export type OwnershipSourceReceiptInput = { sourceUrl: string; sourceLabel: string; observedAt: string; note: string | null };
-export type ProfileFieldReceiptName = "identity" | "description" | "category" | "hours" | "phone" | "address" | "website" | "instagram" | "tiktok" | "facebook" | "service_tags" | "ownership";
+export type ProfileFieldReceiptName = "identity" | "description" | "category" | "hours" | "price_range" | "phone" | "address" | "website" | "instagram" | "tiktok" | "facebook" | "service_tags" | "ownership";
 export type ProfileFieldReceiptInput = { field: ProfileFieldReceiptName; sourceUrl: string; sourceLabel: string; observedAt: string; confidence: "high" | "medium" | "low"; note: string | null };
 export type ValidatedAdminProfilePatch = { patch: Record<string, string | string[] | null>; ownershipReceipt: OwnershipSourceReceiptInput | null; fieldReceipts: ProfileFieldReceiptInput[]; requiredReceiptFields: ProfileFieldReceiptName[]; changeNote: string; locationChanged: boolean };
 
 type ExistingProfile = {
   name: string; description?: string | null; address: string | null; city: string | null; state: string | null;
-  phone?: string | null; website?: string | null; hours?: string | null; instagram?: string | null; tiktok?: string | null; facebook?: string | null;
+  phone?: string | null; website?: string | null; hours?: string | null; priceRange?: string | null; instagram?: string | null; tiktok?: string | null; facebook?: string | null;
   twitter?: string | null; youtube?: string | null; pinterest?: string | null; category?: string | null; subcategory?: string | null;
   tags?: string[] | null; vibes?: string[] | null; ownershipDesignations: string[] | null;
 };
@@ -28,7 +30,7 @@ type ExistingProfile = {
 const OPTIONAL_TEXT_FIELDS: Record<string, { column: string; max: number }> = {
   description: { column: "description", max: 5000 }, address: { column: "address", max: 255 }, city: { column: "city", max: 100 }, state: { column: "state", max: 50 }, phone: { column: "phone", max: 30 }, hours: { column: "hours", max: 255 }, priceRange: { column: "price_range", max: 10 }, instagram: { column: "instagram", max: 255 }, tiktok: { column: "tiktok", max: 255 }, facebook: { column: "facebook", max: 255 }, twitter: { column: "twitter", max: 255 }, youtube: { column: "youtube", max: 255 }, pinterest: { column: "pinterest", max: 255 }, category: { column: "category", max: 100 }, subcategory: { column: "subcategory", max: 100 },
 };
-const RECEIPT_FIELDS = new Set<ProfileFieldReceiptName>(["identity", "description", "category", "hours", "phone", "address", "website", "instagram", "tiktok", "facebook", "service_tags", "ownership"]);
+const RECEIPT_FIELDS = new Set<ProfileFieldReceiptName>(["identity", "description", "category", "hours", "price_range", "phone", "address", "website", "instagram", "tiktok", "facebook", "service_tags", "ownership"]);
 
 function own(input: Record<string, unknown>, key: string): boolean { return Object.prototype.hasOwnProperty.call(input, key); }
 function cleanText(value: unknown, field: string, max: number, allowNull = true): string | null {
@@ -44,15 +46,6 @@ function isPrivateHostname(hostname: string): boolean {
   const host = hostname.toLowerCase(); if (host === "localhost" || host.endsWith(".localhost") || host === "::1" || host.startsWith("127.") || host.startsWith("10.") || host.startsWith("192.168.")) return true;
   const match = host.match(/^172\.(\d{1,3})\./); return Boolean(match && Number(match[1]) >= 16 && Number(match[1]) <= 31);
 }
-const DIRECTORY_HOST_SUFFIXES = [
-  "yelp.com", "yellowpages.com", "google.com", "googleusercontent.com",
-  "bing.com", "foursquare.com", "tripadvisor.com", "mapquest.com",
-  "nextdoor.com", "merchantcircle.com", "chamberofcommerce.com",
-];
-function isDirectoryHostname(hostname: string): boolean {
-  const normalized = hostname.toLowerCase();
-  return DIRECTORY_HOST_SUFFIXES.some((suffix) => normalized === suffix || normalized.endsWith(`.${suffix}`));
-}
 function cleanPublicUrl(value: unknown, field: string): string | null {
   const text = cleanText(value, field, 512); if (text === null) return null;
   let url: URL; try { url = new URL(text); } catch { throw new Error(`${field} must be a valid public https or http URL`); }
@@ -61,7 +54,7 @@ function cleanPublicUrl(value: unknown, field: string): string | null {
 }
 function cleanOfficialWebsite(value: unknown): string | null {
   const url = cleanPublicUrl(value, "website");
-  if (url !== null && isDirectoryHostname(new URL(url).hostname)) {
+  if (url !== null && !normalizeOfficialWebsiteDomain(url)) {
     throw new Error("website must be the business’s own official website, not a directory or listing");
   }
   return url;
@@ -104,6 +97,7 @@ function receiptFieldForColumn(column: string): ProfileFieldReceiptName | null {
   if (column === "description") return "description";
   if (["category", "subcategory"].includes(column)) return "category";
   if (column === "hours") return "hours";
+  if (column === "price_range") return "price_range";
   if (column === "phone") return "phone";
   if (column === "address") return "address";
   if (column === "website") return "website";
@@ -147,7 +141,7 @@ export function validateAdminBusinessProfilePatch(input: unknown, existing: Exis
   if (ownershipReceipt && !fieldReceipts.some((receipt) => receipt.field === "ownership")) fieldReceipts.push({ field: "ownership", sourceUrl: ownershipReceipt.sourceUrl, sourceLabel: ownershipReceipt.sourceLabel, observedAt: ownershipReceipt.observedAt, confidence: "high", note: ownershipReceipt.note });
   const receiptFields = new Set(fieldReceipts.map((receipt) => receipt.field));
   if (fieldReceipts.length !== receiptFields.size) throw new Error("Submit at most one source receipt per public fact field per save");
-  const existingValue: Record<string, unknown> = { ...existing, ownership_designations: existing.ownershipDesignations ?? [] };
+  const existingValue: Record<string, unknown> = { ...existing, price_range: existing.priceRange ?? null, ownership_designations: existing.ownershipDesignations ?? [] };
   const changedColumns = Object.entries(patch).filter(([column, next]) => !sameValue(existingValue[column], next)).map(([column]) => column);
   const requiredReceiptFields = [...new Set(changedColumns.map(receiptFieldForColumn).filter((field): field is ProfileFieldReceiptName => Boolean(field)))];
   const missing = requiredReceiptFields.filter((field) => !receiptFields.has(field));

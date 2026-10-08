@@ -52,6 +52,9 @@ describe("high-confidence business identity policy", () => {
     expect(highConfidenceBusinessDuplicateReasons({ phone: "+1 (215) 555-0199" }, {
       phone: "215-555-0199",
     })).toEqual(["same_phone"]);
+    expect(highConfidenceBusinessDuplicateReasons({ phone: "555-1212" }, {
+      phone: "555-1212",
+    })).toEqual([]);
   });
 
   it("never accepts directories, marketplaces, or maps as an official identity source", () => {

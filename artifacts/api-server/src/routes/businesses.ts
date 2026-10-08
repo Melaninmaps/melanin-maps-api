@@ -461,7 +461,6 @@ async function sendDirectNameAvailabilityFallback(
   const { rows } = await pool.query<Record<string, unknown>>(
     `SELECT * FROM public.public_businesses
       WHERE ${filters.join(" AND ")}
-        AND ${mwmDiasporaPromotionSqlPredicate("public.public_businesses.id")}
       ORDER BY name, id
       LIMIT $${params.length}`,
     params,
@@ -481,7 +480,7 @@ async function sendDirectNameAvailabilityFallback(
     page: { offset: 0, limit },
     featuredCount: 0,
     usedFuzzyFallback: false,
-    searchScope: "diaspora_promotion_catalog",
+    searchScope: "direct_named_safety_context",
     searchClarification: null,
     availabilityFallback: true,
   });
@@ -777,6 +776,17 @@ router.get("/businesses", async (req: Request, res: Response) => {
                 .filter((value) => CANONICAL_VIBE_KEYS.has(value)),
             )].slice(0, 8)
           : [];
+        const directSearchText = typeof search === "string" ? search.trim() : "";
+        // A retained public profile can be read only when the member names it
+        // exactly. This is a safety/context lookup, never a browse, fuzzy search,
+        // map result, or Kinfolk recommendation path.
+        const directNamedSafetyLookup = isDeliberateNamedBusinessLookup(directSearchText)
+          && !hasGeoFilter
+          && !(category && typeof category === "string" && category !== "All")
+          && !(subcategory && typeof subcategory === "string")
+          && !(handle && typeof handle === "string")
+          && requestedDesignationValues.length === 0
+          && requestedVibes.length === 0;
         if (requestedVibes.length > 0) {
           conditions.push(
             sql<boolean>`${businessesTable.vibes} ?| ARRAY[${sql.join(
@@ -960,6 +970,38 @@ router.get("/businesses", async (req: Request, res: Response) => {
           )
           .limit(pageLimit)
           .offset(offset);
+
+        let usedDirectNamedSafetyLookup = false;
+        if (businesses.length === 0 && directNamedSafetyLookup) {
+          const exactNameConditions = [
+            publicBusinessVisibilityCondition(),
+            sql<boolean>`REGEXP_REPLACE(LOWER(COALESCE(${businessesTable.name}, '')), '[^a-z0-9]+', '', 'g') = ${normalizedDirectBusinessName(directSearchText)}`,
+          ];
+          if (city && typeof city === "string" && city.trim()) {
+            exactNameConditions.push(
+              sql<boolean>`LOWER(BTRIM(COALESCE(${businessesTable.city}, ''))) = LOWER(BTRIM(${normalizeCityAlias(city)}))`,
+            );
+          }
+          if (state && typeof state === "string" && state.trim()) {
+            exactNameConditions.push(
+              sql<boolean>`UPPER(BTRIM(COALESCE(${businessesTable.state}, ''))) = UPPER(BTRIM(${state.trim()}))`,
+            );
+          }
+          if (country && typeof country === "string" && country.trim()) {
+            exactNameConditions.push(
+              sql<boolean>`${businessesTable.country} ILIKE ${`%${country.trim()}%`}`,
+            );
+          }
+          businesses = await db
+            .select()
+            .from(businessesTable)
+            .where(and(...exactNameConditions))
+            .orderBy(asc(businessesTable.name), asc(businessesTable.id))
+            .limit(pageLimit)
+            .offset(offset);
+          totalCount = businesses.length;
+          usedDirectNamedSafetyLookup = businesses.length > 0;
+        }
 
         // Annotate businesses that have active growth-tool promotions as featured.
         // Only businesses that already matched the search criteria are promoted —
@@ -1299,7 +1341,9 @@ router.get("/businesses", async (req: Request, res: Response) => {
           page: { offset, limit: pageLimit },
           featuredCount: withDistance.filter((b: any) => b.featured).length,
           usedFuzzyFallback,
-          searchScope: "diaspora_promotion_catalog",
+          searchScope: usedDirectNamedSafetyLookup
+            ? "direct_named_safety_context"
+            : "diaspora_promotion_catalog",
           // Metadata only: it never changes the member's query, filters, or
           // results. Clients choose whether to retry the suggestion.
           searchClarification,
@@ -4120,6 +4164,7 @@ router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response
         phone: existing.phone,
         website: existing.website,
         hours: existing.hours,
+        priceRange: existing.price_range,
         instagram: existing.instagram,
         tiktok: existing.tiktok,
         facebook: existing.facebook,
@@ -4140,25 +4185,35 @@ router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response
 
     const patch = { ...validated.patch };
     const nextName = String(patch.name ?? existing.name);
+    const nextAddress = String(patch.address ?? existing.address ?? "");
     const nextCity = String(patch.city ?? existing.city ?? "");
     const nextState = String(patch.state ?? existing.state ?? "");
-    const identityChanged = ["name", "city", "state"].some((field) => Object.prototype.hasOwnProperty.call(patch, field));
+    const identityChanged = ["name", "address", "city", "state"].some((field) => (
+      Object.prototype.hasOwnProperty.call(patch, field)
+      && String(patch[field] ?? "") !== String(existing[field as keyof AdminBusinessProfileRow] ?? "")
+    ));
     if (identityChanged) {
-      const collision = await client.query<{ id: string; name: string; city: string | null; state: string | null }>(
-        `SELECT id, name, city, state FROM businesses
+      const potentialCollisions = await client.query<BusinessIdentityInput & { id: string }>(
+        `SELECT id, name, address, city, state, phone, website, instagram, facebook, tiktok, twitter, youtube, pinterest FROM businesses
           WHERE id <> $1
             AND COALESCE(is_duplicate, false) = false
             AND regexp_replace(lower(COALESCE(name, '')), '[^a-z0-9]', '', 'g') = $2
             AND regexp_replace(lower(COALESCE(city, '')), '[^a-z0-9]', '', 'g') = $3
             AND regexp_replace(lower(COALESCE(state, '')), '[^a-z0-9]', '', 'g') = $4
-          LIMIT 2`,
+          LIMIT 25`,
         [businessId, normalizeBusinessIdentityPart(nextName), normalizeBusinessIdentityPart(nextCity), normalizeBusinessIdentityPart(nextState)],
       );
-      if (collision.rows.length > 0) {
+      const collision = potentialCollisions.rows.find((candidate) => (
+        highConfidenceBusinessDuplicateReasons(
+          { name: nextName, address: nextAddress, city: nextCity, state: nextState },
+          candidate,
+        ).includes("same_name_and_address")
+      ));
+      if (collision) {
         await client.query("ROLLBACK");
         res.status(409).json({
-          error: "An existing canonical business has the same name and location. Use the audited duplicate review workflow instead.",
-          conflictingBusinessId: collision.rows[0].id,
+          error: "An existing canonical business has the same exact name and complete address. Use the audited duplicate review workflow instead.",
+          conflictingBusinessId: collision.id,
         });
         return;
       }

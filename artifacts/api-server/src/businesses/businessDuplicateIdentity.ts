@@ -141,7 +141,9 @@ export function normalizeOfficialSocialProfileForPlatform(
 export function normalizeBusinessPhone(value: string | null | undefined): string | null {
   const raw = String(value ?? "").replace(/\D/g, "");
   const normalized = raw.length === 11 && raw.startsWith("1") ? raw.slice(1) : raw;
-  return normalized.length >= 7 ? normalized : null;
+  // A seven-digit local number is not a globally or even city-wide reliable
+  // business identity. Keep only plausible full international/NANP numbers.
+  return normalized.length >= 10 && normalized.length <= 15 ? normalized : null;
 }
 
 export const normalizeBusinessAddress = normalizeBusinessStreetAddress;

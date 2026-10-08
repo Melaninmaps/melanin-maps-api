@@ -5,7 +5,7 @@ import { ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS, normalizeBusinessIdentityPart, v
 
 const existing = {
   name: "Community Books", description: "Independent community bookstore.", address: "123 Main Street", city: "Philadelphia", state: "PA",
-  phone: null, website: null, hours: null, instagram: null, tiktok: null, facebook: null, twitter: null, youtube: null, pinterest: null,
+  phone: null, website: null, hours: null, priceRange: null, instagram: null, tiktok: null, facebook: null, twitter: null, youtube: null, pinterest: null,
   category: "Books & Media", subcategory: "Bookstore", tags: ["books"], vibes: [] as string[], ownershipDesignations: [] as string[],
 };
 const receipt = (field: string) => ({ field, sourceUrl: "https://example.org/about", sourceLabel: "Official about page", observedAt: "2026-10-05", confidence: "high", note: "Publicly stated by the business." });
@@ -24,6 +24,8 @@ describe("audited administrator business profile policy", () => {
   it("requires a public source receipt for every changed public fact", () => {
     expect(() => validateAdminBusinessProfilePatch(patch({ description: "Updated bookstore description." }), existing)).toThrow("source receipt is required for: description");
     expect(validateAdminBusinessProfilePatch(patch({ description: "Updated bookstore description.", sourceReceipts: [receipt("description")] }), existing).requiredReceiptFields).toEqual(["description"]);
+    expect(() => validateAdminBusinessProfilePatch(patch({ priceRange: "$$" }), existing)).toThrow("source receipt is required for: price_range");
+    expect(validateAdminBusinessProfilePatch(patch({ priceRange: "$$", sourceReceipts: [receipt("price_range")] }), existing).requiredReceiptFields).toEqual(["price_range"]);
   });
   it("requires a public ownership source receipt for an ownership designation change", () => {
     expect(() => validateAdminBusinessProfilePatch(patch({ ownershipDesignations: ["Black-Owned"] }), existing)).toThrow("source receipt is required");
@@ -36,6 +38,9 @@ describe("audited administrator business profile policy", () => {
   });
   it("never accepts a directory as an official website or a cross-platform social URL", () => {
     expect(() => validateAdminBusinessProfilePatch(patch({ website: "https://www.yelp.com/biz/community-books" }), existing)).toThrow("official website");
+    expect(() => validateAdminBusinessProfilePatch(patch({ website: "https://www.doordash.com/store/community-books" }), existing)).toThrow("official website");
+    expect(() => validateAdminBusinessProfilePatch(patch({ website: "https://www.instagram.com/communitybooks/" }), existing)).toThrow("official website");
+    expect(() => validateAdminBusinessProfilePatch(patch({ website: "https://g.page/community-books" }), existing)).toThrow("official website");
     expect(() => validateAdminBusinessProfilePatch(patch({ instagram: "https://www.yelp.com/biz/community-books" }), existing)).toThrow("official instagram");
     expect(validateAdminBusinessProfilePatch(patch({ instagram: "https://www.instagram.com/communitybooks/", sourceReceipts: [receipt("instagram")] }), existing).patch.instagram).toContain("instagram.com");
   });
@@ -45,7 +50,7 @@ describe("audited administrator business profile policy", () => {
   });
   it("uses central authorization, transactions, receipts, and immutable audit events in the canonical edit route", () => {
     const source = routeSource();
-    expect(source).toContain('router.get("/admin/businesses/:id/profile"'); expect(source).toContain("if (!hasAdminAccess(req))"); expect(source).toContain("business_profile_field_receipts"); expect(source).toContain("business_admin_profile_edit_audit_events"); expect(source).toContain('await client.query("BEGIN")'); expect(source).toContain('await client.query("COMMIT")'); expect(source).toContain("map_coordinates_cleared_after_address_change"); expect(source).toContain("Use the audited duplicate review workflow instead");
+    expect(source).toContain('router.get("/admin/businesses/:id/profile"'); expect(source).toContain("if (!hasAdminAccess(req))"); expect(source).toContain("business_profile_field_receipts"); expect(source).toContain("business_admin_profile_edit_audit_events"); expect(source).toContain('await client.query("BEGIN")'); expect(source).toContain('await client.query("COMMIT")'); expect(source).toContain("map_coordinates_cleared_after_address_change"); expect(source).toContain("Use the audited duplicate review workflow instead"); expect(source).toContain('includes("same_name_and_address")');
     const profileEditSource = source.slice(source.indexOf('router.patch("/admin/businesses/:id/profile"'), source.indexOf("export default router"));
     expect(profileEditSource).not.toMatch(/(?:DELETE|UPDATE)\s+.*(?:business_vibe_evidence|business_endorsement_taps|reviews|checkins)/i);
   });
