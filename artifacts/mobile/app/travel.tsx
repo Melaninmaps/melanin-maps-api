@@ -8,6 +8,7 @@ import {
   AppState,
   FlatList,
   Image,
+  Keyboard,
   KeyboardAvoidingView,
   Linking,
   Modal,
@@ -2500,14 +2501,9 @@ export default function TravelScreen() {
     const attachedImagePreviews = kinfolkImages.map((attachment) => attachment.previewUri);
     const attachedImageAssetIds = kinfolkImages.map((attachment) => attachment.assetId);
     const publicOrigin = exactRadiusOrigin.trim();
-    setInputText("");
-    setVoiceTranscriptReview(null);
-    // The origin is one-turn public context only. It is never shown in the
-    // conversation, attached to memory, or kept in the composer after send.
-    setExactRadiusOrigin("");
     onUserSend(); // scroll to bottom, suppress jump button for this send
     armAutoSpeech();
-    await sendMessage(msg, {
+    const accepted = await sendMessage(msg, {
       voiceMode,
       imageUrls: attachedImagePreviews,
       imageAssetIds: attachedImageAssetIds,
@@ -2515,8 +2511,16 @@ export default function TravelScreen() {
       includeCommunityPerspective,
       publicOrigin: publicOrigin || undefined,
     });
-    setKinfolkImages([]);
-    setIncludeCommunityPerspective(false);
+    if (accepted) {
+      setInputText("");
+      setVoiceTranscriptReview(null);
+      // The origin is one-turn public context only. It is never shown in the
+      // conversation, attached to memory, or kept in the composer after send.
+      setExactRadiusOrigin("");
+      setKinfolkImages([]);
+      setIncludeCommunityPerspective(false);
+      Keyboard.dismiss();
+    }
   }, [inputText, voiceMode, sendMessage, isAuthenticated, onUserSend, kinfolkImages, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin]);
 
   const stopPrimaryVoiceRecording = useCallback(async () => {
