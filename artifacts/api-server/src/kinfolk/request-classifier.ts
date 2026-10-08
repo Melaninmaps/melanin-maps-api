@@ -88,6 +88,10 @@ const DIRECT_DISCOVERY_IMPERATIVE_RE =
 // remains a discovery request.
 const DIRECT_LOCATION_QUESTION_RE =
   /^\s*where\s+is\s+(?!a\b|an\b|the\b|my\b|your\b)([A-Za-z][A-Za-z .'-]{1,50}?)\s*[?!.]?\s*$/i;
+// A ZIP code alone can span more than one locality and must not be silently
+// treated as a city. Keep it available only to explain the clarification; the
+// governed directory path still requires a confirmed city/state scope.
+const POSTAL_CODE_RE = /\b(\d{5})(?:-\d{4})?\b/;
 // City, travel, or dinner words can appear inside a normal draft, career, or
 // reminder request. These requests are never directory discovery by themselves.
 const ORDINARY_ASSISTANT_RE =
@@ -141,6 +145,7 @@ export function classifyKinfolkRequest(
   const explicitTravelPlanningIntent =
     (TRAVEL_RE.test(text) && TRAVEL_PLANNING_RE.test(text)) ||
     DAY_PLAN_RE.test(text);
+  const postalCode = text.match(POSTAL_CODE_RE)?.[1] ?? null;
   // Use server-resolved city (alias-aware) when available; fall back to regex.
   const location = resolvedDestination
     ? resolvedDestination
@@ -293,6 +298,22 @@ export function classifyKinfolkRequest(
     (explicitDiscoveryIntent || explicitTravelPlanningIntent) &&
     !location
   ) {
+    if (postalCode) {
+      return {
+        route: "clarification",
+        discoveryKind: FOOD_RE.test(lower)
+          ? "food"
+          : NIGHTLIFE_RE.test(lower)
+            ? "nightlife"
+            : "business",
+        location: null,
+        ownershipPreference,
+        culturalContext,
+        clarification:
+          `I can search documented local options near ZIP ${postalCode}, but I need the city or neighborhood too so I do not guess a location or mix results from another area. What city or neighborhood should I use?`,
+        reason: "discovery_request_postal_code_requires_confirmed_city",
+      };
+    }
     const missingLocationClarification = businessSubject?.key === "salon"
       ? "I can help find a stylist or salon. Which city or neighborhood should I search? Then I can narrow it to locs, braids or protective styles, natural hair, cut or color, or keep the search broad."
       : FOOD_RE.test(lower)
