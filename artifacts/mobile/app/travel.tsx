@@ -2062,6 +2062,7 @@ export default function TravelScreen() {
   const pendingAutoSpeechRef = useRef<VoicePlaybackRequest | null>(null);
   const queuedVoicePlaybackRef = useRef<VoicePlaybackRequest | null>(null);
   const [voiceAudioUri, setVoiceAudioUri] = useState<string | undefined>(undefined);
+  const voiceAudioFileRef = useRef<FileSystem.File | null>(null);
   const [playingVoice, setPlayingVoice] = useState(false);
   // TTS has separate receipt, playback, and completion stages. Keep this
   // visible so a member never has to guess whether Listen failed or is loading.
@@ -2159,8 +2160,14 @@ export default function TravelScreen() {
     queuedVoicePlaybackRef.current = null;
     autoSpeechGuardRef.current.invalidate(reason);
     if (serverVoicePlayer.playing || serverVoicePlayer.isLoaded) serverVoicePlayer.pause();
+    const temporaryFile = voiceAudioFileRef.current;
+    voiceAudioFileRef.current = null;
+    if (temporaryFile?.exists) {
+      try { temporaryFile.delete(); } catch { /* local playback cleanup is best effort */ }
+    }
     setVoiceAudioUri(undefined);
     setPlayingVoice(false);
+    setVoiceOutputStatus(null);
     setSpokenVoiceText(null);
   }, [serverVoicePlayer]);
 
@@ -2170,8 +2177,12 @@ export default function TravelScreen() {
     messageId: string,
   ) => {
     if (!content.trim() || appStateRef.current !== "active") return;
+    // Clear the prior source before fetching the next response. A reused native
+    // player can otherwise report the old file as loaded and try to play it.
+    stopServerVoice(`new_${source}_voice_request`);
     const request = autoSpeechGuardRef.current.begin();
     let queued = false;
+    let temporaryFile: FileSystem.File | null = null;
     setPlayingVoice(true);
     setSpokenVoiceText(null);
     setVoiceOutputStatus("Preparing voice…");
@@ -2216,12 +2227,16 @@ export default function TravelScreen() {
       ) throw new Error("Kinfolk did not return playable audio.");
       if (!autoSpeechGuardRef.current.canPlay(request)) return;
       setSpokenVoiceText({ messageId, content: payload.spokenText, phase: "preparing" });
-      const temporaryFile = new FileSystem.File(
+      temporaryFile = new FileSystem.File(
         FileSystem.Paths.cache,
         `kinfolk-primary-${Date.now()}.${payload.format}`,
       );
       temporaryFile.write(payload.audio, { encoding: FileSystem.EncodingType.Base64 });
-      if (!autoSpeechGuardRef.current.canPlay(request)) return;
+      if (!autoSpeechGuardRef.current.canPlay(request)) {
+        if (temporaryFile.exists) temporaryFile.delete();
+        return;
+      }
+      voiceAudioFileRef.current = temporaryFile;
       queuedVoicePlaybackRef.current = request;
       setVoiceAudioUri(temporaryFile.uri);
       queued = true;
@@ -2233,12 +2248,15 @@ export default function TravelScreen() {
       Alert.alert("Voice playback unavailable", `${message} You can still read the reply and try Listen again.`);
     } finally {
       if (!queued) {
+        if (temporaryFile?.exists) {
+          try { temporaryFile.delete(); } catch { /* local playback cleanup is best effort */ }
+        }
         autoSpeechGuardRef.current.finish(request);
         setPlayingVoice(false);
         setSpokenVoiceText(null);
       }
     }
-  }, [voiceMode]);
+  }, [stopServerVoice, voiceMode]);
 
   // Do not call play() until the local server-owned WAV has fully loaded.
   useEffect(() => {
@@ -2285,13 +2303,19 @@ export default function TravelScreen() {
   }, [playingVoice, serverVoicePlayerStatus.error, stopServerVoice]);
 
   useEffect(() => {
-    if (playingVoice && serverVoicePlayer.isLoaded && !serverVoicePlayer.playing && !queuedVoicePlaybackRef.current) {
+    if (playingVoice && serverVoicePlayerStatus.didJustFinish && !queuedVoicePlaybackRef.current) {
       setVoiceOutputStatus("Voice finished. Tap Listen to play it again.");
       setSpokenVoiceText((current) => current ? { ...current, phase: "finished" } : current);
+      const temporaryFile = voiceAudioFileRef.current;
+      voiceAudioFileRef.current = null;
+      if (temporaryFile?.exists) {
+        try { temporaryFile.delete(); } catch { /* local playback cleanup is best effort */ }
+      }
+      setVoiceAudioUri(undefined);
       const timer = setTimeout(() => setPlayingVoice(false), 0);
       return () => clearTimeout(timer);
     }
-  }, [playingVoice, serverVoicePlayer, serverVoicePlayer.isLoaded, serverVoicePlayer.playing]);
+  }, [playingVoice, serverVoicePlayerStatus.didJustFinish]);
 
   const armAutoSpeech = useCallback(() => {
     if (!voiceOutputRef.current || appStateRef.current !== "active") {
@@ -2826,22 +2850,15 @@ export default function TravelScreen() {
       )}
 
       {/* Header */}
-      <View style={[styles.header, { paddingTop: topPad + 10, backgroundColor: colors.primary }]}>
-        <TouchableOpacity activeOpacity={0.85} style={styles.headerBtn} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name="arrow-back" size={22} color="#fff" />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>KinfolkAI™</Text>
-          <Text style={styles.headerSub}>Your personal life companion</Text>
-        </View>
-        <View style={styles.headerActions}>
-          <TouchableOpacity activeOpacity={0.85}
-            style={[styles.headerIconBtn, hasProfile && { backgroundColor: "#ffffff30" }]}
-            onPress={() => setShowProfile(true)}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Ionicons name="person-circle-outline" size={22} color="#fff" />
+        <View style={[styles.header, { paddingTop: topPad + 10, backgroundColor: colors.primary }]}>
+          <TouchableOpacity activeOpacity={0.85} style={styles.headerBtn} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="arrow-back" size={22} color="#fff" />
           </TouchableOpacity>
+          <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle} numberOfLines={1}>KinfolkAI™</Text>
+          <Text style={styles.headerSub} numberOfLines={1}>Your personal life companion</Text>
+          </View>
+          <View style={styles.headerActions}>
           <TouchableOpacity activeOpacity={0.85}
             style={[styles.headerIconBtn, showHeaderActions && { backgroundColor: "#ffffff30" }]}
             onPress={() => setShowHeaderActions((visible) => !visible)}
@@ -2857,6 +2874,10 @@ export default function TravelScreen() {
 
       {showHeaderActions && (
         <View style={[styles.headerActionRail, { backgroundColor: colors.primary, borderTopColor: "#ffffff22" }]}>
+          <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); setShowProfile(true); }} accessibilityLabel="Open Kinfolk profile">
+            <Ionicons name="person-circle-outline" size={15} color="#fff" />
+            <Text style={styles.headerActionText}>Profile</Text>
+          </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); router.push("/wishlist" as any); }} accessibilityLabel="Open saved places">
             <Ionicons name={wishlistItems.length > 0 ? "bookmark" : "bookmark-outline"} size={15} color="#fff" />
             <Text style={styles.headerActionText}>Saved</Text>
@@ -3348,7 +3369,7 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingBottom: 12, gap: 8 },
   headerBtn: { padding: 4 },
-  headerCenter: { flex: 1 },
+  headerCenter: { flex: 1, minWidth: 0 },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 18, color: "#FFFFFF" },
   headerSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: "#ffffff99" },
   conversationModeRail: { borderBottomWidth: StyleSheet.hairlineWidth, paddingTop: 8 },

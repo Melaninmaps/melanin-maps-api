@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { useDiscoveryLocation } from "@/features/discovery/LocationContext";
 import { LocationSearchBar } from "@/features/location/LocationSearchBar";
 import type { DiscoveryRecord, LocationFirstResponse } from "@/shared/discoveryContracts";
+import { readLocationFirstResponse } from "./locationFirstResponse";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -16,6 +17,8 @@ export function LocationFirstExplore() {
   const [lens, setLens] = useState<string | null>(null);
   const [response, setResponse] = useState<LocationFirstResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [requestAttempt, setRequestAttempt] = useState(0);
 
   const query = useMemo(
     () => ({
@@ -37,22 +40,46 @@ export function LocationFirstExplore() {
   );
 
   useEffect(() => {
-    if (!location.city) return;
+    if (!location.city) {
+      setResponse(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     const controller = new AbortController();
+    let active = true;
     setLoading(true);
-    fetch(`${BASE}api/discovery/query`, {
-      method: "POST",
-      credentials: "include",
-      signal: controller.signal,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(query),
-    })
-      .then((r) => r.json())
-      .then(setResponse)
-      .catch((e) => { if (e.name !== "AbortError") console.error("Explore discovery failed", e); })
-      .finally(() => setLoading(false));
-    return () => controller.abort();
-  }, [query]);
+    setResponse(null);
+    setError(null);
+
+    void (async () => {
+      try {
+        const httpResponse = await fetch(`${BASE}api/discovery/query`, {
+          method: "POST",
+          credentials: "include",
+          signal: controller.signal,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(query),
+        });
+        const payload: unknown = await httpResponse.json().catch(() => null);
+        const result = readLocationFirstResponse(httpResponse, payload);
+        if (active) setResponse(result);
+      } catch (cause) {
+        if (!active || (cause instanceof DOMException && cause.name === "AbortError")) return;
+        const message = cause instanceof Error
+          ? cause.message
+          : "Explore could not load this area. Please try again.";
+        setError(message);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [query, requestAttempt]);
 
   const locationLabel = [location.neighborhood, location.city, location.stateCode].filter(Boolean).join(", ");
 
@@ -115,6 +142,19 @@ export function LocationFirstExplore() {
           />
         )}
         {loading && <p className="mt-8 text-sm text-[#3A1F0E]/60">Loading local experiences…</p>}
+        {!loading && error && (
+          <section className="mt-8 rounded-2xl border border-[#CA922B]/30 bg-white p-6" role="alert">
+            <h2 className="font-serif text-2xl font-bold text-[#2B1507]">Explore could not load this area</h2>
+            <p className="mt-2 leading-7 text-[#3A1F0E]/70">{error}</p>
+            <button
+              type="button"
+              className="mt-4 rounded-full bg-[#3A1F0E] px-4 py-2 text-sm font-semibold text-white"
+              onClick={() => setRequestAttempt((attempt) => attempt + 1)}
+            >
+              Try again
+            </button>
+          </section>
+        )}
         {!loading && response?.coverageGap && (
           <EmptyExplore
             title="We are still building this local cultural map"
@@ -124,7 +164,7 @@ export function LocationFirstExplore() {
 
         {/* Results grid */}
         <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {response?.records.map((record) => (
+          {(response?.records ?? []).map((record) => (
             <ExploreCard key={`${record.recordType}-${record.id}`} record={record} />
           ))}
         </section>

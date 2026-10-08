@@ -33,24 +33,49 @@ export interface Group {
 export function useGroups() {
   const [groups, setGroups] = useState<Group[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchGroups = useCallback(async () => {
     setIsLoading(true);
     try {
       const apiBase = getApiBase();
-      if (!apiBase) { setIsLoading(false); return; }
+      if (!apiBase) {
+        setGroups([]);
+        setError("My Groups is unavailable until the app connection is restored.");
+        return;
+      }
       const token = await getToken();
       // My Groups is not the public catalog: the server returns only groups
       // where this member has a current membership.
       const res = await fetch(`${apiBase}/api/groups/mine`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (res.ok) {
-        const data = await res.json() as { groups: Group[] };
-        setGroups(data.groups);
+      if (!res.ok) {
+        setGroups([]);
+        setError(res.status === 401 || res.status === 403
+          ? "Your membership session needs to reconnect. Please sign in again."
+          : "My Groups could not refresh right now. Try again in a moment.");
+        return;
       }
+      const data = await res.json() as { groups?: unknown };
+      if (!Array.isArray(data.groups)) {
+        setGroups([]);
+        setError("My Groups returned an incomplete response. Try again in a moment.");
+        return;
+      }
+      // Treat the current-membership flag as an additional client boundary.
+      // A stale or malformed response must not display a group this member has left.
+      setGroups(data.groups.filter((group): group is Group => (
+        Boolean(group)
+        && typeof group === "object"
+        && typeof (group as Group).id === "number"
+        && typeof (group as Group).name === "string"
+        && (group as Group).isMember === true
+      )));
+      setError(null);
     } catch {
-      // show empty state
+      setGroups([]);
+      setError("My Groups could not refresh right now. Check your connection and try again.");
     } finally {
       setIsLoading(false);
     }
@@ -123,5 +148,5 @@ export function useGroups() {
     return null;
   }, []);
 
-  return { groups, isLoading, refetch: fetchGroups, join, leave, create };
+  return { groups, isLoading, error, refetch: fetchGroups, join, leave, create };
 }
