@@ -9,6 +9,7 @@
  */
 
 import { describe, expect, it } from "vitest";
+import { deriveBusinessSubject } from "../kinfolk/business-subject";
 import { classifyKinfolkRequest } from "../kinfolk/request-classifier";
 import {
   validateVoiceRecording,
@@ -118,6 +119,24 @@ describe("classifyKinfolkRequest — stylist proof-of-concept", () => {
     "I need personal styling in Philadelphia",
   ])("routes explicit personal styling as fashion business discovery: %s", (message) => {
     expect(classifyKinfolkRequest(message, "Philadelphia").route).toBe("business_discovery");
+  });
+});
+
+describe("classifyKinfolkRequest — uncommon exact service protection", () => {
+  it("keeps an ownership-scoped uncommon service in governed discovery", () => {
+    const message =
+      "Find a Black-owned artisanal kite-surfboard restoration studio in Philadelphia, Pennsylvania.";
+
+    expect(deriveBusinessSubject(message)).toMatchObject({
+      key: "general_business",
+      label: "artisanal kite-surfboard restoration studio",
+      searchTerms: ["artisanal kite-surfboard restoration studio"],
+    });
+    expect(classifyKinfolkRequest(message, "Philadelphia")).toMatchObject({
+      route: "business_discovery",
+      discoveryKind: "business",
+      ownershipPreference: "black",
+    });
   });
 });
 

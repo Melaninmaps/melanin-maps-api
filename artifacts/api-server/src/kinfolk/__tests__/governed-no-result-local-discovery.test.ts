@@ -74,4 +74,40 @@ describe("governed no-result ownership-documentation cohort", () => {
       expect.objectContaining({ ownershipStatus: "not_matched" }),
     ]));
   });
+
+  it("keeps an uncommon exact service strict instead of using an external substitute", async () => {
+    const subject = deriveBusinessSubject(
+      "Find a Black-owned artisanal kite-surfboard restoration studio in Philadelphia, Pennsylvania.",
+    );
+    const repository = {
+      findBySubject: vi.fn().mockResolvedValue([]),
+      findByPreferenceTerms: vi.fn().mockResolvedValue([]),
+      findPublishedMapEntities: vi.fn().mockResolvedValue([]),
+    };
+    const webSearch = vi.fn();
+
+    const output = await discoverLocalBusinesses({
+      scope: { city: "Philadelphia", stateCode: "PA" },
+      subject: subject!,
+      repository,
+      requiredDesignationIds: ["black-african-american"],
+      strictEvidenceRequired: true,
+      webSearch,
+    });
+
+    expect(subject).toMatchObject({
+      key: "general_business",
+      label: "artisanal kite-surfboard restoration studio",
+      searchTerms: ["artisanal kite-surfboard restoration studio"],
+    });
+    expect(repository.findBySubject).toHaveBeenCalledWith(
+      { city: "Philadelphia", stateCode: "PA" },
+      subject,
+      expect.any(Number),
+      ["black-african-american"],
+    );
+    expect(webSearch).not.toHaveBeenCalled();
+    expect(output.discovery.platformBusinesses).toEqual([]);
+    expect(output.discovery.webFindings).toEqual([]);
+  });
 });

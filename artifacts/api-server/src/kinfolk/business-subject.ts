@@ -31,7 +31,9 @@ export type BusinessSubjectKey =
   | "fragrance"
   | "jewelry"
   | "fashion"
-  | "dessert";
+  | "dessert"
+  /** Exact, uncommon service phrase; never a broad category or silent substitute. */
+  | "general_business";
 
 /** Food timing is a current-turn service need, not a saved preference. */
 export type FoodIntent = "dining_now" | "dining_later" | "takeout_or_delivery" | "event_catering" | "private_chef";
@@ -503,6 +505,34 @@ export function deriveFoodIntent(message: string): FoodIntent | undefined {
   return undefined;
 }
 
+/**
+ * Preserve an uncommon, explicitly requested local service as its own exact
+ * governed subject rather than letting it fall through to model prose. This is
+ * intentionally narrow: generic "business/place" wording remains a request
+ * for clarification, and the phrase must be a direct search target.
+ */
+function deriveExactUnmappedBusinessSubject(
+  message: string,
+): NormalizedBusinessSubject | null {
+  const match = /\b(?:find|locate|recommend|search\s+for|where\s+can\s+i\s+(?:find|go|get))\s+(?:me\s+)?(?:(?:a|an|the|some)\s+)?(?:(?:black|african[- ]american|minority|women|woman|veteran|immigrant|lgbtq|indigenous|latino|disability|family)[- ]owned\s+)?([A-Za-z][A-Za-z0-9/'-]*(?:\s+[A-Za-z][A-Za-z0-9/'-]*){0,7}?)(?=\s+(?:in|near|around|at)\s+[A-Za-z]|[?.!,]|$)/i.exec(message);
+  const phrase = match?.[1]?.replace(/\s+/g, " ").trim() ?? "";
+  if (
+    phrase.length < 4 ||
+    /^(?:business(?:es)?|place(?:s)?|option(?:s)?|something)$/i.test(phrase)
+  ) {
+    return null;
+  }
+  return {
+    key: "general_business",
+    label: phrase,
+    // The exact requested phrase is a hard structured-listing predicate. It
+    // cannot become a nearby, preference-ranked, or model-invented substitute.
+    searchTerms: [phrase],
+    vibeKeys: findVibeKeysForSearch(message),
+    contextualEvidenceTerms: deriveContextualBusinessEvidenceTerms(message),
+  };
+}
+
 export function deriveBusinessSubject(
   message: string,
 ): NormalizedBusinessSubject | null {
@@ -547,7 +577,7 @@ export function deriveBusinessSubject(
     const booksAsShoppingRequest =
       /\bbooks\b/i.test(message) &&
       /\b(?:find|buy|shop|shopping|store|near|where)\b/i.test(message);
-    if (!booksAsShoppingRequest) return null;
+    if (!booksAsShoppingRequest) return deriveExactUnmappedBusinessSubject(message);
     const bookstore = SUBJECTS.find(
       (candidate) => candidate.key === "bookstore",
     )!;
