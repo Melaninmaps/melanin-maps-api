@@ -93,6 +93,26 @@ router.get("/groups", async (req: Request, res: Response) => {
   }
 });
 
+// My Groups is intentionally separate from the browse catalog. It returns
+// only rows with a current membership, so leaving or being removed immediately
+// removes a Group from this member-facing destination.
+router.get("/groups/mine", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const rows = await db
+      .select({ group: groups })
+      .from(groupMembers)
+      .innerJoin(groups, eq(groups.id, groupMembers.groupId))
+      .where(eq(groupMembers.userId, req.user!.id))
+      .orderBy(desc(groups.updatedAt), desc(groups.createdAt));
+
+    res.json({ groups: rows.map(({ group }) => groupCatalogRecord(group, true)) });
+  } catch (err) {
+    req.log.error({ err }, "GET /api/groups/mine error");
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/groups/my-invites", async (req: Request, res: Response) => {
   if (!requireAuth(req, res)) return;
   try {

@@ -144,6 +144,24 @@ describe("Community feed SQL safety and visibility", () => {
     expect(forYou).not.toContain("cp.visibility IN ('public', 'followers_only')");
   });
 
+  it("includes a group post in the main feed only for a current membership", () => {
+    const everyone = outerFeedSql(queryFor("everyone").text);
+    const following = outerFeedSql(queryFor("following").text);
+    const forYou = outerFeedSql(queryFor("foryou").text);
+
+    for (const query of [everyone, following, forYou]) {
+      expect(query).toContain("FROM group_members visible_group_membership");
+      expect(query).toContain("visible_group_membership.user_id = $1");
+      expect(query).toContain("visible_group_membership.group_id = CASE");
+      expect(query).toContain("COALESCE(NULLIF(to_jsonb(cp)->>'group_id', ''), '') = ''");
+    }
+
+    const profile = outerFeedSql(buildCommunityFeedQuery({
+      viewerId: "viewer-1", authorId: "author-1", feedMode: "everyone", limit: 10, offset: 0,
+    }).text);
+    expect(profile).toContain("visible_group_membership.user_id = $2");
+  });
+
   it("applies privacy, moderation, blocking, and test containment to profile feeds", () => {
     const query = buildCommunityFeedQuery({
       viewerId: "viewer-1",

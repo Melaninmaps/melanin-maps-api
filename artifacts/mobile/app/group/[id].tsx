@@ -16,9 +16,12 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { CommunityPostCard } from "@/components/CommunityPostCard";
+import type { CommunityPost } from "@/constants/types";
 import { useColors } from "@/hooks/useColors";
 import { useGroups, type Group } from "@/hooks/useGroups";
 import { useAuth } from "@/lib/auth";
+import { parseMediaUrls } from "@/lib/mediaUrls";
 
 type GroupSuggestion = {
   id: number;
@@ -64,6 +67,49 @@ const CATEGORY_ICONS: Record<string, string> = {
   general: "grid",
 };
 
+function formatPostTimeAgo(iso: unknown): string {
+  const date = new Date(typeof iso === "string" ? iso : Date.now());
+  const minutes = Math.max(0, Math.floor((Date.now() - date.getTime()) / 60_000));
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
+
+function toMemberGroupPost(raw: Record<string, unknown>): CommunityPost {
+  const category = raw.category === "recommendation" || raw.category === "alert" || raw.category === "question"
+    ? raw.category
+    : "discussion";
+  const postType = ["business", "question", "saved_place", "safety", "travel"].includes(String(raw.postType))
+    ? raw.postType as CommunityPost["postType"]
+    : "community";
+  return {
+    id: String(raw.id),
+    author: typeof raw.authorName === "string" ? raw.authorName : "Community Member",
+    authorInitials: typeof raw.authorInitials === "string" ? raw.authorInitials : "CM",
+    authorColor: typeof raw.authorColor === "string" ? raw.authorColor : "#CA922B",
+    authorImageUrl: typeof raw.authorImageUrl === "string" ? raw.authorImageUrl : null,
+    authorId: typeof raw.authorId === "string" ? raw.authorId : undefined,
+    content: typeof raw.content === "string" ? raw.content : "",
+    likes: typeof raw.upvotes === "number" ? raw.upvotes : 0,
+    comments: typeof raw.commentsCount === "number" ? raw.commentsCount : 0,
+    commentPolicy: ["everyone", "followers", "off"].includes(String(raw.commentPolicy))
+      ? raw.commentPolicy as CommunityPost["commentPolicy"]
+      : "everyone",
+    visibility: raw.visibility === "followers_only" ? "followers_only" : "public",
+    timeAgo: formatPostTimeAgo(raw.createdAt),
+    category,
+    postType,
+    groupId: typeof raw.groupId === "number" ? raw.groupId : undefined,
+    liked: raw.liked === true,
+    mediaUrls: parseMediaUrls(raw.mediaUrls),
+    hasContentWarning: raw.hasContentWarning === true,
+    contentWarningType: typeof raw.contentWarningType === "string" ? raw.contentWarningType : undefined,
+    threadId: typeof raw.threadId === "string" ? raw.threadId : undefined,
+  };
+}
+
 type GroupMemberRow = { userId: string; role: string; joinedAt: Date };
 type PendingInvite = { id: number; invitedUserId: string; invitedUserFirstName: string | null; invitedUserLastName: string | null; createdAt: Date };
 type GroupDetail = Group & { isMember: boolean; isAdmin: boolean };
@@ -99,6 +145,9 @@ export default function GroupDetailScreen() {
   const [pendingInvites, setPendingInvites] = useState<PendingInvite[]>([]);
   const [itineraries, setItineraries] = useState<GroupItinerary[]>([]);
   const [suggestions, setSuggestions] = useState<GroupSuggestion[]>([]);
+  const [groupPosts, setGroupPosts] = useState<CommunityPost[]>([]);
+  const [groupPostsLoading, setGroupPostsLoading] = useState(true);
+  const [groupPostsUnavailable, setGroupPostsUnavailable] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [joining, setJoining] = useState(false);
   const [showAddSugg, setShowAddSugg] = useState(false);
@@ -126,14 +175,17 @@ export default function GroupDetailScreen() {
   const loadGroup = useCallback(async () => {
     if (!id) return;
     setIsLoading(true);
+    setGroupPostsLoading(true);
+    setGroupPostsUnavailable(false);
     try {
       const apiBase = getApiBase();
       const token = await SecureStore.getItemAsync("auth_session_token");
       const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-      const [groupRes, itinRes, suggRes] = await Promise.all([
+      const [groupRes, itinRes, suggRes, postsRes] = await Promise.all([
         fetch(`${apiBase}/api/groups/${id}`, { headers: authHeaders }),
         token ? fetch(`${apiBase}/api/groups/${id}/itineraries`, { headers: authHeaders }) : Promise.resolve(null),
         fetch(`${apiBase}/api/groups/${id}/suggestions`),
+        fetch(`${apiBase}/api/community/posts?groupId=${encodeURIComponent(String(id))}`, { headers: authHeaders }),
       ]);
       if (groupRes.ok) {
         const data = await groupRes.json() as {
@@ -145,6 +197,15 @@ export default function GroupDetailScreen() {
         setMembers(data.members ?? []);
         setPendingInvites(data.pendingInvites ?? []);
         setAgeRestricted(data.group.isAgeRestricted ?? false);
+        if (data.group.isMember && postsRes.ok) {
+          const postData = await postsRes.json() as { posts?: Array<Record<string, unknown>> };
+          setGroupPosts((postData.posts ?? []).map(toMemberGroupPost));
+        } else {
+          // A removed or non-member account must never retain prior group
+          // posts or shared media in this detail screen.
+          setGroupPosts([]);
+          if (data.group.isMember) setGroupPostsUnavailable(true);
+        }
       }
       if (itinRes?.ok) {
         const data = await itinRes.json() as { itineraries: GroupItinerary[] };
@@ -154,8 +215,13 @@ export default function GroupDetailScreen() {
         const data = await suggRes.json() as { suggestions: GroupSuggestion[] };
         setSuggestions(data.suggestions ?? []);
       }
-    } catch { /* show not found */ }
-    finally { setIsLoading(false); }
+    } catch {
+      setGroupPosts([]);
+      setGroupPostsUnavailable(true);
+    } finally {
+      setIsLoading(false);
+      setGroupPostsLoading(false);
+    }
   }, [id]);
 
   useEffect(() => { queueMicrotask(() => { void loadGroup(); }); }, [loadGroup]);
@@ -393,29 +459,31 @@ export default function GroupDetailScreen() {
           </View>
         ) : null}
 
+        {/* Posts and media are loaded only after the server confirms current membership. */}
+        {group.isMember && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Group Posts</Text>
+            <Text style={[styles.sectionDescription, { color: colors.mutedForeground }]}>Posts and shared media are visible only to current members of this group.</Text>
+            {groupPostsLoading ? <ActivityIndicator color={catColor} /> : null}
+            {!groupPostsLoading && groupPostsUnavailable ? <Text style={[styles.sectionDescription, { color: colors.mutedForeground }]}>Group posts are unavailable right now. Try again from My Groups.</Text> : null}
+            {!groupPostsLoading && !groupPostsUnavailable && groupPosts.length === 0 ? <Text style={[styles.sectionDescription, { color: colors.mutedForeground }]}>No group posts yet.</Text> : null}
+            {groupPosts.map((post) => (
+              <CommunityPostCard
+                key={post.id}
+                post={post}
+                currentUserId={user?.id}
+                onAuthorPress={(authorId) => router.push(`/user/${authorId}` as never)}
+                onThreadPress={(threadId) => router.push({ pathname: "/community-thread", params: { threadId } } as never)}
+              />
+            ))}
+          </View>
+        )}
+
         {/* Member actions (only shown when authenticated member) */}
         {group.isMember && (
           <View style={styles.section}>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Group Actions</Text>
             <View style={styles.actionGrid}>
-              <TouchableOpacity
-                style={[styles.actionCard, { backgroundColor: catColor + "12", borderColor: catColor + "30" }]}
-                onPress={() => router.push({
-                  pathname: "/(tabs)/community",
-                  params: { groupId: String(group.id), groupName: group.name },
-                } as any)}
-                activeOpacity={0.8}
-              >
-                <View style={[styles.actionIcon, { backgroundColor: catColor + "20" }]}>
-                  <Feather name="message-circle" size={20} color={catColor} />
-                </View>
-                <View style={styles.actionContent}>
-                  <Text style={[styles.actionLabel, { color: catColor }]}>Group Posts</Text>
-                  <Text style={[styles.actionSub, { color: colors.mutedForeground }]}>Share and discuss with this group</Text>
-                </View>
-                <Feather name="chevron-right" size={16} color={catColor} />
-              </TouchableOpacity>
-
               {/* Plan Trip */}
               <TouchableOpacity
                 style={[styles.actionCard, { backgroundColor: "#2D7A4F18", borderColor: "#2D7A4F33" }]}
@@ -945,6 +1013,7 @@ const styles = StyleSheet.create({
   scroll: { paddingHorizontal: 20, paddingTop: 20, gap: 24 },
   section: { gap: 12 },
   sectionTitle: { fontFamily: "Inter_700Bold", fontSize: 17 },
+  sectionDescription: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
   description: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 22 },
   actionGrid: { gap: 12 },
   actionCard: {

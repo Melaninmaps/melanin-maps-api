@@ -40,7 +40,9 @@ export function useGroups() {
       const apiBase = getApiBase();
       if (!apiBase) { setIsLoading(false); return; }
       const token = await getToken();
-      const res = await fetch(`${apiBase}/api/groups`, {
+      // My Groups is not the public catalog: the server returns only groups
+      // where this member has a current membership.
+      const res = await fetch(`${apiBase}/api/groups/mine`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
@@ -66,16 +68,14 @@ export function useGroups() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        setGroups((prev) =>
-          prev.map((g) =>
-            g.id === groupId ? { ...g, isMember: true, memberCount: g.memberCount + 1 } : g,
-          ),
-        );
+        // My Groups contains only active memberships; reload rather than
+        // inventing a catalog record locally after a direct-detail join.
+        await fetchGroups();
         return true;
       }
     } catch { /* ignore */ }
     return false;
-  }, []);
+  }, [fetchGroups]);
 
   const leave = useCallback(async (groupId: number) => {
     const apiBase = getApiBase();
@@ -87,16 +87,14 @@ export function useGroups() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
-        setGroups((prev) =>
-          prev.map((g) =>
-            g.id === groupId ? { ...g, isMember: false, memberCount: Math.max(g.memberCount - 1, 0) } : g,
-          ),
-        );
+        // Remove immediately, then reconcile with the server-owned list.
+        setGroups((prev) => prev.filter((group) => group.id !== groupId));
+        await fetchGroups();
         return true;
       }
     } catch { /* ignore */ }
     return false;
-  }, []);
+  }, [fetchGroups]);
 
   const create = useCallback(async (payload: {
     name: string;
