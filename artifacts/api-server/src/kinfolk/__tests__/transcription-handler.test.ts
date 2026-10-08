@@ -163,6 +163,28 @@ describe("actual Kinfolk transcription handler", () => {
     expect(transcribe).toHaveBeenCalledTimes(1);
   });
 
+  it("accepts only an opaque native multipart type when declared M4A metadata and real bytes agree", async () => {
+    const response = await request(app())
+      .post("/api/kinfolk/transcribe")
+      .field("mimeType", "audio/mp4")
+      .attach("audio", load("voice.m4a"), { filename: "kinfolk-voice.m4a", contentType: "application/octet-stream" });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ transcript: "hello Kinfolk", audioRetained: false });
+    expect(transcribe).toHaveBeenCalledTimes(1);
+  });
+
+  it("rejects a contradictory supported Android multipart MIME before inspecting or uploading bytes", async () => {
+    const response = await request(app())
+      .post("/api/kinfolk/transcribe")
+      .field("mimeType", "audio/mp4")
+      .attach("audio", load("voice.m4a"), { filename: "kinfolk-voice.m4a", contentType: "audio/mpeg" });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toMatchObject({ error: "AUDIO_MIME_MISMATCH", audioRetained: false });
+    expect(transcribe).not.toHaveBeenCalled();
+  });
+
   it("accepts a Safari-style fragmented M4A with zero movie-header duration", async () => {
     const response = await request(app())
       .post("/api/kinfolk/transcribe")
