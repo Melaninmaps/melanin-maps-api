@@ -24,6 +24,8 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(travelSource).toContain("Unclaimed · Not MWM verified");
     expect(travelSource).toContain("MWM verified");
     expect(travelSource).toContain("Why it surfaced:");
+    expect(travelSource).toContain("Ownership not documented — not an ownership-matched recommendation.");
+    expect(travelSource).toContain("Not ownership-matched — shown only because you chose to broaden this search.");
     expect(travelSource).toContain("Know before you go:");
     expect(travelSource).toContain("Confirm current hours, services, and availability");
     expect(hookSource).toContain("resultView?: ConversationalBusinessResultView | null");

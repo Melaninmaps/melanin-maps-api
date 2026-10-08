@@ -170,6 +170,8 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).toContain("resultView: businessCardsAllowed ? data.resultView ?? null : null");
     expect(travelPageSource).toContain("msg.recommendations && !msg.resultView");
     expect(travelPageSource).toContain("External sources are not MWM-verified business listings.");
+    expect(travelPageSource).toContain("Ownership not documented — not an ownership-matched recommendation.");
+    expect(travelPageSource).toContain("Not ownership-matched — shown only because you chose to broaden this search.");
   });
 
   it("invalidates a deferred browser voice response before hidden-page playback", async () => {

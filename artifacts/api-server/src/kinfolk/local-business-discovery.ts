@@ -77,6 +77,8 @@ export type BusinessDiscoveryPlatformBusiness = Readonly<{
     sourceLabel: string | null;
     capturedAt: string | null;
   } | null;
+  /** Never inferred: this labels the explicit discovery cohort only. */
+  ownershipStatus?: "documented" | "not_documented" | "not_matched" | "not_requested";
   provenance: "mwm_public_business";
 }>;
 
@@ -284,6 +286,7 @@ function webQueries(
 
 function platformBusiness(
   business: GovernedKinfolkBusiness,
+  ownershipStatus: BusinessDiscoveryPlatformBusiness["ownershipStatus"],
 ): BusinessDiscoveryPlatformBusiness {
   return {
     id: business.id,
@@ -314,6 +317,7 @@ function platformBusiness(
           capturedAt: business.sourceCapturedAt ?? null,
         }
       : null,
+    ownershipStatus,
     provenance: "mwm_public_business",
   };
 }
@@ -515,6 +519,8 @@ export async function discoverLocalBusinesses(input: {
   documentedSourceTaxonomy?: boolean;
   /** Member explicitly consented to leave the Diaspora Promotion Catalog. */
   allowAllPublicPlaces?: boolean;
+  /** A separate explicit cohort; never treated as evidence of ownership. */
+  ownershipDocumentationScope?: "not_documented";
   /** Transient geocoded public origin for a one-turn exact-radius request. */
   verifiedRadius?: VerifiedRadiusOrigin;
   /** Server-generated correlation id for count-only exact-radius diagnostics. */
@@ -611,6 +617,17 @@ export async function discoverLocalBusinesses(input: {
       business.sourceReceipt === true || Boolean(business.researchSourceUrl),
     );
   }
+  // This cohort is available only after a member explicitly chooses it from a
+  // governed no-result flow. It is deliberately the inverse of documented
+  // ownership evidence and therefore cannot be labeled ownership-matched.
+  if (input.ownershipDocumentationScope === "not_documented") {
+    businessRows = businessRows.filter((business) =>
+      business.sourceReceipt !== true &&
+      !business.researchSourceUrl &&
+      !business.ownershipClaim &&
+      (business.ownershipDesignations?.length ?? 0) === 0,
+    );
+  }
   const afterOwnershipEvidenceCount = businessRows.length;
 
   // A cuisine or another documented current-turn detail cannot be broadened by
@@ -657,6 +674,7 @@ export async function discoverLocalBusinesses(input: {
   let webOutcome: WebSearchOutcome;
   const promotionCatalogIsActive = isMwmDiasporaPromotionEnabled();
   if (
+    input.strictEvidenceRequired ||
     input.requiredDesignationIds?.length ||
     (promotionCatalogIsActive && !input.allowAllPublicPlaces)
   ) {
@@ -689,7 +707,7 @@ export async function discoverLocalBusinesses(input: {
     };
   }
 
-  const rankedWeb = (input.requiredDesignationIds?.length || (promotionCatalogIsActive && !input.allowAllPublicPlaces)
+  const rankedWeb = (input.strictEvidenceRequired || input.requiredDesignationIds?.length || (promotionCatalogIsActive && !input.allowAllPublicPlaces)
     ? []
     : rankLocalBusinessResults(webOutcome.results))
     .filter(
@@ -738,7 +756,16 @@ export async function discoverLocalBusinesses(input: {
     input.personalization,
   )
     .slice(0, 12)
-    .map(platformBusiness);
+    .map((business) => platformBusiness(
+      business,
+      input.ownershipDocumentationScope === "not_documented"
+        ? "not_documented"
+        : input.strictEvidenceRequired
+          ? "documented"
+          : input.allowAllPublicPlaces
+            ? "not_matched"
+          : "not_requested",
+    ));
   const businesses = uniqueActionableBusinessResults(
     actionableBusinesses,
   ).slice(0, 5);

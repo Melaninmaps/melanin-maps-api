@@ -109,6 +109,7 @@ interface ConversationalBusinessResultView {
     matchReason: string;
     verified: boolean;
     claimed: boolean;
+    ownershipStatus: "documented" | "not_documented" | "not_matched" | "not_requested";
     actions: Array<{ label: "View details" | "Visit website"; url: string }>;
   }>;
   seeAll: { label: string; count: number } | null;
@@ -800,6 +801,8 @@ function ConversationalBusinessCards({ view }: { view: ConversationalBusinessRes
               </span>
             </div>
             <p className="mt-2 text-xs leading-relaxed text-[#3A1F0E]/75">{card.supportingText}</p>
+            {card.ownershipStatus === "not_documented" && <p className="mt-2 rounded-lg bg-[#FFF8EC] px-2 py-1 text-[11px] font-semibold text-[#7A4B16]">Ownership not documented — not an ownership-matched recommendation.</p>}
+            {card.ownershipStatus === "not_matched" && <p className="mt-2 rounded-lg bg-[#FFF8EC] px-2 py-1 text-[11px] font-semibold text-[#7A4B16]">Not ownership-matched — shown only because you chose to broaden this search.</p>}
             <p className="mt-2 text-[11px] text-[#3A1F0E]/60">{card.matchReason}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {card.actions.flatMap((action) => {

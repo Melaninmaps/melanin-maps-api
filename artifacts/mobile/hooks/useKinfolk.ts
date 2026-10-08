@@ -44,6 +44,7 @@ export type ConversationalBusinessResultView = {
     matchReason: string;
     verified: boolean;
     claimed: boolean;
+    ownershipStatus: "documented" | "not_documented" | "not_matched" | "not_requested";
     actions: Array<{ label: "View details" | "Visit website"; url: string }>;
   }>;
   seeAll: { label: string; count: number } | null;

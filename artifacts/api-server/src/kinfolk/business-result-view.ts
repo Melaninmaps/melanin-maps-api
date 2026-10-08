@@ -19,6 +19,7 @@ export type ConversationalBusinessResultView = Readonly<{
       sourceLabel: string | null;
       capturedAt: string | null;
     } | null;
+    ownershipStatus: "documented" | "not_documented" | "not_matched" | "not_requested";
     actions: Array<{ label: "View details" | "Visit website"; url: string }>;
   }>;
   seeAll: { label: "See all matching listings"; count: number } | null;
@@ -98,6 +99,7 @@ export function buildConversationalBusinessResultView(input: {
     claimed: business.claimed === true,
     distanceMiles: business.distanceMiles,
     ownershipEvidence: business.ownershipEvidence,
+    ownershipStatus: business.ownershipStatus ?? "not_requested",
     actions: [
       ...(hasPublicDetailAction(business.detailUrl)
         ? [{ label: "View details" as const, url: business.detailUrl }]

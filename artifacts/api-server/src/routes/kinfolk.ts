@@ -102,6 +102,11 @@ import {
   requestsExactRadius,
 } from "../kinfolk/governed-discovery-v2";
 import {
+  buildGovernedNoResultActionReply,
+  buildGovernedNoResultOffer,
+  decodeGovernedNoResultAction,
+} from "../kinfolk/governed-no-result-expansion";
+import {
   extractCurrentTurnPublicOrigin,
   isVerifiedRadiusV1Enabled,
   redactCurrentTurnPublicOrigin,
@@ -7251,6 +7256,7 @@ function joinMemberFacingDesignations(ids: readonly string[]): string {
 
 type SessionMessageWithResultView = SessionMessage & {
   resultView?: { cards?: unknown[] } | null;
+  followUpSuggestions?: string[] | null;
 };
 
 /**
@@ -7317,6 +7323,32 @@ function resolveBusinessResultFollowUp(
       ...explicitDesignationIds,
     ]),
   };
+}
+
+/**
+ * A no-result expansion is valid only when the member selected the exact
+ * server-issued action from the immediately preceding governed response. The
+ * original question restores its service context, but no choice changes saved
+ * preferences or reuses location information outside the active session.
+ */
+function resolveGovernedNoResultFollowUp(
+  messages: readonly SessionMessage[],
+  message: string,
+) {
+  const priorAssistant = [...messages]
+    .reverse()
+    .find((entry) => entry.role === "assistant") as SessionMessageWithResultView | undefined;
+  const action = decodeGovernedNoResultAction({
+    message,
+    offeredActions: priorAssistant?.followUpSuggestions ?? undefined,
+  });
+  if (!action) return null;
+  const priorQuestion = [...messages]
+    .reverse()
+    .find((entry) => entry.role === "user" && Boolean(deriveBusinessSubject(entry.content)));
+  const subject = priorQuestion ? deriveBusinessSubject(priorQuestion.content) : null;
+  if (!priorQuestion || !subject) return null;
+  return { action, priorQuestion: priorQuestion.content, subject };
 }
 
 /**
@@ -7502,23 +7534,31 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
 
   // A mobile "near me" request can provide a reverse-geocoded city/region only.
   // Coordinates never enter this chat route or the saved conversation payload.
+  const ephemeralDiscoverySession = !input.memoryEnabled
+    ? readEphemeralKinfolkSession(input.req.user!.id, input.sessionId)
+    : null;
   const conversationMessages = currentSession?.messages?.length
     ? currentSession.messages
-    : boundedEphemeralConversation(input.conversationContext);
-  const location = resolveTurnGeography(
+    : ephemeralDiscoverySession?.messages ?? boundedEphemeralConversation(input.conversationContext);
+  const noResultFollowUp = resolveGovernedNoResultFollowUp(
+    conversationMessages,
     input.message,
-    input.cityHint ?? currentSession?.destination ?? null,
+  );
+  const discoveryMessage = noResultFollowUp?.priorQuestion ?? input.message;
+  const location = resolveTurnGeography(
+    discoveryMessage,
+    input.cityHint ?? currentSession?.destination ?? ephemeralDiscoverySession?.destination ?? null,
   );
   const followUp = resolveBusinessResultFollowUp(
     conversationMessages,
     input.message,
   );
-  const subject = deriveBusinessSubject(input.message) ?? followUp?.subject ?? null;
+  const subject = deriveBusinessSubject(discoveryMessage) ?? followUp?.subject ?? null;
   const decision = classifyKinfolkRequest(
-    input.message,
+    discoveryMessage,
     location?.city ?? null,
   );
-  if ((!followUp && decision.route !== "business_discovery") || !location?.state || !subject)
+  if ((!followUp && !noResultFollowUp && decision.route !== "business_discovery") || !location?.state || !subject)
     return false;
 
   const scope = { city: location.city, stateCode: location.state };
@@ -7624,7 +7664,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     assuredAgeBand,
     temporaryBusinessAudienceBand(input.message),
   );
-  const explicitDesignationIds = extractExplicitOwnershipDesignationFilterIds(input.message);
+  const explicitDesignationIds = extractExplicitOwnershipDesignationFilterIds(discoveryMessage);
   const savedDesignationIds = normalizeOwnershipDesignationFilterIds(
     Array.isArray(prefs?.preferredOwnershipTypes)
       ? prefs.preferredOwnershipTypes
@@ -7657,14 +7697,25 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   // A member can deliberately override their saved Support Lens for this one
   // recommendation turn. This is the only way Kinfolk may leave the Diaspora
   // Promotion Catalog; it is never an automatic fallback.
-  const explicitAllPlacesExpansion = /\b(?:show|search|include|open to|expand to)\s+(?:all\s+)?(?:public\s+)?(?:places|businesses|options)\b|\bopen\s+to\s+any(?:\s+place)?\b/i.test(input.message);
-  const discoveryDesignationIds = explicitAllPlacesExpansion
+  const noResultAction = noResultFollowUp?.action ?? null;
+  const broadenDocumentedOwnershipScope =
+    noResultAction === "broadenDocumentedScope";
+  const ownershipDocumentationScope =
+    noResultAction === "showOwnershipUndocumented"
+      ? "not_documented" as const
+      : undefined;
+  const explicitAllPlacesExpansion =
+    noResultAction === "showOtherPublicPlaces" ||
+    ownershipDocumentationScope === "not_documented" ||
+    /\b(?:show|search|include|open to|expand to)\s+(?:all\s+)?(?:public\s+)?(?:places|businesses|options)\b|\bopen\s+to\s+any(?:\s+place)?\b/i.test(input.message);
+  const discoveryDesignationIds = explicitAllPlacesExpansion || broadenDocumentedOwnershipScope
     ? []
     : requiredDesignationIds;
   // A saved Black-owned Support Lens is an affirmative, strict ownership
   // preference. It always requires an in-date documented-source receipt and
   // has no automatic fallback to businesses outside that preference.
-  const strictSourceBackedDiscovery = discoveryDesignationIds.length > 0;
+  const strictSourceBackedDiscovery =
+    discoveryDesignationIds.length > 0 || broadenDocumentedOwnershipScope;
   const radiusMiles =
     strictSourceBackedDiscovery && requestsExactRadius(input.message)
       ? requestedRadiusMiles(input.message)
@@ -7763,6 +7814,72 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     });
     return true;
   }
+  const noResultActionReply = noResultAction && [
+    "expandRadius",
+    "keepStrict",
+    "openSettings",
+    "stop",
+  ].includes(noResultAction)
+    ? buildGovernedNoResultActionReply({
+        action: noResultAction,
+        city: scope.city,
+        subjectLabel: subject.label,
+        designationLabel: joinMemberFacingDesignations(requiredDesignationIds),
+      })
+    : null;
+  if (noResultActionReply) {
+    const actionSessionId = await persistDeterministicDiscoveryTurn({
+      userId: input.req.user!.id,
+      memoryEnabled: input.memoryEnabled,
+      sessionId: input.sessionId,
+      message: input.message,
+      reply: noResultActionReply,
+      recommendations: null,
+      resultView: null,
+      followUpSuggestions: [],
+      sources: [],
+      destination: scope.city,
+      vibes: input.vibes,
+    });
+    input.res.status(200).json({
+      sessionId: actionSessionId,
+      reply: noResultActionReply,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: [],
+      resultView: null,
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "business_discovery",
+      responseMeta: {
+        schemaVersion: 1,
+        planKind: "direct_discovery",
+        answerMode: "governed_no_result_action",
+        retrieval: "none",
+        allowBusinessCards: false,
+        evidenceRequired: true,
+        requiresClarification: noResultAction === "expandRadius",
+      },
+      sources: [],
+      sourceNote: "No business results were broadened or substituted.",
+      educationalStatus: "limited",
+      discovery: null,
+      needsClarification: noResultAction === "expandRadius",
+      originalQuery: input.message,
+      location: { city: scope.city, state: scope.stateCode, source: location.source },
+      locationSource: location.source,
+      degraded: false,
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: { attempted: false, state: "not_needed", provider: null, fallbackUsed: false, partial: false },
+        asOf: new Date().toISOString(),
+      },
+    });
+    return true;
+  }
   const discoveryResult = await discoverLocalBusinesses({
     scope,
     subject,
@@ -7793,6 +7910,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     documentedSourceTaxonomy:
       strictSourceBackedDiscovery && isDirectoryTaxonomyV2Enabled(),
     allowAllPublicPlaces: explicitAllPlacesExpansion,
+    ownershipDocumentationScope,
     verifiedRadius: verifiedRadius ?? undefined,
     radiusTraceRequestId: verifiedRadius ? crypto.randomUUID() : undefined,
   });
@@ -7805,6 +7923,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const externalCount = discoveryResult.discovery.webFindings.length;
   const relatedPlaceCount = discoveryResult.discovery.mapPlaces.length;
   const designationSummary = joinMemberFacingDesignations(discoveryDesignationIds);
+  const originalDesignationSummary = joinMemberFacingDesignations(requiredDesignationIds);
   const strictSafetyRequested =
     strictSourceBackedDiscovery && requestsCurrentLocalSafetyContext(input.message);
   // Safety conditions are a second bounded, independent query. Directory cards
@@ -7848,15 +7967,40 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const verifiedRadiusSummary = verifiedRadius
     ? ` within ${verifiedRadius.radiusMiles} straight-line miles of your verified public origin`
     : "";
+  const noResultStage = broadenDocumentedOwnershipScope
+    ? "after_documented_scope" as const
+    : verifiedRadius
+      ? "after_radius" as const
+      : "initial" as const;
+  const noResultOffer =
+    platformCount === 0 &&
+    discoveryResult.discovery.platformStatus === "completed" &&
+    (requiredDesignationIds.length > 0 || broadenDocumentedOwnershipScope) &&
+    noResultAction !== "showOwnershipUndocumented" &&
+    noResultAction !== "showOtherPublicPlaces"
+      ? buildGovernedNoResultOffer({
+          city: scope.city,
+          subjectLabel: requestedSubjectLabel,
+          designationLabel: originalDesignationSummary,
+          canExpandVerifiedRadius: Boolean(verifiedRadius),
+          stage: noResultStage,
+        })
+      : null;
   const conciseDirectoryReply =
-    discoveryDesignationIds.length > 0 && platformCount === 0
+    noResultOffer
+      ? noResultOffer.reply
+      : ownershipDocumentationScope === "not_documented" && platformCount > 0
+        ? `You chose to see ${platformCount} ${requestedSubjectLabel} ${platformCount === 1 ? "listing" : "listings"} in ${scope.city} whose ownership is not documented. They are not ownership-matched recommendations, and your saved preference has not changed.`
+      : explicitAllPlacesExpansion && platformCount > 0
+        ? `You chose to see ${platformCount} other public ${requestedSubjectLabel} ${platformCount === 1 ? "listing" : "listings"} in ${scope.city}. They are explicitly not ownership-matched recommendations, and your saved preference has not changed.`
+      : broadenDocumentedOwnershipScope && platformCount > 0
+        ? `You chose a broader documented ownership scope for this search only. I found ${platformCount} ${requestedSubjectLabel} ${platformCount === 1 ? "listing" : "listings"} in ${scope.city}; this did not change your saved preference.`
+      : discoveryDesignationIds.length > 0 && platformCount === 0
       ? strictSourceBackedDiscovery
         ? `I couldn't find an MWM ${designationSummary} ${requestedSubjectLabel} listing that matches every designation you selected${verifiedRadiusSummary} in ${scope.city}. I won't guess at ownership or quietly swap in a listing outside your focus. You can keep your exact focus, revise one selection, or—only if you choose it—search all public places.`
         : `I couldn't find a documented ${designationSummary} ${requestedSubjectLabel} match for every designation you selected in ${scope.city}. I can keep your exact focus, help you revise one selection, or—only if you choose it—search all public places. A future Community-reviewed alternative is separate from ownership and must carry its own evidence.`
-      : explicitAllPlacesExpansion && platformCount > 0
-        ? `You asked to expand beyond your saved preferences, so these are public listings rather than ownership-filtered recommendations. Ownership and community-safety evidence are shown separately where documented.`
       : platformCount > 0
-      ? `I found ${platformCount} ${designationSummary} ${requestedSubjectLabel} ${platformCount === 1 ? "option" : "options"}${verifiedRadiusSummary} in ${scope.city}. I put the documented matches below so you can open the details or website.${proximityCaveat}${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
+        ? `I found ${platformCount} ${designationSummary} ${requestedSubjectLabel} ${platformCount === 1 ? "option" : "options"}${verifiedRadiusSummary} in ${scope.city}. I put the documented matches below so you can open the details or website.${proximityCaveat}${relatedPlaceCount > 0 ? ` I also found ${relatedPlaceCount} related MWM cultural/place ${relatedPlaceCount === 1 ? "record" : "records"}.` : ""}`
       : discoveryResult.discovery.platformStatus === "degraded"
         ? `I couldn't finish checking MWM's public listings for ${requestedSubjectLabel} in ${scope.city} right now.${externalCount > 0 ? " I did find current external sources below, clearly separated from MWM listings." : " Try again in a moment, or ask me to check a nearby city."}`
         : externalCount > 0
@@ -7865,10 +8009,12 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const conciseReply = [strictSafetyLimit, allergySafetyCaveat, conciseDirectoryReply]
     .filter(Boolean)
     .join("\n\n");
-  const deterministicFollowUps = [
-    resultView.followUp,
-    ...(planningFollowUp ? [planningFollowUp] : []),
-  ];
+  const deterministicFollowUps = noResultOffer
+    ? noResultOffer.followUpSuggestions
+    : [
+        resultView.followUp,
+        ...(planningFollowUp ? [planningFollowUp] : []),
+      ];
   const responseSources = [
     ...discoveryResult.sources.map(({ title, url }) => ({ title, url })),
     ...citySafetySources,

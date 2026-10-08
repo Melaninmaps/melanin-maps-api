@@ -605,6 +605,8 @@ function ConversationalResultCards({ view, colors }: { view: ConversationalBusin
             </View>
             <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold", fontSize: 10, marginTop: 3 }}>{businessTrustLabel(card)}</Text>
             <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginTop: 6 }}>{card.supportingText}</Text>
+            {card.ownershipStatus === "not_documented" && <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold", fontSize: 11, marginTop: 6 }}>Ownership not documented — not an ownership-matched recommendation.</Text>}
+            {card.ownershipStatus === "not_matched" && <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold", fontSize: 11, marginTop: 6 }}>Not ownership-matched — shown only because you chose to broaden this search.</Text>}
             <TouchableOpacity
               onPress={() => Alert.alert(`Why Kinfolk suggested ${card.title}`, recommendationRationale(card))}
               accessibilityRole="button"
