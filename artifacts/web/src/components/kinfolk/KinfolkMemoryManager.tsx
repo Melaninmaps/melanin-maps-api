@@ -12,6 +12,8 @@ interface MemoryRecord {
   expiresAt?: string | null;
   createdAt: string;
   updatedAt?: string;
+  pausedAt?: string | null;
+  state?: "active" | "paused" | "expired";
 }
 
 interface KinfolkMemoryManagerProps {
@@ -39,19 +41,31 @@ export function KinfolkMemoryManager({ onClose, onReset }: KinfolkMemoryManagerP
   const [updatingContinuity, setUpdatingContinuity] = useState(false);
   const [editing, setEditing] = useState<{ id: string; content: string; sensitiveConfirmationRequired: boolean } | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [updatingMemoryId, setUpdatingMemoryId] = useState<string | null>(null);
+
+  const loadReviewableMemories = async (): Promise<MemoryRecord[]> => {
+    let offset = 0;
+    const collected: MemoryRecord[] = [];
+    while (true) {
+      const response = await fetch(`${BASE}api/kinfolk/memories?includeInactive=true&offset=${offset}`, { credentials: "include" });
+      const body = await response.json().catch(() => ({})) as { memories?: MemoryRecord[]; nextOffset?: number | null; error?: string };
+      if (!response.ok) throw new Error(body.error ?? "Could not load memory settings.");
+      collected.push(...(body.memories ?? []));
+      if (typeof body.nextOffset !== "number" || body.nextOffset <= offset) return collected;
+      offset = body.nextOffset;
+    }
+  };
 
   const load = useCallback(async () => {
     setLoading(true); setError(null);
     try {
-      const [response, continuityResponse] = await Promise.all([
-        fetch(`${BASE}api/kinfolk/memories`, { credentials: "include" }),
+      const [reviewableMemories, continuityResponse] = await Promise.all([
+        loadReviewableMemories(),
         fetch(`${BASE}api/kinfolk/continuity`, { credentials: "include" }),
       ]);
-      const body = await response.json().catch(() => ({})) as { memories?: MemoryRecord[]; error?: string };
-      if (!response.ok) throw new Error(body.error ?? "Could not load memory settings.");
       if (!continuityResponse.ok) throw new Error("Could not load continuity settings.");
       const continuity = await continuityResponse.json().catch(() => ({})) as { enabled?: boolean };
-      setMemories(body.memories ?? []);
+      setMemories(reviewableMemories);
       setContinuityEnabled(continuity.enabled === true);
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "Could not load memory settings.");
@@ -75,10 +89,25 @@ export function KinfolkMemoryManager({ onClose, onReset }: KinfolkMemoryManagerP
 
   useEffect(() => { void load(); }, [load]);
 
-  const forget = async (id: string) => {
+  const setMemoryPaused = async (id: string, paused: boolean) => {
+    if (updatingMemoryId) return;
+    setUpdatingMemoryId(id); setError(null);
+    try {
+      const response = await fetch(`${BASE}api/kinfolk/memories/${encodeURIComponent(id)}/pause`, {
+        method: "PATCH", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ paused }),
+      });
+      const body = await response.json().catch(() => ({})) as { memory?: MemoryRecord; error?: string };
+      if (!response.ok || !body.memory) throw new Error(body.error ?? "Kinfolk could not update that memory.");
+      setMemories((items) => items.map((item) => item.id === body.memory!.id ? { ...item, ...body.memory! } : item));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Kinfolk could not update that memory.");
+    } finally { setUpdatingMemoryId(null); }
+  };
+
+  const revokeMemory = async (id: string) => {
     const response = await fetch(`${BASE}api/kinfolk/memories/${encodeURIComponent(id)}`, { method: "DELETE", credentials: "include" });
     if (response.ok) setMemories((items) => items.filter((item) => item.id !== id));
-    else setError("Kinfolk could not forget that memory. Please try again.");
+    else setError("Kinfolk could not revoke use of that memory. Please try again.");
   };
 
   const saveEdit = async () => {
@@ -129,11 +158,48 @@ export function KinfolkMemoryManager({ onClose, onReset }: KinfolkMemoryManagerP
         <button onClick={onClose} aria-label="Close memory settings" className="rounded-full bg-[#FAF6EF] p-2"><X className="h-4 w-4" /></button>
       </header>
       <div className="max-h-[60vh] overflow-y-auto p-5">
-        {loading ? <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-[#CA922B]" /></div> : error ? <div className="py-8 text-center text-sm text-red-600">{error}<button onClick={() => void load()} className="ml-2 font-bold">Retry</button></div> : memories.length === 0 ? <div className="py-8 text-center"><p className="font-bold text-[#2B1507]">Nothing saved yet</p><p className="mt-1 text-sm text-[#3A1F0E]/50">When memory is on, Kinfolk can retain useful non-sensitive preferences, plans, projects, and goals. You can also save a specific note from the composer.</p></div> : <div className="space-y-3">{memories.map((memory) => {
-          const companion = companionLabel(memory);
-          const isEditing = editing?.id === memory.id;
-          return <article key={memory.id} className="rounded-2xl border border-[#3A1F0E]/8 bg-[#FAF6EF] p-4"><div className="flex items-start gap-3"><div className="min-w-0 flex-1">{isEditing ? <><textarea value={editing.content} onChange={(event) => setEditing({ ...editing, content: event.target.value })} maxLength={1000} rows={3} aria-label="Edit private Kinfolk memory" className="w-full resize-y rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm text-[#2B1507] outline-none focus:border-[#CA922B]/55" />{editing.sensitiveConfirmationRequired && <p className="mt-2 text-xs leading-5 text-[#8D5C17]">This memory is sensitive. Confirm separately to save this edit privately.</p>}<div className="mt-2 flex gap-3"><button type="button" onClick={() => void saveEdit()} disabled={savingEdit || !editing.content.trim()} className="rounded-lg bg-[#2B1507] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60">{savingEdit ? "Saving…" : editing.sensitiveConfirmationRequired ? "Confirm sensitive edit" : "Save edit"}</button><button type="button" onClick={() => setEditing(null)} disabled={savingEdit} className="text-xs font-semibold text-[#3A1F0E]/55">Cancel</button></div></> : <><p className="text-sm text-[#3A1F0E]">{companion ? `Private note for ${companion}` : memory.content}</p>{companion ? <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">{companionNotes(memory)}</p> : <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/35">{memory.purpose.replace("_", " ")}{memory.isSensitive ? " · sensitive" : ""}{memory.isSensitive && !memory.sensitiveConsentGrantedAt ? " · confirmation required before use" : ""}</p>}</>}</div>{!isEditing && <div className="flex shrink-0 items-center gap-1"><button onClick={() => setEditing({ id: memory.id, content: memory.content, sensitiveConfirmationRequired: false })} aria-label={companion ? `Edit companion ${companion}` : "Edit this memory"} className="rounded-full p-2 text-[#3A1F0E]/35 hover:bg-[#CA922B]/10 hover:text-[#8D5C17]"><Pencil className="h-4 w-4" /></button><button onClick={() => void forget(memory.id)} aria-label={companion ? `Forget companion ${companion}` : "Forget this memory"} className="rounded-full p-2 text-[#3A1F0E]/35 hover:bg-red-50 hover:text-red-600"><Trash2 className="h-4 w-4" /></button></div>}</div></article>;
-        })}</div>}
+        {loading ? (
+          <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-[#CA922B]" /></div>
+        ) : error ? (
+          <div className="py-8 text-center text-sm text-red-600">{error}<button onClick={() => void load()} className="ml-2 font-bold">Retry</button></div>
+        ) : memories.length === 0 ? (
+          <div className="py-8 text-center"><p className="font-bold text-[#2B1507]">Nothing saved yet</p><p className="mt-1 text-sm text-[#3A1F0E]/50">When memory is on, Kinfolk can retain useful non-sensitive preferences, plans, projects, and goals. You can also save a specific note from the composer.</p></div>
+        ) : (
+          <div className="space-y-3">
+            {memories.map((memory) => {
+              const companion = companionLabel(memory);
+              const isEditing = editing?.id === memory.id;
+              return (
+                <article key={memory.id} className="rounded-2xl border border-[#3A1F0E]/8 bg-[#FAF6EF] p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1">
+                      {isEditing ? (
+                        <>
+                          <textarea value={editing.content} onChange={(event) => setEditing({ ...editing, content: event.target.value })} maxLength={1000} rows={3} aria-label="Edit private Kinfolk memory" className="w-full resize-y rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm text-[#2B1507] outline-none focus:border-[#CA922B]/55" />
+                          {editing.sensitiveConfirmationRequired && <p className="mt-2 text-xs leading-5 text-[#8D5C17]">This memory is sensitive. Confirm separately to save this edit privately.</p>}
+                          <div className="mt-2 flex gap-3"><button type="button" onClick={() => void saveEdit()} disabled={savingEdit || !editing.content.trim()} className="rounded-lg bg-[#2B1507] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60">{savingEdit ? "Saving…" : editing.sensitiveConfirmationRequired ? "Confirm sensitive edit" : "Save edit"}</button><button type="button" onClick={() => setEditing(null)} disabled={savingEdit} className="text-xs font-semibold text-[#3A1F0E]/55">Cancel</button></div>
+                        </>
+                      ) : (
+                        <>
+                          <p className="text-sm text-[#3A1F0E]">{companion ? `Private note for ${companion}` : memory.content}</p>
+                          {companion ? <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">{companionNotes(memory)}</p> : <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/35">{memory.purpose.replace("_", " ")}{memory.isSensitive ? " · sensitive" : ""}{memory.isSensitive && !memory.sensitiveConsentGrantedAt ? " · confirmation required before use" : ""}</p>}
+                          {memory.state === "paused" ? <p className="mt-2 text-xs font-medium text-[#8D5C17]">Paused — Kinfolk will not use this memory until you resume it.</p> : null}
+                        </>
+                      )}
+                    </div>
+                    {!isEditing && (
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        <button onClick={() => setEditing({ id: memory.id, content: memory.content, sensitiveConfirmationRequired: false })} aria-label={companion ? `Edit companion ${companion}` : "Edit this memory"} className="rounded-full p-2 text-[#3A1F0E]/35 hover:bg-[#CA922B]/10 hover:text-[#8D5C17]"><Pencil className="h-4 w-4" /></button>
+                        <button type="button" onClick={() => void setMemoryPaused(memory.id, memory.state !== "paused")} disabled={updatingMemoryId === memory.id} aria-label={memory.state === "paused" ? "Resume use of this memory" : "Pause use of this memory"} className="rounded-lg px-2 py-1 text-[10px] font-semibold text-[#8D5C17] hover:bg-[#CA922B]/10 disabled:opacity-60">{memory.state === "paused" ? "Resume use" : "Pause use"}</button>
+                        <button onClick={() => void revokeMemory(memory.id)} aria-label={companion ? `Revoke use of companion ${companion}` : "Revoke use of this memory"} title="Revoke use of this memory" disabled={updatingMemoryId === memory.id} className="rounded-full p-2 text-[#3A1F0E]/35 hover:bg-red-50 hover:text-red-600 disabled:opacity-60"><Trash2 className="h-4 w-4" /></button>
+                      </div>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
         <section className="mt-5 rounded-2xl border border-[#3A1F0E]/10 bg-[#FAF6EF] p-4" data-testid="kinfolk-continuity-control">
           <div className="flex items-start justify-between gap-4"><div><p className="text-sm font-semibold text-[#2B1507]">Continue private context between chats</p><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">When on, Kinfolk can use your saved conversations and relevant ordinary continuity. Turn it off immediately any time; saved items remain until you edit, delete, or reset them.</p></div><button type="button" role="switch" aria-checked={continuityEnabled} aria-label="Continue private context between chats" disabled={updatingContinuity} onClick={() => void updateContinuity(!continuityEnabled)} className={`mt-0.5 h-7 w-12 rounded-full p-1 transition ${continuityEnabled ? "bg-[#CA922B]" : "bg-[#3A1F0E]/20"}`}><span className={`block h-5 w-5 rounded-full bg-white transition ${continuityEnabled ? "translate-x-5" : "translate-x-0"}`} /></button></div>
         </section>

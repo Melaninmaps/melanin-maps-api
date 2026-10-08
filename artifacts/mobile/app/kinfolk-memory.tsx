@@ -41,6 +41,8 @@ interface PrivateMemory {
   expiresAt?: string | null;
   createdAt: string;
   updatedAt?: string;
+  pausedAt?: string | null;
+  state?: "active" | "paused" | "expired";
 }
 
 interface PreferredNameState {
@@ -85,6 +87,7 @@ export default function KinfolkMemoryScreen() {
   const [updatingContinuity, setUpdatingContinuity] = useState(false);
   const [editing, setEditing] = useState<{ id: string; content: string; original: string; sensitiveConfirmationRequired: boolean } | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
+  const [updatingMemoryId, setUpdatingMemoryId] = useState<string | null>(null);
   const [resetting, setResetting] = useState(false);
   const [preferredName, setPreferredName] = useState<PreferredNameState>({ name: null, state: "not_saved" });
   const [preferredNameDraft, setPreferredNameDraft] = useState("");
@@ -101,12 +104,25 @@ export default function KinfolkMemoryScreen() {
       const headers = { Authorization: `Bearer ${token}` };
       const [summaryRes, privateRes, continuityRes, preferredNameRes] = await Promise.all([
         fetch(`${base}/api/kinfolk/memory-summary`, { headers }),
-        fetch(`${base}/api/kinfolk/memories`, { headers }),
+        fetch(`${base}/api/kinfolk/memories?includeInactive=true&offset=0`, { headers }),
         fetch(`${base}/api/kinfolk/continuity`, { headers }),
         fetch(`${base}/api/kinfolk/preferred-name`, { headers }),
       ]);
       if (summaryRes.ok) setSummary((await summaryRes.json() as { summary: MemorySummary }).summary);
-      if (privateRes.ok) setPrivateMemories((await privateRes.json() as { memories: PrivateMemory[] }).memories ?? []);
+      if (privateRes.ok) {
+        const firstPage = await privateRes.json() as { memories?: PrivateMemory[]; nextOffset?: number | null };
+        const reviewable = [...(firstPage.memories ?? [])];
+        let nextOffset = firstPage.nextOffset;
+        while (typeof nextOffset === "number") {
+          const pageRes = await fetch(`${base}/api/kinfolk/memories?includeInactive=true&offset=${nextOffset}`, { headers });
+          if (!pageRes.ok) throw new Error("Could not load all Kinfolk memory settings.");
+          const page = await pageRes.json() as { memories?: PrivateMemory[]; nextOffset?: number | null };
+          reviewable.push(...(page.memories ?? []));
+          if (page.nextOffset === nextOffset) break;
+          nextOffset = page.nextOffset;
+        }
+        setPrivateMemories(reviewable);
+      }
       if (continuityRes.ok) {
         const continuity = await continuityRes.json() as { enabled?: boolean; disclosureRequired?: boolean };
         setContinuityEnabled(continuity.enabled === true);
@@ -150,16 +166,33 @@ export default function KinfolkMemoryScreen() {
     } finally { setUpdatingContinuity(false); }
   };
 
-  const forgetMemory = async (id: string) => {
+  const setMemoryPaused = async (id: string, paused: boolean) => {
+    if (updatingMemoryId) return;
+    setUpdatingMemoryId(id); setMemoryError("");
+    try {
+      const token = await getToken();
+      if (!token) throw new Error("Please sign in again before changing memory.");
+      const response = await fetch(`${getApiBase()}/api/kinfolk/memories/${encodeURIComponent(id)}/pause`, {
+        method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ paused }),
+      });
+      const body = await response.json().catch(() => ({})) as { memory?: PrivateMemory; error?: string };
+      if (!response.ok || !body.memory) throw new Error(body.error ?? "Could not update that memory.");
+      setPrivateMemories((items) => items.map((item) => item.id === body.memory!.id ? { ...item, ...body.memory! } : item));
+      if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (cause) { setMemoryError(cause instanceof Error ? cause.message : "Could not update that memory."); }
+    finally { setUpdatingMemoryId(null); }
+  };
+
+  const revokeMemory = async (id: string) => {
     setMemoryError("");
     const token = await getToken();
     if (!token) return;
     try {
       const response = await fetch(`${getApiBase()}/api/kinfolk/memories/${encodeURIComponent(id)}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-      if (!response.ok) throw new Error("Could not forget that memory.");
+      if (!response.ok) throw new Error("Could not revoke use of that memory.");
       setPrivateMemories((items) => items.filter((item) => item.id !== id));
       if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    } catch (cause) { setMemoryError(cause instanceof Error ? cause.message : "Could not forget that memory."); }
+    } catch (cause) { setMemoryError(cause instanceof Error ? cause.message : "Could not revoke use of that memory."); }
   };
 
   const saveEdit = async (): Promise<boolean> => {
@@ -342,7 +375,7 @@ export default function KinfolkMemoryScreen() {
       <View style={[styles.continuityCard, { backgroundColor: colors.card, borderColor: colors.border }]}><View style={{ flex: 1, paddingRight: 14 }}><Text style={[styles.itemValue, { color: colors.foreground }]}>Continue private context between chats</Text><Text style={[styles.noteTxt, { color: colors.mutedForeground }]}>When on, Kinfolk can retain useful non-sensitive preferences, plans, projects, goals, and conversations. Turning this off stops future use and retention; saved items stay until you delete or reset them.</Text></View><Switch value={continuityEnabled} disabled={updatingContinuity} onValueChange={(value) => void updateContinuity(value)} trackColor={{ false: colors.border, true: colors.primary + "99" }} thumbColor={continuityEnabled ? colors.primary : "#f5f5f5"} accessibilityLabel="Continue private context between chats" /></View>
       {!summary || buildItems(summary).length === 0 ? <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}><Feather name="inbox" size={36} color={colors.mutedForeground} style={{ marginBottom: 12 }} /><Text style={[styles.emptyTitle, { color: colors.foreground }]}>Your profile is empty</Text><Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>Complete your KinfolkAI™ setup to unlock personalized recommendations, trip briefings, and local intel tailored to you.</Text><TouchableOpacity activeOpacity={0.85} style={[styles.emptyBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/kinfolk-settings" as never)}><Text style={styles.emptyBtnTxt}>Set Up My Profile</Text></TouchableOpacity></View> : <><Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>WHAT I KNOW ABOUT YOU</Text><View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>{buildItems(summary).map((item, i, arr) => <React.Fragment key={item.label}><View style={styles.itemRow}><View style={[styles.itemIcon, { backgroundColor: item.color + "18" }]}><Feather name={item.icon} size={16} color={item.color} /></View><View style={styles.itemContent}><Text style={[styles.itemLabel, { color: colors.mutedForeground }]}>{item.label}</Text><Text style={[styles.itemValue, { color: colors.foreground }]}>{item.value}</Text></View></View>{i < arr.length - 1 && <View style={[styles.sep, { backgroundColor: colors.border, marginLeft: 60 }]} />}</React.Fragment>)}</View><TouchableOpacity activeOpacity={0.85} style={[styles.editBtn, { backgroundColor: colors.primary }]} onPress={() => router.push("/kinfolk-settings" as never)}><Feather name="edit-2" size={16} color="#fff" /><Text style={styles.editBtnTxt}>Edit My KinfolkAI™ Profile</Text></TouchableOpacity></>}
       <Text style={[styles.sectionTitle, { color: colors.mutedForeground, marginTop: 4 }]}>PRIVATE MEMORIES</Text>
-      {privateMemories.length === 0 ? <View style={[styles.emptyMemory, { backgroundColor: colors.card, borderColor: colors.border }]}><Feather name="lock" size={18} color={colors.primary} /><View style={{ flex: 1 }}><Text style={[styles.itemValue, { color: colors.foreground }]}>Nothing saved from chat</Text><Text style={[styles.noteTxt, { color: colors.mutedForeground }]}>With memory on, Kinfolk can retain useful ordinary continuity. You can also save a specific note from the composer; sensitive details always ask separately.</Text></View></View> : <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>{privateMemories.map((memory, index) => { const companion = companionLabel(memory); const isEditing = editing?.id === memory.id; return <React.Fragment key={memory.id}><View style={styles.memoryRow}><View style={[styles.itemIcon, { backgroundColor: colors.primary + "18" }]}><Feather name={companion ? "users" : "lock"} size={15} color={colors.primary} /></View><View style={styles.itemContent}>{isEditing ? <><TextInput value={editing.content} onChangeText={(content) => setEditing({ ...editing, content })} multiline maxLength={1000} accessibilityLabel="Edit private Kinfolk memory" style={[styles.memoryInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]} />{editing.sensitiveConfirmationRequired && <Text style={[styles.sensitiveNote, { color: colors.primary }]}>This is sensitive. Confirm separately to save this edit privately.</Text>}<View style={styles.editActions}><TouchableOpacity disabled={savingEdit || !editing.content.trim()} onPress={() => void saveEdit()} style={[styles.smallPrimary, { backgroundColor: colors.primary, opacity: savingEdit || !editing.content.trim() ? 0.55 : 1 }]}><Text style={styles.smallPrimaryText}>{savingEdit ? "Saving…" : editing.sensitiveConfirmationRequired ? "Confirm sensitive edit" : "Save edit"}</Text></TouchableOpacity><TouchableOpacity disabled={savingEdit} onPress={() => setEditing(null)}><Text style={[styles.cancelText, { color: colors.mutedForeground }]}>Cancel</Text></TouchableOpacity></View></> : <><Text style={[styles.itemValue, { color: colors.foreground }]}>{companion ? `Private note for ${companion}` : memory.content}</Text><Text style={[styles.itemLabel, { color: colors.mutedForeground }]} numberOfLines={2}>{companion ? memory.content.replace(/^Companion:\s*[^\n]+\s*\nNotes:\s*/im, "") : `${memory.purpose.replace("_", " ")}${memory.isSensitive ? " · sensitive" : ""}${memory.isSensitive && !memory.sensitiveConsentGrantedAt ? " · confirmation required before use" : ""}`}</Text></>}</View>{!isEditing && <View style={styles.memoryActions}><TouchableOpacity accessibilityLabel="Edit this memory" onPress={() => setEditing({ id: memory.id, content: memory.content, original: memory.content, sensitiveConfirmationRequired: false })}><Feather name="edit-2" size={16} color={colors.primary} /></TouchableOpacity><TouchableOpacity accessibilityLabel={companion ? `Forget companion ${companion}` : "Forget this memory"} onPress={() => void forgetMemory(memory.id)}><Feather name="trash-2" size={17} color="#DC2626" /></TouchableOpacity></View>}</View>{index < privateMemories.length - 1 && <View style={[styles.sep, { backgroundColor: colors.border, marginLeft: 60 }]} />}</React.Fragment>; })}</View>}
+      {privateMemories.length === 0 ? <View style={[styles.emptyMemory, { backgroundColor: colors.card, borderColor: colors.border }]}><Feather name="lock" size={18} color={colors.primary} /><View style={{ flex: 1 }}><Text style={[styles.itemValue, { color: colors.foreground }]}>Nothing saved from chat</Text><Text style={[styles.noteTxt, { color: colors.mutedForeground }]}>With memory on, Kinfolk can retain useful ordinary continuity. You can also save a specific note from the composer; sensitive details always ask separately.</Text></View></View> : <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>{privateMemories.map((memory, index) => { const companion = companionLabel(memory); const isEditing = editing?.id === memory.id; return <React.Fragment key={memory.id}><View style={styles.memoryRow}><View style={[styles.itemIcon, { backgroundColor: colors.primary + "18" }]}><Feather name={companion ? "users" : "lock"} size={15} color={colors.primary} /></View><View style={styles.itemContent}>{isEditing ? <><TextInput value={editing.content} onChangeText={(content) => setEditing({ ...editing, content })} multiline maxLength={1000} accessibilityLabel="Edit private Kinfolk memory" style={[styles.memoryInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]} />{editing.sensitiveConfirmationRequired && <Text style={[styles.sensitiveNote, { color: colors.primary }]}>This is sensitive. Confirm separately to save this edit privately.</Text>}<View style={styles.editActions}><TouchableOpacity disabled={savingEdit || !editing.content.trim()} onPress={() => void saveEdit()} style={[styles.smallPrimary, { backgroundColor: colors.primary, opacity: savingEdit || !editing.content.trim() ? 0.55 : 1 }]}><Text style={styles.smallPrimaryText}>{savingEdit ? "Saving…" : editing.sensitiveConfirmationRequired ? "Confirm sensitive edit" : "Save edit"}</Text></TouchableOpacity><TouchableOpacity disabled={savingEdit} onPress={() => setEditing(null)}><Text style={[styles.cancelText, { color: colors.mutedForeground }]}>Cancel</Text></TouchableOpacity></View></> : <><Text style={[styles.itemValue, { color: colors.foreground }]}>{companion ? `Private note for ${companion}` : memory.content}</Text><Text style={[styles.itemLabel, { color: colors.mutedForeground }]} numberOfLines={2}>{companion ? memory.content.replace(/^Companion:\s*[^\n]+\s*\nNotes:\s*/im, "") : `${memory.purpose.replace("_", " ")}${memory.isSensitive ? " · sensitive" : ""}${memory.isSensitive && !memory.sensitiveConsentGrantedAt ? " · confirmation required before use" : ""}`}</Text>{memory.state === "paused" ? <Text style={[styles.sensitiveNote, { color: colors.primary }]}>Paused — Kinfolk will not use this note until you resume it.</Text> : null}</>}</View>{!isEditing && <View style={styles.memoryActions}><TouchableOpacity accessibilityLabel="Edit this memory" onPress={() => setEditing({ id: memory.id, content: memory.content, original: memory.content, sensitiveConfirmationRequired: false })}><Feather name="edit-2" size={16} color={colors.primary} /></TouchableOpacity><TouchableOpacity disabled={updatingMemoryId === memory.id} accessibilityLabel={memory.state === "paused" ? "Resume use of this memory" : "Pause use of this memory"} onPress={() => void setMemoryPaused(memory.id, memory.state !== "paused")}><Text style={[styles.cancelText, { color: colors.primary }]}>{memory.state === "paused" ? "Resume use" : "Pause use"}</Text></TouchableOpacity><TouchableOpacity disabled={updatingMemoryId === memory.id} accessibilityLabel={companion ? `Revoke use of companion ${companion}` : "Revoke use of this memory"} onPress={() => void revokeMemory(memory.id)}><Text style={[styles.cancelText, { color: "#DC2626" }]}>Revoke use</Text></TouchableOpacity></View>}</View>{index < privateMemories.length - 1 && <View style={[styles.sep, { backgroundColor: colors.border, marginLeft: 60 }]} />}</React.Fragment>; })}</View>}
       {!!memoryError && <Text style={styles.error}>{memoryError}</Text>}
       <View style={[styles.resetCard, { borderColor: "#FECACA", backgroundColor: "#FEF2F2" }]}><Feather name="rotate-ccw" size={16} color="#B42318" /><View style={{ flex: 1 }}><Text style={[styles.itemValue, { color: colors.foreground }]}>Reset Kinfolk</Text><Text style={[styles.noteTxt, { color: colors.mutedForeground }]}>Clear Kinfolk-only chats, memories, feedback, and preferences. Your account, password, profile, Community posts, saved places, and memberships stay untouched.</Text><TouchableOpacity disabled={resetting} onPress={resetKinfolk} style={styles.resetButton}><Text style={styles.resetButtonText}>{resetting ? "Resetting…" : "Start Kinfolk fresh"}</Text></TouchableOpacity></View></View>
       <View style={[styles.note, { backgroundColor: colors.secondary, borderColor: colors.border }]}><Feather name="lock" size={14} color={colors.mutedForeground} /><Text style={[styles.noteTxt, { color: colors.mutedForeground }]}>Private Kinfolk memory is never public, shared with another member, or used for similarity-based recommendations.</Text></View>
