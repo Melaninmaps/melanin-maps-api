@@ -7,6 +7,7 @@ import { startBuild97Monitor, stopBuild97Monitor } from "./lib/build97Monitor";
 import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
 import {
+  ensureAdminBusinessProfileReceiptsAndCatalogSchema,
   ensureBusinessWebsiteCleanupAuditSchema,
   ensureDirectoryReconciliationLedgerSchema,
   ensureCommunityFeedReadSchema,
@@ -169,6 +170,11 @@ try {
     (message) => logger.warn(message),
   );
   logger.info("Website cleanup audit schema ready before traffic acceptance");
+  // The Business Admin editor and Kinfolk Catalog are a data-neutral control
+  // plane. They must retain their receipt and audit schemas even when explicit
+  // feature-release mode correctly skips unrelated startup migration writers.
+  await ensureAdminBusinessProfileReceiptsAndCatalogSchema(logger);
+  logger.info("Admin profile receipt and Kinfolk Catalog schemas ready before traffic acceptance");
   if (explicitFeatureReleaseMode) {
     logger.info("Explicit feature release mode: skipping boot-time schema and publication writers");
   } else {

@@ -64,6 +64,10 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(migrations).toContain("export async function ensureBusinessWebsiteCleanupAuditSchema");
     expect(serverStartup).toContain("await ensureBusinessWebsiteCleanupAuditSchema(");
     expect(serverStartup).toContain("Website cleanup audit schema ready before traffic acceptance");
+    expect(migrations).toContain("export async function ensureAdminBusinessProfileReceiptsAndCatalogSchema");
+    expect(migrations).toContain("'price_range'");
+    expect(serverStartup).toContain("await ensureAdminBusinessProfileReceiptsAndCatalogSchema(logger)");
+    expect(serverStartup).toContain("Admin profile receipt and Kinfolk Catalog schemas ready before traffic acceptance");
   });
 
   it("projects only reconciliation fields so the established inventory date order stays unambiguous", () => {

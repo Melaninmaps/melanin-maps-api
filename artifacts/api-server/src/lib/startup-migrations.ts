@@ -5909,7 +5909,7 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       id UUID PRIMARY KEY,
       business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
       field_name TEXT NOT NULL CHECK (field_name IN (
-        'identity', 'description', 'category', 'hours', 'phone', 'address', 'website',
+        'identity', 'description', 'category', 'hours', 'price_range', 'phone', 'address', 'website',
         'instagram', 'tiktok', 'facebook', 'service_tags', 'ownership'
       )),
       source_url TEXT NOT NULL CHECK (char_length(source_url) <= 2048),
@@ -5921,6 +5921,16 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       actor_user_id TEXT,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+    ALTER TABLE business_profile_field_receipts
+      DROP CONSTRAINT IF EXISTS business_profile_field_receipts_field_name_check;
+    ALTER TABLE business_profile_field_receipts
+      ADD CONSTRAINT business_profile_field_receipts_field_name_check
+      CHECK (field_name IN (
+        'identity', 'description', 'category', 'hours', 'price_range', 'phone', 'address', 'website',
+        'instagram', 'tiktok', 'facebook', 'service_tags', 'ownership'
+      )) NOT VALID;
+    ALTER TABLE business_profile_field_receipts
+      VALIDATE CONSTRAINT business_profile_field_receipts_field_name_check;
     CREATE INDEX IF NOT EXISTS business_profile_field_receipts_business_field_idx
       ON business_profile_field_receipts (business_id, field_name, created_at DESC);
     CREATE INDEX IF NOT EXISTS business_profile_field_receipts_source_idx
@@ -5982,6 +5992,31 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       FOR EACH ROW EXECUTE FUNCTION public.prevent_business_profile_receipt_mutation();`,
   },
 ];
+
+/**
+ * Required, data-neutral schema for the audited Business Admin editor and
+ * Kinfolk Catalog. This is deliberately separate from the optional broad
+ * startup migration run: explicit feature-release mode suppresses bulk
+ * migration writers, but must not serve these controls without their receipts,
+ * audit tables, or Catalog cohort relation.
+ */
+export async function ensureAdminBusinessProfileReceiptsAndCatalogSchema(
+  logger?: Logger,
+): Promise<void> {
+  const migration = MIGRATIONS.find(
+    (candidate) => candidate.name === "admin_business_profile_receipts_and_catalog_v1",
+  );
+  if (!migration) {
+    throw new Error("Admin profile and Kinfolk Catalog schema migration is unavailable");
+  }
+  await pool.query(migration.sql);
+  await Promise.all([
+    pool.query("SELECT business_id, field_name, source_url FROM business_profile_field_receipts LIMIT 0"),
+    pool.query("SELECT business_id, state, reason FROM business_catalog_cohort_memberships LIMIT 0"),
+    pool.query("SELECT business_id, action, after_state FROM business_catalog_cohort_audit_events LIMIT 0"),
+  ]);
+  logger?.info("Admin profile receipt and Kinfolk Catalog schemas ready before traffic acceptance");
+}
 
 export const COMMUNITY_PUBLICATION_REQUIRED_COLUMNS: Readonly<
   Record<string, readonly string[]>
