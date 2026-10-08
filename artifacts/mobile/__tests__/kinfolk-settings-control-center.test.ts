@@ -9,6 +9,27 @@ const privatePlaces = readFileSync(new URL("../app/kinfolk-private-places.tsx", 
 const temporaryStays = readFileSync(new URL("../app/kinfolk-temporary-stays.tsx", import.meta.url), "utf8");
 const exitGuard = readFileSync(new URL("../hooks/useUnsavedKinfolkExitGuard.ts", import.meta.url), "utf8");
 const widget = readFileSync(new URL("../components/AIChatWidget.tsx", import.meta.url), "utf8");
+const colors = readFileSync(new URL("../constants/colors.ts", import.meta.url), "utf8");
+const voicePreflight = readFileSync(new URL("../app/kinfolk-voice-preflight.tsx", import.meta.url), "utf8");
+const inlineMemoryConsent = readFileSync(new URL("../components/KinfolkInlineMemoryConsent.tsx", import.meta.url), "utf8");
+
+function paletteColor(palette: "light" | "dark", token: "primary" | "primaryForeground"): string {
+  const start = colors.indexOf(`  ${palette}: {`);
+  const end = colors.indexOf("  },", start);
+  const match = colors.slice(start, end).match(new RegExp(`${token}:\\s*"(#[0-9A-Fa-f]{6})"`));
+  if (!match) throw new Error(`Missing ${palette}.${token} color token`);
+  return match[1];
+}
+
+function contrastRatio(foreground: string, background: string): number {
+  const luminance = (hex: string) => {
+    const channels = [1, 3, 5].map((index) => parseInt(hex.slice(index, index + 2), 16) / 255)
+      .map((value) => value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4);
+    return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+  };
+  const [lighter, darker] = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+  return (lighter + 0.05) / (darker + 0.05);
+}
 
 describe("Build 135 native Kinfolk Settings", () => {
   it("starts Settings with only two collapsed, mutually exclusive accordions", () => {
@@ -40,6 +61,17 @@ describe("Build 135 native Kinfolk Settings", () => {
     expect(controlCenter).toContain("Accessibility and regional-language preferences are not inferred");
     expect(controlCenter).toContain('router.push("/kinfolk-private-places" as never)');
     expect(controlCenter).toContain("Private Places");
+  });
+
+  it("keeps native primary actions readable in both app themes", () => {
+    for (const palette of ["light", "dark"] as const) {
+      expect(contrastRatio(paletteColor(palette, "primaryForeground"), paletteColor(palette, "primary"))).toBeGreaterThanOrEqual(4.5);
+    }
+    for (const source of [controlCenter, voicePreflight, inlineMemoryConsent]) {
+      expect(source).toContain("colors.primaryForeground");
+    }
+    expect(controlCenter).not.toContain("PRIMARY_ACTION_INK");
+    expect(voicePreflight).not.toContain("PRIMARY_ACTION_INK");
   });
 
   it("persists settings only through one explicit save transaction and retains a failed draft", () => {
