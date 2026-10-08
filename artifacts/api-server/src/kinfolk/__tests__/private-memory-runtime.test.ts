@@ -236,15 +236,20 @@ describe("Kinfolk private-memory production control", () => {
     );
     const deleteRoute = source.slice(
       source.indexOf('router.delete("/kinfolk/preferred-name"'),
-      source.indexOf('router.get("/kinfolk/memories"'),
+      source.indexOf("class PrivateMemoryCapacityError"),
     );
 
     for (const route of [revokeRoute, deleteRoute]) {
-      expect(route).toContain("const memory = await findPreferredNameMemory(req.user.id)");
+      expect(route).toContain("withSerializedPreferredNameWrite({");
       expect(route).toContain("eq(kinfolkPrivateMemoriesTable.id, memory.id)");
-      expect(route).toContain("eq(kinfolkPrivateMemoriesTable.userId, req.user.id)");
+      expect(route).toContain("eq(kinfolkPrivateMemoriesTable.userId, req.user!.id)");
+      expect(route).toContain("isNull(kinfolkPrivateMemoriesTable.revokedAt)");
     }
-    expect(deleteRoute).not.toContain("eq(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE)");
+    const deleteMutation = deleteRoute.slice(
+      deleteRoute.indexOf(".delete(kinfolkPrivateMemoriesTable)"),
+      deleteRoute.indexOf(".returning({ id: kinfolkPrivateMemoriesTable.id })"),
+    );
+    expect(deleteMutation).not.toContain("eq(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE)");
   });
 
   it("keeps public shares behind current owner consent without deleting share IDs", () => {

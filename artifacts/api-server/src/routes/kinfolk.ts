@@ -352,6 +352,10 @@ import {
   PREFERRED_NAME_MEMORY_PURPOSE,
 } from "../kinfolk/preferred-name-memory";
 import {
+  preferredNameSaveOutcome,
+  resolvePreferredNameMemoryState,
+} from "../kinfolk/preferred-name-lifecycle";
+import {
   buildPlanningDiscoveryFollowUp,
   buildConsentedPlanningContextPrompt,
   isConsentedPlanningMemoryRelevant,
@@ -6084,6 +6088,7 @@ async function findPreferredNameMemory(userId: string) {
       content: kinfolkPrivateMemoriesTable.content,
       purpose: kinfolkPrivateMemoriesTable.purpose,
       expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
+      pausedAt: kinfolkPrivateMemoriesTable.pausedAt,
       updatedAt: kinfolkPrivateMemoriesTable.updatedAt,
     })
     .from(kinfolkPrivateMemoriesTable)
@@ -6112,8 +6117,11 @@ router.get("/kinfolk/preferred-name", async (req: Request, res: Response) => {
     const memory = await findPreferredNameMemory(req.user.id);
     const name = memory ? parsePreferredNameMemory(memory) : null;
     if (!memory || !name) return void res.json({ name: null, state: "not_saved" });
-    const paused = Boolean(memory.expiresAt && memory.expiresAt.getTime() <= Date.now());
-    res.json({ name, state: paused ? "paused" : "active", updatedAt: memory.updatedAt });
+    const state = resolvePreferredNameMemoryState({
+      pausedAt: memory.pausedAt,
+      legacyPauseExpiresAt: memory.expiresAt,
+    });
+    res.json({ name, state, updatedAt: memory.updatedAt });
   } catch (err) {
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to read explicit preferred name");
     res.status(500).json({ error: "Preferred name could not be loaded." });
@@ -6134,28 +6142,59 @@ router.put("/kinfolk/preferred-name", async (req: Request, res: Response) => {
     });
   }
   try {
-    const now = new Date();
-    await db
-      .update(kinfolkPrivateMemoriesTable)
-      .set({ revokedAt: now, updatedAt: now })
-      .where(
-        and(
-          eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
-          eq(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
-          isNull(kinfolkPrivateMemoriesTable.revokedAt),
-        ),
-      );
-    const [memory] = await db
-      .insert(kinfolkPrivateMemoriesTable)
-      .values({
-        userId: req.user.id,
-        content: formatPreferredNameMemory(name),
-        purpose: PREFERRED_NAME_MEMORY_PURPOSE,
-        isSensitive: false,
-        expiresAt: null,
-      })
-      .returning({ id: kinfolkPrivateMemoriesTable.id, updatedAt: kinfolkPrivateMemoriesTable.updatedAt });
-    res.status(201).json({ name, state: "active", memoryId: memory?.id ?? null, updatedAt: memory?.updatedAt ?? now });
+    const result = await withSerializedPreferredNameWrite({
+      userId: req.user.id,
+      write: async ({ memory, tx }) => {
+        const now = new Date();
+        const outcome = preferredNameSaveOutcome({ activeRecordId: memory?.id ?? null });
+        const [saved] = memory
+          ? await tx
+              .update(kinfolkPrivateMemoriesTable)
+              .set({
+                content: formatPreferredNameMemory(name),
+                isSensitive: false,
+                pausedAt: null,
+                // Clear only the old pause sentinel. Preferred names never
+                // have a member-selected expiry lifecycle.
+                expiresAt: null,
+                updatedAt: now,
+              })
+              .where(
+                and(
+                  eq(kinfolkPrivateMemoriesTable.id, memory.id),
+                  eq(kinfolkPrivateMemoriesTable.userId, req.user!.id),
+                  isNull(kinfolkPrivateMemoriesTable.revokedAt),
+                ),
+              )
+              .returning({
+                id: kinfolkPrivateMemoriesTable.id,
+                updatedAt: kinfolkPrivateMemoriesTable.updatedAt,
+              })
+          : await tx
+              .insert(kinfolkPrivateMemoriesTable)
+              .values({
+                userId: req.user!.id,
+                content: formatPreferredNameMemory(name),
+                purpose: PREFERRED_NAME_MEMORY_PURPOSE,
+                isSensitive: false,
+                expiresAt: null,
+                pausedAt: null,
+              })
+              .returning({
+                id: kinfolkPrivateMemoriesTable.id,
+                updatedAt: kinfolkPrivateMemoriesTable.updatedAt,
+              });
+        if (!saved) throw new Error("Preferred-name write lost its owner-scoped record.");
+        return { outcome, memory: saved, now };
+      },
+    });
+    res.status(result.outcome === "created" ? 201 : 200).json({
+      name,
+      state: "active",
+      memoryId: result.memory.id,
+      updatedAt: result.memory.updatedAt ?? result.now,
+      idempotent: result.outcome === "updated",
+    });
   } catch (err) {
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to save explicit preferred name");
     res.status(500).json({ error: "Preferred name could not be saved." });
@@ -6172,21 +6211,33 @@ router.patch("/kinfolk/preferred-name/pause", async (req: Request, res: Response
     return void res.status(400).json({ error: "A boolean paused value is required." });
   }
   try {
-    const memory = await findPreferredNameMemory(req.user.id);
-    const name = memory ? parsePreferredNameMemory(memory) : null;
-    if (!memory || !name) return void res.status(404).json({ error: "Preferred name not found." });
-    const now = new Date();
-    await db
-      .update(kinfolkPrivateMemoriesTable)
-      .set({ expiresAt: paused ? now : null, updatedAt: now })
-      .where(
-        and(
-          eq(kinfolkPrivateMemoriesTable.id, memory.id),
-          eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
-          isNull(kinfolkPrivateMemoriesTable.revokedAt),
-        ),
-      );
-    res.json({ name, state: paused ? "paused" : "active", updatedAt: now });
+    const result = await withSerializedPreferredNameWrite({
+      userId: req.user.id,
+      write: async ({ memory, tx }) => {
+        const name = memory ? parsePreferredNameMemory(memory) : null;
+        if (!memory || !name) return null;
+        const now = new Date();
+        const [updated] = await tx
+          .update(kinfolkPrivateMemoriesTable)
+          .set({
+            pausedAt: paused ? now : null,
+            // Migrate any legacy pause sentinel while preserving the row.
+            expiresAt: null,
+            updatedAt: now,
+          })
+          .where(
+            and(
+              eq(kinfolkPrivateMemoriesTable.id, memory.id),
+              eq(kinfolkPrivateMemoriesTable.userId, req.user!.id),
+              isNull(kinfolkPrivateMemoriesTable.revokedAt),
+            ),
+          )
+          .returning({ id: kinfolkPrivateMemoriesTable.id });
+        return updated ? { name, state: paused ? "paused" as const : "active" as const, updatedAt: now } : null;
+      },
+    });
+    if (!result) return void res.status(404).json({ error: "Preferred name not found." });
+    res.json(result);
   } catch (err) {
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to pause explicit preferred name");
     res.status(500).json({ error: "Preferred name could not be updated." });
@@ -6199,20 +6250,25 @@ router.post("/kinfolk/preferred-name/revoke", async (req: Request, res: Response
   }
   if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
   try {
-    const memory = await findPreferredNameMemory(req.user.id);
-    if (!memory) return void res.status(404).json({ error: "Preferred name not found." });
-    const now = new Date();
-    const [revoked] = await db
-      .update(kinfolkPrivateMemoriesTable)
-      .set({ revokedAt: now, updatedAt: now })
-      .where(
-        and(
-          eq(kinfolkPrivateMemoriesTable.id, memory.id),
-          eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
-          isNull(kinfolkPrivateMemoriesTable.revokedAt),
-        ),
-      )
-      .returning({ id: kinfolkPrivateMemoriesTable.id });
+    const revoked = await withSerializedPreferredNameWrite({
+      userId: req.user.id,
+      write: async ({ memory, tx }) => {
+        if (!memory) return null;
+        const now = new Date();
+        const [result] = await tx
+          .update(kinfolkPrivateMemoriesTable)
+          .set({ revokedAt: now, updatedAt: now })
+          .where(
+            and(
+              eq(kinfolkPrivateMemoriesTable.id, memory.id),
+              eq(kinfolkPrivateMemoriesTable.userId, req.user!.id),
+              isNull(kinfolkPrivateMemoriesTable.revokedAt),
+            ),
+          )
+          .returning({ id: kinfolkPrivateMemoriesTable.id });
+        return result ?? null;
+      },
+    });
     if (!revoked) return void res.status(404).json({ error: "Preferred name not found." });
     res.json({ ok: true, state: "revoked" });
   } catch (err) {
@@ -6227,18 +6283,24 @@ router.delete("/kinfolk/preferred-name", async (req: Request, res: Response) => 
   }
   if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
   try {
-    const memory = await findPreferredNameMemory(req.user.id);
-    if (!memory) return void res.status(404).json({ error: "Preferred name not found." });
-    const deleted = await db
-      .delete(kinfolkPrivateMemoriesTable)
-      .where(
-        and(
-          eq(kinfolkPrivateMemoriesTable.id, memory.id),
-          eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
-        ),
-      )
-      .returning({ id: kinfolkPrivateMemoriesTable.id });
-    if (deleted.length === 0) return void res.status(404).json({ error: "Preferred name not found." });
+    const deleted = await withSerializedPreferredNameWrite({
+      userId: req.user.id,
+      write: async ({ memory, tx }) => {
+        if (!memory) return null;
+        const [result] = await tx
+          .delete(kinfolkPrivateMemoriesTable)
+          .where(
+            and(
+              eq(kinfolkPrivateMemoriesTable.id, memory.id),
+              eq(kinfolkPrivateMemoriesTable.userId, req.user!.id),
+              isNull(kinfolkPrivateMemoriesTable.revokedAt),
+            ),
+          )
+          .returning({ id: kinfolkPrivateMemoriesTable.id });
+        return result ?? null;
+      },
+    });
+    if (!deleted) return void res.status(404).json({ error: "Preferred name not found." });
     res.json({ ok: true, state: "deleted" });
   } catch (err) {
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to delete explicit preferred name");
@@ -6263,6 +6325,50 @@ class PrivateMemoryCapacityError extends Error {
 type KinfolkDatabaseTransaction = Parameters<
   Parameters<typeof db.transaction>[0]
 >[0];
+
+/**
+ * One owner-scoped advisory lock covers every preferred-name lifecycle change.
+ * This makes duplicate taps, retries, and concurrent device requests
+ * deterministic without reading any account or profile name.
+ */
+async function withSerializedPreferredNameWrite<T>(input: {
+  userId: string;
+  write: (input: {
+    memory: {
+      id: string;
+      content: string;
+      purpose: string;
+      expiresAt: Date | null;
+      pausedAt: Date | null;
+    } | null;
+    tx: KinfolkDatabaseTransaction;
+  }) => Promise<T>;
+}): Promise<T> {
+  return db.transaction(async (tx) => {
+    await tx.execute(
+      sql`SELECT pg_advisory_xact_lock(hashtext(${`kinfolk-preferred-name:${input.userId}`}))`,
+    );
+    const [memory] = await tx
+      .select({
+        id: kinfolkPrivateMemoriesTable.id,
+        content: kinfolkPrivateMemoriesTable.content,
+        purpose: kinfolkPrivateMemoriesTable.purpose,
+        expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
+        pausedAt: kinfolkPrivateMemoriesTable.pausedAt,
+      })
+      .from(kinfolkPrivateMemoriesTable)
+      .where(
+        and(
+          eq(kinfolkPrivateMemoriesTable.userId, input.userId),
+          eq(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
+          isNull(kinfolkPrivateMemoriesTable.revokedAt),
+        ),
+      )
+      .orderBy(desc(kinfolkPrivateMemoriesTable.updatedAt))
+      .limit(1);
+    return input.write({ memory: memory ?? null, tx });
+  });
+}
 
 /**
  * Serializes the capacity count and all generic-note writes on one database

@@ -4926,6 +4926,31 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ON kinfolk_private_memories (user_id, revoked_at, paused_at, expires_at, created_at DESC)`,
   },
   {
+    // A preferred name is one explicit address choice per owner. Preserve the
+    // newest active choice and revoke only stale duplicate preferred-name rows
+    // before enforcing that narrow invariant. No generic note or account data
+    // is changed by this migration.
+    name: "kinfolk_preferred_name_owner_active_unique_v1",
+    sql: `WITH ranked_active_preferred_names AS (
+      SELECT id,
+             row_number() OVER (
+               PARTITION BY user_id
+               ORDER BY updated_at DESC, created_at DESC, id DESC
+             ) AS rank
+      FROM kinfolk_private_memories
+      WHERE purpose = 'preferred_name'
+        AND revoked_at IS NULL
+    )
+    UPDATE kinfolk_private_memories
+       SET revoked_at = now(), updated_at = now()
+     WHERE id IN (
+       SELECT id FROM ranked_active_preferred_names WHERE rank > 1
+     );
+    CREATE UNIQUE INDEX IF NOT EXISTS kinfolk_private_memories_preferred_name_owner_active_idx
+      ON kinfolk_private_memories (user_id)
+      WHERE purpose = 'preferred_name' AND revoked_at IS NULL`,
+  },
+  {
     // The authenticated API always scopes reads and writes to user_id. This
     // database guard also prevents accidental memory-owner reassignment through
     // future maintenance code or a direct database mutation.

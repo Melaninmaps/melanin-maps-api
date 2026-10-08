@@ -79,6 +79,7 @@ export type PrivateMemoryForPrompt = {
 
 export type PreferredNameMemoryForPrompt = PrivateMemoryForPrompt & {
   expiresAt: Date | null;
+  pausedAt?: Date | null;
 };
 
 /**
@@ -97,6 +98,7 @@ export function mergeActivePreferredNameForPrompt(input: {
   const candidate = input.preferredNameMemory;
   const now = input.now ?? new Date();
   if (!input.explicitMemoryEnabled || !candidate ||
+      candidate.pausedAt !== null && candidate.pausedAt !== undefined ||
       (candidate.expiresAt !== null && candidate.expiresAt <= now)) {
     return memories;
   }
