@@ -54,6 +54,10 @@ describe("Community, map, and primary Kinfolk regressions", () => {
   it("waits for native playback completion, removes temporary audio, and leaves a retryable state", () => {
     const travel = source("app/travel.tsx");
     expect(travel).toContain("const voiceAudioFileRef = useRef<FileSystem.File | null>(null)");
+    expect(travel).toContain("const pendingVoiceClipFilesRef = useRef<FileSystem.File[]>([])");
+    expect(travel).toContain("const activeVoicePlaybackRef = useRef<VoicePlaybackRequest | null>(null)");
+    expect(travel).toContain("payload.clips");
+    expect(travel).toContain("setVoiceOutputStatus(\"Continuing voice…\")");
     expect(travel).toContain("serverVoicePlayerStatus.didJustFinish");
     expect(travel).toContain('setVoiceOutputStatus("Voice finished. Tap Listen to play it again.")');
     expect(travel).toContain("temporaryFile.delete()");
