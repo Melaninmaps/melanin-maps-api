@@ -624,6 +624,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(handoffBlock).toContain(".orderBy(desc(kinfolkSessionsTable.updatedAt))");
     expect(chatRoute).toContain("crossSessionHandoff?.scope");
     expect(chatRoute).toContain("conversationHandoff: conversationContextScope?.handoff ?? null");
+    expect(chatRoute).toContain('conversationContextScope?.handoff?.state !== "resumed"');
+    expect(chatRoute).toContain(": historyMessages");
   });
 
   it("persists an explicit return-later marker before generic or provider routing", () => {

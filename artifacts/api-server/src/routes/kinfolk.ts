@@ -12416,7 +12416,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       typeof openai.chat.completions.create
     >[0]["messages"] = [
       { role: "system", content: systemPromptWithResponseFormat },
-      ...(leanGeneralChat ? buildLeanGeneralHistory(existingMessages) : historyMessages),
+      // An explicit cross-session return-later resume has already passed the
+      // owner, active-session, and bounded-thread gates above. Lean chat must
+      // use that scoped thread rather than the fresh session's empty history.
+      ...(leanGeneralChat && conversationContextScope?.handoff?.state !== "resumed"
+        ? buildLeanGeneralHistory(existingMessages)
+        : historyMessages),
       { role: "user", content: currentUserContent },
     ];
 
