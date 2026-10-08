@@ -9421,6 +9421,95 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         });
     const scopedConversationMessages =
       conversationContextScope?.messages ?? existingMessages;
+
+    // A deliberate return-later request is a session control, not a question for
+    // the model. Persist its marker before generic routing so the safe saved
+    // status and the later explicit-resume boundary cannot be skipped by a
+    // deterministic or provider response path. This never creates profile
+    // memory and stores no context outside the member's existing session.
+    if (
+      conversationContextScope?.handoffRequested &&
+      memoryEnabled &&
+      sessionPersistenceAvailable &&
+      req.user?.id
+    ) {
+      const timestamp = new Date().toISOString();
+      const handoffReply = "Your conversation is saved privately. When you start a new chat, say “Let’s continue” if you want to pick up this thread. No separate memory was created.";
+      const handoffMessages: SessionMessage[] = [
+        ...existingMessages,
+        { role: "user", content: message, timestamp },
+        {
+          role: "assistant",
+          content: handoffReply,
+          conversationHandoff: { kind: "return_later", requestedAt: timestamp },
+          timestamp,
+        } as SessionMessage,
+      ];
+      let handoffSessionId: string | undefined = sessionId;
+      try {
+        if (currentSession) {
+          await db
+            .update(kinfolkSessionsTable)
+            .set({ messages: handoffMessages, updatedAt: new Date() })
+            .where(eq(kinfolkSessionsTable.id, currentSession.id));
+          handoffSessionId = currentSession.id;
+        } else {
+          const [newSession] = await db
+            .insert(kinfolkSessionsTable)
+            .values({
+              userId: req.user.id,
+              title: message,
+              destination: null,
+              vibes: vibes as string[],
+              messages: handoffMessages,
+            })
+            .returning();
+          handoffSessionId = newSession?.id;
+        }
+      } catch (err) {
+        if (!isOptionalSchemaGap(err)) throw err;
+        console.warn(
+          `[kinfolk-optional] stage=session_handoff_write pgCode=${pgCode(err)} — handoff was not saved`,
+        );
+        return void res.status(503).json({
+          error: "Kinfolk could not save this conversation right now. Please try again before leaving the chat.",
+        });
+      }
+
+      return void res.status(200).json({
+        sessionId: handoffSessionId,
+        reply: handoffReply,
+        conversationHandoff: conversationContextScope.handoff,
+        recommendations: null,
+        itinerary: null,
+        followUpSuggestions: [],
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass: "general_knowledge",
+        sources: [],
+        needsClarification: false,
+        originalQuery: message,
+        answerMode: "conversation_handoff_saved",
+        structuredContent: null,
+        mediaLinks: [],
+        relatedConnections: [],
+        researchStatus: {
+          usedInternal: false,
+          usedLiveWeb: false,
+          degraded: false,
+          web: {
+            attempted: false,
+            state: "not_needed",
+            provider: null,
+            fallbackUsed: false,
+            partial: false,
+          },
+          asOf: new Date().toISOString(),
+        },
+      });
+    }
+
     const conversationHistoryForContext: Array<{ role: "user" | "assistant"; content: string }> = buildKinfolkHistory(
       scopedConversationMessages,
       modelPolicy,

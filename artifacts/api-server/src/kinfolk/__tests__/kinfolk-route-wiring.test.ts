@@ -625,6 +625,17 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("crossSessionHandoff?.scope");
     expect(chatRoute).toContain("conversationHandoff: conversationContextScope?.handoff ?? null");
   });
+
+  it("persists an explicit return-later marker before generic or provider routing", () => {
+    const handoffPersistence = chatRoute.indexOf("stage=session_handoff_write");
+    const genericClassifier = chatRoute.indexOf("buildGenericAnswerRouteClassifierPrompt()");
+
+    expect(handoffPersistence).toBeGreaterThan(-1);
+    expect(handoffPersistence).toBeLessThan(genericClassifier);
+    expect(chatRoute).toContain('answerMode: "conversation_handoff_saved"');
+    expect(chatRoute).toContain("conversationHandoff: conversationContextScope.handoff");
+    expect(chatRoute).toContain("conversationHandoff: { kind: \"return_later\"");
+  });
 });
 
 describe("Kinfolk recommendation enforcement", () => {
