@@ -12,6 +12,7 @@ import {
   ensureCommunityFeedReadSchema,
   ensureKinfolkQuestionImageSchemaOnly,
   ensureKinfolkPrivatePlacesSchema,
+  ensureKinfolkPreferredNameSchema,
   ensureKinfolkTemporaryStaysSchema,
   ensureRequiredPublicationSchema,
   publicationSchemaFailureLogLines,
@@ -128,6 +129,12 @@ async function initStripe() {
 })();
 
 try {
+  // Preferred-name controls are visible in Kinfolk Settings and are safe only
+  // when their data-neutral structure exists. Explicit feature-release mode
+  // skips broad migrations, so verify this exact request-path schema before
+  // accepting traffic rather than returning a misleading save/read 500.
+  await ensureKinfolkPreferredNameSchema(logger);
+  logger.info("Kinfolk preferred-name schema ready before traffic acceptance");
   if (process.env.KINFOLK_MEDIA_BUCKET_ID?.trim()) {
     // This is the only D18 schema bootstrap allowed in explicit feature-release
     // mode: idempotent columns plus a cleanup index, with no row mutation.

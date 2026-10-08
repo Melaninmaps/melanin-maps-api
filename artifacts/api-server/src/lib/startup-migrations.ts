@@ -4926,31 +4926,6 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ON kinfolk_private_memories (user_id, revoked_at, paused_at, expires_at, created_at DESC)`,
   },
   {
-    // A preferred name is one explicit address choice per owner. Preserve the
-    // newest active choice and revoke only stale duplicate preferred-name rows
-    // before enforcing that narrow invariant. No generic note or account data
-    // is changed by this migration.
-    name: "kinfolk_preferred_name_owner_active_unique_v1",
-    sql: `WITH ranked_active_preferred_names AS (
-      SELECT id,
-             row_number() OVER (
-               PARTITION BY user_id
-               ORDER BY updated_at DESC, created_at DESC, id DESC
-             ) AS rank
-      FROM kinfolk_private_memories
-      WHERE purpose = 'preferred_name'
-        AND revoked_at IS NULL
-    )
-    UPDATE kinfolk_private_memories
-       SET revoked_at = now(), updated_at = now()
-     WHERE id IN (
-       SELECT id FROM ranked_active_preferred_names WHERE rank > 1
-     );
-    CREATE UNIQUE INDEX IF NOT EXISTS kinfolk_private_memories_preferred_name_owner_active_idx
-      ON kinfolk_private_memories (user_id)
-      WHERE purpose = 'preferred_name' AND revoked_at IS NULL`,
-  },
-  {
     // The authenticated API always scopes reads and writes to user_id. This
     // database guard also prevents accidental memory-owner reassignment through
     // future maintenance code or a direct database mutation.
@@ -6715,6 +6690,54 @@ export async function ensureCanonicalMwmOwnerAttachmentAuditSchema(logger?: Logg
     "SELECT business_id, target_user_id, actor_user_id, action, prior_state, next_state FROM canonical_mwm_owner_attachment_audit LIMIT 0",
   );
   log("Canonical Mapping With Melanin owner audit schema is ready");
+}
+
+/**
+ * Preferred-name save, pause, resume, revoke, and delete are authenticated
+ * request paths. Explicit feature-release mode intentionally bypasses the
+ * broad migration runner, so this schema-only gate must complete before the
+ * listener accepts an otherwise misleading 500 from those routes.
+ *
+ * This is deliberately data-neutral: it creates only the source-defined
+ * structure and indexes, and never revokes, replaces, pauses, or backfills a
+ * member's existing memory. New writes are serialized by the owner-scoped
+ * transaction lock in the route itself.
+ */
+export async function ensureKinfolkPreferredNameSchema(logger?: Logger): Promise<void> {
+  const log = (msg: string) =>
+    logger ? logger.info(msg) : console.log(`[kinfolk-preferred-name-schema] ${msg}`);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS kinfolk_private_memories (
+      id varchar PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id varchar(100) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      content text NOT NULL,
+      purpose varchar(40) NOT NULL DEFAULT 'personalization',
+      source_session_id varchar(100),
+      is_sensitive boolean NOT NULL DEFAULT false,
+      consent_granted_at timestamptz NOT NULL DEFAULT now(),
+      sensitive_consent_granted_at timestamptz,
+      expires_at timestamptz,
+      paused_at timestamptz,
+      revoked_at timestamptz,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+    ALTER TABLE kinfolk_private_memories
+      ADD COLUMN IF NOT EXISTS consent_granted_at timestamptz NOT NULL DEFAULT now(),
+      ADD COLUMN IF NOT EXISTS sensitive_consent_granted_at timestamptz,
+      ADD COLUMN IF NOT EXISTS paused_at timestamptz;
+    CREATE INDEX IF NOT EXISTS kinfolk_private_memories_preferred_name_lookup_idx
+      ON kinfolk_private_memories (user_id, updated_at DESC)
+      WHERE purpose = 'preferred_name' AND revoked_at IS NULL;
+  `);
+
+  // Structural read only: fail before traffic if an older production baseline
+  // cannot satisfy the active lifecycle query shape.
+  await pool.query(
+    "SELECT id, user_id, content, purpose, expires_at, paused_at, revoked_at, created_at, updated_at FROM kinfolk_private_memories LIMIT 0",
+  );
+  log("Kinfolk preferred-name schema is ready before traffic acceptance");
 }
 
 // Explicit feature-release mode intentionally skips the broad migration runner.

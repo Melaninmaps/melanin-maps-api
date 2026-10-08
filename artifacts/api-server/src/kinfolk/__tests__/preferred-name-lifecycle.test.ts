@@ -10,6 +10,7 @@ import {
 const here = dirname(fileURLToPath(import.meta.url));
 const route = readFileSync(resolve(here, "../../routes/kinfolk.ts"), "utf8");
 const migrations = readFileSync(resolve(here, "../../lib/startup-migrations.ts"), "utf8");
+const server = readFileSync(resolve(here, "../../index.ts"), "utf8");
 
 describe("explicit preferred-name lifecycle", () => {
   it("treats repeat saves as an idempotent update of the active owner record", () => {
@@ -50,10 +51,15 @@ describe("explicit preferred-name lifecycle", () => {
     expect(lifecycle).toContain("router.delete(\"/kinfolk/preferred-name\"");
   });
 
-  it("enforces one active preferred-name record per owner in the database", () => {
-    expect(migrations).toContain('name: "kinfolk_preferred_name_owner_active_unique_v1"');
-    expect(migrations).toContain("ranked_active_preferred_names");
-    expect(migrations).toContain("kinfolk_private_memories_preferred_name_owner_active_idx");
-    expect(migrations).toContain("WHERE purpose = 'preferred_name' AND revoked_at IS NULL");
+  it("makes the preferred-name schema available before explicit feature-release traffic", () => {
+    expect(migrations).toContain("export async function ensureKinfolkPreferredNameSchema");
+    expect(migrations).toContain("CREATE TABLE IF NOT EXISTS kinfolk_private_memories");
+    expect(migrations).toContain("ADD COLUMN IF NOT EXISTS paused_at timestamptz");
+    expect(migrations).toContain("kinfolk_private_memories_preferred_name_lookup_idx");
+    expect(migrations).not.toContain("ranked_active_preferred_names");
+    expect(server).toContain("await ensureKinfolkPreferredNameSchema(logger)");
+    expect(server.indexOf("await ensureKinfolkPreferredNameSchema(logger)")).toBeLessThan(
+      server.indexOf("if (explicitFeatureReleaseMode)"),
+    );
   });
 });
