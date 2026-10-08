@@ -20,6 +20,7 @@ function evidence(overrides: Partial<EvidenceRoute> = {}): EvidenceRoute {
     sourceGuidance: "Stable facts may be answered directly.",
     visibleBoilerplate: null,
     accuratePublicFigureFactsAllowed: true,
+    stableEducationalScope: "none",
     ...overrides,
   };
 }

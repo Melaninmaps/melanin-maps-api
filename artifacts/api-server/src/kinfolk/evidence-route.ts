@@ -13,6 +13,9 @@ export type ClaimMode = "factual" | "evaluative";
 /** The minimum retrieval step required before a model may answer. */
 export type RetrievalRequirement = "none" | "authoritative" | "web_required";
 
+/** A bounded stable educational component within a member turn. */
+export type StableEducationalScope = "none" | "full" | "partial";
+
 export type AllowedSourceCategory =
   | "official_public_source"
   | "peer_reviewed_research"
@@ -36,6 +39,11 @@ export interface EvidenceRoute {
   visibleBoilerplate: string | null;
   /** Stable, verified facts about public figures and their work remain answerable. */
   accuratePublicFigureFactsAllowed: true;
+  /**
+   * `full` can be answered with stable knowledge. `partial` has an additional
+   * current component that still needs cited evidence.
+   */
+  stableEducationalScope: StableEducationalScope;
 }
 
 const CURRENT_WORDS = /\b(current|currently|recent|recently|latest|today|today's|right now|this week|this month|tonight|tomorrow|this weekend|breaking|news|new release|as of)\b/gi;
@@ -47,6 +55,34 @@ const KNOWN_CULTURE_WORK_SIGNALS = /\bSinners\b/i;
 // remains intentionally narrow; financial advice and any current price/rate
 // request continue to use the protected financial evidence route.
 const PERSONAL_BUDGET_ORGANIZATION_RE = /\b(?:help(?:\s+me)?|can you|could you|should\s+i|do\s+i\s+need\s+to|please|i\s+(?:need|want))?\s*(?:organize|organise|plan|create|make|set\s+up|track|review|manage)\s+(?:my|our|a|the)?\s*(?:household\s+|personal\s+)?budget\b/i;
+// This is a work-request boundary, not a topic list: explaining a general
+// concept is different from choosing, changing, buying, selling, filing, or
+// acting on a member's particular financial situation.
+const STABLE_EDUCATION_FRAMING_RE = /\b(?:explain|define|describe|teach\s+me(?:\s+about)?|help\s+me\s+understand|what(?:'s|\s+is)\s+(?:a|an|the)?\s*|how\s+does|how\s+do(?:es)?|in\s+plain\s+language)\b/i;
+const PERSONALIZED_OR_TRANSACTIONAL_FINANCIAL_RE = /\b(?:should|can|do)\s+(?:i|we)\b|\b(?:my|our)\s+(?:loan|mortgage|portfolio|investment(?:s)?|retirement|credit|debt|tax(?:es)?|insurance\s+(?:plan|policy))\b|\b(?:choose|recommend|buy|sell|apply|file|renew|refinance|invest|borrow|pay\s+off|contribute)\b/i;
+const INSURANCE_TERMINOLOGY_RE = /\b(?:premium|deductible|copay|co-pay|coinsurance|out[-\s]?of[-\s]?pocket|coverage\s+limit)\b/i;
+
+function resolveStableEducationalScope(
+  message: string,
+  domain: KinfolkIntent,
+  liveWebRequired: boolean,
+): StableEducationalScope {
+  if (
+    !STABLE_EDUCATION_FRAMING_RE.test(message) ||
+    PERSONALIZED_OR_TRANSACTIONAL_FINANCIAL_RE.test(message)
+  ) {
+    return "none";
+  }
+
+  // Acute health, legal, emergency, and individual decision turns keep their
+  // established evidence requirements. This exception is only for conceptual
+  // finance or plain insurance terminology with no member-specific action.
+  const eligible =
+    domain === "financial_regulated" || INSURANCE_TERMINOLOGY_RE.test(message);
+  if (!eligible) return "none";
+
+  return liveWebRequired ? "partial" : "full";
+}
 
 const HIGH_STAKES = new Set<KinfolkIntent>([
   "medical_health",
@@ -150,9 +186,18 @@ export function routeEvidence(message: string): EvidenceRoute {
   // Keep the evidence route aligned with the chat-route freshness guard,
   // including concise named-person custody or release questions.
   const liveWebRequired = requiresCurrentResearch(cleanMessage);
-  const domain = PERSONAL_BUDGET_ORGANIZATION_RE.test(cleanMessage) && !liveWebRequired
-    ? "general_knowledge"
-    : semanticDomain(cleanMessage, liveWebRequired);
+  const classifiedDomain = semanticDomain(cleanMessage, liveWebRequired);
+  const stableEducationalScope = resolveStableEducationalScope(
+    cleanMessage,
+    classifiedDomain,
+    liveWebRequired,
+  );
+  const domain =
+    (PERSONAL_BUDGET_ORGANIZATION_RE.test(cleanMessage) ||
+      stableEducationalScope === "full") &&
+    !liveWebRequired
+      ? "general_knowledge"
+      : classifiedDomain;
   const claimMode = classifyCulturalClaimMode(cleanMessage);
   const baseRisk = getEvidencePolicy(domain).consequence;
   const risk: Consequence = liveWebRequired && baseRisk === "low" ? "medium" : baseRisk;
@@ -179,6 +224,7 @@ export function routeEvidence(message: string): EvidenceRoute {
     sourceGuidance: sourcePolicy.sourceGuidance,
     visibleBoilerplate: null,
     accuratePublicFigureFactsAllowed: true,
+    stableEducationalScope,
   };
 }
 
