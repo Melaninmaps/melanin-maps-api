@@ -246,6 +246,8 @@ describe("local business subject classification", () => {
   it.each([
     "I'm feeling overwhelmed right now. I've been working on a huge project that could help people, but I get discouraged sometimes.",
     "I feel discouraged about my business.",
+    "I'm overwhelmed trying to keep my business afloat and I need to vent.",
+    "My restaurant is stressing me out and I just need to be heard.",
     "Can I talk to you about something that has been weighing on me?",
     "I'm frustrated with my project and need to vent.",
   ])("keeps ordinary emotional conversation out of discovery despite an old city: %s", (message) => {

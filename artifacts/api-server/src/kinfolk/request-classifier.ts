@@ -14,6 +14,7 @@
  */
 
 import { deriveBusinessSubject } from "./business-subject";
+import { resolveEmotionalSupportGuidance } from "./emotional-support";
 
 export type DiscoveryKind =
   | "food"
@@ -186,6 +187,22 @@ export function classifyKinfolkRequest(
       culturalContext,
       clarification: null,
       reason: "ordinary_assistant_request_routes_to_general_knowledge",
+    };
+  }
+
+  // Emotional support is ordinary conversation, not a local search—even if a
+  // member mentions their own business, a restaurant, or a city while venting.
+  // Emergency language is deliberately excluded by the emotional helper so the
+  // existing emergency path retains its earlier, higher-priority handling.
+  if (resolveEmotionalSupportGuidance({ message: text })) {
+    return {
+      route: "general_knowledge",
+      discoveryKind: "general",
+      location,
+      ownershipPreference,
+      culturalContext,
+      clarification: null,
+      reason: "emotional_support_routes_to_general_knowledge",
     };
   }
 
