@@ -155,6 +155,14 @@ describe("Kinfolk chat presentation", () => {
     expect(memoryManagerSource).toContain("Confirm sensitive edit");
   });
 
+  it("renders a visible, accessible session-only handoff status", () => {
+    expect(travelPageSource).toContain('data-testid="kinfolk-conversation-handoff"');
+    expect(travelPageSource).toContain('aria-live="polite"');
+    expect(travelPageSource).toContain('aria-atomic="true"');
+    expect(travelPageSource).toContain('"Conversation resumed" : "Conversation saved"');
+    expect(travelPageSource).toContain("conversationHandoff.summary");
+  });
+
   it("renders direct memory choices inside the Kinfolk conversation", () => {
     expect(travelPageSource).toContain("KinfolkInlineMemoryConsent");
     expect(travelPageSource).toContain("memoryConsentPlan?: KinfolkInlineMemoryConsentPlan | null");

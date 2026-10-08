@@ -2733,7 +2733,7 @@ function TravelPage() {
                 )}
 
                 {conversationHandoff && (
-                  <aside data-testid="kinfolk-conversation-handoff" role="status" className="mb-3 rounded-xl border border-[#CA922B]/30 bg-[#FFF8EC] px-4 py-3 text-xs text-[#6B4415]">
+                  <aside data-testid="kinfolk-conversation-handoff" role="status" aria-live="polite" aria-atomic="true" className="mb-3 rounded-xl border border-[#CA922B]/30 bg-[#FFF8EC] px-4 py-3 text-xs text-[#6B4415]">
                     <p className="font-semibold">{conversationHandoff.state === "resumed" ? "Conversation resumed" : "Conversation saved"}</p>
                     <p className="mt-1 leading-5">{conversationHandoff.summary}</p>
                   </aside>
