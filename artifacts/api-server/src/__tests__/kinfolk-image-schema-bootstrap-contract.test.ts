@@ -35,4 +35,23 @@ describe("Kinfolk private image schema bootstrap", () => {
     expect(kinfolkRoute).toContain("visionResponseFormat");
     expect(kinfolkRoute).toContain("additionalProperties: false");
   });
+
+  it("keeps private image turns out of live retrieval and source presentation", () => {
+    expect(kinfolkRoute).toContain(
+      "const isPrivateImageTurn = verifiedImageUrls.length > 0;",
+    );
+    expect(kinfolkRoute).toContain(
+      "!isPrivateImageTurn &&\n      (contextualIntelligenceEnabled || citedResearchRequired);",
+    );
+    expect(kinfolkRoute).toContain(
+      "if (!isPrivateImageTurn && (lensEligible || isEntityQuery))",
+    );
+    expect(kinfolkRoute).toContain(
+      "const libraryTopic = isPrivateImageTurn\n      ? null",
+    );
+    expect(kinfolkRoute).toContain(
+      "const memberFacingSources = isPrivateImageTurn\n      ? []",
+    );
+    expect(kinfolkRoute).toContain('state: "not_needed" as const');
+  });
 });

@@ -9176,6 +9176,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         message,
         conversationHistoryForContext,
       );
+    const isPrivateImageTurn = verifiedImageUrls.length > 0;
     const classifiedGeneralAnswerRoute = resolveKinfolkGeneralAnswerRoute({
       message: researchContextMessage,
       evidence: evidenceRoute,
@@ -9188,9 +9189,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // preceding user/assistant exchange. Defer it to the semantic planner rather
     // than asking the generic classifier's redundant clarification; the bounded
     // ephemeral session is never written to member memory or the database.
-    const generalAnswerRoute =
-      resolvedImmediateArithmeticFollowUp &&
-      classifiedGeneralAnswerRoute.requiresFocusedClarification
+    const generalAnswerRoute = isPrivateImageTurn
+      ? {
+          ...classifiedGeneralAnswerRoute,
+          // A private image turn is limited to visible facts. A text-only route
+          // classifier must not start external retrieval or source presentation.
+          strategy: "stable_knowledge" as const,
+          requiresCurrentEvidence: false,
+          requiresFocusedClarification: false,
+          clarificationQuestion: null,
+        }
+      : resolvedImmediateArithmeticFollowUp &&
+          classifiedGeneralAnswerRoute.requiresFocusedClarification
         ? {
             ...classifiedGeneralAnswerRoute,
             strategy: "stable_knowledge" as const,
@@ -9221,7 +9231,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         (requiresCurrentResearch(researchContextMessage) ||
           culturalLearningOpportunity !== null));
     contextualResearchEnabled =
-      contextualIntelligenceEnabled || citedResearchRequired;
+      !isPrivateImageTurn &&
+      (contextualIntelligenceEnabled || citedResearchRequired);
 
     // Resolve current-turn geography before session continuity. A city explicitly
     // named now is authoritative and may change an enabled session's destination.
@@ -9663,13 +9674,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // the optional semantic-ambiguity planner is disabled: otherwise Kinfolk can
     // fall through to a model-only description instead of checking current news,
     // public notices, and local reporting.
-    let cityBriefingPlan = isCityBriefingRequest(message, destination)
-      ? buildCityBriefingPlan({
+    let cityBriefingPlan =
+      !isPrivateImageTurn && isCityBriefingRequest(message, destination)
+        ? buildCityBriefingPlan({
           message,
           city: destination!,
           stateCode: destinationState,
-        })
-      : null;
+          })
+        : null;
 
     // Do not make members learn a private command vocabulary. When a city is
     // resolved but the request is casual or incomplete, a bounded semantic
@@ -10542,7 +10554,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const isEntityQuery =
       ENTITY_INDEX[normalizeLensQuery(message)] !== undefined;
 
-    if (lensEligible || isEntityQuery) {
+    if (!isPrivateImageTurn && (lensEligible || isEntityQuery)) {
       try {
         const memberProfile = buildMemberProfile({
           userId: req.user?.id ?? "anon",
@@ -11840,7 +11852,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // ── Library topic grounding (non-blocking enrichment) ────────────────────
     // Load structured Library topic data when the user asks about a library topic.
     // Returns null on any error — must never cause a 500.
-    const libraryTopic = await loadLibraryGrounding(message);
+    const libraryTopic = isPrivateImageTurn
+      ? null
+      : await loadLibraryGrounding(message);
     const libraryGroundingBlock = buildLibraryGroundingBlock(libraryTopic);
     const visionSafetyBlock =
       verifiedImageUrls.length > 0
@@ -12653,7 +12667,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       providerStatus: null,
       latencyMs: Date.now() - _kinfolkStartedAt,
       taskMode: contextualPlan?.taskMode ?? null,
-      retrievalState: contextualEvidence?.degraded
+      retrievalState: isPrivateImageTurn
+        ? "not_used"
+        : contextualEvidence?.degraded
         ? "degraded"
         : contextualEvidence?.internal.length &&
             contextualEvidence?.external.length
@@ -12663,14 +12679,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             : contextualEvidence?.internal.length
               ? "internal"
               : "not_used",
-      sourceCount: contextualEvidence
+      sourceCount: isPrivateImageTurn
+        ? 0
+        : contextualEvidence
         ? contextualEvidence.internal.length +
           contextualEvidence.external.length +
           contextualEvidence.media.length
         : 0,
     });
-    const memberFacingSources = filterMemberFacingSources(
-      [
+    const memberFacingSources = isPrivateImageTurn
+      ? []
+      : filterMemberFacingSources(
+          [
         ...(!isCurrentCityBriefing
           ? contextResolution.sources.map((s) => ({
               id: s.url,
@@ -12705,11 +12725,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               evidenceText: `${source.excerpt} ${source.supports.join(" ")}`,
             }))
           : []),
-      ],
-      researchContextMessage,
-    );
+          ],
+          researchContextMessage,
+        );
     const currentEvidenceSourceContext =
-      contextualPartialEvidenceSourceContext ??
+      (isPrivateImageTurn
+        ? null
+        : contextualPartialEvidenceSourceContext) ??
       (generalAnswerRoute.requiresCurrentEvidence
         ? buildCurrentEvidenceSourceContext([
             ...(contextualEvidence?.external ?? []),
@@ -12767,8 +12789,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           : undefined,
       // Source relevance is server-authored guidance, not a model-generated
       // claim. Clients display it directly above the existing source links.
-      sourceContext:
-        currentEvidenceSourceContext ??
+      sourceContext: isPrivateImageTurn
+        ? undefined
+        : currentEvidenceSourceContext ??
         lifeGuidance?.sourceContext ??
         (contextualPlan?.taskMode === "city_briefing"
           ? contextualPlan.freshness === "stable"
@@ -12794,7 +12817,25 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             relatedConnections: contextualRelatedConnections,
           }
         : {}),
-      researchStatus: {
+      researchStatus: isPrivateImageTurn
+        ? {
+            usedInternal: false,
+            usedLiveWeb: false,
+            degraded: false,
+            web: {
+              attempted: false,
+              state: "not_needed" as const,
+              provider: null,
+              fallbackUsed: false,
+              partial: false,
+              providerAttempted: false,
+              providerUsed: false,
+              failure: null,
+              attempts: [],
+            },
+            asOf: new Date().toISOString(),
+          }
+        : {
         usedInternal:
           contextResolution.sources.length > 0 ||
           knowledgeGraphSources.length > 0 ||
