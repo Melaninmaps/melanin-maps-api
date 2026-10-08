@@ -5870,8 +5870,116 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       after jsonb,
       created_at timestamptz NOT NULL DEFAULT now()
     );
-    CREATE INDEX IF NOT EXISTS founder_product_knowledge_audit_record_idx
-      ON founder_product_knowledge_audit (knowledge_id, created_at DESC);`,
+   CREATE INDEX IF NOT EXISTS founder_product_knowledge_audit_record_idx
+     ON founder_product_knowledge_audit (knowledge_id, created_at DESC);`,
+  },
+  {
+    // This is additive only. Profile facts retain immutable public-source
+    // receipts; Kinfolk Catalog membership links only to existing canonical
+    // profiles and never changes a listing lifecycle or recommendation gate.
+    name: "admin_business_profile_receipts_and_catalog_v1",
+    sql: `CREATE TABLE IF NOT EXISTS business_admin_profile_edit_audit_events (
+      id UUID PRIMARY KEY,
+      business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+      actor_user_id TEXT,
+      change_note TEXT NOT NULL CHECK (char_length(change_note) BETWEEN 3 AND 1000),
+      changed_fields JSONB NOT NULL,
+      before_state JSONB NOT NULL,
+      after_state JSONB NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS business_admin_profile_edit_audit_business_created_idx
+      ON business_admin_profile_edit_audit_events (business_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS business_admin_ownership_source_receipts (
+      id UUID PRIMARY KEY,
+      business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+      ownership_designations JSONB NOT NULL,
+      source_url TEXT NOT NULL CHECK (char_length(source_url) <= 2048),
+      source_label TEXT NOT NULL CHECK (char_length(source_label) BETWEEN 1 AND 255),
+      observed_at DATE NOT NULL,
+      note TEXT,
+      actor_user_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS business_admin_ownership_receipt_business_created_idx
+      ON business_admin_ownership_source_receipts (business_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS business_profile_field_receipts (
+      id UUID PRIMARY KEY,
+      business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+      field_name TEXT NOT NULL CHECK (field_name IN (
+        'identity', 'description', 'category', 'hours', 'phone', 'address', 'website',
+        'instagram', 'tiktok', 'facebook', 'service_tags', 'ownership'
+      )),
+      source_url TEXT NOT NULL CHECK (char_length(source_url) <= 2048),
+      source_label TEXT NOT NULL CHECK (char_length(source_label) BETWEEN 1 AND 255),
+      observed_at DATE NOT NULL,
+      confidence TEXT NOT NULL CHECK (confidence IN ('high', 'medium', 'low')),
+      note TEXT,
+      observed_value JSONB NOT NULL DEFAULT '{}'::jsonb,
+      actor_user_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS business_profile_field_receipts_business_field_idx
+      ON business_profile_field_receipts (business_id, field_name, created_at DESC);
+    CREATE INDEX IF NOT EXISTS business_profile_field_receipts_source_idx
+      ON business_profile_field_receipts (source_url, observed_at DESC);
+
+    CREATE TABLE IF NOT EXISTS business_catalog_cohort_memberships (
+      business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+      cohort_key TEXT NOT NULL CHECK (cohort_key = 'kinfolk_catalog'),
+      state TEXT NOT NULL CHECK (state IN ('intake', 'review', 'ready', 'held', 'removed')),
+      reason TEXT NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 1000),
+      created_by_user_id TEXT,
+      updated_by_user_id TEXT,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (business_id, cohort_key)
+    );
+    CREATE INDEX IF NOT EXISTS business_catalog_cohort_membership_state_updated_idx
+      ON business_catalog_cohort_memberships (cohort_key, state, updated_at DESC);
+
+    CREATE TABLE IF NOT EXISTS business_catalog_cohort_audit_events (
+      id UUID PRIMARY KEY,
+      business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+      cohort_key TEXT NOT NULL CHECK (cohort_key = 'kinfolk_catalog'),
+      action TEXT NOT NULL CHECK (action IN ('added', 'state_changed')),
+      actor_user_id TEXT,
+      reason TEXT NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 1000),
+      before_state JSONB,
+      after_state JSONB NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS business_catalog_cohort_audit_business_created_idx
+      ON business_catalog_cohort_audit_events (business_id, created_at DESC);
+
+    CREATE OR REPLACE FUNCTION public.prevent_business_profile_receipt_mutation()
+    RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+      RAISE EXCEPTION 'business profile receipts and audit events are immutable';
+    END;
+    $$;
+    DROP TRIGGER IF EXISTS business_admin_profile_edit_audit_immutable
+      ON business_admin_profile_edit_audit_events;
+    CREATE TRIGGER business_admin_profile_edit_audit_immutable
+      BEFORE UPDATE OR DELETE ON business_admin_profile_edit_audit_events
+      FOR EACH ROW EXECUTE FUNCTION public.prevent_business_profile_receipt_mutation();
+    DROP TRIGGER IF EXISTS business_admin_ownership_receipt_immutable
+      ON business_admin_ownership_source_receipts;
+    CREATE TRIGGER business_admin_ownership_receipt_immutable
+      BEFORE UPDATE OR DELETE ON business_admin_ownership_source_receipts
+      FOR EACH ROW EXECUTE FUNCTION public.prevent_business_profile_receipt_mutation();
+    DROP TRIGGER IF EXISTS business_profile_field_receipt_immutable
+      ON business_profile_field_receipts;
+    CREATE TRIGGER business_profile_field_receipt_immutable
+      BEFORE UPDATE OR DELETE ON business_profile_field_receipts
+      FOR EACH ROW EXECUTE FUNCTION public.prevent_business_profile_receipt_mutation();
+    DROP TRIGGER IF EXISTS business_catalog_cohort_audit_immutable
+      ON business_catalog_cohort_audit_events;
+    CREATE TRIGGER business_catalog_cohort_audit_immutable
+      BEFORE UPDATE OR DELETE ON business_catalog_cohort_audit_events
+      FOR EACH ROW EXECUTE FUNCTION public.prevent_business_profile_receipt_mutation();`,
   },
 ];
 
