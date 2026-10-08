@@ -129,23 +129,49 @@ function respondWithError(
   res.status(status).json({ error, code, requestId });
 }
 
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" ? value as Record<string, unknown> : null;
+}
+
+function numericHttpStatus(value: unknown): number | undefined {
+  const candidate = typeof value === "number"
+    ? value
+    : typeof value === "string" && /^\d{3}$/.test(value)
+    ? Number(value)
+    : undefined;
+  return candidate && Number.isInteger(candidate) && candidate >= 100 && candidate <= 599
+    ? candidate
+    : undefined;
+}
+
+function providerHttpStatus(error: unknown): number | undefined {
+  const value = asRecord(error);
+  if (!value) return undefined;
+  // @google-cloud/storage can wrap a Gaxios error: its HTTP status is exposed
+  // as response.status rather than as the top-level `code`. Read only numeric
+  // status fields so logs never retain provider messages or response bodies.
+  const response = asRecord(value.response);
+  const candidates = [
+    value.statusCode,
+    value.status,
+    value.code,
+    response?.statusCode,
+    response?.status,
+    response?.code,
+  ];
+  for (const candidate of candidates) {
+    const status = numericHttpStatus(candidate);
+    if (status) return status;
+  }
+  return undefined;
+}
+
 function providerErrorDetails(error: unknown): Record<string, unknown> {
   if (!error || typeof error !== "object") return { errorType: "UnknownProviderError" };
-  const value = error as Record<string, unknown>;
-  const rawCode = value.code ?? value.statusCode ?? value.status;
-  // Provider string codes can contain opaque credentials; retain only a numeric
-  // status for operations and never log provider-supplied messages.
-  const providerCode = typeof rawCode === "number" ? String(rawCode) : undefined;
-  const status = typeof value.statusCode === "number"
-    ? value.statusCode
-    : typeof value.status === "number"
-    ? value.status
-    : typeof value.code === "number"
-    ? value.code
-    : undefined;
+  const status = providerHttpStatus(error);
   return {
     errorType: (error as { constructor?: { name?: string } }).constructor?.name ?? "ProviderError",
-    ...(providerCode ? { providerCode } : {}),
+    ...(status ? { providerCode: String(status) } : {}),
     ...(status ? { providerStatus: status } : {}),
   };
 }
@@ -153,8 +179,8 @@ function providerErrorDetails(error: unknown): Record<string, unknown> {
 function isProviderAuthError(error: unknown): boolean {
   if (!error || typeof error !== "object") return false;
   const value = error as Record<string, unknown>;
-  const status = value.statusCode ?? value.status ?? value.code;
-  if (status === 401 || status === 403 || status === "401" || status === "403") return true;
+  const status = providerHttpStatus(error);
+  if (status === 401 || status === 403) return true;
   const message = typeof value.message === "string" ? value.message.toLowerCase() : "";
   return message.includes("credential") || message.includes("unauthenticated") || message.includes("invalid_grant");
 }

@@ -301,6 +301,22 @@ describe("POST /api/media/upload error contract", () => {
     expect(JSON.stringify(response.body)).not.toContain("private credential value");
   });
 
+  it("classifies wrapped Google provider 403 errors without exposing response details", async () => {
+    const file = workingFile();
+    file.save.mockRejectedValue(Object.assign(new Error("private provider response"), {
+      response: { status: 403, data: { error: { message: "opaque provider detail" } } },
+    }));
+    const response = await request(createTestApp(file))
+      .post("/api/media/upload?purpose=kinfolk_question")
+      .field("kinfolkVisionConsent", "true")
+      .attach("file", Buffer.from("png"), { filename: "question.png", contentType: "image/png" });
+
+    expect(response.status).toBe(502);
+    expect(response.body.code).toBe(MEDIA_UPLOAD_ERROR_CODES.STORAGE_AUTH_FAILED);
+    expect(JSON.stringify(response.body)).not.toContain("private provider response");
+    expect(JSON.stringify(response.body)).not.toContain("opaque provider detail");
+  });
+
   it("distinguishes provider save failure from authentication failure", async () => {
     const file = workingFile();
     file.save.mockRejectedValue(Object.assign(new Error("internal provider detail"), { code: 503 }));
