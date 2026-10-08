@@ -12,6 +12,21 @@ const EXPLICIT_CURRENT_STATUS_RE = /\b(?:current|recent|latest|today|live)\s+(?:
 const EXPLICIT_CURRENT_PUBLIC_METRIC_RE = /\b(?:current|latest|recent|today(?:'s)?)\b[\s\S]{0,48}\b(?:rate|price|cost|estimate|ranking|rank|availability|statistic|metric)\b/i;
 const CURRENT_NAMED_UPDATE_RE = /\b(?:current|recent|latest|today|live)\s+(?!i\b|we\b|my\b|our\b)[A-Z][\p{L}'’-]{1,}(?:\s+[\p{L}\d'’-]+){0,5}\s+(?:status|updates?)\b/iu;
 const OPERATING_STATUS_RE = /\b(?:open|closed|close|closing|opening|hours?|schedule|scheduled|availability|available)\b/i;
+// Terms such as "prices" usually identify a changing public fact, but a member
+// can still ask for a durable explanation of the underlying concept. Keep that
+// narrow educational request out of live retrieval unless it expressly requests
+// a current measure, date, or personal financial decision.
+const STABLE_CONCEPT_EXPLANATION_RE = /\b(?:explain|define|describe|teach\s+me(?:\s+about)?|help\s+me\s+understand|in\s+plain\s+(?:language|english)|how\s+does)\b/i;
+const STABLE_ECONOMIC_CONCEPT_RE = /\b(?:inflation|grocery\s+(?:price|prices|budget)|price\s+(?:changes?|increases?)|percentage(?:\s+change)?|deductible|copay|co-pay|coinsurance|premium|coverage\s+limit)\b/i;
+const EXPLICIT_CURRENT_MEASURE_RE = /\b(?:current|latest|recent|today(?:'s)?|this\s+(?:week|month|year)|right\s+now|as\s+of)\b|\b(?:what(?:'s|\s+is)|how\s+much|how\s+high|how\s+low)\b[\s\S]{0,48}\b(?:rate|price|cost|statistic|metric|increase|change)\b/i;
+const PERSONAL_FINANCIAL_DECISION_RE = /\b(?:should|can|do)\s+(?:i|we)\b|\b(?:buy|sell|invest|borrow|refinance|choose|recommend|afford|apply|file|renew|pay\s+off)\b/i;
+
+function isStableEconomicConceptExplanation(message: string): boolean {
+  return STABLE_CONCEPT_EXPLANATION_RE.test(message)
+    && STABLE_ECONOMIC_CONCEPT_RE.test(message)
+    && !EXPLICIT_CURRENT_MEASURE_RE.test(message)
+    && !PERSONAL_FINANCIAL_DECISION_RE.test(message);
+}
 // A time-bound operating-status question stays current even when natural
 // speech omits the venue noun, for example: “is it open today?”
 const TIME_BOUND_OPERATING_STATUS_RE = /\b(?:open|closed|close|closing|opening|hours?|schedule|scheduled|availability|available)\b[\s\S]{0,48}\b(?:today|tonight|tomorrow|this\s+weekend)\b|\b(?:today|tonight|tomorrow|this\s+weekend)\b[\s\S]{0,48}\b(?:open|closed|close|closing|opening|hours?|schedule|scheduled|availability|available)\b/i;
@@ -109,6 +124,14 @@ export function temporalEvidencePolicy(message: string): TemporalEvidencePolicy 
       freshness: HISTORICAL_RATE_RE.test(message) ? "historical" : "current",
       evidenceStandard: "single_authoritative_or_reliable",
       calculationEligible: true,
+    };
+  }
+  if (isStableEconomicConceptExplanation(message)) {
+    return {
+      requestedFact: "stable",
+      freshness: "stable",
+      evidenceStandard: "none",
+      calculationEligible: false,
     };
   }
   if (MERCHANT_PAYMENT_POLICY_RE.test(message)) {

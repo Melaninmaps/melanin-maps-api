@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildKinfolkEvidenceRecoveryReply,
+  buildKinfolkPartialEvidenceMemberNotice,
   buildKinfolkPartialEvidenceInstruction,
   resolveKinfolkAlwaysHelpPlan,
 } from "../always-help-fallback";
@@ -106,5 +107,12 @@ describe("Kinfolk always-help fallback", () => {
     expect(instruction).toContain("DIRECTLY RELEVANT PARTIAL EVIDENCE");
     expect(instruction).toContain("State only what the linked source directly supports");
     expect(instruction).toContain("Do not calculate, extrapolate, or fill a gap");
+  });
+
+  it("uses a plain-language limitation only for genuinely time-specific partial evidence", () => {
+    expect(buildKinfolkPartialEvidenceMemberNotice(stable)).toBeNull();
+    expect(buildKinfolkPartialEvidenceMemberNotice(currentConversion)).toMatch(/available source can confirm/i);
+    expect(buildKinfolkPartialEvidenceMemberNotice(historicalConversion)).toMatch(/that period/i);
+    expect(buildKinfolkPartialEvidenceMemberNotice(currentConversion)).not.toMatch(/evidence note|corroborat/i);
   });
 });

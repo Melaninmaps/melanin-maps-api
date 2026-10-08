@@ -157,9 +157,10 @@ describe("Kinfolk chat static wiring", () => {
     );
   });
 
-  it("discloses a qualified partial answer in the server response rather than trusting model prose", () => {
-    expect(chatRoute).toContain("const memberFacingReply = contextualPartialEvidenceSourceContext");
-    expect(chatRoute).toContain("Evidence note: ${contextualPartialEvidenceSourceContext}");
+  it("uses a clear qualified limitation only for time-specific partial evidence", () => {
+    expect(chatRoute).toContain("buildKinfolkPartialEvidenceMemberNotice(temporalPolicy)");
+    expect(chatRoute).toContain("const memberFacingReply = contextualPartialEvidenceMemberNotice");
+    expect(chatRoute).not.toContain("Evidence note:");
     expect(chatRoute).toContain("reply: memberFacingReply");
   });
 

@@ -84,6 +84,21 @@ export function buildKinfolkPartialEvidenceInstruction(
   ].join(" ");
 }
 
+/**
+ * A brief, member-facing limit for the rare path where a current or historical
+ * request has one directly relevant source but not enough evidence for every
+ * claim. Stable education deliberately receives no provenance slogan here.
+ */
+export function buildKinfolkPartialEvidenceMemberNotice(
+  temporalPolicy: TemporalEvidencePolicy,
+): string | null {
+  if (temporalPolicy.freshness === "stable") return null;
+  if (temporalPolicy.freshness === "historical") {
+    return "I’ve kept this to what the available source can confirm for that period. A different historical source may be needed for the remaining detail.";
+  }
+  return "I’ve kept this to what the available source can confirm. A fresh check is safest for any detail it does not establish.";
+}
+
 export function buildKinfolkEvidenceRecoveryReply(input: Readonly<{
   temporalPolicy: TemporalEvidencePolicy;
   requestedConsensus: boolean;

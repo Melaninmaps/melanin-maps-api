@@ -90,6 +90,21 @@ describe("current research routing", () => {
     )).toBe(true);
   });
 
+  it("keeps stable plain-language concepts out of live retrieval even when the topic includes prices", () => {
+    expect(requiresCurrentResearch(
+      "Explain inflation and grocery prices in plain English.",
+    )).toBe(false);
+    expect(temporalEvidencePolicy(
+      "Explain inflation and grocery prices in plain English.",
+    )).toMatchObject({ requestedFact: "stable", freshness: "stable" });
+    expect(requiresCurrentResearch(
+      "Explain the current inflation rate and grocery prices this month in plain English.",
+    )).toBe(true);
+    expect(requiresCurrentResearch(
+      "What grocery prices should I expect this week?",
+    )).toBe(true);
+  });
+
   it.each([
     "What time does the dry cleaner near me close today?",
     "Help me find a restaurant for tonight.",

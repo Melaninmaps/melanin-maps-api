@@ -58,9 +58,10 @@ const PERSONAL_BUDGET_ORGANIZATION_RE = /\b(?:help(?:\s+me)?|can you|could you|s
 // This is a work-request boundary, not a topic list: explaining a general
 // concept is different from choosing, changing, buying, selling, filing, or
 // acting on a member's particular financial situation.
-const STABLE_EDUCATION_FRAMING_RE = /\b(?:explain|define|describe|teach\s+me(?:\s+about)?|help\s+me\s+understand|what(?:'s|\s+is)\s+(?:a|an|the)?\s*|how\s+does|how\s+do(?:es)?|in\s+plain\s+language)\b/i;
+const STABLE_EDUCATION_FRAMING_RE = /\b(?:explain|define|describe|teach\s+me(?:\s+about)?|help\s+me\s+understand|what(?:'s|\s+is)\s+(?:a|an|the)?\s*|how\s+does|how\s+do(?:es)?|in\s+plain\s+(?:language|english))\b/i;
 const PERSONALIZED_OR_TRANSACTIONAL_FINANCIAL_RE = /\b(?:should|can|do)\s+(?:i|we)\b|\b(?:my|our)\s+(?:loan|mortgage|portfolio|investment(?:s)?|retirement|credit|debt|tax(?:es)?|insurance\s+(?:plan|policy))\b|\b(?:choose|recommend|buy|sell|apply|file|renew|refinance|invest|borrow|pay\s+off|contribute)\b/i;
 const INSURANCE_TERMINOLOGY_RE = /\b(?:premium|deductible|copay|co-pay|coinsurance|out[-\s]?of[-\s]?pocket|coverage\s+limit)\b/i;
+const STABLE_FINANCIAL_CONCEPT_RE = /\b(?:inflation|grocery\s+(?:price|prices|budget)|price\s+(?:changes?|increases?)|percentage(?:\s+change)?|compound\s+interest)\b/i;
 
 function resolveStableEducationalScope(
   message: string,
@@ -78,7 +79,9 @@ function resolveStableEducationalScope(
   // established evidence requirements. This exception is only for conceptual
   // finance or plain insurance terminology with no member-specific action.
   const eligible =
-    domain === "financial_regulated" || INSURANCE_TERMINOLOGY_RE.test(message);
+    domain === "financial_regulated"
+    || INSURANCE_TERMINOLOGY_RE.test(message)
+    || STABLE_FINANCIAL_CONCEPT_RE.test(message);
   if (!eligible) return "none";
 
   return liveWebRequired ? "partial" : "full";

@@ -37,6 +37,23 @@ describe("stable educational routing", () => {
     });
   });
 
+  it("keeps an explanation of inflation and grocery prices in the stable educational path", () => {
+    const message = "Explain inflation and grocery prices in plain English.";
+    const evidence = routeEvidence(message);
+    const route = resolveKinfolkGeneralAnswerRoute({
+      message,
+      evidence,
+      semantic: authoritativeSemanticDecision,
+    });
+
+    expect(requiresCurrentResearch(message)).toBe(false);
+    expect(evidence.stableEducationalScope).toBe("full");
+    expect(route).toMatchObject({
+      strategy: "stable_knowledge",
+      requiresCurrentEvidence: false,
+    });
+  });
+
   it.each([
     "In plain language, what do a health-insurance deductible, copay, and premium mean? Give a made-up example.",
     "Explain how compound interest works without using today's rates.",

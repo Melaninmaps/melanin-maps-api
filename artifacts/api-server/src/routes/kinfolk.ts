@@ -171,6 +171,7 @@ import {
 import {
   buildKinfolkEvidenceRecoveryReply,
   buildKinfolkPartialEvidenceInstruction,
+  buildKinfolkPartialEvidenceMemberNotice,
   resolveKinfolkAlwaysHelpPlan,
 } from "../kinfolk/always-help-fallback";
 import {
@@ -10457,6 +10458,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     let liveWebOutcome: WebSearchOutcome | null = null;
     let contextualPartialEvidenceInstruction: string | null = null;
     let contextualPartialEvidenceSourceContext: string | null = null;
+    let contextualPartialEvidenceMemberNotice: string | null = null;
     if (contextualPlan) {
       const contextualTrace = {
         primaryAttempted: false,
@@ -10810,8 +10812,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       if (alwaysHelpRecovery.action === "provide_qualified_partial") {
         contextualPartialEvidenceInstruction =
           buildKinfolkPartialEvidenceInstruction(temporalPolicy);
+        contextualPartialEvidenceMemberNotice =
+          buildKinfolkPartialEvidenceMemberNotice(temporalPolicy);
         contextualPartialEvidenceSourceContext =
-          "A directly relevant source is linked below, but it does not fully corroborate this answer. Kinfolk is showing only the supported portion and naming the remaining uncertainty.";
+          "A relevant source is linked below for the limited current detail in this answer.";
       } else {
         recordKinfolkTelemetry({
           requestId: _kinfolkReqId,
@@ -13261,8 +13265,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             ...(contextualEvidence?.media ?? []),
           ])
         : null);
-    const memberFacingReply = contextualPartialEvidenceSourceContext
-      ? `${reply}\n\nEvidence note: ${contextualPartialEvidenceSourceContext}`
+    const memberFacingReply = contextualPartialEvidenceMemberNotice
+      ? `${reply}\n\n${contextualPartialEvidenceMemberNotice}`
       : reply;
     res.json({
       sessionId: finalSessionId,
