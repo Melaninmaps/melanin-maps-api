@@ -51,6 +51,7 @@ import { openExternalUrl } from "@/lib/safeLinking";
 import { businessClarificationContinuation } from "@/lib/businessClarificationContinuation";
 import { kinfolkWorkingElapsedSeconds, kinfolkWorkingElapsedLabel } from "@/lib/kinfolkWorkingIndicator";
 import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
+import { prepareKinfolkVoiceUpload, type PreparedKinfolkVoiceUpload } from "@/lib/kinfolkVoiceUpload";
 import { KinfolkCompanionMemoryOfferCard } from "@/components/KinfolkCompanionMemoryOffer";
 import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDisclosure";
 import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiveMemoryConfirmation";
@@ -2550,6 +2551,8 @@ export default function TravelScreen() {
   const stopPrimaryVoiceRecording = useCallback(async () => {
     const recordingWasActive = primaryRecorder.isRecording || isRecordingVoice;
     if (!recordingWasActive) return;
+    const preservedDraft = primaryRecordingDraftRef.current;
+    let voiceUpload: PreparedKinfolkVoiceUpload | null = null;
     setIsRecordingVoice(false);
     setIsTranscribingVoice(true);
     setVoiceInputStatus("Turning your words into text…");
@@ -2561,23 +2564,15 @@ export default function TravelScreen() {
       if (primaryRecorder.isRecording) await primaryRecorder.stop();
       const uri = primaryRecorder.uri;
       if (!uri) throw new Error("No recording was captured. Please try again or type your question.");
-      const ext = (uri.split(".").pop() ?? "m4a").toLowerCase();
-      const mimeType = ({
-        m4a: "audio/mp4",
-        mp4: "audio/mp4",
-        mp3: "audio/mpeg",
-        wav: "audio/wav",
-        webm: "audio/webm",
-      } as const)[ext as "m4a" | "mp4" | "mp3" | "wav" | "webm"];
-      if (!mimeType) throw new Error("This recording format is not supported. Please try again or type your question.");
+      voiceUpload = await prepareKinfolkVoiceUpload(uri, Platform.OS);
       const token = await SecureStore.getItemAsync("auth_session_token");
       const form = new FormData();
-      // Use Expo's Blob-compatible File rather than the legacy React Native
-      // multipart object. The latter produces "Unsupported FormDataPart" on
-      // current native runtimes before transcription is even requested.
-      form.append("audio", new FileSystem.File(uri));
+      // Android receives a canonical typed Blob and filename so its multipart
+      // part agrees with the M4A/AAC recorder. iOS keeps its working File
+      // transport. The API still validates complete bytes before transcription.
+      form.append("audio", voiceUpload.body, voiceUpload.filename);
       form.append("durationMs", String(durationMs));
-      form.append("mimeType", mimeType);
+      form.append("mimeType", voiceUpload.mimeType);
       form.append(
         "regionalFlavor",
         typeof preferences?.regionalFlavor === "string"
@@ -2627,9 +2622,11 @@ export default function TravelScreen() {
         setVoiceInputStatus("Review your transcription, then tap Send when you’re ready.");
       }
     } catch (cause) {
+      setInputText(preservedDraft);
       setVoiceInputStatus(null);
       Alert.alert("Voice Input", cause instanceof Error ? cause.message : "Recording error. Please try again or type your question.");
     } finally {
+      voiceUpload?.cleanup();
       primaryRecordingStartedAtRef.current = null;
       setVoiceRecordingElapsedSeconds(0);
       setIsTranscribingVoice(false);
