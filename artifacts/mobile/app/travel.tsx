@@ -57,7 +57,6 @@ import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiv
 import { KinfolkInlineMemoryConsent } from "@/components/KinfolkInlineMemoryConsent";
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
-const PRIMARY_ACTION_INK = "#241405";
 const NATIVE_VOICE_MAX_DURATION_MS = 60_000;
 
 const ALL_CATEGORIES = [
@@ -3273,7 +3272,7 @@ export default function TravelScreen() {
               accessibilityLabel={voiceOutput ? "Turn off automatic Kinfolk spoken replies" : "Turn on automatic Kinfolk spoken replies"}
               activeOpacity={0.75}
             >
-              <Ionicons name={voiceOutput ? "volume-high" : "volume-mute-outline"} size={18} color={voiceOutput ? PRIMARY_ACTION_INK : colors.mutedForeground} />
+              <Ionicons name={voiceOutput ? "volume-high" : "volume-mute-outline"} size={18} color={voiceOutput ? colors.primaryForeground : colors.mutedForeground} />
             </TouchableOpacity>
           ) : null}
           {Platform.OS !== "web" ? (
@@ -3322,7 +3321,7 @@ export default function TravelScreen() {
             disabled={!inputText.trim() || uploadingKinfolkImage}
             accessibilityLabel="Send message to Kinfolk"
           >
-            <Ionicons name="arrow-up" size={20} color={inputText.trim() && !uploadingKinfolkImage ? PRIMARY_ACTION_INK : colors.mutedForeground} />
+            <Ionicons name="arrow-up" size={20} color={inputText.trim() && !uploadingKinfolkImage ? colors.primaryForeground : colors.mutedForeground} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>
