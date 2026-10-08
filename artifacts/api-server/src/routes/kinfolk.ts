@@ -451,6 +451,7 @@ import {
   type KinfolkRelatedConnection,
   type KinfolkStructuredContent,
 } from "../kinfolk/contextual-answer-contract";
+import { resolveKinfolkVisualEvidence } from "../kinfolk/visual-evidence";
 import {
   buildUntrustedEvidenceDataBlock,
   protectContextualOutput,
@@ -13263,6 +13264,17 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const memberFacingReply = contextualPartialEvidenceSourceContext
       ? `${reply}\n\nEvidence note: ${contextualPartialEvidenceSourceContext}`
       : reply;
+    // Public visual evidence is intentionally separate from member image
+    // understanding. Until a candidate carries a reviewed source, rights record,
+    // and first-party asset reference, this boundary returns no image rather than
+    // sending a query, profile detail, or generic remote image to a client.
+    const visualEvidence = resolveKinfolkVisualEvidence({
+      currentMessage: message,
+      answerStrategy: generalAnswerRoute.strategy,
+      highConsequence: intentPolicy.consequence !== "low",
+      isPrivateImageTurn,
+      candidates: [],
+    });
     res.json({
       sessionId: finalSessionId,
       reply: memberFacingReply,
@@ -13294,6 +13306,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // Additive, client-safe explanation of the server decision. It contains
       // no raw question, personal memory, hidden source query, or catalog data.
       responseMeta: kinfolkDecisionResponseMeta(decisionPlan),
+      // An empty list is deliberate when a visual request lacks a reviewed source.
+      // Never substitute a generic stock image or a provider URL for this field.
+      visualEvidence: visualEvidence.evidence,
+      visualEvidenceStatus: visualEvidence.state,
+      visualEvidenceNotice: visualEvidence.notice ?? undefined,
       // Provenance note — required display text for high-consequence intents (legal/medical/
       // financial/emergency). Deterministic from intent class, never from model output.
       // Provenance note — deterministic per intent class, never derived from model output.

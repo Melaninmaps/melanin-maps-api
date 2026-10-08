@@ -55,6 +55,7 @@ import { KinfolkCompanionMemoryOfferCard } from "@/components/KinfolkCompanionMe
 import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDisclosure";
 import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiveMemoryConfirmation";
 import { KinfolkInlineMemoryConsent } from "@/components/KinfolkInlineMemoryConsent";
+import { KinfolkVisualEvidenceCards } from "@/components/KinfolkVisualEvidenceCards";
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
 const NATIVE_VOICE_MAX_DURATION_MS = 60_000;
@@ -765,6 +766,12 @@ function AiMessageBubble({
         {msg.nearbyNudge && !recs && (
           <NearbyNudgeChip nudge={msg.nearbyNudge} onSend={onQuickReply} colors={colors} />
         )}
+
+        <KinfolkVisualEvidenceCards
+          evidence={msg.visualEvidence}
+          notice={msg.visualEvidenceNotice}
+          colors={colors}
+        />
 
         {msg.resultView && <ConversationalResultCards view={msg.resultView} colors={colors} />}
 

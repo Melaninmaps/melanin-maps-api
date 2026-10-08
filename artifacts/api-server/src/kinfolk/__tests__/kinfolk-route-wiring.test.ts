@@ -142,6 +142,18 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).not.toContain("public_url = ANY($2::text[])");
   });
 
+  it("renders public visual discovery only through the reviewed evidence boundary", () => {
+    expect(routeSource).toContain('import { resolveKinfolkVisualEvidence } from "../kinfolk/visual-evidence";');
+    expect(chatRoute).toContain("const visualEvidence = resolveKinfolkVisualEvidence({");
+    expect(chatRoute).toContain("currentMessage: message,");
+    expect(chatRoute).toContain("highConsequence: intentPolicy.consequence !== \"low\",");
+    expect(chatRoute).toContain("isPrivateImageTurn,");
+    expect(chatRoute).toContain("candidates: [],");
+    expect(chatRoute).toContain("visualEvidence: visualEvidence.evidence,");
+    expect(chatRoute).toContain("visualEvidenceNotice: visualEvidence.notice ?? undefined,");
+    expect(chatRoute).toContain("Never substitute a generic stock image or a provider URL");
+  });
+
   it("forces every semantic task mode with a time-specific answer requirement through the matching evidence path", () => {
     expect(chatRoute).toContain("if (generalAnswerRoute.requiresCurrentEvidence) {");
     expect(chatRoute).toContain("freshness: temporalEvidencePolicy(researchContextMessage).freshness");

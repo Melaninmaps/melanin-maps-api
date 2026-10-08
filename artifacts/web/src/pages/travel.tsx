@@ -31,6 +31,7 @@ import {
   KinfolkAssistantText,
   KinfolkSpokenText,
   KinfolkContextualContent,
+  KinfolkVisualEvidenceCards,
   KinfolkItinerary as KinfolkItineraryRenderer,
   KinfolkSourceLinks,
   KinfolkStaffDemoBadge,
@@ -44,6 +45,7 @@ import {
   type KinfolkResearchStatus,
   type KinfolkStaffDemoExperience,
   type KinfolkStructuredContent,
+  type KinfolkVisualEvidence,
 } from "@/components/kinfolk/KinfolkChatPresentation";
 import {
   AAVE_LEVEL_OPTIONS,
@@ -179,6 +181,8 @@ interface Message {
   mediaLinks?: KinfolkMediaLink[];
   relatedConnections?: KinfolkRelatedConnection[];
   researchStatus?: KinfolkResearchStatus | null;
+  visualEvidence?: KinfolkVisualEvidence[];
+  visualEvidenceNotice?: string | null;
   followUpSuggestions?: string[]; timestamp: string;
   cultureAction?: CultureAction | null;
   libraryAction?: LibraryAction | null;
@@ -2080,6 +2084,8 @@ function TravelPage() {
         mediaLinks?: KinfolkMediaLink[];
         relatedConnections?: KinfolkRelatedConnection[];
         researchStatus?: KinfolkResearchStatus | null;
+        visualEvidence?: KinfolkVisualEvidence[];
+        visualEvidenceNotice?: string | null;
         followUpSuggestions?: string[];
         cultureAction?: CultureAction | null;
         libraryAction?: LibraryAction | null;
@@ -2150,6 +2156,8 @@ function TravelPage() {
         mediaLinks: data.mediaLinks ?? [],
         relatedConnections: data.relatedConnections ?? [],
         researchStatus: data.researchStatus ?? null,
+        visualEvidence: data.visualEvidence ?? [],
+        visualEvidenceNotice: data.visualEvidenceNotice ?? null,
         followUpSuggestions: data.followUpSuggestions ?? [], timestamp: new Date().toISOString(),
         cultureAction: data.cultureAction ?? null,
         libraryAction: data.libraryAction ?? null,
@@ -2925,6 +2933,12 @@ function TravelPage() {
                           mediaLinks={msg.mediaLinks}
                           relatedConnections={msg.relatedConnections}
                           researchStatus={msg.researchStatus}
+                        />
+                      )}
+                      {msg.role === "assistant" && (
+                        <KinfolkVisualEvidenceCards
+                          evidence={msg.visualEvidence}
+                          notice={msg.visualEvidenceNotice}
                         />
                       )}
                       {msg.role === "assistant" && msg.communityPerspective && (

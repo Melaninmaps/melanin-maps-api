@@ -27,6 +27,23 @@ export type KinfolkStructuredContent =
 export interface KinfolkMediaLink { title: string; creator: string | null; platform: string; url: string; reason: string }
 export interface KinfolkRelatedConnection { title: string; relationship: string; reason: string; href: string | null; evidenceUrl: string | null }
 export interface KinfolkResearchStatus { usedInternal: boolean; usedLiveWeb: boolean; degraded: boolean; asOf: string }
+/** A server-approved first-party visual asset with its source and rights record. */
+export interface KinfolkVisualEvidence {
+  id: string;
+  assetPath: string;
+  altText: string;
+  sourceName: string;
+  sourcePageUrl: string;
+  sourceTitle: string;
+  caption: string;
+  subject: string;
+  category: "general" | "education" | "cultural" | "clinical";
+  sourcePublishedAt: string | null;
+  sourceReviewedAt: string;
+  rights: "public_domain" | "licensed" | "publisher_permission" | "internal_approved";
+  rightsNotice: string;
+  whyThisImageFits: string;
+}
 
 /**
  * Additive chat contract for structured itinerary responses. The API keeps its
@@ -89,6 +106,13 @@ export function isStaffDemoExperience(
 
 export function safeExternalSourceHref(url: string): string | null {
   return safePublicExternalHref(url);
+}
+
+/** Public visual evidence must use a server-approved first-party asset path. */
+export function safeKinfolkVisualEvidenceAssetPath(value: string): string | null {
+  return /^\/api\/kinfolk\/visual-evidence\/assets\/[A-Za-z0-9_-]{8,128}$/.test(value)
+    ? value
+    : null;
 }
 
 export function safeLibraryHref(url: string): string | null {
@@ -231,6 +255,38 @@ export function KinfolkContextualContent({ structuredContent, mediaLinks = [], r
     {safeConnections.length > 0 && <section data-testid="kinfolk-related-connections" aria-label="Related connections"><h3 className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60">Related connections</h3><div className="mt-2 space-y-2">{safeConnections.map((connection, index) => <article key={`${connection.title}-${index}`} className="rounded-xl border border-[#3A1F0E]/8 bg-white p-3 text-xs"><p className="font-bold text-[#2B1507]">{connection.title} <span className="font-normal text-[#3A1F0E]/60">· {connection.relationship}</span></p><p className="mt-1 text-[#3A1F0E]/70">{connection.reason}</p><div className="mt-1 flex gap-3">{connection.href && <a href={connection.href} className="font-semibold text-[#8D5C17] underline">Open in Library</a>}{connection.evidenceHref && <a href={connection.evidenceHref} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#8D5C17] underline">Supporting source</a>}</div></article>)}</div></section>}
     {researchStatus && <p data-testid="kinfolk-research-status" className="text-[10px] text-[#3A1F0E]/50">Updated {researchStatus.asOf ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(researchStatus.asOf)) : "recently"}{researchStatus.degraded ? " · some current details may need a fresh check" : ""}</p>}
   </section>;
+}
+
+/**
+ * Renders only reviewed, first-party visual assets. Source links and the rights
+ * notice remain visible beside the image so the member can assess provenance.
+ */
+export function KinfolkVisualEvidenceCards({ evidence = [], notice = null }: {
+  evidence?: KinfolkVisualEvidence[];
+  notice?: string | null;
+}) {
+  const safeEvidence = evidence.flatMap((item) => {
+    const assetPath = safeKinfolkVisualEvidenceAssetPath(item.assetPath);
+    const sourceHref = safeExternalSourceHref(item.sourcePageUrl);
+    return assetPath && sourceHref ? [{ ...item, assetPath, sourceHref }] : [];
+  });
+  if (safeEvidence.length === 0 && !notice) return null;
+  return (
+    <section data-testid="kinfolk-visual-evidence" aria-label="Verified visual evidence" className="mt-3 space-y-3">
+      {safeEvidence.map((item) => (
+        <figure key={item.id} className="overflow-hidden rounded-2xl border border-[#3A1F0E]/10 bg-white shadow-sm">
+          <img src={item.assetPath} alt={item.altText} loading="lazy" referrerPolicy="no-referrer" className="max-h-[28rem] w-full bg-[#FAF6EF] object-contain" />
+          <figcaption className="space-y-1.5 px-4 py-3 text-xs leading-5 text-[#3A1F0E]/70">
+            <p className="font-semibold text-[#2B1507]">{item.caption}</p>
+            <p>{item.whyThisImageFits}</p>
+            <p className="text-[#3A1F0E]/60">{item.rightsNotice}</p>
+            <a href={item.sourceHref} target="_blank" rel="noopener noreferrer" className="inline-block font-semibold text-[#8D5C17] underline">Source: {item.sourceName} — {item.sourceTitle}</a>
+          </figcaption>
+        </figure>
+      ))}
+      {notice ? <p data-testid="kinfolk-visual-evidence-notice" className="rounded-xl border border-[#CA922B]/25 bg-[#FFF8EC] p-3 text-xs leading-5 text-[#3A1F0E]/70">{notice}</p> : null}
+    </section>
+  );
 }
 
 export function KinfolkStaffDemoBadge({

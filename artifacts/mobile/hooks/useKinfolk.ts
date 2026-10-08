@@ -146,6 +146,24 @@ export type InlineMemoryConsentPlan = {
   sensitive: Array<{ id: string; label: string; content: string }>;
 };
 
+/** A source-reviewed public visual, served only from a first-party asset path. */
+export type KinfolkVisualEvidence = {
+  id: string;
+  assetPath: string;
+  altText: string;
+  sourceName: string;
+  sourcePageUrl: string;
+  sourceTitle: string;
+  caption: string;
+  subject: string;
+  category: "general" | "education" | "cultural" | "clinical";
+  sourcePublishedAt: string | null;
+  sourceReviewedAt: string;
+  rights: "public_domain" | "licensed" | "publisher_permission" | "internal_approved";
+  rightsNotice: string;
+  whyThisImageFits: string;
+};
+
 export type ChatMessage = {
   id: string;
   role: "user" | "assistant";
@@ -189,6 +207,9 @@ export type ChatMessage = {
   inlineMemoryConsent?: { message: string; plan: InlineMemoryConsentPlan; sessionId?: string | null } | null;
   /** Server decision metadata; clients fail closed when cards are not authorized. */
   responseMeta?: KinfolkResponseMeta | null;
+  /** Optional public visual evidence; never a member-upload or provider URL. */
+  visualEvidence?: KinfolkVisualEvidence[];
+  visualEvidenceNotice?: string | null;
 };
 type ConversationHandoffStatus = {
   state: "saved" | "resumed";
@@ -338,6 +359,8 @@ export function useKinfolk() {
           locationSource?: string | null;
           companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
           responseMeta?: KinfolkResponseMeta | null;
+          visualEvidence?: KinfolkVisualEvidence[];
+          visualEvidenceNotice?: string | null;
           conversationHandoff?: ConversationHandoffStatus | null;
           sensitiveMemoryConfirmation?: {
             confirmationRequired?: boolean;
@@ -393,6 +416,8 @@ export function useKinfolk() {
           sensitiveMemoryDraft,
           inlineMemoryConsent,
           responseMeta,
+          visualEvidence: data.visualEvidence ?? [],
+          visualEvidenceNotice: data.visualEvidenceNotice ?? null,
         };
         setPendingRetryText(null); // clear retry on success
         setMessages((prev) => [...prev, aiMsg]);
