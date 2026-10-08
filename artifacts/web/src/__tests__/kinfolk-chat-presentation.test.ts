@@ -54,7 +54,7 @@ describe("Kinfolk chat presentation", () => {
     expect(markup).not.toContain("dangerouslySetInnerHTML");
   });
 
-  it("keeps the exact bounded audio text visibly available during and after playback", () => {
+  it("keeps the exact full audio text visibly available during and after playback", () => {
     const spoken = "First sentence. Second sentence.";
     const playing = renderToStaticMarkup(React.createElement(KinfolkSpokenText, {
       content: spoken,
@@ -76,10 +76,17 @@ describe("Kinfolk chat presentation", () => {
     expect(finished).toContain(spoken);
     expect(unavailable).toContain("Audio unavailable — spoken text returned");
     expect(unavailable).toContain(spoken);
-    expect(travelPageSource).toContain("spokenText?: string");
+    expect(travelPageSource).toContain("normalizeKinfolkVoicePlaybackPayload");
+    expect(travelPageSource).toContain("createKinfolkVoicePlaybackQueue");
     expect(travelPageSource).toContain("body: JSON.stringify({ text: content, mode: kinfolkMode, requestId: msgId })");
     expect(travelPageSource).toContain("<KinfolkSpokenText content={spokenText.content} phase={spokenText.phase} />");
     expect(travelPageSource).toContain('phase: "unavailable"');
+    expect(travelPageSource).toContain("payload.spokenText !== content");
+    expect(travelPageSource).toContain("Playback could not continue. Replay the full answer.");
+    expect(travelPageSource).toContain('voiceGuardRef.current.invalidate("new_message")');
+    expect(travelPageSource).toContain("queue.pause()");
+    expect(travelPageSource).toContain("queue.resume()");
+    expect(travelPageSource).toContain('"Pause" : spokenText?.messageId === msg.id ? "Replay"');
     expect(travelPageSource).not.toContain("text: content.slice(0, 600)");
   });
 

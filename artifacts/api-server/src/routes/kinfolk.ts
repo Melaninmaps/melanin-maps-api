@@ -479,6 +479,7 @@ import {
   resolveKinfolkSpeechConfiguration,
   resolveKinfolkVoiceDelivery,
 } from "../kinfolk/voice-delivery";
+import { splitKinfolkSpeechText } from "../kinfolk/voice-speech-chunks";
 import { buildKendrickDrakeCulturalConsensusAnswer } from "../kinfolk/cultural-consensus-answer";
 import { buildCulturalConflictClarification } from "../kinfolk/cultural-conflict-clarification";
 import { buildKinfolkProductIdentityResponse } from "../kinfolk/product-identity-response";
@@ -14761,8 +14762,8 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
   }
   const speechRequest = normalizeKinfolkSpeechRequest(req.body);
   const delivery = resolveKinfolkVoiceDelivery(speechRequest.mode);
-  const chars = Math.min(text.length, 600);
-  const speakText = chars < text.length ? text.slice(0, 597) + "…" : text;
+  const speechChunks = splitKinfolkSpeechText(text);
+  const chars = text.length;
 
   try {
     const [[userRow], [voicePreferences]] = await Promise.all([
@@ -14794,24 +14795,33 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
       speechConfig,
       voicePreferences?.kinfolkVoice,
     );
-    const audioBuffer = await Promise.race([
-      textToSpeechWithStyle({
-        text: speakText,
-        voice: speakerProfile.voice,
-        format: "wav",
-        model: speechConfig.model,
-        styleInstruction: buildKinfolkSpeechInstruction(delivery, speakerProfile),
-      }),
-      new Promise<never>((_resolve, reject) => {
-        ttsTimer = setTimeout(() => reject(new Error("TTS_TIMEOUT")), 15_000);
-      }),
-    ]).finally(() => {
-      if (ttsTimer) clearTimeout(ttsTimer);
-    });
-    if (!Buffer.isBuffer(audioBuffer) || audioBuffer.length < 256) {
-      return void res.status(503).json({
-        error: "TTS_UNAVAILABLE",
-        message: "Kinfolk could not create audio for that response. Please try again or read the text instead.",
+    const clips: Array<{ audio: string; spokenText: string; bytes: number }> = [];
+    for (const spokenText of speechChunks) {
+      const audioBuffer = await Promise.race([
+        textToSpeechWithStyle({
+          text: spokenText,
+          voice: speakerProfile.voice,
+          format: "wav",
+          model: speechConfig.model,
+          styleInstruction: buildKinfolkSpeechInstruction(delivery, speakerProfile),
+        }),
+        new Promise<never>((_resolve, reject) => {
+          ttsTimer = setTimeout(() => reject(new Error("TTS_TIMEOUT")), 15_000);
+        }),
+      ]).finally(() => {
+        if (ttsTimer) clearTimeout(ttsTimer);
+        ttsTimer = undefined;
+      });
+      if (!Buffer.isBuffer(audioBuffer) || audioBuffer.length < 256) {
+        return void res.status(503).json({
+          error: "TTS_UNAVAILABLE",
+          message: "Kinfolk could not create audio for the full response. Please try again or read the text instead.",
+        });
+      }
+      clips.push({
+        audio: audioBuffer.toString("base64"),
+        spokenText,
+        bytes: audioBuffer.length,
       });
     }
     await incrementVoiceChars(req.user.id, chars);
@@ -14821,13 +14831,14 @@ router.post("/kinfolk/speak", async (req: Request, res: Response) => {
       : Math.max(0, Math.round(((usage.limit - newUsed) / usage.limit) * 100));
 
     res.json({
-      audio: audioBuffer.toString("base64"),
+      // Retain the first clip for older clients. New clients validate the full
+      // sequence before playing it, so they never silently omit a visible suffix.
+      audio: clips[0]?.audio,
       format: "wav",
       contentType: "audio/wav",
-      bytes: audioBuffer.length,
-      // The client renders this exact bounded text alongside audio playback.
-      // It never needs to infer which portion of a longer visual reply was spoken.
-      spokenText: speakText,
+      bytes: clips.reduce((total, clip) => total + clip.bytes, 0),
+      clips: clips.map(({ audio, spokenText }) => ({ audio, spokenText })),
+      spokenText: text,
       speakerProfile: speakerProfile.id,
       speakerLabel: speakerProfile.label,
       deliveryMode: delivery.mode,

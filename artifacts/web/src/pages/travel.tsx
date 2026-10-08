@@ -58,7 +58,13 @@ import {
   startBrowserPcmVoiceRecorder,
   type BrowserPcmVoiceRecorder,
 } from "@/lib/browserPcmVoiceRecorder";
-import { createVoicePlaybackGuard } from "@/lib/voicePlaybackGuard";
+import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
+import {
+  createKinfolkVoicePlaybackQueue,
+  normalizeKinfolkVoicePlaybackPayload,
+  type KinfolkVoiceAudioClip,
+  type KinfolkVoicePlaybackQueue,
+} from "@/lib/kinfolkVoicePlayback";
 import { useAgeAssurance } from "@/hooks/useAgeAssurance";
 import {
   canRenderKinfolkBusinessCards,
@@ -1114,6 +1120,7 @@ function TravelPage() {
 
   // TTS state
   const [playingId, setPlayingId] = useState<string | null>(null);
+  const [pausedId, setPausedId] = useState<string | null>(null);
   const [voiceStatus, setVoiceStatus] = useState<Record<string, string>>({});
   const [spokenText, setSpokenText] = useState<{
     messageId: string;
@@ -1130,6 +1137,12 @@ function TravelPage() {
   const voiceGuardRef = useRef(createVoicePlaybackGuard(
     () => pageForegroundRef.current && document.visibilityState === "visible",
   ));
+  const voicePlaybackRef = useRef<{
+    messageId: string;
+    request: VoicePlaybackRequest;
+    clips: readonly KinfolkVoiceAudioClip[];
+    queue: KinfolkVoicePlaybackQueue;
+  } | null>(null);
 
   const releaseAudio = useCallback(() => {
     const audio = audioRef.current;
@@ -1147,8 +1160,11 @@ function TravelPage() {
     const stopPlayback = () => {
       pageForegroundRef.current = false;
       voiceGuardRef.current.invalidate("page_hidden");
+      voicePlaybackRef.current?.queue.interrupt();
+      voicePlaybackRef.current = null;
       releaseAudio();
       setPlayingId(null);
+      setPausedId(null);
       setSpokenText(null);
     };
     const handleVisibilityChange = () => {
@@ -1166,6 +1182,8 @@ function TravelPage() {
       window.removeEventListener("pagehide", stopPlayback);
       window.removeEventListener("pageshow", handlePageShow);
       voiceGuardRef.current.invalidate("unmount");
+      voicePlaybackRef.current?.queue.interrupt();
+      voicePlaybackRef.current = null;
       releaseAudio();
     };
   }, [releaseAudio]);
@@ -1602,24 +1620,129 @@ function TravelPage() {
     activeChatControllerRef.current?.abort("unmount");
   }, [clearResponseStatusTimers]);
 
-  // TTS playback. Manual Listen remains available even when auto-speak is off.
+  // TTS playback. Each server-issued clip must concatenate to the exact visible
+  // reply; `onended` advances to the next clip instead of treating a provider
+  // chunk boundary as the end of the member's answer.
   const playMessage = useCallback(async (msgId: string, content: string, source: "manual" | "auto" = "manual") => {
     if (!content.trim()) return;
-    if (source === "manual" && playingId === msgId) {
-      voiceGuardRef.current.invalidate("manual_stop");
+
+    const finishPlayback = (playback: NonNullable<typeof voicePlaybackRef.current>) => {
+      if (voicePlaybackRef.current !== playback) return;
+      voiceGuardRef.current.finish(playback.request);
+      voicePlaybackRef.current = null;
       releaseAudio();
       setPlayingId(null);
-      setVoiceStatus(prev => ({ ...prev, [msgId]: "" }));
-      setSpokenText(current => current?.messageId === msgId
-        && (current.phase === "preparing" || current.phase === "playing")
-        ? null
+      setPausedId(null);
+      setVoiceStatus(prev => ({ ...prev, [playback.messageId]: "" }));
+      setSpokenText(current => current?.messageId === playback.messageId
+        ? { ...current, phase: "finished" }
         : current);
+    };
+    const failPlayback = (playback: NonNullable<typeof voicePlaybackRef.current>) => {
+      if (voicePlaybackRef.current !== playback) return;
+      playback.queue.fail();
+      voiceGuardRef.current.finish(playback.request);
+      voicePlaybackRef.current = null;
+      releaseAudio();
+      setPlayingId(null);
+      setPausedId(null);
+      setVoiceStatus(prev => ({
+        ...prev,
+        [playback.messageId]: "Playback could not continue. Replay the full answer.",
+      }));
+      setSpokenText(current => current?.messageId === playback.messageId
+        ? { ...current, phase: "unavailable" }
+        : current);
+    };
+    const startClip = async (
+      playback: NonNullable<typeof voicePlaybackRef.current>,
+      clipIndex: number,
+    ): Promise<void> => {
+      if (voicePlaybackRef.current !== playback || !voiceGuardRef.current.canPlay(playback.request)) return;
+      const clip = playback.clips[clipIndex];
+      if (!clip) return void failPlayback(playback);
+      const bytes = Uint8Array.from(atob(clip.audio), char => char.charCodeAt(0));
+      const url = URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
+      if (voicePlaybackRef.current !== playback || !voiceGuardRef.current.canPlay(playback.request)) {
+        URL.revokeObjectURL(url);
+        return;
+      }
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audioUrlRef.current = url;
+      audio.onended = () => {
+        if (voicePlaybackRef.current !== playback || !voiceGuardRef.current.canPlay(playback.request)) return;
+        releaseAudio();
+        const nextClip = playback.queue.advance();
+        if (nextClip === null) {
+          if (playback.queue.phase() === "finished") finishPlayback(playback);
+          return;
+        }
+        setVoiceStatus(prev => ({
+          ...prev,
+          [playback.messageId]: `Speaking… (${nextClip + 1}/${playback.clips.length})`,
+        }));
+        void startClip(playback, nextClip);
+      };
+      audio.onerror = () => failPlayback(playback);
+      try {
+        await audio.play();
+      } catch {
+        failPlayback(playback);
+        return;
+      }
+      if (voicePlaybackRef.current !== playback || !voiceGuardRef.current.canPlay(playback.request)) {
+        releaseAudio();
+        return;
+      }
+      setSpokenText(current => current?.messageId === playback.messageId
+        ? { ...current, phase: "playing" }
+        : current);
+      setVoiceStatus(prev => ({
+        ...prev,
+        [playback.messageId]: playback.clips.length > 1
+          ? `Speaking… (${clipIndex + 1}/${playback.clips.length})`
+          : "Speaking…",
+      }));
+    };
+
+    if (source === "manual" && playingId === msgId) {
+      const playback = voicePlaybackRef.current;
+      if (playback?.messageId === msgId && playback.queue.phase() === "paused") {
+        const resumedIndex = playback.queue.resume();
+        const audio = audioRef.current;
+        if (resumedIndex === null || !audio) return void failPlayback(playback);
+        try {
+          await audio.play();
+          setPausedId(null);
+          setVoiceStatus(prev => ({ ...prev, [msgId]: "Speaking…" }));
+        } catch {
+          failPlayback(playback);
+        }
+        return;
+      }
+      if (playback?.messageId === msgId && playback.queue.pause() && audioRef.current) {
+        audioRef.current.pause();
+        setPausedId(msgId);
+        setVoiceStatus(prev => ({ ...prev, [msgId]: "Paused. Tap Resume to continue." }));
+        return;
+      }
+      voiceGuardRef.current.invalidate("manual_cancel");
+      playback?.queue.interrupt();
+      voicePlaybackRef.current = null;
+      releaseAudio();
+      setPlayingId(null);
+      setPausedId(null);
+      setVoiceStatus(prev => ({ ...prev, [msgId]: "Replay available." }));
       return;
     }
     if (!pageForegroundRef.current || document.visibilityState !== "visible") return;
     const request = voiceGuardRef.current.begin();
+    voicePlaybackRef.current?.queue.interrupt();
+    voicePlaybackRef.current = null;
     releaseAudio();
     setPlayingId(msgId);
+    setPausedId(null);
     setSpokenText(null);
     setVoiceStatus(prev => ({ ...prev, [msgId]: "Preparing voice…" }));
     try {
@@ -1631,57 +1754,28 @@ function TravelPage() {
       });
       if (!voiceGuardRef.current.canPlay(request)) return;
       if (!r.ok) throw new Error("TTS request failed");
-      const d = await r.json() as { audio?: string; spokenText?: string };
+      const payload = normalizeKinfolkVoicePlaybackPayload(await r.json());
+      if (payload.spokenText !== content) {
+        throw new Error("Kinfolk voice text did not match the visible answer");
+      }
       if (!voiceGuardRef.current.canPlay(request)) return;
-      if (!d.audio || !d.spokenText?.trim()) throw new Error("No audio or spoken text returned");
-      setSpokenText({ messageId: msgId, content: d.spokenText, phase: "preparing" });
-      const bytes = Uint8Array.from(atob(d.audio), char => char.charCodeAt(0));
-      const url = URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));
-      if (!voiceGuardRef.current.canPlay(request)) {
-        URL.revokeObjectURL(url);
-        return;
-      }
-      const audio = new Audio(url);
-      audioRef.current = audio;
-      audioUrlRef.current = url;
-      const finish = () => {
-        voiceGuardRef.current.finish(request);
-        releaseAudio();
-        setPlayingId(null);
-        setVoiceStatus(prev => ({ ...prev, [msgId]: "" }));
-        setSpokenText(current => current?.messageId === msgId
-          ? { ...current, phase: "finished" }
-          : current);
-      };
-      audio.onended = finish;
-      audio.onerror = () => {
-        voiceGuardRef.current.finish(request);
-        releaseAudio();
-        setPlayingId(null);
-        setVoiceStatus(prev => ({ ...prev, [msgId]: "Tap Listen" }));
-        setSpokenText(current => current?.messageId === msgId
-          ? { ...current, phase: "unavailable" }
-          : current);
-      };
-      if (!voiceGuardRef.current.canPlay(request)) {
-        releaseAudio();
-        return;
-      }
-      await audio.play();
-      if (!voiceGuardRef.current.canPlay(request)) {
-        releaseAudio();
-        return;
-      }
-      setSpokenText(current => current?.messageId === msgId
-        ? { ...current, phase: "playing" }
-        : current);
-      setVoiceStatus(prev => ({ ...prev, [msgId]: "Speaking…" }));
+      setSpokenText({ messageId: msgId, content: payload.spokenText, phase: "preparing" });
+      const queue = createKinfolkVoicePlaybackQueue(payload.clips);
+      const playback = { messageId: msgId, request, clips: payload.clips, queue };
+      voicePlaybackRef.current = playback;
+      await startClip(playback, queue.start());
     } catch {
       if (!voiceGuardRef.current.isCurrent(request)) return;
+      const playback = voicePlaybackRef.current;
+      if (playback?.request === request) {
+        failPlayback(playback);
+        return;
+      }
       voiceGuardRef.current.finish(request);
       releaseAudio();
       setPlayingId(null);
-      setVoiceStatus(prev => ({ ...prev, [msgId]: "Tap Listen" }));
+      setPausedId(null);
+      setVoiceStatus(prev => ({ ...prev, [msgId]: "Voice unavailable. Replay when ready." }));
       setSpokenText(current => current?.messageId === msgId
         ? { ...current, phase: "unavailable" }
         : current);
@@ -1884,6 +1978,19 @@ function TravelPage() {
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
+    const interruptedPlayback = voicePlaybackRef.current;
+    voiceGuardRef.current.invalidate("new_message");
+    interruptedPlayback?.queue.interrupt();
+    voicePlaybackRef.current = null;
+    releaseAudio();
+    setPlayingId(null);
+    setPausedId(null);
+    if (interruptedPlayback) {
+      setVoiceStatus(prev => ({
+        ...prev,
+        [interruptedPlayback.messageId]: "Playback paused by your new message. Replay anytime.",
+      }));
+    }
     const publicOrigin = exactRadiusOrigin.trim();
     setInput("");
     setVoiceTranscriptReview(null);
@@ -2098,7 +2205,7 @@ function TravelPage() {
       // after its response (or the bounded expiry worker handles interruption).
       setImageAttachments([]);
     }
-  }, [sending, sessionId, loadSessions, imageAttachments, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, exactRadiusOrigin]);
+  }, [sending, sessionId, loadSessions, imageAttachments, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, exactRadiusOrigin, releaseAudio]);
 
   // Change the depth of an existing answer (Show more / Show less).
   // Records the event server-side and updates the local message state optimistically.
@@ -2145,7 +2252,12 @@ function TravelPage() {
   const newChat = () => {
     clearResponseStatusTimers();
     activeChatControllerRef.current?.abort("new_chat");
+    voiceGuardRef.current.invalidate("new_chat");
+    voicePlaybackRef.current?.queue.interrupt();
+    voicePlaybackRef.current = null;
     releaseAudio();
+    setPlayingId(null);
+    setPausedId(null);
     autoSpokenMessageIdsRef.current.clear();
     setSessionId(undefined); setMessages([]); setInput(""); setVoiceTranscriptReview(null); setShowHistory(false); setPendingClarificationMsgId(null); setGeneratedImage(null);
   };
@@ -2663,7 +2775,7 @@ function TravelPage() {
                             }`}
                           >
                             <Volume2 size={10} />
-                            {playingId === msg.id ? "Stop" : "Listen"}
+                            {pausedId === msg.id ? "Resume" : playingId === msg.id ? "Pause" : spokenText?.messageId === msg.id ? "Replay" : "Listen"}
                           </button>
                           {voiceStatus[msg.id] && <span aria-live="polite" className="text-[10px] text-[#3A1F0E]/40">{voiceStatus[msg.id]}</span>}
                         </div>
