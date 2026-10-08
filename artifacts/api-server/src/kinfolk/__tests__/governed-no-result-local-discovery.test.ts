@@ -56,7 +56,7 @@ describe("governed no-result ownership-documentation cohort", () => {
     const webSearch = vi.fn();
     const documentedScope = await discoverLocalBusinesses({
       scope: { city: "Houston", stateCode: "TX" }, subject: subject!, repository,
-      strictEvidenceRequired: true, webSearch,
+      strictEvidenceRequired: true, documentedOwnershipScope: true, webSearch,
     });
     expect(webSearch).not.toHaveBeenCalled();
     expect(documentedScope.discovery.platformBusinesses).toEqual([

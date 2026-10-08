@@ -521,6 +521,8 @@ export async function discoverLocalBusinesses(input: {
   allowAllPublicPlaces?: boolean;
   /** A separate explicit cohort; never treated as evidence of ownership. */
   ownershipDocumentationScope?: "not_documented";
+  /** Explicitly broader documented scope still cannot substitute external results. */
+  documentedOwnershipScope?: boolean;
   /** Transient geocoded public origin for a one-turn exact-radius request. */
   verifiedRadius?: VerifiedRadiusOrigin;
   /** Server-generated correlation id for count-only exact-radius diagnostics. */
@@ -674,7 +676,7 @@ export async function discoverLocalBusinesses(input: {
   let webOutcome: WebSearchOutcome;
   const promotionCatalogIsActive = isMwmDiasporaPromotionEnabled();
   if (
-    input.strictEvidenceRequired ||
+    input.documentedOwnershipScope ||
     input.requiredDesignationIds?.length ||
     (promotionCatalogIsActive && !input.allowAllPublicPlaces)
   ) {
@@ -707,7 +709,7 @@ export async function discoverLocalBusinesses(input: {
     };
   }
 
-  const rankedWeb = (input.strictEvidenceRequired || input.requiredDesignationIds?.length || (promotionCatalogIsActive && !input.allowAllPublicPlaces)
+  const rankedWeb = (input.documentedOwnershipScope || input.requiredDesignationIds?.length || (promotionCatalogIsActive && !input.allowAllPublicPlaces)
     ? []
     : rankLocalBusinessResults(webOutcome.results))
     .filter(

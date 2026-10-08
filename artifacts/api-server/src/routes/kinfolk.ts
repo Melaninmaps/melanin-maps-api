@@ -7911,6 +7911,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       strictSourceBackedDiscovery && isDirectoryTaxonomyV2Enabled(),
     allowAllPublicPlaces: explicitAllPlacesExpansion,
     ownershipDocumentationScope,
+    documentedOwnershipScope: broadenDocumentedOwnershipScope,
     verifiedRadius: verifiedRadius ?? undefined,
     radiusTraceRequestId: verifiedRadius ? crypto.randomUUID() : undefined,
   });
