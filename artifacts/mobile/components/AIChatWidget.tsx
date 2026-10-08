@@ -348,6 +348,9 @@ export function AIChatWidget() {
   const openRef = useRef(false);
   const appStateRef = useRef(AppState.currentState);
   const queuedPlaybackRequestRef = useRef<VoicePlaybackRequest | null>(null);
+  const activePlaybackRequestRef = useRef<VoicePlaybackRequest | null>(null);
+  const currentPlaybackFileRef = useRef<FileSystem.File | null>(null);
+  const pendingPlaybackFilesRef = useRef<FileSystem.File[]>([]);
   const voiceGuardRef = useRef(createVoicePlaybackGuard(
     // Factory stores this predicate and invokes it only from effects/events.
     // eslint-disable-next-line react-hooks/refs
@@ -695,7 +698,15 @@ export function AIChatWidget() {
   const stopPlayback = useCallback((reason: string) => {
     voiceGuardRef.current.invalidate(reason);
     queuedPlaybackRequestRef.current = null;
+    activePlaybackRequestRef.current = null;
     if (player.playing || player.isLoaded) player.pause();
+    [currentPlaybackFileRef.current, ...pendingPlaybackFilesRef.current].forEach((file) => {
+      if (file?.exists) {
+        try { file.delete(); } catch { /* temporary playback cleanup is best effort */ }
+      }
+    });
+    currentPlaybackFileRef.current = null;
+    pendingPlaybackFilesRef.current = [];
     setListenUri(undefined);
     setPlayingId(null);
     setPreviewingVoice(null);
@@ -742,7 +753,6 @@ export function AIChatWidget() {
         if (cancelled || !voiceGuardRef.current.canPlay(request)) return;
         player.volume = 1;
         player.play();
-        voiceGuardRef.current.finish(request);
         queuedPlaybackRequestRef.current = null;
       } catch (error) {
         if (cancelled) return;
@@ -762,13 +772,35 @@ export function AIChatWidget() {
     stopPlayback("playback_error");
   }, [playerStatus.error, playingId, stopPlayback]);
 
-  // ── Clear playingId when audio finishes ───────────────────────────────────
+  // ── Advance every server-issued chunk; never truncate a visible reply ──────
   useEffect(() => {
-    if (playingId && !player.playing && player.isLoaded) {
-      const timer = setTimeout(() => setPlayingId(null), 0);
-      return () => clearTimeout(timer);
+    if (!playingId || !playerStatus.didJustFinish || queuedPlaybackRequestRef.current) return;
+    const finished = currentPlaybackFileRef.current;
+    currentPlaybackFileRef.current = null;
+    if (finished?.exists) {
+      try { finished.delete(); } catch { /* temporary playback cleanup is best effort */ }
     }
-  }, [player, player.playing, player.isLoaded, playingId]);
+    const next = pendingPlaybackFilesRef.current.shift();
+    const request = activePlaybackRequestRef.current;
+    if (next && request && voiceGuardRef.current.canPlay(request)) {
+      currentPlaybackFileRef.current = next;
+      queuedPlaybackRequestRef.current = request;
+      setVoiceOutputStatus("Continuing Kinfolk Voice…");
+      setListenUri(next.uri);
+      return;
+    }
+    pendingPlaybackFilesRef.current.forEach((file) => {
+      if (file.exists) {
+        try { file.delete(); } catch { /* temporary playback cleanup is best effort */ }
+      }
+    });
+    pendingPlaybackFilesRef.current = [];
+    activePlaybackRequestRef.current = null;
+    if (request) voiceGuardRef.current.finish(request);
+    setVoiceOutputStatus("Kinfolk Voice finished. Tap Listen to replay it.");
+    const timer = setTimeout(() => setPlayingId(null), 0);
+    return () => clearTimeout(timer);
+  }, [playerStatus.didJustFinish, playingId]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
@@ -856,8 +888,8 @@ export function AIChatWidget() {
         Alert.alert("Kinfolk Voice", serverMessage);
         return;
       }
-      const { audio, format, charsUsed, charsLimit, percentRemaining, tierName } = await r.json() as {
-        audio: string; format: string; charsUsed: number;
+      const { audio, format, clips, charsUsed, charsLimit, percentRemaining, tierName } = await r.json() as {
+        audio: string; format: string; clips?: Array<{ audio?: string; spokenText?: string }>; charsUsed: number;
         charsLimit: number; percentRemaining: number; tierName: string;
       };
       if (!audio || !format) {
@@ -866,12 +898,25 @@ export function AIChatWidget() {
       }
       if (!voiceGuardRef.current.canPlay(request)) return;
       setVoiceUsage({ used: charsUsed, limit: charsLimit, percent: percentRemaining, tierName });
-      const tempFile = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_${msgId}.${format}`);
-      tempFile.write(audio, { encoding: FileSystem.EncodingType.Base64 });
+      const sequence = Array.isArray(clips) && clips.length > 0 ? clips : [{ audio }];
+      if (sequence.some((clip) => !clip.audio?.trim())) {
+        setVoiceOutputStatus("Kinfolk did not return audio for the full reply. Please try Listen again.");
+        return;
+      }
+      const files = sequence.map((clip, index) => {
+        const file = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_${msgId}-${index}.${format}`);
+        file.write(clip.audio!, { encoding: FileSystem.EncodingType.Base64 });
+        return file;
+      });
       if (!voiceGuardRef.current.canPlay(request)) return;
+      const [firstFile, ...remainingFiles] = files;
+      if (!firstFile) return;
+      currentPlaybackFileRef.current = firstFile;
+      pendingPlaybackFilesRef.current = remainingFiles;
+      activePlaybackRequestRef.current = request;
       queuedPlaybackRequestRef.current = request;
       setPlayingId(msgId);
-      setListenUri(tempFile.uri);
+      setListenUri(firstFile.uri);
       queued = true;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (error) {
