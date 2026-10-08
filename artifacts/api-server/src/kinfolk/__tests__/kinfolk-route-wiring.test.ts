@@ -287,7 +287,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(deterministicStart).toBeGreaterThan(-1);
     expect(deterministicStart).toBeLessThan(quotaCheck);
     expect(deterministicStart).toBeLessThan(providerCall);
-    expect(helper).toMatch(/resolveTurnGeography\(\s*input\.message,\s*input\.cityHint \?\? currentSession\?\.destination \?\? null,?\s*\)/);
+    expect(helper).toMatch(/resolveTurnGeography\(\s*discoveryMessage,\s*input\.cityHint \?\? currentSession\?\.destination \?\? ephemeralDiscoverySession\?\.destination \?\? null,?\s*\)/);
     expect(helper).toContain('decision.route !== "business_discovery"');
     expect(helper).toContain('namedBusiness.state !== "not_named"');
     expect(helper).toContain("getMemberAgeBand(input.req.user!.id)");
