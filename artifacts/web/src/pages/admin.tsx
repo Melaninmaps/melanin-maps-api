@@ -360,6 +360,7 @@ type BusinessReconciliationFilter =
   | "official_presence_unverified"
   | "ownership_unverified"
   | "identity_conflict"
+  | "phone_conflict"
   | "duplicate_candidate";
 
 type CategoryWaitlistEntry = {
@@ -2655,15 +2656,17 @@ export default function Admin() {
     const reconciliationReasonCode = restoring
       ? undefined
       : window.prompt(
-        "Enter the documented archive reason code exactly: confirmed_closed, confirmed_duplicate, confirmed_fraud_or_unsafe, or documented_safety_or_legal_removal. Missing ownership, website, social, or map evidence is not an archive reason.",
+        "Enter the documented ledger reason code exactly: confirmed_closed, confirmed_duplicate, confirmed_fraud_or_unsafe, documented_safety_or_legal_removal, identity_conflict, or phone_conflict. Missing ownership, website, social, or map evidence is not a removal reason.",
       )?.trim();
     if (!restoring && ![
       "confirmed_closed",
       "confirmed_duplicate",
       "confirmed_fraud_or_unsafe",
       "documented_safety_or_legal_removal",
+      "identity_conflict",
+      "phone_conflict",
     ].includes(reconciliationReasonCode ?? "")) {
-      window.alert("No archive action was taken. A documented archive reason code is required.");
+      window.alert("No public-discovery action was taken. A documented ledger reason code is required.");
       return;
     }
     if (
@@ -5133,7 +5136,8 @@ Selected: ${summary}`,
                   <option value="reversible_public_hold">Reversible public hold</option>
                   <option value="official_presence_unverified">Official presence unverified</option>
                   <option value="ownership_unverified">Ownership unverified</option>
-                  <option value="identity_conflict">Identity conflict</option>
+                  <option value="identity_conflict">Identity/contact conflict</option>
+                  <option value="phone_conflict">Phone conflict</option>
                   <option value="duplicate_candidate">Duplicate candidate</option>
                 </select>
               </label>
@@ -5602,6 +5606,20 @@ Selected: ${summary}`,
                                     `Why should "${biz.name}" be removed from public discovery? This immediately removes it from public search, map pins, and Kinfolk promotion. The record, reports, and linked data remain intact.`,
                                   )?.trim();
                                   if (!reason) return;
+                                  const reconciliationReasonCode = window.prompt(
+                                    "Enter the documented ledger reason code exactly: confirmed_closed, confirmed_duplicate, confirmed_fraud_or_unsafe, documented_safety_or_legal_removal, identity_conflict, or phone_conflict. Missing ownership, website, social, or map evidence is not a removal reason.",
+                                  )?.trim();
+                                  if (![
+                                    "confirmed_closed",
+                                    "confirmed_duplicate",
+                                    "confirmed_fraud_or_unsafe",
+                                    "documented_safety_or_legal_removal",
+                                    "identity_conflict",
+                                    "phone_conflict",
+                                  ].includes(reconciliationReasonCode ?? "")) {
+                                    window.alert("No public-discovery action was taken. A documented ledger reason code is required.");
+                                    return;
+                                  }
                                   if (
                                     !window.confirm(
                                       `Remove "${biz.name}" from public discovery now? This is reversible and will be recorded with your reason.`,
@@ -5620,6 +5638,7 @@ Selected: ${summary}`,
                                         body: JSON.stringify({
                                           listingStatus: "archived",
                                           reason,
+                                          reconciliationReasonCode,
                                         }),
                                       },
                                     );
