@@ -3,7 +3,10 @@ import {
   archiveActionForReason,
   archiveStateForReason,
   isDirectoryArchiveReasonCode,
+  isDirectoryPublicDiscoveryRemovalReasonCode,
   isDirectoryReconciliationReasonCode,
+  publicDiscoveryRemovalActionForReason,
+  publicDiscoveryRemovalStateForReason,
 } from "../directoryReconciliationPolicy";
 
 describe("directory reconciliation policy", () => {
@@ -27,5 +30,19 @@ describe("directory reconciliation policy", () => {
     expect(archiveStateForReason("confirmed_fraud_or_unsafe")).toBe("archived_confirmed_fraud_or_unsafe");
     expect(archiveStateForReason("documented_safety_or_legal_removal")).toBe("archived_documented_safety_or_legal");
     expect(archiveActionForReason("confirmed_fraud_or_unsafe")).toBe("archive_confirmed_fraud_or_unsafe");
+  });
+
+  it("permits a reversible hold only for an already-documented identity or phone conflict", () => {
+    for (const reasonCode of ["identity_conflict", "phone_conflict"] as const) {
+      expect(isDirectoryPublicDiscoveryRemovalReasonCode(reasonCode)).toBe(true);
+      expect(publicDiscoveryRemovalStateForReason(reasonCode)).toBe("reversible_public_hold");
+      expect(publicDiscoveryRemovalActionForReason(reasonCode)).toBe("reversible_public_hold");
+    }
+  });
+
+  it("does not turn missing presence, ownership, or an unconfirmed duplicate into a removal reason", () => {
+    expect(isDirectoryPublicDiscoveryRemovalReasonCode("official_presence_unverified")).toBe(false);
+    expect(isDirectoryPublicDiscoveryRemovalReasonCode("ownership_unverified")).toBe(false);
+    expect(isDirectoryPublicDiscoveryRemovalReasonCode("duplicate_candidate")).toBe(false);
   });
 });

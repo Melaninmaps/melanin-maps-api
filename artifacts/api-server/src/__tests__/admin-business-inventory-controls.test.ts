@@ -227,7 +227,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("Archive reason code must match the record’s documented reconciliation decision");
     expect(adminScreen).toContain("Reconciliation status");
     expect(adminScreen).toContain("Reconciliation ledger:");
-    expect(adminScreen).toContain("Missing ownership, website, social, or map evidence is not an archive reason");
+    expect(adminScreen).toContain("Missing ownership, website, social, or map evidence is not a removal reason");
   });
 
   it("clears a bad website only through an immutable audit receipt and leaves social-only qualification available", () => {
