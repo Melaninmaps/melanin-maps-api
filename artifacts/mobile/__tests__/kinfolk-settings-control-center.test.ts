@@ -6,6 +6,7 @@ const kinfolkRoute = readFileSync(new URL("../app/kinfolk-settings.tsx", import.
 const controlCenter = readFileSync(new URL("../components/KinfolkSettingsControlCenter.tsx", import.meta.url), "utf8");
 const memory = readFileSync(new URL("../app/kinfolk-memory.tsx", import.meta.url), "utf8");
 const privatePlaces = readFileSync(new URL("../app/kinfolk-private-places.tsx", import.meta.url), "utf8");
+const temporaryStays = readFileSync(new URL("../app/kinfolk-temporary-stays.tsx", import.meta.url), "utf8");
 const exitGuard = readFileSync(new URL("../hooks/useUnsavedKinfolkExitGuard.ts", import.meta.url), "utf8");
 const widget = readFileSync(new URL("../components/AIChatWidget.tsx", import.meta.url), "utf8");
 
@@ -68,7 +69,7 @@ describe("Build 135 native Kinfolk Settings", () => {
   });
 
   it("prevents the global chat pill from overlapping Settings content", () => {
-    expect(widget).toContain('const onSettingsRoute = ["/settings", "/kinfolk-settings", "/kinfolk-memory", "/kinfolk-private-places"]');
+    expect(widget).toContain('const onSettingsRoute = ["/settings", "/kinfolk-settings", "/kinfolk-memory", "/kinfolk-private-places", "/kinfolk-temporary-stays"]');
     expect(widget).toContain("|| onSettingsRoute");
   });
 
@@ -80,5 +81,16 @@ describe("Build 135 native Kinfolk Settings", () => {
     expect(privatePlaces).toContain("never becomes Kinfolk chat memory");
     expect(privatePlaces).toContain("useUnsavedKinfolkExitGuard");
     expect(privatePlaces).not.toContain("/api/kinfolk/chat");
+  });
+
+  it("keeps native Temporary Stays explicit, encrypted, retained only through grace, and outside Kinfolk chat", () => {
+    expect(controlCenter).toContain('router.push("/kinfolk-temporary-stays" as never)');
+    expect(temporaryStays).toContain("api/kinfolk/temporary-stays/status");
+    expect(temporaryStays).toContain("googleMapsGeocodingConsent: true");
+    expect(temporaryStays).toContain("postDepartureGraceDays");
+    expect(temporaryStays).toContain("/extend");
+    expect(temporaryStays).toContain("/active");
+    expect(temporaryStays).toContain("useUnsavedKinfolkExitGuard");
+    expect(temporaryStays).not.toContain("/api/kinfolk/chat");
   });
 });

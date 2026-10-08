@@ -1023,6 +1023,10 @@ function RootLayoutNav() {
         options={{ headerShown: false, presentation: "card" }}
       />
       <Stack.Screen
+        name="kinfolk-temporary-stays"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
         name="kinfolk-voice-preflight"
         options={{ headerShown: false, presentation: "card" }}
       />

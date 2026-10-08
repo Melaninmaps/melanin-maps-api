@@ -10,6 +10,8 @@ import {
   ensureDirectoryReconciliationLedgerSchema,
   ensureCommunityFeedReadSchema,
   ensureKinfolkQuestionImageSchemaOnly,
+  ensureKinfolkPrivatePlacesSchema,
+  ensureKinfolkTemporaryStaysSchema,
   ensureRequiredPublicationSchema,
   publicationSchemaFailureLogLines,
   runStartupMigrations,
@@ -34,6 +36,11 @@ import {
   startKinfolkQuestionImageRetentionScheduler,
   stopKinfolkQuestionImageRetentionScheduler,
 } from "./kinfolk/question-image-assets";
+import {
+  startTemporaryStayRetentionScheduler,
+  stopTemporaryStayRetentionScheduler,
+} from "./kinfolk/temporary-stay-retention";
+import { privatePlacesRuntimeState } from "./kinfolk/private-places-policy";
 
 const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);
@@ -124,6 +131,21 @@ try {
     await ensureKinfolkQuestionImageSchemaOnly();
     logger.info("Kinfolk private image schema ready before traffic acceptance");
   }
+  if (process.env.KINFOLK_PRIVATE_PLACES_ENABLED === "true") {
+    // Private Places and Temporary Stays must have encrypted-only structures
+    // before their explicitly enabled runtime can accept a member request. This
+    // bootstrap is idempotent schema work only; it never geocodes, seeds, or
+    // creates a member place/stay.
+    await ensureKinfolkPrivatePlacesSchema(
+      (message) => logger.info(message),
+      (message) => logger.warn(message),
+    );
+    await ensureKinfolkTemporaryStaysSchema(
+      (message) => logger.info(message),
+      (message) => logger.warn(message),
+    );
+    logger.info("Kinfolk encrypted Private Places and Temporary Stays schemas ready before traffic acceptance");
+  }
   // The reconciliation ledger is a schema-only safety gate. It must be ready
   // even when explicit feature-release mode correctly suppresses broad startup
   // writers, publishers, and enrichment work.
@@ -188,6 +210,9 @@ const onListening = (err?: Error) => {
   // Accessible at GET /api/pool-audit (x-cron-secret auth).
   // Emits SLOW_QUERY and POOL_GROWTH_DETECTED warnings to Railway logs.
   initPoolInstrumentation(pool, getPool);
+  if (privatePlacesRuntimeState().enabled) {
+    startTemporaryStayRetentionScheduler(logger);
+  }
   if (explicitFeatureReleaseMode) {
     logger.info(
       "Explicit feature release mode: skipping automatic startup writers, seeds, publishers, and workers",
@@ -298,6 +323,7 @@ function gracefulShutdown(signal: string) {
     stopCityRequestFlush();
     stopLibraryGrowthWorker();
     stopKinfolkQuestionImageRetentionScheduler();
+    stopTemporaryStayRetentionScheduler();
     try {
       // Drain the app's own pool (max:8) first.
       await pool.end();

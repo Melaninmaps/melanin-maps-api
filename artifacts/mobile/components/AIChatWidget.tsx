@@ -372,7 +372,7 @@ export function AIChatWidget() {
   // Settings is the place to make deliberate preference changes. The globally
   // mounted floating pill must never cover a save action, a modal field, or a
   // bottom row on smaller iPhones and Android devices.
-  const onSettingsRoute = ["/settings", "/kinfolk-settings", "/kinfolk-memory", "/kinfolk-private-places"].some(
+  const onSettingsRoute = ["/settings", "/kinfolk-settings", "/kinfolk-memory", "/kinfolk-private-places", "/kinfolk-temporary-stays"].some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),
   );
   const suppressed = onPrimaryKinfolkConversation

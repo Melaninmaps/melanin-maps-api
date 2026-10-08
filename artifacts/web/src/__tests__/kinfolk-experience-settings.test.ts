@@ -16,6 +16,10 @@ const privatePlacesSource = readFileSync(
   new URL("../components/kinfolk/PrivatePlacesSettings.tsx", import.meta.url),
   "utf8",
 );
+const temporaryStaysSource = readFileSync(
+  new URL("../components/kinfolk/TemporaryStaysSettings.tsx", import.meta.url),
+  "utf8",
+);
 
 describe("unified Web Kinfolk settings", () => {
   it("gives Profile Settings one home for conversation mode, speaker, and saved memories", () => {
@@ -64,5 +68,16 @@ describe("unified Web Kinfolk settings", () => {
     expect(privatePlacesSource).toContain("Use for nearby directory search");
     expect(privatePlacesSource).toContain("never chat memory");
     expect(privatePlacesSource).not.toContain("api/kinfolk/chat");
+  });
+
+  it("keeps Temporary Stays in Kinfolk Settings with explicit dates, disclosure, retention, and owner controls", () => {
+    expect(settingsSource).toContain("TemporaryStaysSettings");
+    expect(temporaryStaysSource).toContain("api/kinfolk/temporary-stays/status");
+    expect(temporaryStaysSource).toContain("googleMapsGeocodingConsent: true");
+    expect(temporaryStaysSource).toContain("postDepartureGraceDays");
+    expect(temporaryStaysSource).toContain("/extend");
+    expect(temporaryStaysSource).toContain("Pause");
+    expect(temporaryStaysSource).toContain("Edit");
+    expect(temporaryStaysSource).not.toContain("api/kinfolk/chat");
   });
 });
