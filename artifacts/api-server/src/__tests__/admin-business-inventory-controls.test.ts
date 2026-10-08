@@ -303,11 +303,13 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
   it("publishes saved Admin links and profile categories to fresh web and mobile profile reads", () => {
     expect(businessRoutes).toContain('"/admin/businesses/:id/profile"');
     for (const field of ["website", "instagram", "tiktok", "facebook", "category", "subcategory", "updatedAt"]) {
-      expect(businessRoutes).toContain(`businessesTable.${field}`);
+      expect(businessRoutes).toContain(field);
     }
+    expect(businessRoutes).toContain("business_profile_field_receipts");
+    expect(businessRoutes).toContain("business_admin_profile_edit_audit_events");
     expect(businessRoutes).toContain("sendDynamicJson(res, {");
     expect(businessRoutes).toContain("attachDocumentedOwnership(");
-    expect(adminEditBusiness).toContain("public profile links are live now");
+    expect(adminEditBusiness).toContain("Profile saved with an audit receipt.");
     expect(publicBusinessDetail).toContain("refetchOnWindowFocus: true");
     expect(mobileBusinessHook).toContain("useFocusEffect");
     expect(mobileBusinessHook).toContain("/api/businesses/${id}");
