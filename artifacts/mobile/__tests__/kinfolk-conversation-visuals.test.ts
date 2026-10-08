@@ -6,6 +6,10 @@ const travelSource = readFileSync(
   new URL("../app/travel.tsx", import.meta.url),
   "utf8",
 );
+const kinfolkHookSource = readFileSync(
+  new URL("../hooks/useKinfolk.ts", import.meta.url),
+  "utf8",
+);
 
 describe("mobile Kinfolk conversation-first visuals", () => {
   it("uses a compact welcome conversation while retaining every start path", () => {
@@ -50,11 +54,24 @@ describe("mobile Kinfolk conversation-first visuals", () => {
     expect(travelSource).toContain("isLoading && kinfolkRequestStartedAt !== null");
   });
 
+  it("keeps the composer usable and the next answer visible above the native keyboard", () => {
+    expect(travelSource).toContain('keyboardShouldPersistTaps="handled"');
+    expect(travelSource).toContain("automaticallyAdjustKeyboardInsets={Platform.OS === \"ios\"}");
+    expect(travelSource).toContain("onFocus={() => scrollToBottom(true)}");
+    expect(travelSource).toContain("contentCol: { flex: 1, minWidth: 0 }");
+    expect(travelSource).toContain("chatContent: { paddingTop: 16, paddingBottom: 24, flexGrow: 1 }");
+  });
+
   it("keeps an imperfect voice transcript member-controlled before the shared Kinfolk send path", () => {
     expect(travelSource).toContain("const originalText = payload.meaningReview?.originalText?.trim() || payload.text.trim()");
     expect(travelSource).toContain("setInputText(originalText)");
     expect(travelSource).toContain("Review your transcription, then tap Send when you’re ready.");
     expect(travelSource).toContain("await sendMessage(msg, {");
+  });
+
+  it("does not silently carry a prior city into a new native Kinfolk request", () => {
+    expect(kinfolkHookSource).not.toContain("const cityHint = [...messagesRef.current]");
+    expect(kinfolkHookSource).not.toContain("          cityHint,");
   });
 
   it("sends a consent-first travel category chip only when the member taps it", () => {
