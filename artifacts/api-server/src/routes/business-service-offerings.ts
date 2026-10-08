@@ -86,7 +86,14 @@ async function replaceOfferings(input: {
           item.observedAt, item.confidence, item.lastConfirmedAt, item.note],
       );
     }
-    const after = await listOfferings(input.business.id);
+    const afterResult = await client.query<OfferingRow>(
+      `SELECT id, service_key, service_label, policy, price_text, duration_minutes, booking_url,
+              evidence_state, status, source_url, source_label, observed_at::text, confidence,
+              last_confirmed_at::text, note
+         FROM business_service_offerings WHERE business_id = $1 ORDER BY service_key`,
+      [input.business.id],
+    );
+    const after = afterResult.rows.map(offering);
     await client.query(
       `INSERT INTO business_service_offering_audit_events
        (id, business_id, actor_user_id, actor_role, change_note, before_state, after_state)

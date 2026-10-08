@@ -62,6 +62,7 @@ import { KinfolkExperienceSettings } from "@/components/kinfolk/KinfolkExperienc
 import { SocialVideoPreferences } from "@/features/profile/SocialVideoPreferences";
 import { BusinessSupportPreferences } from "@/features/profile/BusinessSupportPreferences";
 import { MemberContextPreferences } from "@/features/profile/MemberContextPreferences";
+import { HairServicePreferences } from "@/features/profile/HairServicePreferences";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -2597,6 +2598,10 @@ export default function Profile() {
 
           <div className="mt-8">
             <MemberContextPreferences />
+          </div>
+
+          <div className="mt-8">
+            <HairServicePreferences />
           </div>
 
           <div className="mt-8">
