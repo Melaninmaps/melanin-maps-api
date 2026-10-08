@@ -46,6 +46,7 @@ import {
   mapLocationServicesOffNotice,
   type MapLocationNotice,
 } from "@/lib/mapLocationStatus";
+import { resolveMapBusinessProximity } from "@/lib/mapBusinessScope";
 import { useAuth } from "@/lib/auth";
 import {
   canLoadLocalCollections,
@@ -565,10 +566,19 @@ export function FullMapView({
   const routeSearchLocality = parseMapSearchLocality(searchCity, searchState);
   // A submitted search (including a map deep link) is an explicit geography
   // choice, so it overrides automatic device/profile locality until cleared.
+  const hasExplicitMapLocality = Boolean(searchedLocality || routeSearchLocality);
   const mapLocality =
     searchedLocality ??
     routeSearchLocality ??
     resolveMapLocality(memberLocation, memberPlace, profileLocality);
+  // A selected city and an around-me radius are different member requests.
+  // Never combine the device coordinate with an explicit city: a location
+  // refresh from outside that city would otherwise turn a valid city response
+  // into a successful empty radius response and erase its visible map pins.
+  const proximityMapLocation = resolveMapBusinessProximity({
+    hasExplicitLocality: hasExplicitMapLocality,
+    memberLocation,
+  });
   const hasLocalCollectionScope = canLoadLocalCollections(mapLocality);
   const localityScopeKey = mapLocalityKey(mapLocality, exploringAllAreas);
   const collectionScopeQuery = mapCollectionScopeQuery(mapLocality, exploringAllAreas);
@@ -587,8 +597,8 @@ export function FullMapView({
     searchScope: businessSearchScope,
   } = useBusinesses({
     search: submittedBusinessSearch,
-    latitude: deliberateMapNameSearch ? null : memberLocation?.latitude ?? null,
-    longitude: deliberateMapNameSearch ? null : memberLocation?.longitude ?? null,
+    latitude: deliberateMapNameSearch ? null : proximityMapLocation?.latitude ?? null,
+    longitude: deliberateMapNameSearch ? null : proximityMapLocation?.longitude ?? null,
     city: deliberateMapNameSearch ? "" : mapLocality?.city,
     state: deliberateMapNameSearch ? "" : mapLocality?.state,
     radiusMiles: mapDiscoveryRadius,
@@ -665,15 +675,15 @@ export function FullMapView({
     // Canonical pins remain available during an empty local refresh, but they
     // must still respect the member-selected radius so the map count and camera
     // never claim that distant pins are nearby.
-    const scopePins = memberLocation
+    const scopePins = proximityMapLocation
       ? canonicalMapPins.filter((business) =>
-          distanceMiles(memberLocation, business) <= mapDiscoveryRadius,
+          distanceMiles(proximityMapLocation, business) <= mapDiscoveryRadius,
         )
       : canonicalMapPins;
     return scopePins.filter((business) =>
       matchesMapDiscoveryFocus(business, mapDiscoveryFocus),
     );
-  }, [canonicalMapPins, mapDiscoveryFocus, mapDiscoveryRadius, memberLocation]);
+  }, [canonicalMapPins, mapDiscoveryFocus, mapDiscoveryRadius, proximityMapLocation]);
   const directMatch = businessSearchScope === "explicit_public_listing"
     ? businesses[0] ?? null
     : null;
@@ -699,7 +709,7 @@ export function FullMapView({
   const activeMapDiscoveryLabel = mapDiscoveryFocus === "all"
     ? "All nearby places"
     : mapDiscoveryCounts.find((focus) => focus.id === mapDiscoveryFocus)?.label ?? "Your selection";
-  const localScopeDescription = memberLocation
+  const localScopeDescription = proximityMapLocation
     ? `within ${mapDiscoveryRadius} miles of your location`
     : mapLocality?.city
       ? `in ${mapLocality.city}${mapLocality.state ? `, ${mapLocality.state}` : ""}`
