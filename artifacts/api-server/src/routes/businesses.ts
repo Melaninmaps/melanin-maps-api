@@ -67,6 +67,11 @@ import {
   type BusinessIdentityInput,
 } from "../businesses/businessDuplicateIdentity";
 import {
+  normalizeBusinessIdentityPart,
+  validateAdminBusinessProfilePatch,
+} from "../businesses/adminBusinessProfilePolicy";
+import { isAdmin as hasAdminAccess } from "../lib/adminAuth";
+import {
   BUSINESS_IMAGE_ELIGIBILITY_POLICY_VERSION,
   attachEligibleBusinessImages,
   ensureBusinessImageEvidenceSchema,
@@ -3931,123 +3936,309 @@ router.get(
   },
 );
 
-// ─── PATCH /admin/businesses/:id/profile ─────────────────────────────────────
-// Admin-only: update any field on any business — including social media handles,
-// ownership designations, vibes, description, and contact info — regardless of
-// whether the business has been claimed by an owner.
-router.patch(
-  "/admin/businesses/:id/profile",
-  async (req: Request, res: Response) => {
-    if (!isAdmin(req)) {
-      res.status(403).json({ error: "Admin required" });
+type AdminBusinessProfileRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  address: string | null;
+  city: string | null;
+  state: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  phone: string | null;
+  website: string | null;
+  hours: string | null;
+  price_range: string | null;
+  instagram: string | null;
+  tiktok: string | null;
+  facebook: string | null;
+  twitter: string | null;
+  youtube: string | null;
+  pinterest: string | null;
+  ownership_designations: string[] | null;
+  vibes: string[] | null;
+  tags: string[] | null;
+  category: string | null;
+  subcategory: string | null;
+  photos: string[] | null;
+  listing_status: string | null;
+  is_duplicate: boolean;
+};
+
+const ADMIN_PROFILE_SELECT = `SELECT id, name, description, address, city, state, latitude, longitude,
+  phone, website, hours, price_range, instagram, tiktok, facebook, twitter, youtube, pinterest,
+  ownership_designations, vibes, tags, category, subcategory, photos, listing_status,
+  COALESCE(is_duplicate, false) AS is_duplicate
+  FROM businesses WHERE id = $1`;
+
+function toAdminBusinessProfile(row: AdminBusinessProfileRow) {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    address: row.address,
+    city: row.city,
+    state: row.state,
+    latitude: row.latitude === null ? null : Number(row.latitude),
+    longitude: row.longitude === null ? null : Number(row.longitude),
+    phone: row.phone,
+    website: row.website,
+    hours: row.hours,
+    priceRange: row.price_range,
+    instagram: row.instagram,
+    tiktok: row.tiktok,
+    facebook: row.facebook,
+    twitter: row.twitter,
+    youtube: row.youtube,
+    pinterest: row.pinterest,
+    ownershipDesignations: Array.isArray(row.ownership_designations) ? row.ownership_designations : [],
+    vibes: Array.isArray(row.vibes) ? row.vibes : [],
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    category: row.category,
+    subcategory: row.subcategory,
+    photos: Array.isArray(row.photos) ? row.photos : [],
+    listingStatus: row.listing_status,
+    isDuplicate: row.is_duplicate,
+  };
+}
+
+router.get("/admin/businesses/:id/profile", async (req: Request, res: Response) => {
+  if (!hasAdminAccess(req)) {
+    res.status(403).json({ error: "Admin required" });
+    return;
+  }
+  const businessId = String(req.params.id ?? "").trim();
+  try {
+    const [business, ownershipReceipt, catalogMembership, fieldReceipts, profileAudit] = await Promise.all([
+      pool.query<AdminBusinessProfileRow>(ADMIN_PROFILE_SELECT, [businessId]),
+      pool.query<{
+        ownership_designations: string[]; source_url: string; source_label: string;
+        observed_at: string; note: string | null; created_at: string;
+      }>(`SELECT ownership_designations, source_url, source_label, observed_at, note, created_at
+           FROM business_admin_ownership_source_receipts
+          WHERE business_id = $1
+          ORDER BY created_at DESC LIMIT 1`, [businessId]),
+      pool.query<{ state: string; reason: string; updated_at: string; created_at: string }>(
+        `SELECT state, reason, updated_at, created_at
+           FROM business_catalog_cohort_memberships
+          WHERE business_id = $1 AND cohort_key = 'kinfolk_catalog'`,
+        [businessId],
+      ),
+      pool.query<{
+        field_name: string; source_url: string; source_label: string; observed_at: string;
+        confidence: string; note: string | null; created_at: string;
+      }>(
+        `SELECT field_name, source_url, source_label, observed_at, confidence, note, created_at
+           FROM business_profile_field_receipts
+          WHERE business_id = $1
+          ORDER BY created_at DESC`,
+        [businessId],
+      ),
+      pool.query<{
+        changed_fields: string[]; change_note: string; actor_user_id: string | null; created_at: string;
+      }>(
+        `SELECT changed_fields, change_note, actor_user_id, created_at
+           FROM business_admin_profile_edit_audit_events
+          WHERE business_id = $1
+          ORDER BY created_at DESC
+          LIMIT 50`,
+        [businessId],
+      ),
+    ]);
+    const row = business.rows[0];
+    if (!row) {
+      res.status(404).json({ error: "Business not found" });
       return;
     }
-    const id = String(req.params.id);
-    try {
-      const {
-        name,
-        description,
-        address,
-        city,
-        state,
-        latitude,
-        longitude,
-        phone,
-        website,
-        hours,
-        priceRange,
-        instagram,
-        tiktok,
-        facebook,
-        twitter,
-        youtube,
-        pinterest,
-        primarySocialPlatform,
-        ownerName,
-        businessTagline,
-        ownerBio,
-        ownerStory,
-        ownershipDesignations,
-        blackOwned,
-        vibes,
-        tags,
-        category,
-        subcategory,
-      } = req.body as Record<string, unknown>;
+    const receipt = ownershipReceipt.rows[0] ?? null;
+    res.json({
+      business: toAdminBusinessProfile(row),
+      ownershipReceipt: receipt && {
+        ownershipDesignations: receipt.ownership_designations,
+        sourceUrl: receipt.source_url,
+        sourceLabel: receipt.source_label,
+        observedAt: String(receipt.observed_at).slice(0, 10),
+        note: receipt.note,
+        createdAt: receipt.created_at,
+      },
+      catalogMembership: catalogMembership.rows[0] ?? null,
+      fieldReceipts: fieldReceipts.rows.map((receipt) => ({
+        field: receipt.field_name,
+        sourceUrl: receipt.source_url,
+        sourceLabel: receipt.source_label,
+        observedAt: String(receipt.observed_at).slice(0, 10),
+        confidence: receipt.confidence,
+        note: receipt.note,
+        createdAt: receipt.created_at,
+      })),
+      profileAudit: profileAudit.rows.map((event) => ({
+        changedFields: Array.isArray(event.changed_fields) ? event.changed_fields : [],
+        changeNote: event.change_note,
+        actorUserId: event.actor_user_id,
+        createdAt: event.created_at,
+      })),
+    });
+  } catch (error) {
+    req.log.error({ error }, "Failed to load administrator business profile");
+    res.status(500).json({ error: "Could not load business profile" });
+  }
+});
 
-      // Only include keys explicitly provided in the request body (no accidental nulling)
-      const patch: Record<string, unknown> = { updatedAt: new Date() };
-      if (name !== undefined) patch.name = name;
-      if (description !== undefined) patch.description = description;
-      if (address !== undefined) patch.address = address;
-      if (city !== undefined) patch.city = city;
-      if (state !== undefined) patch.state = state;
-      if (latitude !== undefined) patch.latitude = latitude;
-      if (longitude !== undefined) patch.longitude = longitude;
-      if (phone !== undefined) patch.phone = phone;
-      if (website !== undefined) patch.website = website;
-      if (hours !== undefined) patch.hours = hours;
-      if (priceRange !== undefined) patch.priceRange = priceRange;
-      if (instagram !== undefined) patch.instagram = instagram;
-      if (tiktok !== undefined) patch.tiktok = tiktok;
-      if (facebook !== undefined) patch.facebook = facebook;
-      if (twitter !== undefined) patch.twitter = twitter;
-      if (youtube !== undefined) patch.youtube = youtube;
-      if (pinterest !== undefined) patch.pinterest = pinterest;
-      if (primarySocialPlatform !== undefined)
-        patch.primarySocialPlatform = primarySocialPlatform;
-      if (ownerName !== undefined) patch.ownerName = ownerName;
-      if (businessTagline !== undefined)
-        patch.businessTagline = businessTagline;
-      if (ownerBio !== undefined) patch.ownerBio = ownerBio;
-      if (ownerStory !== undefined) patch.ownerStory = ownerStory;
-      if (ownershipDesignations !== undefined)
-        patch.ownershipDesignations = ownershipDesignations;
-      if (blackOwned !== undefined) patch.blackOwned = blackOwned;
-      if (vibes !== undefined) patch.vibes = vibes;
-      if (tags !== undefined) patch.tags = tags;
-      if (category !== undefined) patch.category = category;
-      if (subcategory !== undefined) patch.subcategory = subcategory;
-
-      if (Object.keys(patch).length === 1) {
-        res.status(400).json({ error: "No updatable fields provided" });
-        return;
-      }
-
-      const [biz] = await db
-        .update(businessesTable)
-        .set(patch as Parameters<ReturnType<typeof db.update>["set"]>[0])
-        .where(eq(businessesTable.id, id))
-        .returning({
-          id: businessesTable.id,
-          name: businessesTable.name,
-          website: businessesTable.website,
-          instagram: businessesTable.instagram,
-          tiktok: businessesTable.tiktok,
-          facebook: businessesTable.facebook,
-          twitter: businessesTable.twitter,
-          youtube: businessesTable.youtube,
-          pinterest: businessesTable.pinterest,
-          category: businessesTable.category,
-          subcategory: businessesTable.subcategory,
-          ownershipDesignations: businessesTable.ownershipDesignations,
-          blackOwned: businessesTable.blackOwned,
-          vibes: businessesTable.vibes,
-          status: businessesTable.status,
-          updatedAt: businessesTable.updatedAt,
-        });
-
-      if (!biz) {
-        res.status(404).json({ error: "Business not found" });
-        return;
-      }
-      res.json({ business: biz });
-    } catch (err) {
-      req.log.error({ err }, "Failed to update business profile");
-      res.status(500).json({ error: "Failed to update business profile" });
+// This is the sole generic profile edit path. Lifecycle publication, reviewed
+// discovery eligibility, verified ownership, claims, duplicates, and map pins
+// are intentionally excluded and each retain their dedicated workflows.
+router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response) => {
+  if (!hasAdminAccess(req)) {
+    res.status(403).json({ error: "Admin required" });
+    return;
+  }
+  const businessId = String(req.params.id ?? "").trim();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const existingResult = await client.query<AdminBusinessProfileRow>(`${ADMIN_PROFILE_SELECT} FOR UPDATE`, [businessId]);
+    const existing = existingResult.rows[0];
+    if (!existing) {
+      await client.query("ROLLBACK");
+      res.status(404).json({ error: "Business not found" });
+      return;
     }
-  },
-);
+    if (existing.is_duplicate) {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "Confirmed duplicate records are read-only until an audited restore resolves the duplicate" });
+      return;
+    }
+
+    let validated;
+    try {
+      validated = validateAdminBusinessProfilePatch(req.body, {
+        name: existing.name,
+        description: existing.description,
+        address: existing.address,
+        city: existing.city,
+        state: existing.state,
+        phone: existing.phone,
+        website: existing.website,
+        hours: existing.hours,
+        instagram: existing.instagram,
+        tiktok: existing.tiktok,
+        facebook: existing.facebook,
+        twitter: existing.twitter,
+        youtube: existing.youtube,
+        pinterest: existing.pinterest,
+        category: existing.category,
+        subcategory: existing.subcategory,
+        tags: existing.tags,
+        vibes: existing.vibes,
+        ownershipDesignations: existing.ownership_designations,
+      });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid profile update" });
+      return;
+    }
+
+    const patch = { ...validated.patch };
+    const nextName = String(patch.name ?? existing.name);
+    const nextCity = String(patch.city ?? existing.city ?? "");
+    const nextState = String(patch.state ?? existing.state ?? "");
+    const identityChanged = ["name", "city", "state"].some((field) => Object.prototype.hasOwnProperty.call(patch, field));
+    if (identityChanged) {
+      const collision = await client.query<{ id: string; name: string; city: string | null; state: string | null }>(
+        `SELECT id, name, city, state FROM businesses
+          WHERE id <> $1
+            AND COALESCE(is_duplicate, false) = false
+            AND regexp_replace(lower(COALESCE(name, '')), '[^a-z0-9]', '', 'g') = $2
+            AND regexp_replace(lower(COALESCE(city, '')), '[^a-z0-9]', '', 'g') = $3
+            AND regexp_replace(lower(COALESCE(state, '')), '[^a-z0-9]', '', 'g') = $4
+          LIMIT 2`,
+        [businessId, normalizeBusinessIdentityPart(nextName), normalizeBusinessIdentityPart(nextCity), normalizeBusinessIdentityPart(nextState)],
+      );
+      if (collision.rows.length > 0) {
+        await client.query("ROLLBACK");
+        res.status(409).json({
+          error: "An existing canonical business has the same name and location. Use the audited duplicate review workflow instead.",
+          conflictingBusinessId: collision.rows[0].id,
+        });
+        return;
+      }
+    }
+
+    if (validated.locationChanged) {
+      // An address edit is not a geocode approval. Clear a potentially stale
+      // pin so a new one can be created only by the audited map workflow.
+      patch.latitude = null;
+      patch.longitude = null;
+    }
+    const allowedColumns: Record<string, string> = {
+      name: "name", description: "description", address: "address", city: "city", state: "state",
+      phone: "phone", website: "website", hours: "hours", price_range: "price_range",
+      instagram: "instagram", tiktok: "tiktok", facebook: "facebook", twitter: "twitter",
+      youtube: "youtube", pinterest: "pinterest", ownership_designations: "ownership_designations",
+      vibes: "vibes", tags: "tags", category: "category", subcategory: "subcategory",
+      latitude: "latitude", longitude: "longitude",
+    };
+    const entries = Object.entries(patch);
+    const setClauses = entries.map(([key], index) => `${allowedColumns[key]} = $${index + 1}`).join(", ");
+    const update = await client.query<AdminBusinessProfileRow>(
+      `UPDATE businesses SET ${setClauses}, updated_at = NOW() WHERE id = $${entries.length + 1}
+       RETURNING id, name, description, address, city, state, latitude, longitude,
+         phone, website, hours, price_range, instagram, tiktok, facebook, twitter, youtube, pinterest,
+         ownership_designations, vibes, tags, category, subcategory, photos, listing_status,
+         COALESCE(is_duplicate, false) AS is_duplicate`,
+      [...entries.map(([, value]) => value), businessId],
+    );
+    const updated = update.rows[0];
+    if (validated.ownershipReceipt) {
+      await client.query(
+        `INSERT INTO business_admin_ownership_source_receipts
+           (id, business_id, ownership_designations, source_url, source_label, observed_at, note, actor_user_id)
+         VALUES ($1, $2, $3::jsonb, $4, $5, $6::date, $7, $8)`,
+        [
+          randomUUID(), businessId, JSON.stringify(updated.ownership_designations ?? []),
+          validated.ownershipReceipt.sourceUrl, validated.ownershipReceipt.sourceLabel,
+          validated.ownershipReceipt.observedAt, validated.ownershipReceipt.note, req.user?.id ?? null,
+        ],
+      );
+    }
+    for (const receipt of validated.fieldReceipts) {
+      await client.query(
+        `INSERT INTO business_profile_field_receipts
+           (id, business_id, field_name, source_url, source_label, observed_at, confidence, note, observed_value, actor_user_id)
+         VALUES ($1, $2, $3, $4, $5, $6::date, $7, $8, $9::jsonb, $10)`,
+        [
+          randomUUID(), businessId, receipt.field, receipt.sourceUrl, receipt.sourceLabel,
+          receipt.observedAt, receipt.confidence, receipt.note,
+          JSON.stringify({ fieldsChanged: validated.requiredReceiptFields }), req.user?.id ?? null,
+        ],
+      );
+    }
+    const changedFields = [...Object.keys(validated.patch), ...(validated.locationChanged ? ["map_coordinates_cleared_after_address_change"] : [])];
+    await client.query(
+      `INSERT INTO business_admin_profile_edit_audit_events
+         (id, business_id, actor_user_id, change_note, changed_fields, before_state, after_state)
+       VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb)`,
+      [
+        randomUUID(), businessId, req.user?.id ?? null, validated.changeNote,
+        JSON.stringify(changedFields), JSON.stringify(toAdminBusinessProfile(existing)), JSON.stringify(toAdminBusinessProfile(updated)),
+      ],
+    );
+    await client.query("COMMIT");
+    res.json({
+      business: toAdminBusinessProfile(updated),
+      mapPinInvalidated: validated.locationChanged,
+      message: validated.locationChanged
+        ? "Profile saved. The prior map pin was cleared and remains unavailable until an audited geocode is approved."
+        : "Profile saved. This edit did not change listing publication, verified ownership, or discovery eligibility.",
+    });
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    req.log.error({ error }, "Failed to update administrator business profile");
+    res.status(500).json({ error: "Could not save business profile" });
+  } finally {
+    client.release();
+  }
+});
 
 // ─── POST /admin/seed-known-businesses ────────────────────────────────────────
 // Idempotent: inserts well-known community businesses that are not yet in the DB.
