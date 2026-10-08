@@ -18298,7 +18298,7 @@ async function ensureBusinessListingStatusAuditSchema(
 // A bad public URL is a contact-data defect, not by itself a reason to hide a
 // source-documented, social-first business. The current cleanup state supports
 // Admin review; the original URL and verification receipt are append-only.
-async function ensureBusinessWebsiteCleanupAuditSchema(
+export async function ensureBusinessWebsiteCleanupAuditSchema(
   log: (msg: string) => void,
   warn: (msg: string) => void,
 ): Promise<void> {
