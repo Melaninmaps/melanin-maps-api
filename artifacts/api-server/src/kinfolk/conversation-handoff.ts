@@ -34,8 +34,8 @@ function compactText(value: string, maxLength = 150): string {
 /** Only a deliberate request to return later creates a session handoff marker. */
 export function isExplicitConversationHandoffRequest(message: string): boolean {
   const value = message.trim().toLowerCase();
-  return /\b(?:pick\s+(?:this|it|that)\s+up|continue|resume|return\s+to)\b[\s\S]{0,80}\b(?:tomorrow|later|next\s+time|when\s+i(?:'m|\s+am)\s+back)\b/.test(value)
-    && /\b(?:this|it|that|conversation|thread|plan|discussion)\b/.test(value);
+  return /\b(?:pick\s+(?:this|it|that)\s+up|continue|resume|return(?:\s+to)?|come\s+back|circle\s+back)\b[\s\S]{0,80}\b(?:tomorrow|later|next\s+time|when\s+i(?:'m|\s+am)\s+back)\b/.test(value)
+    && /\b(?:this|it|that|conversation|thread|plan(?:ning)?|discussion)\b/.test(value);
 }
 
 /** A resume needs both a previously saved handoff and an explicit continuation signal. */

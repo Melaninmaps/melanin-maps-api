@@ -21,6 +21,9 @@ describe("Kinfolk conversation handoffs", () => {
     });
 
     expect(isExplicitConversationHandoffRequest("Let's pick this up tomorrow.")).toBe(true);
+    expect(isExplicitConversationHandoffRequest("I will return later to keep planning the outreach.")).toBe(true);
+    expect(isExplicitConversationHandoffRequest("I'll come back later to finish this discussion.")).toBe(true);
+    expect(isExplicitConversationHandoffRequest("I will return a library book later.")).toBe(false);
     expect(scoped.handoffRequested).toBe(true);
     expect(scoped.handoff).toMatchObject({ state: "saved" });
     expect(scoped.handoff?.summary).toContain("No separate memory was created");
