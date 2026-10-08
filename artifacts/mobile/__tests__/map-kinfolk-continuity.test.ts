@@ -13,6 +13,7 @@ const business = source("../app/business/[id].tsx");
 const travel = source("../app/travel.tsx");
 const kinfolk = source("../hooks/useKinfolk.ts");
 const rootLayout = source("../app/_layout.tsx");
+const mapBusinessScope = source("../lib/mapBusinessScope.ts");
 
 describe("native map, business, and Kinfolk continuity", () => {
   it("keeps a canonical pin layer independent of a changing local scope", () => {
@@ -25,6 +26,16 @@ describe("native map, business, and Kinfolk continuity", () => {
     expect(businesses).toContain('import { getApiBase } from "@/lib/api";');
     expect(businesses).toContain("const apiBase = getApiBase();");
     expect(businesses).not.toContain("function getApiBaseUrl()");
+  });
+
+  it("keeps an explicitly selected city separate from an around-me GPS radius", () => {
+    expect(map).toContain("const hasExplicitMapLocality = Boolean(searchedLocality || routeSearchLocality);");
+    expect(map).toContain("resolveMapBusinessProximity");
+    expect(map).toContain("latitude: deliberateMapNameSearch ? null : proximityMapLocation?.latitude ?? null,");
+    expect(map).toContain("longitude: deliberateMapNameSearch ? null : proximityMapLocation?.longitude ?? null,");
+    expect(map).toContain("const scopePins = proximityMapLocation");
+    expect(map).toContain("const localScopeDescription = proximityMapLocation");
+    expect(mapBusinessScope).toContain("return input.hasExplicitLocality ? null : input.memberLocation;");
   });
 
   it("gives every native map member a keyboard exit path", () => {
