@@ -31,6 +31,23 @@ const OPTIONAL_TEXT_FIELDS: Record<string, { column: string; max: number }> = {
   description: { column: "description", max: 5000 }, address: { column: "address", max: 255 }, city: { column: "city", max: 100 }, state: { column: "state", max: 50 }, phone: { column: "phone", max: 30 }, hours: { column: "hours", max: 255 }, priceRange: { column: "price_range", max: 10 }, instagram: { column: "instagram", max: 255 }, tiktok: { column: "tiktok", max: 255 }, facebook: { column: "facebook", max: 255 }, twitter: { column: "twitter", max: 255 }, youtube: { column: "youtube", max: 255 }, pinterest: { column: "pinterest", max: 255 }, category: { column: "category", max: 100 }, subcategory: { column: "subcategory", max: 100 },
 };
 const RECEIPT_FIELDS = new Set<ProfileFieldReceiptName>(["identity", "description", "category", "hours", "price_range", "phone", "address", "website", "instagram", "tiktok", "facebook", "service_tags", "ownership"]);
+const ADMIN_PROFILE_JSONB_COLUMNS = new Set(["ownership_designations", "vibes", "tags"]);
+
+/**
+ * node-postgres encodes JavaScript arrays as PostgreSQL arrays. Profile array
+ * fields are JSONB columns, so their bindings must be explicit JSON text and
+ * carry a JSONB cast in the update statement. Without this adapter, a
+ * non-empty ownership, vibe, or tag edit rolls back after validation.
+ */
+export function adminProfileUpdateSqlBinding(
+  column: string,
+  value: string | string[] | null,
+): { value: string | null; jsonb: boolean } {
+  if (ADMIN_PROFILE_JSONB_COLUMNS.has(column)) {
+    return { value: JSON.stringify(value ?? []), jsonb: true };
+  }
+  return { value: value as string | null, jsonb: false };
+}
 
 function own(input: Record<string, unknown>, key: string): boolean { return Object.prototype.hasOwnProperty.call(input, key); }
 function cleanText(value: unknown, field: string, max: number, allowNull = true): string | null {

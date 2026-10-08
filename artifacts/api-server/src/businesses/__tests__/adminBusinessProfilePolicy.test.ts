@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS, normalizeBusinessIdentityPart, validateAdminBusinessProfilePatch } from "../adminBusinessProfilePolicy";
+import { ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS, adminProfileUpdateSqlBinding, normalizeBusinessIdentityPart, validateAdminBusinessProfilePatch } from "../adminBusinessProfilePolicy";
 
 const existing = {
   name: "Community Books", description: "Independent community bookstore.", address: "123 Main Street", city: "Philadelphia", state: "PA",
@@ -30,6 +30,12 @@ describe("audited administrator business profile policy", () => {
   it("requires a public ownership source receipt for an ownership designation change", () => {
     expect(() => validateAdminBusinessProfilePatch(patch({ ownershipDesignations: ["Black-Owned"] }), existing)).toThrow("source receipt is required");
     expect(validateAdminBusinessProfilePatch(patch({ ownershipDesignations: ["Black-Owned"], ownershipReceipt: { sourceUrl: "https://example.org/owners", sourceLabel: "Dated official ownership announcement", observedAt: "2026-10-05", note: "Explicit ownership statement." } }), existing).fieldReceipts).toContainEqual(expect.objectContaining({ field: "ownership", sourceUrl: "https://example.org/owners" }));
+  });
+  it("binds editable array fields as JSONB rather than PostgreSQL arrays", () => {
+    expect(adminProfileUpdateSqlBinding("ownership_designations", ["Black / African American-Owned"])).toEqual({ value: '["Black / African American-Owned"]', jsonb: true });
+    expect(adminProfileUpdateSqlBinding("vibes", ["Welcoming"])).toEqual({ value: '["Welcoming"]', jsonb: true });
+    expect(adminProfileUpdateSqlBinding("website", "https://communitybooks.example")).toEqual({ value: "https://communitybooks.example", jsonb: false });
+    expect(routeSource()).toContain('binding.jsonb ? "::jsonb" : ""');
   });
   it("rejects private-network website values and invalidates a pin after a sourced location edit", () => {
     expect(() => validateAdminBusinessProfilePatch(patch({ website: "http://127.0.0.1/private" }), existing)).toThrow("valid public https or http URL");

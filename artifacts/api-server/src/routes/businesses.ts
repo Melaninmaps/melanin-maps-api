@@ -67,6 +67,7 @@ import {
   type BusinessIdentityInput,
 } from "../businesses/businessDuplicateIdentity";
 import {
+  adminProfileUpdateSqlBinding,
   normalizeBusinessIdentityPart,
   validateAdminBusinessProfilePatch,
 } from "../businesses/adminBusinessProfilePolicy";
@@ -4233,15 +4234,20 @@ router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response
       vibes: "vibes", tags: "tags", category: "category", subcategory: "subcategory",
       latitude: "latitude", longitude: "longitude",
     };
-    const entries = Object.entries(patch);
-    const setClauses = entries.map(([key], index) => `${allowedColumns[key]} = $${index + 1}`).join(", ");
+    const entries = Object.entries(patch).map(([key, value]) => [
+      key,
+      adminProfileUpdateSqlBinding(key, value),
+    ] as const);
+    const setClauses = entries
+      .map(([key, binding], index) => `${allowedColumns[key]} = $${index + 1}${binding.jsonb ? "::jsonb" : ""}`)
+      .join(", ");
     const update = await client.query<AdminBusinessProfileRow>(
       `UPDATE businesses SET ${setClauses}, updated_at = NOW() WHERE id = $${entries.length + 1}
        RETURNING id, name, description, address, city, state, latitude, longitude,
          phone, website, hours, price_range, instagram, tiktok, facebook, twitter, youtube, pinterest,
          ownership_designations, vibes, tags, category, subcategory, photos, listing_status,
          COALESCE(is_duplicate, false) AS is_duplicate`,
-      [...entries.map(([, value]) => value), businessId],
+      [...entries.map(([, binding]) => binding.value), businessId],
     );
     const updated = update.rows[0];
     if (validated.ownershipReceipt) {
