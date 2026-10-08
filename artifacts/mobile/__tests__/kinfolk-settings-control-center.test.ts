@@ -12,6 +12,8 @@ const widget = readFileSync(new URL("../components/AIChatWidget.tsx", import.met
 const colors = readFileSync(new URL("../constants/colors.ts", import.meta.url), "utf8");
 const voicePreflight = readFileSync(new URL("../app/kinfolk-voice-preflight.tsx", import.meta.url), "utf8");
 const inlineMemoryConsent = readFileSync(new URL("../components/KinfolkInlineMemoryConsent.tsx", import.meta.url), "utf8");
+const travel = readFileSync(new URL("../app/travel.tsx", import.meta.url), "utf8");
+const sensitiveMemoryConfirmation = readFileSync(new URL("../components/KinfolkSensitiveMemoryConfirmation.tsx", import.meta.url), "utf8");
 
 function paletteColor(palette: "light" | "dark", token: "primary" | "primaryForeground"): string {
   const start = colors.indexOf(`  ${palette}: {`);
@@ -67,11 +69,13 @@ describe("Build 135 native Kinfolk Settings", () => {
     for (const palette of ["light", "dark"] as const) {
       expect(contrastRatio(paletteColor(palette, "primaryForeground"), paletteColor(palette, "primary"))).toBeGreaterThanOrEqual(4.5);
     }
-    for (const source of [controlCenter, voicePreflight, inlineMemoryConsent]) {
+    for (const source of [controlCenter, voicePreflight, inlineMemoryConsent, travel, sensitiveMemoryConfirmation]) {
       expect(source).toContain("colors.primaryForeground");
     }
     expect(controlCenter).not.toContain("PRIMARY_ACTION_INK");
     expect(voicePreflight).not.toContain("PRIMARY_ACTION_INK");
+    expect(travel).not.toContain("PRIMARY_ACTION_INK");
+    expect(sensitiveMemoryConfirmation).not.toContain('color: "#241405"');
   });
 
   it("persists settings only through one explicit save transaction and retains a failed draft", () => {
