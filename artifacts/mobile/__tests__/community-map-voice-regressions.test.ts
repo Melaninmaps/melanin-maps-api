@@ -51,6 +51,31 @@ describe("Community, map, and primary Kinfolk regressions", () => {
     expect(travel).toContain('playsInSilentMode: true');
   });
 
+  it("waits for native playback completion, removes temporary audio, and leaves a retryable state", () => {
+    const travel = source("app/travel.tsx");
+    expect(travel).toContain("const voiceAudioFileRef = useRef<FileSystem.File | null>(null)");
+    expect(travel).toContain("const pendingVoiceClipFilesRef = useRef<FileSystem.File[]>([])");
+    expect(travel).toContain("const activeVoicePlaybackRef = useRef<VoicePlaybackRequest | null>(null)");
+    expect(travel).toContain("payload.clips");
+    expect(travel).toContain("setVoiceOutputStatus(\"Continuing voice…\")");
+    expect(travel).toContain("serverVoicePlayerStatus.didJustFinish");
+    expect(travel).toContain('setVoiceOutputStatus("Voice finished. Tap Listen to play it again.")');
+    expect(travel).toContain("temporaryFile.delete()");
+    expect(travel).toContain("stopServerVoice(`new_${source}_voice_request`)");
+    expect(travel).not.toContain("serverVoicePlayer.isLoaded && !serverVoicePlayer.playing && !queuedVoicePlaybackRef.current");
+  });
+
+  it("keeps the Kinfolk header compact and places secondary actions behind overflow", () => {
+    const travel = source("app/travel.tsx");
+    const header = travel.split("{/* Header */}")[1]?.split("{showHeaderActions && (")[0] ?? "";
+    const overflow = travel.split("{showHeaderActions && (")[1]?.split("{isAuthenticated && (")[0] ?? "";
+    expect(header).toContain('accessibilityLabel="Open Kinfolk conversation actions"');
+    expect(header).toContain("numberOfLines={1}");
+    expect(header).not.toContain("person-circle-outline");
+    expect(overflow).toContain('accessibilityLabel="Open Kinfolk profile"');
+    expect(overflow).toContain('accessibilityLabel="Open saved places"');
+  });
+
   it("keeps the exact spoken reply text visible in the active message during and after playback", () => {
     const travel = source("app/travel.tsx");
     expect(travel).toContain("spokenText?: string");

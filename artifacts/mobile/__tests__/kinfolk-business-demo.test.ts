@@ -145,6 +145,10 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(widgetSource).toContain('stopPlayback("app_background")');
     expect(widgetSource).toContain("if (!voiceGuardRef.current.canPlay(request)");
     expect(widgetSource).toContain("queuedPlaybackRequestRef.current = request");
+    expect(widgetSource).toContain("const pendingPlaybackFilesRef = useRef<FileSystem.File[]>([])");
+    expect(widgetSource).toContain("clips?: Array<{ audio?: string; spokenText?: string }>");
+    expect(widgetSource).toContain("setVoiceOutputStatus(\"Continuing Kinfolk Voice…\")");
+    expect(widgetSource).toContain("playerStatus.didJustFinish");
     expect(widgetSource).toContain("player.play()");
     expect(widgetSource).toContain("setListenUri(undefined)");
     // The widget guard blocks playback when it closes or backgrounds. The primary
