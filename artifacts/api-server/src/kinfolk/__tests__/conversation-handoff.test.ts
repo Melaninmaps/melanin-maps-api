@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildConversationResumePreview,
   isExplicitConversationHandoffRequest,
+  resolveExplicitCrossSessionHandoff,
   resolveConversationContextScope,
 } from "../conversation-handoff";
 
@@ -50,6 +51,52 @@ describe("Kinfolk conversation handoffs", () => {
     expect(preview?.summary).toContain("neighborhood workshop");
     expect(scoped.handoff).toEqual(preview);
     expect(scoped.messages).toHaveLength(4);
+  });
+
+  it("allows an explicit new-session resume to use only the latest marked owner thread", () => {
+    const olderMarkedMessages = [
+      message("user", "Help me prepare a workshop agenda."),
+      message("assistant", "Start with a clear outcome."),
+      message("user", "I'll come back later to finish this discussion."),
+      message("assistant", "Absolutely.", {
+        conversationHandoff: { kind: "return_later", requestedAt: "2026-10-08T00:00:00.000Z" },
+      }),
+    ];
+    const latestMarkedMessages = [
+      message("user", "Help me plan a neighborhood clean-up."),
+      message("assistant", "Choose a date and a small volunteer team."),
+      message("user", "I'll come back later to finish this discussion."),
+      message("assistant", "Absolutely.", {
+        conversationHandoff: { kind: "return_later", requestedAt: "2026-10-08T01:00:00.000Z" },
+      }),
+    ];
+
+    const crossSession = resolveExplicitCrossSessionHandoff({
+      sessions: [
+        { id: "latest-owner-session", messages: latestMarkedMessages as never },
+        { id: "older-owner-session", messages: olderMarkedMessages as never },
+      ],
+      currentMessage: "Let's continue.",
+    });
+
+    expect(crossSession?.sourceSessionId).toBe("latest-owner-session");
+    expect(crossSession?.scope.handoff?.summary).toContain("neighborhood clean-up");
+    expect(crossSession?.scope.messages).toHaveLength(4);
+  });
+
+  it("does not select a cross-session thread without an explicit resume", () => {
+    const markedMessages = [
+      message("user", "Help me plan a workshop."),
+      message("user", "Let's pick this up tomorrow."),
+      message("assistant", "Absolutely.", {
+        conversationHandoff: { kind: "return_later", requestedAt: "2026-10-08T00:00:00.000Z" },
+      }),
+    ];
+
+    expect(resolveExplicitCrossSessionHandoff({
+      sessions: [{ id: "owner-session", messages: markedMessages as never }],
+      currentMessage: "How do I make lentil soup?",
+    })).toBeNull();
   });
 
   it("does not reuse an old thread for an unrelated new question", () => {

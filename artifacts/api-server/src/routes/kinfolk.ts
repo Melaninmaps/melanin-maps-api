@@ -371,6 +371,8 @@ import {
 import { isOrdinaryContinuityMemoryRelevant } from "../kinfolk/ordinary-continuity-memory";
 import {
   buildConversationResumePreview,
+  isExplicitConversationResumeRequest,
+  resolveExplicitCrossSessionHandoff,
   resolveConversationContextScope,
 } from "../kinfolk/conversation-handoff";
 import {
@@ -9355,6 +9357,53 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }
     }
 
+    // Starting a new chat never imports an earlier conversation by default. A
+    // member must explicitly ask to continue, and only then may the latest
+    // active, owner-scoped session carrying a return-later marker contribute its
+    // bounded thread. The resumed answer stays in this new session; no prior
+    // messages are copied into it and no profile memory is created.
+    let crossSessionHandoffMessages: SessionMessage[] | null = null;
+    if (
+      memoryEnabled &&
+      sessionPersistenceAvailable &&
+      !staffAuditPolicy &&
+      !currentSession &&
+      !ephemeralSession &&
+      req.user?.id &&
+      isExplicitConversationResumeRequest(message)
+    ) {
+      try {
+        const recentOwnerSessions = await db
+          .select({
+            id: kinfolkSessionsTable.id,
+            messages: kinfolkSessionsTable.messages,
+          })
+          .from(kinfolkSessionsTable)
+          .where(
+            and(
+              eq(kinfolkSessionsTable.userId, req.user.id),
+              isNull(kinfolkSessionsTable.archivedAt),
+            ),
+          )
+          .orderBy(desc(kinfolkSessionsTable.updatedAt))
+          .limit(12);
+        const crossSessionHandoff = resolveExplicitCrossSessionHandoff({
+          sessions: recentOwnerSessions.map((session) => ({
+            id: session.id,
+            messages: session.messages ?? [],
+          })),
+          currentMessage: message,
+        });
+        crossSessionHandoffMessages = crossSessionHandoff?.scope.messages ?? null;
+      } catch (err) {
+        // An unavailable optional history read must never broaden context or
+        // block ordinary chat. It only makes this explicit resume unavailable.
+        console.warn(
+          `[kinfolk-optional] stage=session_cross_handoff pgCode=${pgCode(err)} — continuing without a prior thread`,
+        );
+      }
+    }
+
     // Staff audits never read or write member sessions. They may pass only the
     // immediate synthetic conversation being evaluated so a revision can be
     // tested without weakening audit isolation.
@@ -9367,7 +9416,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const conversationContextScope = staffAuditPolicy
       ? null
       : resolveConversationContextScope({
-          messages: existingMessages,
+          messages: crossSessionHandoffMessages ?? existingMessages,
           currentMessage: message,
         });
     const scopedConversationMessages =

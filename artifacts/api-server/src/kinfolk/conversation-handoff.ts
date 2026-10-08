@@ -14,6 +14,12 @@ export type ConversationContextScope = {
   handoffRequested: boolean;
 };
 
+/** A member-owned, active session considered only after an explicit resume. */
+export type ConversationHandoffSessionCandidate = {
+  id: string;
+  messages: SessionMessage[];
+};
+
 type HandoffMarkedSessionMessage = SessionMessage & {
   conversationHandoff?: { kind: "return_later"; requestedAt: string } | null;
 };
@@ -87,6 +93,31 @@ export function buildConversationResumePreview(
     state: "resumed",
     summary: `Picking up where you left off: ${handoffTopic(messages, markerIndex)}. Kinfolk will use only this recent conversation thread.`,
   };
+}
+
+/**
+ * Finds the most recent eligible owner session from a caller-supplied, newest-first
+ * list. The route is responsible for the owner/active-session database boundary;
+ * this policy refuses all cross-session context unless the member explicitly asks
+ * to continue or resume.
+ */
+export function resolveExplicitCrossSessionHandoff(input: {
+  sessions: readonly ConversationHandoffSessionCandidate[];
+  currentMessage: string;
+}): { sourceSessionId: string; scope: ConversationContextScope } | null {
+  if (!isExplicitConversationResumeRequest(input.currentMessage)) return null;
+
+  for (const session of input.sessions) {
+    const scope = resolveConversationContextScope({
+      messages: session.messages,
+      currentMessage: input.currentMessage,
+    });
+    if (scope.handoff?.state === "resumed") {
+      return { sourceSessionId: session.id, scope };
+    }
+  }
+
+  return null;
 }
 
 /**

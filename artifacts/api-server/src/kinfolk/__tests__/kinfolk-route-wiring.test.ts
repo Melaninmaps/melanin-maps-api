@@ -610,6 +610,20 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("modelDestination: validatedModelDestination");
     expect(chatRoute).not.toContain("modelDestination: proposedModelDestination");
   });
+
+  it("loads a prior conversation only for an explicit owner-scoped active-session handoff", () => {
+    const handoffStart = chatRoute.indexOf("let crossSessionHandoffMessages");
+    const handoffEnd = chatRoute.indexOf("const existingMessages", handoffStart);
+    const handoffBlock = chatRoute.slice(handoffStart, handoffEnd);
+
+    expect(handoffStart).toBeGreaterThan(-1);
+    expect(handoffBlock).toContain("isExplicitConversationResumeRequest(message)");
+    expect(handoffBlock).toContain("eq(kinfolkSessionsTable.userId, req.user.id)");
+    expect(handoffBlock).toContain("isNull(kinfolkSessionsTable.archivedAt)");
+    expect(handoffBlock).toContain("resolveExplicitCrossSessionHandoff");
+    expect(handoffBlock).toContain(".orderBy(desc(kinfolkSessionsTable.updatedAt))");
+    expect(chatRoute).toContain("messages: crossSessionHandoffMessages ?? existingMessages");
+  });
 });
 
 describe("Kinfolk recommendation enforcement", () => {
