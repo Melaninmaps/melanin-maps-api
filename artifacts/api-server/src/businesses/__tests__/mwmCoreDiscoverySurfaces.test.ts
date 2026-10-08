@@ -22,7 +22,7 @@ describe("documented Discovery surface coverage", () => {
   it("uses the shared documented eligibility policy on every ordinary discovery and recommendation surface", () => {
     for (const [surface, contents] of Object.entries(discoverySources)) {
       expect(contents, surface).toContain("mwmCoreDiscoveryPolicy");
-      expect(contents, surface).toMatch(/mwmCoreDiscoverySqlPredicate|mwmDiasporaPromotionSqlPredicate/);
+      expect(contents, surface).toMatch(/mwmCoreDiscoverySqlPredicate|mwmDiasporaPromotionSqlPredicate|mwmKinfolkCatalogSqlPredicate/);
     }
     expect(discoverySources.businessDirectory).toContain("documentedDiscoveryEligibilitySqlPredicate");
     expect(discoverySources.businessDirectory).toContain('"map"');

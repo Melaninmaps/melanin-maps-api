@@ -245,12 +245,13 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
 
   it("publishes saved Admin links and profile categories to fresh web and mobile profile reads", () => {
     expect(businessRoutes).toContain('"/admin/businesses/:id/profile"');
-    for (const field of ["website", "instagram", "tiktok", "facebook", "category", "subcategory", "updatedAt"]) {
-      expect(businessRoutes).toContain(`businessesTable.${field}`);
+    for (const field of ["website", "instagram", "tiktok", "facebook", "category", "subcategory"]) {
+      expect(businessRoutes).toContain(`${field}: row.${field}`);
     }
+    expect(businessRoutes).toContain("updatedAt: new Date()");
     expect(businessRoutes).toContain("sendDynamicJson(res, {");
-    expect(businessRoutes).toContain("const [publicBusiness] = await attachDocumentedOwnership([toPublicBusinessRecord(business)]);");
-    expect(adminEditBusiness).toContain("public profile links are live now");
+    expect(businessRoutes).toContain("const [publicBusiness] = await attachPublicBusinessPresentation([toPublicBusinessRecord(business)]);");
+    expect(adminEditBusiness).toContain("Profile saved with an audit receipt.");
     expect(publicBusinessDetail).toContain("refetchOnWindowFocus: true");
     expect(mobileBusinessHook).toContain("useFocusEffect");
     expect(mobileBusinessHook).toContain("/api/businesses/${id}");
@@ -343,11 +344,11 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("manus_created");
   });
 
-  it("adds Kinfolk Current as the existing public catalog without replacing the Admin workflow", () => {
+  it("adds Kinfolk Current as a separately ready catalog without replacing the Admin workflow", () => {
     expect(adminRoute).toContain('intakeCohort === "kinfolk_current"');
     expect(adminRoute).toContain("const kinfolkCurrentPredicate");
     expect(adminRoute).toContain("FROM public.public_businesses AS current_kinfolk");
-    expect(adminRoute).toContain('mwmDiasporaPromotionSqlPredicate("current_kinfolk.id")');
+    expect(adminRoute).toContain('mwmKinfolkCatalogSqlPredicate("current_kinfolk.id")');
     expect(adminRoute).toContain('value: "kinfolk_current"');
     expect(adminRoute).toContain("Kinfolk Current — current public catalog");
     expect(adminRoute).toContain("count: kinfolkRecommendableTotal");
@@ -356,6 +357,17 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Use the same filters, checkboxes, full editor, and reversible archive action");
     expect(adminScreen).toContain("onSaved={() => {");
     expect(adminScreen).toContain("await loadBusinesses();");
+  });
+
+  it("maintains a read-only eligibility operational ledger for reconciliation work", () => {
+    expect(adminRoute).toContain('router.get("/admin/businesses/eligibility-ledger"');
+    expect(adminRoute).toContain("official_presence_unresolved");
+    expect(adminRoute).toContain("ownership_not_established");
+    expect(adminRoute).toContain("identity_conflict");
+    expect(adminRoute).toContain("website_removed");
+    expect(adminScreen).toContain("Directory eligibility ledger");
+    expect(adminScreen).toContain("socialOnlyPublic");
+    expect(adminScreen).toContain("websiteRemoved");
   });
 
   it("preserves selected live rows and the active query across editor and page navigation", () => {

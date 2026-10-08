@@ -5689,6 +5689,97 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
     CREATE INDEX IF NOT EXISTS business_catalog_cohort_audit_business_created_idx
       ON business_catalog_cohort_audit_events (business_id, created_at DESC);`,
   },
+  {
+    // Exact, evidence-bound directory states replace the former generic
+    // qualified/direct-name/review status vocabulary. Existing qualified rows
+    // become public_eligible without changing any public listing lifecycle;
+    // Kinfolk remains an explicit, separately reviewed cohort decision.
+    name: "directory_eligibility_state_engine_v2",
+    sql: `ALTER TABLE business_profile_evidence_receipts
+      DROP CONSTRAINT IF EXISTS business_profile_evidence_receipts_field_name_check;
+      ALTER TABLE business_profile_evidence_receipts
+      ADD CONSTRAINT business_profile_evidence_receipts_field_name_check
+      CHECK (field_name IN (
+        'identity', 'ownership', 'official_website', 'official_social', 'address', 'map_pin',
+        'description', 'category', 'hours', 'phone', 'website', 'instagram', 'tiktok',
+        'facebook', 'service_tags'
+      )) NOT VALID;
+      ALTER TABLE business_profile_evidence_receipts
+      VALIDATE CONSTRAINT business_profile_evidence_receipts_field_name_check;
+
+      ALTER TABLE business_discovery_eligibility
+      DROP CONSTRAINT IF EXISTS business_discovery_eligibility_eligibility_status_check;
+      ALTER TABLE business_discovery_eligibility
+      ADD CONSTRAINT business_discovery_eligibility_eligibility_status_check
+      CHECK (eligibility_status IN (
+        'public_eligible', 'kinfolk_eligible', 'official_presence_unresolved',
+        'ownership_not_established', 'website_identity_mismatch', 'website_unsafe_or_spam',
+        'identity_conflict', 'duplicate_review', 'closure_review', 'unreviewed'
+      )) NOT VALID;
+      ALTER TABLE business_discovery_eligibility
+      DROP CONSTRAINT IF EXISTS business_discovery_eligibility_check;
+      ALTER TABLE business_discovery_eligibility
+      ADD CONSTRAINT business_discovery_eligibility_check
+      CHECK (
+        eligibility_status NOT IN ('public_eligible', 'kinfolk_eligible') OR (
+          identity_evidence_id IS NOT NULL
+          AND ownership_evidence_id IS NOT NULL
+          AND (official_website_evidence_id IS NOT NULL OR official_social_evidence_id IS NOT NULL)
+          AND jsonb_array_length(ownership_designations) > 0
+          AND ownership_source_expires_at IS NOT NULL
+          AND review_after IS NOT NULL
+        )
+      ) NOT VALID;
+      UPDATE business_discovery_eligibility
+         SET eligibility_status = CASE eligibility_status
+           WHEN 'qualified' THEN 'public_eligible'
+           WHEN 'direct_name_only' THEN 'official_presence_unresolved'
+           WHEN 'review_hold' THEN 'unreviewed'
+           WHEN 'revoked' THEN 'closure_review'
+           ELSE eligibility_status
+         END,
+         policy_version = 'documented_diaspora_discovery_v2'
+       WHERE eligibility_status IN ('qualified', 'direct_name_only', 'review_hold', 'revoked')
+          OR policy_version <> 'documented_diaspora_discovery_v2';
+      ALTER TABLE business_discovery_eligibility
+      VALIDATE CONSTRAINT business_discovery_eligibility_eligibility_status_check;
+      ALTER TABLE business_discovery_eligibility
+      VALIDATE CONSTRAINT business_discovery_eligibility_check;
+
+      ALTER TABLE business_discovery_eligibility_audit_events
+      DROP CONSTRAINT IF EXISTS business_discovery_eligibility_audit_events_action_check;
+      ALTER TABLE business_discovery_eligibility_audit_events
+      ADD CONSTRAINT business_discovery_eligibility_audit_events_action_check
+      CHECK (action IN (
+        'public_eligible', 'kinfolk_eligible', 'official_presence_unresolved',
+        'ownership_not_established', 'website_identity_mismatch', 'website_unsafe_or_spam',
+        'identity_conflict', 'duplicate_review', 'closure_review', 'unreviewed',
+        'requalified', 'reclassified'
+      )) NOT VALID;
+      ALTER TABLE business_discovery_eligibility_audit_events
+      VALIDATE CONSTRAINT business_discovery_eligibility_audit_events_action_check;
+
+      CREATE TABLE IF NOT EXISTS business_profile_field_receipts (
+        id UUID PRIMARY KEY,
+        business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+        field_name TEXT NOT NULL CHECK (field_name IN (
+          'identity', 'description', 'category', 'hours', 'phone', 'address', 'website',
+          'instagram', 'tiktok', 'facebook', 'service_tags', 'ownership'
+        )),
+        source_url TEXT NOT NULL CHECK (char_length(source_url) <= 2048),
+        source_label TEXT NOT NULL CHECK (char_length(source_label) BETWEEN 1 AND 255),
+        observed_at DATE NOT NULL,
+        confidence TEXT NOT NULL CHECK (confidence IN ('high', 'medium', 'low')),
+        note TEXT,
+        observed_value JSONB NOT NULL DEFAULT '{}'::jsonb,
+        actor_user_id TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS business_profile_field_receipts_business_field_idx
+        ON business_profile_field_receipts (business_id, field_name, created_at DESC);
+      CREATE INDEX IF NOT EXISTS business_profile_field_receipts_source_idx
+        ON business_profile_field_receipts (source_url, observed_at DESC);`,
+  },
 ];
 
 export const COMMUNITY_PUBLICATION_REQUIRED_COLUMNS: Readonly<

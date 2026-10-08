@@ -186,7 +186,7 @@ describe("governed Kinfolk business repository", () => {
     },
   );
 
-  it("keeps every public listing in the temporary Kinfolk catalog without treating provenance as ownership evidence", async () => {
+  it("uses only a ready reviewed Kinfolk Catalog member without treating provenance as ownership evidence", async () => {
     const pool = { query: vi.fn().mockResolvedValue({ rows: [] }) };
     await createGovernedKinfolkBusinessRepository(pool).findDestinationCatalog({
       city: "Allentown",
@@ -198,7 +198,9 @@ describe("governed Kinfolk business repository", () => {
     expect(sql).not.toContain("completed_cohort_directory_discovery_receipts");
     expect(sql).not.toContain("national_diaspora_master_18294");
     expect(sql).not.toContain("source_backed_held_live");
-    expect(sql).toContain("AND TRUE");
+    expect(sql).toContain("business_catalog_cohort_memberships");
+    expect(sql).toContain("kinfolk_catalog");
+    expect(sql).toContain("kinfolk_catalog.state = 'ready'");
     expect(sql).not.toContain("jsonb_array_elements_text");
   });
 

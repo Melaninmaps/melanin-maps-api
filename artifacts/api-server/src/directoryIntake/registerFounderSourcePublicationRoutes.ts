@@ -163,7 +163,7 @@ async function recordSourceReceiptAndEligibility(
   client: { query: Function },
   target: SourceTarget,
 ): Promise<{
-  qualified: boolean;
+  publicEligible: boolean;
   officialWebsiteBlanked: boolean;
   socialOnly: boolean;
   holdReason: "no_usable_official_presence" | "no_documented_ownership_designation" | null;
@@ -198,7 +198,7 @@ async function recordSourceReceiptAndEligibility(
   );
   if (!presence.hasOfficialPresence) {
     return {
-      qualified: false,
+      publicEligible: false,
       officialWebsiteBlanked: Boolean(presence.rejectedWebsite),
       socialOnly: false,
       holdReason: "no_usable_official_presence",
@@ -206,7 +206,7 @@ async function recordSourceReceiptAndEligibility(
   }
   if (!candidate.ownershipDesignations.length) {
     return {
-      qualified: false,
+      publicEligible: false,
       officialWebsiteBlanked: false,
       socialOnly: false,
       holdReason: "no_documented_ownership_designation",
@@ -232,7 +232,7 @@ async function recordSourceReceiptAndEligibility(
        business_id, eligibility_status, policy_version, identity_evidence_id, ownership_evidence_id,
        official_website_evidence_id, official_social_evidence_id, address_evidence_id, map_pin_evidence_id,
        ownership_designations, ownership_source_expires_at, review_after, decision_reason, decided_by, decided_at, updated_at
-     ) VALUES ($1, 'qualified', $2, $3::uuid, $4::uuid, $5::uuid, $6::uuid, NULL, NULL,
+     ) VALUES ($1, 'public_eligible', $2, $3::uuid, $4::uuid, $5::uuid, $6::uuid, NULL, NULL,
        $7::jsonb, $8::timestamptz, $9::timestamptz, $10, 'founder-source-publication', now(), now())
      ON CONFLICT (business_id) DO UPDATE SET
        eligibility_status = EXCLUDED.eligibility_status, policy_version = EXCLUDED.policy_version,
@@ -254,12 +254,12 @@ async function recordSourceReceiptAndEligibility(
   await client.query(
      `INSERT INTO business_discovery_eligibility_audit_events
        (id, business_id, action, actor_id, reason, before_state, after_state)
-     VALUES ($1, $2, 'qualified', 'founder-source-publication', $3, '{}'::jsonb,
+     VALUES ($1, $2, 'public_eligible', 'founder-source-publication', $3, '{}'::jsonb,
        jsonb_build_object('sourceRecordKey', $4::text, 'policyVersion', $5::text))`,
     [randomUUID(), businessId, "Founder source presence publication", candidate.sourceRecordKey, DOCUMENTED_DISCOVERY_POLICY_VERSION],
   );
   return {
-    qualified: true,
+    publicEligible: true,
     officialWebsiteBlanked: Boolean(presence.rejectedWebsite && !presence.officialWebsite),
     socialOnly: !presence.officialWebsite && Boolean(firstSocial),
     holdReason: null,
@@ -517,7 +517,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           if (!evidenceIds.length) continue;
           const held = await client.query<{ state: Record<string, unknown> }>(
             `UPDATE business_discovery_eligibility e
-                SET eligibility_status = 'review_hold', identity_evidence_id = NULL, ownership_evidence_id = NULL,
+                SET eligibility_status = 'identity_conflict', identity_evidence_id = NULL, ownership_evidence_id = NULL,
                     official_website_evidence_id = NULL, official_social_evidence_id = NULL,
                     address_evidence_id = NULL, map_pin_evidence_id = NULL, ownership_designations = '[]'::jsonb,
                     ownership_source_expires_at = NULL, review_after = NULL,
@@ -534,7 +534,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
             await client.query(
               `INSERT INTO business_discovery_eligibility_audit_events
                  (id, business_id, action, actor_id, reason, before_state, after_state)
-               VALUES ($1, $2, 'review_hold', 'founder-source-publication-integrity-repair', $3, $4::jsonb, $5::jsonb)`,
+               VALUES ($1, $2, 'identity_conflict', 'founder-source-publication-integrity-repair', $3, $4::jsonb, $5::jsonb)`,
               [
                 randomUUID(), businessId,
                 "Source receipt was attached to a different normalized business identity; evidence held for review.",
@@ -715,19 +715,19 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           }
         }
 
-        let qualifiedCount = 0;
+        let publicEligibleCount = 0;
         let blankedCount = 0;
         let socialOnlyCount = 0;
         let noPresenceHoldCount = noPresence.length;
         const ownershipDesignationHoldCount = selected.filter(
           (candidate) => !candidate.ownershipDesignations.length,
         ).length;
-        const qualifiedBusinessIds = new Set<string>();
+        const publicEligibleBusinessIds = new Set<string>();
         const sourceDesignationsByBusiness = new Map<string, Set<string>>();
         for (const target of targets) {
           const result = await recordSourceReceiptAndEligibility(client, target);
-          if (result.qualified) {
-            qualifiedBusinessIds.add(target.businessId);
+          if (result.publicEligible) {
+            publicEligibleBusinessIds.add(target.businessId);
             const designations = sourceDesignationsByBusiness.get(target.businessId) ?? new Set<string>();
             target.candidate.ownershipDesignations.forEach((designation) => designations.add(designation));
             sourceDesignationsByBusiness.set(target.businessId, designations);
@@ -740,14 +740,14 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           if (result.officialWebsiteBlanked) blankedCount += 1;
           if (result.socialOnly) socialOnlyCount += 1;
         }
-        qualifiedCount = qualifiedBusinessIds.size;
+        publicEligibleCount = publicEligibleBusinessIds.size;
         const countSourceDesignation = (designation: string) => [...sourceDesignationsByBusiness.values()]
           .filter((designations) => designations.has(designation)).length;
         const afterManifest = {
           ...beforeManifest,
           profilesCreated: new Set(targets.filter((target) => target.outcome === "created").map((target) => target.businessId)).size,
           existingProfilesEnriched: new Set(targets.filter((target) => target.outcome === "linked_existing").map((target) => target.businessId)).size,
-          searchableInMwm: qualifiedCount,
+          searchableInMwm: publicEligibleCount,
           sourceDocumentedOwnership: {
             blackOwned: countSourceDesignation("Black / African American-Owned"),
             latinxHispanicOwned: countSourceDesignation("Latino / Hispanic-Owned"),

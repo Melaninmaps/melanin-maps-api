@@ -1,6 +1,6 @@
 import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoContainment";
 import {
-  mwmDiasporaPromotionSqlPredicate,
+  mwmKinfolkCatalogSqlPredicate,
 } from "../businesses/mwmCoreDiscoveryPolicy";
 import {
   sanitizePublicListingCopy,
@@ -184,13 +184,10 @@ const RETAINED_DIRECTORY_SOURCE_RECEIPTS = new Set([
 ]);
 
 function governedDirectoryDiscoveryPredicate(allowAllPublicPlaces = false): string {
-  // During the founder-led cleanup, every public, non-archived listing is in
-  // the ordinary Kinfolk catalog. Receipt provenance never creates an identity
-  // label: a Black-owned, Black woman-owned, or other ownership request still
-  // adds its own explicit designation predicate in the query that follows.
-  // Archiving remains the sole, reversible way to remove a listing from the
-  // default catalog, map, and category/city discovery.
-  return mwmDiasporaPromotionSqlPredicate(
+  // Kinfolk recommendation is narrower than public Directory/Map discovery:
+  // it needs evidence-backed kinfolk_eligible state and a ready membership in
+  // the explicit Kinfolk Catalog. Direct named lookup remains separate below.
+  return mwmKinfolkCatalogSqlPredicate(
     "b.id",
     allowAllPublicPlaces ? "all_public" : undefined,
   );
@@ -263,7 +260,7 @@ const CANONICAL_SELECT = `
       JOIN public.business_profile_evidence_receipts AS ownership_receipt
         ON ownership_receipt.id = documented_eligibility.ownership_evidence_id
      WHERE documented_eligibility.business_id::text = b.id::text
-       AND documented_eligibility.eligibility_status = 'qualified'
+       AND documented_eligibility.eligibility_status = 'kinfolk_eligible'
        AND documented_eligibility.ownership_source_expires_at > CURRENT_TIMESTAMP
        AND documented_eligibility.review_after > CURRENT_TIMESTAMP
      LIMIT 1
@@ -274,7 +271,7 @@ const CANONICAL_SELECT = `
       JOIN public.business_profile_evidence_receipts AS ownership_receipt
         ON ownership_receipt.id = documented_eligibility.ownership_evidence_id
      WHERE documented_eligibility.business_id::text = b.id::text
-       AND documented_eligibility.eligibility_status = 'qualified'
+       AND documented_eligibility.eligibility_status = 'kinfolk_eligible'
        AND documented_eligibility.ownership_source_expires_at > CURRENT_TIMESTAMP
        AND documented_eligibility.review_after > CURRENT_TIMESTAMP
      LIMIT 1
@@ -286,7 +283,7 @@ const CANONICAL_SELECT = `
       JOIN public.business_profile_evidence_receipts AS ownership_receipt
         ON ownership_receipt.id = documented_eligibility.ownership_evidence_id
      WHERE documented_eligibility.business_id::text = b.id::text
-       AND documented_eligibility.eligibility_status = 'qualified'
+       AND documented_eligibility.eligibility_status = 'kinfolk_eligible'
        AND documented_eligibility.ownership_source_expires_at > CURRENT_TIMESTAMP
        AND documented_eligibility.review_after > CURRENT_TIMESTAMP
      LIMIT 1
@@ -955,7 +952,7 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           WHERE b.latitude IS NOT NULL
             AND b.longitude IS NOT NULL
             AND NOT ${PROVEN_DEMO_BUSINESS_SQL_PREDICATE}
-            AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
+            AND ${mwmKinfolkCatalogSqlPredicate("b.id")}
         )
         SELECT *
         FROM governed_nearby

@@ -302,6 +302,20 @@ type AdminUser = {
   createdAt: string;
 };
 
+type DirectoryEligibilityLedger = {
+  generatedAt: string;
+  publicEligible: number;
+  kinfolkEligible: number;
+  socialOnlyPublic: number;
+  websiteRemoved: number;
+  ownershipUnresolved: number;
+  officialPresenceUnresolved: number;
+  conflictHold: number;
+  duplicateHold: number;
+  closureHold: number;
+  unreviewed: number;
+};
+
 type AdminBusiness = {
   id: string;
   name: string;
@@ -335,6 +349,8 @@ type AdminBusiness = {
   researchSourceUrl: string | null;
   kinfolkRecommendationReason: string | null;
   intakeBatchReference: string | null;
+  eligibilityState: string;
+  kinfolkCatalogState: string;
   outreach: {
     businessId: string;
     status: string;
@@ -972,6 +988,8 @@ export default function Admin() {
     "all" | "website_present" | "website_missing" | "social_present" | "social_missing" | "no_public_link"
   >("all");
   const [bizOwnershipFilter, setBizOwnershipFilter] = useState<"all" | "black" | "hispanic" | "no_tag">("all");
+  const [bizEligibilityStateFilter, setBizEligibilityStateFilter] = useState("all");
+  const [bizKinfolkCatalogStateFilter, setBizKinfolkCatalogStateFilter] = useState("all");
   const [bizAddedFrom, setBizAddedFrom] = useState("");
   const [bizAddedTo, setBizAddedTo] = useState("");
   const [bizSort, setBizSort] = useState<"added_desc" | "name_asc">("name_asc");
@@ -1002,6 +1020,7 @@ export default function Admin() {
     useState(1);
   const [businessInventoryLoading, setBusinessInventoryLoading] = useState(false);
   const [businessInventoryFilterError, setBusinessInventoryFilterError] = useState<string | null>(null);
+  const [directoryEligibilityLedger, setDirectoryEligibilityLedger] = useState<DirectoryEligibilityLedger | null>(null);
   const [businessCityOptions, setBusinessCityOptions] = useState<AdminCityOption[]>([]);
   const [businessServiceOptions, setBusinessServiceOptions] = useState<
     { value: string; label: string }[]
@@ -1020,6 +1039,8 @@ export default function Admin() {
     sourceBatch: "" as DirectorySourceBatch,
     link: "all" as typeof bizLinkFilter,
     ownership: "all" as typeof bizOwnershipFilter,
+    eligibilityState: "all",
+    kinfolkCatalogState: "all",
     addedFrom: "",
     addedTo: "",
     sort: "name_asc" as typeof bizSort,
@@ -1184,6 +1205,8 @@ export default function Admin() {
       sourceBatch: bizSourceBatchFilter,
       link: bizLinkFilter,
       ownership: bizOwnershipFilter,
+      eligibilityState: bizEligibilityStateFilter,
+      kinfolkCatalogState: bizKinfolkCatalogStateFilter,
       addedFrom: bizAddedFrom,
       addedTo: bizAddedTo,
       sort: bizSort,
@@ -1197,6 +1220,8 @@ export default function Admin() {
     bizSourceBatchFilter,
     bizLinkFilter,
     bizOwnershipFilter,
+    bizEligibilityStateFilter,
+    bizKinfolkCatalogStateFilter,
     bizSearch,
     bizSort,
     bizStatusFilter,
@@ -1289,6 +1314,8 @@ export default function Admin() {
     sourceBatch?: DirectorySourceBatch;
     link?: typeof bizLinkFilter;
     ownership?: typeof bizOwnershipFilter;
+    eligibilityState?: string;
+    kinfolkCatalogState?: string;
     addedFrom?: string;
     addedTo?: string;
     sort?: typeof bizSort;
@@ -1304,6 +1331,8 @@ export default function Admin() {
     const sourceBatchValue = next.sourceBatch ?? current.sourceBatch;
     const linkValue = next.link ?? current.link;
     const ownershipValue = next.ownership ?? current.ownership;
+    const eligibilityStateValue = next.eligibilityState ?? current.eligibilityState;
+    const kinfolkCatalogStateValue = next.kinfolkCatalogState ?? current.kinfolkCatalogState;
     const addedFromValue = next.addedFrom ?? current.addedFrom;
     const addedToValue = next.addedTo ?? current.addedTo;
     const sortValue = next.sort ?? current.sort;
@@ -1324,6 +1353,8 @@ export default function Admin() {
     if (sourceBatchValue) params.set("sourceBatch", sourceBatchValue);
     if (linkValue !== "all") params.set("link", linkValue);
     if (ownershipValue !== "all") params.set("ownership", ownershipValue);
+    if (eligibilityStateValue !== "all") params.set("eligibilityState", eligibilityStateValue);
+    if (kinfolkCatalogStateValue !== "all") params.set("kinfolkCatalogState", kinfolkCatalogStateValue);
     if (addedFromValue) params.set("addedFrom", addedFromValue);
     if (addedToValue) params.set("addedTo", addedToValue);
     if (sortValue !== "added_desc") params.set("sort", sortValue);
@@ -1426,6 +1457,10 @@ export default function Admin() {
           Array.isArray(data.intakeCohortOptions) ? data.intakeCohortOptions : [],
         );
         setLastRefreshed(new Date());
+        void authenticatedFetch(`${BASE}api/admin/businesses/eligibility-ledger`, { credentials: "include" })
+          .then((response) => response.ok ? response.json() : null)
+          .then((ledger) => { if (ledger && typeof ledger.publicEligible === "number") setDirectoryEligibilityLedger(ledger as DirectoryEligibilityLedger); })
+          .catch(() => undefined);
       })
       .finally(() => {
         if (requestId === businessInventoryRequestId.current) {
@@ -2476,6 +2511,8 @@ export default function Admin() {
     if (bizSourceBatchFilter) params.set("sourceBatch", bizSourceBatchFilter);
     if (bizLinkFilter !== "all") params.set("link", bizLinkFilter);
     if (bizOwnershipFilter !== "all") params.set("ownership", bizOwnershipFilter);
+    if (bizEligibilityStateFilter !== "all") params.set("eligibilityState", bizEligibilityStateFilter);
+    if (bizKinfolkCatalogStateFilter !== "all") params.set("kinfolkCatalogState", bizKinfolkCatalogStateFilter);
     if (bizAddedFrom) params.set("addedFrom", bizAddedFrom);
     if (bizAddedTo) params.set("addedTo", bizAddedTo);
     if (bizSort !== "added_desc") params.set("sort", bizSort);
@@ -2493,6 +2530,8 @@ export default function Admin() {
     sourceBatch?: DirectorySourceBatch;
     link?: typeof bizLinkFilter;
     ownership?: typeof bizOwnershipFilter;
+    eligibilityState?: string;
+    kinfolkCatalogState?: string;
     addedFrom?: string;
     addedTo?: string;
     sort?: typeof bizSort;
@@ -2512,6 +2551,8 @@ export default function Admin() {
       sourceBatch: next.sourceBatch ?? bizSourceBatchFilter,
       link: next.link ?? bizLinkFilter,
       ownership: next.ownership ?? bizOwnershipFilter,
+      eligibilityState: next.eligibilityState ?? bizEligibilityStateFilter,
+      kinfolkCatalogState: next.kinfolkCatalogState ?? bizKinfolkCatalogStateFilter,
       addedFrom: next.addedFrom ?? bizAddedFrom,
       addedTo: next.addedTo ?? bizAddedTo,
       sort: next.sort ?? bizSort,
@@ -2525,6 +2566,8 @@ export default function Admin() {
     setBizSourceBatchFilter(query.sourceBatch);
     setBizLinkFilter(query.link);
     setBizOwnershipFilter(query.ownership);
+    setBizEligibilityStateFilter(query.eligibilityState);
+    setBizKinfolkCatalogStateFilter(query.kinfolkCatalogState);
     setBizAddedFrom(query.addedFrom);
     setBizAddedTo(query.addedTo);
     setBizSort(query.sort);
@@ -2546,6 +2589,8 @@ export default function Admin() {
       sourceBatch: "",
       link: "all",
       ownership: "all",
+      eligibilityState: "all",
+      kinfolkCatalogState: "all",
       addedFrom: "",
       addedTo: "",
       sort: "name_asc",
@@ -4875,6 +4920,7 @@ Selected: ${summary}`,
               ))}
             </div>
 
+            {directoryEligibilityLedger && <div className="mb-4 rounded-2xl border border-sky-200 bg-sky-50 p-4"><div className="mb-2 flex flex-wrap items-baseline justify-between gap-2"><h3 className="text-sm font-bold text-sky-950">Directory eligibility ledger</h3><p className="text-xs text-sky-900/60">Read-only counts · refreshed {new Date(directoryEligibilityLedger.generatedAt).toLocaleString()}</p></div><div className="grid grid-cols-2 gap-2 sm:grid-cols-5 xl:grid-cols-10">{[["Public", directoryEligibilityLedger.publicEligible], ["Kinfolk", directoryEligibilityLedger.kinfolkEligible], ["Social-only", directoryEligibilityLedger.socialOnlyPublic], ["Website removed", directoryEligibilityLedger.websiteRemoved], ["Ownership unresolved", directoryEligibilityLedger.ownershipUnresolved], ["Presence unresolved", directoryEligibilityLedger.officialPresenceUnresolved], ["Conflict hold", directoryEligibilityLedger.conflictHold], ["Duplicate hold", directoryEligibilityLedger.duplicateHold], ["Closure hold", directoryEligibilityLedger.closureHold], ["Unreviewed", directoryEligibilityLedger.unreviewed]].map(([label, count]) => <div key={String(label)} className="rounded-xl bg-white/80 px-2 py-2 text-center"><div className="text-lg font-bold text-sky-950">{Number(count).toLocaleString()}</div><div className="text-[10px] font-semibold text-sky-900/65">{label}</div></div>)}</div></div>}
             <div className="mb-5 grid grid-cols-1 gap-3 rounded-2xl border border-[#3A1F0E]/10 bg-white p-4 md:grid-cols-2 xl:grid-cols-6">
               <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                 Intake cohort
@@ -5061,6 +5107,18 @@ Selected: ${summary}`,
                   <option value="social_present">Has any social media</option>
                   <option value="social_missing">No direct social URL saved (review queue)</option>
                   <option value="no_public_link">No website or social media</option>
+                </select>
+              </label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                Evidence eligibility
+                <select value={bizEligibilityStateFilter} onChange={(event) => applyBusinessInventoryFilters({ eligibilityState: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]" aria-label="Filter businesses by evidence eligibility state">
+                  <option value="all">All eligibility states</option><option value="held">All held / unreviewed</option><option value="public_eligible">Public eligible</option><option value="kinfolk_eligible">Kinfolk eligible</option><option value="official_presence_unresolved">Official presence unresolved</option><option value="ownership_not_established">Ownership not established</option><option value="website_identity_mismatch">Website identity mismatch</option><option value="website_unsafe_or_spam">Website unsafe or spam</option><option value="identity_conflict">Identity conflict</option><option value="duplicate_review">Duplicate review</option><option value="closure_review">Closure review</option><option value="unreviewed">Unreviewed</option>
+                </select>
+              </label>
+              <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                Kinfolk Catalog
+                <select value={bizKinfolkCatalogStateFilter} onChange={(event) => applyBusinessInventoryFilters({ kinfolkCatalogState: event.target.value })} className="mt-1.5 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]" aria-label="Filter businesses by Kinfolk Catalog cohort state">
+                  <option value="all">All catalog states</option><option value="not_in_catalog">Not in catalog</option><option value="intake">Intake</option><option value="review">Review</option><option value="ready">Ready</option><option value="held">Held</option><option value="removed">Removed</option>
                 </select>
               </label>
               <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
@@ -5396,6 +5454,10 @@ Selected: ${summary}`,
                             {biz.manusCreated
                               ? "Direct Manus research/import provenance. Review and use the existing reversible Archive action if needed."
                               : "Source receipts retained in Admin exports and audit history."}
+                          </div>
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            <span className="rounded-full bg-[#2B1507]/8 px-2 py-0.5 text-[10px] font-bold text-[#3A1F0E]/65">Eligibility: {biz.eligibilityState.replace(/_/g, " ")}</span>
+                            <span className="rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-bold text-sky-800">Catalog: {biz.kinfolkCatalogState.replace(/_/g, " ")}</span>
                           </div>
                         </td>
                         <td className="px-4 py-3 text-xs text-[#3A1F0E]/60">

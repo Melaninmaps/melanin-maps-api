@@ -5,13 +5,15 @@ import {
   isMwmCoreDiscoveryEligible,
   isMwmDiasporaPromotionEnabled,
   isMwmDiasporaPromotionEligible,
+  isMwmKinfolkCatalogEligible,
   mwmCoreDiscoverySqlPredicate,
   mwmDiasporaPromotionSqlPredicate,
+  mwmKinfolkCatalogSqlPredicate,
 } from "../mwmCoreDiscoveryPolicy";
 import { DOCUMENTED_DISCOVERY_POLICY_VERSION } from "../documentedDiscoveryEligibility";
 
 const documented = {
-  eligibilityStatus: "qualified",
+  eligibilityStatus: "public_eligible",
   policyVersion: DOCUMENTED_DISCOVERY_POLICY_VERSION,
   identityEvidenceId: "identity",
   ownershipEvidenceId: "ownership",
@@ -42,6 +44,12 @@ describe("MWM Core discovery policy compatibility", () => {
       city: "Philadelphia",
       ownershipDesignation: "minority-owned",
     } as unknown as typeof documented)).toBe(false);
+  });
+
+  it("requires a separately ready Kinfolk Catalog membership for recommendation", () => {
+    expect(isMwmKinfolkCatalogEligible({ ...documented, eligibilityStatus: "kinfolk_eligible" })).toBe(false);
+    expect(isMwmKinfolkCatalogEligible({ ...documented, eligibilityStatus: "kinfolk_eligible", kinfolkCatalogReady: true })).toBe(true);
+    expect(mwmKinfolkCatalogSqlPredicate("b.id")).toContain("business_catalog_cohort_memberships");
   });
 
   it("retains completed-cohort provenance for review but not as member eligibility", () => {

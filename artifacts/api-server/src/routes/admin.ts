@@ -34,7 +34,7 @@ import {
   dedupeKey as _dedupeKey,
   normalizeText as _normalizeText,
 } from "../lib/business-dedup.js";
-import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
+import { mwmDiasporaPromotionSqlPredicate, mwmKinfolkCatalogSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 import { COMPLETED_COHORT_MANIFEST_CHECKSUM } from "../directoryImport/cohortReconciliation";
 import {
   sourceBackedDirectoryCandidates,
@@ -898,6 +898,8 @@ type AdminBusinessInventoryQuery = Readonly<{
   status?: unknown;
   link?: unknown;
   ownership?: unknown;
+  eligibilityState?: unknown;
+  kinfolkCatalogState?: unknown;
   addedFrom?: unknown;
   addedTo?: unknown;
   sort?: unknown;
@@ -937,6 +939,8 @@ async function compileAdminBusinessInventoryFilters(
   const status = String(query.status ?? "active");
   const link = String(query.link ?? "all");
   const ownership = String(query.ownership ?? "all");
+  const eligibilityState = String(query.eligibilityState ?? "all");
+  const kinfolkCatalogState = String(query.kinfolkCatalogState ?? "all");
   const addedFrom = String(query.addedFrom ?? "").trim();
   const addedTo = String(query.addedTo ?? "").trim();
   const sort = String(query.sort ?? "name_asc") === "added_desc"
@@ -1008,15 +1012,13 @@ async function compileAdminBusinessInventoryFilters(
     )`);
   }
   const manusCreatedPredicate = `(${manusCreatedPredicateParts.join(" OR ")})`;
-  // Kinfolk Current is the same current, public catalog that drives the
-  // existing Kinfolk count. It is not a source-ingestion, ownership, paid, or
-  // promotion cohort. Scoping through the public view keeps archived,
-  // duplicate, hidden, suspended, and demonstration records out even when an
-  // administrator is otherwise reviewing the retained master inventory.
+  // Kinfolk Current is a real, explicit cohort: only a ready Catalog member
+  // with current Kinfolk eligibility appears. It is never inferred from a
+  // source batch, ownership label, paid status, or a general public listing.
   const kinfolkCurrentPredicate = `businesses.id IN (
     SELECT current_kinfolk.id
       FROM public.public_businesses AS current_kinfolk
-     WHERE ${mwmDiasporaPromotionSqlPredicate("current_kinfolk.id")}
+     WHERE ${mwmKinfolkCatalogSqlPredicate("current_kinfolk.id")}
   )`;
   const filters: string[] = [];
   const filterParams: unknown[] = [];
@@ -1088,6 +1090,20 @@ async function compileAdminBusinessInventoryFilters(
     filters.push(`COALESCE(ownership_designations, '[]'::jsonb) ?| $${filterParams.length}::text[]`);
   } else if (ownership === "no_tag") {
     filters.push("COALESCE(black_owned, false) = false AND COALESCE(jsonb_array_length(ownership_designations), 0) = 0");
+  }
+  const eligibilityStateSql = "COALESCE((SELECT e.eligibility_status FROM business_discovery_eligibility e WHERE e.business_id::text = businesses.id::text), 'unreviewed')";
+  const heldEligibilityStates = "'official_presence_unresolved', 'ownership_not_established', 'website_identity_mismatch', 'website_unsafe_or_spam', 'identity_conflict', 'duplicate_review', 'closure_review', 'unreviewed'";
+  if (eligibilityState === "held") {
+    filters.push(`${eligibilityStateSql} IN (${heldEligibilityStates})`);
+  } else if (["public_eligible", "kinfolk_eligible", "official_presence_unresolved", "ownership_not_established", "website_identity_mismatch", "website_unsafe_or_spam", "identity_conflict", "duplicate_review", "closure_review", "unreviewed"].includes(eligibilityState)) {
+    addFilter(`${eligibilityStateSql} = ?`, eligibilityState);
+  }
+  if (["intake", "review", "ready", "held", "removed", "not_in_catalog"].includes(kinfolkCatalogState)) {
+    if (kinfolkCatalogState === "not_in_catalog") {
+      filters.push("NOT EXISTS (SELECT 1 FROM business_catalog_cohort_memberships kc WHERE kc.business_id::text = businesses.id::text AND kc.cohort_key = 'kinfolk_catalog')");
+    } else {
+      addFilter("EXISTS (SELECT 1 FROM business_catalog_cohort_memberships kc WHERE kc.business_id::text = businesses.id::text AND kc.cohort_key = 'kinfolk_catalog' AND kc.state = ?)", kinfolkCatalogState);
+    }
   }
 
   if (link === "website_present") {
@@ -1409,6 +1425,58 @@ router.patch("/admin/invites/:id", async (req: Request, res: Response) => {
   }
 });
 
+router.get("/admin/businesses/eligibility-ledger", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Admin required" });
+    return;
+  }
+  try {
+    const { rows } = await pool.query<{
+      public_eligible: string;
+      kinfolk_eligible: string;
+      social_only_public: string;
+      website_removed: string;
+      ownership_not_established: string;
+      official_presence_unresolved: string;
+      conflict_hold: string;
+      duplicate_hold: string;
+      closure_hold: string;
+      unreviewed: string;
+    }>(`SELECT
+      COUNT(*) FILTER (WHERE e.eligibility_status = 'public_eligible')::text AS public_eligible,
+      COUNT(*) FILTER (WHERE e.eligibility_status = 'kinfolk_eligible')::text AS kinfolk_eligible,
+      COUNT(*) FILTER (WHERE e.eligibility_status IN ('public_eligible', 'kinfolk_eligible') AND e.official_social_evidence_id IS NOT NULL AND e.official_website_evidence_id IS NULL)::text AS social_only_public,
+      COUNT(*) FILTER (WHERE e.eligibility_status IN ('public_eligible', 'kinfolk_eligible') AND NULLIF(BTRIM(COALESCE(b.website, '')), '') IS NULL)::text AS website_removed,
+      COUNT(*) FILTER (WHERE e.eligibility_status = 'ownership_not_established')::text AS ownership_not_established,
+      COUNT(*) FILTER (WHERE e.eligibility_status = 'official_presence_unresolved')::text AS official_presence_unresolved,
+      COUNT(*) FILTER (WHERE e.eligibility_status IN ('identity_conflict', 'website_identity_mismatch', 'website_unsafe_or_spam'))::text AS conflict_hold,
+      COUNT(*) FILTER (WHERE e.eligibility_status = 'duplicate_review')::text AS duplicate_hold,
+      COUNT(*) FILTER (WHERE e.eligibility_status = 'closure_review')::text AS closure_hold,
+      COUNT(*) FILTER (WHERE e.eligibility_status = 'unreviewed' OR e.business_id IS NULL)::text AS unreviewed
+      FROM businesses b
+      LEFT JOIN business_discovery_eligibility e ON e.business_id::text = b.id::text
+      WHERE b.status NOT IN ('removed', 'deleted')`);
+    const row = rows[0];
+    const number = (value: string | undefined) => Number.parseInt(value ?? "0", 10) || 0;
+    res.json({
+      generatedAt: new Date().toISOString(),
+      publicEligible: number(row?.public_eligible),
+      kinfolkEligible: number(row?.kinfolk_eligible),
+      socialOnlyPublic: number(row?.social_only_public),
+      websiteRemoved: number(row?.website_removed),
+      ownershipUnresolved: number(row?.ownership_not_established),
+      officialPresenceUnresolved: number(row?.official_presence_unresolved),
+      conflictHold: number(row?.conflict_hold),
+      duplicateHold: number(row?.duplicate_hold),
+      closureHold: number(row?.closure_hold),
+      unreviewed: number(row?.unreviewed),
+    });
+  } catch (error) {
+    req.log.error({ error }, "Failed to load directory eligibility ledger");
+    res.status(500).json({ error: "Could not load the directory eligibility ledger" });
+  }
+});
+
 router.get("/admin/businesses", async (req: Request, res: Response) => {
   if (!isAdmin(req)) {
     res.status(403).json({ error: "Forbidden" });
@@ -1511,6 +1579,8 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       research_source_url: string | null;
       kinfolk_recommendation_reason: string | null;
       intake_batch_reference: string | null;
+      eligibility_state: string;
+      kinfolk_catalog_state: string;
       intake_cohort: "protected_historical_cohort" | "user_national_master" | "other_inventory";
       manus_created: boolean;
       }>(
@@ -1522,6 +1592,8 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
               to_jsonb(businesses)->>'research_source_url' AS research_source_url,
               to_jsonb(businesses)->>'kinfolk_recommendation_reason' AS kinfolk_recommendation_reason,
               to_jsonb(businesses)->>'intake_batch_reference' AS intake_batch_reference,
+              COALESCE((SELECT e.eligibility_status FROM business_discovery_eligibility e WHERE e.business_id::text = businesses.id::text), 'unreviewed') AS eligibility_state,
+              COALESCE((SELECT kc.state FROM business_catalog_cohort_memberships kc WHERE kc.business_id::text = businesses.id::text AND kc.cohort_key = 'kinfolk_catalog'), 'not_in_catalog') AS kinfolk_catalog_state,
               CASE
                 WHEN ${completedCohortPredicate} THEN 'protected_historical_cohort'
                 WHEN ${nationalMasterPredicate} THEN 'user_national_master'
@@ -1556,7 +1628,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       pool.query<{ total: string }>(
         `SELECT COUNT(*)::text AS total
            FROM public.public_businesses
-          WHERE ${mwmDiasporaPromotionSqlPredicate("public.public_businesses.id")}`,
+          WHERE ${mwmKinfolkCatalogSqlPredicate("public.public_businesses.id")}`,
       ),
       pool.query<{ total: string }>(
         `SELECT COUNT(*)::text AS total
@@ -1666,6 +1738,8 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       researchSourceUrl: b.research_source_url,
       kinfolkRecommendationReason: b.kinfolk_recommendation_reason,
       intakeBatchReference: b.intake_batch_reference,
+      eligibilityState: b.eligibility_state,
+      kinfolkCatalogState: b.kinfolk_catalog_state,
       permanentlyClosed:
         b.enrichment_note?.toLowerCase().includes("permanently closed") ??
         false,

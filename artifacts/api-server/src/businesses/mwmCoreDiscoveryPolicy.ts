@@ -96,6 +96,14 @@ export function mwmDiasporaPromotionSqlPredicate(
   return documentedDiscoveryEligibilitySqlPredicate(businessIdExpression, "discovery");
 }
 
+/** Kinfolk has a separately reviewed, ready-only Catalog cohort. */
+export function mwmKinfolkCatalogSqlPredicate(
+  businessIdExpression: string,
+  _configuredValue: string | undefined = process.env[MWM_PROMOTION_CATALOG_MODE_ENV],
+): string {
+  return documentedDiscoveryEligibilitySqlPredicate(businessIdExpression, "kinfolk");
+}
+
 export type MwmCoreReceiptCandidate = DocumentedDiscoveryEligibilityCandidate & {
   mwmCoreCohort?: string | null;
   mwm_core_cohort?: string | null;
@@ -117,9 +125,16 @@ export function isMwmDiasporaPromotionEligible(
   return isDocumentedDiscoveryEligible(record);
 }
 
+export function isMwmKinfolkCatalogEligible(
+  record: MwmCoreReceiptCandidate,
+  _configuredValue: string | undefined = process.env[MWM_PROMOTION_CATALOG_MODE_ENV],
+): boolean {
+  return isDocumentedDiscoveryEligible(record, "kinfolk");
+}
+
 /** Visible copy used only where an operator needs the policy explanation. */
 export const MWM_CORE_EVIDENCE_RULE =
   "Ordinary recommendation and browse surfaces require a current documented identity, ownership, official website, and official social receipt. A source designation is not owner verification. Missing, conflicting, or stale ownership evidence fails closed; direct named safety/context lookup remains available without becoming a recommendation.";
 
 export const MWM_CORE_ACTIVATION_CONTRACT =
-  "Record reviewed field-level evidence before an administrator marks a profile qualified. The documented discovery gate is server-owned and applies to directory browse, map pins, Discovery, universal search, Explore, and Kinfolk; disabling it uses a fail-closed hold, never an all-live fallback.";
+  "Record reviewed field-level evidence before an administrator marks a profile public eligible. The server-owned gate applies to directory browse, map pins, Discovery, universal search, and Explore; Kinfolk also requires a ready Catalog membership. Disabling it uses a fail-closed hold, never an all-live fallback.";

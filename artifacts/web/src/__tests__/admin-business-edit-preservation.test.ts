@@ -25,6 +25,7 @@ describe("admin business edit preservation", () => {
     expect(editor).toContain("(current)");
     expect(editor).not.toContain("blackOwned: ownershipDesignations");
     expect(editor).toContain("ownershipReceipt");
+    expect(editor).toContain("sourceReceipts");
     expect(editor).toContain("changeNote");
   });
 
@@ -38,9 +39,13 @@ describe("admin business edit preservation", () => {
 
   it("restores the row-level editor in the master inventory while retaining separate status actions", () => {
     const page = adminPage();
-    expect(page).toContain("Edit profile is available. Choose a status tab before archival");
+    expect(page).toContain("Edit profile");
     expect(page).toContain("setEditingBiz({ id: biz.id, name: biz.name })");
     expect(page).toContain("KinfolkCatalogCohort");
     expect(page).toContain('id: "kinfolk-catalog"');
+    expect(page).toContain("Directory eligibility ledger");
+    expect(page).toContain("eligibility-ledger");
+    expect(page).toContain("bizKinfolkCatalogStateFilter");
+    expect(page).toContain("bizEligibilityStateFilter");
   });
 });

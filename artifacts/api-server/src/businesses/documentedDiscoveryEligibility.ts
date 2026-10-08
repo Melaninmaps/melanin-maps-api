@@ -1,23 +1,26 @@
 import { DIASPORA_OWNERSHIP_DESIGNATIONS, ownershipDesignationFilterId } from "@workspace/constants";
+import {
+  KINFOLK_DIRECTORY_ELIGIBILITY_STATES,
+  PUBLIC_DIRECTORY_ELIGIBILITY_STATES,
+  type DirectoryEligibilityState,
+} from "./directoryEligibilityState";
 
 /**
- * Server-owned promotion gate for map, directory, Discovery, and Kinfolk.
+ * Server-owned eligibility gate for Directory, Map, Explore, and Kinfolk.
  *
- * A live profile is not a recommendation candidate merely because it is public
- * or has a legacy ownership flag. The gate is satisfied only by an active,
- * auditable eligibility decision whose ownership source and at least one
- * official member-facing presence remain current.
- * Direct named lookup deliberately does not use this predicate; it is a narrow
- * safety/context read, not a recommendation surface.
+ * It is deliberately stricter than a listing lifecycle: public eligibility is
+ * an evidence decision, and Kinfolk eligibility additionally requires a ready
+ * membership in the explicit Kinfolk Catalog cohort. A direct named lookup is
+ * a narrow safety/context read and never a recommendation surface.
  */
 export const DOCUMENTED_DISCOVERY_POLICY_VERSION =
-  "documented_diaspora_discovery_v1" as const;
+  "documented_diaspora_discovery_v2" as const;
 
 /** A fail-closed operational switch. There is intentionally no permissive "off" mode. */
 export const DOCUMENTED_DISCOVERY_POLICY_MODE_ENV =
   "MWM_DOCUMENTED_DISCOVERY_POLICY_MODE" as const;
 
-export type DocumentedDiscoverySurface = "discovery" | "map";
+export type DocumentedDiscoverySurface = "discovery" | "map" | "kinfolk";
 
 export type DocumentedDiscoveryEligibilityCandidate = Readonly<{
   eligibilityStatus?: string | null;
@@ -40,6 +43,8 @@ export type DocumentedDiscoveryEligibilityCandidate = Readonly<{
   review_after?: string | null;
   ownershipDesignations?: readonly string[] | null;
   ownership_designations?: readonly string[] | null;
+  kinfolkCatalogReady?: boolean | null;
+  kinfolk_catalog_ready?: boolean | null;
 }>;
 
 export function isDocumentedDiscoveryHoldEnabled(
@@ -58,10 +63,14 @@ function columnFor(businessIdExpression: string, column: string): string {
   throw new Error("DOCUMENTED_DISCOVERY_BUSINESS_IDENTIFIER_REQUIRED");
 }
 
+function sqlList(values: readonly string[]): string {
+  return values.map((value) => `'${value}'`).join(", ");
+}
+
 /**
- * SQL predicate shared by every ordinary recommendation/browse surface. It is
- * static application policy: callers supply only a trusted column reference,
- * never an HTTP parameter or a member-controlled value.
+ * SQL predicate shared by every ordinary browse/recommendation surface. The
+ * expression is static policy, not member-provided input. Directory/Map accept
+ * either public state; Kinfolk accepts only an explicitly ready catalog member.
  */
 export function documentedDiscoveryEligibilitySqlPredicate(
   businessIdExpression: string,
@@ -70,27 +79,39 @@ export function documentedDiscoveryEligibilitySqlPredicate(
 ): string {
   if (isDocumentedDiscoveryHoldEnabled(configuredValue)) return "FALSE";
   const businessId = columnFor(businessIdExpression, "id");
+  const permittedStates = surface === "kinfolk"
+    ? KINFOLK_DIRECTORY_ELIGIBILITY_STATES
+    : PUBLIC_DIRECTORY_ELIGIBILITY_STATES;
   const mapClause = surface === "map"
-    ? `
-       AND documented_eligibility.map_pin_evidence_id IS NOT NULL`
+    ? "\n       AND documented_eligibility.map_pin_evidence_id IS NOT NULL"
+    : "";
+  const kinfolkClause = surface === "kinfolk"
+    ? `\n       AND EXISTS (
+         SELECT 1
+           FROM public.business_catalog_cohort_memberships AS kinfolk_catalog
+          WHERE kinfolk_catalog.business_id::text = ${businessId}::text
+            AND kinfolk_catalog.cohort_key = 'kinfolk_catalog'
+            AND kinfolk_catalog.state = 'ready'
+       )`
     : "";
   return `EXISTS (
     SELECT 1
       FROM public.business_discovery_eligibility AS documented_eligibility
      WHERE documented_eligibility.business_id::text = ${businessId}::text
-       AND documented_eligibility.eligibility_status = 'qualified'
+       AND documented_eligibility.eligibility_status IN (${sqlList(permittedStates)})
        AND documented_eligibility.policy_version = '${DOCUMENTED_DISCOVERY_POLICY_VERSION}'
+       AND documented_eligibility.identity_evidence_id IS NOT NULL
        AND documented_eligibility.ownership_evidence_id IS NOT NULL
        AND (
          documented_eligibility.official_website_evidence_id IS NOT NULL
          OR documented_eligibility.official_social_evidence_id IS NOT NULL
        )
        AND documented_eligibility.ownership_source_expires_at > CURRENT_TIMESTAMP
-       AND documented_eligibility.review_after > CURRENT_TIMESTAMP${mapClause}
+       AND documented_eligibility.review_after > CURRENT_TIMESTAMP${mapClause}${kinfolkClause}
   )`;
 }
 
-/** Pure test/non-SQL counterpart. Expired or incomplete receipts always fail closed. */
+/** Pure test/non-SQL counterpart. Expired or incomplete evidence fails closed. */
 export function isDocumentedDiscoveryEligible(
   record: DocumentedDiscoveryEligibilityCandidate,
   surface: DocumentedDiscoverySurface = "discovery",
@@ -100,28 +121,33 @@ export function isDocumentedDiscoveryEligible(
   if (isDocumentedDiscoveryHoldEnabled(configuredValue)) return false;
   const value = (camel: keyof DocumentedDiscoveryEligibilityCandidate, snake: keyof DocumentedDiscoveryEligibilityCandidate) =>
     record[camel] ?? record[snake] ?? null;
-  const expiresAt = value("ownershipSourceExpiresAt", "ownership_source_expires_at");
-  const reviewAfter = value("reviewAfter", "review_after");
   const dateIsFuture = (date: string | null | undefined) => {
     if (!date) return false;
     const timestamp = Date.parse(date);
     return Number.isFinite(timestamp) && timestamp > now.getTime();
   };
+  const eligibilityStatus = value("eligibilityStatus", "eligibility_status") as DirectoryEligibilityState | null;
+  const permittedStates = surface === "kinfolk"
+    ? KINFOLK_DIRECTORY_ELIGIBILITY_STATES
+    : PUBLIC_DIRECTORY_ELIGIBILITY_STATES;
+  const identityEvidence = value("identityEvidenceId", "identity_evidence_id");
   const ownershipEvidence = value("ownershipEvidenceId", "ownership_evidence_id");
   const officialWebsite = value("officialWebsiteEvidenceId", "official_website_evidence_id");
   const officialSocial = value("officialSocialEvidenceId", "official_social_evidence_id");
   if (
-    value("eligibilityStatus", "eligibility_status") !== "qualified"
+    !permittedStates.includes(eligibilityStatus as never)
     || value("policyVersion", "policy_version") !== DOCUMENTED_DISCOVERY_POLICY_VERSION
+    || typeof identityEvidence !== "string" || !identityEvidence.trim()
     || typeof ownershipEvidence !== "string" || !ownershipEvidence.trim()
     || !([officialWebsite, officialSocial].some((item) => typeof item === "string" && item.trim()))
-    || !dateIsFuture(expiresAt as string | null)
-    || !dateIsFuture(reviewAfter as string | null)
+    || !dateIsFuture(value("ownershipSourceExpiresAt", "ownership_source_expires_at") as string | null)
+    || !dateIsFuture(value("reviewAfter", "review_after") as string | null)
   ) return false;
   if (surface === "map") {
     const mapEvidence = value("mapPinEvidenceId", "map_pin_evidence_id");
     if (typeof mapEvidence !== "string" || !mapEvidence.trim()) return false;
   }
+  if (surface === "kinfolk" && value("kinfolkCatalogReady", "kinfolk_catalog_ready") !== true) return false;
   const documentedIds = new Set(
     (record.ownershipDesignations ?? record.ownership_designations ?? [])
       .map(ownershipDesignationFilterId),
@@ -132,4 +158,4 @@ export function isDocumentedDiscoveryEligible(
 }
 
 export const DOCUMENTED_DISCOVERY_EVIDENCE_RULE =
-  "Ordinary directory, Discovery, and Kinfolk recommendations require a current, audited ownership receipt and at least one audited official website or official social receipt. Map pins also require sourced address and geocode receipts. A source designation is documented by source, never owner verification. Missing, revoked, or stale ownership evidence removes recommendation eligibility immediately; direct named safety/context lookup remains separate.";
+  "Directory eligibility requires a current identity receipt, a documented ownership designation, and at least one official website or official social receipt. Kinfolk eligibility additionally requires an administrator-reviewed, ready Kinfolk Catalog membership. Map pins also require sourced address and geocode receipts. A source designation is documented by source, never owner verification. Held, unresolved, duplicate, conflict, unsafe-website, closure, and unreviewed states never appear through public search, maps, Explore, or Kinfolk recommendations; direct named safety/context lookup remains separate.";

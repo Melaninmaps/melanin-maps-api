@@ -323,10 +323,10 @@ async function attachDocumentedOwnership<T extends Record<string, unknown>>(
     `SELECT eligibility.business_id, eligibility.ownership_designations,
             receipt.source_url, receipt.source_label, receipt.observed_at::text
        FROM business_discovery_eligibility AS eligibility
-       JOIN business_profile_evidence_receipts AS receipt
+      JOIN business_profile_evidence_receipts AS receipt
          ON receipt.id = eligibility.ownership_evidence_id
       WHERE eligibility.business_id = ANY($1::varchar[])
-        AND eligibility.eligibility_status = 'qualified'
+        AND eligibility.eligibility_status IN ('public_eligible', 'kinfolk_eligible')
         AND eligibility.ownership_source_expires_at > CURRENT_TIMESTAMP
         AND eligibility.review_after > CURRENT_TIMESTAMP`,
     [ids],
@@ -4111,7 +4111,7 @@ router.get("/admin/businesses/:id/profile", async (req: Request, res: Response) 
   }
   const businessId = String(req.params.id ?? "").trim();
   try {
-    const [business, ownershipReceipt, catalogMembership] = await Promise.all([
+    const [business, ownershipReceipt, catalogMembership, fieldReceipts, profileAudit] = await Promise.all([
       pool.query<AdminBusinessProfileRow>(ADMIN_PROFILE_SELECT, [businessId]),
       pool.query<{
         ownership_designations: string[]; source_url: string; source_label: string;
@@ -4124,6 +4124,26 @@ router.get("/admin/businesses/:id/profile", async (req: Request, res: Response) 
         `SELECT state, reason, updated_at, created_at
            FROM business_catalog_cohort_memberships
           WHERE business_id = $1 AND cohort_key = 'kinfolk_catalog'`,
+        [businessId],
+      ),
+      pool.query<{
+        field_name: string; source_url: string; source_label: string; observed_at: string;
+        confidence: string; note: string | null; created_at: string;
+      }>(
+        `SELECT field_name, source_url, source_label, observed_at, confidence, note, created_at
+           FROM business_profile_field_receipts
+          WHERE business_id = $1
+          ORDER BY created_at DESC`,
+        [businessId],
+      ),
+      pool.query<{
+        changed_fields: string[]; change_note: string; actor_user_id: string | null; created_at: string;
+      }>(
+        `SELECT changed_fields, change_note, actor_user_id, created_at
+           FROM business_admin_profile_edit_audit_events
+          WHERE business_id = $1
+          ORDER BY created_at DESC
+          LIMIT 50`,
         [businessId],
       ),
     ]);
@@ -4144,6 +4164,21 @@ router.get("/admin/businesses/:id/profile", async (req: Request, res: Response) 
         createdAt: receipt.created_at,
       },
       catalogMembership: catalogMembership.rows[0] ?? null,
+      fieldReceipts: fieldReceipts.rows.map((receipt) => ({
+        field: receipt.field_name,
+        sourceUrl: receipt.source_url,
+        sourceLabel: receipt.source_label,
+        observedAt: String(receipt.observed_at).slice(0, 10),
+        confidence: receipt.confidence,
+        note: receipt.note,
+        createdAt: receipt.created_at,
+      })),
+      profileAudit: profileAudit.rows.map((event) => ({
+        changedFields: Array.isArray(event.changed_fields) ? event.changed_fields : [],
+        changeNote: event.change_note,
+        actorUserId: event.actor_user_id,
+        createdAt: event.created_at,
+      })),
     });
   } catch (error) {
     req.log.error({ error }, "Failed to load administrator business profile");
@@ -4180,9 +4215,23 @@ router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response
     try {
       validated = validateAdminBusinessProfilePatch(req.body, {
         name: existing.name,
+        description: existing.description,
         address: existing.address,
         city: existing.city,
         state: existing.state,
+        phone: existing.phone,
+        website: existing.website,
+        hours: existing.hours,
+        instagram: existing.instagram,
+        tiktok: existing.tiktok,
+        facebook: existing.facebook,
+        twitter: existing.twitter,
+        youtube: existing.youtube,
+        pinterest: existing.pinterest,
+        category: existing.category,
+        subcategory: existing.subcategory,
+        tags: existing.tags,
+        vibes: existing.vibes,
         ownershipDesignations: existing.ownership_designations,
       });
     } catch (error) {
@@ -4251,6 +4300,18 @@ router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response
           randomUUID(), businessId, JSON.stringify(updated.ownership_designations ?? []),
           validated.ownershipReceipt.sourceUrl, validated.ownershipReceipt.sourceLabel,
           validated.ownershipReceipt.observedAt, validated.ownershipReceipt.note, req.user?.id ?? null,
+        ],
+      );
+    }
+    for (const receipt of validated.fieldReceipts) {
+      await client.query(
+        `INSERT INTO business_profile_field_receipts
+           (id, business_id, field_name, source_url, source_label, observed_at, confidence, note, observed_value, actor_user_id)
+         VALUES ($1, $2, $3, $4, $5, $6::date, $7, $8, $9::jsonb, $10)`,
+        [
+          randomUUID(), businessId, receipt.field, receipt.sourceUrl, receipt.sourceLabel,
+          receipt.observedAt, receipt.confidence, receipt.note,
+          JSON.stringify({ fieldsChanged: validated.requiredReceiptFields }), req.user?.id ?? null,
         ],
       );
     }
