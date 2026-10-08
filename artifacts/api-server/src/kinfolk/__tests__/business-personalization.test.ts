@@ -292,6 +292,7 @@ describe("Kinfolk business personalization", () => {
       subjectKey: "salon",
       ageBand: "18_plus",
       city: "Philadelphia",
+      includeOptionalHairRefinement: true,
     });
     expect(steps).toHaveLength(1);
     expect(steps[0]?.question).toContain("What kind of hair service");
@@ -310,6 +311,7 @@ describe("Kinfolk business personalization", () => {
       subjectKey: subject!.key,
       ageBand: "18_plus",
       city: "Philadelphia",
+      includeOptionalHairRefinement: true,
     })[0]).toMatchObject({
       id: "business-hair-service",
       question: "What kind of hair service should I focus on?",

@@ -11,7 +11,10 @@ const source = readFileSync(
 describe("saved documented support lens", () => {
   it("requires a documented-source result and preserves an honest no-match", () => {
     expect(source).toContain(
-      "const strictSourceBackedDiscovery = discoveryDesignationIds.length > 0;",
+      "const strictSourceBackedDiscovery =",
+    );
+    expect(source).toContain(
+      "discoveryDesignationIds.length > 0 || broadenDocumentedOwnershipScope;",
     );
     expect(source).toContain("strictEvidenceRequired: strictSourceBackedDiscovery");
     expect(source).toContain("I won't guess at ownership or quietly swap in a listing outside your focus.");
