@@ -59,7 +59,7 @@ const TRAVEL_RE =
 const BUSINESS_CATEGORY_RE =
   /\b(businesses?|laundromats?|laundry|grocer(?:y|ies)|salons?|hotels?)\b/i;
 const DISCOVERY_ACTION_RE =
-  /\b(?:find|recommend|locate|search(?:\s+for)?|show|browse|looking\s+for|help\s+me\s+find|tell\s+me\s+about|where\s+can\s+(?:i|we)|where\s+should\s+(?:i|we)|what|which|any\s+good|need|want)\b/i;
+  /\b(?:find|recommend|suggest(?:ions?)?|locate|search(?:\s+for)?|show|browse|looking\s+for|help\s+me\s+find|tell\s+me\s+about|where\s+can\s+(?:i|we)|where\s+should\s+(?:i|we)|what|which|any\s+good|need|want)\b/i;
 const CATEGORY_LOCATION_RE =
   /\b(?:food|restaurant|restaurants|eat|eating|dining|dinner|lunch|breakfast|cafe|caf[eé]|coffee|bakery|meal|spots?|nightlife|night life|bars?|clubs?|lounge|late[- ]night|entertainment|concert|music|party|businesses?|laundromats?|laundry|grocer(?:y|ies)|salons?|hotels?)\b[\s\S]{0,48}\b(?:in|near|around|at)\b/i;
 const TRAVEL_PLANNING_RE =

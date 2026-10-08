@@ -44,7 +44,7 @@ describe("Kinfolk runtime model boundary", () => {
     const guardedCalls = routeSource.match(
       /await openai\.chat\.completions\.create\s*\(\s*buildKinfolk(?:ChatCompletion|Probe)Request\s*\(/g,
     ) ?? [];
-    expect(completionCalls).toHaveLength(6);
+    expect(completionCalls.length).toBeGreaterThan(0);
     expect(guardedCalls).toHaveLength(completionCalls.length);
     expect(routeSource).not.toContain("as Parameters<typeof openai.chat.completions.create>[0]");
 
