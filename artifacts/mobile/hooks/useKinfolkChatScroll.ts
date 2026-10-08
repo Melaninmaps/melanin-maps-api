@@ -31,6 +31,11 @@ export function useKinfolkChatScroll() {
   // true  → user is at (or near) the bottom; auto-scroll is active
   // false → user has scrolled up; "Jump to latest" button should be visible
   const [isAtBottom, setIsAtBottom] = useState(true);
+  // The FlatList can report a content-size update before React has committed a
+  // preceding setState. Keep the current decision in a ref so a sent question
+  // and its answer are never stranded below the visible viewport by a stale
+  // onContentSizeChange closure.
+  const isAtBottomRef = useRef(true);
 
   // Used to force-scroll on the next content-size change after the user sends
   // a message, even if they happened to be scrolled up at the time of send.
@@ -39,6 +44,7 @@ export function useKinfolkChatScroll() {
   /** Call this when the user sends a new message. */
   const onUserSend = useCallback(() => {
     forceSrollNextRef.current = true;
+    isAtBottomRef.current = true;
     setIsAtBottom(true);
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 50);
   }, []);
@@ -53,6 +59,7 @@ export function useKinfolkChatScroll() {
       const distanceFromBottom =
         contentSize.height - layoutMeasurement.height - contentOffset.y;
       const nowAtBottom = distanceFromBottom <= NEAR_BOTTOM_THRESHOLD;
+      isAtBottomRef.current = nowAtBottom;
       setIsAtBottom(nowAtBottom);
     },
     [],
@@ -64,14 +71,15 @@ export function useKinfolkChatScroll() {
    * requested (i.e., right after the user sends a message).
    */
   const onContentSizeChange = useCallback(() => {
-    if (forceSrollNextRef.current || isAtBottom) {
+    if (forceSrollNextRef.current || isAtBottomRef.current) {
       forceSrollNextRef.current = false;
       flatListRef.current?.scrollToEnd({ animated: true });
     }
-  }, [isAtBottom]);
+  }, []);
 
   /** Imperatively scroll to the bottom — used by the Jump button. */
   const scrollToBottom = useCallback((animated = true) => {
+    isAtBottomRef.current = true;
     setIsAtBottom(true);
     flatListRef.current?.scrollToEnd({ animated });
   }, []);
