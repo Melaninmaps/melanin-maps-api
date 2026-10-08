@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { normalizeBusinessIdentityPart, validateAdminBusinessProfilePatch } from "../adminBusinessProfilePolicy";
+import { ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS, normalizeBusinessIdentityPart, validateAdminBusinessProfilePatch } from "../adminBusinessProfilePolicy";
 
 const existing = {
   name: "Community Books", description: "Independent community bookstore.", address: "123 Main Street", city: "Philadelphia", state: "PA",
@@ -15,6 +15,11 @@ const routeSource = () => readFileSync(fileURLToPath(new URL("../../routes/busin
 describe("audited administrator business profile policy", () => {
   it("rejects generic attempts to change lifecycle, verification, ownership badges, or pins", () => {
     for (const blocked of ["blackOwned", "verified", "listingStatus", "latitude", "verifiedDesignations"]) expect(() => validateAdminBusinessProfilePatch(patch({ [blocked]: blocked === "blackOwned" }), existing)).toThrow("governed by a separate reviewed workflow");
+  });
+  it("does not allow an official-profile edit to mutate member-supplied tags, endorsements, check-ins, reviews, or Tia signals", () => {
+    for (const field of ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS) {
+      expect(() => validateAdminBusinessProfilePatch(patch({ [field]: [] }), existing)).toThrow("community member information");
+    }
   });
   it("requires a public source receipt for every changed public fact", () => {
     expect(() => validateAdminBusinessProfilePatch(patch({ description: "Updated bookstore description." }), existing)).toThrow("source receipt is required for: description");
@@ -41,5 +46,7 @@ describe("audited administrator business profile policy", () => {
   it("uses central authorization, transactions, receipts, and immutable audit events in the canonical edit route", () => {
     const source = routeSource();
     expect(source).toContain('router.get("/admin/businesses/:id/profile"'); expect(source).toContain("if (!hasAdminAccess(req))"); expect(source).toContain("business_profile_field_receipts"); expect(source).toContain("business_admin_profile_edit_audit_events"); expect(source).toContain('await client.query("BEGIN")'); expect(source).toContain('await client.query("COMMIT")'); expect(source).toContain("map_coordinates_cleared_after_address_change"); expect(source).toContain("Use the audited duplicate review workflow instead");
+    const profileEditSource = source.slice(source.indexOf('router.patch("/admin/businesses/:id/profile"'), source.indexOf("export default router"));
+    expect(profileEditSource).not.toMatch(/(?:DELETE|UPDATE)\s+.*(?:business_vibe_evidence|business_endorsement_taps|reviews|checkins)/i);
   });
 });

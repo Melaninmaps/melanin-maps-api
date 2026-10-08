@@ -1,3 +1,4 @@
+import { normalizeBusinessStreetAddress } from "@workspace/constants";
 import { normalizeText } from "../lib/business-dedup";
 
 /**
@@ -73,21 +74,6 @@ const SOCIAL_PLATFORM_DEFAULT_HOSTS = {
   pinterest: "pinterest.com",
 } as const;
 
-const ADDRESS_ALIASES: ReadonlyArray<readonly [RegExp, string]> = [
-  [/\b(street|st)\b/g, "st"],
-  [/\b(avenue|ave)\b/g, "ave"],
-  [/\b(road|rd)\b/g, "rd"],
-  [/\b(boulevard|blvd)\b/g, "blvd"],
-  [/\b(drive|dr)\b/g, "dr"],
-  [/\b(lane|ln)\b/g, "ln"],
-  [/\b(court|ct)\b/g, "ct"],
-  [/\b(place|pl)\b/g, "pl"],
-  [/\b(parkway|pkwy)\b/g, "pkwy"],
-  [/\b(highway|hwy)\b/g, "hwy"],
-  [/\b(suite|ste)\b/g, "ste"],
-  [/\b(apartment|apt)\b/g, "apt"],
-];
-
 function publicHttpUrl(value: string | null | undefined): URL | null {
   if (!value?.trim()) return null;
   try {
@@ -158,14 +144,7 @@ export function normalizeBusinessPhone(value: string | null | undefined): string
   return normalized.length >= 7 ? normalized : null;
 }
 
-export function normalizeBusinessAddress(value: string | null | undefined): string | null {
-  let normalized = normalizeText(value);
-  if (!normalized) return null;
-  for (const [pattern, replacement] of ADDRESS_ALIASES) {
-    normalized = normalized.replace(pattern, replacement);
-  }
-  return normalized.replace(/\s+/g, " ").trim() || null;
-}
+export const normalizeBusinessAddress = normalizeBusinessStreetAddress;
 
 function normalizedValue(value: string | null | undefined): string | null {
   const normalized = normalizeText(value);

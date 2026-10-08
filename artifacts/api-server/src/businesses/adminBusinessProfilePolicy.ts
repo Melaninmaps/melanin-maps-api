@@ -3,6 +3,16 @@ export const ADMIN_PROFILE_BLOCKED_FIELDS = new Set([
   "isDuplicate", "duplicateOfId", "permanentlyHidden", "latitude", "longitude",
 ]);
 
+/**
+ * Aggregate member feedback belongs to its contributor/moderation workflow.  It
+ * is never an administrator-owned business-profile fact, and a profile save
+ * must neither replace nor clear it.
+ */
+export const ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS = new Set([
+  "communityVibes", "communityTags", "communityFeedback", "endorsements",
+  "checkins", "reviews", "tiaApproved", "tiaSignals",
+]);
+
 export type OwnershipSourceReceiptInput = { sourceUrl: string; sourceLabel: string; observedAt: string; note: string | null };
 export type ProfileFieldReceiptName = "identity" | "description" | "category" | "hours" | "phone" | "address" | "website" | "instagram" | "tiktok" | "facebook" | "service_tags" | "ownership";
 export type ProfileFieldReceiptInput = { field: ProfileFieldReceiptName; sourceUrl: string; sourceLabel: string; observedAt: string; confidence: "high" | "medium" | "low"; note: string | null };
@@ -110,6 +120,7 @@ export function validateAdminBusinessProfilePatch(input: unknown, existing: Exis
   if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("A profile patch object is required");
   const raw = input as Record<string, unknown>;
   for (const blocked of ADMIN_PROFILE_BLOCKED_FIELDS) if (own(raw, blocked)) throw new Error(`${blocked} is governed by a separate reviewed workflow and cannot be changed here`);
+  for (const field of ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS) if (own(raw, field)) throw new Error(`${field} is community member information and cannot be changed by an official profile save`);
   const changeNote = cleanText(raw.changeNote, "change note", 1000, false) as string;
   const patch: Record<string, string | string[] | null> = {};
   if (own(raw, "name")) patch.name = cleanText(raw.name, "name", 255, false) as string;
