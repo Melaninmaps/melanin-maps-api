@@ -369,6 +369,7 @@ import {
   isExplicitProfileMemoryRelevant,
   profileDiscoveryContextTerms,
 } from "../kinfolk/explicit-member-memory";
+import { relevantMemberServicePreferences } from "../kinfolk/service-preferences";
 import { isOrdinaryContinuityMemoryRelevant } from "../kinfolk/ordinary-continuity-memory";
 import {
   buildConversationResumePreview,
@@ -7748,7 +7749,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   // Profile notes can refine a matching service search only where their own
   // documented listing metadata supports it. They never become a designation
   // filter or an inferred ownership claim.
-  const relevantProfileDiscoveryTerms = explicitMemberMemoryEnabled
+  const relevantProfileMemories = explicitMemberMemoryEnabled
     ? await db
         .select({
           content: kinfolkPrivateMemoriesTable.content,
@@ -7773,15 +7774,18 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
         )
         .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
         .limit(8)
-        .then((memories) =>
-          memories.flatMap((memory) =>
-            isExplicitProfileMemoryRelevant(memory, input.message)
-              ? profileDiscoveryContextTerms(memory)
-              : [],
-          ),
-        )
+        .then((memories) => memories.filter((memory) =>
+          isExplicitProfileMemoryRelevant(memory, input.message),
+        ))
         .catch(() => [])
     : [];
+  const relevantProfileDiscoveryTerms = relevantProfileMemories.flatMap(
+    (memory) => profileDiscoveryContextTerms(memory),
+  );
+  const memberServicePreference = relevantMemberServicePreferences(
+    relevantProfileMemories,
+    input.message,
+  );
   const [prefs, assuredAgeBand] = input.memoryEnabled
     ? await Promise.all([
         getCachedPrefs(input.req.user!.id),
@@ -8032,6 +8036,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       ],
       avoidTerms: prefs?.avoidCategories ?? [],
       currentRequest: input.message,
+      servicePreference: memberServicePreference,
     },
     requiredDesignationIds: discoveryDesignationIds,
     strictEvidenceRequired: strictSourceBackedDiscovery,

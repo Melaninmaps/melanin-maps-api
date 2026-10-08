@@ -22,6 +22,7 @@ const TRAVEL_OR_LOCAL_REQUEST = /\b(?:travel|trip|work trip|visit|in|minneapolis
 const FAMILY_OR_SCHEDULE_REQUEST = /\b(?:child(?:ren)?|kids?|son|daughter|family|daycare|aftercare|school|pickup|care|schedule|shift|work|job|commute)\b/i;
 const PERSONAL_CONTEXT_REQUEST = /\b(?:remember|know about me|my profile|call me|what do you know)\b/i;
 const HEALTH_OR_PERSONAL_SERVICE_REQUEST = /\b(?:doctor|physician|medical|health(?:\s+care)?|therap(?:y|ist)|counsel(?:or|ling)|dentist|specialist|clinic|hospital|midwi(?:fe|fery)|ob[- ]?gyn|pediatric(?:ian|s)?)\b/i;
+const HAIR_SERVICE_CONTEXT = /\b(?:hair|hairstyl(?:ist|er)|stylist|salon|locs?|dreadlocks?|retwist|braids?|protective styl(?:e|ing)|silk press|wigs?|lace|sew[- ]?in|detangl|shampoo|condition|installs?)\b/i;
 const CURRENT_AFFAIRS_INTEREST = /\b(?:military|deployment|war|conflict|foreign policy|geopolitic(?:s|al)|oil|energy)\b/i;
 const CURRENT_AFFAIRS_REQUEST = /\b(?:war|conflict|military|deployment|foreign policy|geopolitic(?:s|al)|iran|oil|energy)\b/i;
 
@@ -125,6 +126,8 @@ export function isExplicitProfileMemoryRelevant(
 
   const remembersFamilyOrSchedule = /\b(?:children|kids?|son|daughter|mother|father|mom|dad|schedule|shift|hours?|work|job|care)\b/i.test(memory.content);
   if (remembersFamilyOrSchedule && FAMILY_OR_SCHEDULE_REQUEST.test(currentMessage)) return true;
+
+  if (HAIR_SERVICE_CONTEXT.test(memory.content) && HAIR_SERVICE_CONTEXT.test(currentMessage)) return true;
 
   // A saved identity can help rank published culturally relevant health records.
   // It never determines a provider's ownership, identity, or eligibility.

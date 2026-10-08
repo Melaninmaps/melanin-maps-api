@@ -24,6 +24,7 @@ import {
   normalizeOwnershipDesignationFilterIds,
   ownershipDesignationStorageValues,
 } from "@workspace/constants";
+import type { BusinessServiceOffering } from "../businesses/serviceOfferingPolicy";
 
 export type QueryPool = {
   query<T = Record<string, unknown>>(
@@ -69,6 +70,7 @@ export type GovernedKinfolkBusiness = Readonly<{
   ownershipDesignations?: string[];
   tags: string[];
   specialties: string[];
+  serviceOfferings?: BusinessServiceOffering[];
   profileStatus: string | null;
   story: string | null;
   missionStatement: string | null;
@@ -136,6 +138,7 @@ type BusinessRow = {
   ownership_designations: unknown;
   tags: unknown;
   specialties: unknown;
+  service_offerings: unknown;
   profile_status: unknown;
   business_story: unknown;
   mission_statement: unknown;
@@ -244,6 +247,17 @@ const CANONICAL_SELECT = `
     FROM public.business_specialties AS bs
     WHERE bs.business_id::text = b.id::text
   ), ARRAY[]::text[]) AS specialties,
+  COALESCE((
+    SELECT jsonb_agg(jsonb_build_object(
+      'id', offering.id, 'serviceKey', offering.service_key, 'serviceLabel', offering.service_label,
+      'policy', offering.policy, 'priceText', offering.price_text, 'durationMinutes', offering.duration_minutes,
+      'bookingUrl', offering.booking_url, 'evidenceState', offering.evidence_state, 'status', offering.status,
+      'sourceUrl', offering.source_url, 'sourceLabel', offering.source_label, 'observedAt', offering.observed_at::text,
+      'confidence', offering.confidence, 'lastConfirmedAt', offering.last_confirmed_at::text, 'note', offering.note
+    ) ORDER BY offering.service_key)
+    FROM public.business_service_offerings AS offering
+    WHERE offering.business_id::text = b.id::text
+  ), '[]'::jsonb) AS service_offerings,
   b.profile_status,
   bi.business_story,
   bi.mission_statement,
@@ -330,6 +344,17 @@ function stringArray(value: unknown): string[] {
   }
 }
 
+function jsonArray(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== "string") return [];
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
   const sourceReceipt =
     Boolean(
@@ -372,6 +397,7 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     ownershipDesignations: stringArray(row.ownership_designations),
     tags: stringArray(row.tags),
     specialties: stringArray(row.specialties),
+    serviceOfferings: jsonArray(row.service_offerings) as BusinessServiceOffering[],
     profileStatus: nullableText(row.profile_status),
     story: nullableText(row.business_story),
     missionStatement: nullableText(row.mission_statement),

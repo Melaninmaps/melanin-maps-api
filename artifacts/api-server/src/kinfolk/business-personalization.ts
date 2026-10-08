@@ -1,5 +1,7 @@
 import type { AgeBand } from "../lib/audience-policy";
 import type { GovernedKinfolkBusiness } from "./governedBusinessRepository";
+import { isConfirmedServiceOffering } from "../businesses/serviceOfferingPolicy";
+import type { MemberServicePreference } from "./service-preferences";
 
 export type BusinessAudienceBand = AgeBand | "mixed_all_ages";
 
@@ -9,6 +11,7 @@ export type KinfolkBusinessPersonalization = Readonly<{
   priorityPreferenceTerms?: readonly string[];
   avoidTerms?: readonly string[];
   currentRequest?: string;
+  servicePreference?: MemberServicePreference | null;
 }>;
 
 export type RankedKinfolkBusiness = GovernedKinfolkBusiness &
@@ -158,6 +161,16 @@ function scoredBusiness(
   reasons: string[];
 } | null {
   const text = searchableText(business);
+  const servicePreference = personalization.servicePreference;
+  const documentedOfferings = (business.serviceOfferings ?? []).filter(isConfirmedServiceOffering);
+  if (servicePreference?.requiredInclusions.length) {
+    const meetsMandatoryPolicy = documentedOfferings.some((offering) =>
+      servicePreference.requiredInclusions.every((requirement) => offering.policy[requirement] === "included") &&
+      (!servicePreference.excludesPrewashedRequirement || offering.policy.arrivalPreparation !== "required"),
+    );
+    // Unknown and unverified service policies never satisfy a mandatory request.
+    if (!meetsMandatoryPolicy) return null;
+  }
   const publishedAudienceEvidence = [
     ...business.audiencesServed,
     business.audienceType,
@@ -184,6 +197,18 @@ function scoredBusiness(
 
   let score = 0;
   const reasons: string[] = [];
+  if (servicePreference?.preferredServiceKeys.length) {
+    const matchingOfferings = documentedOfferings.filter((offering) =>
+      servicePreference.preferredServiceKeys.includes(offering.serviceKey),
+    );
+    if (matchingOfferings.length) {
+      score += 36;
+      reasons.push(`Documented service match: ${matchingOfferings[0]!.serviceLabel}`);
+    }
+  }
+  if (servicePreference?.requiredInclusions.length) {
+    reasons.push("Documented appointment requirements match");
+  }
   const priorityTerms = new Set(
     (personalization.priorityPreferenceTerms ?? [])
       .map((value) => cleanTerm(value))
