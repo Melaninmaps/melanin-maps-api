@@ -9542,10 +9542,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // strengthen an evidence requirement, never relax one.
     const evidenceRoute = classifyEvidenceRoute(message);
     // Resolve a city named in the current message before any optional model
-    // classification. A session destination is only a fallback for established
-    // routes; the consent-first travel offer below requires a current-turn city.
+    // classification. A session destination is available only for an explicit
+    // return-later resume or direct short follow-up. An unrelated new turn must
+    // never inherit a former trip's geography, catalog, or itinerary behavior.
     const sessionDestination =
-      currentSession?.destination ?? ephemeralSession?.destination ?? null;
+      conversationContextScope?.messages.length
+        ? currentSession?.destination ?? ephemeralSession?.destination ?? null
+        : null;
     const turnGeography = resolveTurnGeography(message, sessionDestination);
     const destination = turnGeography?.city ?? null;
     const locationSource = turnGeography?.source ?? null;
@@ -11411,7 +11414,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // Exact city APIs are state-scoped; unregistered geography may use a validated
     // place geocode solely for radius lookup. Business names are never geocoded.
     const broadCatalogAllowed = namedBusinessResolution.state === "not_named";
-    if (broadCatalogAllowed && destination && destinationScope) {
+    // A local catalog is a response tool, never background conversation context.
+    // Ordinary emotional, planning, and general turns must not query or receive
+    // prior-city listings merely because an earlier session had a destination.
+    const catalogRequestedForTurn =
+      decisionPlan.allowBusinessCards ||
+      earlyDecision.route === "travel_planning" ||
+      isTravelPlanningPrompt(message);
+    if (broadCatalogAllowed && catalogRequestedForTurn && destination && destinationScope) {
       try {
         businessCatalog =
           await governedBusinessRepository.findDestinationCatalog(
@@ -11426,6 +11436,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
 
     if (
       broadCatalogAllowed &&
+      catalogRequestedForTurn &&
       destination &&
       !destinationScope &&
       !businessCatalog.length
@@ -11492,6 +11503,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     });
     if (
       homeCatalogAllowed &&
+      catalogRequestedForTurn &&
       !destination &&
       req.user?.id &&
       !businessCatalog.length
@@ -12150,6 +12162,17 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       isWeatherQuery(message),
     );
     const promptDestination = currentRequestUsesLocation ? destination : null;
+    // The catalog prompt contains mandatory listing instructions. Bind it only
+    // to an authorized discovery, itinerary, or exact named-business turn so a
+    // general conversation cannot be redirected by unrelated listings.
+    const promptBusinessContextAllowed =
+      decisionPlan.allowBusinessCards || travelPlanning || Boolean(namedBusiness);
+    const promptBusinessCatalog = promptBusinessContextAllowed
+      ? businessCatalog
+      : [];
+    const promptCatalogSource = promptBusinessContextAllowed
+      ? catalogSource
+      : "none";
     const destinationLocalTimeContext = promptDestination
       ? await resolveDestinationLocalTimeContext(promptDestination)
       : null;
@@ -12166,7 +12189,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         destination: promptDestination,
         voiceMode: conversationVoiceMode,
         aaveLevel: prefs?.aaveLevel ?? 0,
-        businessCatalog,
+        businessCatalog: promptBusinessCatalog,
         activeJourney: currentRequestUsesLocation ? activeJourney : null,
         crossCityBridge: currentRequestUsesLocation ? crossCityBridge : null,
         weatherContext,
@@ -12181,7 +12204,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         libraryInterests,
         circleContext,
         privacySuppressed: effectivePrivacySuppressed,
-        catalogSource,
+        catalogSource: promptCatalogSource,
         intentClass,
       }) +
       (lifeGuidance ? `\n\n${lifeGuidance.responseInstruction}` : "") +

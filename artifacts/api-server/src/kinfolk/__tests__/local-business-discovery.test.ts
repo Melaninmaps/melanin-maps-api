@@ -243,6 +243,29 @@ describe("local business subject classification", () => {
     });
   });
 
+  it.each([
+    "I'm feeling overwhelmed right now. I've been working on a huge project that could help people, but I get discouraged sometimes.",
+    "I feel discouraged about my business.",
+    "Can I talk to you about something that has been weighing on me?",
+    "I'm frustrated with my project and need to vent.",
+  ])("keeps ordinary emotional conversation out of discovery despite an old city: %s", (message) => {
+    expect(classifyKinfolkRequest(message, "Philadelphia")).toMatchObject({
+      route: "general_knowledge",
+      discoveryKind: "general",
+    });
+  });
+
+  it("retains affirmative business and travel discovery routes", () => {
+    expect(classifyKinfolkRequest("Help me find a Black-owned restaurant in Philadelphia", "Philadelphia")).toMatchObject({
+      route: "business_discovery",
+      discoveryKind: "food",
+    });
+    expect(classifyKinfolkRequest("Plan a day in Philadelphia", "Philadelphia")).toMatchObject({
+      route: "travel_planning",
+      discoveryKind: "travel",
+    });
+  });
+
   it("does not interpret a generic bookstore category as an exact business name", async () => {
     const findExactByNormalizedName = vi.fn();
     const result = await resolveNamedBusinessTurn({
