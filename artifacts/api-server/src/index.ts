@@ -41,6 +41,8 @@ import {
   stopTemporaryStayRetentionScheduler,
 } from "./kinfolk/temporary-stay-retention";
 import { privatePlacesRuntimeState } from "./kinfolk/private-places-policy";
+import { shouldRunPrivatePlacesSyntheticQaAcceptance } from "./kinfolk/private-places-fictional-qa";
+import { runPrivatePlacesProductionSyntheticAcceptance } from "./kinfolk/private-places-production-acceptance";
 
 const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);
@@ -131,7 +133,7 @@ try {
     await ensureKinfolkQuestionImageSchemaOnly();
     logger.info("Kinfolk private image schema ready before traffic acceptance");
   }
-  if (process.env.KINFOLK_PRIVATE_PLACES_ENABLED === "true") {
+  if (process.env.KINFOLK_PRIVATE_PLACES_ENABLED === "true" || shouldRunPrivatePlacesSyntheticQaAcceptance()) {
     // Private Places and Temporary Stays must have encrypted-only structures
     // before their explicitly enabled runtime can accept a member request. This
     // bootstrap is idempotent schema work only; it never geocodes, seeds, or
@@ -194,6 +196,17 @@ try {
   );
   await pool.end().catch(() => undefined);
   process.exit(1);
+}
+
+if (shouldRunPrivatePlacesSyntheticQaAcceptance()) {
+  try {
+    const result = await runPrivatePlacesProductionSyntheticAcceptance();
+    logger.info({ checks: result.checks, cleanupVerified: result.cleanupVerified }, "Private Places synthetic acceptance passed before traffic");
+  } catch (_error) {
+    logger.fatal({ code: "kinfolk_private_places_synthetic_acceptance_failed" }, "Private Places synthetic acceptance failed — server will not accept traffic");
+    await pool.end().catch(() => undefined);
+    process.exit(1);
+  }
 }
 
 const onListening = (err?: Error) => {
