@@ -18214,6 +18214,28 @@ export async function ensureKinfolkQuestionImagePrivacySchema(
   }
 }
 
+/**
+ * Required, schema-only bootstrap for the dedicated Kinfolk image path.
+ * Explicit feature-release mode correctly avoids broad startup writers; when
+ * the dedicated bucket is configured, these columns and this index are the
+ * minimum fail-closed prerequisite for recording a short-lived private asset.
+ * Unlike the legacy optional helper above, this performs no row update and
+ * intentionally propagates an error so traffic is not accepted half-configured.
+ */
+export async function ensureKinfolkQuestionImageSchemaOnly(): Promise<void> {
+  await pool.query(`
+    ALTER TABLE media_assets
+      ADD COLUMN IF NOT EXISTS vision_consent_granted_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS retention_expires_at TIMESTAMPTZ,
+      ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMPTZ
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS media_assets_kinfolk_question_cleanup_idx
+        ON media_assets (retention_expires_at)
+     WHERE purpose = 'kinfolk_question' AND status = 'ready'
+  `);
+}
+
 // ── Reversible public-discovery removal audit ──────────────────────────────────
 // A removal stops public search, map display, and Kinfolk promotion through the
 // existing archived/suspended state. The audit table records why an administrator

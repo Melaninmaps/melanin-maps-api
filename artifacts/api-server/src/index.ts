@@ -9,6 +9,7 @@ import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
 import {
   ensureDirectoryReconciliationLedgerSchema,
   ensureCommunityFeedReadSchema,
+  ensureKinfolkQuestionImageSchemaOnly,
   ensureRequiredPublicationSchema,
   publicationSchemaFailureLogLines,
   runStartupMigrations,
@@ -117,6 +118,12 @@ async function initStripe() {
 })();
 
 try {
+  if (process.env.KINFOLK_MEDIA_BUCKET_ID?.trim()) {
+    // This is the only D18 schema bootstrap allowed in explicit feature-release
+    // mode: idempotent columns plus a cleanup index, with no row mutation.
+    await ensureKinfolkQuestionImageSchemaOnly();
+    logger.info("Kinfolk private image schema ready before traffic acceptance");
+  }
   // The reconciliation ledger is a schema-only safety gate. It must be ready
   // even when explicit feature-release mode correctly suppresses broad startup
   // writers, publishers, and enrichment work.
