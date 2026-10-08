@@ -385,7 +385,8 @@ describe("contextual intelligence behavior integration", () => {
     expect(bundle).toMatchObject({ degraded: true, degradedReason: "A retrieval provider was unavailable." });
     expect(payload.reply).toMatch(/could not be verified/i);
     expect(payload.reply).not.toMatch(/\b\d[\d,.]*\s*(streams?|views?|million|billion)\b/i);
-    expect(payload.sources).toEqual([{ title: stable.title, url: stable.url }]);
+    // Stable catalog material is not evidence for a changing streaming metric.
+    expect(payload.sources).toEqual([]);
   });
 
   it("searches only published Brazil records and never writes memory, even when consent is merely offered", async () => {

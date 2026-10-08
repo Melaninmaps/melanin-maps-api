@@ -198,7 +198,8 @@ describe("governed Kinfolk business repository", () => {
     expect(sql).not.toContain("completed_cohort_directory_discovery_receipts");
     expect(sql).not.toContain("national_diaspora_master_18294");
     expect(sql).not.toContain("source_backed_held_live");
-    expect(sql).toContain("AND TRUE");
+    expect(sql).toContain("business_discovery_eligibility AS documented_eligibility");
+    expect(sql).not.toContain("AND TRUE");
     expect(sql).not.toContain("jsonb_array_elements_text");
   });
 

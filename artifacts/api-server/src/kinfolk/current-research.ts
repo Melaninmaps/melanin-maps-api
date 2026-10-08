@@ -9,6 +9,11 @@ const INTRINSIC_CHANGING_EXTERNAL_FACT_RE = /\b(?:weather|forecast|temperature|r
 const EXPLICIT_CURRENT_STATUS_RE = /\b(?:current|recent|latest|today|live)\s+(?:status|updates?)\b/i;
 const CURRENT_NAMED_UPDATE_RE = /\b(?:current|recent|latest|today|live)\s+(?!i\b|we\b|my\b|our\b)[A-Z][\p{L}'’-]{1,}(?:\s+[\p{L}\d'’-]+){0,5}\s+(?:status|updates?)\b/iu;
 const OPERATING_STATUS_RE = /\b(?:open|closed|close|closing|opening|hours?|schedule|scheduled|availability|available)\b/i;
+// A time-bound operating-status question remains current even when speech or
+// typing omits the venue noun, for example: "is it open today?".
+const TIME_BOUND_OPERATING_STATUS_RE = /\b(?:open|closed|close|closing|opening|hours?|schedule|scheduled|availability|available)\b[\s\S]{0,48}\b(?:today|tonight|tomorrow|this\s+weekend)\b|\b(?:today|tonight|tomorrow|this\s+weekend)\b[\s\S]{0,48}\b(?:open|closed|close|closing|opening|hours?|schedule|scheduled|availability|available)\b/i;
+const MEMBER_WORK_SCHEDULE_RE = /\b(?:my|our)\s+(?:work|shift|office)\s+(?:hours?|schedule)\b/i;
+const RECENCY_QUALIFIED_PUBLIC_METRIC_RE = /\b(?:current|latest|recent)\s+(?:(?:public|streaming|chart|market|audience)\s+)?(?:milestone|ranking|rank|record|streams?|views?|sales|attendance|awards?|release|performance)\b/i;
 const EXTERNAL_ENTITY_RE = /\b(?:business|restaurant|cafe|store|shop|dry\s+cleaner|venue|gallery|location|library|museum|office|service|clinic|school|airport|flight|train|bus|transit|hotel|reservation|trip|travel|vacation|itinerary|event|concert|game|show|movie|site|website|place)\b/i;
 const EXTERNAL_DISCOVERY_ACTION_RE = /\b(?:find|search|recommend|give|choose|select|book|reserve|visit|go\s+to|eat\s+at|plan)\b/i;
 const WHAT_IS_OPEN_RE = /\bwhat(?:'s|\s+is)\s+open\b/i;
@@ -27,6 +32,8 @@ function hasChangingExternalFact(message: string): boolean {
     INTRINSIC_CHANGING_EXTERNAL_FACT_RE.test(message)
     || EXPLICIT_CURRENT_STATUS_RE.test(message)
     || CURRENT_NAMED_UPDATE_RE.test(message)
+    || (TIME_BOUND_OPERATING_STATUS_RE.test(message) && !MEMBER_WORK_SCHEDULE_RE.test(message))
+    || RECENCY_QUALIFIED_PUBLIC_METRIC_RE.test(message)
     || (REGULATED_PUBLIC_SUBJECT_RE.test(message) && REGULATED_PUBLIC_ACTION_RE.test(message))
   ) return true;
 
@@ -34,7 +41,10 @@ function hasChangingExternalFact(message: string): boolean {
   // service, event, or direct "what is open" query—not a member's own workday.
   if (
     OPERATING_STATUS_RE.test(message)
-    && (EXTERNAL_ENTITY_RE.test(message) || WHAT_IS_OPEN_RE.test(message) || OPEN_NOW_RE.test(message))
+    && (EXTERNAL_ENTITY_RE.test(message)
+      || WHAT_IS_OPEN_RE.test(message)
+      || OPEN_NOW_RE.test(message)
+      || (TIME_BOUND_OPERATING_STATUS_RE.test(message) && !MEMBER_WORK_SCHEDULE_RE.test(message)))
   ) {
     return true;
   }
@@ -107,7 +117,10 @@ export function temporalEvidencePolicy(message: string): TemporalEvidencePolicy 
   }
   if (
     OPERATING_STATUS_RE.test(message) &&
-    (EXTERNAL_ENTITY_RE.test(message) || WHAT_IS_OPEN_RE.test(message) || OPEN_NOW_RE.test(message))
+    (EXTERNAL_ENTITY_RE.test(message)
+      || WHAT_IS_OPEN_RE.test(message)
+      || OPEN_NOW_RE.test(message)
+      || (TIME_BOUND_OPERATING_STATUS_RE.test(message) && !MEMBER_WORK_SCHEDULE_RE.test(message)))
   ) {
     return {
       requestedFact: "operating_status",
