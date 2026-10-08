@@ -765,18 +765,19 @@ function EventsTab() {
   );
 }
 
-// ── Groups Tab ─────────────────────────────────────────────────────────────
-function GroupsTab({ isAuthenticated }: { isAuthenticated: boolean }) {
+// ── My Groups page ─────────────────────────────────────────────────────────
+// This is deliberately not the browse catalog. A member sees only Groups with
+// a current membership; no unrelated group or group post is rendered here.
+function MyGroupsPage({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
-  const [joining, setJoining] = useState<string | null>(null);
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await authenticatedFetch(`${BASE}api/groups`);
+      const res = await authenticatedFetch(`${BASE}api/groups/mine`);
       if (res.ok) {
         const d = await res.json() as { groups: Group[] };
         setGroups(d.groups ?? []);
@@ -786,33 +787,28 @@ function GroupsTab({ isAuthenticated }: { isAuthenticated: boolean }) {
 
   useEffect(() => { load(); }, [load]);
 
-  const toggleJoin = async (g: Group) => {
-    if (!isAuthenticated) { toast({ title: "Sign in to join groups" }); return; }
-    setJoining(g.id);
-    try {
-      const method = g.isMember ? "DELETE" : "POST";
-      const res = await authenticatedFetch(`${BASE}api/groups/${g.id}/${g.isMember ? "leave" : "join"}`, {
-        method,
-      });
-      if (res.ok) {
-        setGroups(gs => gs.map(x => x.id === g.id ? { ...x, isMember: !x.isMember, memberCount: x.memberCount + (g.isMember ? -1 : 1) } : x));
-      }
-    } catch { /* ignore */ } finally { setJoining(null); }
-  };
-
   if (loading) return <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#CA922B]" /></div>;
 
   return (
     <div className="space-y-3">
       {groups.length === 0 && (
-        <div className="text-center py-16">
+        <div data-testid="community-my-groups-empty" className="text-center py-16">
           <Users className="w-10 h-10 text-[#CA922B]/40 mx-auto mb-3" />
-          <p className="text-sm text-[#3A1F0E]/50 font-medium">No groups yet</p>
-          <p className="text-xs text-[#3A1F0E]/35 mt-1">Groups are coming soon</p>
+          <p className="text-sm text-[#3A1F0E]/50 font-medium">You have not joined any groups yet</p>
+          <p className="text-xs text-[#3A1F0E]/35 mt-1">When you join a group, it will appear here.</p>
         </div>
       )}
       {groups.map(g => (
-        <div key={g.id} className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-4 flex items-start gap-3 hover:shadow-sm transition-shadow">
+        <button
+          key={g.id}
+          type="button"
+          data-testid={`community-my-group-${g.id}`}
+          onClick={() => {
+            if (!isAuthenticated) { toast({ title: "Sign in to open your groups" }); return; }
+            navigate(`/community/groups/${encodeURIComponent(String(g.id))}`);
+          }}
+          className="w-full bg-white rounded-2xl border border-[#3A1F0E]/8 p-4 flex items-start gap-3 text-left hover:shadow-sm hover:border-[#CA922B]/35 transition-shadow"
+        >
           <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0"
             style={{ backgroundColor: `${categoryColor(g.category)}18` }}>
             <Users className="w-5 h-5" style={{ color: categoryColor(g.category) }} />
@@ -825,24 +821,11 @@ function GroupsTab({ isAuthenticated }: { isAuthenticated: boolean }) {
               {g.city && <><span>·</span><span>{g.city}{g.state ? `, ${g.state}` : ""}</span></>}
             </div>
           </div>
-          <div className="shrink-0 flex flex-col items-end gap-2">
-            {g.isMember ? (
-              <button
-                onClick={() => navigate(`/community?groupId=${encodeURIComponent(String(g.id))}&groupName=${encodeURIComponent(g.name)}`)}
-                className="px-4 py-1.5 rounded-full text-xs font-bold bg-[#CA922B] text-white hover:bg-[#B38024]">
-                View posts
-              </button>
-            ) : null}
-            <button
-              onClick={() => toggleJoin(g)}
-              disabled={joining === g.id}
-              className={`px-4 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                g.isMember ? "bg-[#FAF6EF] text-[#3A1F0E]/60 border border-[#3A1F0E]/10 hover:bg-red-50 hover:text-red-600" : "bg-[#CA922B] text-white hover:bg-[#B38024]"
-              }`}>
-              {joining === g.id ? "..." : g.isMember ? "Leave" : "Join"}
-            </button>
+          <div className="shrink-0 flex items-center gap-2 text-[#CA922B]">
+            <span className="px-3 py-1.5 rounded-full text-xs font-bold bg-[#CA922B] text-white">Open</span>
+            <ChevronLeft className="h-4 w-4 rotate-180" aria-hidden="true" />
           </div>
-        </div>
+        </button>
       ))}
     </div>
   );
@@ -887,7 +870,7 @@ function MemberCard({ m }: { m: MemberResult }) {
 // ── Main Community Page ────────────────────────────────────────────────────
 // Community is intentionally limited to the social feed and groups. Events
 // retain their dedicated route, while Library carries urgent updates.
-const TABS = ["Feed", "Groups"] as const;
+const TABS = ["Community Feed", "My Groups"] as const;
 type Tab = typeof TABS[number];
 
 export default function Community() {
@@ -895,6 +878,8 @@ export default function Community() {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   const isAuthenticated = !!(auth?.user);
+  const pathname = location.split("?")[0];
+  const isMyGroupsPage = pathname === "/community/groups";
   const groupIdParam = new URLSearchParams(location.split("?")[1] ?? "").get("groupId");
   const groupNameParam = new URLSearchParams(location.split("?")[1] ?? "").get("groupName");
   const activeGroupId = groupIdParam && /^\d+$/.test(groupIdParam) ? Number(groupIdParam) : null;
@@ -935,7 +920,7 @@ export default function Community() {
     setSearchActive(false);
   }, []);
 
-  const [activeTab, setActiveTab] = useState<Tab>("Feed");
+  const activeTab: Tab = isMyGroupsPage ? "My Groups" : "Community Feed";
   const [feedMode, setFeedMode] = useState<"everyone" | "following">("everyone");
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
@@ -950,6 +935,14 @@ export default function Community() {
   const [communityFeedDisplay, setCommunityFeedDisplay] = useState<CommunityFeedDisplay>("mixed");
   const [showFeedControls, setShowFeedControls] = useState(false);
   const [savingFeedDisplay, setSavingFeedDisplay] = useState(false);
+
+  // Preserve old shared links without continuing to render a Group as a feed
+  // filter. Every Group now has its own member-only destination.
+  useEffect(() => {
+    if (activeGroupId !== null) {
+      navigate(`/community/groups/${encodeURIComponent(String(activeGroupId))}`);
+    }
+  }, [activeGroupId, navigate]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -1084,10 +1077,9 @@ export default function Community() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <div className="flex items-center gap-2">
-                {activeGroupId ? <button onClick={() => navigate("/community")} className="text-[#F5EBD8]/70 hover:text-white" aria-label="Back to Community feed"><ChevronLeft className="w-5 h-5" /></button> : null}
-                <h1 className="font-serif font-bold text-2xl text-white">{activeGroupId ? activeGroupName : "The Feed"}</h1>
+                <h1 className="font-serif font-bold text-2xl text-white">{activeTab === "My Groups" ? "My Groups" : "Community"}</h1>
               </div>
-              <p className="text-[#F5EBD8]/60 text-sm">{activeGroupId ? "Posts shared with this group" : "Connect with the community"}</p>
+              <p className="text-[#F5EBD8]/60 text-sm">{activeTab === "My Groups" ? "The groups you currently belong to" : "Connect with the community"}</p>
             </div>
             {isAuthenticated && (
               <button data-testid="community-compose-open" onClick={() => setShowCompose(true)}
@@ -1119,16 +1111,17 @@ export default function Community() {
 
           {/* Tabs — hidden while search is active */}
           {!searchActive && (
-            <div className="flex gap-1 bg-white/8 rounded-2xl p-1">
-              {(activeGroupId ? ["Feed"] as const : TABS).map(tab => (
-                <button key={tab} onClick={() => setActiveTab(tab)}
+            <nav aria-label="Community workbook pages" className="flex gap-1 bg-white/8 rounded-2xl p-1">
+              {TABS.map(tab => (
+                <button key={tab} onClick={() => navigate(tab === "Community Feed" ? "/community" : "/community/groups")}
+                  aria-current={activeTab === tab ? "page" : undefined}
                   className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors ${
                     activeTab === tab ? "bg-white text-[#2B1507] shadow-sm" : "text-white/70 hover:text-white"
                   }`}>
                   {tab}
                 </button>
               ))}
-            </div>
+            </nav>
           )}
           {!searchActive && (
             <Link href="/community-guidelines" className="mt-2 block text-center text-xs font-semibold text-[#F5EBD8]/70 underline-offset-4 hover:text-white hover:underline">
@@ -1177,7 +1170,7 @@ export default function Community() {
         )}
 
         {/* Feed tab */}
-        {!searchActive && activeTab === "Feed" && (
+        {!searchActive && activeTab === "Community Feed" && (
           <>
             {/* Feed mode + trending */}
             <div className="space-y-4 mb-5">
@@ -1297,7 +1290,7 @@ export default function Community() {
           </>
         )}
 
-        {!searchActive && activeTab === "Groups" && <GroupsTab isAuthenticated={isAuthenticated} />}
+        {!searchActive && activeTab === "My Groups" && <MyGroupsPage isAuthenticated={isAuthenticated} />}
       </div>
 
       {showFeedControls && (

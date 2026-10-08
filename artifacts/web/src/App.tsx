@@ -27,6 +27,7 @@ import DiscoverUniversal from "@/pages/discover-universal";
 import BusinessDetail from "@/pages/business-detail";
 import Safety from "@/pages/safety";
 import Community from "@/pages/community";
+import CommunityGroup from "@/pages/community-group";
 import { LocationFirstBusinessDirectory } from "@/features/businesses/LocationFirstBusinessDirectory";
 import ForBusinessOwners from "@/pages/for-business-owners";
 import Roadmap from "@/pages/roadmap";
@@ -368,6 +369,12 @@ function Router() {
       {/* ── Account required — identity makes these features meaningful ──────── */}
       <Route path="/community">
         <Layout><PreLaunchRoute><Community /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/community/groups">
+        <Layout><PreLaunchRoute><Community /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/community/groups/:id">
+        <Layout><PreLaunchRoute><CommunityGroup /></PreLaunchRoute></Layout>
       </Route>
       <Route path="/events">
         <Layout><PreLaunchRoute><LocationFirstEvents /></PreLaunchRoute></Layout>

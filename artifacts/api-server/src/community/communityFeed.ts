@@ -116,6 +116,27 @@ const AUTHOR_IS_PRIVATE = `COALESCE((to_jsonb(u)->>'is_private')::boolean, false
 // during rolling deployment and prevents Group-only posts from leaking into it.
 const POST_IS_NOT_GROUP_ONLY = `COALESCE(NULLIF(to_jsonb(cp)->>'group_id', ''), '') = ''`;
 
+/**
+ * Main Community Feed can include a Group post only while the viewer remains a
+ * member of that exact Group. The predicate is evaluated on every read, so a
+ * leave or removal takes effect immediately without relying on client state.
+ */
+function postIsVisibleInCommunityFeed(viewerPlaceholder: string): string {
+  return `(
+    ${POST_IS_NOT_GROUP_ONLY}
+    OR EXISTS (
+      SELECT 1
+      FROM group_members visible_group_membership
+      WHERE visible_group_membership.user_id = ${viewerPlaceholder}
+        AND visible_group_membership.group_id = CASE
+          WHEN COALESCE(to_jsonb(cp)->>'group_id', '') ~ '^[0-9]+$'
+            THEN (to_jsonb(cp)->>'group_id')::integer
+          ELSE NULL
+        END
+    )
+  )`;
+}
+
 function communityPostProjection(capabilities: CommunityFeedCapabilities): string {
   const commentsCount = capabilities.communityPostComments
     ? `(
@@ -262,12 +283,13 @@ export function buildCommunityFeedQuery(
   const projection = communityPostProjection(capabilities);
   if (input.authorId) {
     const relation = acceptedRelationship("$2");
+    const feedVisibility = postIsVisibleInCommunityFeed("$2");
     return {
       text: `SELECT ${projection}
         FROM community_posts cp
         LEFT JOIN users u ON u.id = cp.author_id
         WHERE cp.author_id = $1
-          AND ${POST_IS_NOT_GROUP_ONLY}
+          AND ${feedVisibility}
           AND (${POST_REQUIRES_MODERATION} = false OR cp.author_id = $2)
           AND ${INTERNAL_CONTENT_EXCLUSION}
           AND ${notBlocked("$2")}
@@ -284,12 +306,13 @@ export function buildCommunityFeedQuery(
 
   if (input.feedMode === "following") {
     const relation = acceptedRelationship("$1");
+    const feedVisibility = postIsVisibleInCommunityFeed("$1");
     return {
       text: `SELECT ${projection}
         FROM community_posts cp
         LEFT JOIN users u ON u.id = cp.author_id
         WHERE (cp.author_id = $1 OR ${relation})
-          AND ${POST_IS_NOT_GROUP_ONLY}
+          AND ${feedVisibility}
           AND ${POST_VISIBILITY} IN ('public', 'followers_only')
           AND (${POST_REQUIRES_MODERATION} = false OR cp.author_id = $1)
           AND ${INTERNAL_CONTENT_EXCLUSION}
@@ -304,12 +327,13 @@ export function buildCommunityFeedQuery(
     const recentWindow = options.recentOnly === false
       ? ""
       : "AND cp.created_at > NOW() - INTERVAL '30 days'";
+    const feedVisibility = postIsVisibleInCommunityFeed("$1");
     return {
       text: `SELECT ${projection}
         FROM community_posts cp
         LEFT JOIN users u ON u.id = cp.author_id
         WHERE ${POST_VISIBILITY} = 'public'
-          AND ${POST_IS_NOT_GROUP_ONLY}
+          AND ${feedVisibility}
           AND ${POST_REQUIRES_MODERATION} = false
           AND (${AUTHOR_IS_PRIVATE} = false OR u.id IS NULL)
           AND ${INTERNAL_CONTENT_EXCLUSION}
@@ -322,12 +346,13 @@ export function buildCommunityFeedQuery(
   }
 
   const relation = acceptedRelationship("$1");
+  const feedVisibility = postIsVisibleInCommunityFeed("$1");
   return {
     text: `SELECT ${projection}
     FROM community_posts cp
       LEFT JOIN users u ON u.id = cp.author_id
       WHERE ${POST_VISIBILITY} = 'public'
-        AND ${POST_IS_NOT_GROUP_ONLY}
+        AND ${feedVisibility}
         AND ${POST_REQUIRES_MODERATION} = false
         AND ${INTERNAL_CONTENT_EXCLUSION}
         AND ${notBlocked("$1")}

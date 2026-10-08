@@ -46,7 +46,7 @@ import { detectSocialVideoPlatform } from "@workspace/constants";
 // Community is the social surface: a feed and the member groups that shape it.
 // Events, Library material, safety resources, market, and profiles retain their
 // own existing routes; they no longer displace posts inside this feed tab.
-const TABS = ["Feed", "Groups"];
+const TABS = ["Community Feed", "My Groups"];
 
 type CommunityFeedDisplay = "text_first" | "mixed" | "video_first";
 
@@ -164,10 +164,9 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
   };
 }
 
-function GroupCard({ group, onPress, onJoinLeave }: {
+function GroupCard({ group, onPress }: {
   group: Group;
   onPress: () => void;
-  onJoinLeave: (g: Group) => void;
 }) {
   const colors = useColors();
   const catColor = CATEGORY_COLORS[group.category] ?? "#CA922B";
@@ -206,18 +205,9 @@ function GroupCard({ group, onPress, onJoinLeave }: {
           )}
         </View>
       </View>
-      <TouchableOpacity
-        style={[
-          styles.joinChip,
-          { backgroundColor: group.isMember ? colors.secondary : catColor, borderColor: group.isMember ? colors.border : catColor },
-        ]}
-        onPress={() => onJoinLeave(group)}
-        activeOpacity={0.8}
-      >
-        <Text style={[styles.joinChipText, { color: group.isMember ? colors.foreground : "#FFFFFF" }]}>
-          {group.isMember ? "Joined" : "Join"}
-        </Text>
-      </TouchableOpacity>
+      <View style={[styles.joinChip, { backgroundColor: catColor, borderColor: catColor }]}>
+        <Text style={[styles.joinChipText, { color: "#FFFFFF" }]}>Open</Text>
+      </View>
     </TouchableOpacity>
   );
 }
@@ -232,7 +222,7 @@ export default function CommunityScreen() {
   const activeGroupName = typeof params.groupName === "string" ? params.groupName : "This Group";
   const { isAuthenticated, user } = useAuth();
   const isPaidMember = !!user && ["navigator", "trailblazer", "community_builder", "legacy_member", "founding", "beta"].includes(user.memberType ?? "");
-  const [activeTab, setActiveTab] = useState("Feed");
+  const [activeTab, setActiveTab] = useState("Community Feed");
   const [refreshing, setRefreshing] = useState(false);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -355,7 +345,7 @@ export default function CommunityScreen() {
     inputRef.current?.focus();
   };
 
-  const { groups, isLoading: groupsLoading, refetch: refetchGroups, join, leave } = useGroups();
+  const { groups, isLoading: groupsLoading, refetch: refetchGroups } = useGroups();
   const [eventsTimeFilter, setEventsTimeFilter] = useState("Upcoming");
   const { events, isLoading: eventsLoading, refetch: refetchEvents } = useEvents();
 
@@ -493,8 +483,14 @@ export default function CommunityScreen() {
   useEffect(() => { queueMicrotask(() => { void loadPosts({ force: true }); }); }, [loadPosts]);
 
   useFocusEffect(useCallback(() => {
-    if (activeTab === "Feed") void loadPosts();
+    if (activeTab === "Community Feed") void loadPosts();
   }, [activeTab, loadPosts]));
+
+  // My Groups is a separate membership-only destination. Refresh the
+  // server-authoritative membership list whenever the member returns to it.
+  useEffect(() => {
+    if (activeTab === "My Groups") void refetchGroups();
+  }, [activeTab, refetchGroups]);
 
   // Fetch trending hashtags on mount
   useEffect(() => {
@@ -807,20 +803,6 @@ export default function CommunityScreen() {
     }
   };
 
-  const handleJoinLeave = async (group: Group) => {
-    if (!isAuthenticated) {
-      setUpgradeFeature("Joining Groups");
-      setShowUpgrade(true);
-      return;
-    }
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    if (group.isMember) {
-      await leave(group.id);
-    } else {
-      await join(group.id);
-    }
-  };
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 16, backgroundColor: colors.background, borderBottomColor: colors.border }]}>
@@ -859,7 +841,7 @@ export default function CommunityScreen() {
         contentContainerStyle={{ flexDirection: "row" }}
         accessibilityRole="tablist"
       >
-        {(activeGroupId ? ["Feed"] : TABS).map((tab) => (
+        {(activeGroupId ? ["Community Feed"] : TABS).map((tab) => (
           <TouchableOpacity activeOpacity={0.85}
             key={tab}
             onPress={() => setActiveTab(tab)}
@@ -986,7 +968,7 @@ export default function CommunityScreen() {
         </View>
       ) : activeTab === "Circles ⭐" ? (
         <CirclesTab colors={colors} router={router} isAuthenticated={isAuthenticated} isPaidMember={isPaidMember} bottomPad={bottomPad} />
-      ) : activeTab === "Groups" ? (
+      ) : activeTab === "My Groups" ? (
         <View style={{ flex: 1 }}>
           {/* Category filter */}
           <FlatList
@@ -1054,9 +1036,9 @@ export default function CommunityScreen() {
               ) : (
                 <View style={styles.empty}>
                   <Feather name="users" size={40} color={colors.muted} />
-                  <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>No groups here yet</Text>
+                  <Text style={[styles.emptyTitle, { color: colors.mutedForeground }]}>You have not joined any groups yet</Text>
                   <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>
-                    Every community starts somewhere. Try a different category or be the one who starts this one.
+                    Groups you currently belong to will appear here.
                   </Text>
                 </View>
               )
@@ -1065,7 +1047,6 @@ export default function CommunityScreen() {
               <GroupCard
                 group={item}
                 onPress={() => router.push({ pathname: "/group/[id]", params: { id: String(item.id) } })}
-                onJoinLeave={handleJoinLeave}
               />
             )}
           />

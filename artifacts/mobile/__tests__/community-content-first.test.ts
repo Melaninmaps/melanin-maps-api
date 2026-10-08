@@ -14,10 +14,25 @@ const threadSource = readFileSync(
   fileURLToPath(new URL("../app/community-thread.tsx", import.meta.url)),
   "utf8",
 );
+const groupsHookSource = readFileSync(
+  fileURLToPath(new URL("../hooks/useGroups.ts", import.meta.url)),
+  "utf8",
+);
+const groupDetailSource = readFileSync(
+  fileURLToPath(new URL("../app/group/[id].tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("native Community content-first surface", () => {
   it("keeps Community navigation limited to the feed and groups", () => {
-    expect(source).toContain('const TABS = ["Feed", "Groups"];');
+    expect(source).toContain('const TABS = ["Community Feed", "My Groups"];');
+    expect(source).toContain('activeTab === "Community Feed"');
+    expect(source).toContain('activeTab === "My Groups"');
+    expect(groupsHookSource).toContain("/api/groups/mine");
+    expect(groupsHookSource).toContain("prev.filter((group) => group.id !== groupId)");
+    expect(groupDetailSource).toContain("/api/community/posts?groupId=");
+    expect(groupDetailSource).toContain("Posts and shared media are visible only to current members of this group.");
+    expect(groupDetailSource).toContain("<CommunityPostCard");
     expect(source).toContain("Events, Library material, safety resources, market, and profiles retain their");
   });
 
