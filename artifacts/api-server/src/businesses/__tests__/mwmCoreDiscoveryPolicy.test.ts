@@ -7,6 +7,8 @@ import {
   isMwmDiasporaPromotionEligible,
   mwmCoreDiscoverySqlPredicate,
   mwmDiasporaPromotionSqlPredicate,
+  mwmPublicDirectorySqlPredicate,
+  sourceBackedGeneralDirectorySqlPredicate,
 } from "../mwmCoreDiscoveryPolicy";
 import { DOCUMENTED_DISCOVERY_POLICY_VERSION } from "../documentedDiscoveryEligibility";
 
@@ -42,6 +44,19 @@ describe("MWM Core discovery policy compatibility", () => {
       city: "Philadelphia",
       ownershipDesignation: "minority-owned",
     } as unknown as typeof documented)).toBe(false);
+  });
+
+  it("allows only current active source receipts into general directory browse", () => {
+    const sourceReceipt = sourceBackedGeneralDirectorySqlPredicate("b.id");
+    const generalDirectory = mwmPublicDirectorySqlPredicate("b.id");
+    expect(sourceReceipt).toContain("business_source_directory_receipts");
+    expect(sourceReceipt).toContain("mapping_status = 'active'");
+    expect(sourceReceipt).toContain("observed_at + INTERVAL '180 days'");
+    expect(sourceReceipt).toContain("official_website_url");
+    expect(sourceReceipt).toContain("official_socials");
+    expect(sourceReceipt).not.toContain("ownership_designations");
+    expect(generalDirectory).toContain("business_discovery_eligibility");
+    expect(generalDirectory).toContain("business_source_directory_receipts");
   });
 
   it("retains completed-cohort provenance for review but not as member eligibility", () => {
