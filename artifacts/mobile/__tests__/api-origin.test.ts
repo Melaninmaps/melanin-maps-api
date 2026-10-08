@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { getApiBase, STAGING_ORIGIN } from "../lib/api";
+import { getApiBase, STAGING_ORIGIN } from "../lib/apiOrigin";
 
 const originalOrigin = process.env.EXPO_PUBLIC_API_ORIGIN;
 const originalEnvironment = process.env.EXPO_PUBLIC_APP_ENV;
