@@ -271,9 +271,6 @@ export function useKinfolk() {
       content: message.content,
       resultView: message.resultView ?? null,
     }));
-    const cityHint = [...messagesRef.current]
-      .reverse()
-      .find((message) => message.location?.city)?.location?.city;
 
     const userMsg: ChatMessage = {
       id: makeId(),
@@ -306,7 +303,6 @@ export function useKinfolk() {
           imageAssetIds: opts?.imageAssetIds ?? [],
           imageVisionConsent: opts?.imageVisionConsent === true,
           includeCommunityPerspective: opts?.includeCommunityPerspective === true,
-          cityHint,
           publicOrigin: opts?.publicOrigin?.trim() || undefined,
           conversationContext,
           clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,

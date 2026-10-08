@@ -1035,8 +1035,8 @@ const aiStyles = StyleSheet.create({
   wrapper: { flexDirection: "row", alignItems: "flex-start", marginBottom: 16, paddingHorizontal: 12 },
   avatarCol: { marginRight: 8, paddingTop: 2 },
   avatar: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  contentCol: { flex: 1 },
-  bubble: { borderRadius: 16, borderTopLeftRadius: 4, padding: 12, borderWidth: 1, marginBottom: 8 },
+  contentCol: { flex: 1, minWidth: 0 },
+  bubble: { borderRadius: 16, borderTopLeftRadius: 4, padding: 12, borderWidth: 1, marginBottom: 8, minWidth: 0 },
   bubbleText: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 20, flexShrink: 1 },
   copyBtn: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 4, marginTop: 8, paddingVertical: 3, paddingHorizontal: 2 },
   copyLabel: { fontFamily: "Inter_500Medium", fontSize: 11 },
@@ -2966,12 +2966,14 @@ export default function TravelScreen() {
       {/* Chat area */}
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={0}>
         <FlatList
-        keyboardDismissMode="on-drag"
+          keyboardDismissMode="on-drag"
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets={Platform.OS === "ios"}
           ref={flatListRef}
           data={messages}
           keyExtractor={(item) => item.id}
           renderItem={renderMessage}
-          contentContainerStyle={styles.chatContent}
+          contentContainerStyle={[styles.chatContent, { paddingBottom: Math.max(insets.bottom, 24) }]}
           ListHeaderComponent={(
             <View>
               {conversationHandoff && (
@@ -3226,6 +3228,7 @@ export default function TravelScreen() {
             returnKeyType="send"
             submitBehavior="submit"
             onSubmitEditing={() => void handleSend()}
+            onFocus={() => scrollToBottom(true)}
             editable={!uploadingKinfolkImage}
           />
           {(isLoading || playingVoice) ? (
@@ -3369,7 +3372,7 @@ const styles = StyleSheet.create({
   queryCounterText: { fontFamily: "Inter_400Regular", fontSize: 11, flex: 1 },
   aiDownBanner: { flexDirection: "row", alignItems: "flex-start", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
   aiDownBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1, lineHeight: 18 },
-  chatContent: { paddingTop: 16, paddingBottom: 8 },
+  chatContent: { paddingTop: 16, paddingBottom: 24, flexGrow: 1 },
   compareBar: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1 },
   compareBarText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 13 },
   compareGoBtn: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8 },
