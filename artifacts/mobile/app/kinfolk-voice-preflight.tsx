@@ -42,6 +42,9 @@ import {
 } from "@/lib/voicePreflight";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
+// Gold is the app's action color in both themes. Dark ink keeps its labels
+// legible in dark mode without changing the selected speaker or any audio flow.
+const PRIMARY_ACTION_INK = "#241405";
 const ROUTES: ReadonlyArray<{ id: VoicePreflightRoute; label: string; detail: string }> = [
   { id: "phone_speaker", label: "Phone speaker", detail: "Device speaker" },
   { id: "wired_headphones", label: "Wired headphones", detail: "Physical wired route" },
@@ -490,7 +493,7 @@ export default function KinfolkVoicePreflightScreen() {
               style={[styles.primaryButton, { backgroundColor: colors.primary, opacity: isStarting || authLoading ? 0.65 : 1 }]}
               accessibilityLabel="Start Kinfolk Voice Preflight recording"
             >
-              {isStarting ? <ActivityIndicator color="#fff" /> : <Feather name="mic" size={17} color="#fff" />}
+              {isStarting ? <ActivityIndicator color={PRIMARY_ACTION_INK} /> : <Feather name="mic" size={17} color={PRIMARY_ACTION_INK} />}
               <Text style={styles.primaryButtonText}>Start recording</Text>
             </TouchableOpacity>
           ) : (
@@ -513,7 +516,7 @@ export default function KinfolkVoicePreflightScreen() {
               style={[styles.transcriptInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
             />
             <TouchableOpacity onPress={() => void sendTranscript()} disabled={!canSend} style={[styles.primaryButton, { backgroundColor: colors.primary, opacity: canSend ? 1 : 0.65 }]} accessibilityLabel="Send reviewed voice transcript to Kinfolk">
-              {isSending ? <ActivityIndicator color="#fff" /> : <Feather name="send" size={16} color="#fff" />}
+              {isSending ? <ActivityIndicator color={PRIMARY_ACTION_INK} /> : <Feather name="send" size={16} color={PRIMARY_ACTION_INK} />}
               <Text style={styles.primaryButtonText}>Send transcript</Text>
             </TouchableOpacity>
           </View>
@@ -524,7 +527,7 @@ export default function KinfolkVoicePreflightScreen() {
             <Text style={[styles.stepTitle, { color: colors.foreground }]}>Kinfolk text reply</Text>
             <Text selectable style={[styles.replyText, { color: colors.foreground }]}>{reply}</Text>
             <TouchableOpacity onPress={() => void prepareSpeech()} disabled={!canPrepareSpeech} style={[styles.primaryButton, { backgroundColor: colors.primary, opacity: canPrepareSpeech ? 1 : 0.65 }]} accessibilityLabel="Prepare Kinfolk spoken response">
-              {isPreparingSpeech ? <ActivityIndicator color="#fff" /> : <Feather name="volume-2" size={16} color="#fff" />}
+              {isPreparingSpeech ? <ActivityIndicator color={PRIMARY_ACTION_INK} /> : <Feather name="volume-2" size={16} color={PRIMARY_ACTION_INK} />}
               <Text style={styles.primaryButtonText}>Prepare spoken reply</Text>
             </TouchableOpacity>
             {playbackUri ? (
@@ -600,7 +603,7 @@ const styles = StyleSheet.create({
   preflightPrompt: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   promptQuote: { fontFamily: "Inter_500Medium", fontSize: 13, lineHeight: 19, fontStyle: "italic" },
   primaryButton: { minHeight: 45, borderRadius: 10, paddingHorizontal: 15, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
-  primaryButtonText: { color: "#fff", fontFamily: "Inter_700Bold", fontSize: 13 },
+  primaryButtonText: { color: PRIMARY_ACTION_INK, fontFamily: "Inter_700Bold", fontSize: 13 },
   stopButton: { minHeight: 45, borderRadius: 10, borderWidth: 1, paddingHorizontal: 15, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#FEF2F2" },
   stopButtonText: { color: "#B91C1C", fontFamily: "Inter_700Bold", fontSize: 13 },
   stepTitle: { fontFamily: "Inter_700Bold", fontSize: 14 },

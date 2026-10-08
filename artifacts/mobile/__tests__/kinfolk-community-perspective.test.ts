@@ -25,6 +25,9 @@ describe("mobile Kinfolk Community perspective", () => {
     expect(consentSource).toContain("selectedIds: ids");
     expect(consentSource).toContain("selected.length === 0");
     expect(consentSource).toContain("consent: true");
+    expect(consentSource).toContain("const [sensitiveConsent, setSensitiveConsent]");
+    expect(consentSource).toContain("sensitiveConsent: includesSensitive");
+    expect(consentSource).toContain("I separately confirm these selected sensitive details");
   });
 
   it("renders only a generic unverified-perspective disclosure, never raw Community post content", () => {

@@ -32,6 +32,10 @@ const disclosureSource = readFileSync(
   fileURLToPath(new URL("../components/kinfolk/KinfolkContinuityDisclosure.tsx", import.meta.url)),
   "utf8",
 );
+const inlineMemoryConsentSource = readFileSync(
+  fileURLToPath(new URL("../components/kinfolk/KinfolkInlineMemoryConsent.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("Kinfolk chat presentation", () => {
   it("continues the original local search for both a clarification answer and Skip", () => {
@@ -167,6 +171,9 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).toContain("KinfolkInlineMemoryConsent");
     expect(travelPageSource).toContain("memoryConsentPlan?: KinfolkInlineMemoryConsentPlan | null");
     expect(travelPageSource).toContain("inlineMemoryConsent: data.memoryConsentPlan");
+    expect(inlineMemoryConsentSource).toContain("const [sensitiveConsent, setSensitiveConsent]");
+    expect(inlineMemoryConsentSource).toContain("sensitiveConsent: savingSensitive");
+    expect(inlineMemoryConsentSource).toContain("I separately confirm these selected sensitive details");
   });
 
   it("renders deterministic business recommendations with active detail and website links", () => {

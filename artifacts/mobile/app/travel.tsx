@@ -57,6 +57,7 @@ import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiv
 import { KinfolkInlineMemoryConsent } from "@/components/KinfolkInlineMemoryConsent";
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
+const PRIMARY_ACTION_INK = "#241405";
 const NATIVE_VOICE_MAX_DURATION_MS = 60_000;
 
 const ALL_CATEGORIES = [
@@ -2062,6 +2063,10 @@ export default function TravelScreen() {
   const voiceOutputRef = useRef(false);
   const pendingAutoSpeechRef = useRef<VoicePlaybackRequest | null>(null);
   const queuedVoicePlaybackRef = useRef<VoicePlaybackRequest | null>(null);
+  // The API synthesizes every speech chunk. Keep the complete local sequence
+  // rather than playing only the backward-compatible first `audio` field.
+  const activeVoicePlaybackRef = useRef<VoicePlaybackRequest | null>(null);
+  const pendingVoiceClipFilesRef = useRef<FileSystem.File[]>([]);
   const [voiceAudioUri, setVoiceAudioUri] = useState<string | undefined>(undefined);
   const voiceAudioFileRef = useRef<FileSystem.File | null>(null);
   const [playingVoice, setPlayingVoice] = useState(false);
@@ -2159,13 +2164,17 @@ export default function TravelScreen() {
   const stopServerVoice = useCallback((reason: string) => {
     pendingAutoSpeechRef.current = null;
     queuedVoicePlaybackRef.current = null;
+    activeVoicePlaybackRef.current = null;
     autoSpeechGuardRef.current.invalidate(reason);
     if (serverVoicePlayer.playing || serverVoicePlayer.isLoaded) serverVoicePlayer.pause();
-    const temporaryFile = voiceAudioFileRef.current;
+    const temporaryFiles = [voiceAudioFileRef.current, ...pendingVoiceClipFilesRef.current];
     voiceAudioFileRef.current = null;
-    if (temporaryFile?.exists) {
-      try { temporaryFile.delete(); } catch { /* local playback cleanup is best effort */ }
-    }
+    pendingVoiceClipFilesRef.current = [];
+    temporaryFiles.forEach((temporaryFile) => {
+      if (temporaryFile?.exists) {
+        try { temporaryFile.delete(); } catch { /* local playback cleanup is best effort */ }
+      }
+    });
     setVoiceAudioUri(undefined);
     setPlayingVoice(false);
     setVoiceOutputStatus(null);
@@ -2183,7 +2192,7 @@ export default function TravelScreen() {
     stopServerVoice(`new_${source}_voice_request`);
     const request = autoSpeechGuardRef.current.begin();
     let queued = false;
-    let temporaryFile: FileSystem.File | null = null;
+    let temporaryFiles: FileSystem.File[] = [];
     setPlayingVoice(true);
     setSpokenVoiceText(null);
     setVoiceOutputStatus("Preparing voice…");
@@ -2217,6 +2226,7 @@ export default function TravelScreen() {
         contentType?: string;
         bytes?: number;
         spokenText?: string;
+        clips?: Array<{ audio?: string; spokenText?: string }>;
       };
       if (
         !payload.audio
@@ -2227,19 +2237,32 @@ export default function TravelScreen() {
         || !payload.spokenText?.trim()
       ) throw new Error("Kinfolk did not return playable audio.");
       if (!autoSpeechGuardRef.current.canPlay(request)) return;
+      const clips = Array.isArray(payload.clips) && payload.clips.length > 0
+        ? payload.clips
+        : [{ audio: payload.audio, spokenText: payload.spokenText }];
+      if (clips.some((clip) => !clip.audio?.trim() || !clip.spokenText?.trim())) {
+        throw new Error("Kinfolk did not return audio for the full visible response.");
+      }
       setSpokenVoiceText({ messageId, content: payload.spokenText, phase: "preparing" });
-      temporaryFile = new FileSystem.File(
-        FileSystem.Paths.cache,
-        `kinfolk-primary-${Date.now()}.${payload.format}`,
-      );
-      temporaryFile.write(payload.audio, { encoding: FileSystem.EncodingType.Base64 });
+      temporaryFiles = clips.map((clip, index) => {
+        const file = new FileSystem.File(
+          FileSystem.Paths.cache,
+          `kinfolk-primary-${Date.now()}-${index}.${payload.format}`,
+        );
+        file.write(clip.audio!, { encoding: FileSystem.EncodingType.Base64 });
+        return file;
+      });
       if (!autoSpeechGuardRef.current.canPlay(request)) {
-        if (temporaryFile.exists) temporaryFile.delete();
+        temporaryFiles.forEach((file) => { if (file.exists) file.delete(); });
         return;
       }
-      voiceAudioFileRef.current = temporaryFile;
+      const [firstFile, ...remainingFiles] = temporaryFiles;
+      if (!firstFile) throw new Error("Kinfolk did not return playable audio.");
+      voiceAudioFileRef.current = firstFile;
+      pendingVoiceClipFilesRef.current = remainingFiles;
+      activeVoicePlaybackRef.current = request;
       queuedVoicePlaybackRef.current = request;
-      setVoiceAudioUri(temporaryFile.uri);
+      setVoiceAudioUri(firstFile.uri);
       queued = true;
     } catch (cause) {
       if (request.signal.aborted) return;
@@ -2249,9 +2272,11 @@ export default function TravelScreen() {
       Alert.alert("Voice playback unavailable", `${message} You can still read the reply and try Listen again.`);
     } finally {
       if (!queued) {
-        if (temporaryFile?.exists) {
-          try { temporaryFile.delete(); } catch { /* local playback cleanup is best effort */ }
-        }
+        temporaryFiles.forEach((temporaryFile) => {
+          if (temporaryFile.exists) {
+            try { temporaryFile.delete(); } catch { /* local playback cleanup is best effort */ }
+          }
+        });
         autoSpeechGuardRef.current.finish(request);
         setPlayingVoice(false);
         setSpokenVoiceText(null);
@@ -2283,7 +2308,6 @@ export default function TravelScreen() {
         setVoiceOutputStatus("Speaking…");
         setSpokenVoiceText((current) => current ? { ...current, phase: "playing" } : current);
         queuedVoicePlaybackRef.current = null;
-        autoSpeechGuardRef.current.finish(request);
       } catch {
         if (!cancelled) {
           setVoiceOutputStatus("Voice unavailable — try Listen again.");
@@ -2305,13 +2329,32 @@ export default function TravelScreen() {
 
   useEffect(() => {
     if (playingVoice && serverVoicePlayerStatus.didJustFinish && !queuedVoicePlaybackRef.current) {
-      setVoiceOutputStatus("Voice finished. Tap Listen to play it again.");
-      setSpokenVoiceText((current) => current ? { ...current, phase: "finished" } : current);
       const temporaryFile = voiceAudioFileRef.current;
       voiceAudioFileRef.current = null;
       if (temporaryFile?.exists) {
         try { temporaryFile.delete(); } catch { /* local playback cleanup is best effort */ }
       }
+      const nextFile = pendingVoiceClipFilesRef.current.shift();
+      const request = activeVoicePlaybackRef.current;
+      if (nextFile && request && autoSpeechGuardRef.current.canPlay(request)) {
+        // Load and play the next server-issued clip automatically. No visible
+        // suffix is silently skipped when an answer crosses a TTS chunk.
+        voiceAudioFileRef.current = nextFile;
+        queuedVoicePlaybackRef.current = request;
+        setVoiceOutputStatus("Continuing voice…");
+        setVoiceAudioUri(nextFile.uri);
+        return;
+      }
+      pendingVoiceClipFilesRef.current.forEach((file) => {
+        if (file.exists) {
+          try { file.delete(); } catch { /* local playback cleanup is best effort */ }
+        }
+      });
+      pendingVoiceClipFilesRef.current = [];
+      activeVoicePlaybackRef.current = null;
+      if (request) autoSpeechGuardRef.current.finish(request);
+      setVoiceOutputStatus("Voice finished. Tap Listen to play it again.");
+      setSpokenVoiceText((current) => current ? { ...current, phase: "finished" } : current);
       setVoiceAudioUri(undefined);
       const timer = setTimeout(() => setPlayingVoice(false), 0);
       return () => clearTimeout(timer);
@@ -3224,7 +3267,7 @@ export default function TravelScreen() {
               accessibilityLabel={voiceOutput ? "Turn off automatic Kinfolk spoken replies" : "Turn on automatic Kinfolk spoken replies"}
               activeOpacity={0.75}
             >
-              <Ionicons name={voiceOutput ? "volume-high" : "volume-mute-outline"} size={18} color={voiceOutput ? "#fff" : colors.mutedForeground} />
+              <Ionicons name={voiceOutput ? "volume-high" : "volume-mute-outline"} size={18} color={voiceOutput ? PRIMARY_ACTION_INK : colors.mutedForeground} />
             </TouchableOpacity>
           ) : null}
           {Platform.OS !== "web" ? (
@@ -3273,7 +3316,7 @@ export default function TravelScreen() {
             disabled={!inputText.trim() || uploadingKinfolkImage}
             accessibilityLabel="Send message to Kinfolk"
           >
-            <Ionicons name="arrow-up" size={20} color="#fff" />
+            <Ionicons name="arrow-up" size={20} color={inputText.trim() && !uploadingKinfolkImage ? PRIMARY_ACTION_INK : colors.mutedForeground} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>

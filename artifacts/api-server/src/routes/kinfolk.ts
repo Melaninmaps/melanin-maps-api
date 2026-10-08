@@ -223,6 +223,7 @@ import {
   rankTravelCatalogForMember,
   type KinfolkItinerary,
 } from "../kinfolk/itinerary-response";
+import { isExplicitCurrentItineraryRequest } from "../kinfolk/itinerary-eligibility";
 import { inspectProactiveTravelSuggestion } from "../kinfolk/proactive-travel-suggestions";
 
 // ── Living Library lazy singleton instances ────────────────────────────────────
@@ -6548,6 +6549,15 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
   if (selected.length !== selectedIds.length) {
     return void res.status(400).json({ error: "One or more memory choices are no longer valid.", code: "MEMORY_CONSENT_SELECTION_INVALID" });
   }
+  // The ordinary selector must never authorize a sensitive detail by accident.
+  // A member must make the second, specific confirmation for every selected
+  // sensitive item before it can reach the private-memory write path.
+  if (selected.some((item) => item.kind === "sensitive") && body.sensitiveConsent !== true) {
+    return void res.status(400).json({
+      error: "Confirm the sensitive detail separately before Kinfolk saves it privately.",
+      code: "SENSITIVE_MEMORY_CONSENT_REQUIRED",
+    });
+  }
 
   try {
     const result = await withSerializedPrivateMemoryWrite({
@@ -11426,10 +11436,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // A local catalog is a response tool, never background conversation context.
     // Ordinary emotional, planning, and general turns must not query or receive
     // prior-city listings merely because an earlier session had a destination.
+    const explicitItineraryRequest = isExplicitCurrentItineraryRequest(message);
     const catalogRequestedForTurn =
       decisionPlan.allowBusinessCards ||
-      earlyDecision.route === "travel_planning" ||
-      isTravelPlanningPrompt(message);
+      (explicitItineraryRequest &&
+        (earlyDecision.route === "travel_planning" || isTravelPlanningPrompt(message)));
     if (broadCatalogAllowed && catalogRequestedForTurn && destination && destinationScope) {
       try {
         businessCatalog =
@@ -11886,8 +11897,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const travelPlanning =
       !isCurrentCityBriefing &&
       !generalAnswerRoute.requiresCurrentEvidence &&
-      (isTravelPlanningPrompt(message) ||
-        earlyDecision.route === "travel_planning");
+      explicitItineraryRequest &&
+      (isTravelPlanningPrompt(message) || earlyDecision.route === "travel_planning");
     if (
       travelPlanning &&
       broadCatalogAllowed &&

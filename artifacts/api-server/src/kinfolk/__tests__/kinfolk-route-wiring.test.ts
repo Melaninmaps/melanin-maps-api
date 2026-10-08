@@ -58,6 +58,16 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("catalogSource: promptCatalogSource");
   });
 
+  it("permits a directory itinerary only for an explicit current activity, date, and place request", () => {
+    expect(routeSource).toContain('import { isExplicitCurrentItineraryRequest } from "../kinfolk/itinerary-eligibility"');
+    expect(chatRoute).toContain("const explicitItineraryRequest = isExplicitCurrentItineraryRequest(message)");
+    expect(chatRoute).toContain("explicitItineraryRequest &&");
+    const catalogGate = chatRoute.indexOf("const catalogRequestedForTurn =");
+    const itineraryAssembly = chatRoute.indexOf("const travelPlanning =");
+    expect(catalogGate).toBeGreaterThan(-1);
+    expect(itineraryAssembly).toBeGreaterThan(catalogGate);
+  });
+
   it("wires current-turn identity, evidence routing, strict parsing, and itinerary normalization", () => {
     expect(chatRoute).toContain("resolvePermittedIdentityContext(message)");
     expect(chatRoute).toContain("classifyEvidenceRoute(message)");

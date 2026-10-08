@@ -46,7 +46,10 @@ import {
   mapLocationServicesOffNotice,
   type MapLocationNotice,
 } from "@/lib/mapLocationStatus";
-import { resolveMapBusinessProximity } from "@/lib/mapBusinessScope";
+import {
+  filterMapPinsForExplicitLocality,
+  resolveMapBusinessProximity,
+} from "@/lib/mapBusinessScope";
 import { useAuth } from "@/lib/auth";
 import {
   canLoadLocalCollections,
@@ -679,11 +682,15 @@ export function FullMapView({
       ? canonicalMapPins.filter((business) =>
           distanceMiles(proximityMapLocation, business) <= mapDiscoveryRadius,
         )
-      : canonicalMapPins;
+      : filterMapPinsForExplicitLocality(
+          canonicalMapPins,
+          mapLocality,
+          hasExplicitMapLocality,
+        );
     return scopePins.filter((business) =>
       matchesMapDiscoveryFocus(business, mapDiscoveryFocus),
     );
-  }, [canonicalMapPins, mapDiscoveryFocus, mapDiscoveryRadius, proximityMapLocation]);
+  }, [canonicalMapPins, hasExplicitMapLocality, mapDiscoveryFocus, mapDiscoveryRadius, mapLocality, proximityMapLocation]);
   const directMatch = businessSearchScope === "explicit_public_listing"
     ? businesses[0] ?? null
     : null;
