@@ -1194,6 +1194,7 @@ describe("source contracts", () => {
       businesses.indexOf('router.patch("/businesses/:id/status"'),
     );
     expect(detailRoute).toContain("FROM public.public_businesses WHERE id = $1");
+    expect(detailRoute).toContain("if (!visRows[0] && !isAdmin(req))");
     expect(detailRoute).not.toContain("SELECT is_duplicate, status FROM businesses");
   });
 });

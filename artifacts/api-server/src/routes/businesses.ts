@@ -2495,21 +2495,13 @@ router.get("/businesses/:id", async (req: Request, res: Response) => {
 
     // The canonical public view applies every shared visibility rule: active status,
     // live listing lifecycle, permanent-hidden flag, duplicate suppression, and
-    // proven-demo containment. An administrator may intentionally archive a
-    // legitimate record from promotion, map, category, and Kinfolk discovery
-    // while retaining its stable direct-name profile for record review.
+    // proven-demo containment. A retained record outside that view is an
+    // administrator-only review record; it is never a public direct profile.
     const { rows: visRows } = await pool.query<{ id: string }>(
       `SELECT id FROM public.public_businesses WHERE id = $1 LIMIT 1`,
       [id],
     );
-    const archivedDirectProfile =
-      business.status === "suspended" &&
-      business.listingStatus === "archived" &&
-      !business.permanentlyHidden &&
-      !String(business.dataSource ?? "").trim().toLowerCase().match(/^(demo|demo_seed)$/) &&
-      String(business.phone ?? "").replace(/\D/g, "") !== "15555550100" &&
-      String(business.phone ?? "").replace(/\D/g, "") !== "5555550100";
-    if (!visRows[0] && !archivedDirectProfile) {
+    if (!visRows[0] && !isAdmin(req)) {
       res.status(404).json({ error: "Business not found" });
       return;
     }
