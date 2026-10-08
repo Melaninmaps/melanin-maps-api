@@ -59,6 +59,14 @@ import {
 } from "../businesses/mwmCoreDiscoveryPolicy";
 import { documentedDiscoveryEligibilitySqlPredicate } from "../businesses/documentedDiscoveryEligibility";
 import {
+  highConfidenceBusinessDuplicateReasons,
+  normalizeBusinessPhone,
+  normalizeOfficialSocialProfileForPlatform,
+  normalizeOfficialWebsiteDomain,
+  type BusinessDuplicateMatchReason,
+  type BusinessIdentityInput,
+} from "../businesses/businessDuplicateIdentity";
+import {
   BUSINESS_IMAGE_ELIGIBILITY_POLICY_VERSION,
   attachEligibleBusinessImages,
   ensureBusinessImageEvidenceSchema,
@@ -2839,28 +2847,110 @@ router.post("/businesses/suggest-place", async (req: any, res: Response) => {
   }
 });
 
-function normalizedDuplicateValue(value: string | undefined): string {
-  return (value ?? "")
-    .normalize("NFKC")
-    .toLocaleLowerCase("en-US")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
+type BusinessIdentityCandidate = BusinessIdentityInput & {
+  id: string;
+  name: string;
+  address: string | null;
+  city: string;
+  state: string | null;
+  listing_status?: string | null;
+  owner_claim_status?: string | null;
+  status?: string | null;
+  matchReasons: BusinessDuplicateMatchReason[];
+};
+
+type IdentityCandidateScope = "public" | "admin";
+
+function identitySocialNeedles(input: BusinessIdentityInput): string[] {
+  return [
+    normalizeOfficialSocialProfileForPlatform("instagram", input.instagram),
+    normalizeOfficialSocialProfileForPlatform("facebook", input.facebook),
+    normalizeOfficialSocialProfileForPlatform("tiktok", input.tiktok),
+    normalizeOfficialSocialProfileForPlatform("twitter", input.twitter),
+    normalizeOfficialSocialProfileForPlatform("youtube", input.youtube),
+    normalizeOfficialSocialProfileForPlatform("pinterest", input.pinterest),
+  ].map((value) => value ?? "");
 }
 
-function socialDuplicateNeedle(value: string | undefined): string {
-  return (value ?? "")
-    .normalize("NFKC")
-    .toLocaleLowerCase("en-US")
-    .replace(/^https?:\/\/(?:www\.)?/, "")
-    .replace(/^@/, "")
-    .replace(/\/$/, "")
-    .trim();
+/**
+ * Returns only records with independently sufficient identity evidence. The SQL
+ * deliberately gathers a small candidate set; the policy below makes the final
+ * decision so a substring, fuzzy name, shared city, or shared street address
+ * cannot leak into a duplicate warning or block intake.
+ */
+async function findHighConfidenceBusinessIdentityCandidates(
+  input: BusinessIdentityInput,
+  scope: IdentityCandidateScope,
+): Promise<BusinessIdentityCandidate[]> {
+  const [instagram, facebook, tiktok, twitter, youtube, pinterest] = identitySocialNeedles(input);
+  const phone = normalizeBusinessPhone(input.phone) ?? "";
+  const websiteDomain = normalizeOfficialWebsiteDomain(input.website) ?? "";
+  const from = scope === "public" ? "public.public_businesses" : "businesses";
+  const statusPredicate = scope === "admin"
+    ? "COALESCE(status, 'active') <> 'deleted' AND COALESCE(is_duplicate, FALSE) = FALSE AND"
+    : "";
+  const selectedStatus = scope === "admin" ? ", status" : ", listing_status, owner_claim_status";
+  const result = await pool.query<Omit<BusinessIdentityCandidate, "matchReasons">>(
+    `SELECT id, name, address, city, state, phone, website,
+            instagram, facebook, tiktok, twitter, youtube, pinterest${selectedStatus}
+       FROM ${from}
+      WHERE ${statusPredicate} (
+        (LOWER(TRIM(name)) = LOWER(TRIM($1))
+          AND LOWER(TRIM(city)) = LOWER(TRIM($2))
+          AND LOWER(TRIM(COALESCE(state, ''))) = LOWER(TRIM(COALESCE($3, ''))))
+        OR ($4 <> '' AND REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') LIKE '%' || $4 || '%')
+        OR ($5 <> '' AND LOWER(COALESCE(website, '')) LIKE '%' || $5 || '%')
+        OR ($6 <> '' AND LOWER(COALESCE(instagram, '')) LIKE '%' || $6 || '%')
+        OR ($7 <> '' AND LOWER(COALESCE(facebook, '')) LIKE '%' || $7 || '%')
+        OR ($8 <> '' AND LOWER(COALESCE(tiktok, '')) LIKE '%' || $8 || '%')
+        OR ($9 <> '' AND LOWER(COALESCE(twitter, '')) LIKE '%' || $9 || '%')
+        OR ($10 <> '' AND LOWER(COALESCE(youtube, '')) LIKE '%' || $10 || '%')
+        OR ($11 <> '' AND LOWER(COALESCE(pinterest, '')) LIKE '%' || $11 || '%')
+      )
+      ORDER BY name, id
+      LIMIT 50`,
+    [
+      input.name ?? "",
+      input.city ?? "",
+      input.state ?? "",
+      phone,
+      websiteDomain,
+      instagram,
+      facebook,
+      tiktok,
+      twitter,
+      youtube,
+      pinterest,
+    ],
+  );
+
+  return result.rows.flatMap((row) => {
+    const matchReasons = highConfidenceBusinessDuplicateReasons(input, row);
+    return matchReasons.length > 0 ? [{ ...row, matchReasons }] : [];
+  });
 }
 
-// ── GET /businesses/duplicate-check — confirmable soft-match before submission ──
+function publicDuplicateInput(query: Record<string, string | undefined>): BusinessIdentityInput {
+  return {
+    name: query.name,
+    address: query.address,
+    city: query.city,
+    state: query.state,
+    phone: query.phone,
+    website: query.website,
+    instagram: query.instagram,
+    facebook: query.facebook,
+    tiktok: query.tiktok,
+    twitter: query.twitter,
+    youtube: query.youtube,
+    pinterest: query.pinterest,
+  };
+}
+
+// ── GET /businesses/duplicate-check — strict identity check before submission ──
 // This applies to every community submission—minority-owned, non-minority-owned,
 // and ownership-unknown. It only returns already-public listings and never
-// publishes, promotes, verifies, or changes any business record.
+// publishes, promotes, verifies, merges, or changes any business record.
 router.get(
   "/businesses/duplicate-check",
   async (req: Request, res: Response) => {
@@ -2868,144 +2958,21 @@ router.get(
       res.status(401).json({ error: "Authentication required" });
       return;
     }
-    const { name, address, city, state, website, instagram, facebook, tiktok, youtube } = req.query as Record<string, string>;
-    if (!name || !city || !state) {
+    const query = req.query as Record<string, string | undefined>;
+    if (!query.name?.trim() || !query.city?.trim() || !query.state?.trim()) {
       res.status(400).json({ error: "name, city, and state are required" });
       return;
     }
     try {
-      // Step 1: exact match (name + address + city + state)
-      const exactParams: unknown[] = [name.trim(), city.trim(), state.trim()];
-      let exactWhere = `LOWER(name)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3)`;
-      if (address?.trim()) {
-        exactParams.push(address.trim());
-        exactWhere += ` AND LOWER(address)=LOWER($4)`;
-      }
-      const exact = await pool.query(
-        `SELECT id, name, address, city, state, listing_status FROM public.public_businesses WHERE ${exactWhere} LIMIT 5`,
-        exactParams,
+      const candidates = await findHighConfidenceBusinessIdentityCandidates(
+        publicDuplicateInput(query),
+        "public",
       );
-
-      // Step 2: same address, any name (possible rename / new tenant)
-      const sameAddr = address?.trim()
-        ? await pool.query(
-            `SELECT id, name, address, city, state, listing_status FROM public.public_businesses WHERE LOWER(address)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3) LIMIT 10`,
-            [address.trim(), city.trim(), state.trim()],
-          )
-        : { rows: [] };
-
-      // Step 3: same name, same city — could be separate legitimate locations
-      const sameName = await pool.query(
-        `SELECT id, name, address, city, state, listing_status FROM public.public_businesses WHERE LOWER(name)=LOWER($1) AND LOWER(city)=LOWER($2) AND LOWER(state)=LOWER($3) LIMIT 10`,
-        [name.trim(), city.trim(), state.trim()],
-      );
-
-      // Step 4: fuzzy name at same address (possible rebrand / typo) — pg_trgm similarity
-      const fuzzy = address?.trim()
-        ? await pool
-            .query(
-              `SELECT id, name, address, city, state, listing_status, similarity(LOWER(name), LOWER($1)) AS score
-           FROM public.public_businesses
-           WHERE LOWER(address)=LOWER($2) AND LOWER(city)=LOWER($3) AND LOWER(state)=LOWER($4)
-             AND similarity(LOWER(name), LOWER($1)) > 0.5
-           ORDER BY score DESC LIMIT 5`,
-              [name.trim(), address.trim(), city.trim(), state.trim()],
-            )
-            .catch(() => ({ rows: [] })) // pg_trgm may not be installed
-        : { rows: [] };
-
-      // Step 5: a public web or social identifier can independently suggest an
-      // existing listing. It is a confirmation prompt, not an automatic merge:
-      // a franchise, reused address, or similarly named account may be distinct.
-      const instagramNeedle = socialDuplicateNeedle(instagram);
-      const facebookNeedle = socialDuplicateNeedle(facebook);
-      const tiktokNeedle = socialDuplicateNeedle(tiktok);
-      const youtubeNeedle = socialDuplicateNeedle(youtube);
-      const socialNeedles = [instagramNeedle, facebookNeedle, tiktokNeedle, youtubeNeedle]
-        .filter(Boolean);
-      const websiteNeedle = socialDuplicateNeedle(website);
-      const linkedProfiles = websiteNeedle || socialNeedles.length > 0
-        ? await pool.query<{
-            id: string;
-            name: string;
-            address: string | null;
-            city: string;
-            state: string | null;
-            website: string | null;
-            instagram: string | null;
-            facebook: string | null;
-            tiktok: string | null;
-            youtube: string | null;
-            listing_status: string | null;
-            owner_claim_status: string | null;
-          }>(
-             `SELECT id, name, address, city, state, website, instagram, facebook, tiktok, youtube,
-                    listing_status, owner_claim_status
-             FROM public.public_businesses
-             WHERE ($1 <> '' AND LOWER(COALESCE(website, '')) LIKE '%' || $1 || '%')
-                OR ($2 <> '' AND LOWER(COALESCE(instagram, '')) LIKE '%' || $2 || '%')
-                OR ($3 <> '' AND LOWER(COALESCE(facebook, '')) LIKE '%' || $3 || '%')
-                OR ($4 <> '' AND LOWER(COALESCE(tiktok, '')) LIKE '%' || $4 || '%')
-                OR ($5 <> '' AND LOWER(COALESCE(youtube, '')) LIKE '%' || $5 || '%')
-             ORDER BY name, id
-             LIMIT 10`,
-            [websiteNeedle, instagramNeedle, facebookNeedle, tiktokNeedle, youtubeNeedle],
-          )
-        : { rows: [] };
-
-      const allCandidates = [
-        ...exact.rows,
-        ...sameAddr.rows,
-        ...sameName.rows,
-        ...fuzzy.rows,
-        ...linkedProfiles.rows,
-      ];
-      const candidates = [...new Map(allCandidates.map((row) => [String((row as { id: string }).id), row])).values()].map((row) => {
-        const candidate = row as {
-          id: string;
-          name: string;
-          address?: string | null;
-          city: string;
-          state?: string | null;
-          website?: string | null;
-          instagram?: string | null;
-          facebook?: string | null;
-          tiktok?: string | null;
-          youtube?: string | null;
-          listing_status?: string | null;
-          owner_claim_status?: string | null;
-        };
-        const reasons: string[] = [];
-        const sameName = normalizedDuplicateValue(candidate.name) === normalizedDuplicateValue(name);
-        const sameAddress = Boolean(address?.trim())
-          && normalizedDuplicateValue(candidate.address ?? "") === normalizedDuplicateValue(address);
-        if (sameName && sameAddress) reasons.push("same_name_and_address");
-        else if (sameName) reasons.push("same_name");
-        else if (sameAddress) reasons.push("same_address");
-        const linkedValues = [candidate.website, candidate.instagram, candidate.facebook, candidate.tiktok, candidate.youtube]
-          .map(socialDuplicateNeedle)
-          .filter(Boolean);
-        if (websiteNeedle && linkedValues.some((value) => value.includes(websiteNeedle) || websiteNeedle.includes(value))) reasons.push("same_website");
-        if (socialNeedles.some((needle) => linkedValues.some((value) => value.includes(needle) || needle.includes(value)))) reasons.push("same_social_profile");
-        return { ...candidate, matchReasons: reasons };
-      });
-
-      const isDuplicate = exact.rows.length > 0 && !!address?.trim();
       res.json({
-        isDuplicate,
-        step1_exactMatch: exact.rows,
-        step2_sameAddress: sameAddr.rows,
-        step3_sameName: sameName.rows,
-        step4_fuzzy: fuzzy.rows,
-        step5_linkedProfiles: linkedProfiles.rows,
+        isDuplicate: candidates.length > 0,
+        identityEvidenceOnly: true,
         candidates,
-        recommendation: isDuplicate
-          ? "reject"
-          : exact.rows.length > 0
-            ? "flag_address"
-            : sameName.rows.length > 0
-              ? "allow_separate"
-              : "allow",
+        recommendation: candidates.length > 0 ? "review_existing_canonical" : "allow",
       });
     } catch (err) {
       req.log.error({ err }, "duplicate-check failed");
@@ -4487,7 +4454,9 @@ router.post(
 );
 
 // ─── GET /admin/businesses/check-duplicate ───────────────────────────────────
-// Checks for possible duplicate businesses by name + city or address.
+// Returns only high-confidence canonical identity candidates. A similar name,
+// city, or address never reaches the warning state without an exact identity
+// signal enforced by businessDuplicateIdentity.
 router.get(
   "/admin/businesses/check-duplicate",
   async (req: Request, res: Response): Promise<void> => {
@@ -4495,63 +4464,24 @@ router.get(
       res.status(403).json({ error: "Admin required" });
       return;
     }
-    const name = (req.query.name as string | undefined)?.trim().toLowerCase();
-    const city = (req.query.city as string | undefined)?.trim().toLowerCase();
-    const state = (req.query.state as string | undefined)?.trim().toLowerCase();
-    const address = (req.query.address as string | undefined)
-      ?.trim()
-      .toLowerCase();
-
-    if (!name && !address) {
-      res.json({ duplicates: [] });
+    const query = req.query as Record<string, string | undefined>;
+    const input = publicDuplicateInput(query);
+    if (!input.name?.trim() && !input.phone?.trim() && !input.website?.trim()) {
+      res.json({ duplicates: [], identityEvidenceOnly: true });
       return;
     }
-
     try {
-      const rows = await pool.query<{
-        id: string;
-        name: string;
-        city: string | null;
-        state: string | null;
-        address: string | null;
-      }>(
-        `SELECT id, name, city, state, address FROM businesses
-       WHERE status != 'deleted'
-         AND (
-           (lower(name) % $1 AND (city IS NULL OR lower(city) = $2))
-           OR (address IS NOT NULL AND lower(address) % $3)
-         )
-       LIMIT 5`,
-        [name ?? "", city ?? "", address ?? ""],
-      );
-
-      if (rows.rows.length === 0) {
-        res.json({ duplicates: [] });
-        return;
-      }
+      const duplicates = await findHighConfidenceBusinessIdentityCandidates(input, "admin");
       res.json({
-        duplicates: rows.rows,
-        warning: `Found ${rows.rows.length} possible match${rows.rows.length !== 1 ? "es" : ""} — review before adding.`,
+        duplicates,
+        identityEvidenceOnly: true,
+        warning: duplicates.length > 0
+          ? `Found ${duplicates.length} existing canonical profile${duplicates.length === 1 ? "" : "s"} with exact identity evidence — use the existing profile and attach the new source receipt.`
+          : undefined,
       });
-    } catch {
-      // pg_trgm similarity % may not be available — fall back to ILIKE
-      try {
-        const rows = await pool.query<{ id: string; name: string }>(
-          `SELECT id, name FROM businesses
-         WHERE status != 'deleted' AND lower(name) ILIKE $1
-         LIMIT 5`,
-          [`%${(name ?? "").replace(/%/g, "")}%`],
-        );
-        res.json({
-          duplicates: rows.rows,
-          warning:
-            rows.rows.length > 0
-              ? `Found ${rows.rows.length} possible match${rows.rows.length !== 1 ? "es" : ""} — review before adding.`
-              : undefined,
-        });
-      } catch (err) {
-        res.json({ duplicates: [] }); // Non-blocking
-      }
+    } catch (err) {
+      req.log.error({ err }, "admin duplicate identity check failed");
+      res.status(503).json({ error: "Could not verify canonical identity. Please retry before creating a profile." });
     }
   },
 );
@@ -4645,6 +4575,41 @@ router.post(
     )
       ? listingStatus!
       : "staged";
+
+    // Re-evaluate identity on the server immediately before creation. A browser
+    // preflight is never sufficient to prevent a duplicate canonical profile.
+    let canonicalMatches: BusinessIdentityCandidate[];
+    try {
+      canonicalMatches = await findHighConfidenceBusinessIdentityCandidates({
+        name,
+        address,
+        city,
+        state: province?.trim() || state,
+        phone,
+        website,
+        instagram,
+        facebook,
+        tiktok,
+        twitter,
+        youtube,
+        pinterest,
+      }, "admin");
+    } catch (err) {
+      req.log.error({ err }, "admin creation identity check failed");
+      res.status(503).json({
+        error: "Could not verify canonical identity. Please retry before creating a profile.",
+        code: "CANONICAL_IDENTITY_CHECK_UNAVAILABLE",
+      });
+      return;
+    }
+    if (canonicalMatches.length > 0) {
+      res.status(409).json({
+        error: "An existing canonical profile has exact identity evidence. Open that profile and attach this source receipt instead of creating another listing.",
+        code: "EXISTING_CANONICAL_BUSINESS",
+        canonicalCandidates: canonicalMatches,
+      });
+      return;
+    }
 
     const id = randomUUID();
 

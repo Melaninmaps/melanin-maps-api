@@ -44,7 +44,7 @@ const STEP_LABELS: Record<Step, string> = {
 
 interface DuplicateWarning {
   step: number;
-  existing?: { id: string; name: string }[];
+  existing?: { id: string; name: string; matchReasons?: string[] }[];
   message: string;
 }
 
@@ -59,7 +59,6 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
   const [checkingDup, setCheckingDup] = useState(false);
   const [dupWarning, setDupWarning] = useState<DuplicateWarning | null>(null);
   const [error, setError] = useState("");
-  const [forceProceed, setForceProceed] = useState(false);
   const [savedBiz, setSavedBiz] = useState<{ id: string; name: string } | null>(null);
 
   // ── Form fields ──────────────────────────────────────────────────────────
@@ -165,11 +164,19 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
       if (city.trim()) params.set("city", city.trim());
       if (state.trim()) params.set("state", state.trim());
       if (address.trim()) params.set("address", address.trim());
+      if (phone.trim()) params.set("phone", phone.trim());
+      if (website.trim()) params.set("website", website.trim());
+      if (instagram.trim()) params.set("instagram", instagram.trim());
+      if (facebook.trim()) params.set("facebook", facebook.trim());
+      if (tiktok.trim()) params.set("tiktok", tiktok.trim());
+      if (twitter.trim()) params.set("twitter", twitter.trim());
+      if (youtube.trim()) params.set("youtube", youtube.trim());
+      if (pinterest.trim()) params.set("pinterest", pinterest.trim());
       const res = await fetch(`${BASE}/api/admin/businesses/check-duplicate?${params}`, {
         credentials: "include",
       });
       if (!res.ok) return true; // Don't block on check failure
-      const data = await res.json() as { duplicates?: Array<{ id: string; name: string }>; warning?: string };
+      const data = await res.json() as { duplicates?: Array<{ id: string; name: string; matchReasons?: string[] }>; warning?: string };
       if (data.duplicates && data.duplicates.length > 0) {
         setDupWarning({
           step: 1,
@@ -189,10 +196,8 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
   async function handleSubmit() {
     setError("");
 
-    if (!forceProceed) {
-      const clean = await checkDuplicates();
-      if (!clean) return;
-    }
+    const clean = await checkDuplicates();
+    if (!clean) return;
 
     setSubmitting(true);
     try {
@@ -236,12 +241,17 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
         credentials: "include",
         body: JSON.stringify(body),
       });
-      const data = await res.json() as { business?: { id: string; name: string }; error?: string; duplicate?: unknown };
+      const data = await res.json() as {
+        business?: { id: string; name: string };
+        error?: string;
+        canonicalCandidates?: Array<{ id: string; name: string; matchReasons?: string[] }>;
+      };
 
       if (!res.ok) {
         if (res.status === 409) {
           setDupWarning({
             step: 1,
+            existing: data.canonicalCandidates,
             message: data.error ?? "A matching business already exists.",
           });
           return;
@@ -310,7 +320,9 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
                   <div className="mt-2 space-y-1">
                     {dupWarning.existing.map(biz => (
                       <div key={biz.id} className="flex items-center gap-2 text-xs text-amber-700">
-                        <span className="font-medium truncate">{biz.name}</span>
+                        <span className="font-medium truncate">
+                          {biz.name}{biz.matchReasons?.length ? ` — ${biz.matchReasons.map(reason => reason.replaceAll("_", " ")).join(", ")}` : ""}
+                        </span>
                         <a
                           href={`${BASE}/businesses/${biz.id}`}
                           target="_blank"
@@ -325,17 +337,14 @@ export function AdminAddBusiness({ onClose, onSuccess }: Props) {
                 )}
                 <div className="flex gap-3 mt-3">
                   <button
-                    onClick={() => { setDupWarning(null); setForceProceed(true); }}
-                    className="text-xs font-bold text-amber-800 underline hover:text-amber-900"
-                  >
-                    These are different — proceed anyway
-                  </button>
-                  <button
                     onClick={() => { setDupWarning(null); setStep("basic"); }}
                     className="text-xs font-bold text-amber-800 underline hover:text-amber-900"
                   >
-                    Edit the record instead
+                    Edit the record
                   </button>
+                  <span className="text-xs text-amber-800/80">
+                    Exact identity evidence is server-enforced. Use the existing profile and attach the new source receipt.
+                  </span>
                 </div>
               </div>
             </div>
