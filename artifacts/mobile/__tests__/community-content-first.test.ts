@@ -36,6 +36,24 @@ describe("native Community content-first surface", () => {
     expect(source).toContain("Events, Library material, safety resources, market, and profiles retain their");
   });
 
+  it("renders My Groups as one membership-only list with visible loading, empty, and recovery states", () => {
+    const myGroupsStart = source.lastIndexOf(') : activeTab === "My Groups" ? (');
+    const myGroupsEnd = source.indexOf(') : activeTab === "Resources"', myGroupsStart);
+    const myGroups = source.slice(myGroupsStart, myGroupsEnd);
+    expect(source).toContain("const memberGroups = groups.filter((group) => group.isMember === true);");
+    expect(myGroups).toContain("data={filteredGroups}");
+    expect(myGroups).toContain("ListHeaderComponent");
+    expect(myGroups).toContain('testID="my-groups-loading"');
+    expect(myGroups).toContain('testID="my-groups-empty"');
+    expect(myGroups).toContain('testID="my-groups-recovery"');
+    expect(myGroups).toContain('accessibilityLabel="Retry loading My Groups"');
+    expect(myGroups).toContain('pathname: "/group/[id]"');
+    expect(groupsHookSource).toContain("const [error, setError]");
+    expect(groupsHookSource).toContain("Array.isArray(data.groups)");
+    expect(groupsHookSource).toContain("(group as Group).isMember === true");
+    expect(groupsHookSource).toContain("My Groups could not refresh right now");
+  });
+
   it("places the shared feed directly below the Feed and Groups navigation", () => {
     const feedList = source.split("data={filteredPosts}")[1]?.split("ListEmptyComponent")[0] ?? "";
 
