@@ -116,6 +116,20 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("hasApprovedRelevantMemory: isPreferredNameRecallRequest(message)");
   });
 
+  it("answers only a stable educational component when a separate current metric is unavailable", () => {
+    const evidenceGate = chatRoute.indexOf("const genericEvidenceOutcome = resolveKinfolkEvidenceOutcome({");
+    const fallbackPrompt = chatRoute.indexOf("CURRENT COMPONENT UNAVAILABLE — STABLE EDUCATION ONLY");
+    const modelPrompt = chatRoute.indexOf("const combinedPolicyPrompt = [");
+
+    expect(chatRoute).toContain('evidenceRoute.stableEducationalScope === "partial"');
+    expect(chatRoute).toContain("const stableEducationalPartialRecovery =");
+    expect(evidenceGate).toBeGreaterThan(-1);
+    expect(fallbackPrompt).toBeGreaterThan(evidenceGate);
+    expect(modelPrompt).toBeLessThan(fallbackPrompt);
+    expect(chatRoute).toContain("!stableEducationalPartialRecovery");
+    expect(chatRoute).toContain("Do not provide a current number, date, rate, price");
+  });
+
   it("keeps deterministic directory discovery out of every current-research turn", () => {
     expect(chatRoute).toMatch(
       /verifiedImageUrls\.length === 0\s*&&\s*!requiresCurrentResearch\(message\)\s*&&\s*\(await tryAnswerDeterministicBusinessDiscovery\(/,

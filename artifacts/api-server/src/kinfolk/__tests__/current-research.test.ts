@@ -81,6 +81,15 @@ describe("current research routing", () => {
     expect(requiresCurrentResearch("Plan a visit tomorrow around the venue opening hours.")).toBe(true);
   });
 
+  it("separates a stable concept from an explicitly current public metric", () => {
+    expect(requiresCurrentResearch(
+      "Explain how inflation affects my grocery budget in plain language and give me an example.",
+    )).toBe(false);
+    expect(requiresCurrentResearch(
+      "Explain how inflation affects a grocery budget, then tell me the current U.S. inflation rate.",
+    )).toBe(true);
+  });
+
   it.each([
     "What time does the dry cleaner near me close today?",
     "Help me find a restaurant for tonight.",

@@ -11204,10 +11204,19 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       route: generalAnswerRoute,
       hasSupportingEvidence: hasLiveWebEvidence,
     });
+    // A bounded concept explanation can remain useful when a separately
+    // requested current metric lacks evidence. The later prompt permits only
+    // the stable portion and requires an explicit current-data disclosure.
+    const stableEducationalPartialRecovery =
+      evidenceRoute.stableEducationalScope === "partial" &&
+      genericEvidenceOutcome === "decline" &&
+      generalAnswerRoute.requiresCurrentEvidence &&
+      !hasLiveWebEvidence;
     const failClosedReply =
-      routeEvidenceFailureReply ??
+      (stableEducationalPartialRecovery ? null : routeEvidenceFailureReply) ??
       (genericEvidenceOutcome === "decline" &&
-      generalAnswerRoute.requiresCurrentEvidence
+      generalAnswerRoute.requiresCurrentEvidence &&
+      !stableEducationalPartialRecovery
         ? TRUTHFUL_EVIDENCE_UNAVAILABLE_REPLY
         : null);
     if (failClosedReply) {
@@ -12301,6 +12310,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       intentPolicyPrompt || null,
       healthCareOverride.promptBlock || null,
       evidenceRoutePromptBlock(evidenceRoute, permittedIdentity),
+      stableEducationalPartialRecovery
+        ? "CURRENT COMPONENT UNAVAILABLE — STABLE EDUCATION ONLY: A requested current metric could not be verified from claim-relevant live evidence. Answer only the stable educational component in plain language. You may use clearly labeled hypothetical numbers to illustrate the concept. State separately that you cannot verify the requested current value right now. Do not provide a current number, date, rate, price, estimate, availability claim, citation, personalized financial recommendation, or substitute stale material."
+        : null,
       namedBusiness && !healthCareOverride.suppressesGeneralBusinessCatalog
         ? namedBusinessPromptBlock(namedBusiness)
         : null,

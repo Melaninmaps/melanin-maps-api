@@ -7,6 +7,9 @@ import { canonicalizeContextualUrl } from "./contextual-url";
 const TIME_HORIZON_RE = /\b(?:today|tonight|tomorrow|(?:this|next)\s+weekend|this\s+(?:week|month|year))\b/i;
 const INTRINSIC_CHANGING_EXTERNAL_FACT_RE = /\b(?:weather|forecast|temperature|rain|snow|wind|air\s+quality|availability|available|outage|outages|traffic|transit|delay|delays|cancellations?|breaking\s+news|news|election|redistricting|officeholder|law|laws|policy|regulation|regulations?|recall|alert|alerts?|deadline|deadlines?|price|prices|cost|costs|gas\s+prices?|interest\s+rates?|exchange\s+rates?|market\s+price|stock\s+price|showtimes?)\b/i;
 const EXPLICIT_CURRENT_STATUS_RE = /\b(?:current|recent|latest|today|live)\s+(?:status|updates?)\b/i;
+// A measured public value needs current evidence only when the member asks for
+// its current value. A stable explanation of how the same metric works does not.
+const EXPLICIT_CURRENT_PUBLIC_METRIC_RE = /\b(?:current|latest|recent|today(?:'s)?)\b[\s\S]{0,48}\b(?:rate|price|cost|estimate|ranking|rank|availability|statistic|metric)\b/i;
 const CURRENT_NAMED_UPDATE_RE = /\b(?:current|recent|latest|today|live)\s+(?!i\b|we\b|my\b|our\b)[A-Z][\p{L}'’-]{1,}(?:\s+[\p{L}\d'’-]+){0,5}\s+(?:status|updates?)\b/iu;
 const OPERATING_STATUS_RE = /\b(?:open|closed|close|closing|opening|hours?|schedule|scheduled|availability|available)\b/i;
 // A time-bound operating-status question stays current even when natural
@@ -31,6 +34,7 @@ function hasChangingExternalFact(message: string): boolean {
   if (
     INTRINSIC_CHANGING_EXTERNAL_FACT_RE.test(message)
     || EXPLICIT_CURRENT_STATUS_RE.test(message)
+    || EXPLICIT_CURRENT_PUBLIC_METRIC_RE.test(message)
     || CURRENT_NAMED_UPDATE_RE.test(message)
     || (TIME_BOUND_OPERATING_STATUS_RE.test(message) && !MEMBER_WORK_SCHEDULE_RE.test(message))
     || RECENCY_QUALIFIED_PUBLIC_METRIC_RE.test(message)

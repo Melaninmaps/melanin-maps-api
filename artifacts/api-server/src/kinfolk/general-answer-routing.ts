@@ -199,7 +199,9 @@ export function resolveKinfolkGeneralAnswerRoute(
   // field name is retained for response compatibility, but the evidence policy
   // independently determines the requested fact's freshness and threshold.
   const deterministicCurrent = requiresTimeSpecificResearch(input.message);
-  const highConsequence = input.evidence.risk === "high";
+  const stableEducationalScope = input.evidence.stableEducationalScope ?? "none";
+  const highConsequence =
+    input.evidence.risk === "high" && stableEducationalScope === "none";
   // A semantic classifier can describe a personal turn as "current" merely
   // because it happened recently. Personal framing alone is not an external,
   // changing fact. Deterministic current cues and high-consequence safeguards
@@ -214,7 +216,8 @@ export function resolveKinfolkGeneralAnswerRoute(
       )
     );
   const semanticAuthoritative =
-    input.semantic?.evidenceNeed === "authoritative";
+    input.semantic?.evidenceNeed === "authoritative" &&
+    stableEducationalScope === "none";
   const requiresCurrentEvidence = deterministicCurrent || semanticCurrent;
   const requiresAuthoritativeEvidence =
     highConsequence || semanticAuthoritative;
