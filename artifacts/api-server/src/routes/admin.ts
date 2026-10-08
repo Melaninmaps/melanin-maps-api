@@ -55,9 +55,9 @@ import {
 import { buildMinnesotaLegacyCanonicalReconciliations } from "../directoryIntake/mnBlackDirectoryLegacyCanonicalReconciliation";
 import { CITY_SAFETY_SOURCE_REGISTRY } from "../kinfolk/city-safety-briefing-v1";
 import {
-  archiveActionForReason,
-  archiveStateForReason,
-  isDirectoryArchiveReasonCode,
+  isDirectoryPublicDiscoveryRemovalReasonCode,
+  publicDiscoveryRemovalActionForReason,
+  publicDiscoveryRemovalStateForReason,
 } from "../businesses/directoryReconciliationPolicy";
 
 const router: IRouter = Router();
@@ -1162,6 +1162,8 @@ async function compileAdminBusinessInventoryFilters(
       filters.push("EXISTS (SELECT 1 FROM business_directory_reconciliation_ledger ledger WHERE ledger.business_id::text = businesses.id::text AND ledger.reason_code = 'ownership_unverified')");
     } else if (reconciliation === "identity_conflict") {
       filters.push("EXISTS (SELECT 1 FROM business_directory_reconciliation_ledger ledger WHERE ledger.business_id::text = businesses.id::text AND ledger.reason_code = 'identity_conflict')");
+    } else if (reconciliation === "phone_conflict") {
+      filters.push("EXISTS (SELECT 1 FROM business_directory_reconciliation_ledger ledger WHERE ledger.business_id::text = businesses.id::text AND ledger.reason_code = 'phone_conflict')");
     } else if (reconciliation === "duplicate_candidate") {
       filters.push("EXISTS (SELECT 1 FROM business_directory_reconciliation_ledger ledger WHERE ledger.business_id::text = businesses.id::text AND ledger.reason_code = 'duplicate_candidate')");
     }
@@ -1931,9 +1933,9 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
     return;
   }
   const removing = listingStatus === "archived";
-  if (removing && !isDirectoryArchiveReasonCode(reconciliationReasonCode)) {
+  if (removing && !isDirectoryPublicDiscoveryRemovalReasonCode(reconciliationReasonCode)) {
     res.status(400).json({
-      error: "Archiving requires one documented reason code: confirmed_closed, confirmed_duplicate, confirmed_fraud_or_unsafe, or documented_safety_or_legal_removal.",
+      error: "Public-discovery removal requires one documented ledger reason code: confirmed_closed, confirmed_duplicate, confirmed_fraud_or_unsafe, documented_safety_or_legal_removal, identity_conflict, or phone_conflict. Missing ownership, website, social, or map evidence is not a removal reason.",
     });
     return;
   }
@@ -2062,9 +2064,9 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
         beforeState,
         afterState: nextState,
       });
-      if (removing && isDirectoryArchiveReasonCode(reconciliationReasonCode)) {
+      if (removing && isDirectoryPublicDiscoveryRemovalReasonCode(reconciliationReasonCode)) {
         const beforeReconciliation = reconciliationByBusinessId.get(current.id)?.state ?? {};
-        const archivedLedger = await client.query<{ state: Record<string, unknown> }>(
+        const removedLedger = await client.query<{ state: Record<string, unknown> }>(
           `UPDATE business_directory_reconciliation_ledger
               SET reconciliation_state = $1,
                   recommended_action = $2,
@@ -2074,8 +2076,8 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
             WHERE business_id = $4
           RETURNING to_jsonb(business_directory_reconciliation_ledger) AS state`,
           [
-            archiveStateForReason(reconciliationReasonCode),
-            archiveActionForReason(reconciliationReasonCode),
+            publicDiscoveryRemovalStateForReason(reconciliationReasonCode),
+            publicDiscoveryRemovalActionForReason(reconciliationReasonCode),
             req.user?.id ?? null,
             current.id,
           ],
@@ -2088,7 +2090,7 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
           [
             randomUUID(), current.id, req.user?.id ?? null, reconciliationReasonCode,
             normalizedReason, JSON.stringify(beforeReconciliation),
-            JSON.stringify(archivedLedger.rows[0]?.state ?? {}),
+            JSON.stringify(removedLedger.rows[0]?.state ?? {}),
           ],
         );
       }
@@ -2261,9 +2263,9 @@ router.patch(
       return;
     }
     const removing = listingStatus === "archived";
-    if (removing && !isDirectoryArchiveReasonCode(reconciliationReasonCode)) {
+    if (removing && !isDirectoryPublicDiscoveryRemovalReasonCode(reconciliationReasonCode)) {
       res.status(400).json({
-        error: "Archiving requires one documented reason code: confirmed_closed, confirmed_duplicate, confirmed_fraud_or_unsafe, or documented_safety_or_legal_removal.",
+        error: "Public-discovery removal requires one documented ledger reason code: confirmed_closed, confirmed_duplicate, confirmed_fraud_or_unsafe, documented_safety_or_legal_removal, identity_conflict, or phone_conflict. Missing ownership, website, social, or map evidence is not a removal reason.",
       });
       return;
     }
@@ -2370,8 +2372,8 @@ router.patch(
         beforeState,
         afterState: nextState,
       });
-      if (removing && isDirectoryArchiveReasonCode(reconciliationReasonCode)) {
-        const archivedLedger = await client.query<{ state: Record<string, unknown> }>(
+      if (removing && isDirectoryPublicDiscoveryRemovalReasonCode(reconciliationReasonCode)) {
+        const removedLedger = await client.query<{ state: Record<string, unknown> }>(
           `UPDATE business_directory_reconciliation_ledger
               SET reconciliation_state = $1,
                   recommended_action = $2,
@@ -2381,8 +2383,8 @@ router.patch(
             WHERE business_id = $4
           RETURNING to_jsonb(business_directory_reconciliation_ledger) AS state`,
           [
-            archiveStateForReason(reconciliationReasonCode),
-            archiveActionForReason(reconciliationReasonCode),
+            publicDiscoveryRemovalStateForReason(reconciliationReasonCode),
+            publicDiscoveryRemovalActionForReason(reconciliationReasonCode),
             req.user?.id ?? null,
             id,
           ],
@@ -2395,7 +2397,7 @@ router.patch(
           [
             randomUUID(), id, req.user?.id ?? null, reconciliationReasonCode,
             normalizedReason, JSON.stringify(priorReconciliation.rows[0]?.state ?? {}),
-            JSON.stringify(archivedLedger.rows[0]?.state ?? {}),
+            JSON.stringify(removedLedger.rows[0]?.state ?? {}),
           ],
         );
       }

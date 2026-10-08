@@ -82,6 +82,17 @@ export const DIRECTORY_ARCHIVE_REASON_CODES = [
 
 export type DirectoryArchiveReasonCode = (typeof DIRECTORY_ARCHIVE_REASON_CODES)[number];
 
+// These reasons do not assert closure, duplicate status, fraud, or a legal/safety
+// finding. They permit only a reversible public-discovery hold after the exact
+// reason was recorded in the reconciliation ledger.
+export const DIRECTORY_REVERSIBLE_PUBLIC_HOLD_REASON_CODES = [
+  "identity_conflict",
+  "phone_conflict",
+] as const;
+
+export type DirectoryReversiblePublicHoldReasonCode =
+  (typeof DIRECTORY_REVERSIBLE_PUBLIC_HOLD_REASON_CODES)[number];
+
 export function isDirectoryReconciliationReasonCode(
   value: unknown,
 ): value is DirectoryReconciliationReasonCode {
@@ -94,6 +105,19 @@ export function isDirectoryArchiveReasonCode(
 ): value is DirectoryArchiveReasonCode {
   return typeof value === "string"
     && (DIRECTORY_ARCHIVE_REASON_CODES as readonly string[]).includes(value);
+}
+
+export function isDirectoryReversiblePublicHoldReasonCode(
+  value: unknown,
+): value is DirectoryReversiblePublicHoldReasonCode {
+  return typeof value === "string"
+    && (DIRECTORY_REVERSIBLE_PUBLIC_HOLD_REASON_CODES as readonly string[]).includes(value);
+}
+
+export function isDirectoryPublicDiscoveryRemovalReasonCode(
+  value: unknown,
+): value is DirectoryArchiveReasonCode | DirectoryReversiblePublicHoldReasonCode {
+  return isDirectoryArchiveReasonCode(value) || isDirectoryReversiblePublicHoldReasonCode(value);
 }
 
 export function archiveStateForReason(
@@ -126,5 +150,21 @@ export function archiveActionForReason(
   }
 }
 
+export function publicDiscoveryRemovalStateForReason(
+  reasonCode: DirectoryArchiveReasonCode | DirectoryReversiblePublicHoldReasonCode,
+): DirectoryReconciliationState {
+  return isDirectoryArchiveReasonCode(reasonCode)
+    ? archiveStateForReason(reasonCode)
+    : "reversible_public_hold";
+}
+
+export function publicDiscoveryRemovalActionForReason(
+  reasonCode: DirectoryArchiveReasonCode | DirectoryReversiblePublicHoldReasonCode,
+): DirectoryReconciliationAction {
+  return isDirectoryArchiveReasonCode(reasonCode)
+    ? archiveActionForReason(reasonCode)
+    : "reversible_public_hold";
+}
+
 export const DIRECTORY_RECONCILIATION_RULE =
-  "Every retained business has a concrete reconciliation state and reason code. Kinfolk Current requires documented diaspora/minority ownership plus a valid identity-matching official website or official social account. Phone, map, directory, marketplace, and aggregator links never count as official presence. Missing presence or ownership evidence routes a record to reconciliation; only confirmed closure, duplicate, fraud/unsafe destination, or documented safety/legal removal may archive it.";
+  "Every retained business has a concrete reconciliation state and reason code. Kinfolk Current requires documented diaspora/minority ownership plus a valid identity-matching official website or official social account. Phone, map, directory, marketplace, and aggregator links never count as official presence. Missing presence or ownership evidence routes a record to reconciliation. A ledger-recorded identity or phone conflict may place only that record on reversible public-discovery hold; only confirmed closure, duplicate, fraud/unsafe destination, or documented safety/legal removal may use an archive-specific reconciliation state.";
