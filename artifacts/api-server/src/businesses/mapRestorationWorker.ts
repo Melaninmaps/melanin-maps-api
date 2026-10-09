@@ -4,12 +4,18 @@ import type { Pool, PoolClient } from "pg";
 import { isAdmin } from "../lib/adminAuth";
 
 export const FOUNDER_MAP_RESTORATION_POLICY_VERSION =
-  "founder-map-restoration-v1" as const;
+  "founder-map-restoration-v2" as const;
 export const FOUNDER_MAP_RESTORATION_ACTOR =
   "founder-authorized-map-restoration-2026-10-09" as const;
 
-const GOOGLE_GEOCODER_URL = "https://maps.googleapis.com/maps/api/geocode/json";
-const MIN_REQUEST_INTERVAL_MS = 220;
+/**
+ * The Census geocoder is an approved public geocoding source. Its address-range
+ * result is accepted only when every map-identifying component exactly matches
+ * the pre-existing canonical stored address; it is never a city-centre fallback.
+ */
+const CENSUS_GEOCODER_URL = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress";
+const CENSUS_GEOCODER_SOURCE_URL = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress?benchmark=Public_AR_Current&format=json";
+const MIN_REQUEST_INTERVAL_MS = 300;
 
 export type MapRestorationOutcome =
   | "published"
@@ -42,18 +48,17 @@ type PhysicalAddress = Readonly<{
   postalCode: string;
 }>;
 
-type GoogleComponent = Readonly<{
-  long_name?: string;
-  short_name?: string;
-  types?: string[];
-}>;
-
-type GoogleGeocodeResult = Readonly<{
-  formatted_address?: string;
-  address_components?: GoogleComponent[];
-  geometry?: Readonly<{
-    location?: Readonly<{ lat?: number; lng?: number }>;
-    location_type?: string;
+type CensusGeocodeResult = Readonly<{
+  matchedAddress?: string;
+  coordinates?: Readonly<{ x?: number; y?: number }>;
+  addressComponents?: Readonly<{
+    fromAddress?: string;
+    preDirection?: string;
+    streetName?: string;
+    suffixType?: string;
+    city?: string;
+    state?: string;
+    zip?: string;
   }>;
 }>;
 
@@ -297,65 +302,20 @@ export function parseCompleteStoredPhysicalAddress(
   };
 }
 
-function component(
-  result: GoogleGeocodeResult,
-  type: string,
-): { long: string | null; short: string | null } {
-  const value = result.address_components?.find((entry) =>
-    entry.types?.includes(type),
-  );
-  return {
-    long: value?.long_name?.trim() ?? null,
-    short: value?.short_name?.trim() ?? null,
-  };
-}
-
-function parseGoogleRoute(value: string | null): {
-  directional: string | null;
-  streetName: string;
-  streetType: string;
-} | null {
-  const pieces = normalized(value).split(" ").filter(Boolean);
-  if (pieces.length < 2) return null;
-  const streetType = canonicalStreetType(pieces.at(-1) ?? null);
-  if (!streetType) return null;
-  const maybeDirectional = canonicalDirectional(pieces[0] ?? null);
-  const streetName = pieces.slice(maybeDirectional ? 1 : 0, -1).join(" ");
-  return streetName
-    ? { directional: maybeDirectional, streetName, streetType }
-    : null;
-}
-
-function matchingGoogleLocation(
+export function matchingCensusLocation(
   expected: PhysicalAddress,
-  result: GoogleGeocodeResult,
+  result: CensusGeocodeResult,
 ): GeocodedLocation | null {
-  const latitude = Number(result.geometry?.location?.lat);
-  const longitude = Number(result.geometry?.location?.lng);
-  const locationType = result.geometry?.location_type ?? "";
-  const streetNumber = normalized(
-    component(result, "street_number").long ??
-      component(result, "street_number").short,
-  );
-  const route = parseGoogleRoute(
-    component(result, "route").long ?? component(result, "route").short,
-  );
-  const city = normalized(
-    component(result, "locality").long ??
-      component(result, "postal_town").long ??
-      component(result, "administrative_area_level_2").long,
-  );
-  const state = canonicalState(
-    component(result, "administrative_area_level_1").short ??
-      component(result, "administrative_area_level_1").long,
-  );
-  const postalCode = normalizePostalCode(
-    component(result, "postal_code").long ??
-      component(result, "postal_code").short,
-  );
-  const country = normalized(
-    component(result, "country").short ?? component(result, "country").long,
-  );
+  const latitude = Number(result.coordinates?.y);
+  const longitude = Number(result.coordinates?.x);
+  const components = result.addressComponents;
+  const houseNumber = normalized(components?.fromAddress ?? null);
+  const directional = canonicalDirectional(components?.preDirection ?? null);
+  const streetName = normalized(components?.streetName ?? null);
+  const streetType = canonicalStreetType(components?.suffixType ?? null);
+  const city = normalized(components?.city ?? null);
+  const state = canonicalState(components?.state ?? null);
+  const postalCode = normalizePostalCode(components?.zip ?? null);
   if (
     !Number.isFinite(latitude) ||
     latitude < -90 ||
@@ -363,29 +323,25 @@ function matchingGoogleLocation(
     !Number.isFinite(longitude) ||
     longitude < -180 ||
     longitude > 180 ||
-    !["ROOFTOP", "RANGE_INTERPOLATED"].includes(locationType) ||
-    country !== "us" ||
-    streetNumber !== expected.houseNumber ||
-    !route ||
-    route.directional !== expected.directional ||
-    route.streetName !== expected.streetName ||
-    route.streetType !== expected.streetType ||
+    houseNumber !== expected.houseNumber ||
+    directional !== expected.directional ||
+    streetName !== expected.streetName ||
+    streetType !== expected.streetType ||
     city !== expected.city ||
     state !== expected.state ||
     postalCode?.slice(0, 5) !== expected.postalCode.slice(0, 5) ||
-    !result.formatted_address
-  )
-    return null;
+    !result.matchedAddress
+  ) return null;
   return {
     latitude,
     longitude,
-    formattedAddress: result.formatted_address,
-    locationType,
+    formattedAddress: result.matchedAddress,
+    locationType: "CENSUS_ADDRESS_RANGE_INTERPOLATED",
     components: {
-      houseNumber: streetNumber,
-      directional: route.directional,
-      streetName: route.streetName,
-      streetType: route.streetType,
+      houseNumber,
+      directional,
+      streetName,
+      streetType,
       city,
       state,
       postalCode,
@@ -406,55 +362,38 @@ async function waitForGeocoderTurn(): Promise<void> {
   await turn;
 }
 
-async function geocodeExactAddress(
-  expected: PhysicalAddress,
-  apiKey: string | undefined,
-): Promise<{
+async function geocodeExactAddress(expected: PhysicalAddress): Promise<{
   location: GeocodedLocation | null;
   outcome: MapRestorationOutcome;
   reason: string;
 }> {
-  if (!apiKey?.trim()) {
-    return {
-      location: null,
-      outcome: "geocoder_unavailable",
-      reason: "GOOGLE_MAPS_API_KEY is not configured.",
-    };
-  }
   try {
     await waitForGeocoderTurn();
-    const url = `${GOOGLE_GEOCODER_URL}?address=${encodeURIComponent(expected.queryAddress)}&key=${encodeURIComponent(apiKey)}`;
+    const url = `${CENSUS_GEOCODER_URL}?address=${encodeURIComponent(expected.queryAddress)}&benchmark=Public_AR_Current&format=json`;
     const response = await fetch(url, { signal: AbortSignal.timeout(9_000) });
     if (!response.ok)
       return {
         location: null,
         outcome: "geocoder_error",
-        reason: `Google Geocoding returned HTTP ${response.status}.`,
+        reason: `Census Geocoder returned HTTP ${response.status}.`,
       };
     const payload = (await response.json()) as {
-      status?: string;
-      results?: GoogleGeocodeResult[];
+      result?: { addressMatches?: CensusGeocodeResult[] };
     };
-    if (payload.status !== "OK")
-      return {
-        location: null,
-        outcome: "geocoder_no_exact_match",
-        reason: `Google Geocoding returned ${payload.status ?? "an empty status"}.`,
-      };
-    for (const result of payload.results ?? []) {
-      const location = matchingGoogleLocation(expected, result);
+    for (const result of payload.result?.addressMatches ?? []) {
+      const location = matchingCensusLocation(expected, result);
       if (location)
         return {
           location,
           outcome: "published",
-          reason: "Exact Google address-component match.",
+          reason: "Exact Census address-component match.",
         };
     }
     return {
       location: null,
       outcome: "geocoder_no_exact_match",
       reason:
-        "No Google result matched the complete stored street, city, state, and ZIP components.",
+        "No Census result matched the complete stored street, city, state, and ZIP components.",
     };
   } catch (error) {
     return {
@@ -462,8 +401,8 @@ async function geocodeExactAddress(
       outcome: "geocoder_error",
       reason:
         error instanceof Error
-          ? `Google Geocoding request failed: ${error.message}`
-          : "Google Geocoding request failed.",
+          ? `Census Geocoder request failed: ${error.message}`
+          : "Census Geocoder request failed.",
     };
   }
 }
@@ -518,8 +457,21 @@ async function loadPendingCandidates(
         AND e.ownership_source_expires_at > CURRENT_TIMESTAMP
         AND e.review_after > CURRENT_TIMESTAMP
        AND e.map_pin_evidence_id IS NULL
+       AND NOT EXISTS (
+         SELECT 1
+           FROM public.business_legacy_map_location_attestations AS legacy_location
+          WHERE legacy_location.business_id::text = b.id::text
+            AND COALESCE((
+              SELECT legacy_event.action
+                FROM public.business_legacy_map_location_attestation_events AS legacy_event
+               WHERE legacy_event.attestation_id = legacy_location.id
+               ORDER BY legacy_event.created_at DESC, legacy_event.id DESC
+               LIMIT 1
+            ), 'active') <> 'revoked'
+       )
        AND (
           o.business_id IS NULL
+          OR o.policy_version <> $2
           -- A profile edit changes businesses.updated_at, which makes a prior
           -- exception eligible for a fresh exact-geocode attempt without
           -- relying on an optional database hashing extension.
@@ -527,7 +479,7 @@ async function loadPendingCandidates(
        )
       ORDER BY b.id ASC
       LIMIT $1`,
-    [limit],
+    [limit, FOUNDER_MAP_RESTORATION_POLICY_VERSION],
   );
   return rows;
 }
@@ -615,7 +567,7 @@ async function persistMapEvidence(
     isServiceArea: false,
     identityMatch: true,
     matchingSignals: ["address"],
-    verificationMethod: "existing_stored_address_exact_google_component_match",
+    verificationMethod: "existing_stored_address_exact_census_component_match",
   };
   const mapEvidence = {
     queryAddress: expected.queryAddress,
@@ -633,7 +585,7 @@ async function persistMapEvidence(
     `${FOUNDER_MAP_RESTORATION_POLICY_VERSION}|${candidate.id}|map_pin|${JSON.stringify(mapEvidence)}`,
   );
   const reason =
-    "Founder-authorized map restoration: an existing complete stored physical address exactly matched Google Geocoding address components. Existing documented identity, ownership, official-presence eligibility, business fields, and lifecycle were retained.";
+    "Founder-authorized map restoration: an existing complete stored physical address exactly matched Census Geocoder address components. Existing documented identity, ownership, official-presence eligibility, business fields, and lifecycle were retained.";
 
   await client.query(
     `INSERT INTO business_profile_evidence_receipts
@@ -644,14 +596,14 @@ async function persistMapEvidence(
     [
       addressEvidenceId,
       candidate.id,
-      GOOGLE_GEOCODER_URL,
-      "Google Geocoding exact match for stored physical address",
+      CENSUS_GEOCODER_SOURCE_URL,
+      "Census Geocoder exact match for stored physical address",
       observedAt,
       JSON.stringify(addressEvidence),
       addressHash,
       FOUNDER_MAP_RESTORATION_ACTOR,
       mapEvidenceId,
-      "Google Geocoding audited map coordinate",
+      "Census Geocoder audited map coordinate",
       JSON.stringify(mapEvidence),
       mapHash,
     ],
@@ -751,10 +703,7 @@ async function processCandidate(
     );
     return "missing_complete_stored_address";
   }
-  const geocoded = await geocodeExactAddress(
-    expected,
-    environment.GOOGLE_MAPS_API_KEY,
-  );
+  const geocoded = await geocodeExactAddress(expected);
   if (!geocoded.location) {
     const outcome =
       geocoded.outcome === "published" ? "geocoder_error" : geocoded.outcome;

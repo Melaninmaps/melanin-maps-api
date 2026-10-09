@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   FOUNDER_MAP_RESTORATION_POLICY_VERSION,
+  matchingCensusLocation,
   parseCompleteStoredPhysicalAddress,
 } from "../mapRestorationWorker";
 
@@ -68,14 +69,64 @@ describe("founder map restoration", () => {
     ).toBeNull();
   });
 
+  it("accepts a Census coordinate only after every map-identifying address component matches", () => {
+    const expected = parseCompleteStoredPhysicalAddress({
+      id: "business-census",
+      name: "Example Shop",
+      address: "1226 N. 52nd Street, Suite 4",
+      city: "Philadelphia",
+      state: "PA",
+      country: "United States",
+      postalCode: "19131",
+    });
+    expect(expected).not.toBeNull();
+    expect(
+      matchingCensusLocation(expected!, {
+        matchedAddress: "1226 N 52ND ST, PHILADELPHIA, PA, 19131",
+        coordinates: { x: -75.2199, y: 39.9891 },
+        addressComponents: {
+          fromAddress: "1226",
+          preDirection: "N",
+          streetName: "52ND",
+          suffixType: "ST",
+          city: "PHILADELPHIA",
+          state: "PA",
+          zip: "19131",
+        },
+      }),
+    ).toMatchObject({
+      latitude: 39.9891,
+      longitude: -75.2199,
+      locationType: "CENSUS_ADDRESS_RANGE_INTERPOLATED",
+    });
+    expect(
+      matchingCensusLocation(expected!, {
+        matchedAddress: "1228 N 52ND ST, PHILADELPHIA, PA, 19131",
+        coordinates: { x: -75.2199, y: 39.9891 },
+        addressComponents: {
+          fromAddress: "1228",
+          preDirection: "N",
+          streetName: "52ND",
+          suffixType: "ST",
+          city: "PHILADELPHIA",
+          state: "PA",
+          zip: "19131",
+        },
+      }),
+    ).toBeNull();
+  });
+
   it("keeps the write scope to coordinates plus required map receipts and audits", () => {
     expect(FOUNDER_MAP_RESTORATION_POLICY_VERSION).toBe(
-      "founder-map-restoration-v1",
+      "founder-map-restoration-v2",
     );
     expect(source).toContain(
-      "Google Geocoding exact match for stored physical address",
+      "Census Geocoder exact match for stored physical address",
     );
+    expect(source).toContain("CENSUS_ADDRESS_RANGE_INTERPOLATED");
+    expect(source).not.toContain("GOOGLE_MAPS_API_KEY");
     expect(source).toContain("e.map_pin_evidence_id IS NULL");
+    expect(source).toContain("business_legacy_map_location_attestations");
     expect(source).toContain("UPDATE businesses\n        SET latitude");
     expect(source).toContain("business_discovery_eligibility_audit_events");
     expect(source).toContain("business_directory_reconciliation_audit_events");
