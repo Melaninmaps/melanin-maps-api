@@ -1393,7 +1393,19 @@ export default function MapPage() {
       .then((r) => r.json())
       .then(({ key }: { key?: string }) => {
         if (!key) { setApiKeyError(true); return; }
-        if (document.getElementById("gmaps-script")) { setGmLoaded(true); return; }
+        const existingScript = document.getElementById("gmaps-script") as HTMLScriptElement | null;
+        if (existingScript) {
+          // React can mount the route twice while the first request is still
+          // loading the Google script. Marking it ready merely because the tag
+          // exists races map construction against window.google, which used to
+          // put a healthy map into the permanent provider-error fallback.
+          if ((window as any).google?.maps) { setGmLoaded(true); return; }
+          const markReady = () => setGmLoaded(true);
+          const markError = () => setApiKeyError(true);
+          existingScript.addEventListener("load", markReady, { once: true });
+          existingScript.addEventListener("error", markError, { once: true });
+          return;
+        }
         (window as any).__mwmMapInit = () => setGmLoaded(true);
         (window as any).gm_authFailure = () => setApiKeyError(true);
         const script = document.createElement("script");

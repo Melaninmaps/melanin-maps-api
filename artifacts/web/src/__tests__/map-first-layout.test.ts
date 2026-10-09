@@ -29,6 +29,8 @@ describe("map-first Web layout", () => {
     expect(mapSource).toContain("}, [gmLoaded, ready, requestMapDeviceLocation, centerSavedHomeArea, savedHomeCity]);");
     expect(mapSource).toContain("const map: GMap = new g.Map(mapDivRef.current");
     expect(mapSource).toContain("setReady(true);");
+    expect(mapSource).toContain("if ((window as any).google?.maps) { setGmLoaded(true); return; }");
+    expect(mapSource).toContain('existingScript.addEventListener("load", markReady, { once: true });');
   });
 
   it("recovers the saved home area when member authentication resolves after map initialization", () => {
