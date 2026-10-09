@@ -1,5 +1,12 @@
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { OWNERSHIP_FILTER_OPTIONS } from "@workspace/constants";
+import {
+  isFiniteMapCoordinate,
+  mapDistanceOriginContext,
+  normalizeManualMapDistanceOrigin,
+  resolveMapDistanceOrigin,
+  type MapDistanceOrigin,
+} from "@/lib/mapDistanceOrigin";
 import { persistReducedSupportLensRemoval } from "@/lib/supportLensActions";
 import {
   countMapDiscoveryFocuses,
@@ -189,6 +196,7 @@ function getConfidenceLabel(level: string): string {
 
 type RouteInfo = { distance: string; duration: string; bizName: string };
 type MapGeolocationStatus = "idle" | "requesting" | "granted" | "denied" | "unavailable" | "timed_out" | "error";
+type MapDistanceDisplay = { text: string; originContext: string };
 
 const BRAND_STYLE: object[] = [
   { elementType: "geometry", stylers: [{ color: "#f5ede0" }] },
@@ -225,23 +233,26 @@ function mapDirectionsUrl(business: BizWithCoords): string | null {
 }
 
 function approximateMapDistanceMiles(
-  origin: { lat: number; lng: number } | null,
+  origin: MapDistanceOrigin | null,
   business: BizWithCoords,
-): string | null {
+): MapDistanceDisplay | null {
   if (!origin) return null;
   const latitude = Number(business.latitude);
   const longitude = Number(business.longitude);
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
   const miles = haversineKm(origin.lat, origin.lng, latitude, longitude) * 0.621371;
   if (!Number.isFinite(miles)) return null;
-  return miles < 0.1 ? "< 0.1 mi away" : `${miles.toFixed(1)} mi away`;
+  return {
+    text: miles < 0.1 ? "< 0.1 mi away" : `${miles.toFixed(1)} mi away`,
+    originContext: mapDistanceOriginContext(origin),
+  };
 }
 
 /**
  * Map pins expose only receipt-gated address, ownership, and official-website
  * fields. Escape every value anyway because Google InfoWindow accepts HTML.
  */
-function mapBusinessPreviewHtml(business: BizWithCoords, distance: string | null): string {
+function mapBusinessPreviewHtml(business: BizWithCoords, distance: MapDistanceDisplay | null): string {
   const safeName = escapeHtml(business.name?.trim() || "Business");
   const location = [business.address, [business.city, business.state].filter(Boolean).join(", ")]
     .filter((value): value is string => Boolean(value?.trim()))
@@ -264,7 +275,7 @@ function mapBusinessPreviewHtml(business: BizWithCoords, distance: string | null
     ? `<div style="font-size:10px;color:#2D7A4F;font-weight:700;margin-top:6px">Documented by source: ${escapeHtml(labels.join(", "))}</div>`
     : "";
   const safeDistance = distance
-    ? `<div style="font-size:10px;color:#795548;font-weight:700;margin-top:5px">${escapeHtml(distance)} from your current location</div>`
+    ? `<div style="font-size:10px;color:#795548;font-weight:700;margin-top:5px">${escapeHtml(distance.text)} ${escapeHtml(distance.originContext)}</div>`
     : "";
   const directions = mapDirectionsUrl(business);
   const safeWebsite = safePublicUrl(business.official_website);
@@ -394,15 +405,23 @@ export default function MapPage() {
   const [mapEvents] = useState<MapEvent[]>([]);
   const eventMarkersRef = useRef<GMarker[]>([]);
 
-  // User's confirmed geolocation — set when browser grants permission
+  // User's confirmed geolocation — set when browser grants permission.
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  // A manually selected origin is voluntary, browser-local, and applies only
+  // to displayed pin-preview distances. It never overwrites device location,
+  // saved home, local search scope, or the member profile.
+  const [manualDistanceOrigin, setManualDistanceOrigin] = useState<MapDistanceOrigin | null>(null);
+  const [manualOriginInput, setManualOriginInput] = useState("");
+  const [manualOriginConsent, setManualOriginConsent] = useState(false);
+  const [manualOriginStatus, setManualOriginStatus] = useState<"idle" | "resolving" | "ready" | "error">("idle");
+  const [manualOriginMessage, setManualOriginMessage] = useState<string | null>(null);
   // Marker listeners are registered once by Google Maps. Keep the latest
-  // confirmed device location in a ref so a later consent result can add an
-  // honest distance to the preview without re-creating every marker.
-  const userCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
+  // explicit manual origin or confirmed device location in a ref so later
+  // consent/selection changes apply without re-creating every marker.
+  const distanceOriginRef = useRef<MapDistanceOrigin | null>(null);
   useEffect(() => {
-    userCoordsRef.current = userCoords;
-  }, [userCoords]);
+    distanceOriginRef.current = resolveMapDistanceOrigin(manualDistanceOrigin, userCoords);
+  }, [manualDistanceOrigin, userCoords]);
   // A profile home city is useful when a member declines precise location. It is
   // still a local starting point, never permission to populate the whole map.
   const [profileCoords, setProfileCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -541,6 +560,46 @@ export default function MapPage() {
       { enableHighAccuracy: true, timeout: 12_000, maximumAge: 0 },
     );
   }, []);
+
+  const applyManualDistanceOrigin = useCallback(() => {
+    const requestedPlace = normalizeManualMapDistanceOrigin(manualOriginInput);
+    if (!requestedPlace) {
+      setManualOriginStatus("error");
+      setManualOriginMessage("Enter a city, neighborhood, or street address up to 120 characters.");
+      return;
+    }
+    if (!manualOriginConsent) {
+      setManualOriginStatus("error");
+      setManualOriginMessage("Confirm that this temporary place can be used for approximate map distances.");
+      return;
+    }
+    const Geocoder = (window as any).google?.maps?.Geocoder;
+    if (!Geocoder) {
+      setManualOriginStatus("error");
+      setManualOriginMessage("Map search is still loading. Try again in a moment.");
+      return;
+    }
+    setManualOriginStatus("resolving");
+    setManualOriginMessage("Checking the selected place…");
+    new Geocoder().geocode({ address: requestedPlace }, (results: any[], status: string) => {
+      const result = status === "OK" ? results?.[0] : null;
+      const location = result?.geometry?.location;
+      const latitude = typeof location?.lat === "function" ? location.lat() : location?.lat;
+      const longitude = typeof location?.lng === "function" ? location.lng() : location?.lng;
+      if (!isFiniteMapCoordinate(latitude) || !isFiniteMapCoordinate(longitude)) {
+        setManualOriginStatus("error");
+        setManualOriginMessage("That place could not be located precisely enough for distances. Try a city and state or full street address.");
+        return;
+      }
+      const label = normalizeManualMapDistanceOrigin(
+        typeof result?.formatted_address === "string" ? result.formatted_address : requestedPlace,
+      ) ?? requestedPlace;
+      setManualDistanceOrigin({ lat: latitude, lng: longitude, label, source: "manual" });
+      setManualOriginInput(label);
+      setManualOriginStatus("ready");
+      setManualOriginMessage(`Approximate pin-preview distances now use ${label}.`);
+    });
+  }, [manualOriginConsent, manualOriginInput]);
 
   const centerSavedHomeArea = useCallback((homeCity: string | null) => {
     if (!homeCity || !mapRef.current || handoffQuery || searchViewportLockedRef.current) return;
@@ -1538,7 +1597,7 @@ export default function MapPage() {
     });
 
     infoWindowRef.current?.setContent(
-      mapBusinessPreviewHtml(biz, approximateMapDistanceMiles(userCoordsRef.current, biz)),
+      mapBusinessPreviewHtml(biz, approximateMapDistanceMiles(distanceOriginRef.current, biz)),
     );
     infoWindowRef.current?.open(mapRef.current, m);
   }, []);
@@ -1806,6 +1865,71 @@ export default function MapPage() {
           <div className="px-4 py-3 border-b border-[#2563A8]/15 bg-[#EFF6FF] text-xs leading-relaxed text-[#1E3A5F]">
             <strong>Travel destinations — planning references.</strong> These pins use supplied destination coordinates; related references may share one city or regional node. They are not business listings and do not certify current safety or accessibility. Check current official travel guidance before travel.
           </div>
+        )}
+
+        {!showingCultural && (
+          <section
+            aria-label="Temporary distance origin"
+            data-testid="manual-map-distance-origin"
+            className="px-4 py-3 border-b border-[#3A1F0E]/6 bg-[#FFFCF6] shrink-0"
+          >
+            <p className="text-[11px] font-bold text-[#2B1507]">Use a place for approximate pin-preview distances</p>
+            <p className="mt-0.5 text-[10px] leading-relaxed text-[#3A1F0E]/60">
+              This is optional and stays only in this browser until you clear it. It does not change your saved home, request device location, or change nearby search results.
+            </p>
+            <div className="mt-2 flex gap-2">
+              <input
+                value={manualOriginInput}
+                onChange={(event) => {
+                  setManualOriginInput(event.target.value);
+                  if (manualOriginStatus !== "idle") {
+                    setManualOriginStatus("idle");
+                    setManualOriginMessage(null);
+                  }
+                }}
+                maxLength={120}
+                aria-label="Temporary place for approximate pin-preview distances"
+                placeholder="City, neighborhood, or address"
+                className="min-w-0 flex-1 rounded-lg border border-[#3A1F0E]/15 bg-white px-2.5 py-2 text-[11px] text-[#2B1507] placeholder:text-[#3A1F0E]/40 focus:outline-none focus:border-[#CA922B]/50"
+              />
+              <button
+                type="button"
+                onClick={applyManualDistanceOrigin}
+                disabled={manualOriginStatus === "resolving"}
+                className="shrink-0 rounded-lg bg-[#2B1507] px-3 py-2 text-[10px] font-bold text-white disabled:cursor-wait disabled:opacity-60"
+              >
+                {manualOriginStatus === "resolving" ? "Checking…" : "Use place"}
+              </button>
+            </div>
+            <label className="mt-2 flex items-start gap-2 text-[10px] leading-snug text-[#3A1F0E]/65">
+              <input
+                type="checkbox"
+                checked={manualOriginConsent}
+                onChange={(event) => setManualOriginConsent(event.target.checked)}
+                className="mt-0.5"
+              />
+              <span>I want to use this temporary place only for approximate map pin-preview distances.</span>
+            </label>
+            {manualOriginMessage && (
+              <p role="status" aria-live="polite" className={`mt-2 text-[10px] leading-snug ${manualOriginStatus === "error" ? "text-[#A12C2C]" : "text-[#3A1F0E]/65"}`}>
+                {manualOriginMessage}
+              </p>
+            )}
+            {manualDistanceOrigin && (
+              <button
+                type="button"
+                onClick={() => {
+                  setManualDistanceOrigin(null);
+                  setManualOriginConsent(false);
+                  setManualOriginStatus("idle");
+                  setManualOriginMessage("Temporary distance origin cleared. Pin previews use device location only when you grant it.");
+                }}
+                className="mt-2 text-[10px] font-bold text-[#CA922B] hover:text-[#9F6E16] hover:underline"
+              >
+                Clear temporary distance origin
+              </button>
+            )}
+          </section>
         )}
 
         {/* Browser location is explicit: a saved home area is never shown as live GPS. */}

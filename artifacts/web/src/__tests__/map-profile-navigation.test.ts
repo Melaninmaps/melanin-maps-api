@@ -21,6 +21,19 @@ describe("map profile navigation", () => {
     expect(map).not.toContain('marker.addListener("click", () => navigate(`/businesses/${biz.id}`))');
   });
 
+  it("keeps a member-selected distance origin explicit, temporary, and separate from GPS and home locality", () => {
+    const map = source("../pages/map.tsx");
+    expect(map).toContain('data-testid="manual-map-distance-origin"');
+    expect(map).toContain("This is optional and stays only in this browser until you clear it.");
+    expect(map).toContain("does not change your saved home, request device location, or change nearby search results.");
+    expect(map).toContain("applyManualDistanceOrigin");
+    expect(map).toContain("Confirm that this temporary place can be used for approximate map distances.");
+    expect(map).toContain("Clear temporary distance origin");
+    expect(map).toContain("resolveMapDistanceOrigin(manualDistanceOrigin, userCoords)");
+    expect(map).toContain("approximateMapDistanceMiles(distanceOriginRef.current, biz)");
+    expect(map).not.toContain("localStorage.setItem");
+  });
+
   it("opens first-party cultural and discoverability profiles while retaining non-profile info windows", () => {
     const map = source("../pages/map.tsx");
     expect(map).toContain('navigate(pin.detailPath)');
