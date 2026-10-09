@@ -315,6 +315,7 @@ import { buildConversationalBusinessResultView } from "../kinfolk/business-resul
 import {
   businessDiscoveryClarification,
   effectiveBusinessAudienceBand,
+  resolveBusinessLocationClarificationFollowUp,
   temporaryBusinessAudienceBand,
 } from "../kinfolk/business-discovery-clarification";
 import { createPostgresDiscoverySignalRepository } from "../discovery/postgresFlywheelRepository";
@@ -7655,28 +7656,49 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const ephemeralDiscoverySession = !input.memoryEnabled
     ? readEphemeralKinfolkSession(input.req.user!.id, input.sessionId)
     : null;
-  const conversationMessages = currentSession?.messages?.length
+  const serverConversationMessages = currentSession?.messages?.length
     ? currentSession.messages
-    : ephemeralDiscoverySession?.messages ?? boundedEphemeralConversation(input.conversationContext);
+    : ephemeralDiscoverySession?.messages ?? [];
+  const conversationMessages = serverConversationMessages.length
+    ? serverConversationMessages
+    : boundedEphemeralConversation(input.conversationContext);
   const noResultFollowUp = resolveGovernedNoResultFollowUp(
     conversationMessages,
     input.message,
   );
-  const discoveryMessage = noResultFollowUp?.priorQuestion ?? input.message;
-  const location = resolveTurnGeography(
-    discoveryMessage,
-    input.cityHint ?? currentSession?.destination ?? ephemeralDiscoverySession?.destination ?? null,
-  );
+  const locationClarificationFollowUp =
+    resolveBusinessLocationClarificationFollowUp(serverConversationMessages);
+  const discoveryMessage =
+    noResultFollowUp?.priorQuestion ??
+    locationClarificationFollowUp?.priorQuestion ??
+    input.message;
+  const location = locationClarificationFollowUp
+    ? resolveTurnGeography(input.message, null)
+    : resolveTurnGeography(
+        discoveryMessage,
+        input.cityHint ?? currentSession?.destination ?? ephemeralDiscoverySession?.destination ?? null,
+      );
   const followUp = resolveBusinessResultFollowUp(
     conversationMessages,
     input.message,
   );
-  const subject = deriveBusinessSubject(discoveryMessage) ?? followUp?.subject ?? null;
+  const subject =
+    deriveBusinessSubject(discoveryMessage) ??
+    locationClarificationFollowUp?.subject ??
+    followUp?.subject ??
+    null;
   const decision = classifyKinfolkRequest(
     discoveryMessage,
     location?.city ?? null,
   );
-  if ((!followUp && !noResultFollowUp && decision.route !== "business_discovery") || !location?.state || !subject)
+  if (
+    (!followUp &&
+      !noResultFollowUp &&
+      !locationClarificationFollowUp &&
+      decision.route !== "business_discovery") ||
+    !location?.state ||
+    !subject
+  )
     return false;
 
   const scope = { city: location.city, stateCode: location.state };
@@ -9769,9 +9791,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // because the regex requires a preposition before the city name.
     const earlyDecision = classifyKinfolkRequest(message, destination ?? null);
     if (earlyDecision.route === "clarification") {
-      res.json({
+      const clarificationReply =
+        earlyDecision.clarification ?? "Which city or neighborhood should I search?";
+      const clarificationSessionId = await persistDeterministicDiscoveryTurn({
+        userId: req.user.id,
+        memoryEnabled,
         sessionId,
-        reply: earlyDecision.clarification,
+        message,
+        reply: clarificationReply,
+        recommendations: null,
+        resultView: null,
+        followUpSuggestions: [],
+        sources: [],
+        destination: "",
+        vibes,
+      });
+      res.json({
+        sessionId: clarificationSessionId,
+        reply: clarificationReply,
         recommendations: null,
         followUpSuggestions: [],
         smartPromotion: null,
