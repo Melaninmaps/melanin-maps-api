@@ -423,6 +423,12 @@ async function run(): Promise<Result> {
     process.env.CRON_SECRET = "disposable-map-route-secret";
     const routeApp = express();
     routeApp.use(express.json());
+    routeApp.use((req, _res, next) => {
+      if (req.headers["x-test-named-admin"] === "disposable-admin") {
+        (req as any).user = { id: "disposable-address-admin", role: "admin", email: "admin@example.test" };
+      }
+      next();
+    });
     registerDocumentedDiscoveryReviewRoutes(routeApp);
     await request(routeApp).put("/api/admin/businesses/route-map/map-pin-evidence").send(mapInput).expect(401);
     await client.query(
@@ -566,6 +572,19 @@ async function run(): Promise<Result> {
       .put("/api/admin/businesses/route-address/stored-address-evidence")
       .set("x-cron-secret", "disposable-map-route-secret")
       .send(addressInput)
+      .expect(401);
+    const beforeExactSnapshotMismatch = await client.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM public.business_profile_evidence_receipts WHERE business_id = 'route-address'`);
+    await request(routeApp)
+      .put("/api/admin/businesses/route-address/stored-address-evidence")
+      .set("x-test-named-admin", "disposable-admin")
+      .send({ ...addressInput, expectedStoredAddress: "123 Synthetic Street, Philadelphia, PA " })
+      .expect(409);
+    const afterExactSnapshotMismatch = await client.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM public.business_profile_evidence_receipts WHERE business_id = 'route-address'`);
+    assert(afterExactSnapshotMismatch.rows[0]?.count === beforeExactSnapshotMismatch.rows[0]?.count, "normalized-but-not-exact address snapshot wrote a receipt");
+    await request(routeApp)
+      .put("/api/admin/businesses/route-address/stored-address-evidence")
+      .set("x-test-named-admin", "disposable-admin")
+      .send(addressInput)
       .expect(200);
     const routeAddress = await client.query<{
       business: Record<string, unknown>;
@@ -590,10 +609,17 @@ async function run(): Promise<Result> {
     assert(JSON.stringify(reconciledAddress.eligibility.ownership_designations) === JSON.stringify(["Black / African American-Owned"]), "address-only route changed ownership evidence");
     assert(Array.isArray(reconciledAddress.ledger.evidence_receipt_ids) && reconciledAddress.ledger.evidence_receipt_ids.length === 1, "address-only route did not append one ledger receipt");
     assert(reconciledAddress.discovery_actions?.join(",") === "address_reconciled" && reconciledAddress.reconciliation_actions?.join(",") === "review", "address-only route did not write required immutable audits");
+    let immutableAddressReceiptRejected = false;
+    try {
+      await client.query(`UPDATE public.business_profile_evidence_receipts SET source_url = 'https://tamper.example/' WHERE business_id = 'route-address'`);
+    } catch (error) {
+      immutableAddressReceiptRejected = String(error).includes("immutable");
+    }
+    assert(immutableAddressReceiptRejected, "stored-address evidence receipt was mutable after reconciliation");
     const addressReceiptCount = await client.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM public.business_profile_evidence_receipts WHERE business_id = 'route-address'`);
     await request(routeApp)
       .put("/api/admin/businesses/route-address/stored-address-evidence")
-      .set("x-cron-secret", "disposable-map-route-secret")
+      .set("x-test-named-admin", "disposable-admin")
       .send({ ...addressInput, expectedStoredAddress: "123 Synthetic Street, Philadelphia, PA" })
       .expect(409);
     const addressReceiptCountAfterReplay = await client.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM public.business_profile_evidence_receipts WHERE business_id = 'route-address'`);
@@ -625,7 +651,7 @@ async function run(): Promise<Result> {
     );
     await request(routeApp)
       .put("/api/admin/businesses/route-address-null/stored-address-evidence")
-      .set("x-cron-secret", "disposable-map-route-secret")
+      .set("x-test-named-admin", "disposable-admin")
       .send({ ...addressInput, expectedStoredAddress: null })
       .expect(200);
     const nullAddressResult = await client.query<{ address: string | null; latitude: string | null; longitude: string | null; map_pin_evidence_id: string | null }>(
@@ -636,6 +662,46 @@ async function run(): Promise<Result> {
     );
     assert(nullAddressResult.rows[0]?.address === "123 Synthetic Street, Philadelphia, PA 19103", "explicit-null address snapshot did not receive exact first-party address");
     assert(nullAddressResult.rows[0]?.latitude === null && nullAddressResult.rows[0]?.longitude === null && nullAddressResult.rows[0]?.map_pin_evidence_id === null, "explicit-null address path created or retained map data");
+    const heldAddressCases = [
+      ["route-address-identity-hold", "requires_reconciliation", "identity_conflict", "reconcile", "active", "live_unclaimed"],
+      ["route-address-contact-hold", "requires_reconciliation", "phone_conflict", "reconcile", "active", "live_unclaimed"],
+      ["route-address-location-hold", "requires_reconciliation", "address_conflict", "reconcile", "active", "live_unclaimed"],
+      ["route-address-duplicate-hold", "requires_reconciliation", "duplicate_candidate", "reconcile", "active", "live_unclaimed"],
+      ["route-address-public-hold", "reversible_public_hold", "address_conflict", "reversible_public_hold", "active", "live_unclaimed"],
+      ["route-address-archived-hold", "archived_confirmed_duplicate", "confirmed_duplicate", "archive_confirmed_duplicate", "duplicate", "archived"],
+      ["route-address-closed-hold", "reviewed_qualified", "source_ownership_and_official_presence_verified", "qualify_kinfolk_current", "closed", "live_unclaimed"],
+    ] as const;
+    for (const [id, reconciliationState, reasonCode, recommendedAction, status, listingStatus] of heldAddressCases) {
+      await client.query(
+        `INSERT INTO public.businesses (id, name, address, city, state, category, subcategory, description, status, listing_status)
+         VALUES ($1, 'Held Address Fixture', '123 Synthetic Street, Philadelphia, PA', 'Philadelphia', 'PA', 'Food & Drink', 'Cafe', 'Synthetic held address fixture', $2, $3)`,
+        [id, status, listingStatus],
+      );
+      await client.query(
+        `INSERT INTO public.business_discovery_eligibility (
+           business_id, eligibility_status, policy_version, identity_evidence_id, ownership_evidence_id,
+           official_website_evidence_id, official_social_evidence_id, ownership_designations,
+           ownership_source_expires_at, review_after, decision_reason
+         ) VALUES ($1, 'qualified', $2, 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+           'cccccccc-cccc-cccc-cccc-cccccccccccc', NULL, '["Black / African American-Owned"]'::jsonb,
+           now() + interval '1 day', now() + interval '1 day', 'Existing current qualification')`,
+        [id, DOCUMENTED_DISCOVERY_POLICY_VERSION],
+      );
+      await client.query(
+        `INSERT INTO public.business_directory_reconciliation_ledger (
+           business_id, reconciliation_state, reason_code, presence_status, ownership_status, recommended_action
+         ) VALUES ($1, $2, $3, 'valid_website', 'source_documented', $4)`,
+        [id, reconciliationState, reasonCode, recommendedAction],
+      );
+      const beforeHeldCount = await client.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM public.business_profile_evidence_receipts WHERE business_id = $1`, [id]);
+      await request(routeApp)
+        .put(`/api/admin/businesses/${id}/stored-address-evidence`)
+        .set("x-test-named-admin", "disposable-admin")
+        .send(addressInput)
+        .expect(409);
+      const afterHeldCount = await client.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM public.business_profile_evidence_receipts WHERE business_id = $1`, [id]);
+      assert(afterHeldCount.rows[0]?.count === beforeHeldCount.rows[0]?.count, `held address fixture ${id} wrote a receipt`);
+    }
     checks.stored_address_reconciliation_clears_coordinates_without_creating_map_evidence = true;
 
     await client.query(
