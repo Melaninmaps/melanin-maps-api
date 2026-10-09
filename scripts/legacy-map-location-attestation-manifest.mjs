@@ -69,7 +69,11 @@ function eligibility(value, label, now) {
   ]), label);
   if (raw.eligibilityStatus !== "qualified") fail(`${label}.eligibilityStatus must be qualified`);
   if (raw.policyVersion !== DOCUMENTED_DISCOVERY_POLICY_VERSION) fail(`${label}.policyVersion must be the current documented policy`);
-  const identityEvidenceId = text(raw.identityEvidenceId, `${label}.identityEvidenceId`, { max: 255 });
+  // The public map and Kinfolk predicate requires documented ownership plus
+  // official presence, not a separately stored identity receipt. Preserve an
+  // existing identity reference when available, but do not force a new review
+  // cycle solely to restore an already-qualified canonical record.
+  const identityEvidenceId = nullableText(raw.identityEvidenceId, `${label}.identityEvidenceId`, 255);
   const ownershipEvidenceId = text(raw.ownershipEvidenceId, `${label}.ownershipEvidenceId`, { max: 255 });
   const officialWebsiteEvidenceId = nullableText(raw.officialWebsiteEvidenceId, `${label}.officialWebsiteEvidenceId`, 255);
   const officialSocialEvidenceId = nullableText(raw.officialSocialEvidenceId, `${label}.officialSocialEvidenceId`, 255);
