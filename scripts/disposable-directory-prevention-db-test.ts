@@ -227,6 +227,21 @@ async function run(): Promise<Result> {
       CREATE TRIGGER disposable_reconciliation_audit_immutable
       BEFORE UPDATE OR DELETE ON public.business_directory_reconciliation_audit_events
       FOR EACH ROW EXECUTE FUNCTION public.disposable_prevent_map_audit_mutation();
+      CREATE OR REPLACE FUNCTION public.prevent_stored_address_evidence_receipt_mutation()
+      RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        IF OLD.captured_by LIKE 'stored-address-reconciliation:%' THEN
+          RAISE EXCEPTION 'stored-address evidence receipts are immutable';
+        END IF;
+        IF TG_OP = 'DELETE' THEN
+          RETURN OLD;
+        END IF;
+        RETURN NEW;
+      END;
+      $$;
+      CREATE TRIGGER business_profile_evidence_receipts_stored_address_immutable
+      BEFORE UPDATE OR DELETE ON public.business_profile_evidence_receipts
+      FOR EACH ROW EXECUTE FUNCTION public.prevent_stored_address_evidence_receipt_mutation();
       -- The real public route reads the hardened visibility view. This isolated
       -- fixture contains only synthetic rows and mirrors the canonical/active
       -- subset required for a map response assertion.
