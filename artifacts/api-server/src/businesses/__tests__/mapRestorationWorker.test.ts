@@ -130,6 +130,7 @@ describe("founder map restoration", () => {
     expect(source).toContain("AND b.latitude IS NULL");
     expect(source).toContain("AND b.longitude IS NULL");
     expect(source).toContain("business_legacy_map_location_attestations");
+    expect(source).toContain('COUNT(*) FILTER (WHERE e.map_pin_evidence_id IS NOT NULL OR EXISTS');
     expect(source).toContain("UPDATE businesses\n        SET latitude");
     expect(source).toContain("business_discovery_eligibility_audit_events");
     expect(source).toContain("business_directory_reconciliation_audit_events");

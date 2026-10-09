@@ -858,8 +858,30 @@ export function registerFounderMapRestorationRoutes(
           awaitingMapEvidence: string;
         }>(
           `SELECT COUNT(*)::text AS total,
-                  COUNT(*) FILTER (WHERE e.map_pin_evidence_id IS NOT NULL)::text AS mapped,
-                  COUNT(*) FILTER (WHERE e.map_pin_evidence_id IS NULL)::text AS "awaitingMapEvidence"
+                  COUNT(*) FILTER (WHERE e.map_pin_evidence_id IS NOT NULL OR EXISTS (
+                    SELECT 1
+                      FROM public.business_legacy_map_location_attestations legacy_location
+                     WHERE legacy_location.business_id::text = e.business_id::text
+                       AND COALESCE((
+                         SELECT legacy_event.action
+                           FROM public.business_legacy_map_location_attestation_events legacy_event
+                          WHERE legacy_event.attestation_id = legacy_location.id
+                          ORDER BY legacy_event.created_at DESC, legacy_event.id DESC
+                          LIMIT 1
+                       ), 'active') <> 'revoked'
+                  ))::text AS mapped,
+                  COUNT(*) FILTER (WHERE NOT (e.map_pin_evidence_id IS NOT NULL OR EXISTS (
+                    SELECT 1
+                      FROM public.business_legacy_map_location_attestations legacy_location
+                     WHERE legacy_location.business_id::text = e.business_id::text
+                       AND COALESCE((
+                         SELECT legacy_event.action
+                           FROM public.business_legacy_map_location_attestation_events legacy_event
+                          WHERE legacy_event.attestation_id = legacy_location.id
+                          ORDER BY legacy_event.created_at DESC, legacy_event.id DESC
+                          LIMIT 1
+                       ), 'active') <> 'revoked'
+                  )))::text AS "awaitingMapEvidence"
              FROM public.public_businesses b
              JOIN public.business_discovery_eligibility e ON e.business_id::text = b.id::text
             WHERE e.eligibility_status = 'qualified'
