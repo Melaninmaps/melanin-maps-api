@@ -851,7 +851,7 @@ export function registerFounderMapRestorationRoutes(
   app.get("/api/admin/map-restoration/status", async (req, res) => {
     if (!requireAdmin(req, res)) return;
     try {
-      const [catalog, outcomes] = await Promise.all([
+      const [catalog, outcomes, currentEligibleOutcomes, outcomesOutsideCurrentPopulation] = await Promise.all([
         pool.query<{
           total: string;
           mapped: string;
@@ -899,6 +899,40 @@ export function registerFounderMapRestorationRoutes(
             ORDER BY outcome`,
           [FOUNDER_MAP_RESTORATION_POLICY_VERSION],
         ),
+        pool.query<{ outcome: MapRestorationOutcome; total: string }>(
+          `SELECT o.outcome, COUNT(*)::text AS total
+             FROM business_map_restoration_outcomes o
+             JOIN public.public_businesses b ON b.id::text = o.business_id::text
+             JOIN public.business_discovery_eligibility e ON e.business_id::text = b.id::text
+            WHERE o.policy_version = $1
+              AND e.eligibility_status = 'qualified'
+              AND e.policy_version = 'documented_diaspora_discovery_v1'
+              AND e.ownership_evidence_id IS NOT NULL
+              AND (e.official_website_evidence_id IS NOT NULL OR e.official_social_evidence_id IS NOT NULL)
+              AND e.ownership_source_expires_at > CURRENT_TIMESTAMP
+              AND e.review_after > CURRENT_TIMESTAMP
+            GROUP BY o.outcome
+            ORDER BY o.outcome`,
+          [FOUNDER_MAP_RESTORATION_POLICY_VERSION],
+        ),
+        pool.query<{ total: string }>(
+          `SELECT COUNT(*)::text AS total
+             FROM business_map_restoration_outcomes o
+            WHERE o.policy_version = $1
+              AND NOT EXISTS (
+                SELECT 1
+                  FROM public.public_businesses b
+                  JOIN public.business_discovery_eligibility e ON e.business_id::text = b.id::text
+                 WHERE b.id::text = o.business_id::text
+                   AND e.eligibility_status = 'qualified'
+                   AND e.policy_version = 'documented_diaspora_discovery_v1'
+                   AND e.ownership_evidence_id IS NOT NULL
+                   AND (e.official_website_evidence_id IS NOT NULL OR e.official_social_evidence_id IS NOT NULL)
+                   AND e.ownership_source_expires_at > CURRENT_TIMESTAMP
+                   AND e.review_after > CURRENT_TIMESTAMP
+              )`,
+          [FOUNDER_MAP_RESTORATION_POLICY_VERSION],
+        ),
       ]);
       res.json({
         policyVersion: FOUNDER_MAP_RESTORATION_POLICY_VERSION,
@@ -911,6 +945,11 @@ export function registerFounderMapRestorationRoutes(
           outcome: row.outcome,
           total: Number(row.total),
         })),
+        currentEligibleOutcomes: currentEligibleOutcomes.rows.map((row) => ({
+          outcome: row.outcome,
+          total: Number(row.total),
+        })),
+        outcomesOutsideCurrentPopulation: Number(outcomesOutsideCurrentPopulation.rows[0]?.total ?? "0"),
       });
     } catch (error) {
       req.log.error({ error }, "Failed to read founder map restoration status");
