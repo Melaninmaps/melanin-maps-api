@@ -51,6 +51,7 @@ import { openExternalUrl } from "@/lib/safeLinking";
 import { businessClarificationContinuation } from "@/lib/businessClarificationContinuation";
 import { kinfolkWorkingElapsedSeconds, kinfolkWorkingElapsedLabel } from "@/lib/kinfolkWorkingIndicator";
 import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
+import { createVoiceRecordingControl } from "@/lib/voiceRecordingControl";
 import { KinfolkCompanionMemoryOfferCard } from "@/components/KinfolkCompanionMemoryOffer";
 import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDisclosure";
 import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiveMemoryConfirmation";
@@ -2092,6 +2093,9 @@ export default function TravelScreen() {
   const primaryRecorderState = useAudioRecorderState(primaryRecorder, 250);
   const primaryRecordingStartedAtRef = useRef<number | null>(null);
   const primaryRecordingDraftRef = useRef("");
+  const primaryVoiceRecordingControlRef = useRef(createVoiceRecordingControl());
+  const primaryVoiceRecordingSessionRef = useRef<number | null>(null);
+  const primaryVoiceStartGenerationRef = useRef(0);
   const serverVoicePlayer = useAudioPlayer(voiceAudioUri);
   const serverVoicePlayerStatus = useAudioPlayerStatus(serverVoicePlayer);
   const autoSpeechGuardRef = useRef(createVoicePlaybackGuard(
@@ -2149,7 +2153,7 @@ export default function TravelScreen() {
   useEffect(() => {
     void (async () => {
       try {
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+        const base = getApiBase();
         const r = await fetch(`${base}/api/kinfolk/health`, { signal: AbortSignal.timeout(8000) });
         setKinfolkOk(r.ok);
       } catch {
@@ -2378,22 +2382,6 @@ export default function TravelScreen() {
     void playServerVoice(last.content, "auto", last.id);
   }, [messages, isLoading, playServerVoice, voiceOutput]);
 
-  useEffect(() => {
-    const subscription = AppState.addEventListener("change", (state) => {
-      appStateRef.current = state;
-      if (state !== "active") {
-        pendingAutoSpeechRef.current = null;
-        stopServerVoice("app_background");
-      }
-    });
-    return () => {
-      subscription.remove();
-      appStateRef.current = "background";
-      pendingAutoSpeechRef.current = null;
-      stopServerVoice("unmount");
-    };
-  }, [stopServerVoice]);
-
   const speakManually = useCallback((messageId: string, content: string) => {
     if (playingVoice) {
       stopServerVoice("manual_stop");
@@ -2495,8 +2483,13 @@ export default function TravelScreen() {
       Alert.alert("Sign in to use Kinfolk Voice", "Create or sign in to a free account to record a question. You can still type your question.");
       return;
     }
+    const startGeneration = primaryVoiceStartGenerationRef.current + 1;
+    primaryVoiceStartGenerationRef.current = startGeneration;
+    const startStillAllowed = () => startGeneration === primaryVoiceStartGenerationRef.current
+      && appStateRef.current === "active";
     try {
       const permission = await requestRecordingPermissionsAsync();
+      if (!startStillAllowed()) return;
       if (!permission.granted) {
         Alert.alert(
           "Microphone access is off",
@@ -2522,7 +2515,15 @@ export default function TravelScreen() {
         shouldPlayInBackground: false,
         shouldRouteThroughEarpiece: false,
       });
+      if (!startStillAllowed()) {
+        await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+        return;
+      }
       await primaryRecorder.prepareToRecordAsync();
+      if (!startStillAllowed()) {
+        await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+        return;
+      }
       if (!primaryRecorder.getStatus().canRecord) {
         throw new Error("Your phone could not prepare its microphone. Try again, or check microphone access in Settings.");
       }
@@ -2530,15 +2531,29 @@ export default function TravelScreen() {
       // Recorder startup is asynchronous on physical devices. Verify it before
       // switching the control into its red Stop state.
       await new Promise<void>((resolve) => setTimeout(resolve, 80));
+      if (!startStillAllowed()) {
+        if (primaryRecorder.isRecording) await primaryRecorder.stop();
+        const staleFile = primaryRecorder.uri;
+        if (staleFile) {
+          const temporaryFile = new FileSystem.File(staleFile);
+          try { if (temporaryFile.exists) temporaryFile.delete(); } catch { /* cache cleanup is best effort */ }
+        }
+        await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+        return;
+      }
       if (!primaryRecorder.getStatus().isRecording) {
         throw new Error("Your phone did not begin recording. Check microphone access and try again.");
       }
+      primaryVoiceRecordingSessionRef.current = primaryVoiceRecordingControlRef.current.begin();
       primaryRecordingStartedAtRef.current = Date.now();
       primaryRecordingDraftRef.current = inputText;
       setVoiceRecordingElapsedSeconds(0);
       setIsRecordingVoice(true);
       setVoiceInputStatus("Recording… 60-second maximum. Tap stop when you’re finished.");
     } catch (cause) {
+      if (!startStillAllowed()) return;
+      primaryVoiceRecordingControlRef.current.cancel();
+      primaryVoiceRecordingSessionRef.current = null;
       primaryRecordingStartedAtRef.current = null;
       setIsRecordingVoice(false);
       setVoiceInputStatus(null);
@@ -2592,6 +2607,7 @@ export default function TravelScreen() {
   const stopPrimaryVoiceRecording = useCallback(async () => {
     const recordingWasActive = primaryRecorder.isRecording || isRecordingVoice;
     if (!recordingWasActive) return;
+    const recordingSession = primaryVoiceRecordingSessionRef.current;
     setIsRecordingVoice(false);
     setIsTranscribingVoice(true);
     setVoiceInputStatus("Turning your words into text…");
@@ -2605,6 +2621,11 @@ export default function TravelScreen() {
       const uri = primaryRecorder.uri;
       if (!uri) throw new Error("No recording was captured. Please try again or type your question.");
       temporaryRecordingUri = uri;
+      if (!primaryVoiceRecordingControlRef.current.permitsTranscription(recordingSession)) {
+        setInputText(primaryRecordingDraftRef.current);
+        setVoiceInputStatus("Recording was interrupted or canceled. Your draft was restored. Nothing was uploaded.");
+        return;
+      }
       const ext = (uri.split(".").pop() ?? "m4a").toLowerCase();
       const mimeType = ({
         m4a: "audio/mp4",
@@ -2628,11 +2649,24 @@ export default function TravelScreen() {
           ? preferences.regionalFlavor
           : "off",
       );
+      if (!primaryVoiceRecordingControlRef.current.permitsTranscription(recordingSession)) {
+        setInputText(primaryRecordingDraftRef.current);
+        setVoiceInputStatus("Recording was interrupted or canceled. Your draft was restored. Nothing was uploaded.");
+        return;
+      }
+      const transcriptionAbortController = primaryVoiceRecordingControlRef.current.beginTranscription(recordingSession);
+      if (!transcriptionAbortController) {
+        setInputText(primaryRecordingDraftRef.current);
+        setVoiceInputStatus("Recording was interrupted or canceled. Your draft was restored. Nothing was uploaded.");
+        return;
+      }
       const response = await fetch(`${getApiBase()}/api/kinfolk/transcribe`, {
         method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: form,
+        signal: transcriptionAbortController.signal,
       });
+      if (!primaryVoiceRecordingControlRef.current.permitsTranscription(recordingSession)) return;
       const payload = await response.json().catch(() => ({})) as {
         text?: string;
         message?: string;
@@ -2644,6 +2678,7 @@ export default function TravelScreen() {
           requiresConfirmation?: boolean;
         };
       };
+      if (!primaryVoiceRecordingControlRef.current.permitsTranscription(recordingSession)) return;
       if (!response.ok) {
         const recovery = payload.error === "AUDIO_UNREADABLE" || payload.error === "AUDIO_MIME_MISMATCH"
           ? "Kinfolk could not read that recording. Please try recording again; if it repeats, type your message and keep the conversation going."
@@ -2671,10 +2706,17 @@ export default function TravelScreen() {
         setVoiceInputStatus("Review your transcription, then tap Send when you’re ready.");
       }
     } catch (cause) {
+      if (!primaryVoiceRecordingControlRef.current.permitsTranscription(recordingSession)) {
+        setInputText(primaryRecordingDraftRef.current);
+        setVoiceInputStatus("Recording was interrupted or canceled. Your draft was restored. Nothing was uploaded.");
+        return;
+      }
       setVoiceInputStatus(null);
       Alert.alert("Voice Input", cause instanceof Error ? cause.message : "Recording error. Please try again or type your question.");
     } finally {
       primaryRecordingStartedAtRef.current = null;
+      primaryVoiceRecordingControlRef.current.finish(recordingSession);
+      primaryVoiceRecordingSessionRef.current = null;
       setVoiceRecordingElapsedSeconds(0);
       setIsTranscribingVoice(false);
       if (temporaryRecordingUri) {
@@ -2686,15 +2728,18 @@ export default function TravelScreen() {
   }, [isRecordingVoice, preferences?.regionalFlavor, primaryRecorder]);
 
   const cancelPrimaryVoiceRecording = useCallback(async () => {
-    if (!primaryRecorder.isRecording) return;
+    primaryVoiceStartGenerationRef.current += 1;
+    primaryVoiceRecordingControlRef.current.cancel();
+    primaryVoiceRecordingSessionRef.current = null;
     setIsRecordingVoice(false);
     setInputText(primaryRecordingDraftRef.current);
     setVoiceInputStatus(primaryRecordingDraftRef.current
       ? "Recording canceled. Your draft was restored."
       : "Recording canceled. Nothing was uploaded.");
+    const uriBeforeStop = primaryRecorder.uri;
     try {
-      await primaryRecorder.stop();
-      const uri = primaryRecorder.uri;
+      if (primaryRecorder.isRecording) await primaryRecorder.stop();
+      const uri = primaryRecorder.uri ?? uriBeforeStop;
       if (uri) {
         const temporaryFile = new FileSystem.File(uri);
         try { temporaryFile.delete(); } catch { /* cache cleanup is best effort */ }
@@ -2727,22 +2772,67 @@ export default function TravelScreen() {
   }, [isRecordingVoice, stopPrimaryVoiceRecording]);
 
   // Calls, route changes, and media-service resets can stop native recording
-  // behind React's back. Recover to the same transcription/retry path instead
-  // of leaving the microphone control visually active but inert.
+  // behind React's back. This is not a member Stop action: discard the raw
+  // audio, restore the untouched draft, and never route partial audio to
+  // transcription.
   useEffect(() => {
     if (!isRecordingVoice || primaryRecorderState.isRecording) return;
     if (primaryRecordingStartedAtRef.current === null) return;
     const timeout = setTimeout(() => {
       if (!primaryRecorder.getStatus().isRecording) {
-        void stopPrimaryVoiceRecording();
+        primaryVoiceStartGenerationRef.current += 1;
+        primaryVoiceRecordingControlRef.current.cancel();
+        primaryVoiceRecordingSessionRef.current = null;
+        const uri = primaryRecorder.uri;
+        if (uri) {
+          const temporaryFile = new FileSystem.File(uri);
+          try { if (temporaryFile.exists) temporaryFile.delete(); } catch { /* cache cleanup is best effort */ }
+        }
+        primaryRecordingStartedAtRef.current = null;
+        setIsRecordingVoice(false);
+        setVoiceRecordingElapsedSeconds(0);
+        setInputText(primaryRecordingDraftRef.current);
+        setVoiceInputStatus("Recording was interrupted. Your draft was restored. Nothing was uploaded.");
+        void setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
       }
     }, 350);
     return () => clearTimeout(timeout);
-  }, [isRecordingVoice, primaryRecorder, primaryRecorderState.isRecording, stopPrimaryVoiceRecording]);
+  }, [isRecordingVoice, primaryRecorder, primaryRecorderState.isRecording]);
 
   useEffect(() => () => {
-    if (primaryRecorder.isRecording) void primaryRecorder.stop();
+    primaryVoiceStartGenerationRef.current += 1;
+    primaryVoiceRecordingControlRef.current.cancel();
+    const uriBeforeStop = primaryRecorder.uri;
+    void (async () => {
+      try {
+        if (primaryRecorder.isRecording) await primaryRecorder.stop();
+      } finally {
+        const uri = primaryRecorder.uri ?? uriBeforeStop;
+        if (uri) {
+          const temporaryFile = new FileSystem.File(uri);
+          try { if (temporaryFile.exists) temporaryFile.delete(); } catch { /* cache cleanup is best effort */ }
+        }
+      }
+    })();
   }, [primaryRecorder]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      appStateRef.current = state;
+      if (state !== "active") {
+        pendingAutoSpeechRef.current = null;
+        stopServerVoice("app_background");
+        void cancelPrimaryVoiceRecording();
+      }
+    });
+    return () => {
+      subscription.remove();
+      appStateRef.current = "background";
+      pendingAutoSpeechRef.current = null;
+      void cancelPrimaryVoiceRecording();
+      stopServerVoice("unmount");
+    };
+  }, [cancelPrimaryVoiceRecording, stopServerVoice]);
 
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);

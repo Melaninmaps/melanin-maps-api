@@ -129,4 +129,16 @@ describe("Build 135 native Kinfolk Settings", () => {
     expect(temporaryStays).toContain("useUnsavedKinfolkExitGuard");
     expect(temporaryStays).not.toContain("/api/kinfolk/chat");
   });
+
+  it("uses the canonical fail-closed API-origin policy for Kinfolk privacy and settings requests", () => {
+    for (const source of [controlCenter, privatePlaces, temporaryStays]) {
+      expect(source).toContain("requireKinfolkPrivateApiContext");
+      expect(source).not.toContain("EXPO_PUBLIC_DOMAIN");
+    }
+    expect(controlCenter).toContain('requireKinfolkPrivateApiContext(token, "Kinfolk Settings")');
+    expect(privatePlaces).toContain('requireKinfolkPrivateApiContext(memberToken, "Private Places")');
+    expect(temporaryStays).toContain('requireKinfolkPrivateApiContext(memberToken, "Temporary Stays")');
+    expect(travel).not.toContain("EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : \"\"");
+    expect(travel).toContain("const base = getApiBase();");
+  });
 });

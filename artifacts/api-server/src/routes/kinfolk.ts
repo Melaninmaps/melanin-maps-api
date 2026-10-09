@@ -140,6 +140,7 @@ import {
   normalizeTranscript,
   VOICE_MAX_DURATION_SECONDS,
 } from "../kinfolk/voice-validation";
+import { createTranscriptionAbortScope } from "../kinfolk/transcriptionAbortScope";
 import { buildHairLossCarePlan } from "../kinfolk/hairCare/hairLossRecommendation";
 import {
   answerWithLivingLibrary,
@@ -14958,9 +14959,10 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     });
   }
 
-  // 7. Transcribe with 15-second timeout — never persist audio blob
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15_000);
+  // 7. Transcribe with a bounded lifetime and an explicit client-disconnect
+  // abort path — never continue sending raw audio to the provider after the
+  // originating member has canceled or backgrounded their recording.
+  const transcriptionScope = createTranscriptionAbortScope(req, res, 15_000);
   const startMs = Date.now();
   const transcriptionModel = kinfolkModel("transcription");
 
@@ -14973,8 +14975,10 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
 
     const transcription = await audioOpenai.audio.transcriptions.create(
       { file, model: transcriptionModel },
-      { signal: controller.signal },
+      { signal: transcriptionScope.signal },
     );
+
+    if (transcriptionScope.wasClientCancelled()) return;
 
     // Log outcome + latency only — never log audio content, transcript text, or user context
     req.log.info(
@@ -15009,8 +15013,11 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
       regionalFlavor,
     });
     let reviewContent: string | null = null;
+    if (transcriptionScope.wasClientCancelled()) return;
     if (resolveOpenAIConfiguration()) {
       const reviewController = new AbortController();
+      const abortReviewForCancelledMember = () => reviewController.abort();
+      transcriptionScope.signal.addEventListener("abort", abortReviewForCancelledMember, { once: true });
       const reviewTimeout = setTimeout(() => reviewController.abort(), 4_000);
       try {
         const review = await openai.chat.completions.create(
@@ -15031,8 +15038,10 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
         // otherwise usable transcript or force the member to record again.
       } finally {
         clearTimeout(reviewTimeout);
+        transcriptionScope.signal.removeEventListener("abort", abortReviewForCancelledMember);
       }
     }
+    if (transcriptionScope.wasClientCancelled()) return;
     const meaningReview = parseVoiceTranscriptMeaningReview({
       transcript: transcriptText,
       regionalFlavor,
@@ -15049,6 +15058,20 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
       audioRetained: false,
     });
   } catch (err: unknown) {
+    if (transcriptionScope.wasClientCancelled()) {
+      req.log.info(
+        {
+          route: "kinfolk.transcribe",
+          model: transcriptionModel,
+          latencyMs: Date.now() - startMs,
+          audioBytes: buffer.length,
+          status: 499,
+          clientCancelled: true,
+        },
+        "kinfolk provider canceled by member",
+      );
+      return;
+    }
     const msg = err instanceof Error ? err.message : "";
     const isAbort = msg.includes("abort") || msg.includes("timeout");
     req.log.warn(
@@ -15077,7 +15100,7 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
       audioRetained: false,
     });
   } finally {
-    clearTimeout(timeout);
+    transcriptionScope.dispose();
   }
 });
 

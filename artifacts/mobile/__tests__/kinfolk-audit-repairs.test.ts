@@ -45,6 +45,7 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(widget).toContain("setInput(draft)");
     expect(travel).toContain("setInputText(primaryRecordingDraftRef.current)");
     expect(travel).toContain("cancelPrimaryVoiceRecording()");
+    expect(travel).toContain("primaryVoiceStartGenerationRef");
   });
 
   it("recovers an externally interrupted widget recording without uploading partial audio", () => {
@@ -52,9 +53,45 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(widget).toContain("const recorderState = useAudioRecorderState(recorder, 250)");
     expect(widget).toContain("voiceRecordingObservedRef");
     expect(widget).toContain("voiceStopRequestedRef");
+    expect(widget).toContain("voiceStartGenerationRef");
+    expect(widget).toContain("const startStillAllowed");
+    expect(widget).toContain("isRecordingRef.current");
+    expect(widget).toContain("voiceRecordingControlRef");
+    expect(widget).toContain("permitsTranscription(recordingSession)");
+    expect(widget).toContain("beginTranscription(recordingSession)");
+    expect(widget).toContain("signal: transcriptionAbortController.signal");
     expect(widget).toContain("Recording was interrupted. Your draft was restored.");
     expect(widget).toContain("removeTemporaryVoiceRecording(recorder.uri)");
     expect(widget).toContain("if (recorder.getStatus().isRecording || voiceStopRequestedRef.current) return");
+  });
+
+  it("discards widget audio before close, background, or unmount can race a transcription upload", () => {
+    const closeControl = widget.slice(widget.indexOf("const setWidgetOpen"), widget.indexOf("const openRecommendationBusiness"));
+    expect(closeControl.indexOf("void discardVoiceRecording()")).toBeGreaterThan(-1);
+    expect(closeControl.indexOf("void discardVoiceRecording()")).toBeLessThan(closeControl.indexOf('stopPlayback("widget_closed")'));
+    expect(widget).toContain('void discardVoiceRecording();\n        stopPlayback("app_background")');
+    expect(widget).toContain('void discardVoiceRecording();\n      stopPlayback("unmount")');
+  });
+
+  it("keeps widget preview audio owned by cleanup on completion, close, and background", () => {
+    expect(widget).toContain("previewPlaybackFileRef");
+    expect(widget).toContain("kinfolk_preview_${mode}.${format}");
+    expect(widget).toContain("previewPlaybackFileRef.current = file");
+    expect(widget).toContain("playingId.startsWith(\"__preview_\")");
+    expect(widget).toContain("previewFile.delete()");
+    expect(widget).toContain("previewPlaybackFileRef.current = null");
+  });
+
+  it("never treats a primary travel interruption or unmount as a member stop", () => {
+    const interrupted = travel.slice(travel.indexOf("Calls, route changes, and media-service resets"), travel.indexOf("const handleFeedback"));
+    expect(interrupted).toContain("primaryVoiceRecordingControlRef.current.cancel()");
+    expect(interrupted).toContain("Your draft was restored. Nothing was uploaded.");
+    expect(interrupted).not.toContain("void stopPrimaryVoiceRecording()");
+    expect(interrupted).toContain("temporaryFile.delete()");
+    expect(travel).toContain("permitsTranscription(recordingSession)");
+    expect(travel).toContain("beginTranscription(recordingSession)");
+    expect(travel).toContain("signal: transcriptionAbortController.signal");
+    expect(travel).toContain('void cancelPrimaryVoiceRecording();');
   });
 
   it("removes raw voice recordings after every transcription attempt", () => {

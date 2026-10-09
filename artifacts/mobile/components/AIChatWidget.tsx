@@ -38,6 +38,7 @@ import { getApiBase } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { parseSafeSourceLink } from "@/lib/sourceLinks";
 import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
+import { createVoiceRecordingControl } from "@/lib/voiceRecordingControl";
 import {
   KinfolkBusinessRecommendationSheet,
   type KinfolkBusinessRecommendation,
@@ -347,6 +348,10 @@ export function AIChatWidget() {
   const recordingDraftRef = useRef("");
   const voiceStopRequestedRef = useRef(false);
   const voiceRecordingObservedRef = useRef(false);
+  const voiceRecordingControlRef = useRef(createVoiceRecordingControl());
+  const voiceRecordingSessionRef = useRef<number | null>(null);
+  const voiceStartGenerationRef = useRef(0);
+  const isRecordingRef = useRef(false);
   const [recordingElapsedSeconds, setRecordingElapsedSeconds] = useState(0);
   const listRef = useRef<FlatList>(null);
   const openRef = useRef(false);
@@ -354,6 +359,7 @@ export function AIChatWidget() {
   const queuedPlaybackRequestRef = useRef<VoicePlaybackRequest | null>(null);
   const activePlaybackRequestRef = useRef<VoicePlaybackRequest | null>(null);
   const currentPlaybackFileRef = useRef<FileSystem.File | null>(null);
+  const previewPlaybackFileRef = useRef<FileSystem.File | null>(null);
   const pendingPlaybackFilesRef = useRef<FileSystem.File[]>([]);
   const voiceGuardRef = useRef(createVoicePlaybackGuard(
     // Factory stores this predicate and invokes it only from effects/events.
@@ -387,6 +393,10 @@ export function AIChatWidget() {
     || ["/onboarding", "/login", "/signup"].some((r) => pathname.startsWith(r));
 
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  useEffect(() => {
+    isRecordingRef.current = isRecording;
+  }, [isRecording]);
 
   const removeTemporaryVoiceRecording = useCallback((uri: string | null) => {
     if (!uri) return;
@@ -469,7 +479,13 @@ export function AIChatWidget() {
   const startVoice = async () => {
     if (Platform.OS === "web" || isStartingVoice || recorder.isRecording) return;
     if (authLoading) return;
+    const startGeneration = voiceStartGenerationRef.current + 1;
+    voiceStartGenerationRef.current = startGeneration;
+    const startStillAllowed = () => startGeneration === voiceStartGenerationRef.current
+      && openRef.current
+      && appStateRef.current === "active";
     const token = await getToken();
+    if (!startStillAllowed()) return;
     if (!isAuthenticated || !token) {
       Alert.alert(
         "Sign in to use Kinfolk Voice",
@@ -496,14 +512,29 @@ export function AIChatWidget() {
         return;
       }
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      if (!startStillAllowed()) {
+        await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+        return;
+      }
       await recorder.prepareToRecordAsync();
+      if (!startStillAllowed()) {
+        await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+        return;
+      }
       voiceStopRequestedRef.current = false;
       voiceRecordingObservedRef.current = false;
       recorder.record();
       await new Promise<void>((resolve) => setTimeout(resolve, 80));
+      if (!startStillAllowed()) {
+        if (recorder.isRecording) await recorder.stop();
+        removeTemporaryVoiceRecording(recorder.uri);
+        await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+        return;
+      }
       if (!recorder.getStatus().isRecording) {
         throw new Error("Your phone did not begin recording. Check microphone access and try again.");
       }
+      voiceRecordingSessionRef.current = voiceRecordingControlRef.current.begin();
       recordingStartedAtRef.current = Date.now();
       recordingDraftRef.current = input;
       setRecordingElapsedSeconds(0);
@@ -511,6 +542,9 @@ export function AIChatWidget() {
       setVoiceInputStatus("Recording… 60-second maximum. Tap the microphone again when you’re finished.");
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
+      if (!startStillAllowed()) return;
+      voiceRecordingControlRef.current.cancel();
+      voiceRecordingSessionRef.current = null;
       recordingStartedAtRef.current = null;
       setIsRecording(false);
       setVoiceInputStatus(null);
@@ -524,7 +558,8 @@ export function AIChatWidget() {
   };
 
   const stopVoice = useCallback(async () => {
-    if (!recorder.isRecording) return;
+    if (!recorder.isRecording && !isRecording) return;
+    const recordingSession = voiceRecordingSessionRef.current;
     voiceStopRequestedRef.current = true;
     setIsRecording(false);
     setVoiceInputStatus("Turning your words into text…");
@@ -543,6 +578,11 @@ export function AIChatWidget() {
       }
       temporaryRecordingUri = uri;
 
+      if (!voiceRecordingControlRef.current.permitsTranscription(recordingSession)) {
+        setInput(recordingDraftRef.current);
+        setVoiceInputStatus("Recording was interrupted or canceled. Your draft was restored. Nothing was uploaded.");
+        return;
+      }
       const base = getApiBase();
       const token = await getToken();
       if (!token) {
@@ -569,16 +609,30 @@ export function AIChatWidget() {
       form.append("durationMs", String(durationMs));
       form.append("mimeType", mimeType);
 
+      if (!voiceRecordingControlRef.current.permitsTranscription(recordingSession)) {
+        setInput(recordingDraftRef.current);
+        setVoiceInputStatus("Recording was interrupted or canceled. Your draft was restored. Nothing was uploaded.");
+        return;
+      }
+      const transcriptionAbortController = voiceRecordingControlRef.current.beginTranscription(recordingSession);
+      if (!transcriptionAbortController) {
+        setInput(recordingDraftRef.current);
+        setVoiceInputStatus("Recording was interrupted or canceled. Your draft was restored. Nothing was uploaded.");
+        return;
+      }
       const r = await fetch(`${base}/api/kinfolk/transcribe`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
         body: form,
+        signal: transcriptionAbortController.signal,
       });
+      if (!voiceRecordingControlRef.current.permitsTranscription(recordingSession)) return;
 
       if (r.ok) {
         const { text } = await r.json() as { text?: string };
+        if (!voiceRecordingControlRef.current.permitsTranscription(recordingSession)) return;
         if (text) {
           setInput(text);
           setVoiceInputStatus("Your words are ready to review. Tap Send when you’re ready.");
@@ -593,10 +647,16 @@ export function AIChatWidget() {
           const errBody = await r.json() as { message?: string; error?: string };
           if (errBody.message) serverMessage = errBody.message;
         } catch { /* ignore parse error */ }
+        if (!voiceRecordingControlRef.current.permitsTranscription(recordingSession)) return;
         setVoiceInputStatus(null);
         Alert.alert("Voice Input", serverMessage);
       }
     } catch (err) {
+      if (!voiceRecordingControlRef.current.permitsTranscription(recordingSession)) {
+        setInput(recordingDraftRef.current);
+        setVoiceInputStatus("Recording was interrupted or canceled. Your draft was restored. Nothing was uploaded.");
+        return;
+      }
       recordingStartedAtRef.current = null;
       setVoiceInputStatus(null);
       const msg = err instanceof Error ? err.message : String(err);
@@ -605,22 +665,32 @@ export function AIChatWidget() {
       recordingStartedAtRef.current = null;
       setRecordingElapsedSeconds(0);
       removeTemporaryVoiceRecording(temporaryRecordingUri);
+      voiceRecordingControlRef.current.finish(recordingSession);
+      voiceRecordingSessionRef.current = null;
       voiceRecordingObservedRef.current = false;
       voiceStopRequestedRef.current = false;
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
     }
-  }, [recorder, removeTemporaryVoiceRecording]);
+  }, [isRecording, recorder, removeTemporaryVoiceRecording]);
 
   const discardVoiceRecording = useCallback(async () => {
-    if (!recorder.isRecording) return;
+    const hasPendingRecording = recorder.isRecording
+      || isRecordingRef.current
+      || recordingStartedAtRef.current !== null
+      || voiceRecordingSessionRef.current !== null;
+    voiceStartGenerationRef.current += 1;
+    voiceRecordingControlRef.current.cancel();
+    voiceRecordingSessionRef.current = null;
+    if (!hasPendingRecording) return;
     voiceStopRequestedRef.current = true;
     setIsRecording(false);
     const draft = recordingDraftRef.current;
     setInput(draft);
     setVoiceInputStatus(draft ? "Recording canceled. Your draft was restored." : "Recording canceled. Nothing was uploaded.");
+    const uriBeforeStop = recorder.uri;
     try {
-      await recorder.stop();
-      const uri = recorder.uri;
+      if (recorder.isRecording) await recorder.stop();
+      const uri = recorder.uri ?? uriBeforeStop;
       removeTemporaryVoiceRecording(uri);
     } catch { /* discard is intentionally quiet */ }
     finally {
@@ -663,6 +733,8 @@ export function AIChatWidget() {
     if (!isRecording || !voiceRecordingObservedRef.current || voiceStopRequestedRef.current) return;
     const timeout = setTimeout(() => {
       if (recorder.getStatus().isRecording || voiceStopRequestedRef.current) return;
+      voiceRecordingControlRef.current.cancel();
+      voiceRecordingSessionRef.current = null;
       removeTemporaryVoiceRecording(recorder.uri);
       recordingStartedAtRef.current = null;
       voiceRecordingObservedRef.current = false;
@@ -750,12 +822,13 @@ export function AIChatWidget() {
     queuedPlaybackRequestRef.current = null;
     activePlaybackRequestRef.current = null;
     if (player.playing || player.isLoaded) player.pause();
-    [currentPlaybackFileRef.current, ...pendingPlaybackFilesRef.current].forEach((file) => {
+    [currentPlaybackFileRef.current, previewPlaybackFileRef.current, ...pendingPlaybackFilesRef.current].forEach((file) => {
       if (file?.exists) {
         try { file.delete(); } catch { /* temporary playback cleanup is best effort */ }
       }
     });
     currentPlaybackFileRef.current = null;
+    previewPlaybackFileRef.current = null;
     pendingPlaybackFilesRef.current = [];
     setListenUri(undefined);
     setPlayingId(null);
@@ -766,8 +839,11 @@ export function AIChatWidget() {
   const setWidgetOpen = useCallback((nextOpen: boolean) => {
     openRef.current = nextOpen;
     setOpen(nextOpen);
-    if (!nextOpen) stopPlayback("widget_closed");
-  }, [stopPlayback]);
+    if (!nextOpen) {
+      void discardVoiceRecording();
+      stopPlayback("widget_closed");
+    }
+  }, [discardVoiceRecording, stopPlayback]);
 
   const openRecommendationBusiness = useCallback((businessId: string) => {
     // A Kinfolk pick is a Mapping with Melanin listing, so its primary tap
@@ -825,6 +901,20 @@ export function AIChatWidget() {
   // ── Advance every server-issued chunk; never truncate a visible reply ──────
   useEffect(() => {
     if (!playingId || !playerStatus.didJustFinish || queuedPlaybackRequestRef.current) return;
+    if (playingId.startsWith("__preview_")) {
+      const previewFile = previewPlaybackFileRef.current;
+      previewPlaybackFileRef.current = null;
+      if (previewFile?.exists) {
+        try { previewFile.delete(); } catch { /* temporary playback cleanup is best effort */ }
+      }
+      const request = activePlaybackRequestRef.current;
+      activePlaybackRequestRef.current = null;
+      if (request) voiceGuardRef.current.finish(request);
+      setPreviewingVoice(null);
+      setListenUri(undefined);
+      setPlayingId(null);
+      return;
+    }
     const finished = currentPlaybackFileRef.current;
     currentPlaybackFileRef.current = null;
     if (finished?.exists) {
@@ -855,15 +945,19 @@ export function AIChatWidget() {
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
       appStateRef.current = state;
-      if (state !== "active") stopPlayback("app_background");
+      if (state !== "active") {
+        void discardVoiceRecording();
+        stopPlayback("app_background");
+      }
     });
     return () => {
       subscription.remove();
       openRef.current = false;
       appStateRef.current = "background";
+      void discardVoiceRecording();
       stopPlayback("unmount");
     };
-  }, [stopPlayback]);
+  }, [discardVoiceRecording, stopPlayback]);
 
   // ── Fetch the member-visible voice allowance when chat opens ──────────────
   useEffect(() => {
@@ -900,6 +994,7 @@ export function AIChatWidget() {
       stopPlayback("manual_stop");
       return;
     }
+    stopPlayback("new_voice_playback");
     setVoiceOutputStatus(null);
     const request = voiceGuardRef.current.begin();
     let queued = false;
@@ -981,6 +1076,7 @@ export function AIChatWidget() {
 
   const previewVoice = async (mode: string) => {
     if (Platform.OS === "web" || previewingVoice !== null || !openRef.current || appStateRef.current !== "active") return;
+    stopPlayback("voice_preview_started");
     const request = voiceGuardRef.current.begin();
     let queued = false;
     setPreviewingVoice(mode);
@@ -1016,7 +1112,15 @@ export function AIChatWidget() {
         if (!voiceGuardRef.current.canPlay(request)) return;
         const file = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_preview_${mode}.${format}`);
         file.write(audio, { encoding: FileSystem.EncodingType.Base64 });
-        if (!voiceGuardRef.current.canPlay(request)) return;
+        previewPlaybackFileRef.current = file;
+        if (!voiceGuardRef.current.canPlay(request)) {
+          if (file.exists) {
+            try { file.delete(); } catch { /* temporary playback cleanup is best effort */ }
+          }
+          previewPlaybackFileRef.current = null;
+          return;
+        }
+        activePlaybackRequestRef.current = request;
         queuedPlaybackRequestRef.current = request;
         setPlayingId(`__preview_${mode}__`);
         setListenUri(file.uri);
@@ -1028,8 +1132,10 @@ export function AIChatWidget() {
       setVoiceOutputStatus("Kinfolk could not request a voice preview. Check your connection and try again.");
     }
     finally {
-      if (voiceGuardRef.current.isCurrent(request)) setPreviewingVoice(null);
-      if (!queued) voiceGuardRef.current.finish(request);
+      if (!queued) {
+        if (voiceGuardRef.current.isCurrent(request)) setPreviewingVoice(null);
+        voiceGuardRef.current.finish(request);
+      }
     }
   };
 

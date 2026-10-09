@@ -28,6 +28,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/lib/auth";
 import { getApiBase } from "@/lib/api";
+import { createVoiceRecordingControl } from "@/lib/voiceRecordingControl";
 import { useColors } from "@/hooks/useColors";
 import {
   createVoicePreflightStages,
@@ -104,6 +105,9 @@ export default function KinfolkVoicePreflightScreen() {
   const playbackFileRef = useRef<FileSystem.File | null>(null);
   const recordingStartedAtRef = useRef<number | null>(null);
   const activeAttemptRef = useRef<string | null>(null);
+  const recordingControlRef = useRef(createVoiceRecordingControl());
+  const recordingSessionRef = useRef<number | null>(null);
+  const recordingStartGenerationRef = useRef(0);
   const player = useAudioPlayer(playbackUri);
   const playerStatus = useAudioPlayerStatus(player);
 
@@ -149,8 +153,37 @@ export default function KinfolkVoicePreflightScreen() {
     setPlayRequested(false);
   }, [cleanPlaybackFile, cleanRecordedFile, recordedUri]);
 
+  const abortPreflightRecording = useCallback(async (
+    detail: string,
+    updateAttempt = true,
+  ) => {
+    recordingStartGenerationRef.current += 1;
+    const hadActiveRecording = recorder.isRecording
+      || recordingStartedAtRef.current !== null
+      || recordingSessionRef.current !== null;
+    recordingControlRef.current.cancel();
+    recordingSessionRef.current = null;
+    recordingStartedAtRef.current = null;
+    const uriBeforeStop = recorder.uri;
+    try {
+      if (recorder.isRecording) await recorder.stop();
+    } catch {
+      // An interruption cleanup must continue even if the native recorder has
+      // already been stopped by the operating system.
+    } finally {
+      cleanRecordedFile(recorder.uri ?? uriBeforeStop);
+      setRecordedUri(null);
+      setRecordedDurationMs(0);
+      setIsStopping(false);
+      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+    }
+    if (hadActiveRecording && updateAttempt) {
+      updateStage("recording_started", "failed", detail);
+    }
+  }, [cleanRecordedFile, recorder, updateStage]);
+
   const startPreflight = async () => {
-    if (Platform.OS === "web" || isStarting || recorderState.isRecording) return;
+    if (Platform.OS === "web" || isStarting || isStopping || recorder.isRecording) return;
     if (!isAuthenticated || authLoading) {
       Alert.alert("Sign in required", "Sign in before running Kinfolk Voice Preflight. No recording is made until you start a test.", [
         { text: "Not now", style: "cancel" },
@@ -158,6 +191,10 @@ export default function KinfolkVoicePreflightScreen() {
       ]);
       return;
     }
+    const startGeneration = recordingStartGenerationRef.current + 1;
+    recordingStartGenerationRef.current = startGeneration;
+    const startStillAllowed = () => startGeneration === recordingStartGenerationRef.current
+      && AppState.currentState === "active";
     resetForNewAttempt();
     const attemptId = nextAttemptId();
     const now = new Date().toISOString();
@@ -189,6 +226,7 @@ export default function KinfolkVoicePreflightScreen() {
     updateStage("permission", "running", "Checking microphone permission.");
     try {
       const permission = await requestRecordingPermissionsAsync();
+      if (!startStillAllowed()) return;
       if (!permission.granted) {
         updateStage("permission", "failed", voicePreflightFailure("permission"));
         updateStage("recording_started", "failed", "Recording cannot start until microphone permission is granted.");
@@ -200,11 +238,33 @@ export default function KinfolkVoicePreflightScreen() {
       updateStage("permission", "passed", "Microphone permission granted.");
       updateStage("recording_started", "running", "Preparing device recorder.");
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true, shouldRouteThroughEarpiece: false });
+      if (!startStillAllowed()) {
+        await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+        return;
+      }
       await recorder.prepareToRecordAsync();
+      if (!startStillAllowed()) {
+        await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+        return;
+      }
       recorder.record();
+      await new Promise<void>((resolve) => setTimeout(resolve, 80));
+      if (!startStillAllowed()) {
+        if (recorder.isRecording) await recorder.stop();
+        cleanRecordedFile(recorder.uri);
+        await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+        return;
+      }
+      if (!recorder.getStatus().isRecording) {
+        throw new Error("Your phone did not begin recording. Check microphone access and try again.");
+      }
+      recordingSessionRef.current = recordingControlRef.current.begin();
       recordingStartedAtRef.current = Date.now();
       updateStage("recording_started", "passed", "Recording started. Speak the preflight sentence, then tap Stop.");
     } catch (error) {
+      if (!startStillAllowed()) return;
+      recordingControlRef.current.cancel();
+      recordingSessionRef.current = null;
       const message = error instanceof Error ? error.message : "Unable to start the recorder.";
       updateStage("recording_started", "failed", voicePreflightFailure("recording_started", `Recording did not start: ${message}`));
       Alert.alert("Recording did not start", "Check microphone permission and retry the Voice Preflight.");
@@ -216,6 +276,7 @@ export default function KinfolkVoicePreflightScreen() {
 
   const stopAndTranscribe = async () => {
     if (!recorderState.isRecording || isStopping) return;
+    const recordingSession = recordingSessionRef.current;
     setIsStopping(true);
     updateStage("recording_captured", "running", "Stopping recorder and reading technical metadata.");
     let temporaryRecordingUri: string | null = null;
@@ -246,6 +307,10 @@ export default function KinfolkVoicePreflightScreen() {
       setRecordedUri(uri);
       temporaryRecordingUri = uri;
       setRecordedDurationMs(durationMs);
+      if (!recordingControlRef.current.permitsTranscription(recordingSession)) {
+        updateStage("recording_captured", "failed", "Recording was interrupted or canceled. The raw file was deleted and was not uploaded.");
+        return;
+      }
       updateStage("recording_captured", "passed", `${durationMs} ms · ${fileSize} bytes · declared ${mimeType}. Raw audio remains only in temporary device cache.`);
       updateStage("transcription_upload", "running", "Uploading temporary recording to Kinfolk transcription.");
 
@@ -258,19 +323,32 @@ export default function KinfolkVoicePreflightScreen() {
       form.append("audio", file);
       form.append("durationMs", String(durationMs));
       form.append("mimeType", mimeType);
+      if (!recordingControlRef.current.permitsTranscription(recordingSession)) {
+        updateStage("transcription_upload", "failed", "Recording was interrupted or canceled. The raw file was deleted and was not uploaded.");
+        return;
+      }
+      const transcriptionAbortController = recordingControlRef.current.beginTranscription(recordingSession);
+      if (!transcriptionAbortController) {
+        updateStage("transcription_upload", "failed", "Recording was interrupted or canceled. The raw file was deleted and was not uploaded.");
+        return;
+      }
       const response = await fetch(`${getApiBase()}/api/kinfolk/transcribe`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: form,
+        signal: transcriptionAbortController.signal,
       });
+      if (!recordingControlRef.current.permitsTranscription(recordingSession)) return;
       if (!response.ok) {
         const payload = await response.json().catch(() => ({})) as { message?: string; error?: string };
+        if (!recordingControlRef.current.permitsTranscription(recordingSession)) return;
         const message = payload.message?.trim() || `Upload failed with HTTP ${response.status}. Try again.`;
         updateStage("transcription_upload", "failed", voicePreflightFailure("transcription_upload", message));
         return;
       }
       updateStage("transcription_upload", "passed", "Upload reached /kinfolk/transcribe and returned successfully.");
       const payload = await response.json() as { text?: string };
+      if (!recordingControlRef.current.permitsTranscription(recordingSession)) return;
       if (!payload.text?.trim()) {
         updateStage("transcript_inserted", "failed", voicePreflightFailure("transcript_inserted"));
         return;
@@ -278,13 +356,21 @@ export default function KinfolkVoicePreflightScreen() {
       setTranscript(payload.text.trim());
       updateStage("transcript_inserted", "passed", "Transcript returned and inserted for review. The text is not copied into the technical log.");
     } catch (error) {
+      if (!recordingControlRef.current.permitsTranscription(recordingSession)) return;
       const message = error instanceof Error ? error.message : "Unknown recording error.";
       updateStage("transcription_upload", "failed", voicePreflightFailure("transcription_upload", `Upload failed—try again. ${message}`));
     } finally {
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+      const ownsActiveSession = recordingSessionRef.current === recordingSession;
+      if (ownsActiveSession) {
+        recordingControlRef.current.finish(recordingSession);
+        recordingSessionRef.current = null;
+        await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+      }
       cleanRecordedFile(temporaryRecordingUri);
-      setRecordedUri(null);
-      setIsStopping(false);
+      if (ownsActiveSession) {
+        setRecordedUri(null);
+        setIsStopping(false);
+      }
     }
   };
 
@@ -404,17 +490,15 @@ export default function KinfolkVoicePreflightScreen() {
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") return;
       if (player.playing) player.pause();
-      if (recorderState.isRecording) {
-        updateStage("recording_started", "failed", "Recording was interrupted because the app left the foreground. Retry the attempt.");
-      }
+      void abortPreflightRecording("Recording was interrupted because the app left the foreground. The raw file was deleted and was not uploaded.");
     });
     return () => subscription.remove();
-  }, [player, recorderState.isRecording, updateStage]);
+  }, [abortPreflightRecording, player]);
 
   useEffect(() => () => {
-    cleanRecordedFile(recordedUri);
+    void abortPreflightRecording("Voice Preflight closed before recording completed.", false);
     cleanPlaybackFile();
-  }, [cleanPlaybackFile, cleanRecordedFile, recordedUri]);
+  }, [abortPreflightRecording, cleanPlaybackFile]);
 
   const copyLog = async () => {
     await Clipboard.setStringAsync(formatVoicePreflightLog(attempts));
@@ -422,14 +506,11 @@ export default function KinfolkVoicePreflightScreen() {
   };
 
   const retry = () => {
-    cleanRecordedFile(recordedUri);
-    cleanPlaybackFile();
-    setRecordedUri(null);
-    setTranscript("");
-    setReply("");
-    setRecordedDurationMs(0);
-    setPlayRequested(false);
-    void startPreflight();
+    void (async () => {
+      await abortPreflightRecording("Recording was canceled before retry. The raw file was deleted and was not uploaded.", false);
+      resetForNewAttempt();
+      await startPreflight();
+    })();
   };
 
   const canStop = recorderState.isRecording && !isStopping;
@@ -486,8 +567,8 @@ export default function KinfolkVoicePreflightScreen() {
           {!recorderState.isRecording ? (
             <TouchableOpacity
               onPress={() => void startPreflight()}
-              disabled={isStarting || authLoading}
-              style={[styles.primaryButton, { backgroundColor: colors.primary, opacity: isStarting || authLoading ? 0.65 : 1 }]}
+              disabled={isStarting || isStopping || authLoading}
+              style={[styles.primaryButton, { backgroundColor: colors.primary, opacity: isStarting || isStopping || authLoading ? 0.65 : 1 }]}
               accessibilityLabel="Start Kinfolk Voice Preflight recording"
             >
               {isStarting ? <ActivityIndicator color={colors.primaryForeground} /> : <Feather name="mic" size={17} color={colors.primaryForeground} />}
