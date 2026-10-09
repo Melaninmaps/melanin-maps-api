@@ -17,8 +17,10 @@ export const ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS = new Set([
 
 export type OwnershipSourceReceiptInput = { sourceUrl: string; sourceLabel: string; observedAt: string; note: string | null };
 export type ProfileFieldReceiptName = "identity" | "description" | "category" | "hours" | "price_range" | "phone" | "address" | "website" | "instagram" | "tiktok" | "facebook" | "service_tags" | "ownership";
-export type ProfileFieldReceiptInput = { field: ProfileFieldReceiptName; sourceUrl: string; sourceLabel: string; observedAt: string; confidence: "high" | "medium" | "low"; note: string | null };
-export type ValidatedAdminProfilePatch = { patch: Record<string, string | string[] | null>; ownershipReceipt: OwnershipSourceReceiptInput | null; fieldReceipts: ProfileFieldReceiptInput[]; requiredReceiptFields: ProfileFieldReceiptName[]; changeNote: string; locationChanged: boolean };
+export type ReceiptIdentityMatchSignal = "business_name" | "street_address" | "full_phone" | "official_domain" | "official_social_profile";
+export type ProfileFieldReceiptInput = { field: ProfileFieldReceiptName; sourceUrl: string; sourceLabel: string; observedAt: string; confidence: "high" | "medium" | "low"; note: string | null; identityMatch: boolean; identityMatchSignal: ReceiptIdentityMatchSignal | null };
+export type ReceiptObservedValue = { fields: Record<string, string | string[] | null>; identityMatch: { asserted: boolean; signal: ReceiptIdentityMatchSignal | null } };
+export type ValidatedAdminProfilePatch = { patch: Record<string, string | string[] | null>; ownershipReceipt: OwnershipSourceReceiptInput | null; fieldReceipts: ProfileFieldReceiptInput[]; requiredReceiptFields: ProfileFieldReceiptName[]; receiptObservedValues: Partial<Record<ProfileFieldReceiptName, ReceiptObservedValue>>; changeNote: string; locationChanged: boolean };
 
 type ExistingProfile = {
   name: string; description?: string | null; address: string | null; city: string | null; state: string | null;
@@ -32,6 +34,22 @@ const OPTIONAL_TEXT_FIELDS: Record<string, { column: string; max: number }> = {
 };
 const RECEIPT_FIELDS = new Set<ProfileFieldReceiptName>(["identity", "description", "category", "hours", "price_range", "phone", "address", "website", "instagram", "tiktok", "facebook", "service_tags", "ownership"]);
 const ADMIN_PROFILE_JSONB_COLUMNS = new Set(["ownership_designations", "vibes", "tags"]);
+const RECEIPT_REQUIRED_CREATION_PRESENCE_FIELDS = ["website", "instagram", "facebook", "tiktok", "twitter", "youtube", "pinterest"] as const;
+
+/**
+ * The legacy direct-create endpoint has no atomic per-field receipt protocol.
+ * It may create a staged shell, but presence and ownership claims must move
+ * through the audited profile workflow after a canonical identity is known.
+ */
+export function directAdminCreationUnsafeFields(input: Record<string, unknown>): string[] {
+  const fields: string[] = RECEIPT_REQUIRED_CREATION_PRESENCE_FIELDS.filter((field) => {
+    const value = input[field];
+    return typeof value === "string" && value.trim().length > 0;
+  });
+  if (Array.isArray(input.ownershipDesignations) && input.ownershipDesignations.length > 0) fields.push("ownershipDesignations");
+  if (input.blackOwned === true) fields.push("blackOwned");
+  return fields;
+}
 
 /**
  * node-postgres encodes JavaScript arrays as PostgreSQL arrays. Profile array
@@ -106,7 +124,11 @@ function cleanFieldReceipt(value: unknown): ProfileFieldReceiptInput {
   if (!RECEIPT_FIELDS.has(field as ProfileFieldReceiptName)) throw new Error("source receipt field is invalid");
   const confidence = raw.confidence;
   if (confidence !== "high" && confidence !== "medium" && confidence !== "low") throw new Error("source receipt confidence is invalid");
-  return { field: field as ProfileFieldReceiptName, sourceUrl: cleanPublicUrl(raw.sourceUrl, "source receipt URL") as string, sourceLabel: cleanText(raw.sourceLabel, "source receipt label", 255, false) as string, observedAt: validObservedDate(raw.observedAt, "source receipt observation date"), confidence, note: cleanText(raw.note, "source receipt note", 1000) };
+  const identityMatch = raw.identityMatch === true;
+  const identityMatchSignal = raw.identityMatchSignal;
+  const allowedIdentitySignals = new Set<ReceiptIdentityMatchSignal>(["business_name", "street_address", "full_phone", "official_domain", "official_social_profile"]);
+  if (identityMatchSignal !== null && identityMatchSignal !== undefined && !allowedIdentitySignals.has(identityMatchSignal as ReceiptIdentityMatchSignal)) throw new Error("source receipt identity-match signal is invalid");
+  return { field: field as ProfileFieldReceiptName, sourceUrl: cleanPublicUrl(raw.sourceUrl, "source receipt URL") as string, sourceLabel: cleanText(raw.sourceLabel, "source receipt label", 255, false) as string, observedAt: validObservedDate(raw.observedAt, "source receipt observation date"), confidence, note: cleanText(raw.note, "source receipt note", 1000), identityMatch, identityMatchSignal: identityMatchSignal as ReceiptIdentityMatchSignal | null ?? null };
 }
 function sameValue(a: unknown, b: unknown): boolean { return JSON.stringify(a ?? null) === JSON.stringify(b ?? null); }
 function receiptFieldForColumn(column: string): ProfileFieldReceiptName | null {
@@ -155,7 +177,7 @@ export function validateAdminBusinessProfilePatch(input: unknown, existing: Exis
   if (!Array.isArray(rawReceipts)) throw new Error("sourceReceipts must be a list");
   if (rawReceipts.length > 20) throw new Error("sourceReceipts cannot contain more than 20 items");
   const fieldReceipts = rawReceipts.map(cleanFieldReceipt);
-  if (ownershipReceipt && !fieldReceipts.some((receipt) => receipt.field === "ownership")) fieldReceipts.push({ field: "ownership", sourceUrl: ownershipReceipt.sourceUrl, sourceLabel: ownershipReceipt.sourceLabel, observedAt: ownershipReceipt.observedAt, confidence: "high", note: ownershipReceipt.note });
+  if (ownershipReceipt && !fieldReceipts.some((receipt) => receipt.field === "ownership")) fieldReceipts.push({ field: "ownership", sourceUrl: ownershipReceipt.sourceUrl, sourceLabel: ownershipReceipt.sourceLabel, observedAt: ownershipReceipt.observedAt, confidence: "high", note: ownershipReceipt.note, identityMatch: true, identityMatchSignal: "business_name" });
   const receiptFields = new Set(fieldReceipts.map((receipt) => receipt.field));
   if (fieldReceipts.length !== receiptFields.size) throw new Error("Submit at most one source receipt per public fact field per save");
   const existingValue: Record<string, unknown> = { ...existing, price_range: existing.priceRange ?? null, ownership_designations: existing.ownershipDesignations ?? [] };
@@ -163,6 +185,30 @@ export function validateAdminBusinessProfilePatch(input: unknown, existing: Exis
   const requiredReceiptFields = [...new Set(changedColumns.map(receiptFieldForColumn).filter((field): field is ProfileFieldReceiptName => Boolean(field)))];
   const missing = requiredReceiptFields.filter((field) => !receiptFields.has(field));
   if (missing.length) throw new Error(`A public source receipt is required for: ${missing.join(", ")}`);
+  const unboundReceiptFields = fieldReceipts.map((receipt) => receipt.field).filter((field) => !requiredReceiptFields.includes(field));
+  if (unboundReceiptFields.length) throw new Error(`A source receipt may only support a changed public fact: ${[...new Set(unboundReceiptFields)].join(", ")}`);
+  const presenceColumns = new Set(["website", "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest"]);
+  for (const column of changedColumns) {
+    if (!presenceColumns.has(column)) continue;
+    const field = receiptFieldForColumn(column);
+    const receipt = fieldReceipts.find((candidate) => candidate.field === field);
+    if (!receipt?.identityMatch || !receipt.identityMatchSignal) throw new Error(`An explicit identity match and signal are required before changing official ${column}`);
+  }
+  const receiptObservedValues: Partial<Record<ProfileFieldReceiptName, ReceiptObservedValue>> = {};
+  for (const column of changedColumns) {
+    const field = receiptFieldForColumn(column);
+    if (!field) continue;
+    receiptObservedValues[field] = {
+      fields: {
+        ...(receiptObservedValues[field]?.fields ?? {}),
+        [column]: patch[column],
+      },
+      identityMatch: {
+        asserted: fieldReceipts.find((receipt) => receipt.field === field)?.identityMatch ?? false,
+        signal: fieldReceipts.find((receipt) => receipt.field === field)?.identityMatchSignal ?? null,
+      },
+    };
+  }
   const locationChanged = ["address", "city", "state"].some((column) => changedColumns.includes(column));
-  return { patch, ownershipReceipt, fieldReceipts, requiredReceiptFields, changeNote, locationChanged };
+  return { patch, ownershipReceipt, fieldReceipts, requiredReceiptFields, receiptObservedValues, changeNote, locationChanged };
 }

@@ -252,6 +252,44 @@ async function findByTokenSimilarity(candidate: Candidate) {
   ) ?? null;
 }
 
+/**
+ * A fuzzy name/location result is a review lead, never an identity assertion.
+ * Only the exact dedupe key can authorize an automatic update of a retained
+ * profile. This prevents a similar local business from receiving a candidate's
+ * phone, website, or address.
+ */
+export function decideGenericIngestExistingAction(
+  exactBusinessId: string | null,
+  fuzzyBusinessId: string | null,
+): Readonly<{ action: "UPDATE_EXISTING" | "REVIEW_IDENTITY_CONFLICT" | "CREATE"; businessId: string | null }> {
+  if (exactBusinessId) return { action: "UPDATE_EXISTING", businessId: exactBusinessId };
+  if (fuzzyBusinessId) return { action: "REVIEW_IDENTITY_CONFLICT", businessId: fuzzyBusinessId };
+  return { action: "CREATE", businessId: null };
+}
+
+async function queueGenericIngestIdentityReview(
+  candidate: Candidate,
+  score: number,
+  existingBusinessId: string,
+): Promise<void> {
+  await pool.query(
+    `INSERT INTO business_review_items
+      (candidate_name, candidate_address, candidate_city, candidate_state,
+       candidate_website, candidate_phone, candidate_latitude, candidate_longitude,
+       candidate_category, candidate_source_provider, candidate_source_url,
+       evidence, score, review_type, reason, status, created_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13,$14,$15,'pending',NOW())`,
+    [
+      candidate.name, candidate.address ?? "", candidate.city ?? "",
+      candidate.state ?? "", candidate.website ?? "", candidate.phone ?? "",
+      candidate.latitude ?? null, candidate.longitude ?? null,
+      candidate.category ?? "", candidate.sourceProvider, candidate.sourceUrl ?? "",
+      JSON.stringify(candidate.evidence), score, "identity_conflict",
+      `Similar-name/locality match ${existingBusinessId} requires reviewed identity evidence before any profile field is updated.`,
+    ],
+  );
+}
+
 // ── Main route ────────────────────────────────────────────────────────────────
 
 router.post("/businesses/ingest", async (req: Request, res: Response) => {
@@ -308,9 +346,26 @@ router.post("/businesses/ingest", async (req: Request, res: Response) => {
 
     const key = dedupeKey(candidate);
 
-    // Check for existing record by exact key or token similarity
+    // A token-similarity result can surface a duplicate-review lead but must
+    // never select a canonical record for a field update.
     const exactExisting = await findByDedupeKey(key);
-    const existing = exactExisting ?? await findByTokenSimilarity(candidate);
+    const fuzzyExisting = exactExisting ? null : await findByTokenSimilarity(candidate);
+    const existingDecision = decideGenericIngestExistingAction(
+      exactExisting?.id ?? null,
+      fuzzyExisting?.id ?? null,
+    );
+    if (existingDecision.action === "REVIEW_IDENTITY_CONFLICT") {
+      await queueGenericIngestIdentityReview(candidate, score, existingDecision.businessId as string);
+      results.push({
+        action: "NEEDS_REVIEW",
+        id: existingDecision.businessId as string,
+        name: candidate.name,
+        reason: "Similar name and locality require identity review; no profile field was updated.",
+        score,
+      });
+      continue;
+    }
+    const existing = exactExisting;
 
     if (existing) {
       // Fill in missing fields on existing canonical row

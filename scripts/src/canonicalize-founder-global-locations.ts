@@ -423,7 +423,10 @@ async function applyLockedPlan(client: PoolClient, batchId: string, repairs: Rep
   `, [POLICY_VERSION]);
   const targetsUpdated = await client.query(`
     UPDATE businesses target
-       SET website=a.website,source_url=a.source_url,
+       -- Location canonicalization proves neither official-domain nor source-link
+       -- ownership. Preserve the target's contact values; source contacts remain
+       -- provenance only and require a separate reviewed assertion to promote.
+       SET website=target.website,source_url=target.source_url,
            country=a.canonical_country,source_evidence=a.merged_source_evidence,updated_at=NOW()
       FROM mwm_global_location_merge_aggregate a
      WHERE target.id=a.target_id

@@ -331,6 +331,22 @@ function sortCandidates(rows: Candidate[]): Candidate[] {
   });
 }
 
+function hasUnsafeCrossCandidateContactEvidence(rows: Candidate[]): boolean {
+  if (rows.length <= 1) return false;
+  if (rows.some((row) => {
+    const location = canonicalCandidateLocation(row);
+    return !canonicalStreetIdentity(row.address, location.city, location.state);
+  })) return true;
+  const contactValues = [
+    rows.map((row) => safeExternalUrl(row.website)),
+    rows.map((row) => safeExternalUrl(row.source_url)),
+    rows.map((row) => socialUrl("instagram", row.instagram_url)),
+    rows.map((row) => socialUrl("facebook", row.facebook_url)),
+    rows.map((row) => socialUrl("tiktok", row.tiktok_url)),
+  ];
+  return contactValues.some((values) => new Set(values.filter(Boolean)).size > 1);
+}
+
 function publicTags(rows: Candidate[], category: string, subcategory: string): string[] {
   const values = new Set<string>([category, subcategory]);
   for (const row of rows) {
@@ -377,13 +393,15 @@ function planGroup(rows: Candidate[], existing: ExistingBusiness | null): PlanRo
   }
   const recordId = existing?.id ?? deterministicUuid(identity);
   const isNew = !existing;
-  const website = firstValue(ordered, (row) => safeExternalUrl(row.website));
-  const sourceUrl = firstValue(ordered, (row) => safeExternalUrl(row.source_url));
-  const instagram = firstValue(ordered, (row) => socialUrl("instagram", row.instagram_url));
-  const facebook = firstValue(ordered, (row) => socialUrl("facebook", row.facebook_url));
-  const tiktok = firstValue(ordered, (row) => socialUrl("tiktok", row.tiktok_url));
-  const address = firstValue(ordered, (row) => row.address?.trim() || null);
-  const phone = firstValue(ordered, (row) => row.phone?.trim() || null);
+  // Presence values never cross candidate boundaries. A multi-candidate group
+  // that is not held uses only its deterministic primary candidate.
+  const website = safeExternalUrl(winner.website);
+  const sourceUrl = safeExternalUrl(winner.source_url);
+  const instagram = socialUrl("instagram", winner.instagram_url);
+  const facebook = socialUrl("facebook", winner.facebook_url);
+  const tiktok = socialUrl("tiktok", winner.tiktok_url);
+  const address = winner.address?.trim() || null;
+  const phone = winner.phone?.trim() || null;
   const policy = getBusinessExperiencePolicy(winner.category, winner.subcategory);
   const category = policy.category;
   const subcategory = winner.subcategory?.trim() || category;
@@ -641,10 +659,15 @@ async function createPlans(client: PoolClient, lock: boolean): Promise<{ plans: 
   let identityClaimConflictsHeld = 0;
   let countryConflictsHeld = 0;
   let dualIndexConflictsHeld = 0;
+  let crossCandidateContactEvidenceHeld = 0;
   for (const [identity, rows] of groups) {
     const countries = new Set(rows.map((row) => normalizeCountry(canonicalCandidateLocation(row).country)).filter(Boolean));
     if (countries.size !== 1) {
       countryConflictsHeld += 1;
+      continue;
+    }
+    if (hasUnsafeCrossCandidateContactEvidence(rows)) {
+      crossCandidateContactEvidenceHeld += 1;
       continue;
     }
     const candidateCountry = [...countries][0];
@@ -741,6 +764,7 @@ async function createPlans(client: PoolClient, lock: boolean): Promise<{ plans: 
       identityClaimConflictsHeld,
       countryConflictsHeld,
       dualIndexConflictsHeld,
+      crossCandidateContactEvidenceHeld,
       publicationRows: plans.length,
       newSearchableListings: primaryPlans.filter((plan) => plan.is_new).length,
       suppliedStreetLikeAddresses: primaryPlans.filter((plan) => plan.address && /\d.*[A-Za-z]/.test(plan.address)).length,

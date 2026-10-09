@@ -1,14 +1,14 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS, adminProfileUpdateSqlBinding, normalizeBusinessIdentityPart, validateAdminBusinessProfilePatch } from "../adminBusinessProfilePolicy";
+import { ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS, adminProfileUpdateSqlBinding, directAdminCreationUnsafeFields, normalizeBusinessIdentityPart, validateAdminBusinessProfilePatch } from "../adminBusinessProfilePolicy";
 
 const existing = {
   name: "Community Books", description: "Independent community bookstore.", address: "123 Main Street", city: "Philadelphia", state: "PA",
   phone: null, website: null, hours: null, priceRange: null, instagram: null, tiktok: null, facebook: null, twitter: null, youtube: null, pinterest: null,
   category: "Books & Media", subcategory: "Bookstore", tags: ["books"], vibes: [] as string[], ownershipDesignations: [] as string[],
 };
-const receipt = (field: string) => ({ field, sourceUrl: "https://example.org/about", sourceLabel: "Official about page", observedAt: "2026-10-05", confidence: "high", note: "Publicly stated by the business." });
+const receipt = (field: string, identityMatch = false) => ({ field, sourceUrl: "https://example.org/about", sourceLabel: "Official about page", observedAt: "2026-10-05", confidence: "high", note: "Publicly stated by the business.", identityMatch, identityMatchSignal: identityMatch ? "business_name" : null });
 function patch(overrides: Record<string, unknown> = {}) { return { name: "Community Books", description: "Independent community bookstore.", city: "Philadelphia", category: "Books & Media", subcategory: "Bookstore", tags: ["books"], vibes: [], ownershipDesignations: [], changeNote: "Corrected public profile details from a current official source.", ...overrides }; }
 const routeSource = () => readFileSync(fileURLToPath(new URL("../../routes/businesses.ts", import.meta.url)), "utf8");
 
@@ -23,9 +23,13 @@ describe("audited administrator business profile policy", () => {
   });
   it("requires a public source receipt for every changed public fact", () => {
     expect(() => validateAdminBusinessProfilePatch(patch({ description: "Updated bookstore description." }), existing)).toThrow("source receipt is required for: description");
-    expect(validateAdminBusinessProfilePatch(patch({ description: "Updated bookstore description.", sourceReceipts: [receipt("description")] }), existing).requiredReceiptFields).toEqual(["description"]);
+    const descriptionChange = validateAdminBusinessProfilePatch(patch({ description: "Updated bookstore description.", sourceReceipts: [receipt("description")] }), existing);
+    expect(descriptionChange.requiredReceiptFields).toEqual(["description"]);
+    expect(descriptionChange.receiptObservedValues).toEqual({ description: { fields: { description: "Updated bookstore description." }, identityMatch: { asserted: false, signal: null } } });
     expect(() => validateAdminBusinessProfilePatch(patch({ priceRange: "$$" }), existing)).toThrow("source receipt is required for: price_range");
-    expect(validateAdminBusinessProfilePatch(patch({ priceRange: "$$", sourceReceipts: [receipt("price_range")] }), existing).requiredReceiptFields).toEqual(["price_range"]);
+    const priceChange = validateAdminBusinessProfilePatch(patch({ priceRange: "$$", sourceReceipts: [receipt("price_range")] }), existing);
+    expect(priceChange.requiredReceiptFields).toEqual(["price_range"]);
+    expect(priceChange.receiptObservedValues).toEqual({ price_range: { fields: { price_range: "$$" }, identityMatch: { asserted: false, signal: null } } });
   });
   it("requires a public ownership source receipt for an ownership designation change", () => {
     expect(() => validateAdminBusinessProfilePatch(patch({ ownershipDesignations: ["Black-Owned"] }), existing)).toThrow("source receipt is required");
@@ -48,7 +52,13 @@ describe("audited administrator business profile policy", () => {
     expect(() => validateAdminBusinessProfilePatch(patch({ website: "https://www.instagram.com/communitybooks/" }), existing)).toThrow("official website");
     expect(() => validateAdminBusinessProfilePatch(patch({ website: "https://g.page/community-books" }), existing)).toThrow("official website");
     expect(() => validateAdminBusinessProfilePatch(patch({ instagram: "https://www.yelp.com/biz/community-books" }), existing)).toThrow("official instagram");
-    expect(validateAdminBusinessProfilePatch(patch({ instagram: "https://www.instagram.com/communitybooks/", sourceReceipts: [receipt("instagram")] }), existing).patch.instagram).toContain("instagram.com");
+    expect(() => validateAdminBusinessProfilePatch(patch({ instagram: "https://www.instagram.com/communitybooks/", sourceReceipts: [receipt("instagram")] }), existing)).toThrow("explicit identity match");
+    expect(validateAdminBusinessProfilePatch(patch({ instagram: "https://www.instagram.com/communitybooks/", sourceReceipts: [receipt("instagram", true)] }), existing).patch.instagram).toContain("instagram.com");
+  });
+  it("allows the legacy direct-create path to create only a staged receipt-free shell", () => {
+    expect(directAdminCreationUnsafeFields({ website: "https://communitybooks.example", instagram: "", ownershipDesignations: [], blackOwned: false })).toEqual(["website"]);
+    expect(directAdminCreationUnsafeFields({ ownershipDesignations: ["Black-Owned"], blackOwned: true })).toEqual(["ownershipDesignations", "blackOwned"]);
+    expect(directAdminCreationUnsafeFields({ website: "", ownershipDesignations: [], blackOwned: false })).toEqual([]);
   });
   it("normalizes identity comparison without equating different cities", () => {
     expect(normalizeBusinessIdentityPart("Uncle Bobbie’s Coffee & Books")).toBe("unclebobbiescoffeebooks");
@@ -59,5 +69,13 @@ describe("audited administrator business profile policy", () => {
     expect(source).toContain('router.get("/admin/businesses/:id/profile"'); expect(source).toContain("if (!hasAdminAccess(req))"); expect(source).toContain("business_profile_field_receipts"); expect(source).toContain("business_admin_profile_edit_audit_events"); expect(source).toContain('await client.query("BEGIN")'); expect(source).toContain('await client.query("COMMIT")'); expect(source).toContain("map_coordinates_cleared_after_address_change"); expect(source).toContain("Use the audited duplicate review workflow instead"); expect(source).toContain('includes("same_name_and_address")');
     const profileEditSource = source.slice(source.indexOf('router.patch("/admin/businesses/:id/profile"'), source.indexOf("export default router"));
     expect(profileEditSource).not.toMatch(/(?:DELETE|UPDATE)\s+.*(?:business_vibe_evidence|business_endorsement_taps|reviews|checkins)/i);
+    expect(profileEditSource).toContain("receiptObservedValues[receipt.field]");
+    expect(source).toContain("observedValue: receipt.observed_value");
+    const retiredMediaRoute = source.slice(source.indexOf('router.post(\n  "/admin/businesses/:id/social-link"'), source.indexOf('router.get(\n  "/admin/businesses/check-duplicate"'));
+    expect(retiredMediaRoute).toContain("UNRECEIPTED_SOCIAL_MEDIA_ROUTE_RETIRED");
+    expect(retiredMediaRoute).not.toContain(".update(businessesTable)");
+    const directCreateRoute = source.slice(source.indexOf('router.post(\n  "/admin/businesses"'), source.indexOf('router.post(\n  "/admin/businesses/:id/confirm-fake"'));
+    expect(directCreateRoute).toContain("FIELD_RECEIPTS_REQUIRED_FOR_PRESENCE");
+    expect(directCreateRoute).toContain("STAGED_CREATION_REQUIRED");
   });
 });

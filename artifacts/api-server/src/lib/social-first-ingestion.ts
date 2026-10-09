@@ -188,31 +188,39 @@ function mergeSocialProfiles(existing: SocialProfile[], incoming: SocialProfile[
 
 // ── Duplicate detection ───────────────────────────────────────────────────────
 
-async function findExisting(candidate: Candidate): Promise<{
+type ExistingSocialBusiness = {
   id: string;
   social_profiles: SocialProfile[] | null;
   source_evidence: Evidence[] | null;
   website: string | null;
   website_domain: string | null;
   phone: string | null;
-} | null> {
+};
+
+export function decideSocialFirstIdentityMatch(
+  strongMatchCount: number,
+  nameLocalityMatchCount: number,
+): Readonly<{ action: "MERGE" | "REVIEW" | "CREATE"; reason: string | null }> {
+  if (strongMatchCount === 1) return { action: "MERGE", reason: null };
+  if (strongMatchCount > 1) return { action: "REVIEW", reason: "ambiguous_strong_identifier_match" };
+  if (nameLocalityMatchCount > 0) return { action: "REVIEW", reason: "name_locality_match_requires_identity_review" };
+  return { action: "CREATE", reason: null };
+}
+
+async function findExisting(candidate: Candidate): Promise<Readonly<{
+  existing: ExistingSocialBusiness | null;
+  holdReason: string | null;
+}>> {
   const phone = phoneKey(candidate.phone);
   const domain = websiteHost(candidate.website ?? null);
-  const normalizedName = norm(candidate.name);
   const socialUrls = candidate.socialProfiles
     .map((p) => normalizedUrl(p.url))
     .filter(Boolean) as string[];
 
-  // Never use name alone to merge. Require a strong identifier:
-  // phone, website domain, a matching social URL, OR name+city+state.
-  const { rows } = await pool.query<{
-    id: string;
-    social_profiles: SocialProfile[] | null;
-    source_evidence: Evidence[] | null;
-    website: string | null;
-    website_domain: string | null;
-    phone: string | null;
-  }>(
+  // Strong identifiers can establish a merge only when exactly one canonical
+  // row matches. Name + city + state remains a review lead, not proof that a
+  // candidate social profile belongs to that canonical row.
+  const { rows: strongMatches } = await pool.query<ExistingSocialBusiness>(
     `SELECT id, social_profiles, source_evidence, website, website_domain, phone
      FROM businesses
      WHERE coalesce(is_duplicate, false) = false
@@ -230,24 +238,34 @@ async function findExisting(candidate: Candidate): Promise<{
              WHERE p->>'url' = ANY($4::text[])
            )
          )
-         OR (
-           normalized_name = $5
-           AND lower(coalesce(city,'')) = lower($6)
-           AND lower(coalesce(state,'')) = lower($7)
-         )
        )
-     LIMIT 1`,
+     LIMIT 2`,
     [
       phone,
       domain,
       socialUrls.length > 0,
       socialUrls,
-      normalizedName,
-      candidate.city ?? "",
-      candidate.state ?? "",
     ],
   );
-  return rows[0] ?? null;
+  let nameLocalityMatchCount = 0;
+  if (strongMatches.length === 0) {
+    const { rows: nameLocalityMatches } = await pool.query<{ id: string }>(
+      `SELECT id FROM businesses
+       WHERE coalesce(is_duplicate, false) = false
+         AND coalesce(status, 'active') NOT IN ('duplicate', 'permanently_hidden')
+         AND normalized_name = $1
+         AND lower(coalesce(city,'')) = lower($2)
+         AND lower(coalesce(state,'')) = lower($3)
+       LIMIT 2`,
+      [norm(candidate.name), candidate.city ?? "", candidate.state ?? ""],
+    );
+    nameLocalityMatchCount = nameLocalityMatches.length;
+  }
+  const decision = decideSocialFirstIdentityMatch(strongMatches.length, nameLocalityMatchCount);
+  return {
+    existing: decision.action === "MERGE" ? strongMatches[0] ?? null : null,
+    holdReason: decision.reason,
+  };
 }
 
 // ── Review queue ──────────────────────────────────────────────────────────────
@@ -306,8 +324,17 @@ export async function ingestSocialFirstCandidate(
     return { status: "MANUAL_REVIEW", reason };
   }
 
-  // 2. Duplicate detection — check by phone, domain, social URL, or name+city+state.
-  const existing = await findExisting(candidate);
+  // 2. Duplicate detection — merge only on one exact phone/domain/social match.
+  const identityLookup = await findExisting(candidate);
+  if (identityLookup.holdReason) {
+    await queueReview(candidate, identityLookup.holdReason);
+    logger.info(
+      { event: "SOCIAL_FIRST_IDENTITY_HOLD", name: candidate.name, reason: identityLookup.holdReason },
+      "social-first candidate held before any canonical profile merge",
+    );
+    return { status: "MANUAL_REVIEW", reason: identityLookup.holdReason };
+  }
+  const existing = identityLookup.existing;
   if (existing) {
     // Merge-only: never overwrite stronger verified data with a social claim.
     const mergedSocial = mergeSocialProfiles(

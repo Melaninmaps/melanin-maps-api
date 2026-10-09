@@ -69,6 +69,7 @@ import {
 } from "../businesses/businessDuplicateIdentity";
 import {
   adminProfileUpdateSqlBinding,
+  directAdminCreationUnsafeFields,
   normalizeBusinessIdentityPart,
   validateAdminBusinessProfilePatch,
 } from "../businesses/adminBusinessProfilePolicy";
@@ -4086,9 +4087,9 @@ router.get("/admin/businesses/:id/profile", async (req: Request, res: Response) 
       ),
       pool.query<{
         field_name: string; source_url: string; source_label: string; observed_at: string;
-        confidence: string; note: string | null; created_at: string;
+        confidence: string; note: string | null; observed_value: unknown; created_at: string;
       }>(
-        `SELECT field_name, source_url, source_label, observed_at, confidence, note, created_at
+        `SELECT field_name, source_url, source_label, observed_at, confidence, note, observed_value, created_at
            FROM business_profile_field_receipts
           WHERE business_id = $1
           ORDER BY created_at DESC`,
@@ -4129,6 +4130,7 @@ router.get("/admin/businesses/:id/profile", async (req: Request, res: Response) 
         observedAt: String(receipt.observed_at).slice(0, 10),
         confidence: receipt.confidence,
         note: receipt.note,
+        observedValue: receipt.observed_value,
         createdAt: receipt.created_at,
       })),
       profileAudit: profileAudit.rows.map((event) => ({
@@ -4285,7 +4287,7 @@ router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response
         [
           randomUUID(), businessId, receipt.field, receipt.sourceUrl, receipt.sourceLabel,
           receipt.observedAt, receipt.confidence, receipt.note,
-          JSON.stringify({ fieldsChanged: validated.requiredReceiptFields }), req.user?.id ?? null,
+          JSON.stringify(validated.receiptObservedValues[receipt.field]), req.user?.id ?? null,
         ],
       );
     }
@@ -4649,74 +4651,16 @@ router.post(
       res.status(403).json({ error: "Admin required" });
       return;
     }
-    const id = String(req.params.id);
     const { url } = req.body as { url?: string };
     if (!url?.trim()) {
       res.status(400).json({ error: "url is required" });
       return;
     }
-
-    const ALLOWED = [
-      "youtube.com",
-      "youtu.be",
-      "tiktok.com",
-      "instagram.com",
-      "facebook.com",
-      "fb.watch",
-      "vimeo.com",
-      "pinterest.com",
-    ];
-    try {
-      const hostname = new URL(url.trim()).hostname.replace("www.", "");
-      if (!ALLOWED.some((h) => hostname.includes(h))) {
-        res.status(400).json({
-          error:
-            "Supported platforms: YouTube, TikTok, Instagram, Facebook, Pinterest, Vimeo.",
-        });
-        return;
-      }
-    } catch {
-      res
-        .status(400)
-        .json({ error: "Invalid URL. Please paste the full link." });
-      return;
-    }
-
-    try {
-      const [business] = await db
-        .select({ id: businessesTable.id, videos: businessesTable.videos })
-        .from(businessesTable)
-        .where(eq(businessesTable.id, id));
-      if (!business) {
-        res.status(404).json({ error: "Business not found" });
-        return;
-      }
-
-      const current = (business.videos as string[]) ?? [];
-      if (current.includes(url.trim())) {
-        res.status(409).json({ error: "This link is already added." });
-        return;
-      }
-      if (current.length >= 10) {
-        res
-          .status(400)
-          .json({ error: "Maximum of 10 social media links per business." });
-        return;
-      }
-
-      const [updated] = await db
-        .update(businessesTable)
-        .set({ videos: [...current, url.trim()], updatedAt: new Date() })
-        .where(eq(businessesTable.id, id))
-        .returning({ id: businessesTable.id, videos: businessesTable.videos });
-
-      res
-        .status(201)
-        .json({ videos: updated.videos, message: "Social link added." });
-    } catch (err) {
-      req.log.error({ err }, "POST /admin/businesses/:id/social-link error");
-      res.status(500).json({ error: "Could not add social link." });
-    }
+    res.status(410).json({
+      error: "This unreceipted social-media attachment route is retired. Use the reviewed media-source workflow with identity evidence.",
+      code: "UNRECEIPTED_SOCIAL_MEDIA_ROUTE_RETIRED",
+    });
+    return;
   },
 );
 
@@ -4836,12 +4780,26 @@ router.post(
       return;
     }
 
-    const VALID_LISTING_STATUSES = ["staged", "live_unclaimed", "live_claimed"];
-    const finalListingStatus = VALID_LISTING_STATUSES.includes(
-      listingStatus ?? "",
-    )
-      ? listingStatus!
-      : "staged";
+    const unsafeCreationFields = directAdminCreationUnsafeFields({
+      website, instagram, facebook, tiktok, twitter, youtube, pinterest,
+      ownershipDesignations, blackOwned,
+    });
+    if (unsafeCreationFields.length > 0) {
+      res.status(400).json({
+        error: `A staged profile cannot be created with unreceipted presence or ownership fields: ${unsafeCreationFields.join(", ")}. Create the shell, then use the audited profile editor with field-level evidence.`,
+        code: "FIELD_RECEIPTS_REQUIRED_FOR_PRESENCE",
+      });
+      return;
+    }
+    if (listingStatus && listingStatus !== "staged") {
+      res.status(400).json({
+        error: "New administrator-created profiles must remain staged until the separate reviewed lifecycle workflow approves visibility.",
+        code: "STAGED_CREATION_REQUIRED",
+      });
+      return;
+    }
+
+    const finalListingStatus = "staged";
 
     // Re-evaluate identity on the server immediately before creation. A browser
     // preflight is never sufficient to prevent a duplicate canonical profile.
@@ -4880,38 +4838,10 @@ router.post(
 
     const id = randomUUID();
 
-    // Auto-geocode if address provided
-    let lat = "0";
-    let lng = "0";
-    const geoApiKey = process.env.GOOGLE_MAPS_API_KEY;
-    if (geoApiKey && address?.trim() && city?.trim()) {
-      try {
-        const geoAddr = encodeURIComponent(
-          [
-            address.trim(),
-            city.trim(),
-            province?.trim() || state?.trim(),
-            country?.trim(),
-          ]
-            .filter(Boolean)
-            .join(", "),
-        );
-        const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${geoAddr}&key=${geoApiKey}`;
-        const geoResp = await fetch(geoUrl);
-        const geoData = (await geoResp.json()) as {
-          results?: Array<{
-            geometry?: { location?: { lat: number; lng: number } };
-          }>;
-        };
-        const loc = geoData.results?.[0]?.geometry?.location;
-        if (loc) {
-          lat = String(loc.lat);
-          lng = String(loc.lng);
-        }
-      } catch {
-        // Non-fatal — business saved with lat/lng=0; admin can geocode later
-      }
-    }
+    // A usable address supports a staged profile, not a public map pin. The
+    // reviewed geocode workflow is the sole writer for coordinates.
+    const lat: string | null = null;
+    const lng: string | null = null;
 
     try {
       // Use raw SQL so we can write email, zip, listing_status, data_source —

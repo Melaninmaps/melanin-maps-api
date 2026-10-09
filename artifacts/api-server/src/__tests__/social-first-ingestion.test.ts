@@ -10,7 +10,7 @@
 
 import { describe, expect, it, beforeEach, afterEach } from "vitest";
 import { pool } from "@workspace/db";
-import { ingestSocialFirstCandidate, norm } from "../lib/social-first-ingestion";
+import { decideSocialFirstIdentityMatch, ingestSocialFirstCandidate, norm } from "../lib/social-first-ingestion";
 
 // ── Test data scope ───────────────────────────────────────────────────────────
 // All test businesses use city="__TEST__" so cleanup is fully scoped.
@@ -247,6 +247,44 @@ describe("tour social-first ingestion", () => {
     expect(first.status).toBe("VERIFIED_ADD");
     expect(second.status).toBe("EXISTING_UPDATE");
     expect(await dbCount({ normalizedName: norm("Repeat Laundry") })).toBe(1);
+  });
+
+  it("holds a name-and-locality-only match without adding its social profile", async () => {
+    const existing = await ingestSocialFirstCandidate(
+      {
+        ...base,
+        name: "Ambiguous Laundry",
+        socialProfiles: [
+          { platform: "instagram" as const, url: "https://instagram.com/ambiguouslaundryoriginal", handle: "@ambiguouslaundryoriginal", suppliedByUser: true },
+        ],
+      },
+      "Black-owned",
+    );
+    expect(existing.status).toBe("VERIFIED_ADD");
+
+    const contender = await ingestSocialFirstCandidate(
+      {
+        ...base,
+        name: "Ambiguous Laundry",
+        address: "999 Different Street, Atlanta, GA 30309",
+        latitude: 33.79,
+        longitude: -84.39,
+        socialProfiles: [
+          { platform: "instagram" as const, url: "https://instagram.com/ambiguouslaundrydifferent", handle: "@ambiguouslaundrydifferent", suppliedByUser: true },
+        ],
+      },
+      "Black-owned",
+    );
+
+    expect(contender).toEqual({ status: "MANUAL_REVIEW", reason: "name_locality_match_requires_identity_review" });
+    expect(await dbCount({ normalizedName: norm("Ambiguous Laundry") })).toBe(1);
+  });
+
+  it("holds multiple strong identifier matches instead of selecting one", () => {
+    expect(decideSocialFirstIdentityMatch(2, 0)).toEqual({
+      action: "REVIEW",
+      reason: "ambiguous_strong_identifier_match",
+    });
   });
 
   it("keeps same-name businesses in different cities separate", async () => {
