@@ -7,6 +7,10 @@ import {
   validateAdminBusinessProfilePatch,
 } from "../artifacts/api-server/src/businesses/adminBusinessProfilePolicy";
 import {
+  buildStagedDirectBusinessInsert,
+  validateDirectBusiness,
+} from "../artifacts/api-server/src/businesses/registerAdminPublishAndClaimRoutes";
+import {
   mapPinOnlyPatch,
   registerDocumentedDiscoveryReviewRoutes,
   storedAddressMatchesMapEvidence,
@@ -249,6 +253,40 @@ async function run(): Promise<Result> {
       `unexpected direct-create safety result: ${unsafe.join(",")}`,
     );
     checks.direct_create_presence_and_ownership_rejected = true;
+
+    // The legacy administrative create route is permitted to make only a
+    // non-public research shell. Exercise its real policy helpers here in the
+    // disposable harness so the database-backed release check covers both the
+    // reject path above and the sole allowed creation shape.
+    const stagedShell = buildStagedDirectBusinessInsert(
+      validateDirectBusiness({
+        name: "Synthetic Staged Shell",
+        category: "Community Services",
+        city: "Philadelphia",
+        state: "PA",
+        address: "123 Synthetic Street",
+        phone: "215-555-0100",
+      }),
+      "synthetic-admin",
+      "synthetic-staged-shell",
+    );
+    assert(
+      stagedShell.status === "pending_review"
+        && stagedShell.listingStatus === "staged"
+        && stagedShell.blackOwned === false
+        && stagedShell.ownershipDesignations.length === 0,
+      "legacy direct create did not produce a non-public no-ownership shell",
+    );
+    assert(
+      !("latitude" in stagedShell)
+        && !("longitude" in stagedShell)
+        && !("website" in stagedShell)
+        && !("instagram" in stagedShell)
+        && !("imageUrl" in stagedShell)
+        && !("photos" in stagedShell),
+      "legacy direct create shell contained protected public-presence or map fields",
+    );
+    checks.direct_create_only_produces_nonpublic_staged_shell = true;
 
     // Founder-source publication refreshes presence and ownership receipts but
     // supplies no physical address or geocode. The exact upsert behavior must
