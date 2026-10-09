@@ -1281,7 +1281,6 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
           WHERE e.business_id = $1
             AND e.eligibility_status = 'qualified'
             AND e.policy_version = $2
-            AND e.identity_evidence_id IS NOT NULL
             AND e.ownership_evidence_id IS NOT NULL
             AND (e.official_website_evidence_id IS NOT NULL OR e.official_social_evidence_id IS NOT NULL)
             AND e.ownership_source_expires_at > now()
@@ -1486,10 +1485,9 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
         const activeEligibility = await client.query<{ business_id: string }>(
           `SELECT e.business_id
              FROM business_discovery_eligibility e
-            WHERE e.business_id = $1
+           WHERE e.business_id = $1
               AND e.eligibility_status = 'qualified'
               AND e.policy_version = $2
-              AND e.identity_evidence_id IS NOT NULL
               AND e.ownership_evidence_id IS NOT NULL
               AND (e.official_website_evidence_id IS NOT NULL OR e.official_social_evidence_id IS NOT NULL)
               AND e.ownership_source_expires_at > now()

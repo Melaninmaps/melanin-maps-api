@@ -21,6 +21,7 @@ const now = new Date("2026-10-05T00:00:00.000Z");
 describe("documented Discovery eligibility", () => {
   it("requires ownership plus one official presence and a current ownership review", () => {
     expect(isDocumentedDiscoveryEligible(current, "discovery", now)).toBe(true);
+    expect(isDocumentedDiscoveryEligible({ ...current, identityEvidenceId: null }, "discovery", now)).toBe(true);
     expect(isDocumentedDiscoveryEligible({ ...current, officialSocialEvidenceId: null }, "discovery", now)).toBe(true);
     expect(isDocumentedDiscoveryEligible({ ...current, officialWebsiteEvidenceId: null }, "discovery", now)).toBe(true);
     expect(isDocumentedDiscoveryEligible({ ...current, officialWebsiteEvidenceId: null, officialSocialEvidenceId: null }, "discovery", now)).toBe(false);

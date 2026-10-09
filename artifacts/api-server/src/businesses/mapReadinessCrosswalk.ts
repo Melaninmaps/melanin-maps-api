@@ -105,7 +105,6 @@ export function assessMapReadiness(
   });
   const currentDocumentedEligibility = candidate.eligibilityStatus === "qualified"
     && candidate.policyVersion === DOCUMENTED_DISCOVERY_POLICY_VERSION
-    && Boolean(candidate.identityEvidenceId)
     && Boolean(candidate.ownershipEvidenceId)
     && Boolean(candidate.officialWebsiteEvidenceId || candidate.officialSocialEvidenceId)
     && hasFutureDate(candidate.ownershipSourceExpiresAt, now)
@@ -145,7 +144,6 @@ export function assessMapReadiness(
   const missingEligibility: string[] = [];
   if (candidate.eligibilityStatus !== "qualified") missingEligibility.push("qualified_documented_eligibility");
   if (candidate.policyVersion !== DOCUMENTED_DISCOVERY_POLICY_VERSION) missingEligibility.push("current_policy_version");
-  if (!candidate.identityEvidenceId) missingEligibility.push("identity_evidence_receipt");
   if (!candidate.ownershipEvidenceId) missingEligibility.push("ownership_evidence_receipt");
   if (!candidate.officialWebsiteEvidenceId && !candidate.officialSocialEvidenceId) {
     missingEligibility.push("official_website_or_social_evidence_receipt");

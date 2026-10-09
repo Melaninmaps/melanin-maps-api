@@ -451,7 +451,6 @@ async function loadPendingCandidates(
        LEFT JOIN public.business_map_restoration_outcomes o ON o.business_id::text = b.id::text
       WHERE e.eligibility_status = 'qualified'
         AND e.policy_version = 'documented_diaspora_discovery_v1'
-        AND e.identity_evidence_id IS NOT NULL
         AND e.ownership_evidence_id IS NOT NULL
         AND (e.official_website_evidence_id IS NOT NULL OR e.official_social_evidence_id IS NOT NULL)
         AND e.ownership_source_expires_at > CURRENT_TIMESTAMP
@@ -539,7 +538,6 @@ async function persistMapEvidence(
       WHERE b.id = $1
         AND e.eligibility_status = 'qualified'
         AND e.policy_version = 'documented_diaspora_discovery_v1'
-        AND e.identity_evidence_id IS NOT NULL
         AND e.ownership_evidence_id IS NOT NULL
         AND (e.official_website_evidence_id IS NOT NULL OR e.official_social_evidence_id IS NOT NULL)
         AND e.ownership_source_expires_at > CURRENT_TIMESTAMP
@@ -866,7 +864,6 @@ export function registerFounderMapRestorationRoutes(
              JOIN public.business_discovery_eligibility e ON e.business_id::text = b.id::text
             WHERE e.eligibility_status = 'qualified'
               AND e.policy_version = 'documented_diaspora_discovery_v1'
-              AND e.identity_evidence_id IS NOT NULL
               AND e.ownership_evidence_id IS NOT NULL
               AND (e.official_website_evidence_id IS NOT NULL OR e.official_social_evidence_id IS NOT NULL)
               AND e.ownership_source_expires_at > CURRENT_TIMESTAMP

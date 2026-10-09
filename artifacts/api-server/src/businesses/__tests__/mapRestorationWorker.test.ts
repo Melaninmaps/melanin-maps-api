@@ -126,6 +126,7 @@ describe("founder map restoration", () => {
     expect(source).toContain("CENSUS_ADDRESS_RANGE_INTERPOLATED");
     expect(source).not.toContain("GOOGLE_MAPS_API_KEY");
     expect(source).toContain("e.map_pin_evidence_id IS NULL");
+    expect(source).not.toContain("e.identity_evidence_id IS NOT NULL");
     expect(source).toContain("AND b.latitude IS NULL");
     expect(source).toContain("AND b.longitude IS NULL");
     expect(source).toContain("business_legacy_map_location_attestations");

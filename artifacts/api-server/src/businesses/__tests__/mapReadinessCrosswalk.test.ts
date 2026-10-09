@@ -44,6 +44,13 @@ describe("map readiness crosswalk", () => {
     });
   });
 
+  it("uses the same current Kinfolk predicate when a legacy identity receipt is absent", () => {
+    expect(assessMapReadiness({ ...current, identityEvidenceId: null }, now)).toMatchObject({
+      category: "A_VERIFIED_AND_MAP_READY",
+      isCurrentDocumentedEligibility: true,
+    });
+  });
+
   it("accounts for a reviewed unchanged legacy stored location without calling it a first-party receipt", () => {
     expect(assessMapReadiness({
       ...current,
