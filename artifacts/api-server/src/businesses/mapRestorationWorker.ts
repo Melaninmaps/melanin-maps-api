@@ -457,6 +457,11 @@ async function loadPendingCandidates(
         AND e.ownership_source_expires_at > CURRENT_TIMESTAMP
         AND e.review_after > CURRENT_TIMESTAMP
        AND e.map_pin_evidence_id IS NULL
+       -- A retained coordinate belongs to the separate legacy-attestation or
+       -- correction lane. This worker only geocodes records that truly have no
+       -- stored coordinate pair; it never overwrites a historical location.
+       AND b.latitude IS NULL
+       AND b.longitude IS NULL
        AND NOT EXISTS (
          SELECT 1
            FROM public.business_legacy_map_location_attestations AS legacy_location
