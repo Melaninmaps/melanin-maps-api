@@ -5,6 +5,10 @@ const mapSource = readFileSync(
   new URL("../pages/map.tsx", import.meta.url),
   "utf8",
 );
+const geolocationPolicySource = readFileSync(
+  new URL("../lib/mapGeolocationPolicy.ts", import.meta.url),
+  "utf8",
+);
 
 describe("website map locality-first presentation", () => {
   it("does not display business, cultural, or historical map pins without a local scope", () => {
@@ -27,9 +31,17 @@ describe("website map locality-first presentation", () => {
     expect(mapSource).toContain("const requestMapDeviceLocation = useCallback");
     expect(mapSource).toContain("requestMapDeviceLocation({ onUnavailable: () => centerSavedHomeArea(savedHomeCity) });");
     expect(mapSource).toContain("centerSavedHomeArea(savedHomeCity);");
-    expect(mapSource).toContain("This map is showing your saved home area, not your live location.");
+    expect(geolocationPolicySource).toContain("This map is showing your saved home area, not your live location.");
     expect(mapSource).toContain('onClick={() => requestMapDeviceLocation({ forceViewport: true })}');
     expect(mapSource).toContain('aria-live="polite"');
     expect(mapSource).not.toContain("userCoords ?? { lat: 39.9526, lng: -75.1652 }");
+  });
+
+  it("has an application-owned timeout when a browser geolocation callback never settles", () => {
+    expect(mapSource).toContain("const watchdog = window.setTimeout");
+    expect(mapSource).toContain("MAP_GEOLOCATION_WATCHDOG_MS");
+    expect(mapSource).toContain("window.clearTimeout(watchdog)");
+    expect(mapSource).toContain("mapGeolocationFailure(3)");
+    expect(mapSource).toContain("options?.onUnavailable?.()");
   });
 });

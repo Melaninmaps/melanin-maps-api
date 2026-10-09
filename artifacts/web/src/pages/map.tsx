@@ -7,6 +7,12 @@ import {
   resolveMapDistanceOrigin,
   type MapDistanceOrigin,
 } from "@/lib/mapDistanceOrigin";
+import {
+  mapGeolocationFailure,
+  MAP_GEOLOCATION_TIMEOUT_MS,
+  MAP_GEOLOCATION_WATCHDOG_MS,
+  type MapGeolocationStatus,
+} from "@/lib/mapGeolocationPolicy";
 import { persistReducedSupportLensRemoval } from "@/lib/supportLensActions";
 import {
   countMapDiscoveryFocuses,
@@ -195,7 +201,6 @@ function getConfidenceLabel(level: string): string {
 }
 
 type RouteInfo = { distance: string; duration: string; bizName: string };
-type MapGeolocationStatus = "idle" | "requesting" | "granted" | "denied" | "unavailable" | "timed_out" | "error";
 type MapDistanceDisplay = { text: string; originContext: string };
 
 const BRAND_STYLE: object[] = [
@@ -531,8 +536,24 @@ export default function MapPage() {
 
     setGeoLocationStatus("requesting");
     setGeoLocationMessage("Requesting your device location…");
+    let unavailableReported = false;
+    const reportUnavailable = (status: Extract<MapGeolocationStatus, "denied" | "timed_out" | "error">, message: string) => {
+      if (unavailableReported) return;
+      unavailableReported = true;
+      setGeoLocationStatus(status);
+      setGeoLocationMessage(message);
+      options?.onUnavailable?.();
+    };
+    // The browser-provided geolocation timeout is advisory in some browser and
+    // device combinations. The watchdog is deliberately local-only: it does
+    // not manufacture coordinates, record a location, or alter nearby scope.
+    const watchdog = window.setTimeout(() => {
+      const failure = mapGeolocationFailure(3);
+      reportUnavailable(failure.status, failure.message);
+    }, MAP_GEOLOCATION_WATCHDOG_MS);
     navigator.geolocation.getCurrentPosition(
       (position) => {
+        window.clearTimeout(watchdog);
         const coordinates = { lat: position.coords.latitude, lng: position.coords.longitude };
         if (mapRef.current && (options?.forceViewport === true || !searchViewportLockedRef.current)) {
           mapRef.current.setCenter(coordinates);
@@ -543,21 +564,11 @@ export default function MapPage() {
         setGeoLocationMessage(null);
       },
       (geolocationError) => {
-        const status: MapGeolocationStatus = geolocationError.code === geolocationError.PERMISSION_DENIED
-          ? "denied"
-          : geolocationError.code === geolocationError.TIMEOUT
-            ? "timed_out"
-            : "error";
-        const message = status === "denied"
-          ? "Location permission is off. This map is showing your saved home area, not your live location. Allow location for Mapping With Melanin in your browser settings, then try again."
-          : status === "timed_out"
-            ? "Your location did not respond in time. This map is showing your saved home area, not your live location. Try again when your connection and device location are available."
-            : "Your location could not be determined. This map is showing your saved home area, not your live location. You can try again or search a city.";
-        setGeoLocationStatus(status);
-        setGeoLocationMessage(message);
-        options?.onUnavailable?.();
+        window.clearTimeout(watchdog);
+        const failure = mapGeolocationFailure(geolocationError.code);
+        reportUnavailable(failure.status, failure.message);
       },
-      { enableHighAccuracy: true, timeout: 12_000, maximumAge: 0 },
+      { enableHighAccuracy: true, timeout: MAP_GEOLOCATION_TIMEOUT_MS, maximumAge: 0 },
     );
   }, []);
 
