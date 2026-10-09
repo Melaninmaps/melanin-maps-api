@@ -184,6 +184,113 @@ function normalizedAddress(value: unknown): string | null {
   return text?.toLocaleLowerCase("en-US").replace(/[^a-z0-9]+/g, " ").trim() ?? null;
 }
 
+type PhysicalAddressComponents = Readonly<{
+  houseNumber: string;
+  directional: string | null;
+  streetName: string;
+  streetType: string;
+  city: string;
+  state: string;
+  postalCode: string;
+}>;
+
+const DIRECTIONAL_ALIASES: Record<string, string> = {
+  n: "north", north: "north", s: "south", south: "south",
+  e: "east", east: "east", w: "west", west: "west",
+};
+const STREET_TYPE_ALIASES: Record<string, string> = {
+  st: "street", street: "street", ave: "avenue", avenue: "avenue",
+  rd: "road", road: "road", blvd: "boulevard", boulevard: "boulevard",
+  dr: "drive", drive: "drive", ln: "lane", lane: "lane",
+  ct: "court", court: "court", pl: "place", place: "place",
+  pkwy: "parkway", parkway: "parkway", ter: "terrace", terrace: "terrace",
+  hwy: "highway", highway: "highway", cir: "circle", circle: "circle",
+};
+const STATE_ALIASES: Record<string, string> = {
+  al: "alabama", ak: "alaska", az: "arizona", ar: "arkansas", ca: "california",
+  co: "colorado", ct: "connecticut", de: "delaware", fl: "florida", ga: "georgia",
+  hi: "hawaii", id: "idaho", il: "illinois", in: "indiana", ia: "iowa",
+  ks: "kansas", ky: "kentucky", la: "louisiana", me: "maine", md: "maryland",
+  ma: "massachusetts", mi: "michigan", mn: "minnesota", ms: "mississippi", mo: "missouri",
+  mt: "montana", ne: "nebraska", nv: "nevada", nh: "new hampshire", nj: "new jersey",
+  nm: "new mexico", ny: "new york", nc: "north carolina", nd: "north dakota", oh: "ohio",
+  ok: "oklahoma", or: "oregon", pa: "pennsylvania", ri: "rhode island", sc: "south carolina",
+  sd: "south dakota", tn: "tennessee", tx: "texas", ut: "utah", vt: "vermont",
+  va: "virginia", wa: "washington", wv: "west virginia", wi: "wisconsin", wy: "wyoming",
+};
+
+function componentText(value: unknown): string | null {
+  return normalizedText(value, 160)?.toLocaleLowerCase("en-US").replace(/[^a-z0-9]+/g, " ").trim() ?? null;
+}
+
+function canonicalState(value: unknown): string | null {
+  const normalized = componentText(value);
+  if (!normalized) return null;
+  return STATE_ALIASES[normalized] ?? Object.entries(STATE_ALIASES).find(([, state]) => state === normalized)?.[1] ?? null;
+}
+
+function canonicalDirectional(value: unknown): string | null {
+  const normalized = componentText(value);
+  if (normalized == null || normalized === "") return null;
+  return DIRECTIONAL_ALIASES[normalized] ?? null;
+}
+
+function canonicalStreetType(value: unknown): string | null {
+  const normalized = componentText(value);
+  return normalized ? STREET_TYPE_ALIASES[normalized] ?? null : null;
+}
+
+function normalizePhysicalAddressComponents(value: unknown): PhysicalAddressComponents | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const raw = value as Record<string, unknown>;
+  const houseNumber = componentText(raw.houseNumber);
+  const directional = raw.directional == null || raw.directional === "" ? null : canonicalDirectional(raw.directional);
+  const streetName = componentText(raw.streetName);
+  const streetType = canonicalStreetType(raw.streetType);
+  const city = componentText(raw.city);
+  const state = canonicalState(raw.state);
+  const postalCode = normalizedText(raw.postalCode, 10)?.replace(/\s/g, "") ?? null;
+  if (!houseNumber || !streetName || !streetType || !city || !state || !postalCode || !/^\d{5}(?:-\d{4})?$/.test(postalCode)) {
+    return null;
+  }
+  return { houseNumber, directional, streetName, streetType, city, state, postalCode };
+}
+
+function parseCompleteUsStreetAddress(value: unknown): PhysicalAddressComponents | null {
+  const text = normalizedText(value, 300);
+  if (!text) return null;
+  const match = text.match(/^\s*(\d+[A-Za-z]?)\s+(?:(N(?:orth)?|S(?:outh)?|E(?:ast)?|W(?:est)?)\.?\s+)?(.+?)\s+(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Court|Ct|Place|Pl|Parkway|Pkwy|Terrace|Ter|Highway|Hwy|Circle|Cir)\.?\s*,\s*([^,]+?)\s*,\s*([A-Za-z]{2}|[A-Za-z ]+)\s+(\d{5}(?:-\d{4})?)\s*$/i);
+  if (!match) return null;
+  return normalizePhysicalAddressComponents({
+    houseNumber: match[1], directional: match[2] ?? null, streetName: match[3], streetType: match[4],
+    city: match[5], state: match[6], postalCode: match[7],
+  });
+}
+
+function samePhysicalAddress(left: PhysicalAddressComponents, right: PhysicalAddressComponents): boolean {
+  return left.houseNumber === right.houseNumber
+    && left.directional === right.directional
+    && left.streetName === right.streetName
+    && left.streetType === right.streetType
+    && left.city === right.city
+    && left.state === right.state
+    && left.postalCode === right.postalCode;
+}
+
+function exactMapEvidenceAddressMatch(addressEvidence: EvidenceInput, mapPinEvidence: EvidenceInput): boolean {
+  const firstParty = parseCompleteUsStreetAddress(addressEvidence.observedValue?.address);
+  const query = parseCompleteUsStreetAddress(mapPinEvidence.observedValue?.queryAddress);
+  const geocoder = normalizePhysicalAddressComponents(mapPinEvidence.observedValue?.addressComponents);
+  if (mapPinEvidence.observedValue?.addressComponents != null) {
+    if (!firstParty || !query || !geocoder) return false;
+    return samePhysicalAddress(firstParty, query) && samePhysicalAddress(firstParty, geocoder);
+  }
+  const address = normalizedAddress(addressEvidence.observedValue?.address);
+  const geocodedAddress = normalizedAddress(mapPinEvidence.observedValue?.formattedAddress);
+  const queryAddress = normalizedAddress(mapPinEvidence.observedValue?.queryAddress);
+  return Boolean(address && geocodedAddress && queryAddress && geocodedAddress === address && queryAddress === address);
+}
+
 function requireFiniteCoordinate(value: unknown, label: "latitude" | "longitude", minimum: number, maximum: number): number {
   if (typeof value !== "number" || !Number.isFinite(value) || value < minimum || value > maximum) {
     throw new Error(`map pin evidence requires a finite numeric observedValue.${label}`);
@@ -302,16 +409,13 @@ export function validateMapPinEvidenceReviewInput(value: unknown, now: Date): Ma
   if (!APPROVED_GEOCODER_HOSTS.has(hostOf(mapPinEvidence.sourceUrl))) {
     throw new Error("map pin evidence must use an approved geocoder endpoint");
   }
-  const address = normalizedAddress(addressEvidence.observedValue?.address);
-  const geocodedAddress = normalizedAddress(mapPinEvidence.observedValue?.formattedAddress);
-  const queryAddress = normalizedAddress(mapPinEvidence.observedValue?.queryAddress);
   if (addressEvidence.observedValue?.addressType !== "physical" || addressEvidence.observedValue?.isServiceArea !== false) {
     throw new Error("address evidence must explicitly document a physical street address, not a service area");
   }
   requireFiniteCoordinate(mapPinEvidence.observedValue?.latitude, "latitude", -90, 90);
   requireFiniteCoordinate(mapPinEvidence.observedValue?.longitude, "longitude", -180, 180);
-  if (!address || !geocodedAddress || !queryAddress || mapPinEvidence.observedValue?.addressMatch !== true
-      || geocodedAddress !== address || queryAddress !== address) {
+  if (mapPinEvidence.observedValue?.addressMatch !== true
+      || !exactMapEvidenceAddressMatch(addressEvidence, mapPinEvidence)) {
     throw new Error("map pin evidence must record an exact approved-geocoder address match");
   }
   return {
@@ -324,7 +428,10 @@ export function validateMapPinEvidenceReviewInput(value: unknown, now: Date): Ma
 export function storedAddressMatchesMapEvidence(storedAddress: unknown, input: MapPinEvidenceReviewInput): boolean {
   const stored = normalizedAddress(storedAddress);
   const evidenced = normalizedAddress(input.addressEvidence.observedValue?.address);
-  return Boolean(stored && evidenced && stored === evidenced);
+  if (stored && evidenced && stored === evidenced) return true;
+  const storedComponents = parseCompleteUsStreetAddress(storedAddress);
+  const evidencedComponents = parseCompleteUsStreetAddress(input.addressEvidence.observedValue?.address);
+  return Boolean(storedComponents && evidencedComponents && samePhysicalAddress(storedComponents, evidencedComponents));
 }
 
 export function mapPinOnlyPatch(

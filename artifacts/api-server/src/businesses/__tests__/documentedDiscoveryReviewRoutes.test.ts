@@ -229,6 +229,52 @@ describe("documented discovery review input", () => {
     });
   });
 
+  it("accepts only complete address-component equivalents for directional and street-type abbreviations", () => {
+    const request = mapEvidenceRequest();
+    request.addressEvidence.observedValue.address = "1226 N 52nd St, Philadelphia, PA 19131";
+    request.mapPinEvidence.sourceUrl = "https://nominatim.openstreetmap.org/search?format=jsonv2";
+    request.mapPinEvidence.observedValue.queryAddress = "1226 N 52nd St, Philadelphia, PA 19131";
+    request.mapPinEvidence.observedValue.formattedAddress = "1226, North 52nd Street, Carroll Park, Philadelphia, Pennsylvania, 19131, United States";
+    (request.mapPinEvidence.observedValue as Record<string, unknown>).addressComponents = {
+      houseNumber: "1226",
+      directional: "North",
+      streetName: "52nd",
+      streetType: "Street",
+      city: "Philadelphia",
+      state: "Pennsylvania",
+      postalCode: "19131",
+    };
+
+    const result = validateMapPinEvidenceReviewInput(request, now);
+    expect(storedAddressMatchesMapEvidence("1226 N. 52nd Street, Philadelphia, PA 19131", result)).toBe(true);
+    expect(storedAddressMatchesMapEvidence("1226 N. 52nd Street, Philadelphia, PA", result)).toBe(false);
+  });
+
+  it("rejects a component-equivalent map request when the approved geocoder postcode conflicts", () => {
+    const request = mapEvidenceRequest();
+    request.addressEvidence.observedValue.address = "1226 N 52nd St, Philadelphia, PA 19131";
+    request.mapPinEvidence.sourceUrl = "https://nominatim.openstreetmap.org/search?format=jsonv2";
+    request.mapPinEvidence.observedValue.queryAddress = "1226 N 52nd St, Philadelphia, PA 19131";
+    request.mapPinEvidence.observedValue.formattedAddress = "1226, North 52nd Street, Philadelphia, Pennsylvania, 19199, United States";
+    (request.mapPinEvidence.observedValue as Record<string, unknown>).addressComponents = {
+      houseNumber: "1226",
+      directional: "North",
+      streetName: "52nd",
+      streetType: "Street",
+      city: "Philadelphia",
+      state: "Pennsylvania",
+      postalCode: "19199",
+    };
+
+    expect(() => validateMapPinEvidenceReviewInput(request, now)).toThrow("exact approved-geocoder address match");
+  });
+
+  it("rejects a partial address-component receipt rather than falling back to string equality", () => {
+    const request = mapEvidenceRequest();
+    (request.mapPinEvidence.observedValue as Record<string, unknown>).addressComponents = { postalCode: "19103" };
+    expect(() => validateMapPinEvidenceReviewInput(request, now)).toThrow("exact approved-geocoder address match");
+  });
+
   it("rejects map-only attachment without identity-matched official address evidence", () => {
     const request = mapEvidenceRequest();
     request.addressEvidence.observedValue.identityMatch = false;
