@@ -328,6 +328,14 @@ describe("documented discovery review input", () => {
     expect(canSafelyCompleteStoredAddress(null, "123 Example Street, Philadelphia, PA")).toBe(false);
   });
 
+  it("preserves the supplied address snapshot exactly for the route-level compare-and-set guard", () => {
+    const snapshot = "123 Example Street, Philadelphia, PA  ";
+    expect(validateStoredAddressReconciliationInput({
+      ...storedAddressReconciliationRequest(),
+      expectedStoredAddress: snapshot,
+    }, now).expectedStoredAddress).toBe(snapshot);
+  });
+
   it("rejects ambiguous, conflicting, service-area, and already-complete stored-address reconciliations", () => {
     const request = storedAddressReconciliationRequest();
     expect(() => validateStoredAddressReconciliationInput({ ...request, expectedStoredAddress: "" }, now))

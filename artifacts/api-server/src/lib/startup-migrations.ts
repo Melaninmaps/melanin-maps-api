@@ -5662,6 +5662,30 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ));`,
   },
   {
+    // The decisive first-party receipt for a stored-address reconciliation is
+    // append-only. Older founder-source receipts retain their documented
+    // refresh/supersession behavior; this route never repoints or overwrites
+    // an address receipt after the immutable before/after audit references it.
+    name: "business_profile_evidence_receipts_stored_address_immutable_v4",
+    sql: `CREATE OR REPLACE FUNCTION public.prevent_stored_address_evidence_receipt_mutation()
+      RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        IF OLD.captured_by LIKE 'stored-address-reconciliation:%' THEN
+          RAISE EXCEPTION 'stored-address evidence receipts are immutable';
+        END IF;
+        IF TG_OP = 'DELETE' THEN
+          RETURN OLD;
+        END IF;
+        RETURN NEW;
+      END;
+      $$;
+      DROP TRIGGER IF EXISTS business_profile_evidence_receipts_stored_address_immutable
+        ON business_profile_evidence_receipts;
+      CREATE TRIGGER business_profile_evidence_receipts_stored_address_immutable
+      BEFORE UPDATE OR DELETE ON business_profile_evidence_receipts
+      FOR EACH ROW EXECUTE FUNCTION public.prevent_stored_address_evidence_receipt_mutation();`,
+  },
+  {
     // Founder-provided ownership directories are a documented source basis for
     // their stated designation. They need one official member-facing presence
     // (website OR official social) for directory/Discovery eligibility; a street

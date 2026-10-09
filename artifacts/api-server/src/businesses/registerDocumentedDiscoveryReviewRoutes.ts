@@ -2,7 +2,7 @@ import { randomUUID } from "crypto";
 import type { Express, Request, Response } from "express";
 import { pool } from "@workspace/db";
 import { DIASPORA_OWNERSHIP_DESIGNATIONS } from "@workspace/constants";
-import { isAdmin } from "../lib/adminAuth";
+import { isAdmin, isNamedAdmin } from "../lib/adminAuth";
 import { DOCUMENTED_DISCOVERY_POLICY_VERSION } from "./documentedDiscoveryEligibility";
 import { assessMapReadiness, type MapReadinessCandidate } from "./mapReadinessCrosswalk";
 import {
@@ -535,8 +535,11 @@ export function validateStoredAddressReconciliationInput(
   }
   const expectedStoredAddress = raw.expectedStoredAddress === null
     ? null
-    : normalizedText(raw.expectedStoredAddress, 300);
-  if (raw.expectedStoredAddress !== null && !expectedStoredAddress) {
+    : typeof raw.expectedStoredAddress === "string"
+      ? raw.expectedStoredAddress
+      : null;
+  if (raw.expectedStoredAddress !== null
+    && (!expectedStoredAddress || !expectedStoredAddress.trim() || expectedStoredAddress.length > 300)) {
     throw new Error("expectedStoredAddress must be a non-empty stored address or explicit null");
   }
   const decisionReason = normalizedText(raw.decisionReason, 4_000);
@@ -748,6 +751,14 @@ function directoryReconciliationOutcome(input: ReviewInput): Readonly<{
 function requireAdmin(req: Request, res: Response): boolean {
   if (!isAdmin(req)) {
     res.status((req as any).user?.id ? 403 : 401).json({ error: "Administrator access required" });
+    return false;
+  }
+  return true;
+}
+
+function requireNamedAdmin(req: Request, res: Response): boolean {
+  if (!isNamedAdmin(req)) {
+    res.status((req as any).user?.id ? 403 : 401).json({ error: "A signed-in named administrator is required" });
     return false;
   }
   return true;
@@ -1170,7 +1181,7 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
    * coordinates, and leaves map evidence empty for a later geocoder review.
    */
   app.put("/api/admin/businesses/:id/stored-address-evidence", async (req, res) => {
-    if (!requireAdmin(req, res)) return;
+    if (!requireNamedAdmin(req, res)) return;
     const businessId = String(req.params.id ?? "").trim();
     if (!businessId || businessId.length > 255) {
       res.status(400).json({ error: "A valid business id is required" });
@@ -1192,11 +1203,13 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
         address: string | null;
         latitude: string | null;
         longitude: string | null;
+        status: string | null;
+        listing_status: string | null;
         is_duplicate: boolean;
         duplicate_of_id: string | null;
         is_superseded: boolean;
       }>(
-        `SELECT b.id, b.name, b.address, b.latitude, b.longitude,
+        `SELECT b.id, b.name, b.address, b.latitude, b.longitude, b.status, b.listing_status,
                 COALESCE(b.is_duplicate, false) AS is_duplicate,
                 b.duplicate_of_id,
                 EXISTS (
@@ -1204,7 +1217,7 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
                    WHERE duplicate_resolution.superseded_business_id = b.id
                 ) AS is_superseded
            FROM businesses b
-          WHERE b.id = $1 AND b.status NOT IN ('removed', 'deleted')
+          WHERE b.id = $1
           FOR UPDATE`,
         [businessId],
       );
@@ -1219,7 +1232,13 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
         res.status(409).json({ error: "Stored address evidence may be reconciled only on the existing canonical business record" });
         return;
       }
-      if (normalizedAddress(business.address) !== normalizedAddress(input.expectedStoredAddress)) {
+      if (["duplicate", "permanently_hidden", "removed", "deleted", "closed"].includes(String(business.status ?? "").toLocaleLowerCase("en-US"))
+        || ["archived", "suspended", "removed"].includes(String(business.listing_status ?? "").toLocaleLowerCase("en-US"))) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "Stored address evidence cannot be reconciled on a closed, duplicate, hidden, archived, or suspended canonical record" });
+        return;
+      }
+      if (business.address !== input.expectedStoredAddress) {
         await client.query("ROLLBACK");
         res.status(409).json({ error: "The stored address changed after the supplied read-before-write snapshot; refresh before reconciliation" });
         return;
@@ -1255,8 +1274,13 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
         res.status(409).json({ error: "A record with audited map evidence cannot use stored-address reconciliation; address corrections require a separate review" });
         return;
       }
-      const priorLedger = await client.query<{ state: Record<string, unknown> }>(
-        `SELECT to_jsonb(ledger) AS state
+      const priorLedger = await client.query<{
+        state: Record<string, unknown>;
+        reconciliation_state: string;
+        reason_code: string;
+        recommended_action: string;
+      }>(
+        `SELECT to_jsonb(ledger) AS state, ledger.reconciliation_state, ledger.reason_code, ledger.recommended_action
            FROM business_directory_reconciliation_ledger ledger
           WHERE ledger.business_id = $1
           FOR UPDATE`,
@@ -1267,6 +1291,18 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
         res.status(409).json({ error: "A reconciliation ledger record is required before stored-address reconciliation" });
         return;
       }
+      const ledger = priorLedger.rows[0];
+      const allowedLedgerReasons = new Set([
+        "source_ownership_and_official_presence_verified",
+        "social_only_public_business",
+      ]);
+      if (ledger.reconciliation_state !== "reviewed_qualified"
+        || ledger.recommended_action !== "qualify_kinfolk_current"
+        || !allowedLedgerReasons.has(ledger.reason_code)) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "Stored address evidence is held until identity, contact, duplicate, lifecycle, and reconciliation conflicts are resolved" });
+        return;
+      }
       const addressAuditSchema = await client.query<{ ready: boolean }>(
         `SELECT EXISTS (
            SELECT 1
@@ -1274,6 +1310,12 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
             WHERE constraint_record.conrelid = 'business_discovery_eligibility_audit_events'::regclass
               AND constraint_record.contype = 'c'
               AND pg_get_constraintdef(constraint_record.oid) LIKE '%address_reconciled%'
+         ) AND EXISTS (
+           SELECT 1
+             FROM pg_trigger trigger_record
+            WHERE trigger_record.tgrelid = 'business_profile_evidence_receipts'::regclass
+              AND trigger_record.tgname = 'business_profile_evidence_receipts_stored_address_immutable'
+              AND NOT trigger_record.tgisinternal
          ) AS ready`,
       );
       if (!addressAuditSchema.rows[0]?.ready) {
@@ -1281,7 +1323,7 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
         res.status(409).json({ error: "Stored-address reconciliation is unavailable until the separately reviewed immutable audit-schema migration is applied" });
         return;
       }
-      const actorId = typeof (req as any).user?.id === "string" ? (req as any).user.id : "automation";
+      const actorId = (req as any).user.id as string;
       const addressEvidenceId = randomUUID();
       const patch = storedAddressOnlyPatch(input, addressEvidenceId);
       await client.query(
@@ -1293,7 +1335,7 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
           addressEvidenceId, businessId, input.addressEvidence.field, input.addressEvidence.sourceKind,
           input.addressEvidence.sourceUrl, input.addressEvidence.sourceLabel, input.addressEvidence.observedAt,
           input.addressEvidence.sourceExpiresAt ?? null, input.addressEvidence.confidence,
-          JSON.stringify(input.addressEvidence.observedValue ?? {}), actorId,
+          JSON.stringify(input.addressEvidence.observedValue ?? {}), `stored-address-reconciliation:${actorId}`,
         ],
       );
       const nextBusiness = await client.query<{ state: Record<string, unknown> }>(
@@ -1304,7 +1346,7 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
           WHERE id = $1
             AND address IS NOT DISTINCT FROM $3
           RETURNING to_jsonb(businesses) AS state`,
-        [businessId, patch.address, business.address],
+        [businessId, patch.address, input.expectedStoredAddress],
       );
       if (nextBusiness.rows.length !== 1) throw new Error("stored-address compare-and-set guard failed");
       const nextEligibility = await client.query<{ state: Record<string, unknown> }>(
