@@ -178,6 +178,27 @@ describe("documented discovery review input", () => {
       .toThrow("map pin qualification requires a documented physical-address receipt");
   });
 
+  it("accepts a separately audited physical address plus official-geocoder map pin", () => {
+    const addressAndPin = [...baseEvidence, {
+      field: "address" as const,
+      sourceKind: "business_official" as const,
+      sourceUrl: "https://acme.example/contact",
+      observedAt: "2026-10-05T00:00:00.000Z",
+      confidence: "high" as const,
+      observedValue: { address: "123 Example Street, Philadelphia, PA 19103" },
+    }, {
+      field: "map_pin" as const,
+      sourceKind: "official_geocoder" as const,
+      sourceUrl: "https://maps.googleapis.com/maps/api/geocode/json",
+      observedAt: "2026-10-05T00:00:00.000Z",
+      confidence: "high" as const,
+      observedValue: { latitude: 39.9526, longitude: -75.1652 },
+    }];
+    const result = validateDocumentedDiscoveryReviewInput(qualified(addressAndPin), now);
+    expect((result.evidence ?? []).map((item) => item.field)).toContain("address");
+    expect((result.evidence ?? []).map((item) => item.field)).toContain("map_pin");
+  });
+
   it("allows a reversible direct-name-only hold without inventing recommendation evidence", () => {
     const result = validateDocumentedDiscoveryReviewInput({
       eligibilityStatus: "direct_name_only",
