@@ -272,6 +272,10 @@ export default function MapPage() {
     }
   };
   const { data: authData } = useGetCurrentAuthUser();
+  const savedHomeCity = useMemo(() => {
+    const candidate = (authData?.user as { homeCity?: unknown } | undefined)?.homeCity;
+    return typeof candidate === "string" && candidate.trim() ? candidate.trim() : null;
+  }, [authData?.user]);
 
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<GMap>(null);
@@ -359,6 +363,10 @@ export default function MapPage() {
   // Prevent home-city geocoder and GPS from overriding a user-initiated search viewport
   const searchViewportLockedRef = useRef(false);
   const searchViewportSequenceRef = useRef(0);
+  // A profile query commonly resolves after Google Maps has rendered. Keep this
+  // ref outside map initialization so the saved-home fallback still applies
+  // once the authenticated member record arrives, without repeated geocoding.
+  const centeredSavedHomeRef = useRef<string | null>(null);
 
   // ── Discoverability pins — tour cultural sites, recurring events, orgs ───────
   type DiscoverabilityPin = {
@@ -455,6 +463,36 @@ export default function MapPage() {
       { enableHighAccuracy: true, timeout: 12_000, maximumAge: 0 },
     );
   }, []);
+
+  const centerSavedHomeArea = useCallback((homeCity: string | null) => {
+    if (!homeCity || !mapRef.current || handoffQuery || searchViewportLockedRef.current) return;
+    const normalizedHomeCity = homeCity.trim().toLocaleLowerCase("en-US");
+    if (!normalizedHomeCity || centeredSavedHomeRef.current === normalizedHomeCity) return;
+    const g = (window as any).google?.maps;
+    if (!g?.Geocoder) return;
+
+    centeredSavedHomeRef.current = normalizedHomeCity;
+    new g.Geocoder().geocode({ address: homeCity }, (results: any[], status: string) => {
+      if (!searchViewportLockedRef.current && status === "OK" && results?.[0]?.geometry?.location && mapRef.current) {
+        const location = results[0].geometry.location;
+        mapRef.current.setCenter(location);
+        mapRef.current.setZoom(12);
+        setProfileCoords({ lat: location.lat(), lng: location.lng() });
+      } else if (status !== "OK") {
+        // Preserve the failure state for a later authenticated refresh rather
+        // than silently leaving the member on the broad default viewport.
+        centeredSavedHomeRef.current = null;
+      }
+    });
+  }, [handoffQuery]);
+
+  // The map object can be ready before the authenticated member query returns.
+  // Center on the saved home city as soon as it arrives; a confirmed device
+  // location still wins and re-centers the canvas in requestMapDeviceLocation.
+  useEffect(() => {
+    if (!ready || userCoords || handoffQuery || searchViewportLockedRef.current) return;
+    centerSavedHomeArea(savedHomeCity);
+  }, [centerSavedHomeArea, handoffQuery, ready, savedHomeCity, userCoords]);
 
   const clearEssentialServices = useCallback(() => {
     essentialServiceMarkersRef.current.forEach((marker) => marker.setMap(null));
@@ -1348,25 +1386,7 @@ export default function MapPage() {
       // ── Location priority: (1) device location, then (2) saved home area ───
       // Do not make a saved city look like a live location. It is used only if
       // browser location is unavailable or denied, and the notice below says so.
-      const homeCity = (authData?.user as any)?.homeCity as string | null | undefined;
-      const centerSavedHomeArea = () => {
-        // Skip the fallback if a directory handoff or an intentional search
-        // already owns the viewport.
-        if (!homeCity || handoffQuery || searchViewportLockedRef.current) return;
-        new g.Geocoder().geocode(
-          { address: homeCity },
-          (results: any[], status: string) => {
-            if (!searchViewportLockedRef.current && status === "OK" && results?.[0]?.geometry?.location) {
-              const location = results[0].geometry.location;
-              map.setCenter(location);
-              map.setZoom(12);
-              setProfileCoords({ lat: location.lat(), lng: location.lng() });
-            }
-          },
-        );
-      };
-
-      requestMapDeviceLocation({ onUnavailable: centerSavedHomeArea });
+      requestMapDeviceLocation({ onUnavailable: () => centerSavedHomeArea(savedHomeCity) });
 
       businesses.forEach((biz) => {
         const lat = parseFloat(String(biz.latitude));
@@ -1406,7 +1426,7 @@ export default function MapPage() {
   // dependency so a successful script load actually creates the map object.
   // `ready` remains here to preserve the existing marker pass.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gmLoaded, ready, isLoading, handoffQuery, navigate, requestMapDeviceLocation]);
+  }, [gmLoaded, ready, isLoading, handoffQuery, navigate, requestMapDeviceLocation, centerSavedHomeArea, savedHomeCity]);
 
   const selectBusiness = useCallback((id: string, biz: BizWithCoords, marker?: GMarker) => {
     setSelected(id);

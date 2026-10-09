@@ -26,8 +26,17 @@ describe("map-first Web layout", () => {
   });
 
   it("creates the map object after the Google Maps callback changes readiness", () => {
-    expect(mapSource).toContain("}, [gmLoaded, ready, isLoading, handoffQuery, navigate, requestMapDeviceLocation]);");
+    expect(mapSource).toContain("}, [gmLoaded, ready, isLoading, handoffQuery, navigate, requestMapDeviceLocation, centerSavedHomeArea, savedHomeCity]);");
     expect(mapSource).toContain("const map: GMap = new g.Map(mapDivRef.current");
     expect(mapSource).toContain("setReady(true);");
+  });
+
+  it("recovers the saved home area when member authentication resolves after map initialization", () => {
+    expect(mapSource).toContain("const savedHomeCity = useMemo(() => {");
+    expect(mapSource).toContain("const centeredSavedHomeRef = useRef<string | null>(null);");
+    expect(mapSource).toContain("const centerSavedHomeArea = useCallback((homeCity: string | null) => {");
+    expect(mapSource).toContain("requestMapDeviceLocation({ onUnavailable: () => centerSavedHomeArea(savedHomeCity) });");
+    expect(mapSource).toContain("if (!ready || userCoords || handoffQuery || searchViewportLockedRef.current) return;");
+    expect(mapSource).toContain("centerSavedHomeArea(savedHomeCity);");
   });
 });
