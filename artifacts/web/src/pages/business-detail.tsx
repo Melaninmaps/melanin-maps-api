@@ -20,6 +20,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { canDisplayBusinessCover, getBusinessHeroIcon, type BusinessHeroRecord } from "@/features/businesses/businessHero";
 import { detectSocialVideoPlatform, type SocialVideoPlatform } from "@workspace/constants";
 import { useSocialVideoPreferences } from "@/hooks/useSocialVideoPreferences";
+import { normalizeBusinessSocialProfileUrl } from "@/lib/businessProfileSocialUrl";
 
 function safeExternalProfileUrl(value: unknown, expectedPlatform: SocialVideoPlatform): string | null {
   if (typeof value !== "string" || !value.trim()) return null;
@@ -1605,14 +1606,22 @@ export default function BusinessDetail() {
                 {(() => {
                   const b = business as any;
 
-                  // Build handle links from individual social fields
-                  const handleLinks: { platform: string; url: string }[] = [];
-                  if (b.instagram) handleLinks.push({ platform: "Instagram", url: `https://www.instagram.com/${b.instagram.replace("@", "")}` });
-                  if (b.tiktok)    handleLinks.push({ platform: "TikTok",    url: `https://www.tiktok.com/@${b.tiktok.replace("@", "")}` });
-                  if (b.facebook)  handleLinks.push({ platform: "Facebook",  url: b.facebook.startsWith("http") ? b.facebook : `https://www.facebook.com/${b.facebook.replace("@", "")}` });
-                  if (b.twitter)   handleLinks.push({ platform: "X / Twitter", url: `https://twitter.com/${b.twitter.replace("@", "")}` });
-                  if (b.youtube)   handleLinks.push({ platform: "YouTube",   url: b.youtube.startsWith("http") ? b.youtube : `https://www.youtube.com/@${b.youtube.replace("@", "")}` });
-                  if (b.pinterest) handleLinks.push({ platform: "Pinterest", url: `https://www.pinterest.com/${b.pinterest.replace("@", "")}` });
+                  // Historic canonical records may retain an official profile
+                  // as a full URL or as a handle. Normalize either format and
+                  // reject a mismatched destination rather than double-prefixing
+                  // it into a broken link.
+                  const handleLinks = [
+                    ["Instagram", b.instagram, "instagram"],
+                    ["TikTok", b.tiktok, "tiktok"],
+                    ["Facebook", b.facebook, "facebook"],
+                    ["X / Twitter", b.twitter, "twitter"],
+                    ["YouTube", b.youtube, "youtube"],
+                    ["Pinterest", b.pinterest, "pinterest"],
+                  ] as const;
+                  const normalizedHandleLinks = handleLinks.flatMap(([platform, value, socialPlatform]) => {
+                    const url = normalizeBusinessSocialProfileUrl(value, socialPlatform);
+                    return url ? [{ platform, url }] : [];
+                  });
 
                   // Linked social posts / videos added by admin
                   const linkedPosts: string[] = Array.isArray(b.videos) ? b.videos.filter((v: string) => v.startsWith("http")) : [];
@@ -1630,7 +1639,7 @@ export default function BusinessDetail() {
                     return "Social";
                   }
 
-                  if (handleLinks.length === 0 && linkedPosts.length === 0) return null;
+                  if (normalizedHandleLinks.length === 0 && linkedPosts.length === 0) return null;
 
                   return (
                     <div className="pt-5 border-t border-white/10 space-y-3">
@@ -1640,9 +1649,9 @@ export default function BusinessDetail() {
                       </div>
 
                       {/* Social profile handles */}
-                      {handleLinks.length > 0 && (
+                      {normalizedHandleLinks.length > 0 && (
                         <div className="flex flex-wrap gap-2">
-                          {handleLinks.map(({ platform, url }) => (
+                          {normalizedHandleLinks.map(({ platform, url }) => (
                             <a
                               key={platform}
                               href={url}
