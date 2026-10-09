@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  canSafelyCompleteStoredAddress,
   mapPinOnlyPatch,
   storedAddressMatchesMapEvidence,
+  storedAddressOnlyPatch,
   validateDocumentedDiscoveryReviewInput,
   validateMapPinEvidenceReviewInput,
+  validateStoredAddressReconciliationInput,
 } from "../registerDocumentedDiscoveryReviewRoutes";
 
 const now = new Date("2026-10-05T00:00:00.000Z");
@@ -104,6 +107,14 @@ function mapEvidenceRequest() {
         addressMatch: true,
       },
     },
+  };
+}
+
+function storedAddressReconciliationRequest() {
+  return {
+    expectedStoredAddress: "123 Example Street, Philadelphia, PA",
+    decisionReason: "The official contact page completes the stored address with the exact postal code.",
+    addressEvidence: mapEvidenceRequest().addressEvidence,
   };
 }
 
@@ -296,6 +307,46 @@ describe("documented discovery review input", () => {
     request.mapPinEvidence.observedValue.formattedAddress = "123 Example Street, Philadelphia, PA";
     const result = validateMapPinEvidenceReviewInput(request, now);
     expect(storedAddressMatchesMapEvidence("123 Example Street, Philadelphia, PA", result)).toBe(false);
+  });
+
+  it("permits only a first-party completion of the same incomplete stored street core", () => {
+    const result = validateStoredAddressReconciliationInput(storedAddressReconciliationRequest(), now);
+    expect(canSafelyCompleteStoredAddress(result.expectedStoredAddress, result.addressEvidence.observedValue?.address)).toBe(true);
+    expect(storedAddressOnlyPatch(result, "address-receipt")).toEqual({
+      address: "123 Example Street, Philadelphia, PA 19103",
+      addressEvidenceId: "address-receipt",
+    });
+  });
+
+  it("permits an explicit-null snapshot only with a complete identity-matched first-party address", () => {
+    const result = validateStoredAddressReconciliationInput({
+      ...storedAddressReconciliationRequest(),
+      expectedStoredAddress: null,
+    }, now);
+    expect(result.expectedStoredAddress).toBeNull();
+    expect(canSafelyCompleteStoredAddress(null, result.addressEvidence.observedValue?.address)).toBe(true);
+    expect(canSafelyCompleteStoredAddress(null, "123 Example Street, Philadelphia, PA")).toBe(false);
+  });
+
+  it("rejects ambiguous, conflicting, service-area, and already-complete stored-address reconciliations", () => {
+    const request = storedAddressReconciliationRequest();
+    expect(() => validateStoredAddressReconciliationInput({ ...request, expectedStoredAddress: "" }, now))
+      .toThrow("expectedStoredAddress");
+    expect(canSafelyCompleteStoredAddress("123 Example, Philadelphia, PA", request.addressEvidence.observedValue.address)).toBe(false);
+    expect(canSafelyCompleteStoredAddress("124 Example Street, Philadelphia, PA", request.addressEvidence.observedValue.address)).toBe(false);
+    expect(canSafelyCompleteStoredAddress("123 Example Street, Philadelphia, PA 19103", request.addressEvidence.observedValue.address)).toBe(false);
+    const serviceArea = storedAddressReconciliationRequest();
+    serviceArea.addressEvidence.observedValue.addressType = "service_area";
+    expect(() => validateStoredAddressReconciliationInput(serviceArea, now)).toThrow("physical street address");
+  });
+
+  it("rejects an incomplete or identity-unmatched first-party address receipt before reconciliation", () => {
+    const incomplete = storedAddressReconciliationRequest();
+    incomplete.addressEvidence.observedValue.address = "123 Example Street, Philadelphia, PA";
+    expect(() => validateStoredAddressReconciliationInput(incomplete, now)).toThrow("complete US street address");
+    const unmatched = storedAddressReconciliationRequest();
+    unmatched.addressEvidence.observedValue.identityMatch = false;
+    expect(() => validateStoredAddressReconciliationInput(unmatched, now)).toThrow("address evidence requires identityMatch: true");
   });
 
   it("rejects map-only attachment without identity-matched official address evidence", () => {

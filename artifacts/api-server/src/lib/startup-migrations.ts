@@ -5648,6 +5648,20 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       FOR EACH ROW EXECUTE FUNCTION public.prevent_business_legacy_map_location_attestation_mutation();`,
   },
   {
+    // A first-party completion of an incomplete historical address is not a
+    // map action. It has its own immutable event so coordinates cannot be
+    // retained or inferred from a contact correction.
+    name: "business_discovery_eligibility_address_reconciliation_audit_v3",
+    sql: `ALTER TABLE business_discovery_eligibility_audit_events
+      DROP CONSTRAINT IF EXISTS business_discovery_eligibility_audit_events_action_check;
+      ALTER TABLE business_discovery_eligibility_audit_events
+      ADD CONSTRAINT business_discovery_eligibility_audit_events_action_check
+      CHECK (action IN (
+        'qualified', 'direct_name_only', 'review_hold', 'revoked', 'requalified',
+        'map_pin_attached', 'address_reconciled'
+      ));`,
+  },
+  {
     // Founder-provided ownership directories are a documented source basis for
     // their stated designation. They need one official member-facing presence
     // (website OR official social) for directory/Discovery eligibility; a street

@@ -7,10 +7,13 @@ import {
   validateAdminBusinessProfilePatch,
 } from "../artifacts/api-server/src/businesses/adminBusinessProfilePolicy";
 import {
+  canSafelyCompleteStoredAddress,
   mapPinOnlyPatch,
   registerDocumentedDiscoveryReviewRoutes,
   storedAddressMatchesMapEvidence,
+  storedAddressOnlyPatch,
   validateMapPinEvidenceReviewInput,
+  validateStoredAddressReconciliationInput,
 } from "../artifacts/api-server/src/businesses/registerDocumentedDiscoveryReviewRoutes";
 import businessRoutes from "../artifacts/api-server/src/routes/businesses";
 import { DOCUMENTED_DISCOVERY_POLICY_VERSION } from "../artifacts/api-server/src/businesses/documentedDiscoveryEligibility";
@@ -193,7 +196,7 @@ async function run(): Promise<Result> {
       CREATE TABLE public.business_discovery_eligibility_audit_events (
         id uuid PRIMARY KEY,
         business_id varchar(255) NOT NULL,
-        action text NOT NULL CHECK (action IN ('qualified', 'direct_name_only', 'review_hold', 'revoked', 'requalified', 'map_pin_attached')),
+        action text NOT NULL CHECK (action IN ('qualified', 'direct_name_only', 'review_hold', 'revoked', 'requalified', 'map_pin_attached', 'address_reconciled')),
         actor_id varchar(255),
         reason text NOT NULL,
         before_state jsonb NOT NULL,
@@ -505,6 +508,135 @@ async function run(): Promise<Result> {
     }
     assert(immutableLedgerAuditRejected, "map reconciliation audit event was mutable");
     checks.map_only_http_route_authorized_and_preserves_protected_fields = true;
+
+    // The address-only route is a separate transaction. It may add omitted
+    // locality components from a first-party page, but it must clear legacy
+    // coordinates, leave map evidence null, and preserve eligibility/lifecycle.
+    const addressInput = validateStoredAddressReconciliationInput({
+      expectedStoredAddress: "123 Synthetic Street, Philadelphia, PA",
+      decisionReason: "Synthetic official contact page completes the currently stored street address.",
+      addressEvidence: {
+        field: "address",
+        sourceKind: "business_official",
+        sourceUrl: "https://synthetic.example/contact",
+        observedAt: "2026-10-09T00:00:00.000Z",
+        confidence: "high",
+        observedValue: {
+          address: "123 Synthetic Street, Philadelphia, PA 19103",
+          addressType: "physical",
+          isServiceArea: false,
+          identityMatch: true,
+          matchingSignals: ["business_name", "city", "address"],
+        },
+      },
+    }, new Date("2026-10-09T00:00:00.000Z"));
+    assert(canSafelyCompleteStoredAddress(addressInput.expectedStoredAddress, addressInput.addressEvidence.observedValue?.address), "same-core incomplete stored address was not accepted");
+    assert(Object.keys(storedAddressOnlyPatch(addressInput, "dddddddd-dddd-dddd-dddd-dddddddddddd")).sort().join(",") === "address,addressEvidenceId", "address-only patch contains fields outside address/evidence scope");
+    await client.query(
+      `INSERT INTO public.businesses (
+         id, name, address, latitude, longitude, city, state, category, subcategory, description, status, listing_status
+       ) VALUES (
+         'route-address', 'Route Address Example', '123 Synthetic Street, Philadelphia, PA', 39.9526, -75.1652,
+         'Philadelphia', 'PA', 'Food & Drink', 'Cafe', 'Synthetic qualified address fixture', 'active', 'live_unclaimed'
+       )`,
+    );
+    await client.query(
+      `INSERT INTO public.business_discovery_eligibility (
+         business_id, eligibility_status, policy_version, identity_evidence_id, ownership_evidence_id,
+         official_website_evidence_id, official_social_evidence_id, ownership_designations,
+         ownership_source_expires_at, review_after, decision_reason
+       ) VALUES (
+         'route-address', 'qualified', $1,
+         '44444444-4444-4444-4444-444444444444', '55555555-5555-5555-5555-555555555555',
+         '66666666-6666-6666-6666-666666666666', NULL, '["Black / African American-Owned"]'::jsonb,
+         now() + interval '1 day', now() + interval '1 day', 'Existing current qualification'
+       )`,
+      [DOCUMENTED_DISCOVERY_POLICY_VERSION],
+    );
+    await client.query(
+      `INSERT INTO public.business_directory_reconciliation_ledger (
+         business_id, reconciliation_state, reason_code, presence_status, ownership_status, recommended_action
+       ) VALUES (
+         'route-address', 'reviewed_qualified', 'source_ownership_and_official_presence_verified',
+         'valid_website', 'source_documented', 'qualify_kinfolk_current'
+       )`,
+    );
+    await request(routeApp).put("/api/admin/businesses/route-address/stored-address-evidence").send(addressInput).expect(401);
+    await request(routeApp)
+      .put("/api/admin/businesses/route-address/stored-address-evidence")
+      .set("x-cron-secret", "disposable-map-route-secret")
+      .send(addressInput)
+      .expect(200);
+    const routeAddress = await client.query<{
+      business: Record<string, unknown>;
+      eligibility: Record<string, unknown>;
+      ledger: Record<string, unknown>;
+      discovery_actions: string[];
+      reconciliation_actions: string[];
+    }>(
+      `SELECT to_jsonb(b) AS business, to_jsonb(e) AS eligibility, to_jsonb(l) AS ledger,
+              (SELECT array_agg(action ORDER BY action) FROM public.business_discovery_eligibility_audit_events WHERE business_id = 'route-address') AS discovery_actions,
+              (SELECT array_agg(action ORDER BY action) FROM public.business_directory_reconciliation_audit_events WHERE business_id = 'route-address') AS reconciliation_actions
+         FROM public.businesses b
+         JOIN public.business_discovery_eligibility e ON e.business_id = b.id
+         JOIN public.business_directory_reconciliation_ledger l ON l.business_id = b.id
+        WHERE b.id = 'route-address'`,
+    );
+    const reconciledAddress = routeAddress.rows[0];
+    assert(reconciledAddress.business.address === "123 Synthetic Street, Philadelphia, PA 19103", "address-only route did not write the exact receipted address");
+    assert(reconciledAddress.business.latitude === null && reconciledAddress.business.longitude === null, "address-only route retained legacy coordinates");
+    assert(reconciledAddress.business.status === "active" && reconciledAddress.business.listing_status === "live_unclaimed", "address-only route changed lifecycle");
+    assert(reconciledAddress.eligibility.map_pin_evidence_id === null && reconciledAddress.eligibility.address_evidence_id, "address-only route created map evidence or omitted its address receipt");
+    assert(JSON.stringify(reconciledAddress.eligibility.ownership_designations) === JSON.stringify(["Black / African American-Owned"]), "address-only route changed ownership evidence");
+    assert(Array.isArray(reconciledAddress.ledger.evidence_receipt_ids) && reconciledAddress.ledger.evidence_receipt_ids.length === 1, "address-only route did not append one ledger receipt");
+    assert(reconciledAddress.discovery_actions?.join(",") === "address_reconciled" && reconciledAddress.reconciliation_actions?.join(",") === "review", "address-only route did not write required immutable audits");
+    const addressReceiptCount = await client.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM public.business_profile_evidence_receipts WHERE business_id = 'route-address'`);
+    await request(routeApp)
+      .put("/api/admin/businesses/route-address/stored-address-evidence")
+      .set("x-cron-secret", "disposable-map-route-secret")
+      .send({ ...addressInput, expectedStoredAddress: "123 Synthetic Street, Philadelphia, PA" })
+      .expect(409);
+    const addressReceiptCountAfterReplay = await client.query<{ count: string }>(`SELECT COUNT(*)::text AS count FROM public.business_profile_evidence_receipts WHERE business_id = 'route-address'`);
+    assert(addressReceiptCountAfterReplay.rows[0]?.count === addressReceiptCount.rows[0]?.count, "stale address reconciliation guard wrote a receipt");
+    await client.query(
+      `INSERT INTO public.businesses (id, name, address, city, state, category, subcategory, description, status, listing_status)
+       VALUES ('route-address-null', 'Route Address Null Example', NULL, 'Philadelphia', 'PA', 'Food & Drink', 'Cafe', 'Synthetic qualified empty-address fixture', 'active', 'live_unclaimed')`,
+    );
+    await client.query(
+      `INSERT INTO public.business_discovery_eligibility (
+         business_id, eligibility_status, policy_version, identity_evidence_id, ownership_evidence_id,
+         official_website_evidence_id, official_social_evidence_id, ownership_designations,
+         ownership_source_expires_at, review_after, decision_reason
+       ) VALUES (
+         'route-address-null', 'qualified', $1,
+         '77777777-7777-7777-7777-777777777777', '88888888-8888-8888-8888-888888888888',
+         '99999999-9999-9999-9999-999999999999', NULL, '["Black / African American-Owned"]'::jsonb,
+         now() + interval '1 day', now() + interval '1 day', 'Existing current qualification'
+       )`,
+      [DOCUMENTED_DISCOVERY_POLICY_VERSION],
+    );
+    await client.query(
+      `INSERT INTO public.business_directory_reconciliation_ledger (
+         business_id, reconciliation_state, reason_code, presence_status, ownership_status, recommended_action
+       ) VALUES (
+         'route-address-null', 'reviewed_qualified', 'source_ownership_and_official_presence_verified',
+         'valid_website', 'source_documented', 'qualify_kinfolk_current'
+       )`,
+    );
+    await request(routeApp)
+      .put("/api/admin/businesses/route-address-null/stored-address-evidence")
+      .set("x-cron-secret", "disposable-map-route-secret")
+      .send({ ...addressInput, expectedStoredAddress: null })
+      .expect(200);
+    const nullAddressResult = await client.query<{ address: string | null; latitude: string | null; longitude: string | null; map_pin_evidence_id: string | null }>(
+      `SELECT b.address, b.latitude, b.longitude, e.map_pin_evidence_id::text
+         FROM public.businesses b
+         JOIN public.business_discovery_eligibility e ON e.business_id = b.id
+        WHERE b.id = 'route-address-null'`,
+    );
+    assert(nullAddressResult.rows[0]?.address === "123 Synthetic Street, Philadelphia, PA 19103", "explicit-null address snapshot did not receive exact first-party address");
+    assert(nullAddressResult.rows[0]?.latitude === null && nullAddressResult.rows[0]?.longitude === null && nullAddressResult.rows[0]?.map_pin_evidence_id === null, "explicit-null address path created or retained map data");
+    checks.stored_address_reconciliation_clears_coordinates_without_creating_map_evidence = true;
 
     await client.query(
       `INSERT INTO ${namespace}.businesses (id, name, website, instagram) VALUES ($1, $2, $3, $4)`,
