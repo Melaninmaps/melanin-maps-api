@@ -58,7 +58,10 @@ import {
   mwmDiasporaPromotionSqlPredicate,
   mwmPublicDirectorySqlPredicate,
 } from "../businesses/mwmCoreDiscoveryPolicy";
-import { documentedDiscoveryEligibilitySqlPredicate } from "../businesses/documentedDiscoveryEligibility";
+import {
+  DOCUMENTED_DISCOVERY_POLICY_VERSION,
+  documentedDiscoveryEligibilitySqlPredicate,
+} from "../businesses/documentedDiscoveryEligibility";
 import {
   highConfidenceBusinessDuplicateReasons,
   normalizeBusinessPhone,
@@ -537,8 +540,11 @@ router.get("/businesses/categories", (_req: Request, res: Response) => {
 
 // ── Lightweight map-pins endpoint ──────────────────────────────────────────
 // Returns ALL active businesses that have valid coordinates, with only the
-// minimal fields a map marker needs. No 200-row cap — this is intentional.
-// The small payload (id/name/lat/lng/category/city/country) keeps it fast.
+// map-safe fields an interactive marker needs. No 200-row cap — this is
+// intentional. A preview exposes a physical address only after the separate
+// documented map-address gate has qualified the pin. A website is exposed here
+// only when it has its own active official-website receipt; social-only records
+// remain eligible without fabricating an official website.
 router.get("/businesses/map-pins", async (req: Request, res: Response) => {
   try {
     // This may clear a member's saved designation filter, but never bypasses
@@ -595,12 +601,39 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
       longitude: string;
       category: string | null;
       subcategory: string | null;
+      address: string | null;
+      description: string | null;
+      ownership_designations: string[] | null;
+      official_website: string | null;
       city: string | null;
       state: string | null;
       country: string | null;
       listing_status: string | null;
     }>(`
       SELECT id, name, latitude, longitude, category, subcategory,
+             address, description,
+             COALESCE((
+               SELECT documented_ownership.ownership_designations
+               FROM public.business_discovery_eligibility documented_ownership
+               WHERE documented_ownership.business_id::text = public.public_businesses.id::text
+                 AND documented_ownership.eligibility_status = 'qualified'
+                 AND documented_ownership.policy_version = '${DOCUMENTED_DISCOVERY_POLICY_VERSION}'
+                 AND documented_ownership.ownership_evidence_id IS NOT NULL
+                 AND documented_ownership.map_pin_evidence_id IS NOT NULL
+                 AND documented_ownership.ownership_source_expires_at > CURRENT_TIMESTAMP
+                 AND documented_ownership.review_after > CURRENT_TIMESTAMP
+               LIMIT 1
+             ), '[]'::jsonb) AS ownership_designations,
+             CASE WHEN EXISTS (
+               SELECT 1
+               FROM public.business_discovery_eligibility documented_website
+               WHERE documented_website.business_id::text = public.public_businesses.id::text
+                 AND documented_website.eligibility_status = 'qualified'
+                 AND documented_website.policy_version = '${DOCUMENTED_DISCOVERY_POLICY_VERSION}'
+                 AND documented_website.official_website_evidence_id IS NOT NULL
+                 AND documented_website.ownership_source_expires_at > CURRENT_TIMESTAMP
+                 AND documented_website.review_after > CURRENT_TIMESTAMP
+             ) THEN website ELSE NULL END AS official_website,
              city, state, country, listing_status
       FROM public.public_businesses
       WHERE latitude IS NOT NULL

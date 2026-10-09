@@ -35,6 +35,18 @@ describe("documented Discovery surface coverage", () => {
     expect(discoverySources.kinfolk).not.toContain("mwmPublicDirectorySqlPredicate");
   });
 
+  it("returns map preview fields only through the existing documented map and official-website gates", () => {
+    const businesses = discoverySources.businessDirectory;
+    expect(businesses).toMatch(/address,\s+description,\s+COALESCE\(/);
+    expect(businesses).toContain("official_website");
+    expect(businesses).toContain("documented_ownership.ownership_evidence_id IS NOT NULL");
+    expect(businesses).toContain("documented_ownership.map_pin_evidence_id IS NOT NULL");
+    expect(businesses).toContain("documented_website.official_website_evidence_id IS NOT NULL");
+    expect(businesses).toContain("documented_website.ownership_source_expires_at > CURRENT_TIMESTAMP");
+    expect(businesses).toContain("documented_website.review_after > CURRENT_TIMESTAMP");
+    expect(businesses).toContain('documentedDiscoveryEligibilitySqlPredicate("public.public_businesses.id", "map")');
+  });
+
   it("keeps the gate out of detail, claim, moderation, and contribution paths", () => {
     const businesses = discoverySources.businessDirectory;
     expect(businesses).toContain("This applies only to public directory discovery");

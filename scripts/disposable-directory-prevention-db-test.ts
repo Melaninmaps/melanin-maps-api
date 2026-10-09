@@ -127,6 +127,7 @@ async function run(): Promise<Result> {
         category text,
         subcategory text,
         description text,
+        website text,
         confidence_score numeric,
         created_at timestamptz NOT NULL DEFAULT now(),
         status text NOT NULL DEFAULT 'active',
@@ -387,8 +388,8 @@ async function run(): Promise<Result> {
     // isolated database. This verifies authorization, lock-gated eligibility,
     // address mismatch rejection, narrow writes, and immutable audit records.
     await client.query(
-      `INSERT INTO public.businesses (id, name, address, city, state, category, subcategory, description, status, listing_status)
-       VALUES ('route-map', 'Route Map Example', '123 Synthetic Street, Philadelphia, PA 19103', 'Philadelphia', 'PA', 'Food & Drink', 'Cafe', 'Synthetic qualified map fixture', 'active', 'live_unclaimed')`,
+      `INSERT INTO public.businesses (id, name, address, city, state, category, subcategory, description, website, status, listing_status)
+       VALUES ('route-map', 'Route Map Example', '123 Synthetic Street, Philadelphia, PA 19103', 'Philadelphia', 'PA', 'Food & Drink', 'Cafe', 'Synthetic qualified map fixture', 'https://route-map.example', 'active', 'live_unclaimed')`,
     );
     await client.query(
       `INSERT INTO public.business_discovery_eligibility (
@@ -449,7 +450,15 @@ async function run(): Promise<Result> {
         && Number(publicPins.body.pins[0]?.longitude) === -75.1587,
       "public map endpoint returned the wrong synthetic pin",
     );
+    assert(
+      publicPins.body.pins[0]?.address === "123 Synthetic Street, Philadelphia, PA 19103"
+        && publicPins.body.pins[0]?.description === "Synthetic qualified map fixture"
+        && JSON.stringify(publicPins.body.pins[0]?.ownership_designations) === JSON.stringify(["Black / African American-Owned"])
+        && publicPins.body.pins[0]?.official_website === "https://route-map.example",
+      "public map endpoint did not return receipt-gated interactive preview fields",
+    );
     checks.qualified_map_pin_reaches_public_endpoint = true;
+    checks.qualified_map_pin_returns_receipt_gated_preview_fields = true;
     const beforeMismatchReceiptCount = await client.query<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM public.business_profile_evidence_receipts WHERE business_id = 'route-map'`,
     );

@@ -60,6 +60,8 @@ type BizWithCoords = {
   id: string;
   name?: string | null;
   category?: string | null;
+  subcategory?: string | null;
+  address?: string | null;
   city?: string | null;
   state?: string | null;
   imageUrl?: string | null;
@@ -67,6 +69,8 @@ type BizWithCoords = {
   longitude?: string | number | null;
   blackOwned?: boolean | null;
   description?: string | null;
+  ownership_designations?: string[] | null;
+  official_website?: string | null;
 };
 
 type UniversalMapEntity = {
@@ -213,6 +217,73 @@ function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): nu
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+function mapDirectionsUrl(business: BizWithCoords): string | null {
+  const latitude = Number(business.latitude);
+  const longitude = Number(business.longitude);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(`${latitude},${longitude}`)}`;
+}
+
+function approximateMapDistanceMiles(
+  origin: { lat: number; lng: number } | null,
+  business: BizWithCoords,
+): string | null {
+  if (!origin) return null;
+  const latitude = Number(business.latitude);
+  const longitude = Number(business.longitude);
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return null;
+  const miles = haversineKm(origin.lat, origin.lng, latitude, longitude) * 0.621371;
+  if (!Number.isFinite(miles)) return null;
+  return miles < 0.1 ? "< 0.1 mi away" : `${miles.toFixed(1)} mi away`;
+}
+
+/**
+ * Map pins expose only receipt-gated address, ownership, and official-website
+ * fields. Escape every value anyway because Google InfoWindow accepts HTML.
+ */
+function mapBusinessPreviewHtml(business: BizWithCoords, distance: string | null): string {
+  const safeName = escapeHtml(business.name?.trim() || "Business");
+  const location = [business.address, [business.city, business.state].filter(Boolean).join(", ")]
+    .filter((value): value is string => Boolean(value?.trim()))
+    .join(" · ");
+  const safeLocation = location ? `<div style="font-size:11px;color:#3A1F0E99;margin:4px 0">${escapeHtml(location)}</div>` : "";
+  const category = business.category?.trim() || business.subcategory?.trim();
+  const safeCategory = category
+    ? `<div style="font-size:11px;color:#CA922B;font-weight:700;margin-top:3px">${escapeHtml(category)}</div>`
+    : "";
+  const description = typeof business.description === "string"
+    ? business.description.replace(/\s+/g, " ").trim().slice(0, 220)
+    : "";
+  const safeDescription = description
+    ? `<div style="font-size:11px;color:#3A1F0E;margin-top:6px;line-height:1.35">${escapeHtml(description)}${description.length === 220 ? "…" : ""}</div>`
+    : "";
+  const labels = Array.isArray(business.ownership_designations)
+    ? business.ownership_designations.filter((label): label is string => typeof label === "string" && label.trim().length > 0)
+    : [];
+  const safeOwnership = labels.length
+    ? `<div style="font-size:10px;color:#2D7A4F;font-weight:700;margin-top:6px">Documented by source: ${escapeHtml(labels.join(", "))}</div>`
+    : "";
+  const safeDistance = distance
+    ? `<div style="font-size:10px;color:#795548;font-weight:700;margin-top:5px">${escapeHtml(distance)} from your current location</div>`
+    : "";
+  const directions = mapDirectionsUrl(business);
+  const safeWebsite = safePublicUrl(business.official_website);
+  const actions = [
+    `<a href="/businesses/${encodeURIComponent(business.id)}" style="font-size:11px;color:#CA922B;font-weight:800;text-decoration:none">View MWM profile</a>`,
+    directions
+      ? `<a href="${escapeHtml(directions)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:#CA922B;font-weight:800;text-decoration:none">Directions</a>`
+      : "",
+    safeWebsite
+      ? `<a href="${escapeHtml(safeWebsite)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:#CA922B;font-weight:800;text-decoration:none">Official website</a>`
+      : "",
+  ].filter(Boolean).join(`<span aria-hidden="true" style="color:#C9B99A"> · </span>`);
+  return `<div role="dialog" aria-label="${safeName} map preview" style="font-family:serif;padding:5px 4px;min-width:205px;max-width:285px">
+    <div style="font-weight:800;font-size:14px;color:#2B1507">${safeName}</div>
+    ${safeCategory}${safeLocation}${safeDescription}${safeOwnership}${safeDistance}
+    <div style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px">${actions}</div>
+  </div>`;
+}
+
 // Legend tile definitions
 const LEGEND_TILES = [
   { key: "business", color: "#CA922B", shape: "circle",   label: "Businesses" },
@@ -325,6 +396,13 @@ export default function MapPage() {
 
   // User's confirmed geolocation — set when browser grants permission
   const [userCoords, setUserCoords] = useState<{ lat: number; lng: number } | null>(null);
+  // Marker listeners are registered once by Google Maps. Keep the latest
+  // confirmed device location in a ref so a later consent result can add an
+  // honest distance to the preview without re-creating every marker.
+  const userCoordsRef = useRef<{ lat: number; lng: number } | null>(null);
+  useEffect(() => {
+    userCoordsRef.current = userCoords;
+  }, [userCoords]);
   // A profile home city is useful when a member declines precise location. It is
   // still a local starting point, never permission to populate the whole map.
   const [profileCoords, setProfileCoords] = useState<{ lat: number; lng: number } | null>(null);
@@ -1337,6 +1415,9 @@ export default function MapPage() {
               position: { lat, lng },
               map: null,
               title: biz.name ?? "",
+              // Legacy Google markers need DOM rendering for the existing
+              // title + click listener to be keyboard focusable.
+              optimized: false,
               icon: {
                 path: g.SymbolPath.CIRCLE,
                 scale: 8,
@@ -1400,6 +1481,9 @@ export default function MapPage() {
           // unscoped initial map never flashes country-wide pins.
           map: null,
           title: biz.name ?? "",
+          // Preserve keyboard focus and the descriptive marker title for the
+          // receipt-safe preview instead of rendering this marker to canvas.
+          optimized: false,
           icon: {
             path: g.SymbolPath.CIRCLE,
             scale: 8,
@@ -1410,11 +1494,10 @@ export default function MapPage() {
           },
         });
 
-        // A public business pin is a doorway to its MWM profile, whether the
-        // place is claimed, unclaimed, minority-owned, or community-listed.
-        // The detail page is where members can safely add experiences and help
-        // prevent a duplicate listing; it is never replaced by an external URL.
-        marker.addListener("click", () => navigate(`/businesses/${biz.id}`));
+        // A business pin first opens a receipt-safe preview. Members choose the
+        // MWM profile, directions, or a separately verified official website
+        // from that preview; a marker never silently leaves the app.
+        marker.addListener("click", () => selectBusiness(biz.id, biz, marker));
         markersRef.current.set(biz.id, marker);
       });
     } catch {
@@ -1454,15 +1537,8 @@ export default function MapPage() {
       });
     });
 
-    const isDemo = biz.description?.startsWith("[DEMO]") ?? false;
     infoWindowRef.current?.setContent(
-      `<div style="font-family:serif;padding:4px 2px;min-width:160px">
-        <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px">${biz.name ?? ""}</div>
-        ${isDemo ? `<div style="display:inline-block;font-size:9px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;background:#fef3c7;color:#b45309;border:1px solid #fcd34d;border-radius:4px;padding:1px 6px;margin-bottom:4px">Demo Listing</div>` : ""}
-        <div style="font-size:12px;color:#CA922B;font-weight:600;margin-bottom:2px">${biz.category ?? ""}</div>
-        <div style="font-size:11px;color:#3A1F0E80">${biz.city ?? ""}, ${biz.state ?? ""}</div>
-        <a href="/businesses/${biz.id}" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none;margin-top:4px;display:block">View Business →</a>
-      </div>`
+      mapBusinessPreviewHtml(biz, approximateMapDistanceMiles(userCoordsRef.current, biz)),
     );
     infoWindowRef.current?.open(mapRef.current, m);
   }, []);

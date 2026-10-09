@@ -8,9 +8,17 @@ const source = (relativePath: string) => readFileSync(
 );
 
 describe("map profile navigation", () => {
-  it("opens an MWM profile directly from a business pin", () => {
+  it("opens a receipt-safe preview before a business pin leaves the map", () => {
     const map = source("../pages/map.tsx");
-    expect(map).toContain('navigate(`/businesses/${biz.id}`)');
+    expect(map).toContain('marker.addListener("click", () => selectBusiness(biz.id, biz, marker))');
+    expect(map).toContain("mapBusinessPreviewHtml");
+    expect(map).toContain("View MWM profile");
+    expect(map).toContain("Directions");
+    expect(map).toContain("Official website");
+    expect(map).toContain("Documented by source:");
+    expect(map).toContain("approximateMapDistanceMiles");
+    expect(map).toContain("optimized: false");
+    expect(map).not.toContain('marker.addListener("click", () => navigate(`/businesses/${biz.id}`))');
   });
 
   it("opens first-party cultural and discoverability profiles while retaining non-profile info windows", () => {
