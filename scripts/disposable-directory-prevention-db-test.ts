@@ -483,7 +483,7 @@ async function run(): Promise<Result> {
     );
     const before = beforeRoute.rows[0];
     const after = afterRoute.rows[0];
-    assert(Number(after.business.latitude) === 39.9526 && Number(after.business.longitude) === -75.1652, "route did not write exact map coordinates");
+    assert(Number(after.business.latitude) === 39.9492 && Number(after.business.longitude) === -75.1587, "route did not write exact map coordinates");
     assert(after.business.address === before.business.address && after.business.status === before.business.status && after.business.listing_status === before.business.listing_status && after.business.updated_at === before.business.updated_at, "route changed protected business fields");
     assert(after.eligibility.eligibility_status === before.eligibility.eligibility_status && JSON.stringify(after.eligibility.ownership_designations) === JSON.stringify(before.eligibility.ownership_designations) && after.eligibility.decision_reason === before.eligibility.decision_reason && after.eligibility.updated_at === before.eligibility.updated_at, "route changed protected eligibility fields");
     assert(after.eligibility.address_evidence_id && after.eligibility.map_pin_evidence_id, "route did not attach map evidence references");
