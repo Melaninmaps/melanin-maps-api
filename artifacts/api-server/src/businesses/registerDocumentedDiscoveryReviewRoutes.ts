@@ -6,6 +6,13 @@ import { isAdmin } from "../lib/adminAuth";
 import { DOCUMENTED_DISCOVERY_POLICY_VERSION } from "./documentedDiscoveryEligibility";
 import { assessMapReadiness, type MapReadinessCandidate } from "./mapReadinessCrosswalk";
 import {
+  LEGACY_MAP_RECEIPT_GATE_SHA,
+  legacyMapLocationAttestationChecksum,
+  legacyMapLocationSnapshotMatchesCurrent,
+  validateLegacyMapLocationAttestationInput,
+  validateLegacyMapLocationRevocationInput,
+} from "./legacyMapLocationAttestation";
+import {
   type DirectoryReconciliationAction,
   type DirectoryReconciliationOwnershipStatus,
   type DirectoryReconciliationPresenceStatus,
@@ -682,6 +689,18 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
                 e.decision_reason AS eligibility_decision_reason,
                 ledger.reconciliation_state, ledger.reason_code AS reconciliation_reason_code,
                 ledger.recommended_action AS reconciliation_recommended_action,
+                EXISTS (
+                  SELECT 1
+                    FROM business_legacy_map_location_attestations legacy_location
+                   WHERE legacy_location.business_id::text = b.id::text
+                     AND COALESCE((
+                       SELECT legacy_event.action
+                         FROM business_legacy_map_location_attestation_events legacy_event
+                        WHERE legacy_event.attestation_id = legacy_location.id
+                        ORDER BY legacy_event.created_at DESC, legacy_event.id DESC
+                        LIMIT 1
+                     ), 'active') <> 'revoked'
+                ) AS legacy_map_location_attested,
                 ownership_receipt.source_url AS ownership_source_url,
                 official_website_receipt.source_url AS official_website_source_url,
                 official_social_receipt.source_url AS official_social_source_url,
@@ -718,6 +737,7 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
           officialSocialEvidenceId: row.official_social_evidence_id as string | null,
           addressEvidenceId: row.address_evidence_id as string | null,
           mapPinEvidenceId: row.map_pin_evidence_id as string | null,
+          legacyMapLocationAttested: Boolean(row.legacy_map_location_attested),
           ownershipSourceExpiresAt: row.ownership_source_expires_at as string | null,
           reviewAfter: row.review_after as string | null,
           eligibilityDecisionReason: row.eligibility_decision_reason as string | null,
@@ -1186,6 +1206,338 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
       await client.query("ROLLBACK");
       req.log.error({ error, businessId }, "Failed to attach audited map pin evidence");
       res.status(500).json({ error: "Failed to attach audited map pin evidence" });
+    } finally {
+      client.release();
+    }
+  });
+
+  /**
+   * Controlled restoration for a location that was structurally mappable before
+   * the documented map-receipt gate. This deliberately writes no profile field,
+   * ownership evidence, eligibility field, ordinary map receipt, or coordinate.
+   * Its only output is an immutable statement that the stored snapshot was
+   * reviewed for one named manifest row; it can later be revoked or restored.
+   */
+  app.put("/api/admin/businesses/:id/legacy-map-location-attestation", async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const businessId = String(req.params.id ?? "").trim();
+    if (!businessId || businessId.length > 255) {
+      res.status(400).json({ error: "A valid business id is required" });
+      return;
+    }
+    let input: ReturnType<typeof validateLegacyMapLocationAttestationInput>;
+    try {
+      input = validateLegacyMapLocationAttestationInput(req.body);
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid legacy map location attestation" });
+      return;
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const currentBusiness = await client.query<{
+        id: string;
+        address: string | null;
+        city: string | null;
+        state: string | null;
+        country: string | null;
+        latitude: string | number | null;
+        longitude: string | number | null;
+        created_at: Date | null;
+        service_area: string | null;
+        public_location_kind: string | null;
+      }>(
+        `SELECT b.id, b.address, b.city, b.state, b.country, b.latitude, b.longitude, b.created_at,
+                to_jsonb(b)->>'service_area' AS service_area,
+                to_jsonb(b)->>'public_location_kind' AS public_location_kind
+           FROM businesses b
+          WHERE b.id = $1
+          FOR UPDATE`,
+        [businessId],
+      );
+      const current = currentBusiness.rows[0];
+      if (!current) {
+        await client.query("ROLLBACK");
+        res.status(404).json({ error: "Business not found" });
+        return;
+      }
+      const publicCanonical = await client.query<{ id: string }>(
+        `SELECT id FROM public.public_businesses WHERE id = $1`,
+        [businessId],
+      );
+      if (publicCanonical.rows.length === 0) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "Legacy map restoration is available only to the current canonical public business" });
+        return;
+      }
+      const activeEligibility = await client.query<{ business_id: string }>(
+        `SELECT e.business_id
+           FROM business_discovery_eligibility e
+          WHERE e.business_id = $1
+            AND e.eligibility_status = 'qualified'
+            AND e.policy_version = $2
+            AND e.identity_evidence_id IS NOT NULL
+            AND e.ownership_evidence_id IS NOT NULL
+            AND (e.official_website_evidence_id IS NOT NULL OR e.official_social_evidence_id IS NOT NULL)
+            AND e.ownership_source_expires_at > now()
+            AND e.review_after > now()
+          FOR UPDATE`,
+        [businessId, DOCUMENTED_DISCOVERY_POLICY_VERSION],
+      );
+      if (activeEligibility.rows.length === 0) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "A current documented Kinfolk eligibility record is required before a legacy map location can be restored" });
+        return;
+      }
+      if (!legacyMapLocationSnapshotMatchesCurrent(input, {
+        address: current.address,
+        city: current.city,
+        state: current.state,
+        country: current.country,
+        latitude: current.latitude,
+        longitude: current.longitude,
+        createdAt: current.created_at,
+        serviceArea: current.service_area,
+        publicLocationKind: current.public_location_kind,
+      })) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "The immutable manifest snapshot no longer matches the current usable canonical location" });
+        return;
+      }
+      const schema = await client.query<{ ready: boolean }>(
+        `SELECT to_regclass('public.business_legacy_map_location_attestations') IS NOT NULL
+                AND to_regclass('public.business_legacy_map_location_attestation_events') IS NOT NULL AS ready`,
+      );
+      if (!schema.rows[0]?.ready) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "Legacy map restoration is unavailable until its separately reviewed immutable schema migration is applied" });
+        return;
+      }
+      const prior = await client.query<{
+        id: string;
+        manifest_row_checksum: string;
+        latest_action: "revoked" | "restored" | null;
+      }>(
+        `SELECT attestation.id::text, attestation.manifest_row_checksum,
+                latest_event.action AS latest_action
+           FROM business_legacy_map_location_attestations attestation
+           LEFT JOIN LATERAL (
+             SELECT event.action
+               FROM business_legacy_map_location_attestation_events event
+              WHERE event.attestation_id = attestation.id
+              ORDER BY event.created_at DESC, event.id DESC
+              LIMIT 1
+           ) latest_event ON TRUE
+          WHERE attestation.business_id = $1
+          FOR UPDATE OF attestation`,
+        [businessId],
+      );
+      const checksum = legacyMapLocationAttestationChecksum(businessId, input);
+      const existing = prior.rows[0];
+      if (existing) {
+        if (existing.manifest_row_checksum === checksum && existing.latest_action !== "revoked") {
+          await client.query("COMMIT");
+          res.json({
+            ok: true,
+            replayed: true,
+            businessId,
+            attestationId: existing.id,
+            message: "Exact legacy map restoration replayed without changing business data or audit history.",
+          });
+          return;
+        }
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "The canonical business already has an immutable legacy location attestation; use its revocation/restoration history instead of overwriting it" });
+        return;
+      }
+      const actorId = typeof (req as any).user?.id === "string" ? (req as any).user.id : "automation";
+      const attestationId = randomUUID();
+      await client.query(
+        `INSERT INTO business_legacy_map_location_attestations (
+           id, business_id, historical_baseline_sha, receipt_gate_sha,
+           address_snapshot, city_snapshot, state_snapshot, country_snapshot,
+           latitude_snapshot, longitude_snapshot, business_created_at,
+           batch_reference, decision_reason, manifest_row_checksum, attested_by
+         ) VALUES (
+           $1, $2, $3, $4, $5, $6, $7, $8, $9::numeric, $10::numeric, $11::timestamptz,
+           $12, $13, $14, $15
+         )`,
+        [
+          attestationId, businessId, input.historicalMapBaselineSha, LEGACY_MAP_RECEIPT_GATE_SHA,
+          input.snapshot.address, input.snapshot.city, input.snapshot.state, input.snapshot.country,
+          String(input.snapshot.latitude), String(input.snapshot.longitude), input.snapshot.businessCreatedAt,
+          input.batchReference, input.decisionReason, checksum, actorId,
+        ],
+      );
+      await client.query("COMMIT");
+      res.json({
+        ok: true,
+        businessId,
+        attestationId,
+        historicalMapBaselineSha: input.historicalMapBaselineSha,
+        message: "Legacy stored location attested without creating a first-party receipt or changing business, eligibility, ownership, lifecycle, or coordinate fields.",
+      });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      req.log.error({ error, businessId }, "Failed to attest a legacy map location");
+      res.status(500).json({ error: "Failed to attest legacy map location" });
+    } finally {
+      client.release();
+    }
+  });
+
+  /** A revocation immediately removes only this legacy restoration from map eligibility. */
+  app.post("/api/admin/businesses/:id/legacy-map-location-attestation/state", async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const businessId = String(req.params.id ?? "").trim();
+    const action = typeof req.body?.action === "string" ? req.body.action.trim() : "";
+    if (!businessId || businessId.length > 255 || !["revoke", "restore"].includes(action)) {
+      res.status(400).json({ error: "A valid business id and state action of revoke or restore are required" });
+      return;
+    }
+    let input: ReturnType<typeof validateLegacyMapLocationRevocationInput>;
+    try {
+      input = validateLegacyMapLocationRevocationInput(req.body);
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid legacy map location state request" });
+      return;
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const attestation = await client.query<{
+        id: string;
+        historical_baseline_sha: string;
+        batch_reference: string;
+        decision_reason: string;
+        address_snapshot: string;
+        city_snapshot: string;
+        state_snapshot: string;
+        country_snapshot: string | null;
+        latitude_snapshot: string | number;
+        longitude_snapshot: string | number;
+        business_created_at: Date | string;
+        latest_action: "revoked" | "restored" | null;
+      }>(
+        `SELECT attestation.id::text, attestation.historical_baseline_sha, attestation.batch_reference,
+                attestation.decision_reason, attestation.address_snapshot, attestation.city_snapshot,
+                attestation.state_snapshot, attestation.country_snapshot, attestation.latitude_snapshot,
+                attestation.longitude_snapshot, attestation.business_created_at,
+                latest_event.action AS latest_action
+           FROM business_legacy_map_location_attestations attestation
+           LEFT JOIN LATERAL (
+             SELECT event.action
+               FROM business_legacy_map_location_attestation_events event
+              WHERE event.attestation_id = attestation.id
+              ORDER BY event.created_at DESC, event.id DESC
+              LIMIT 1
+           ) latest_event ON TRUE
+          WHERE attestation.business_id = $1
+          FOR UPDATE OF attestation`,
+        [businessId],
+      );
+      const currentAttestation = attestation.rows[0];
+      if (!currentAttestation) {
+        await client.query("ROLLBACK");
+        res.status(404).json({ error: "Legacy map location attestation not found" });
+        return;
+      }
+      if (action === "revoke" && currentAttestation.latest_action === "revoked") {
+        await client.query("COMMIT");
+        res.json({ ok: true, replayed: true, businessId, attestationId: currentAttestation.id, state: "revoked" });
+        return;
+      }
+      if (action === "restore") {
+        if (currentAttestation.latest_action !== "revoked") {
+          await client.query("ROLLBACK");
+          res.status(409).json({ error: "Only a currently revoked legacy location attestation can be restored" });
+          return;
+        }
+        const currentBusiness = await client.query<{
+          address: string | null;
+          city: string | null;
+          state: string | null;
+          country: string | null;
+          latitude: string | number | null;
+          longitude: string | number | null;
+          created_at: Date | null;
+          service_area: string | null;
+          public_location_kind: string | null;
+        }>(
+          `SELECT b.address, b.city, b.state, b.country, b.latitude, b.longitude, b.created_at,
+                  to_jsonb(b)->>'service_area' AS service_area,
+                  to_jsonb(b)->>'public_location_kind' AS public_location_kind
+             FROM businesses b
+            WHERE b.id = $1
+            FOR UPDATE`,
+          [businessId],
+        );
+        const current = currentBusiness.rows[0];
+        const publicCanonical = await client.query<{ id: string }>(
+          `SELECT id FROM public.public_businesses WHERE id = $1`,
+          [businessId],
+        );
+        const activeEligibility = await client.query<{ business_id: string }>(
+          `SELECT e.business_id
+             FROM business_discovery_eligibility e
+            WHERE e.business_id = $1
+              AND e.eligibility_status = 'qualified'
+              AND e.policy_version = $2
+              AND e.identity_evidence_id IS NOT NULL
+              AND e.ownership_evidence_id IS NOT NULL
+              AND (e.official_website_evidence_id IS NOT NULL OR e.official_social_evidence_id IS NOT NULL)
+              AND e.ownership_source_expires_at > now()
+              AND e.review_after > now()
+            FOR UPDATE`,
+          [businessId, DOCUMENTED_DISCOVERY_POLICY_VERSION],
+        );
+        const frozenSnapshot = validateLegacyMapLocationAttestationInput({
+          decisionReason: currentAttestation.decision_reason,
+          batchReference: currentAttestation.batch_reference,
+          historicalMapBaselineSha: currentAttestation.historical_baseline_sha,
+          snapshot: {
+            address: currentAttestation.address_snapshot,
+            city: currentAttestation.city_snapshot,
+            state: currentAttestation.state_snapshot,
+            country: currentAttestation.country_snapshot,
+            latitude: Number(currentAttestation.latitude_snapshot),
+            longitude: Number(currentAttestation.longitude_snapshot),
+            businessCreatedAt: new Date(currentAttestation.business_created_at).toISOString(),
+          },
+        });
+        if (!current || publicCanonical.rows.length === 0 || activeEligibility.rows.length === 0
+            || !legacyMapLocationSnapshotMatchesCurrent(frozenSnapshot, {
+              address: current.address,
+              city: current.city,
+              state: current.state,
+              country: current.country,
+              latitude: current.latitude,
+              longitude: current.longitude,
+              createdAt: current.created_at,
+              serviceArea: current.service_area,
+              publicLocationKind: current.public_location_kind,
+            })) {
+          await client.query("ROLLBACK");
+          res.status(409).json({ error: "The original legacy location snapshot no longer matches a current canonical Kinfolk-eligible business; create no replacement attestation automatically" });
+          return;
+        }
+      }
+      const actorId = typeof (req as any).user?.id === "string" ? (req as any).user.id : "automation";
+      const nextAction = action === "revoke" ? "revoked" : "restored";
+      await client.query(
+        `INSERT INTO business_legacy_map_location_attestation_events (
+           id, attestation_id, action, reason, actor_id
+         ) VALUES ($1, $2::uuid, $3, $4, $5)`,
+        [randomUUID(), currentAttestation.id, nextAction, input.decisionReason, actorId],
+      );
+      await client.query("COMMIT");
+      res.json({ ok: true, businessId, attestationId: currentAttestation.id, state: nextAction });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      req.log.error({ error, businessId, action }, "Failed to change legacy map location attestation state");
+      res.status(500).json({ error: "Failed to change legacy map location attestation state" });
     } finally {
       client.release();
     }

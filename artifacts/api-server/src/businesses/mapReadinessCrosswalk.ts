@@ -32,6 +32,7 @@ export type MapReadinessCandidate = Readonly<{
   officialSocialEvidenceId: string | null;
   addressEvidenceId: string | null;
   mapPinEvidenceId: string | null;
+  legacyMapLocationAttested?: boolean | null;
   ownershipSourceExpiresAt: string | null;
   reviewAfter: string | null;
   eligibilityDecisionReason: string | null;
@@ -45,7 +46,7 @@ export type MapReadinessAssessment = Readonly<{
   exactTechnicalBlockers: string[];
   isCurrentDocumentedEligibility: boolean;
   hasTrustworthyCoordinates: boolean;
-  publicLocationSuitability: "physical_location_evidenced" | "explicitly_not_suitable" | "unknown";
+  publicLocationSuitability: "physical_location_evidenced" | "legacy_physical_location_attested" | "explicitly_not_suitable" | "unknown";
 }>;
 
 function hasFutureDate(value: string | null | undefined, now: Date): boolean {
@@ -111,6 +112,7 @@ export function assessMapReadiness(
     && hasFutureDate(candidate.reviewAfter, now);
   const explicitLocationHold = isExplicitlyNotSuitableForPublicPin(candidate);
   const hasPhysicalAddress = Boolean(candidate.address?.trim());
+  const legacyLocationAttested = candidate.legacyMapLocationAttested === true;
 
   if (isClosedDuplicateOrHeld(candidate)) {
     return {
@@ -163,9 +165,9 @@ export function assessMapReadiness(
 
   const mapBlockers: string[] = [];
   if (!hasPhysicalAddress) mapBlockers.push("public_physical_street_address");
-  if (!candidate.addressEvidenceId) mapBlockers.push("first_party_physical_address_receipt");
+  if (!candidate.addressEvidenceId && !legacyLocationAttested) mapBlockers.push("first_party_physical_address_receipt");
   if (!hasTrustworthyCoordinates) mapBlockers.push("approved_geocoder_coordinates");
-  if (!candidate.mapPinEvidenceId) mapBlockers.push("approved_geocoder_map_receipt");
+  if (!candidate.mapPinEvidenceId && !legacyLocationAttested) mapBlockers.push("approved_geocoder_map_receipt");
 
   if (mapBlockers.length === 0) {
     return {
@@ -173,14 +175,16 @@ export function assessMapReadiness(
       exactTechnicalBlockers: [],
       isCurrentDocumentedEligibility: true,
       hasTrustworthyCoordinates: true,
-      publicLocationSuitability: "physical_location_evidenced",
+      publicLocationSuitability: legacyLocationAttested
+        ? "legacy_physical_location_attested"
+        : "physical_location_evidenced",
     };
   }
 
   // A current documented record with an address receipt and trustworthy
   // coordinates has the location facts already, but lacks the separate audited
   // map receipt/linkage. It is the narrow technical-attachment cohort.
-  if (candidate.addressEvidenceId && hasTrustworthyCoordinates && !candidate.mapPinEvidenceId) {
+  if (candidate.addressEvidenceId && hasTrustworthyCoordinates && !candidate.mapPinEvidenceId && !legacyLocationAttested) {
     return {
       category: "B_VERIFIED_BUT_TECHNICALLY_BLOCKED",
       exactTechnicalBlockers: ["approved_geocoder_map_receipt", "map_audit_attachment"],

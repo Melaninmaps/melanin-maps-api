@@ -42,9 +42,10 @@ describe("documented Discovery eligibility", () => {
     expect(isDocumentedDiscoveryEligible({ ...officialSocialOnly, officialSocialEvidenceId: null }, "discovery", now)).toBe(false);
   });
 
-  it("requires a separate geocode receipt before a qualified profile can be a map pin", () => {
+  it("requires a standard geocode receipt or a separately auditable legacy location attestation before a qualified profile can be a map pin", () => {
     expect(isDocumentedDiscoveryEligible(current, "map", now)).toBe(false);
     expect(isDocumentedDiscoveryEligible({ ...current, mapPinEvidenceId: "geocode-receipt" }, "map", now)).toBe(true);
+    expect(isDocumentedDiscoveryEligible({ ...current, legacyMapLocationAttested: true }, "map", now)).toBe(true);
   });
 
   it("uses a fail-closed operational hold rather than an all-live fallback", () => {
@@ -63,6 +64,8 @@ describe("documented Discovery eligibility", () => {
     expect(discovery).toContain("ownership_source_expires_at > CURRENT_TIMESTAMP");
     expect(discovery).toContain("review_after > CURRENT_TIMESTAMP");
     expect(map).toContain("map_pin_evidence_id IS NOT NULL");
+    expect(map).toContain("business_legacy_map_location_attestations");
+    expect(map).toContain("business_legacy_map_location_attestation_events");
     expect(map).toContain('"businesses"."id"');
   });
 });
