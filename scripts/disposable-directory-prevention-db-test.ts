@@ -464,6 +464,7 @@ async function run(): Promise<Result> {
       JSON.stringify(afterReplayCounts.rows[0]) === JSON.stringify(beforeReplayCounts.rows[0]),
       "exact map evidence retry created duplicate receipts or audit events",
     );
+    checks.map_attachment_exact_retry_idempotent = true;
     const publicMapApp = express();
     publicMapApp.use(businessRoutes);
     const publicPins = await request(publicMapApp)
