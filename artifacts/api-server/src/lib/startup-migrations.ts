@@ -6986,6 +6986,38 @@ export async function ensureDirectoryReconciliationLedgerSchema(logger?: Logger)
   log("Directory reconciliation ledger schema is ready");
 }
 
+/**
+ * Founder-authorized map restoration is receipt-first. This idempotent outcome
+ * table records an attached map coordinate or a conservative exception without
+ * changing eligibility, ownership, contacts, address text, or lifecycle.
+ */
+export async function ensureFounderMapRestorationSchema(logger?: Logger): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS business_map_restoration_outcomes (
+      business_id         varchar(255) PRIMARY KEY REFERENCES businesses(id) ON DELETE RESTRICT,
+      policy_version      text NOT NULL,
+      address_fingerprint text,
+      outcome             text NOT NULL CHECK (outcome IN (
+        'published', 'missing_complete_stored_address', 'geocoder_unavailable',
+        'geocoder_no_exact_match', 'geocoder_error', 'candidate_changed',
+        'reconciliation_ledger_missing'
+      )),
+      reason              text NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 1600),
+      details             jsonb NOT NULL DEFAULT '{}'::jsonb,
+      attempt_count       integer NOT NULL DEFAULT 1 CHECK (attempt_count >= 1),
+      last_attempt_at     timestamptz NOT NULL DEFAULT now(),
+      created_at          timestamptz NOT NULL DEFAULT now(),
+      updated_at          timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS business_map_restoration_outcomes_policy_outcome_idx
+      ON business_map_restoration_outcomes (policy_version, outcome, updated_at DESC);
+  `);
+  await pool.query(
+    "SELECT business_id, policy_version, outcome, reason FROM business_map_restoration_outcomes LIMIT 0",
+  );
+  logger?.info("Founder map restoration outcome schema is ready before traffic acceptance");
+}
+
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
   const log = (msg: string) =>
     logger ? logger.info(msg) : console.log(`[startup-migrations] ${msg}`);

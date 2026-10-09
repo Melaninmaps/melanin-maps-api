@@ -10,6 +10,7 @@ import {
   ensureAdminBusinessProfileReceiptsAndCatalogSchema,
   ensureBusinessWebsiteCleanupAuditSchema,
   ensureDirectoryReconciliationLedgerSchema,
+  ensureFounderMapRestorationSchema,
   ensureCommunityFeedReadSchema,
   ensureKinfolkQuestionImageSchemaOnly,
   ensureKinfolkPrivatePlacesSchema,
@@ -23,6 +24,7 @@ import { assertDirectoryReviewLocalStaging } from "./directoryImport/localStagin
 import { ensureRequiredSafetyReportSchema } from "./safety/ensureSafetyReportSchema";
 import { bootstrapDirectoryReviewSchema } from "./directoryImport/reviewDatabase";
 import { startDirectoryPublicationWorker } from "./directoryImport/publicationWorker";
+import { startFounderMapRestorationWorker } from "./businesses/mapRestorationWorker";
 import {
   startLatinxLehighValleyPublication,
 } from "./directoryImport/latinxLehighValleyPublication";
@@ -51,6 +53,7 @@ const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);
 const host = process.env["HOST"]?.trim() || undefined;
 const explicitFeatureReleaseMode = isExplicitFeatureReleaseMode();
+let stopFounderMapRestorationWorker: (() => void) | null = null;
 
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
@@ -162,6 +165,8 @@ try {
   // writers, publishers, and enrichment work.
   await ensureDirectoryReconciliationLedgerSchema(logger);
   logger.info("Directory reconciliation ledger schema ready before traffic acceptance");
+  await ensureFounderMapRestorationSchema(logger);
+  logger.info("Founder map restoration outcome schema ready before traffic acceptance");
   // Website cleanup is likewise a schema-only safety control. It is required
   // for an evidence-bound removal of a bad public URL, and it never changes a
   // business row by itself.
@@ -245,6 +250,7 @@ const onListening = (err?: Error) => {
   // Accessible at GET /api/pool-audit (x-cron-secret auth).
   // Emits SLOW_QUERY and POOL_GROWTH_DETECTED warnings to Railway logs.
   initPoolInstrumentation(pool, getPool);
+  stopFounderMapRestorationWorker = startFounderMapRestorationWorker(pool, logger);
   if (privatePlacesRuntimeState().enabled) {
     startTemporaryStayRetentionScheduler(logger);
   }
@@ -359,6 +365,7 @@ function gracefulShutdown(signal: string) {
     stopLibraryGrowthWorker();
     stopKinfolkQuestionImageRetentionScheduler();
     stopTemporaryStayRetentionScheduler();
+    stopFounderMapRestorationWorker?.();
     try {
       // Drain the app's own pool (max:8) first.
       await pool.end();
