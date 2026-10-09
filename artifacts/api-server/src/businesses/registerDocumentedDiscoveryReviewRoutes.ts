@@ -884,6 +884,23 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
         res.status(409).json({ error: "A reconciliation ledger record is required before a map pin can be attached" });
         return;
       }
+      // Explicit feature-release mode intentionally does not run startup
+      // migrations. Do not write a map coordinate unless the immutable audit
+      // schema has already been deliberately applied by an authorized release.
+      const mapAuditSchema = await client.query<{ ready: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1
+             FROM pg_constraint constraint_record
+            WHERE constraint_record.conrelid = 'business_discovery_eligibility_audit_events'::regclass
+              AND constraint_record.contype = 'c'
+              AND pg_get_constraintdef(constraint_record.oid) LIKE '%map_pin_attached%'
+         ) AS ready`,
+      );
+      if (!mapAuditSchema.rows[0]?.ready) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "Audited map evidence is unavailable until the separately reviewed audit-schema migration is applied" });
+        return;
+      }
 
       const actorId = typeof (req as any).user?.id === "string" ? (req as any).user.id : "automation";
       const addressEvidenceId = randomUUID();
