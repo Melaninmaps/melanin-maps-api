@@ -1,6 +1,55 @@
 import type { BusinessAudienceBand } from "./business-personalization";
-import type { BusinessSubjectKey } from "./business-subject";
+import {
+  deriveBusinessSubject,
+  type BusinessSubjectKey,
+  type NormalizedBusinessSubject,
+} from "./business-subject";
+import { routeEvidence } from "./evidence-route";
 import type { ClarificationStep } from "./intentClarification";
+import { classifyKinfolkRequest } from "./request-classifier";
+
+type BusinessDiscoveryConversationEntry = Readonly<{
+  role: "user" | "assistant";
+  content: string;
+}>;
+
+/**
+ * Continue only the immediate city/neighborhood clarification that Kinfolk
+ * itself issued for a governed directory request. This restores the original
+ * service subject without treating a saved location, an older conversation, or
+ * a generic geography follow-up as authorization to search the directory.
+ */
+export function resolveBusinessLocationClarificationFollowUp(
+  messages: readonly BusinessDiscoveryConversationEntry[],
+): Readonly<{
+  priorQuestion: string;
+  subject: NormalizedBusinessSubject;
+}> | null {
+  const priorAssistant = messages.at(-1);
+  const priorUser = messages.at(-2);
+  if (
+    priorAssistant?.role !== "assistant" ||
+    priorUser?.role !== "user" ||
+    !/\b(?:which\s+city\s+or\s+neighborhood\s+should\s+i\s+search|what\s+city\s+or\s+neighborhood\s+should\s+i\s+use)\b/i.test(
+      priorAssistant.content,
+    )
+  ) {
+    return null;
+  }
+  const priorDecision = classifyKinfolkRequest(priorUser.content, null);
+  if (priorDecision.route !== "clarification") return null;
+  const evidenceDomain = routeEvidence(priorUser.content).domain;
+  if (
+    evidenceDomain === "medical_health" ||
+    evidenceDomain === "legal_regulated" ||
+    evidenceDomain === "financial_regulated" ||
+    evidenceDomain === "safety_emergency"
+  ) {
+    return null;
+  }
+  const subject = deriveBusinessSubject(priorUser.content);
+  return subject ? { priorQuestion: priorUser.content, subject } : null;
+}
 
 export function temporaryBusinessAudienceBand(message: string): BusinessAudienceBand | null {
   // A broad "teen" request uses the younger canonical teen band so results are
