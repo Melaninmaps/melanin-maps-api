@@ -32,6 +32,7 @@ async function run(): Promise<Result> {
     await client.query(`DROP TABLE IF EXISTS ${namespace}.business_profile_field_receipts`);
     await client.query(`DROP TABLE IF EXISTS ${namespace}.businesses`);
     await client.query(`DROP TABLE IF EXISTS ${namespace}.business_review_items`);
+    await client.query(`DROP TABLE IF EXISTS ${namespace}.business_discovery_eligibility`);
     await client.query(`
       CREATE TABLE ${namespace}.businesses (
         id text PRIMARY KEY,
@@ -63,6 +64,18 @@ async function run(): Promise<Result> {
         created_at timestamptz NOT NULL DEFAULT now()
       )
     `);
+    await client.query(`
+      CREATE TABLE ${namespace}.business_discovery_eligibility (
+        business_id text PRIMARY KEY,
+        identity_evidence_id uuid,
+        ownership_evidence_id uuid,
+        official_website_evidence_id uuid,
+        official_social_evidence_id uuid,
+        address_evidence_id uuid,
+        map_pin_evidence_id uuid,
+        ownership_designations jsonb NOT NULL DEFAULT '[]'::jsonb
+      )
+    `);
 
     // The actual branch policy rejects presence and ownership claims through
     // the legacy unreceipted direct-create path.
@@ -78,6 +91,59 @@ async function run(): Promise<Result> {
       `unexpected direct-create safety result: ${unsafe.join(",")}`,
     );
     checks.direct_create_presence_and_ownership_rejected = true;
+
+    // Founder-source publication refreshes presence and ownership receipts but
+    // supplies no physical address or geocode. The exact upsert behavior must
+    // therefore retain a separately reviewed map receipt instead of clearing
+    // it on each source-receipt refresh.
+    const addressEvidenceId = "11111111-1111-1111-1111-111111111111";
+    const mapEvidenceId = "22222222-2222-2222-2222-222222222222";
+    await client.query(
+      `INSERT INTO ${namespace}.business_discovery_eligibility
+       (business_id, identity_evidence_id, ownership_evidence_id, official_website_evidence_id,
+        official_social_evidence_id, address_evidence_id, map_pin_evidence_id, ownership_designations)
+       VALUES ($1, $2::uuid, $3::uuid, $4::uuid, $5::uuid, $6::uuid, $7::uuid, $8::jsonb)`,
+      [
+        "synthetic-map",
+        "33333333-3333-3333-3333-333333333333",
+        "44444444-4444-4444-4444-444444444444",
+        "55555555-5555-5555-5555-555555555555",
+        "66666666-6666-6666-6666-666666666666",
+        addressEvidenceId,
+        mapEvidenceId,
+        JSON.stringify(["Black / African American-Owned"]),
+      ],
+    );
+    await client.query(
+      `INSERT INTO ${namespace}.business_discovery_eligibility
+       (business_id, identity_evidence_id, ownership_evidence_id, official_website_evidence_id,
+        official_social_evidence_id, address_evidence_id, map_pin_evidence_id, ownership_designations)
+       VALUES ($1, $2::uuid, $3::uuid, $4::uuid, $5::uuid, NULL, NULL, $6::jsonb)
+       ON CONFLICT (business_id) DO UPDATE SET
+         identity_evidence_id = EXCLUDED.identity_evidence_id,
+         ownership_evidence_id = EXCLUDED.ownership_evidence_id,
+         official_website_evidence_id = EXCLUDED.official_website_evidence_id,
+         official_social_evidence_id = EXCLUDED.official_social_evidence_id,
+         address_evidence_id = ${namespace}.business_discovery_eligibility.address_evidence_id,
+         map_pin_evidence_id = ${namespace}.business_discovery_eligibility.map_pin_evidence_id,
+         ownership_designations = EXCLUDED.ownership_designations`,
+      [
+        "synthetic-map",
+        "77777777-7777-7777-7777-777777777777",
+        "88888888-8888-8888-8888-888888888888",
+        "99999999-9999-9999-9999-999999999999",
+        "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+        JSON.stringify(["Black / African American-Owned"]),
+      ],
+    );
+    const retainedMap = await client.query<{ address_evidence_id: string; map_pin_evidence_id: string }>(
+      `SELECT address_evidence_id, map_pin_evidence_id
+         FROM ${namespace}.business_discovery_eligibility
+        WHERE business_id = 'synthetic-map'`,
+    );
+    assert(retainedMap.rows[0]?.address_evidence_id === addressEvidenceId, "source refresh cleared audited address evidence");
+    assert(retainedMap.rows[0]?.map_pin_evidence_id === mapEvidenceId, "source refresh cleared audited map-pin evidence");
+    checks.source_receipt_refresh_preserves_audited_map_evidence = true;
 
     await client.query(
       `INSERT INTO ${namespace}.businesses (id, name, website, instagram) VALUES ($1, $2, $3, $4)`,

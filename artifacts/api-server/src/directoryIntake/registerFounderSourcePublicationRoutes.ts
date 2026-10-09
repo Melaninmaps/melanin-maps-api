@@ -239,7 +239,12 @@ async function recordSourceReceiptAndEligibility(
        identity_evidence_id = EXCLUDED.identity_evidence_id, ownership_evidence_id = EXCLUDED.ownership_evidence_id,
        official_website_evidence_id = EXCLUDED.official_website_evidence_id,
        official_social_evidence_id = EXCLUDED.official_social_evidence_id,
-       address_evidence_id = NULL, map_pin_evidence_id = NULL,
+       -- A source-receipt refresh never supplies a physical-address or
+       -- geocoder assertion. Retain any separately audited address/map pin;
+       -- a later address change must use documented-discovery review and a
+       -- fresh address plus geocode receipt.
+       address_evidence_id = business_discovery_eligibility.address_evidence_id,
+       map_pin_evidence_id = business_discovery_eligibility.map_pin_evidence_id,
        ownership_designations = EXCLUDED.ownership_designations,
        ownership_source_expires_at = EXCLUDED.ownership_source_expires_at,
        review_after = EXCLUDED.review_after, decision_reason = EXCLUDED.decision_reason,
