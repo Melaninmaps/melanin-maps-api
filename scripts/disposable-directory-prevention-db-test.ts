@@ -12,6 +12,8 @@ import {
   storedAddressMatchesMapEvidence,
   validateMapPinEvidenceReviewInput,
 } from "../artifacts/api-server/src/businesses/registerDocumentedDiscoveryReviewRoutes";
+import businessRoutes from "../artifacts/api-server/src/routes/businesses";
+import { DOCUMENTED_DISCOVERY_POLICY_VERSION } from "../artifacts/api-server/src/businesses/documentedDiscoveryEligibility";
 import { decideGenericIngestExistingAction } from "../artifacts/api-server/src/routes/business-ingest";
 import { decideSocialFirstIdentityMatch } from "../artifacts/api-server/src/lib/social-first-ingestion";
 
@@ -105,6 +107,7 @@ async function run(): Promise<Result> {
     // fixtures let the real Express route use its production table names and
     // global pool, rather than proving behavior with a copied SQL fragment.
     await client.query(`
+      DROP VIEW IF EXISTS public.public_businesses;
       DROP TABLE IF EXISTS public.business_directory_reconciliation_audit_events;
       DROP TABLE IF EXISTS public.business_discovery_eligibility_audit_events;
       DROP TABLE IF EXISTS public.business_duplicate_resolutions;
@@ -118,6 +121,14 @@ async function run(): Promise<Result> {
         address text,
         latitude numeric,
         longitude numeric,
+        city text,
+        state text,
+        country text,
+        category text,
+        subcategory text,
+        description text,
+        confidence_score numeric,
+        created_at timestamptz NOT NULL DEFAULT now(),
         status text NOT NULL DEFAULT 'active',
         listing_status text NOT NULL DEFAULT 'live_unclaimed',
         is_duplicate boolean NOT NULL DEFAULT false,
@@ -213,6 +224,15 @@ async function run(): Promise<Result> {
       CREATE TRIGGER disposable_reconciliation_audit_immutable
       BEFORE UPDATE OR DELETE ON public.business_directory_reconciliation_audit_events
       FOR EACH ROW EXECUTE FUNCTION public.disposable_prevent_map_audit_mutation();
+      -- The real public route reads the hardened visibility view. This isolated
+      -- fixture contains only synthetic rows and mirrors the canonical/active
+      -- subset required for a map response assertion.
+      CREATE VIEW public.public_businesses AS
+      SELECT *
+        FROM public.businesses
+       WHERE COALESCE(is_duplicate, false) = false
+         AND status = 'active'
+         AND listing_status IN ('live_unclaimed', 'live_claimed');
     `);
 
     // The actual branch policy rejects presence and ownership claims through
@@ -310,8 +330,8 @@ async function run(): Promise<Result> {
         observedAt: "2026-10-09T00:00:00.000Z",
         confidence: "high",
         observedValue: {
-          latitude: 39.9526,
-          longitude: -75.1652,
+          latitude: 39.9492,
+          longitude: -75.1587,
           queryAddress: "123 Synthetic Street, Philadelphia, PA 19103",
           formattedAddress: "123 Synthetic Street, Philadelphia, PA 19103",
           addressMatch: true,
@@ -352,7 +372,7 @@ async function run(): Promise<Result> {
       is_duplicate: boolean;
     }>(`SELECT address, latitude, longitude, listing_status, is_duplicate FROM ${namespace}.businesses WHERE id = 'synthetic-map'`);
     assert(mapOnlyStored.rows[0]?.address === "123 Synthetic Street, Philadelphia, PA 19103", "map-only update changed address");
-    assert(mapOnlyStored.rows[0]?.latitude === "39.9526" && mapOnlyStored.rows[0]?.longitude === "-75.1652", "map-only update did not save exact coordinates");
+    assert(mapOnlyStored.rows[0]?.latitude === "39.9492" && mapOnlyStored.rows[0]?.longitude === "-75.1587", "map-only update did not save exact coordinates");
     assert(mapOnlyStored.rows[0]?.listing_status === "live_unclaimed" && mapOnlyStored.rows[0]?.is_duplicate === false, "map-only update changed lifecycle or duplicate state");
     const mapEligibility = await client.query<{ ownership_designations: string[]; address_evidence_id: string; map_pin_evidence_id: string }>(
       `SELECT ownership_designations, address_evidence_id, map_pin_evidence_id
@@ -367,8 +387,8 @@ async function run(): Promise<Result> {
     // isolated database. This verifies authorization, lock-gated eligibility,
     // address mismatch rejection, narrow writes, and immutable audit records.
     await client.query(
-      `INSERT INTO public.businesses (id, name, address, status, listing_status)
-       VALUES ('route-map', 'Route Map Example', '123 Synthetic Street, Philadelphia, PA 19103', 'active', 'live_unclaimed')`,
+      `INSERT INTO public.businesses (id, name, address, city, state, category, subcategory, description, status, listing_status)
+       VALUES ('route-map', 'Route Map Example', '123 Synthetic Street, Philadelphia, PA 19103', 'Philadelphia', 'PA', 'Food & Drink', 'Cafe', 'Synthetic qualified map fixture', 'active', 'live_unclaimed')`,
     );
     await client.query(
       `INSERT INTO public.business_discovery_eligibility (
@@ -376,10 +396,11 @@ async function run(): Promise<Result> {
          official_website_evidence_id, official_social_evidence_id, ownership_designations,
          ownership_source_expires_at, review_after, decision_reason
        ) VALUES (
-         'route-map', 'qualified', 'documented-discovery-v1',
+         'route-map', 'qualified', $1,
          '11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222',
          '33333333-3333-3333-3333-333333333333', NULL, '["Black / African American-Owned"]'::jsonb,
          now() + interval '1 day', now() + interval '1 day', 'Existing current qualification')`,
+      [DOCUMENTED_DISCOVERY_POLICY_VERSION],
     );
     await client.query(
       `INSERT INTO public.business_directory_reconciliation_ledger (
@@ -416,6 +437,19 @@ async function run(): Promise<Result> {
       .send(mapInput)
       .expect(200);
     assert(accepted.body.ok === true, "map-only route did not return success");
+    const publicMapApp = express();
+    publicMapApp.use(businessRoutes);
+    const publicPins = await request(publicMapApp)
+      .get("/businesses/map-pins?supportScope=all_businesses")
+      .expect(200);
+    assert(Array.isArray(publicPins.body.pins) && publicPins.body.pins.length === 1, "qualified synthetic pin did not reach public map endpoint");
+    assert(
+      publicPins.body.pins[0]?.id === "route-map"
+        && Number(publicPins.body.pins[0]?.latitude) === 39.9492
+        && Number(publicPins.body.pins[0]?.longitude) === -75.1587,
+      "public map endpoint returned the wrong synthetic pin",
+    );
+    checks.qualified_map_pin_reaches_public_endpoint = true;
     const beforeMismatchReceiptCount = await client.query<{ count: string }>(
       `SELECT COUNT(*)::text AS count FROM public.business_profile_evidence_receipts WHERE business_id = 'route-map'`,
     );

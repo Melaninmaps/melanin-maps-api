@@ -4,6 +4,7 @@ import { pool } from "@workspace/db";
 import { DIASPORA_OWNERSHIP_DESIGNATIONS } from "@workspace/constants";
 import { isAdmin } from "../lib/adminAuth";
 import { DOCUMENTED_DISCOVERY_POLICY_VERSION } from "./documentedDiscoveryEligibility";
+import { assessMapReadiness, type MapReadinessCandidate } from "./mapReadinessCrosswalk";
 import {
   type DirectoryReconciliationAction,
   type DirectoryReconciliationOwnershipStatus,
@@ -533,6 +534,108 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
     } catch (error) {
       req.log.error({ error }, "Failed to load documented discovery review queue");
       res.status(500).json({ error: "Failed to load review queue" });
+    }
+  });
+
+  /**
+   * Read-only, paginated evidence crosswalk for the current public population.
+   * It never upgrades eligibility or creates a pin; it names each missing
+   * map-only receipt/linkage condition for auditable pilot preparation.
+   */
+  app.get("/api/admin/business-map-readiness-crosswalk", async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const city = typeof req.query.city === "string" ? req.query.city.trim() : "";
+    const state = typeof req.query.state === "string" ? req.query.state.trim().toUpperCase() : "";
+    const cursor = typeof req.query.cursor === "string" ? req.query.cursor.trim() : "";
+    const limit = Math.min(500, Math.max(1, Number.parseInt(String(req.query.limit ?? "250"), 10) || 250));
+    const params: unknown[] = [];
+    const conditions = ["TRUE"];
+    if (city) { params.push(city); conditions.push(`LOWER(BTRIM(COALESCE(b.city, ''))) = LOWER(BTRIM($${params.length}))`); }
+    if (state) { params.push(state); conditions.push(`UPPER(BTRIM(COALESCE(b.state, ''))) = $${params.length}`); }
+    if (cursor) { params.push(cursor); conditions.push(`b.id > $${params.length}`); }
+    params.push(limit + 1);
+    try {
+      const { rows } = await pool.query<Record<string, unknown>>(
+        `SELECT b.id, b.name, b.city, b.state, b.status, b.listing_status,
+                COALESCE(b.is_duplicate, false) AS is_duplicate, b.duplicate_of_id,
+                b.address, b.latitude, b.longitude,
+                to_jsonb(b)->>'service_area' AS service_area,
+                to_jsonb(b)->>'public_location_kind' AS public_location_kind,
+                EXISTS (
+                  SELECT 1 FROM business_duplicate_resolutions resolution
+                   WHERE resolution.superseded_business_id = b.id
+                ) AS is_superseded,
+                e.eligibility_status, e.policy_version, e.identity_evidence_id,
+                e.ownership_evidence_id, e.official_website_evidence_id,
+                e.official_social_evidence_id, e.address_evidence_id,
+                e.map_pin_evidence_id, e.ownership_source_expires_at, e.review_after,
+                e.decision_reason AS eligibility_decision_reason,
+                ledger.reconciliation_state, ledger.reason_code AS reconciliation_reason_code,
+                ledger.recommended_action AS reconciliation_recommended_action,
+                ownership_receipt.source_url AS ownership_source_url,
+                official_website_receipt.source_url AS official_website_source_url,
+                official_social_receipt.source_url AS official_social_source_url,
+                address_receipt.source_url AS address_source_url,
+                map_receipt.source_url AS map_source_url
+           FROM public.public_businesses b
+           LEFT JOIN business_discovery_eligibility e ON e.business_id::text = b.id::text
+           LEFT JOIN business_directory_reconciliation_ledger ledger ON ledger.business_id::text = b.id::text
+           LEFT JOIN business_profile_evidence_receipts ownership_receipt ON ownership_receipt.id = e.ownership_evidence_id
+           LEFT JOIN business_profile_evidence_receipts official_website_receipt ON official_website_receipt.id = e.official_website_evidence_id
+           LEFT JOIN business_profile_evidence_receipts official_social_receipt ON official_social_receipt.id = e.official_social_evidence_id
+           LEFT JOIN business_profile_evidence_receipts address_receipt ON address_receipt.id = e.address_evidence_id
+           LEFT JOIN business_profile_evidence_receipts map_receipt ON map_receipt.id = e.map_pin_evidence_id
+          WHERE ${conditions.join(" AND ")}
+          ORDER BY b.id ASC
+          LIMIT $${params.length}`,
+        params,
+      );
+      const hasMore = rows.length > limit;
+      const page = rows.slice(0, limit);
+      const records = page.map((row) => {
+        const candidate: MapReadinessCandidate = {
+          id: String(row.id), name: String(row.name ?? ""), city: row.city as string | null,
+          state: row.state as string | null, status: row.status as string | null,
+          listingStatus: row.listing_status as string | null, isDuplicate: Boolean(row.is_duplicate),
+          duplicateOfId: row.duplicate_of_id as string | null, isSuperseded: Boolean(row.is_superseded),
+          address: row.address as string | null, serviceArea: row.service_area as string | null,
+          publicLocationKind: row.public_location_kind as string | null,
+          latitude: row.latitude as string | number | null, longitude: row.longitude as string | number | null,
+          eligibilityStatus: row.eligibility_status as string | null, policyVersion: row.policy_version as string | null,
+          identityEvidenceId: row.identity_evidence_id as string | null,
+          ownershipEvidenceId: row.ownership_evidence_id as string | null,
+          officialWebsiteEvidenceId: row.official_website_evidence_id as string | null,
+          officialSocialEvidenceId: row.official_social_evidence_id as string | null,
+          addressEvidenceId: row.address_evidence_id as string | null,
+          mapPinEvidenceId: row.map_pin_evidence_id as string | null,
+          ownershipSourceExpiresAt: row.ownership_source_expires_at as string | null,
+          reviewAfter: row.review_after as string | null,
+          eligibilityDecisionReason: row.eligibility_decision_reason as string | null,
+          reconciliationState: row.reconciliation_state as string | null,
+          reconciliationReasonCode: row.reconciliation_reason_code as string | null,
+          reconciliationRecommendedAction: row.reconciliation_recommended_action as string | null,
+        };
+        return {
+          ...candidate,
+          assessment: assessMapReadiness(candidate),
+          evidenceReferences: {
+            ownership: { id: candidate.ownershipEvidenceId, sourceUrl: row.ownership_source_url ?? null },
+            officialWebsite: { id: candidate.officialWebsiteEvidenceId, sourceUrl: row.official_website_source_url ?? null },
+            officialSocial: { id: candidate.officialSocialEvidenceId, sourceUrl: row.official_social_source_url ?? null },
+            address: { id: candidate.addressEvidenceId, sourceUrl: row.address_source_url ?? null },
+            mapPin: { id: candidate.mapPinEvidenceId, sourceUrl: row.map_source_url ?? null },
+          },
+        };
+      });
+      res.json({
+        policyVersion: DOCUMENTED_DISCOVERY_POLICY_VERSION,
+        scope: "current_public_businesses",
+        records,
+        nextCursor: hasMore ? String(page.at(-1)?.id ?? "") : null,
+      });
+    } catch (error) {
+      req.log.error({ error }, "Failed to load map readiness crosswalk");
+      res.status(500).json({ error: "Failed to load map readiness crosswalk" });
     }
   });
 
