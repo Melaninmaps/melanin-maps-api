@@ -515,11 +515,14 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("Held after source crawl: no business-specific source description.");
   });
 
-  it("creates a map pin only from a successfully geocoded supplied street address", () => {
-    expect(adminPublisher).toContain("const coordinates = input.address");
-    expect(adminPublisher).toContain("if (coordinates)");
-    expect(adminPublisher).not.toContain('return { lat: "0", lng: "0" }');
-    expect(adminPublisher).toContain("searchable MWM profile without a map pin");
+  it("keeps the legacy direct-create route staged and unable to attach pins, ownership, or media", () => {
+    expect(adminPublisher).toContain("directAdminCreationUnsafeFields");
+    expect(adminPublisher).toContain('listingStatus: "staged"');
+    expect(adminPublisher).toContain('status: "pending_review"');
+    expect(adminPublisher).toContain("cannot attach unreceipted presence, ownership, or media fields");
+    expect(adminPublisher).not.toContain("async function geocode(");
+    expect(adminPublisher).not.toContain("insertValues.latitude");
+    expect(adminPublisher).not.toContain("insertValues.imageUrl");
   });
 
   it("restores only retained approval sources with an audit trail", () => {

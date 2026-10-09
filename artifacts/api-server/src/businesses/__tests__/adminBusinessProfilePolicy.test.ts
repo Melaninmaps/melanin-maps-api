@@ -58,6 +58,7 @@ describe("audited administrator business profile policy", () => {
   it("allows the legacy direct-create path to create only a staged receipt-free shell", () => {
     expect(directAdminCreationUnsafeFields({ website: "https://communitybooks.example", instagram: "", ownershipDesignations: [], blackOwned: false })).toEqual(["website"]);
     expect(directAdminCreationUnsafeFields({ ownershipDesignations: ["Black-Owned"], blackOwned: true })).toEqual(["ownershipDesignations", "blackOwned"]);
+    expect(directAdminCreationUnsafeFields({ mediaAssetUrls: ["https://cdn.example/logo.png"] })).toEqual(["mediaAssetUrls"]);
     expect(directAdminCreationUnsafeFields({ website: "", ownershipDesignations: [], blackOwned: false })).toEqual([]);
   });
   it("normalizes identity comparison without equating different cities", () => {

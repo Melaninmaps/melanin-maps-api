@@ -1,6 +1,7 @@
 import { type Express, type Request, type Response } from "express";
 import { pool, db, businessesTable } from "@workspace/db";
 import { randomUUID } from "crypto";
+import { directAdminCreationUnsafeFields } from "./adminBusinessProfilePolicy";
 
 // ── Input validation ──────────────────────────────────────────────────────
 export interface DirectBusinessInput {
@@ -17,7 +18,7 @@ export interface DirectBusinessInput {
   ownershipDesignations?: string[];
   blackOwned?: boolean;
   mediaAssetUrls?: string[];
-  listingStatus?: "live_unclaimed" | "staged";
+  listingStatus: "staged";
   researchSourceLabel?: string;
   researchSourceUrl?: string;
   kinfolkRecommendationReason?: string;
@@ -35,6 +36,13 @@ export function validateDirectBusiness(input: unknown): DirectBusinessInput {
   }
   if (!body.city || typeof body.city !== "string" || !body.city.trim()) {
     throw new Error("city is required");
+  }
+  if (body.listingStatus !== undefined && body.listingStatus !== "staged") {
+    throw new Error("Direct legacy creation must remain staged until the separate reviewed lifecycle workflow approves visibility");
+  }
+  const unsafeFields = directAdminCreationUnsafeFields(body);
+  if (unsafeFields.length > 0) {
+    throw new Error(`Direct legacy creation cannot attach unreceipted presence, ownership, or media fields: ${unsafeFields.join(", ")}`);
   }
 
   return {
@@ -55,8 +63,7 @@ export function validateDirectBusiness(input: unknown): DirectBusinessInput {
     mediaAssetUrls: Array.isArray(body.mediaAssetUrls)
       ? (body.mediaAssetUrls as string[]).filter((s) => typeof s === "string")
       : [],
-    listingStatus:
-      body.listingStatus === "staged" ? "staged" : "live_unclaimed",
+    listingStatus: "staged",
     researchSourceLabel:
       typeof body.researchSourceLabel === "string"
         ? body.researchSourceLabel.trim().slice(0, 255) || undefined
@@ -76,32 +83,49 @@ export function validateDirectBusiness(input: unknown): DirectBusinessInput {
   };
 }
 
-// ── Geocoding helper ─────────────────────────────────────────────────────
-async function geocode(
-  parts: (string | null | undefined)[],
-): Promise<{ lat: string; lng: string } | null> {
-  const query = parts.filter(Boolean).join(", ");
-  const gmKey = process.env.GOOGLE_MAPS_API_KEY;
-  if (!gmKey || !query) return null;
-  try {
-    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(query)}&key=${gmKey}`;
-    const resp = await fetch(url);
-    const data = (await resp.json()) as any;
-    if (data.status === "OK" && data.results?.[0]?.geometry?.location) {
-      return {
-        lat: String(data.results[0].geometry.location.lat),
-        lng: String(data.results[0].geometry.location.lng),
-      };
-    }
-  } catch { /* non-fatal */ }
-  return null;
+/**
+ * Legacy creation is intentionally limited to a non-public shell.  It never
+ * writes a map location, official-presence field, ownership designation, or
+ * media attachment; each requires its own receipt-bearing reviewed workflow.
+ */
+export function buildStagedDirectBusinessInsert(input: DirectBusinessInput, adminId: string, id: string): Record<string, unknown> {
+  const resolvedState = input.state ?? null;
+  const resolvedCountry = input.country ?? (resolvedState && resolvedState.length <= 2 ? "USA" : null);
+  return {
+    id,
+    name: input.name,
+    category: input.category,
+    subcategory: input.subcategory ?? input.category,
+    description: input.description ?? `${input.name} — ${input.category} in ${input.city}.`,
+    address: input.address ?? null,
+    city: input.city,
+    state: resolvedState,
+    country: resolvedCountry,
+    phone: input.phone ?? null,
+    blackOwned: false,
+    isReferenceOnly: false,
+    status: "pending_review",
+    listingStatus: "staged",
+    verified: false,
+    featured: false,
+    promotionEligible: false,
+    feedbackOptIn: false,
+    submittedById: adminId,
+    ownershipDesignations: [],
+    addedVia: "admin_web",
+    addedByMemberId: adminId,
+    ownerClaimStatus: "unclaimed",
+    dataSource: input.intakeBatchReference ? "admin_backfill" : "admin_web",
+    researchSourceLabel: input.researchSourceLabel ?? null,
+    researchSourceUrl: input.researchSourceUrl ?? null,
+    kinfolkRecommendationReason: input.kinfolkRecommendationReason ?? null,
+    intakeBatchReference: input.intakeBatchReference ?? null,
+  };
 }
 
 export function registerAdminPublishAndClaimRoutes(app: Express): void {
   // ── POST /api/admin/businesses ─────────────────────────────────────────
-  // Admin only — creates a business record that goes live immediately.
-  // listing_status is set to live_unclaimed so the business appears in all
-  // public views (map, directory, search) right away.
+  // Admin only — creates a receipt-free staged shell, never a public profile.
   app.post(
     "/api/admin/businesses",
     async (req: Request, res: Response) => {
@@ -117,72 +141,8 @@ export function registerAdminPublishAndClaimRoutes(app: Express): void {
 
       try {
         const input = validateDirectBusiness(req.body);
-        // Only a supplied street address is eligible for a map pin. A city-only
-        // fallback would create a misleading pin, and a failed geocode must not
-        // be stored as the old 0,0 placeholder.
-        const coordinates = input.address
-          ? await geocode([input.address, input.city, input.state, input.country])
-          : null;
-
-        const resolvedState = input.state ?? null;
-        const resolvedCountry =
-          input.country ??
-          (resolvedState && resolvedState.length <= 2 ? "USA" : null);
-
         const id = `place_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
-        const designations = input.ownershipDesignations ?? [];
-        if (input.blackOwned && !designations.includes("black-owned")) {
-          designations.unshift("black-owned");
-        }
-
-        const insertValues: Record<string, unknown> = {
-          id,
-          name: input.name,
-          category: input.category,
-          subcategory: input.subcategory ?? input.category,
-          description:
-            input.description ??
-            `${input.name} — ${input.category} in ${input.city}.`,
-          address: input.address ?? null,
-          city: input.city,
-          blackOwned: input.blackOwned ?? designations.includes("black-owned"),
-          isReferenceOnly: false,
-          status: input.listingStatus === "staged" ? "pending_review" : "active",
-          listingStatus: input.listingStatus ?? "live_unclaimed",
-          verified: false,
-          featured: false,
-          promotionEligible: false,
-          feedbackOptIn: false,
-          submittedById: user.id,
-          ownershipDesignations: designations,
-          addedVia: "admin_web",
-          addedByMemberId: user.id,
-          ownerClaimStatus: "unclaimed",
-          dataSource: input.intakeBatchReference ? "admin_backfill" : "admin_web",
-          researchSourceLabel: input.researchSourceLabel ?? null,
-          researchSourceUrl: input.researchSourceUrl ?? null,
-          kinfolkRecommendationReason: input.kinfolkRecommendationReason ?? null,
-          intakeBatchReference: input.intakeBatchReference ?? null,
-        };
-
-        if (coordinates) {
-          insertValues.latitude = coordinates.lat;
-          insertValues.longitude = coordinates.lng;
-        }
-
-        if (resolvedState) insertValues.state = resolvedState;
-        if (resolvedCountry) insertValues.country = resolvedCountry;
-        if (input.website) insertValues.website = input.website;
-        if (input.phone) insertValues.phone = input.phone;
-
-        // Attach uploaded media as the primary imageUrl if provided
-        const mediaUrls = input.mediaAssetUrls ?? [];
-        if (mediaUrls.length > 0) {
-          insertValues.imageUrl = mediaUrls[0];
-          if (mediaUrls.length > 1) {
-            insertValues.photos = mediaUrls;
-          }
-        }
+        const insertValues = buildStagedDirectBusinessInsert(input, user.id, id);
 
         const [business] = await db
           .insert(businessesTable)
@@ -193,16 +153,11 @@ export function registerAdminPublishAndClaimRoutes(app: Express): void {
           ok: true,
           businessId: business.id,
           slug: (business as any).slug ?? null,
-          message:
-            input.listingStatus === "staged"
-              ? "Business profile saved as staged."
-              : coordinates
-                ? "Business published with an address-backed map pin."
-                : "Business published as a searchable MWM profile without a map pin.",
+          message: "Business profile saved as staged pending identity and evidence review.",
         });
       } catch (err: unknown) {
         const msg = err instanceof Error ? err.message : "Invalid input";
-        if (msg.includes("required")) {
+        if (msg.includes("required") || msg.startsWith("Direct legacy creation")) {
           res.status(400).json({ error: msg });
         } else {
           console.error("[admin-publish] error:", err);
