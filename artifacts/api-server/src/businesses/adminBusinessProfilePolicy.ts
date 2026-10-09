@@ -48,6 +48,7 @@ export function directAdminCreationUnsafeFields(input: Record<string, unknown>):
   });
   if (Array.isArray(input.ownershipDesignations) && input.ownershipDesignations.length > 0) fields.push("ownershipDesignations");
   if (input.blackOwned === true) fields.push("blackOwned");
+  if (Array.isArray(input.mediaAssetUrls) && input.mediaAssetUrls.length > 0) fields.push("mediaAssetUrls");
   return fields;
 }
 
