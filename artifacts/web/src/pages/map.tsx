@@ -228,22 +228,15 @@ const LEGEND_TILES = [
 
 export default function MapPage() {
   const [, navigate] = useLocation();
-  // Load ALL geolocated businesses — uses dedicated map-pins endpoint (no 200-row cap)
+  // The map only retains pins for its current visible geography. The API cursor
+  // avoids a national marker download when evidence reconciliation restores a
+  // large map-ready population.
   const [mapPins, setMapPins] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [mapSupportScope, setMapSupportScope] = useState<"all_businesses" | null>(null);
   const [mapRefreshGeneration, setMapRefreshGeneration] = useState(0);
   const [savedDesignations, setSavedDesignations] = useState<string[]>([]);
   const [supportLensError, setSupportLensError] = useState<string | null>(null);
-  useEffect(() => {
-    const base = BASE.replace(/\/$/, "");
-    const query = mapSupportScope ? `?supportScope=${mapSupportScope}` : "";
-    fetch(`${base}/api/businesses/map-pins${query}`, { credentials: "include" })
-      .then((r) => r.ok ? r.json() : { pins: [] })
-      .then((d: { pins?: any[] }) => { setMapPins(d.pins ?? []); })
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
-  }, [mapSupportScope, mapRefreshGeneration]);
   useEffect(() => {
     fetch(`${BASE.replace(/\/$/, "")}/api/kinfolk/preferences`, { credentials: "include" })
       .then((response) => response.ok ? response.json() : null)
@@ -282,6 +275,14 @@ export default function MapPage() {
   const markersRef = useRef<Map<string, GMarker>>(new Map());
   const infoWindowRef = useRef<GInfoWindow>(null);
   const directionsRendererRef = useRef<any>(null);
+  const mapPinsAbortRef = useRef<AbortController | null>(null);
+  const mapViewportTimerRef = useRef<number | null>(null);
+  const mapViewportCacheRef = useRef<Map<string, BizWithCoords[]>>(new Map());
+
+  // Changing the saved support lens must not reuse a previous scope's markers.
+  useEffect(() => {
+    mapViewportCacheRef.current.clear();
+  }, [mapRefreshGeneration, mapSupportScope]);
 
   // Two-phase map readiness:
   //   gmLoaded = Google Maps JS API is available in window.google.maps
@@ -420,6 +421,93 @@ export default function MapPage() {
     if (profileCoords) return { lat: profileCoords.lat, lng: profileCoords.lng, label: "your home area" };
     return null;
   }, [detectedLocation, profileCoords, userCoords]);
+
+  const loadViewportPins = useCallback(async () => {
+    const map = mapRef.current;
+    const bounds = map?.getBounds?.();
+    const northEast = bounds?.getNorthEast?.();
+    const southWest = bounds?.getSouthWest?.();
+    if (!northEast || !southWest) return;
+    const south = Number(southWest.lat());
+    const west = Number(southWest.lng());
+    const north = Number(northEast.lat());
+    const east = Number(northEast.lng());
+    if (![south, west, north, east].every(Number.isFinite) || south >= north) return;
+
+    const scope = mapSupportScope ? `supportScope=${mapSupportScope}` : "";
+    const cacheKey = [south, west, north, east].map((value) => value.toFixed(4)).join(",") + `|${scope}`;
+    const cached = mapViewportCacheRef.current.get(cacheKey);
+    if (cached) {
+      setMapPins(cached);
+      setIsLoading(false);
+      return;
+    }
+
+    mapPinsAbortRef.current?.abort();
+    const controller = new AbortController();
+    mapPinsAbortRef.current = controller;
+    setIsLoading(true);
+    try {
+      const base = BASE.replace(/\/$/, "");
+      const pins: BizWithCoords[] = [];
+      let cursor: string | null = null;
+      // A normal visible viewport is substantially smaller than the national
+      // catalog. Continue cursor reads so the member does not mistake the first
+      // page for every nearby result; the server still caps each request.
+      for (let page = 0; page < 32; page += 1) {
+        const params = new URLSearchParams({
+          south: String(south), west: String(west), north: String(north), east: String(east), limit: "250",
+        });
+        if (mapSupportScope) params.set("supportScope", mapSupportScope);
+        if (cursor) params.set("cursor", cursor);
+        const response = await fetch(`${base}/api/businesses/map-pins?${params.toString()}`, {
+          credentials: "include", signal: controller.signal,
+        });
+        if (!response.ok) throw new Error("MAP_PIN_VIEWPORT_REQUEST_FAILED");
+        const payload = await response.json() as { pins?: BizWithCoords[]; nextCursor?: string | null };
+        pins.push(...(Array.isArray(payload.pins) ? payload.pins : []));
+        cursor = typeof payload.nextCursor === "string" && payload.nextCursor ? payload.nextCursor : null;
+        if (!cursor) break;
+      }
+      if (controller.signal.aborted) return;
+      const unique = [...new Map(pins.map((pin) => [pin.id, pin])).values()];
+      mapViewportCacheRef.current.set(cacheKey, unique);
+      // Bounded cache prevents memory growth while a member pans across cities.
+      if (mapViewportCacheRef.current.size > 24) {
+        const first = mapViewportCacheRef.current.keys().next().value;
+        if (first) mapViewportCacheRef.current.delete(first);
+      }
+      setMapPins(unique);
+    } catch (error) {
+      if (!controller.signal.aborted) setMapPins([]);
+    } finally {
+      if (!controller.signal.aborted) setIsLoading(false);
+    }
+  }, [mapSupportScope]);
+
+  useEffect(() => {
+    if (!ready || !mapRef.current) return;
+    if (!activeLocalScope && !exploreAllAreas) {
+      mapPinsAbortRef.current?.abort();
+      setMapPins([]);
+      setIsLoading(false);
+      return;
+    }
+    const g = (window as any).google?.maps;
+    const map = mapRef.current;
+    if (!g?.event || !map) return;
+    const schedule = () => {
+      if (mapViewportTimerRef.current !== null) window.clearTimeout(mapViewportTimerRef.current);
+      mapViewportTimerRef.current = window.setTimeout(() => { void loadViewportPins(); }, 180);
+    };
+    const listener = g.event.addListener(map, "idle", schedule);
+    schedule();
+    return () => {
+      if (mapViewportTimerRef.current !== null) window.clearTimeout(mapViewportTimerRef.current);
+      listener.remove?.();
+      mapPinsAbortRef.current?.abort();
+    };
+  }, [activeLocalScope, loadViewportPins, mapRefreshGeneration, ready]);
 
   const requestMapDeviceLocation = useCallback((options?: {
     forceViewport?: boolean;
@@ -1318,39 +1406,11 @@ export default function MapPage() {
 
   // Initialize map
   useEffect(() => {
-    // Allow early initialization when a ?q= handoff query is waiting — the handoff
-    // must fire as soon as the map object exists, not after the mapPins fetch completes.
-    // Without this guard bypass, /map?q=... stalls 10+ seconds waiting for isLoading=false.
-    if (!gmLoaded || !mapDivRef.current || (isLoading && !handoffQuery)) return;
+    // The map must exist before its local viewport can be queried. Pin loading is
+    // intentionally independent so a national catalog never blocks map startup.
+    if (!gmLoaded || !mapDivRef.current) return;
 
     if (mapRef.current) {
-      // Map already initialized — place initial mapPins markers if the data just
-      // arrived (happens when the map was created early, before isLoading=false).
-      if (!isLoading && markersRef.current.size === 0) {
-        const g = (window as any).google?.maps;
-        if (g) {
-          businesses.forEach((biz) => {
-            const lat = parseFloat(String(biz.latitude));
-            const lng = parseFloat(String(biz.longitude));
-            if (isNaN(lat) || isNaN(lng)) return;
-            const marker: GMarker = new g.Marker({
-              position: { lat, lng },
-              map: null,
-              title: biz.name ?? "",
-              icon: {
-                path: g.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: "#CA922B",
-                fillOpacity: 0.9,
-                strokeColor: "#2B1507",
-                strokeWeight: 2,
-              },
-            });
-            marker.addListener("click", () => selectBusiness(biz.id, biz, marker));
-            markersRef.current.set(biz.id, marker);
-          });
-        }
-      }
       return;
     }
 
@@ -1387,36 +1447,6 @@ export default function MapPage() {
       // Do not make a saved city look like a live location. It is used only if
       // browser location is unavailable or denied, and the notice below says so.
       requestMapDeviceLocation({ onUnavailable: () => centerSavedHomeArea(savedHomeCity) });
-
-      businesses.forEach((biz) => {
-        const lat = parseFloat(String(biz.latitude));
-        const lng = parseFloat(String(biz.longitude));
-        if (isNaN(lat) || isNaN(lng)) return;
-
-        const marker: GMarker = new g.Marker({
-          position: { lat, lng },
-          // Construct the marker now to retain its existing click-through
-          // behavior. Its locality-first visibility is set below, so an
-          // unscoped initial map never flashes country-wide pins.
-          map: null,
-          title: biz.name ?? "",
-          icon: {
-            path: g.SymbolPath.CIRCLE,
-            scale: 8,
-            fillColor: "#CA922B",
-            fillOpacity: 0.9,
-            strokeColor: "#2B1507",
-            strokeWeight: 2,
-          },
-        });
-
-        // A public business pin is a doorway to its MWM profile, whether the
-        // place is claimed, unclaimed, minority-owned, or community-listed.
-        // The detail page is where members can safely add experiences and help
-        // prevent a duplicate listing; it is never replaced by an external URL.
-        marker.addListener("click", () => navigate(`/businesses/${biz.id}`));
-        markersRef.current.set(biz.id, marker);
-      });
     } catch {
       setApiKeyError(true);
     }
@@ -1424,9 +1454,8 @@ export default function MapPage() {
     return () => window.removeEventListener("error", onGmError, true);
   // The Google callback changes gmLoaded after the first render. It must be a
   // dependency so a successful script load actually creates the map object.
-  // `ready` remains here to preserve the existing marker pass.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gmLoaded, ready, isLoading, handoffQuery, navigate, requestMapDeviceLocation, centerSavedHomeArea, savedHomeCity]);
+  }, [gmLoaded, ready, requestMapDeviceLocation, centerSavedHomeArea, savedHomeCity]);
 
   const selectBusiness = useCallback((id: string, biz: BizWithCoords, marker?: GMarker) => {
     setSelected(id);
@@ -1466,6 +1495,37 @@ export default function MapPage() {
     );
     infoWindowRef.current?.open(mapRef.current, m);
   }, []);
+
+  // Reconcile the marker layer when a debounced viewport request completes.
+  // Old viewport markers are detached before new ones are added, preventing a
+  // member from seeing stale businesses after panning to a different city.
+  useEffect(() => {
+    const g = (window as any).google?.maps;
+    const map = mapRef.current;
+    if (!ready || !g || !map) return;
+    const visibleIds = new Set(businesses.map((business) => business.id));
+    markersRef.current.forEach((marker, id) => {
+      if (!visibleIds.has(id)) {
+        marker.setMap(null);
+        markersRef.current.delete(id);
+      }
+    });
+    businesses.forEach((biz) => {
+      if (markersRef.current.has(biz.id)) return;
+      const lat = Number(biz.latitude);
+      const lng = Number(biz.longitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+      const marker: GMarker = new g.Marker({
+        position: { lat, lng }, map: null, title: biz.name ?? "",
+        icon: {
+          path: g.SymbolPath.CIRCLE, scale: 8, fillColor: "#CA922B",
+          fillOpacity: 0.9, strokeColor: "#2B1507", strokeWeight: 2,
+        },
+      });
+      marker.addListener("click", () => selectBusiness(biz.id, biz, marker));
+      markersRef.current.set(biz.id, marker);
+    });
+  }, [businesses, ready, selectBusiness]);
 
   const resetView = useCallback(() => {
     setSelected(null);

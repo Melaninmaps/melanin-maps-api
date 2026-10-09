@@ -10,7 +10,8 @@ const source = (relativePath: string) => readFileSync(
 describe("map profile navigation", () => {
   it("opens an MWM profile directly from a business pin", () => {
     const map = source("../pages/map.tsx");
-    expect(map).toContain('navigate(`/businesses/${biz.id}`)');
+    expect(map).toContain('marker.addListener("click", () => selectBusiness(biz.id, biz, marker));');
+    expect(map).toContain('href="/businesses/${biz.id}"');
   });
 
   it("opens first-party cultural and discoverability profiles while retaining non-profile info windows", () => {

@@ -26,7 +26,7 @@ describe("map-first Web layout", () => {
   });
 
   it("creates the map object after the Google Maps callback changes readiness", () => {
-    expect(mapSource).toContain("}, [gmLoaded, ready, isLoading, handoffQuery, navigate, requestMapDeviceLocation, centerSavedHomeArea, savedHomeCity]);");
+    expect(mapSource).toContain("}, [gmLoaded, ready, requestMapDeviceLocation, centerSavedHomeArea, savedHomeCity]);");
     expect(mapSource).toContain("const map: GMap = new g.Map(mapDivRef.current");
     expect(mapSource).toContain("setReady(true);");
   });

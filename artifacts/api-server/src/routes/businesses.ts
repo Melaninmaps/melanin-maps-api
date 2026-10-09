@@ -55,6 +55,13 @@ import {
   MAP_LOCATION_HOLD_REASON,
 } from "../businesses/mapCoordinateIntegrity";
 import {
+  decodeMapPinCursor,
+  encodeMapPinCursor,
+  MapPinViewportInputError,
+  mapPinViewportFromQuery,
+  mapPinViewportScope,
+} from "../businesses/mapPinViewport";
+import {
   mwmDiasporaPromotionSqlPredicate,
   mwmPublicDirectorySqlPredicate,
 } from "../businesses/mwmCoreDiscoveryPolicy";
@@ -536,9 +543,9 @@ router.get("/businesses/categories", (_req: Request, res: Response) => {
 });
 
 // ── Lightweight map-pins endpoint ──────────────────────────────────────────
-// Returns ALL active businesses that have valid coordinates, with only the
-// minimal fields a map marker needs. No 200-row cap — this is intentional.
-// The small payload (id/name/lat/lng/category/city/country) keeps it fast.
+// Legacy requests intentionally keep their all-safe-pins payload so an
+// installed client is not silently broken. Viewport-aware clients provide a
+// complete bounds set and receive a deterministic cursor page instead.
 router.get("/businesses/map-pins", async (req: Request, res: Response) => {
   try {
     // This may clear a member's saved designation filter, but never bypasses
@@ -586,9 +593,9 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
     const designationWhere = designationClauses.length
       ? `AND ${designationClauses.join(" AND ")}`
       : "";
-    // Uses public.public_businesses view so duplicates and hidden records are
-    // never included — the view enforces is_duplicate=false + live listing_status.
-    const { rows } = await pool.query<{
+    const viewport = mapPinViewportFromQuery(req.query);
+
+    type MapPinRow = {
       id: string;
       name: string;
       latitude: string;
@@ -599,7 +606,83 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
       state: string | null;
       country: string | null;
       listing_status: string | null;
-    }>(`
+      total_in_viewport?: string;
+    };
+    const keepTrustworthy = (rows: MapPinRow[]) => rows.filter((business) =>
+      hasTrustworthyMapCoordinate({
+        city: business.city,
+        stateCode: business.state,
+        latitude: business.latitude,
+        longitude: business.longitude,
+      }),
+    );
+
+    if (viewport) {
+      const scope = mapPinViewportScope(viewport, requestedIds);
+      const cursor = decodeMapPinCursor(req.query.cursor, scope);
+      const params: unknown[] = [...designationParams];
+      const southParameter = params.push(viewport.south);
+      const northParameter = params.push(viewport.north);
+      const westParameter = params.push(viewport.west);
+      const eastParameter = params.push(viewport.east);
+      const longitudeClause = viewport.west <= viewport.east
+        ? `longitude::numeric >= $${westParameter} AND longitude::numeric <= $${eastParameter}`
+        : `(longitude::numeric >= $${westParameter} OR longitude::numeric <= $${eastParameter})`;
+      let cursorClause = "";
+      if (cursor) {
+        const latitudeParameter = params.push(cursor.latitude);
+        const longitudeParameter = params.push(cursor.longitude);
+        const idParameter = params.push(cursor.id);
+        cursorClause = `AND (latitude::numeric, longitude::numeric, id::text) > ($${latitudeParameter}::numeric, $${longitudeParameter}::numeric, $${idParameter}::text)`;
+      }
+      const limitParameter = params.push(viewport.limit + 1);
+      const { rows: candidateRows } = await pool.query<MapPinRow>(`
+        WITH scoped_pins AS (
+          SELECT id, name, latitude, longitude, category, subcategory,
+                 city, state, country, listing_status,
+                 COUNT(*) OVER()::integer AS total_in_viewport
+          FROM public.public_businesses
+          WHERE latitude IS NOT NULL
+            AND longitude IS NOT NULL
+            AND ${documentedDiscoveryEligibilitySqlPredicate("public.public_businesses.id", "map")}
+            AND NOT (latitude::numeric = 0 AND longitude::numeric = 0)
+            AND COALESCE(name, '') NOT ILIKE '%[demo]%'
+            AND COALESCE(description, '') NOT ILIKE '%[demo]%'
+            ${designationWhere}
+            AND latitude::numeric >= $${southParameter}
+            AND latitude::numeric <= $${northParameter}
+            AND ${longitudeClause}
+        )
+        SELECT * FROM scoped_pins
+        WHERE TRUE ${cursorClause}
+        ORDER BY latitude::numeric ASC, longitude::numeric ASC, id::text ASC
+        LIMIT $${limitParameter}
+      `, params);
+      const hasMore = candidateRows.length > viewport.limit;
+      const pageRows = candidateRows.slice(0, viewport.limit);
+      const last = pageRows.at(-1);
+      const totalInViewport = pageRows.length
+        ? Number(pageRows[0]?.total_in_viewport ?? pageRows.length)
+        : 0;
+      sendDynamicJson(res, {
+        pins: keepTrustworthy(pageRows),
+        nextCursor: hasMore && last
+          ? encodeMapPinCursor({
+            latitude: last.latitude,
+            longitude: last.longitude,
+            id: last.id,
+            scope,
+          })
+          : null,
+        totalInViewport,
+        limit: viewport.limit,
+      });
+      return;
+    }
+
+    // Uses public.public_businesses view so duplicates and hidden records are
+    // never included — the view enforces is_duplicate=false + live listing_status.
+    const { rows } = await pool.query<MapPinRow>(`
       SELECT id, name, latitude, longitude, category, subcategory,
              city, state, country, listing_status
       FROM public.public_businesses
@@ -615,17 +698,12 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
     // Historical city-center fallbacks are not business locations. Omit only
     // those exact, known placeholders; their searchable public profiles and
     // source evidence remain retained in the directory.
-    sendDynamicJson(res, {
-      pins: rows.filter((business) =>
-        hasTrustworthyMapCoordinate({
-          city: business.city,
-          stateCode: business.state,
-          latitude: business.latitude,
-          longitude: business.longitude,
-        }),
-      ),
-    });
+    sendDynamicJson(res, { pins: keepTrustworthy(rows) });
   } catch (err) {
+    if (err instanceof MapPinViewportInputError) {
+      res.status(400).json({ error: "Invalid map viewport request", code: err.code });
+      return;
+    }
     res.status(500).json({ error: "Failed to load map pins" });
   }
 });
