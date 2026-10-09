@@ -437,6 +437,33 @@ async function run(): Promise<Result> {
       .send(mapInput)
       .expect(200);
     assert(accepted.body.ok === true, "map-only route did not return success");
+    const beforeReplayCounts = await client.query<{ receipt_count: string; discovery_audit_count: string; reconciliation_audit_count: string }>(
+      `SELECT
+         (SELECT COUNT(*)::text FROM public.business_profile_evidence_receipts WHERE business_id = 'route-map') AS receipt_count,
+         (SELECT COUNT(*)::text FROM public.business_discovery_eligibility_audit_events WHERE business_id = 'route-map') AS discovery_audit_count,
+         (SELECT COUNT(*)::text FROM public.business_directory_reconciliation_audit_events WHERE business_id = 'route-map') AS reconciliation_audit_count`,
+    );
+    const replayed = await request(routeApp)
+      .put("/api/admin/businesses/route-map/map-pin-evidence")
+      .set("x-cron-secret", "disposable-map-route-secret")
+      .send(mapInput)
+      .expect(200);
+    assert(replayed.body.ok === true && replayed.body.replayed === true, "exact map evidence retry did not return an idempotent replay");
+    assert(
+      replayed.body.mapEvidence?.addressEvidenceId === accepted.body.mapEvidence?.addressEvidenceId
+        && replayed.body.mapEvidence?.mapPinEvidenceId === accepted.body.mapEvidence?.mapPinEvidenceId,
+      "exact map evidence retry returned different receipt identifiers",
+    );
+    const afterReplayCounts = await client.query<{ receipt_count: string; discovery_audit_count: string; reconciliation_audit_count: string }>(
+      `SELECT
+         (SELECT COUNT(*)::text FROM public.business_profile_evidence_receipts WHERE business_id = 'route-map') AS receipt_count,
+         (SELECT COUNT(*)::text FROM public.business_discovery_eligibility_audit_events WHERE business_id = 'route-map') AS discovery_audit_count,
+         (SELECT COUNT(*)::text FROM public.business_directory_reconciliation_audit_events WHERE business_id = 'route-map') AS reconciliation_audit_count`,
+    );
+    assert(
+      JSON.stringify(afterReplayCounts.rows[0]) === JSON.stringify(beforeReplayCounts.rows[0]),
+      "exact map evidence retry created duplicate receipts or audit events",
+    );
     const publicMapApp = express();
     publicMapApp.use(businessRoutes);
     const publicPins = await request(publicMapApp)

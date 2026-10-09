@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  isExactMapPinAttachmentReplay,
   mapPinOnlyPatch,
   storedAddressMatchesMapEvidence,
   validateDocumentedDiscoveryReviewInput,
@@ -296,6 +297,46 @@ describe("documented discovery review input", () => {
     request.mapPinEvidence.observedValue.formattedAddress = "123 Example Street, Philadelphia, PA";
     const result = validateMapPinEvidenceReviewInput(request, now);
     expect(storedAddressMatchesMapEvidence("123 Example Street, Philadelphia, PA", result)).toBe(false);
+  });
+
+  it("recognizes only an exact committed map attachment as a safe retry", () => {
+    const result = validateMapPinEvidenceReviewInput(mapEvidenceRequest(), now);
+    const existing = {
+      latitude: "39.9526",
+      longitude: "-75.1652",
+      decisionReason: result.decisionReason,
+      addressEvidence: {
+        id: "address-receipt",
+        fieldName: result.addressEvidence.field,
+        sourceKind: result.addressEvidence.sourceKind,
+        sourceUrl: result.addressEvidence.sourceUrl,
+        sourceLabel: null,
+        observedAt: new Date(result.addressEvidence.observedAt),
+        sourceExpiresAt: null,
+        confidence: result.addressEvidence.confidence,
+        observedValue: result.addressEvidence.observedValue,
+      },
+      mapPinEvidence: {
+        id: "map-receipt",
+        fieldName: result.mapPinEvidence.field,
+        sourceKind: result.mapPinEvidence.sourceKind,
+        sourceUrl: result.mapPinEvidence.sourceUrl,
+        sourceLabel: null,
+        observedAt: new Date(result.mapPinEvidence.observedAt),
+        sourceExpiresAt: null,
+        confidence: result.mapPinEvidence.confidence,
+        observedValue: result.mapPinEvidence.observedValue,
+      },
+    };
+    expect(isExactMapPinAttachmentReplay(result, existing)).toBe(true);
+    expect(isExactMapPinAttachmentReplay({ ...result, decisionReason: "A newly observed correction requires a separate audit event." }, existing)).toBe(false);
+    expect(isExactMapPinAttachmentReplay({
+      ...result,
+      mapPinEvidence: {
+        ...result.mapPinEvidence,
+        observedValue: { ...result.mapPinEvidence.observedValue, longitude: -75.1653 },
+      },
+    }, existing)).toBe(false);
   });
 
   it("rejects map-only attachment without identity-matched official address evidence", () => {

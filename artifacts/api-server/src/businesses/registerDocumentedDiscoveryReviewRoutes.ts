@@ -68,6 +68,26 @@ type MapPinEvidenceReviewInput = Readonly<{
   mapPinEvidence: EvidenceInput;
 }>;
 
+type PersistedEvidenceForMapReplay = Readonly<{
+  id: string | null;
+  fieldName: string | null;
+  sourceKind: string | null;
+  sourceUrl: string | null;
+  sourceLabel: string | null;
+  observedAt: string | Date | null;
+  sourceExpiresAt: string | Date | null;
+  confidence: string | null;
+  observedValue: unknown;
+}>;
+
+type ExistingMapPinAttachment = Readonly<{
+  latitude: string | number | null;
+  longitude: string | number | null;
+  decisionReason: string | null;
+  addressEvidence: PersistedEvidenceForMapReplay;
+  mapPinEvidence: PersistedEvidenceForMapReplay;
+}>;
+
 const OFFICIAL_SOCIAL_HOSTS = new Set([
   "instagram.com",
   "www.instagram.com",
@@ -291,6 +311,54 @@ function exactMapEvidenceAddressMatch(addressEvidence: EvidenceInput, mapPinEvid
   const geocodedAddress = normalizedAddress(mapPinEvidence.observedValue?.formattedAddress);
   const queryAddress = normalizedAddress(mapPinEvidence.observedValue?.queryAddress);
   return Boolean(address && geocodedAddress && queryAddress && geocodedAddress === address && queryAddress === address);
+}
+
+function canonicalJson(value: unknown): string {
+  if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value);
+}
+
+function timestampsMatch(left: string | Date | null | undefined, right: string | null | undefined): boolean {
+  if (left == null || right == null) return left == null && right == null;
+  return Date.parse(String(left)) === Date.parse(right);
+}
+
+function persistedEvidenceMatchesMapInput(
+  persisted: PersistedEvidenceForMapReplay,
+  input: EvidenceInput,
+): boolean {
+  return persisted.id != null
+    && persisted.fieldName === input.field
+    && persisted.sourceKind === input.sourceKind
+    && persisted.sourceUrl === input.sourceUrl
+    && (persisted.sourceLabel ?? null) === (input.sourceLabel ?? null)
+    && timestampsMatch(persisted.observedAt, input.observedAt)
+    && timestampsMatch(persisted.sourceExpiresAt, input.sourceExpiresAt ?? null)
+    && persisted.confidence === input.confidence
+    && canonicalJson(persisted.observedValue) === canonicalJson(input.observedValue ?? {});
+}
+
+/**
+ * A client can lose the success response after the transaction commits. Exact
+ * replay must return the same evidence identifiers without creating a second
+ * pair of receipts or mutable-looking audit history. A changed source, date,
+ * coordinates, or reason is a new correction and remains separately audited.
+ */
+export function isExactMapPinAttachmentReplay(
+  input: MapPinEvidenceReviewInput,
+  existing: ExistingMapPinAttachment,
+): boolean {
+  const latitude = input.mapPinEvidence.observedValue?.latitude;
+  const longitude = input.mapPinEvidence.observedValue?.longitude;
+  return existing.decisionReason === input.decisionReason
+    && Number(existing.latitude) === latitude
+    && Number(existing.longitude) === longitude
+    && persistedEvidenceMatchesMapInput(existing.addressEvidence, input.addressEvidence)
+    && persistedEvidenceMatchesMapInput(existing.mapPinEvidence, input.mapPinEvidence);
 }
 
 function requireFiniteCoordinate(value: unknown, label: "latitude" | "longitude", minimum: number, maximum: number): number {
@@ -1112,6 +1180,107 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
       if (!mapAuditSchema.rows[0]?.ready) {
         await client.query("ROLLBACK");
         res.status(409).json({ error: "Audited map evidence is unavailable until the separately reviewed audit-schema migration is applied" });
+        return;
+      }
+
+      const currentMapAttachment = await client.query<{
+        address_evidence_id: string | null;
+        map_pin_evidence_id: string | null;
+        address_field_name: string | null;
+        address_source_kind: string | null;
+        address_source_url: string | null;
+        address_source_label: string | null;
+        address_observed_at: Date | null;
+        address_source_expires_at: Date | null;
+        address_confidence: string | null;
+        address_observed_value: unknown;
+        map_field_name: string | null;
+        map_source_kind: string | null;
+        map_source_url: string | null;
+        map_source_label: string | null;
+        map_observed_at: Date | null;
+        map_source_expires_at: Date | null;
+        map_confidence: string | null;
+        map_observed_value: unknown;
+        decision_reason: string | null;
+      }>(
+        `SELECT e.address_evidence_id::text, e.map_pin_evidence_id::text,
+                address_receipt.field_name AS address_field_name,
+                address_receipt.source_kind AS address_source_kind,
+                address_receipt.source_url AS address_source_url,
+                address_receipt.source_label AS address_source_label,
+                address_receipt.observed_at AS address_observed_at,
+                address_receipt.source_expires_at AS address_source_expires_at,
+                address_receipt.confidence AS address_confidence,
+                address_receipt.observed_value AS address_observed_value,
+                map_receipt.field_name AS map_field_name,
+                map_receipt.source_kind AS map_source_kind,
+                map_receipt.source_url AS map_source_url,
+                map_receipt.source_label AS map_source_label,
+                map_receipt.observed_at AS map_observed_at,
+                map_receipt.source_expires_at AS map_source_expires_at,
+                map_receipt.confidence AS map_confidence,
+                map_receipt.observed_value AS map_observed_value,
+                map_event.reason AS decision_reason
+           FROM business_discovery_eligibility e
+           LEFT JOIN business_profile_evidence_receipts address_receipt
+             ON address_receipt.id = e.address_evidence_id
+           LEFT JOIN business_profile_evidence_receipts map_receipt
+             ON map_receipt.id = e.map_pin_evidence_id
+           LEFT JOIN LATERAL (
+             SELECT event.reason
+               FROM business_discovery_eligibility_audit_events event
+              WHERE event.business_id = e.business_id
+                AND event.action = 'map_pin_attached'
+                AND event.after_state ->> 'address_evidence_id' = e.address_evidence_id::text
+                AND event.after_state ->> 'map_pin_evidence_id' = e.map_pin_evidence_id::text
+              ORDER BY event.created_at DESC
+              LIMIT 1
+           ) map_event ON TRUE
+          WHERE e.business_id = $1
+          FOR UPDATE OF e`,
+        [businessId],
+      );
+      const attachment = currentMapAttachment.rows[0];
+      if (attachment && isExactMapPinAttachmentReplay(input, {
+        latitude: existingBusiness.rows[0].latitude,
+        longitude: existingBusiness.rows[0].longitude,
+        decisionReason: attachment.decision_reason,
+        addressEvidence: {
+          id: attachment.address_evidence_id,
+          fieldName: attachment.address_field_name,
+          sourceKind: attachment.address_source_kind,
+          sourceUrl: attachment.address_source_url,
+          sourceLabel: attachment.address_source_label,
+          observedAt: attachment.address_observed_at,
+          sourceExpiresAt: attachment.address_source_expires_at,
+          confidence: attachment.address_confidence,
+          observedValue: attachment.address_observed_value,
+        },
+        mapPinEvidence: {
+          id: attachment.map_pin_evidence_id,
+          fieldName: attachment.map_field_name,
+          sourceKind: attachment.map_source_kind,
+          sourceUrl: attachment.map_source_url,
+          sourceLabel: attachment.map_source_label,
+          observedAt: attachment.map_observed_at,
+          sourceExpiresAt: attachment.map_source_expires_at,
+          confidence: attachment.map_confidence,
+          observedValue: attachment.map_observed_value,
+        },
+      })) {
+        await client.query("COMMIT");
+        res.json({
+          ok: true,
+          replayed: true,
+          businessId,
+          policyVersion: DOCUMENTED_DISCOVERY_POLICY_VERSION,
+          mapEvidence: {
+            addressEvidenceId: attachment.address_evidence_id,
+            mapPinEvidenceId: attachment.map_pin_evidence_id,
+          },
+          message: "Exact map-evidence retry replayed without changing receipts, coordinates, or audit history.",
+        });
         return;
       }
 
