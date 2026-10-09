@@ -16,5 +16,7 @@ describe("web map viewport pin retrieval", () => {
     expect(mapSource).toContain("const visibleIds = new Set(businesses.map((business) => business.id))");
     expect(mapSource).toContain("marker.setMap(null)");
     expect(mapSource).toContain("markersRef.current.delete(id)");
+    expect(mapSource).toContain('import { MarkerClusterer } from "@googlemaps/markerclusterer"');
+    expect(mapSource).toContain("new MarkerClusterer({ map, markers })");
   });
 });

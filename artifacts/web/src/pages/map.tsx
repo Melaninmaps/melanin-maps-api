@@ -11,6 +11,7 @@ import {
 import { Link, useLocation, useSearch } from "wouter";
 import { Search, MapPin, X, Navigation, Navigation2, Plus, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { LocalBusinessResults } from "@/features/map/LocalBusinessResults";
 import { applyLocalMapViewport, type MapViewportAdapter } from "@/features/map/applyLocalMapViewport";
 import { parseLocalMapSearch } from "@/features/map/parseLocalMapSearch";
@@ -273,6 +274,7 @@ export default function MapPage() {
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<GMap>(null);
   const markersRef = useRef<Map<string, GMarker>>(new Map());
+  const markerClustererRef = useRef<MarkerClusterer | null>(null);
   const infoWindowRef = useRef<GInfoWindow>(null);
   const directionsRendererRef = useRef<any>(null);
   const mapPinsAbortRef = useRef<AbortController | null>(null);
@@ -1608,9 +1610,12 @@ export default function MapPage() {
     }
   }, [isPaidMember]);
 
-  // Business marker visibility — only shown after user explicitly submits a search
+  // Business marker visibility — only shown after user explicitly submits a
+  // search. The clusterer keeps dense city viewports responsive without
+  // replacing any individual business marker or its profile action.
   useEffect(() => {
-    if (!mapRef.current) return;
+    const map = mapRef.current;
+    if (!map) return;
     const localSearchIntent = parseLocalMapSearch(search);
     const localSearchOwnsPins = businessSearchActive && (
       detectedLocation !== null || (userCoords !== null && localSearchIntent.usesDeviceLocation === true)
@@ -1618,9 +1623,19 @@ export default function MapPage() {
     const showBiz = (businessSearchActive || isDiscoveryFilterActive) && Boolean(activeLocalScope || exploreAllAreas) && !localSearchOwnsPins && (!legendFilter || legendFilter === "business");
     // When universal search returned results, only show those businesses as markers
     const activeIds = new Set(displayedBusinessResults.map((business: any) => business.id as string));
-    markersRef.current.forEach((marker, id) => {
-      marker.setMap(showBiz && activeIds.has(id) ? mapRef.current : null);
-    });
+    markerClustererRef.current?.clearMarkers();
+    markerClustererRef.current = null;
+    if (!showBiz) return;
+    const markers = [...markersRef.current.entries()]
+      .filter(([id]) => activeIds.has(id))
+      .map(([, marker]) => marker);
+    if (markers.length === 0) return;
+    const clusterer = new MarkerClusterer({ map, markers });
+    markerClustererRef.current = clusterer;
+    return () => {
+      clusterer.clearMarkers();
+      if (markerClustererRef.current === clusterer) markerClustererRef.current = null;
+    };
   }, [activeLocalScope, displayedBusinessResults, isDiscoveryFilterActive, legendFilter, businessSearchActive, exploreAllAreas, detectedLocation, userCoords, search]);
 
   // ── Sidebar ─────────────────────────────────────────────────────────────
