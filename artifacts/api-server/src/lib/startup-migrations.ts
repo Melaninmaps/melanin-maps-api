@@ -7018,6 +7018,30 @@ export async function ensureFounderMapRestorationSchema(logger?: Logger): Promis
   logger?.info("Founder map restoration outcome schema is ready before traffic acceptance");
 }
 
+/**
+ * The map policy references this schema on every public pin read. Explicit
+ * feature-release mode intentionally skips the broad migration loop, so this
+ * additive, data-neutral prerequisite must be checked before traffic accepts a
+ * map request. It creates no attestation or business data by itself.
+ */
+export async function ensureLegacyMapLocationAttestationSchema(logger?: Logger): Promise<void> {
+  const migration = MIGRATIONS.find(
+    (entry) => entry.name === "business_legacy_map_location_attestations_v1",
+  );
+  if (!migration) {
+    throw new Error("Legacy map location attestation migration definition is missing.");
+  }
+  await pool.query(migration.sql);
+  const { rows } = await pool.query<{ attestation_table: string | null; event_table: string | null }>(
+    `SELECT to_regclass('public.business_legacy_map_location_attestations')::text AS attestation_table,
+            to_regclass('public.business_legacy_map_location_attestation_events')::text AS event_table`,
+  );
+  if (!rows[0]?.attestation_table || !rows[0]?.event_table) {
+    throw new Error("Legacy map location attestation schema verification failed.");
+  }
+  logger?.info("Legacy map location attestation schema is ready before traffic acceptance");
+}
+
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
   const log = (msg: string) =>
     logger ? logger.info(msg) : console.log(`[startup-migrations] ${msg}`);

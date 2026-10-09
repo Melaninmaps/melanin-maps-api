@@ -676,6 +676,8 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
         `SELECT b.id, b.name, b.city, b.state, b.status, b.listing_status,
                 COALESCE(b.is_duplicate, false) AS is_duplicate, b.duplicate_of_id,
                 b.address, b.latitude, b.longitude,
+                to_jsonb(b)->>'country' AS country,
+                to_jsonb(b)->>'created_at' AS business_created_at,
                 to_jsonb(b)->>'service_area' AS service_area,
                 to_jsonb(b)->>'public_location_kind' AS public_location_kind,
                 EXISTS (
@@ -747,6 +749,8 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
         };
         return {
           ...candidate,
+          country: typeof row.country === "string" ? row.country : null,
+          businessCreatedAt: typeof row.business_created_at === "string" ? row.business_created_at : null,
           assessment: assessMapReadiness(candidate),
           evidenceReferences: {
             ownership: { id: candidate.ownershipEvidenceId, sourceUrl: row.ownership_source_url ?? null },
