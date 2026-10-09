@@ -85,6 +85,7 @@ function mapEvidenceRequest() {
       observedValue: {
         address: "123 Example Street, Philadelphia, PA 19103",
         addressType: "physical",
+        isServiceArea: false,
         identityMatch: true,
         matchingSignals: ["business_name", "city", "address"],
       },
@@ -265,14 +266,29 @@ describe("documented discovery review input", () => {
     expect(() => validateMapPinEvidenceReviewInput(mismatch, now)).toThrow("exact approved-geocoder address match");
   });
 
-  it("rejects service areas, invalid coordinates, and attempts to use map evidence to change an address", () => {
+  it("rejects service areas, malformed coordinates, and attempts to use map evidence to change an address", () => {
     const serviceArea = mapEvidenceRequest();
     serviceArea.addressEvidence.observedValue.addressType = "service_area";
     expect(() => validateMapPinEvidenceReviewInput(serviceArea, now)).toThrow("physical street address");
 
+    const malformedServiceArea = mapEvidenceRequest();
+    (malformedServiceArea.addressEvidence.observedValue as Record<string, unknown>).isServiceArea = "false";
+    expect(() => validateMapPinEvidenceReviewInput(malformedServiceArea, now)).toThrow("physical street address");
+
     const invalidCoordinates = mapEvidenceRequest();
     invalidCoordinates.mapPinEvidence.observedValue.latitude = 91;
     expect(() => validateMapPinEvidenceReviewInput(invalidCoordinates, now)).toThrow("finite observedValue.latitude");
+
+    for (const malformed of [Number.NaN]) {
+      const malformedCoordinates = mapEvidenceRequest();
+      (malformedCoordinates.mapPinEvidence.observedValue as Record<string, unknown>).latitude = malformed;
+      expect(() => validateMapPinEvidenceReviewInput(malformedCoordinates, now)).toThrow("finite observedValue.latitude");
+    }
+    for (const malformed of [null, "", true, "39.9526"]) {
+      const malformedCoordinates = mapEvidenceRequest();
+      (malformedCoordinates.mapPinEvidence.observedValue as Record<string, unknown>).latitude = malformed;
+      expect(() => validateMapPinEvidenceReviewInput(malformedCoordinates, now)).toThrow("finite numeric observedValue.latitude");
+    }
 
     const result = validateMapPinEvidenceReviewInput(mapEvidenceRequest(), now);
     expect(storedAddressMatchesMapEvidence("124 Example Street, Philadelphia, PA 19103", result)).toBe(false);

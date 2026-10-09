@@ -1,11 +1,14 @@
 import { createServer } from "node:http";
+import express from "express";
 import { Pool } from "pg";
+import request from "supertest";
 import {
   directAdminCreationUnsafeFields,
   validateAdminBusinessProfilePatch,
 } from "../artifacts/api-server/src/businesses/adminBusinessProfilePolicy";
 import {
   mapPinOnlyPatch,
+  registerDocumentedDiscoveryReviewRoutes,
   storedAddressMatchesMapEvidence,
   validateMapPinEvidenceReviewInput,
 } from "../artifacts/api-server/src/businesses/registerDocumentedDiscoveryReviewRoutes";
@@ -83,6 +86,108 @@ async function run(): Promise<Result> {
         map_pin_evidence_id uuid,
         ownership_designations jsonb NOT NULL DEFAULT '[]'::jsonb
       )
+    `);
+
+    // The disposable database is dedicated to this harness. These public-schema
+    // fixtures let the real Express route use its production table names and
+    // global pool, rather than proving behavior with a copied SQL fragment.
+    await client.query(`
+      DROP TABLE IF EXISTS public.business_directory_reconciliation_audit_events;
+      DROP TABLE IF EXISTS public.business_discovery_eligibility_audit_events;
+      DROP TABLE IF EXISTS public.business_directory_reconciliation_ledger;
+      DROP TABLE IF EXISTS public.business_profile_evidence_receipts;
+      DROP TABLE IF EXISTS public.business_discovery_eligibility;
+      DROP TABLE IF EXISTS public.businesses;
+      CREATE TABLE public.businesses (
+        id varchar(255) PRIMARY KEY,
+        name text NOT NULL,
+        address text,
+        latitude numeric,
+        longitude numeric,
+        status text NOT NULL DEFAULT 'active',
+        listing_status text NOT NULL DEFAULT 'live_unclaimed',
+        updated_at timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE TABLE public.business_profile_evidence_receipts (
+        id uuid PRIMARY KEY,
+        business_id varchar(255) NOT NULL,
+        field_name text NOT NULL,
+        source_kind text NOT NULL,
+        source_url text NOT NULL,
+        source_label text,
+        observed_at timestamptz NOT NULL,
+        source_expires_at timestamptz,
+        confidence text NOT NULL,
+        observed_value jsonb NOT NULL,
+        captured_by varchar(255)
+      );
+      CREATE TABLE public.business_discovery_eligibility (
+        business_id varchar(255) PRIMARY KEY,
+        eligibility_status text NOT NULL,
+        policy_version text NOT NULL,
+        identity_evidence_id uuid,
+        ownership_evidence_id uuid,
+        official_website_evidence_id uuid,
+        official_social_evidence_id uuid,
+        address_evidence_id uuid,
+        map_pin_evidence_id uuid,
+        ownership_designations jsonb NOT NULL,
+        ownership_source_expires_at timestamptz,
+        review_after timestamptz,
+        decision_reason text NOT NULL,
+        decided_by varchar(255),
+        decided_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE TABLE public.business_directory_reconciliation_ledger (
+        business_id varchar(255) PRIMARY KEY,
+        reconciliation_state text NOT NULL,
+        reason_code text NOT NULL,
+        presence_status text NOT NULL,
+        ownership_status text NOT NULL,
+        recommended_action text NOT NULL,
+        evidence_receipt_ids jsonb NOT NULL DEFAULT '[]'::jsonb,
+        source_reference_ids jsonb NOT NULL DEFAULT '[]'::jsonb,
+        batch_reference text,
+        reviewed_at timestamptz,
+        reviewed_by varchar(255),
+        created_at timestamptz NOT NULL DEFAULT now(),
+        updated_at timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE TABLE public.business_discovery_eligibility_audit_events (
+        id uuid PRIMARY KEY,
+        business_id varchar(255) NOT NULL,
+        action text NOT NULL CHECK (action IN ('qualified', 'direct_name_only', 'review_hold', 'revoked', 'requalified', 'map_pin_attached')),
+        actor_id varchar(255),
+        reason text NOT NULL,
+        before_state jsonb NOT NULL,
+        after_state jsonb NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE TABLE public.business_directory_reconciliation_audit_events (
+        id uuid PRIMARY KEY,
+        business_id varchar(255) NOT NULL,
+        action text NOT NULL CHECK (action IN ('initialize', 'review', 'archive', 'restore')),
+        actor_user_id varchar(255),
+        reason_code text NOT NULL,
+        reason text NOT NULL,
+        evidence_receipt_ids jsonb NOT NULL,
+        before_state jsonb NOT NULL,
+        after_state jsonb NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE OR REPLACE FUNCTION public.disposable_prevent_map_audit_mutation()
+      RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        RAISE EXCEPTION 'map audit records are immutable';
+      END;
+      $$;
+      CREATE TRIGGER disposable_discovery_audit_immutable
+      BEFORE UPDATE OR DELETE ON public.business_discovery_eligibility_audit_events
+      FOR EACH ROW EXECUTE FUNCTION public.disposable_prevent_map_audit_mutation();
+      CREATE TRIGGER disposable_reconciliation_audit_immutable
+      BEFORE UPDATE OR DELETE ON public.business_directory_reconciliation_audit_events
+      FOR EACH ROW EXECUTE FUNCTION public.disposable_prevent_map_audit_mutation();
     `);
 
     // The actual branch policy rejects presence and ownership claims through
@@ -168,6 +273,7 @@ async function run(): Promise<Result> {
         observedValue: {
           address: "123 Synthetic Street, Philadelphia, PA 19103",
           addressType: "physical",
+          isServiceArea: false,
           identityMatch: true,
           matchingSignals: ["business_name", "city", "address"],
         },
@@ -231,6 +337,99 @@ async function run(): Promise<Result> {
     assert(JSON.stringify(mapEligibility.rows[0]?.ownership_designations) === JSON.stringify(["Black / African American-Owned"]), "map-only update changed ownership evidence");
     assert(mapEligibility.rows[0]?.address_evidence_id === attachedAddressEvidenceId && mapEligibility.rows[0]?.map_pin_evidence_id === attachedMapEvidenceId, "map-only evidence ids were not updated");
     checks.map_only_attachment_preserves_address_lifecycle_and_ownership = true;
+
+    // Exercise the real HTTP route and production table names against the
+    // isolated database. This verifies authorization, lock-gated eligibility,
+    // address mismatch rejection, narrow writes, and immutable audit records.
+    await client.query(
+      `INSERT INTO public.businesses (id, name, address, status, listing_status)
+       VALUES ('route-map', 'Route Map Example', '123 Synthetic Street, Philadelphia, PA 19103', 'active', 'live_unclaimed')`,
+    );
+    await client.query(
+      `INSERT INTO public.business_discovery_eligibility (
+         business_id, eligibility_status, policy_version, identity_evidence_id, ownership_evidence_id,
+         official_website_evidence_id, official_social_evidence_id, ownership_designations,
+         ownership_source_expires_at, review_after, decision_reason
+       ) VALUES (
+         'route-map', 'qualified', 'documented-discovery-v1',
+         '11111111-1111-1111-1111-111111111111', '22222222-2222-2222-2222-222222222222',
+         '33333333-3333-3333-3333-333333333333', NULL, '["Black / African American-Owned"]'::jsonb,
+         now() + interval '1 day', now() + interval '1 day', 'Existing current qualification')`,
+    );
+    await client.query(
+      `INSERT INTO public.business_directory_reconciliation_ledger (
+         business_id, reconciliation_state, reason_code, presence_status, ownership_status, recommended_action
+       ) VALUES (
+         'route-map', 'reviewed_qualified', 'source_ownership_and_official_presence_verified',
+         'valid_website', 'source_documented', 'qualify_kinfolk_current'
+       )`,
+    );
+    const beforeRoute = await client.query<{ business: Record<string, unknown>; eligibility: Record<string, unknown>; ledger: Record<string, unknown> }>(
+      `SELECT to_jsonb(b) AS business, to_jsonb(e) AS eligibility, to_jsonb(l) AS ledger
+         FROM public.businesses b
+         JOIN public.business_discovery_eligibility e ON e.business_id = b.id
+         JOIN public.business_directory_reconciliation_ledger l ON l.business_id = b.id
+        WHERE b.id = 'route-map'`,
+    );
+    process.env.CRON_SECRET = "disposable-map-route-secret";
+    const routeApp = express();
+    routeApp.use(express.json());
+    registerDocumentedDiscoveryReviewRoutes(routeApp);
+    await request(routeApp).put("/api/admin/businesses/route-map/map-pin-evidence").send(mapInput).expect(401);
+    const accepted = await request(routeApp)
+      .put("/api/admin/businesses/route-map/map-pin-evidence")
+      .set("x-cron-secret", "disposable-map-route-secret")
+      .send(mapInput)
+      .expect(200);
+    assert(accepted.body.ok === true, "map-only route did not return success");
+    const beforeMismatchReceiptCount = await client.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM public.business_profile_evidence_receipts WHERE business_id = 'route-map'`,
+    );
+    const addressMismatch = structuredClone(mapInput) as typeof mapInput;
+    (addressMismatch.addressEvidence.observedValue as Record<string, unknown>).address = "124 Synthetic Street, Philadelphia, PA 19103";
+    (addressMismatch.mapPinEvidence.observedValue as Record<string, unknown>).queryAddress = "124 Synthetic Street, Philadelphia, PA 19103";
+    (addressMismatch.mapPinEvidence.observedValue as Record<string, unknown>).formattedAddress = "124 Synthetic Street, Philadelphia, PA 19103";
+    await request(routeApp)
+      .put("/api/admin/businesses/route-map/map-pin-evidence")
+      .set("x-cron-secret", "disposable-map-route-secret")
+      .send(addressMismatch)
+      .expect(409);
+    const afterMismatchReceiptCount = await client.query<{ count: string }>(
+      `SELECT COUNT(*)::text AS count FROM public.business_profile_evidence_receipts WHERE business_id = 'route-map'`,
+    );
+    assert(afterMismatchReceiptCount.rows[0]?.count === beforeMismatchReceiptCount.rows[0]?.count, "address mismatch wrote map evidence");
+    const afterRoute = await client.query<{
+      business: Record<string, unknown>;
+      eligibility: Record<string, unknown>;
+      ledger: Record<string, unknown>;
+      discovery_actions: string[];
+      reconciliation_actions: string[];
+    }>(
+      `SELECT to_jsonb(b) AS business, to_jsonb(e) AS eligibility, to_jsonb(l) AS ledger,
+              (SELECT array_agg(action ORDER BY action) FROM public.business_discovery_eligibility_audit_events WHERE business_id = 'route-map') AS discovery_actions,
+              (SELECT array_agg(action ORDER BY action) FROM public.business_directory_reconciliation_audit_events WHERE business_id = 'route-map') AS reconciliation_actions
+         FROM public.businesses b
+         JOIN public.business_discovery_eligibility e ON e.business_id = b.id
+         JOIN public.business_directory_reconciliation_ledger l ON l.business_id = b.id
+        WHERE b.id = 'route-map'`,
+    );
+    const before = beforeRoute.rows[0];
+    const after = afterRoute.rows[0];
+    assert(Number(after.business.latitude) === 39.9526 && Number(after.business.longitude) === -75.1652, "route did not write exact map coordinates");
+    assert(after.business.address === before.business.address && after.business.status === before.business.status && after.business.listing_status === before.business.listing_status && after.business.updated_at === before.business.updated_at, "route changed protected business fields");
+    assert(after.eligibility.eligibility_status === before.eligibility.eligibility_status && JSON.stringify(after.eligibility.ownership_designations) === JSON.stringify(before.eligibility.ownership_designations) && after.eligibility.decision_reason === before.eligibility.decision_reason && after.eligibility.updated_at === before.eligibility.updated_at, "route changed protected eligibility fields");
+    assert(after.eligibility.address_evidence_id && after.eligibility.map_pin_evidence_id, "route did not attach map evidence references");
+    assert(after.ledger.batch_reference === before.ledger.batch_reference && after.ledger.reviewed_at === before.ledger.reviewed_at && after.ledger.reviewed_by === before.ledger.reviewed_by && after.ledger.updated_at === before.ledger.updated_at, "route changed protected ledger metadata");
+    assert(Array.isArray(after.ledger.evidence_receipt_ids) && after.ledger.evidence_receipt_ids.length === 2, "route did not append ledger evidence references");
+    assert(after.discovery_actions?.join(",") === "map_pin_attached" && after.reconciliation_actions?.join(",") === "review", "route did not write required audit events");
+    let immutableAuditRejected = false;
+    try {
+      await client.query(`UPDATE public.business_discovery_eligibility_audit_events SET reason = 'tamper' WHERE business_id = 'route-map'`);
+    } catch (error) {
+      immutableAuditRejected = String(error).includes("immutable");
+    }
+    assert(immutableAuditRejected, "map discovery audit event was mutable");
+    checks.map_only_http_route_authorized_and_preserves_protected_fields = true;
 
     await client.query(
       `INSERT INTO ${namespace}.businesses (id, name, website, instagram) VALUES ($1, $2, $3, $4)`,

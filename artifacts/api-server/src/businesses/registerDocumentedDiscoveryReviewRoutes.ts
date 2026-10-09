@@ -63,7 +63,6 @@ type ReviewInput = Readonly<{
 
 type MapPinEvidenceReviewInput = Readonly<{
   decisionReason: string;
-  batchReference?: string;
   addressEvidence: EvidenceInput;
   mapPinEvidence: EvidenceInput;
 }>;
@@ -184,6 +183,13 @@ function normalizedAddress(value: unknown): string | null {
   return text?.toLocaleLowerCase("en-US").replace(/[^a-z0-9]+/g, " ").trim() ?? null;
 }
 
+function requireFiniteCoordinate(value: unknown, label: "latitude" | "longitude", minimum: number, maximum: number): number {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < minimum || value > maximum) {
+    throw new Error(`map pin evidence requires a finite numeric observedValue.${label}`);
+  }
+  return value;
+}
+
 function requireOfficialPresenceIdentity(
   observedValue: Record<string, unknown>,
   field: "official website" | "official social" | "address",
@@ -298,16 +304,17 @@ export function validateMapPinEvidenceReviewInput(value: unknown, now: Date): Ma
   const address = normalizedAddress(addressEvidence.observedValue?.address);
   const geocodedAddress = normalizedAddress(mapPinEvidence.observedValue?.formattedAddress);
   const queryAddress = normalizedAddress(mapPinEvidence.observedValue?.queryAddress);
-  if (addressEvidence.observedValue?.addressType !== "physical" || addressEvidence.observedValue?.isServiceArea === true) {
+  if (addressEvidence.observedValue?.addressType !== "physical" || addressEvidence.observedValue?.isServiceArea !== false) {
     throw new Error("address evidence must explicitly document a physical street address, not a service area");
   }
+  requireFiniteCoordinate(mapPinEvidence.observedValue?.latitude, "latitude", -90, 90);
+  requireFiniteCoordinate(mapPinEvidence.observedValue?.longitude, "longitude", -180, 180);
   if (!address || !geocodedAddress || !queryAddress || mapPinEvidence.observedValue?.addressMatch !== true
       || geocodedAddress !== address || queryAddress !== address) {
     throw new Error("map pin evidence must record an exact approved-geocoder address match");
   }
   return {
     decisionReason,
-    batchReference: normalizedText(raw.batchReference, 160) ?? undefined,
     addressEvidence,
     mapPinEvidence,
   };
@@ -325,8 +332,8 @@ export function mapPinOnlyPatch(
   mapPinEvidenceId: string,
 ): Readonly<{ latitude: number; longitude: number; addressEvidenceId: string; mapPinEvidenceId: string }> {
   return Object.freeze({
-    latitude: Number(input.mapPinEvidence.observedValue?.latitude),
-    longitude: Number(input.mapPinEvidence.observedValue?.longitude),
+    latitude: input.mapPinEvidence.observedValue?.latitude as number,
+    longitude: input.mapPinEvidence.observedValue?.longitude as number,
     addressEvidenceId,
     mapPinEvidenceId,
   });
@@ -883,16 +890,14 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
       await client.query(
         `UPDATE businesses
             SET latitude = $2::numeric,
-                longitude = $3::numeric,
-                updated_at = now()
+                longitude = $3::numeric
           WHERE id = $1`,
         [businessId, String(patch.latitude), String(patch.longitude)],
       );
       const nextEligibility = await client.query<{ state: Record<string, unknown> }>(
         `UPDATE business_discovery_eligibility
             SET address_evidence_id = $2::uuid,
-                map_pin_evidence_id = $3::uuid,
-                updated_at = now()
+                map_pin_evidence_id = $3::uuid
           WHERE business_id = $1
           RETURNING to_jsonb(business_discovery_eligibility) AS state`,
         [businessId, patch.addressEvidenceId, patch.mapPinEvidenceId],
@@ -908,14 +913,10 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
       );
       const nextLedger = await client.query<{ state: Record<string, unknown> }>(
         `UPDATE business_directory_reconciliation_ledger
-            SET evidence_receipt_ids = evidence_receipt_ids || $2::jsonb,
-                batch_reference = COALESCE($3, batch_reference),
-                reviewed_at = now(),
-                reviewed_by = $4,
-                updated_at = now()
+            SET evidence_receipt_ids = evidence_receipt_ids || $2::jsonb
           WHERE business_id = $1
           RETURNING to_jsonb(business_directory_reconciliation_ledger) AS state`,
-        [businessId, JSON.stringify([addressEvidenceId, mapPinEvidenceId]), input.batchReference ?? null, actorId],
+        [businessId, JSON.stringify([addressEvidenceId, mapPinEvidenceId])],
       );
       await client.query(
         `INSERT INTO business_directory_reconciliation_audit_events (
