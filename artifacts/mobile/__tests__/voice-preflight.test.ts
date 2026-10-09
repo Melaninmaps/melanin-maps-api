@@ -64,6 +64,23 @@ describe("Kinfolk Voice Preflight", () => {
     expect(preflight).toContain("Standard Kinfolk Voice and Female Voice");
   });
 
+  it("cancels and deletes raw audio on background, retry, and unmount before transcription", () => {
+    const preflight = source("app/kinfolk-voice-preflight.tsx");
+    expect(preflight).toContain("const abortPreflightRecording");
+    expect(preflight).toContain("recordingControlRef.current.cancel()");
+    expect(preflight).toContain("cleanRecordedFile(recorder.uri ?? uriBeforeStop)");
+    expect(preflight).toContain("permitsTranscription(recordingSession)");
+    expect(preflight).toContain("beginTranscription(recordingSession)");
+    expect(preflight).toContain("signal: transcriptionAbortController.signal");
+    expect(preflight).toContain("recordingStartGenerationRef");
+    expect(preflight).toContain("const startStillAllowed");
+    expect(preflight).toContain("const ownsActiveSession = recordingSessionRef.current === recordingSession");
+    expect(preflight).toContain("disabled={isStarting || isStopping || authLoading}");
+    expect(preflight).toContain('void abortPreflightRecording("Recording was interrupted because the app left the foreground. The raw file was deleted and was not uploaded.")');
+    expect(preflight).toContain('void abortPreflightRecording("Voice Preflight closed before recording completed.", false)');
+    expect(preflight).toContain('await abortPreflightRecording("Recording was canceled before retry. The raw file was deleted and was not uploaded.", false)');
+  });
+
   it("keeps the screen reachable from Kinfolk settings and registered in native navigation", () => {
     const settings = source("components/KinfolkSettingsControlCenter.tsx");
     const layout = source("app/_layout.tsx");
