@@ -5591,6 +5591,63 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       FOR EACH ROW EXECUTE FUNCTION public.prevent_business_discovery_eligibility_audit_mutation();`,
   },
   {
+    // Historical map restoration is intentionally NOT a fabricated first-party
+    // address/geocoder receipt. It records only an immutable, reviewed snapshot
+    // of a canonical current business location that the former map endpoint
+    // would have shown before the documented map-receipt gate existed. No
+    // business, eligibility, ownership, lifecycle, or profile field is changed
+    // by this additive schema and it performs no automatic backfill.
+    name: "business_legacy_map_location_attestations_v1",
+    sql: `CREATE TABLE IF NOT EXISTS business_legacy_map_location_attestations (
+      id                         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      business_id                varchar(255) NOT NULL UNIQUE REFERENCES businesses(id) ON DELETE RESTRICT,
+      historical_baseline_sha    varchar(64) NOT NULL CHECK (historical_baseline_sha = '3258408f397dc6bb795c6f7da78570d587f25c58'),
+      receipt_gate_sha           varchar(64) NOT NULL CHECK (receipt_gate_sha = '0ca51e2cc47997a523efb850bd56b850bb050568'),
+      address_snapshot           text NOT NULL CHECK (char_length(address_snapshot) BETWEEN 3 AND 300),
+      city_snapshot              text NOT NULL CHECK (char_length(city_snapshot) BETWEEN 1 AND 120),
+      state_snapshot             text NOT NULL CHECK (char_length(state_snapshot) BETWEEN 1 AND 120),
+      country_snapshot           text,
+      latitude_snapshot          numeric NOT NULL CHECK (latitude_snapshot BETWEEN -90 AND 90),
+      longitude_snapshot         numeric NOT NULL CHECK (longitude_snapshot BETWEEN -180 AND 180),
+      business_created_at        timestamptz NOT NULL,
+      batch_reference            varchar(160) NOT NULL,
+      decision_reason            text NOT NULL CHECK (char_length(decision_reason) BETWEEN 3 AND 4000),
+      manifest_row_checksum      varchar(64) NOT NULL UNIQUE CHECK (char_length(manifest_row_checksum) = 64),
+      attested_by                varchar(255),
+      created_at                 timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS business_legacy_map_location_attestations_business_idx
+      ON business_legacy_map_location_attestations (business_id, created_at DESC);
+
+    CREATE TABLE IF NOT EXISTS business_legacy_map_location_attestation_events (
+      id                         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      attestation_id             uuid NOT NULL REFERENCES business_legacy_map_location_attestations(id) ON DELETE RESTRICT,
+      action                     text NOT NULL CHECK (action IN ('revoked', 'restored')),
+      reason                     text NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 4000),
+      actor_id                   varchar(255),
+      created_at                 timestamptz NOT NULL DEFAULT now()
+    );
+    CREATE INDEX IF NOT EXISTS business_legacy_map_location_attestation_events_latest_idx
+      ON business_legacy_map_location_attestation_events (attestation_id, created_at DESC, id DESC);
+
+    CREATE OR REPLACE FUNCTION public.prevent_business_legacy_map_location_attestation_mutation()
+    RETURNS trigger LANGUAGE plpgsql AS $$
+    BEGIN
+      RAISE EXCEPTION 'business legacy map location attestations are append-only';
+    END;
+    $$;
+    DROP TRIGGER IF EXISTS business_legacy_map_location_attestations_immutable
+      ON business_legacy_map_location_attestations;
+    CREATE TRIGGER business_legacy_map_location_attestations_immutable
+      BEFORE UPDATE OR DELETE ON business_legacy_map_location_attestations
+      FOR EACH ROW EXECUTE FUNCTION public.prevent_business_legacy_map_location_attestation_mutation();
+    DROP TRIGGER IF EXISTS business_legacy_map_location_attestation_events_immutable
+      ON business_legacy_map_location_attestation_events;
+    CREATE TRIGGER business_legacy_map_location_attestation_events_immutable
+      BEFORE UPDATE OR DELETE ON business_legacy_map_location_attestation_events
+      FOR EACH ROW EXECUTE FUNCTION public.prevent_business_legacy_map_location_attestation_mutation();`,
+  },
+  {
     // Founder-provided ownership directories are a documented source basis for
     // their stated designation. They need one official member-facing presence
     // (website OR official social) for directory/Discovery eligibility; a street

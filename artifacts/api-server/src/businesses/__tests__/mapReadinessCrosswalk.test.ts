@@ -44,6 +44,19 @@ describe("map readiness crosswalk", () => {
     });
   });
 
+  it("accounts for a reviewed unchanged legacy stored location without calling it a first-party receipt", () => {
+    expect(assessMapReadiness({
+      ...current,
+      addressEvidenceId: null,
+      mapPinEvidenceId: null,
+      legacyMapLocationAttested: true,
+    }, now)).toMatchObject({
+      category: "A_VERIFIED_AND_MAP_READY",
+      exactTechnicalBlockers: [],
+      publicLocationSuitability: "legacy_physical_location_attested",
+    });
+  });
+
   it("separates a missing map receipt/linkage from missing verification evidence", () => {
     expect(assessMapReadiness({ ...current, mapPinEvidenceId: null }, now)).toMatchObject({
       category: "B_VERIFIED_BUT_TECHNICALLY_BLOCKED",

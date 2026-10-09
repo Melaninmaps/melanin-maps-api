@@ -34,6 +34,8 @@ export type DocumentedDiscoveryEligibilityCandidate = Readonly<{
   official_social_evidence_id?: string | null;
   mapPinEvidenceId?: string | null;
   map_pin_evidence_id?: string | null;
+  legacyMapLocationAttested?: boolean | null;
+  legacy_map_location_attested?: boolean | null;
   ownershipSourceExpiresAt?: string | null;
   ownership_source_expires_at?: string | null;
   reviewAfter?: string | null;
@@ -72,7 +74,21 @@ export function documentedDiscoveryEligibilitySqlPredicate(
   const businessId = columnFor(businessIdExpression, "id");
   const mapClause = surface === "map"
     ? `
-       AND documented_eligibility.map_pin_evidence_id IS NOT NULL`
+       AND (
+         documented_eligibility.map_pin_evidence_id IS NOT NULL
+         OR EXISTS (
+           SELECT 1
+             FROM public.business_legacy_map_location_attestations AS legacy_location
+            WHERE legacy_location.business_id::text = ${businessId}::text
+              AND COALESCE((
+                SELECT legacy_event.action
+                  FROM public.business_legacy_map_location_attestation_events AS legacy_event
+                 WHERE legacy_event.attestation_id = legacy_location.id
+                 ORDER BY legacy_event.created_at DESC, legacy_event.id DESC
+                 LIMIT 1
+              ), 'active') <> 'revoked'
+         )
+       )`
     : "";
   return `EXISTS (
     SELECT 1
@@ -120,7 +136,8 @@ export function isDocumentedDiscoveryEligible(
   ) return false;
   if (surface === "map") {
     const mapEvidence = value("mapPinEvidenceId", "map_pin_evidence_id");
-    if (typeof mapEvidence !== "string" || !mapEvidence.trim()) return false;
+    const legacyAttested = value("legacyMapLocationAttested", "legacy_map_location_attested") === true;
+    if ((typeof mapEvidence !== "string" || !mapEvidence.trim()) && !legacyAttested) return false;
   }
   const documentedIds = new Set(
     (record.ownershipDesignations ?? record.ownership_designations ?? [])
@@ -132,4 +149,4 @@ export function isDocumentedDiscoveryEligible(
 }
 
 export const DOCUMENTED_DISCOVERY_EVIDENCE_RULE =
-  "Ordinary directory, Discovery, and Kinfolk recommendations require a current, audited ownership receipt and at least one audited official website or official social receipt. Map pins also require sourced address and geocode receipts. A source designation is documented by source, never owner verification. Missing, revoked, or stale ownership evidence removes recommendation eligibility immediately; direct named safety/context lookup remains separate.";
+  "Ordinary directory, Discovery, and Kinfolk recommendations require a current, audited ownership receipt and at least one audited official website or official social receipt. Standard map pins require sourced address and geocode receipts. A separately audited, revocable legacy-location attestation may restore only an unchanged pre-receipt-gate stored location; it never represents a first-party address receipt or changes eligibility. A source designation is documented by source, never owner verification. Missing, revoked, or stale ownership evidence removes recommendation eligibility immediately; direct named safety/context lookup remains separate.";
