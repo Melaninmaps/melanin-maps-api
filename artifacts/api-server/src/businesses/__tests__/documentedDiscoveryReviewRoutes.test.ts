@@ -275,6 +275,29 @@ describe("documented discovery review input", () => {
     expect(() => validateMapPinEvidenceReviewInput(request, now)).toThrow("exact approved-geocoder address match");
   });
 
+  it("rejects an unsupported supplied directional component instead of treating it as absent", () => {
+    const request = mapEvidenceRequest();
+    (request.mapPinEvidence.observedValue as Record<string, unknown>).addressComponents = {
+      houseNumber: "123",
+      directional: "northeast",
+      streetName: "Example",
+      streetType: "Street",
+      city: "Philadelphia",
+      state: "Pennsylvania",
+      postalCode: "19103",
+    };
+    expect(() => validateMapPinEvidenceReviewInput(request, now)).toThrow("exact approved-geocoder address match");
+  });
+
+  it("rejects an incomplete stored address even when legacy receipt strings match literally", () => {
+    const request = mapEvidenceRequest();
+    request.addressEvidence.observedValue.address = "123 Example Street, Philadelphia, PA";
+    request.mapPinEvidence.observedValue.queryAddress = "123 Example Street, Philadelphia, PA";
+    request.mapPinEvidence.observedValue.formattedAddress = "123 Example Street, Philadelphia, PA";
+    const result = validateMapPinEvidenceReviewInput(request, now);
+    expect(storedAddressMatchesMapEvidence("123 Example Street, Philadelphia, PA", result)).toBe(false);
+  });
+
   it("rejects map-only attachment without identity-matched official address evidence", () => {
     const request = mapEvidenceRequest();
     request.addressEvidence.observedValue.identityMatch = false;

@@ -244,7 +244,9 @@ function normalizePhysicalAddressComponents(value: unknown): PhysicalAddressComp
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const raw = value as Record<string, unknown>;
   const houseNumber = componentText(raw.houseNumber);
-  const directional = raw.directional == null || raw.directional === "" ? null : canonicalDirectional(raw.directional);
+  const hasDirectional = raw.directional != null;
+  const directional = hasDirectional ? canonicalDirectional(raw.directional) : null;
+  if (hasDirectional && directional === null) return null;
   const streetName = componentText(raw.streetName);
   const streetType = canonicalStreetType(raw.streetType);
   const city = componentText(raw.city);
@@ -428,8 +430,9 @@ export function validateMapPinEvidenceReviewInput(value: unknown, now: Date): Ma
 export function storedAddressMatchesMapEvidence(storedAddress: unknown, input: MapPinEvidenceReviewInput): boolean {
   const stored = normalizedAddress(storedAddress);
   const evidenced = normalizedAddress(input.addressEvidence.observedValue?.address);
-  if (stored && evidenced && stored === evidenced) return true;
   const storedComponents = parseCompleteUsStreetAddress(storedAddress);
+  if (!storedComponents) return false;
+  if (stored && evidenced && stored === evidenced) return true;
   const evidencedComponents = parseCompleteUsStreetAddress(input.addressEvidence.observedValue?.address);
   return Boolean(storedComponents && evidencedComponents && samePhysicalAddress(storedComponents, evidencedComponents));
 }
