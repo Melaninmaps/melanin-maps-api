@@ -390,6 +390,9 @@ export function validateDocumentedDiscoveryReviewInput(value: unknown, now: Date
   const counts = new Map<EvidenceField, number>();
   for (const item of evidence) counts.set(item.field, (counts.get(item.field) ?? 0) + 1);
   if ([...counts.values()].some((count) => count > 1)) throw new Error("submit at most one receipt per evidence field per decision");
+  if (counts.has("map_pin")) {
+    throw new Error("map pin evidence must use the dedicated audited map-evidence attachment route");
+  }
   const eligibilityStatus = raw.eligibilityStatus as EligibilityStatus;
   const ownershipSourceExpiresAt = raw.ownershipSourceExpiresAt == null
     ? undefined
@@ -615,15 +618,12 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
         const officialWebsite = evidenceByField.get("official_website")?.observedValue?.websiteUrl;
         const officialSocial = evidenceByField.get("official_social")?.observedValue?.profileUrl;
         const sourceAddress = evidenceByField.get("address")?.observedValue?.address;
-        const mapPin = evidenceByField.get("map_pin")?.observedValue;
         const profilePatch: Record<string, string | null> = {
           website: typeof officialWebsite === "string" ? officialWebsite : null,
           instagram: null,
           facebook: null,
           tiktok: null,
           address: typeof sourceAddress === "string" ? sourceAddress.trim() : null,
-          latitude: mapPin && Number.isFinite(Number(mapPin.latitude)) ? String(mapPin.latitude) : null,
-          longitude: mapPin && Number.isFinite(Number(mapPin.longitude)) ? String(mapPin.longitude) : null,
         };
         if (typeof officialSocial === "string") {
           const host = hostOf(officialSocial);
@@ -641,9 +641,9 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
                   facebook = COALESCE($5, facebook),
                   tiktok = COALESCE($6, tiktok),
                   address = COALESCE($7, address),
-                  latitude = COALESCE($8::numeric, latitude),
-                  longitude = COALESCE($9::numeric, longitude),
-                  website_cleanup_status = CASE WHEN $2 THEN $10 ELSE website_cleanup_status END,
+                  latitude = CASE WHEN $8 THEN NULL ELSE latitude END,
+                  longitude = CASE WHEN $8 THEN NULL ELSE longitude END,
+                  website_cleanup_status = CASE WHEN $2 THEN $9 ELSE website_cleanup_status END,
                   website_cleanup_at = CASE WHEN $2 THEN now() ELSE website_cleanup_at END,
                   updated_at = now()
             WHERE id = $1`,
@@ -655,8 +655,7 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
             profilePatch.facebook,
             profilePatch.tiktok,
             profilePatch.address,
-            profilePatch.latitude,
-            profilePatch.longitude,
+            profilePatch.address !== null,
             input.websiteCleanup?.status ?? null,
           ],
         );
@@ -713,7 +712,9 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
           input.eligibilityStatus === "qualified" ? evidenceIds.get("official_website") : null,
           input.eligibilityStatus === "qualified" ? evidenceIds.get("official_social") : null,
           input.eligibilityStatus === "qualified" ? evidenceIds.get("address") ?? null : null,
-          input.eligibilityStatus === "qualified" ? evidenceIds.get("map_pin") ?? null : null,
+          input.eligibilityStatus === "qualified"
+            ? (evidenceIds.get("address") ? null : retainedId("map_pin_evidence_id"))
+            : null,
           JSON.stringify(input.eligibilityStatus === "qualified" ? input.ownershipDesignations ?? [] : []),
           input.eligibilityStatus === "qualified" ? input.ownershipSourceExpiresAt : null,
           input.eligibilityStatus === "qualified" ? input.reviewAfter : null,
@@ -822,16 +823,30 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
         address: string | null;
         latitude: string | null;
         longitude: string | null;
+        is_duplicate: boolean;
+        duplicate_of_id: string | null;
+        is_superseded: boolean;
       }>(
-        `SELECT id, name, address, latitude, longitude
-           FROM businesses
-          WHERE id = $1 AND status NOT IN ('removed', 'deleted')
+        `SELECT b.id, b.name, b.address, b.latitude, b.longitude,
+                COALESCE(b.is_duplicate, false) AS is_duplicate,
+                b.duplicate_of_id,
+                EXISTS (
+                  SELECT 1 FROM business_duplicate_resolutions duplicate_resolution
+                   WHERE duplicate_resolution.superseded_business_id = b.id
+                ) AS is_superseded
+           FROM businesses b
+          WHERE b.id = $1 AND b.status NOT IN ('removed', 'deleted')
           FOR UPDATE`,
         [businessId],
       );
       if (existingBusiness.rows.length === 0) {
         await client.query("ROLLBACK");
         res.status(404).json({ error: "Business not found" });
+        return;
+      }
+      if (existingBusiness.rows[0].is_duplicate || existingBusiness.rows[0].duplicate_of_id || existingBusiness.rows[0].is_superseded) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "Map evidence may be attached only to the existing canonical business record" });
         return;
       }
       const activeEligibility = await client.query<{ state: Record<string, unknown> }>(

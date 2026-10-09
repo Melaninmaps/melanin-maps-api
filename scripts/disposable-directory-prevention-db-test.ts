@@ -15,8 +15,21 @@ import {
 import { decideGenericIngestExistingAction } from "../artifacts/api-server/src/routes/business-ingest";
 import { decideSocialFirstIdentityMatch } from "../artifacts/api-server/src/lib/social-first-ingestion";
 
-const databaseUrl = process.env.DATABASE_URL;
-if (!databaseUrl) throw new Error("DATABASE_URL is required for the disposable prevention test");
+const databaseUrl = process.env.DISPOSABLE_DIRECTORY_TEST_DATABASE_URL;
+const applicationDatabaseUrl = process.env.DATABASE_URL;
+if (process.env.ALLOW_DISPOSABLE_DIRECTORY_TEST !== "true") {
+  throw new Error("ALLOW_DISPOSABLE_DIRECTORY_TEST=true is required for the destructive disposable prevention test");
+}
+if (!databaseUrl || !applicationDatabaseUrl || databaseUrl !== applicationDatabaseUrl) {
+  throw new Error("DISPOSABLE_DIRECTORY_TEST_DATABASE_URL must be set and must exactly match the dedicated route-test DATABASE_URL");
+}
+const parsedDatabaseUrl = new URL(databaseUrl);
+const protectedDatabaseUrls = [process.env.PRODUCTION_DATABASE_URL, process.env.APP_DATABASE_URL]
+  .filter((value): value is string => Boolean(value));
+const protectedHostOrName = /(^|[-_.])(prod|production)([-_.]|$)|api\.melaninmaps\.com|production-db/i;
+if (protectedDatabaseUrls.includes(databaseUrl) || protectedHostOrName.test(parsedDatabaseUrl.hostname) || protectedHostOrName.test(parsedDatabaseUrl.pathname)) {
+  throw new Error("Refusing to run destructive disposable prevention tests against a protected database target");
+}
 
 const pool = new Pool({ connectionString: databaseUrl, max: 1 });
 const namespace = "mwm_prevention_disposable";
@@ -94,6 +107,7 @@ async function run(): Promise<Result> {
     await client.query(`
       DROP TABLE IF EXISTS public.business_directory_reconciliation_audit_events;
       DROP TABLE IF EXISTS public.business_discovery_eligibility_audit_events;
+      DROP TABLE IF EXISTS public.business_duplicate_resolutions;
       DROP TABLE IF EXISTS public.business_directory_reconciliation_ledger;
       DROP TABLE IF EXISTS public.business_profile_evidence_receipts;
       DROP TABLE IF EXISTS public.business_discovery_eligibility;
@@ -106,7 +120,18 @@ async function run(): Promise<Result> {
         longitude numeric,
         status text NOT NULL DEFAULT 'active',
         listing_status text NOT NULL DEFAULT 'live_unclaimed',
+        is_duplicate boolean NOT NULL DEFAULT false,
+        duplicate_of_id varchar(255),
         updated_at timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE TABLE public.business_duplicate_resolutions (
+        job_id uuid NOT NULL,
+        canonical_business_id varchar(255) NOT NULL,
+        superseded_business_id varchar(255) PRIMARY KEY,
+        identity_evidence jsonb NOT NULL,
+        policy_version varchar(80) NOT NULL,
+        scoring jsonb NOT NULL,
+        created_at timestamptz NOT NULL DEFAULT now()
       );
       CREATE TABLE public.business_profile_evidence_receipts (
         id uuid PRIMARY KEY,
@@ -376,6 +401,15 @@ async function run(): Promise<Result> {
     routeApp.use(express.json());
     registerDocumentedDiscoveryReviewRoutes(routeApp);
     await request(routeApp).put("/api/admin/businesses/route-map/map-pin-evidence").send(mapInput).expect(401);
+    await client.query(
+      `INSERT INTO public.businesses (id, name, address, status, listing_status, is_duplicate, duplicate_of_id)
+       VALUES ('route-duplicate', 'Duplicate Map Example', '123 Synthetic Street, Philadelphia, PA 19103', 'active', 'live_unclaimed', true, 'route-map')`,
+    );
+    await request(routeApp)
+      .put("/api/admin/businesses/route-duplicate/map-pin-evidence")
+      .set("x-cron-secret", "disposable-map-route-secret")
+      .send(mapInput)
+      .expect(409);
     const accepted = await request(routeApp)
       .put("/api/admin/businesses/route-map/map-pin-evidence")
       .set("x-cron-secret", "disposable-map-route-secret")
@@ -429,6 +463,13 @@ async function run(): Promise<Result> {
       immutableAuditRejected = String(error).includes("immutable");
     }
     assert(immutableAuditRejected, "map discovery audit event was mutable");
+    let immutableLedgerAuditRejected = false;
+    try {
+      await client.query(`UPDATE public.business_directory_reconciliation_audit_events SET reason = 'tamper' WHERE business_id = 'route-map'`);
+    } catch (error) {
+      immutableLedgerAuditRejected = String(error).includes("immutable");
+    }
+    assert(immutableLedgerAuditRejected, "map reconciliation audit event was mutable");
     checks.map_only_http_route_authorized_and_preserves_protected_fields = true;
 
     await client.query(
