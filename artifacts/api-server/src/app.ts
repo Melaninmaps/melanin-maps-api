@@ -62,6 +62,7 @@ import { registerAdminPublishAndClaimRoutes } from "./businesses/registerAdminPu
 import { registerDocumentedDiscoveryReviewRoutes } from "./businesses/registerDocumentedDiscoveryReviewRoutes";
 import { registerBusinessImageReviewRoutes } from "./businesses/registerBusinessImageReviewRoutes";
 import { registerKinfolkCatalogAdminRoutes } from "./businesses/registerKinfolkCatalogAdminRoutes";
+import { registerFounderMapRestorationRoutes } from "./businesses/mapRestorationWorker";
 import { registerFounderSourcePublicationRoutes } from "./directoryIntake/registerFounderSourcePublicationRoutes";
 import { registerDirectoryImportRoutes } from "./directoryImport/registerDirectoryImportRoutes";
 import { registerReconciliationRoutes } from "./directoryReconciliation/registerReconciliationRoutes";
@@ -422,6 +423,7 @@ registerAdminPublishAndClaimRoutes(app);
 registerDocumentedDiscoveryReviewRoutes(app);
 registerBusinessImageReviewRoutes(app);
 registerKinfolkCatalogAdminRoutes(app);
+registerFounderMapRestorationRoutes(app, pool);
 registerFounderSourcePublicationRoutes(app);
 registerReconciliationRoutes(app);
 if (assertDirectoryReviewLocalStaging(process.env)) {
