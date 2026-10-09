@@ -5566,6 +5566,31 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ON business_discovery_eligibility_audit_events (business_id, created_at DESC);`,
   },
   {
+    // Map evidence can be refreshed without changing a business's documented
+    // eligibility. Keep its specific before/after event immutable so a map
+    // correction remains independently reviewable and reversible by a later,
+    // separately receipted event rather than by rewriting history.
+    name: "business_discovery_eligibility_map_pin_audit_v2",
+    sql: `ALTER TABLE business_discovery_eligibility_audit_events
+      DROP CONSTRAINT IF EXISTS business_discovery_eligibility_audit_events_action_check;
+      ALTER TABLE business_discovery_eligibility_audit_events
+      ADD CONSTRAINT business_discovery_eligibility_audit_events_action_check
+      CHECK (action IN (
+        'qualified', 'direct_name_only', 'review_hold', 'revoked', 'requalified', 'map_pin_attached'
+      ));
+      CREATE OR REPLACE FUNCTION public.prevent_business_discovery_eligibility_audit_mutation()
+      RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        RAISE EXCEPTION 'business_discovery_eligibility_audit_events are immutable';
+      END;
+      $$;
+      DROP TRIGGER IF EXISTS business_discovery_eligibility_audit_immutable
+        ON business_discovery_eligibility_audit_events;
+      CREATE TRIGGER business_discovery_eligibility_audit_immutable
+      BEFORE UPDATE OR DELETE ON business_discovery_eligibility_audit_events
+      FOR EACH ROW EXECUTE FUNCTION public.prevent_business_discovery_eligibility_audit_mutation();`,
+  },
+  {
     // Founder-provided ownership directories are a documented source basis for
     // their stated designation. They need one official member-facing presence
     // (website OR official social) for directory/Discovery eligibility; a street

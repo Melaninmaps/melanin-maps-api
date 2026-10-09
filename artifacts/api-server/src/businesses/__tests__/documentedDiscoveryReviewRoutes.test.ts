@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { validateDocumentedDiscoveryReviewInput } from "../registerDocumentedDiscoveryReviewRoutes";
+import {
+  mapPinOnlyPatch,
+  storedAddressMatchesMapEvidence,
+  validateDocumentedDiscoveryReviewInput,
+  validateMapPinEvidenceReviewInput,
+} from "../registerDocumentedDiscoveryReviewRoutes";
 
 const now = new Date("2026-10-05T00:00:00.000Z");
 const future = "2026-12-01T00:00:00.000Z";
@@ -66,6 +71,40 @@ const websiteCleanup = {
   evidenceSummary: "The destination identifies an unrelated business.",
   checkedAt: "2026-10-05T00:00:00.000Z",
 };
+
+function mapEvidenceRequest() {
+  return {
+    decisionReason: "An official contact page and approved geocoder confirm the unchanged physical address.",
+    batchReference: "map-pilot-001",
+    addressEvidence: {
+      field: "address" as const,
+      sourceKind: "business_official" as const,
+      sourceUrl: "https://acme.example/contact",
+      observedAt: "2026-10-05T00:00:00.000Z",
+      confidence: "high" as const,
+      observedValue: {
+        address: "123 Example Street, Philadelphia, PA 19103",
+        addressType: "physical",
+        identityMatch: true,
+        matchingSignals: ["business_name", "city", "address"],
+      },
+    },
+    mapPinEvidence: {
+      field: "map_pin" as const,
+      sourceKind: "official_geocoder" as const,
+      sourceUrl: "https://maps.googleapis.com/maps/api/geocode/json",
+      observedAt: "2026-10-05T00:00:00.000Z",
+      confidence: "high" as const,
+      observedValue: {
+        latitude: 39.9526,
+        longitude: -75.1652,
+        queryAddress: "123 Example Street, Philadelphia, PA 19103",
+        formattedAddress: "123 Example Street, Philadelphia, PA 19103",
+        addressMatch: true,
+      },
+    },
+  };
+}
 
 describe("documented discovery review input", () => {
   it("requires ownership plus one official presence for a qualified decision", () => {
@@ -197,6 +236,49 @@ describe("documented discovery review input", () => {
     const result = validateDocumentedDiscoveryReviewInput(qualified(addressAndPin), now);
     expect((result.evidence ?? []).map((item) => item.field)).toContain("address");
     expect((result.evidence ?? []).map((item) => item.field)).toContain("map_pin");
+  });
+
+  it("accepts a map-only attachment only for an identity-matched exact physical address and approved geocoder", () => {
+    const result = validateMapPinEvidenceReviewInput(mapEvidenceRequest(), now);
+    expect(storedAddressMatchesMapEvidence("123 Example Street, Philadelphia, PA 19103", result)).toBe(true);
+    expect(mapPinOnlyPatch(result, "address-receipt", "pin-receipt")).toEqual({
+      latitude: 39.9526,
+      longitude: -75.1652,
+      addressEvidenceId: "address-receipt",
+      mapPinEvidenceId: "pin-receipt",
+    });
+  });
+
+  it("rejects map-only attachment without identity-matched official address evidence", () => {
+    const request = mapEvidenceRequest();
+    request.addressEvidence.observedValue.identityMatch = false;
+    expect(() => validateMapPinEvidenceReviewInput(request, now)).toThrow("address evidence requires identityMatch: true");
+  });
+
+  it("rejects non-approved geocoder hosts and mismatched geocoder addresses", () => {
+    const unknownGeocoder = mapEvidenceRequest();
+    unknownGeocoder.mapPinEvidence.sourceUrl = "https://www.google.com/maps";
+    expect(() => validateMapPinEvidenceReviewInput(unknownGeocoder, now)).toThrow("approved geocoder endpoint");
+
+    const mismatch = mapEvidenceRequest();
+    mismatch.mapPinEvidence.observedValue.formattedAddress = "124 Example Street, Philadelphia, PA 19103";
+    expect(() => validateMapPinEvidenceReviewInput(mismatch, now)).toThrow("exact approved-geocoder address match");
+  });
+
+  it("rejects service areas, invalid coordinates, and attempts to use map evidence to change an address", () => {
+    const serviceArea = mapEvidenceRequest();
+    serviceArea.addressEvidence.observedValue.addressType = "service_area";
+    expect(() => validateMapPinEvidenceReviewInput(serviceArea, now)).toThrow("physical street address");
+
+    const invalidCoordinates = mapEvidenceRequest();
+    invalidCoordinates.mapPinEvidence.observedValue.latitude = 91;
+    expect(() => validateMapPinEvidenceReviewInput(invalidCoordinates, now)).toThrow("finite observedValue.latitude");
+
+    const result = validateMapPinEvidenceReviewInput(mapEvidenceRequest(), now);
+    expect(storedAddressMatchesMapEvidence("124 Example Street, Philadelphia, PA 19103", result)).toBe(false);
+    expect(Object.keys(mapPinOnlyPatch(result, "address-receipt", "pin-receipt")).sort()).toEqual([
+      "addressEvidenceId", "latitude", "longitude", "mapPinEvidenceId",
+    ]);
   });
 
   it("allows a reversible direct-name-only hold without inventing recommendation evidence", () => {

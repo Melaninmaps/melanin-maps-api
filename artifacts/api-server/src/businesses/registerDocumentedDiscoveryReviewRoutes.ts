@@ -61,6 +61,13 @@ type ReviewInput = Readonly<{
   websiteCleanup?: WebsiteCleanupInput;
 }>;
 
+type MapPinEvidenceReviewInput = Readonly<{
+  decisionReason: string;
+  batchReference?: string;
+  addressEvidence: EvidenceInput;
+  mapPinEvidence: EvidenceInput;
+}>;
+
 const OFFICIAL_SOCIAL_HOSTS = new Set([
   "instagram.com",
   "www.instagram.com",
@@ -108,6 +115,11 @@ const OFFICIAL_PRESENCE_SOURCE_KINDS = new Set<EvidenceSourceKind>([
 ]);
 const IDENTITY_MATCHING_SIGNALS = new Set([
   "business_name", "city", "phone", "address", "official_email_domain", "owner_name", "direct_official_link",
+]);
+const APPROVED_GEOCODER_HOSTS = new Set([
+  "maps.googleapis.com",
+  "nominatim.openstreetmap.org",
+  "geocoding.geo.census.gov",
 ]);
 
 function safeHttpsUrl(value: unknown, label: string): string {
@@ -167,9 +179,14 @@ function normalizedText(value: unknown, maxLength: number): string | null {
   return result ? result.slice(0, maxLength) : null;
 }
 
+function normalizedAddress(value: unknown): string | null {
+  const text = normalizedText(value, 300);
+  return text?.toLocaleLowerCase("en-US").replace(/[^a-z0-9]+/g, " ").trim() ?? null;
+}
+
 function requireOfficialPresenceIdentity(
   observedValue: Record<string, unknown>,
-  field: "official website" | "official social",
+  field: "official website" | "official social" | "address",
 ): void {
   const matchingSignals = Array.isArray(observedValue.matchingSignals)
     ? [...new Set(observedValue.matchingSignals.filter((value): value is string => typeof value === "string")
@@ -252,6 +269,67 @@ function validateEvidence(value: unknown, now: Date): EvidenceInput {
     confidence: raw.confidence as EvidenceInput["confidence"],
     observedValue,
   };
+}
+
+/**
+ * Accepts only a map attachment that is anchored to an unchanged stored
+ * address, a first-party address page, and an approved geocoder result for
+ * that exact address. It deliberately cannot alter identity, ownership,
+ * lifecycle, or recommendation eligibility.
+ */
+export function validateMapPinEvidenceReviewInput(value: unknown, now: Date): MapPinEvidenceReviewInput {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("request body must be an object");
+  const raw = value as Record<string, unknown>;
+  const decisionReason = normalizedText(raw.decisionReason, 4_000);
+  if (!decisionReason || decisionReason.length < 3) throw new Error("A 3–4,000 character decisionReason is required");
+  const addressEvidence = validateEvidence(raw.addressEvidence, now);
+  const mapPinEvidence = validateEvidence(raw.mapPinEvidence, now);
+  if (addressEvidence.field !== "address") throw new Error("addressEvidence must document the address field");
+  if (!OFFICIAL_PRESENCE_SOURCE_KINDS.has(addressEvidence.sourceKind)) {
+    throw new Error("address evidence must be captured from the business or owner-controlled presence");
+  }
+  requireOfficialPresenceIdentity(addressEvidence.observedValue ?? {}, "address");
+  if (mapPinEvidence.field !== "map_pin" || mapPinEvidence.sourceKind !== "official_geocoder") {
+    throw new Error("mapPinEvidence must be an official-geocoder map pin receipt");
+  }
+  if (!APPROVED_GEOCODER_HOSTS.has(hostOf(mapPinEvidence.sourceUrl))) {
+    throw new Error("map pin evidence must use an approved geocoder endpoint");
+  }
+  const address = normalizedAddress(addressEvidence.observedValue?.address);
+  const geocodedAddress = normalizedAddress(mapPinEvidence.observedValue?.formattedAddress);
+  const queryAddress = normalizedAddress(mapPinEvidence.observedValue?.queryAddress);
+  if (addressEvidence.observedValue?.addressType !== "physical" || addressEvidence.observedValue?.isServiceArea === true) {
+    throw new Error("address evidence must explicitly document a physical street address, not a service area");
+  }
+  if (!address || !geocodedAddress || !queryAddress || mapPinEvidence.observedValue?.addressMatch !== true
+      || geocodedAddress !== address || queryAddress !== address) {
+    throw new Error("map pin evidence must record an exact approved-geocoder address match");
+  }
+  return {
+    decisionReason,
+    batchReference: normalizedText(raw.batchReference, 160) ?? undefined,
+    addressEvidence,
+    mapPinEvidence,
+  };
+}
+
+export function storedAddressMatchesMapEvidence(storedAddress: unknown, input: MapPinEvidenceReviewInput): boolean {
+  const stored = normalizedAddress(storedAddress);
+  const evidenced = normalizedAddress(input.addressEvidence.observedValue?.address);
+  return Boolean(stored && evidenced && stored === evidenced);
+}
+
+export function mapPinOnlyPatch(
+  input: MapPinEvidenceReviewInput,
+  addressEvidenceId: string,
+  mapPinEvidenceId: string,
+): Readonly<{ latitude: number; longitude: number; addressEvidenceId: string; mapPinEvidenceId: string }> {
+  return Object.freeze({
+    latitude: Number(input.mapPinEvidence.observedValue?.latitude),
+    longitude: Number(input.mapPinEvidence.observedValue?.longitude),
+    addressEvidenceId,
+    mapPinEvidenceId,
+  });
 }
 
 function validateWebsiteCleanup(value: unknown, now: Date): WebsiteCleanupInput {
@@ -703,6 +781,165 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
       await client.query("ROLLBACK");
       req.log.error({ error, businessId }, "Failed to record documented discovery eligibility");
       res.status(500).json({ error: "Failed to record discovery review" });
+    } finally {
+      client.release();
+    }
+  });
+
+  /**
+   * Map-only control path. It is intentionally separate from eligibility
+   * review so an address/geocode repair cannot requalify a business, change a
+   * public profile field, or carry identity/contact evidence across records.
+   */
+  app.put("/api/admin/businesses/:id/map-pin-evidence", async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const businessId = String(req.params.id ?? "").trim();
+    if (!businessId || businessId.length > 255) {
+      res.status(400).json({ error: "A valid business id is required" });
+      return;
+    }
+    let input: MapPinEvidenceReviewInput;
+    try {
+      input = validateMapPinEvidenceReviewInput(req.body, new Date());
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid map evidence request" });
+      return;
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const existingBusiness = await client.query<{
+        id: string;
+        name: string;
+        address: string | null;
+        latitude: string | null;
+        longitude: string | null;
+      }>(
+        `SELECT id, name, address, latitude, longitude
+           FROM businesses
+          WHERE id = $1 AND status NOT IN ('removed', 'deleted')
+          FOR UPDATE`,
+        [businessId],
+      );
+      if (existingBusiness.rows.length === 0) {
+        await client.query("ROLLBACK");
+        res.status(404).json({ error: "Business not found" });
+        return;
+      }
+      const activeEligibility = await client.query<{ state: Record<string, unknown> }>(
+        `SELECT to_jsonb(e) AS state
+           FROM business_discovery_eligibility e
+          WHERE e.business_id = $1
+            AND e.eligibility_status = 'qualified'
+            AND e.identity_evidence_id IS NOT NULL
+            AND e.ownership_evidence_id IS NOT NULL
+            AND (e.official_website_evidence_id IS NOT NULL OR e.official_social_evidence_id IS NOT NULL)
+            AND e.ownership_source_expires_at > now()
+            AND e.review_after > now()
+          FOR UPDATE`,
+        [businessId],
+      );
+      if (activeEligibility.rows.length === 0) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "An active documented eligibility record is required before a map pin can be attached" });
+        return;
+      }
+      if (!storedAddressMatchesMapEvidence(existingBusiness.rows[0].address, input)) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "The evidenced physical address must exactly match the currently stored business address; address changes require separate review" });
+        return;
+      }
+      const priorLedger = await client.query<{ state: Record<string, unknown> }>(
+        `SELECT to_jsonb(ledger) AS state
+           FROM business_directory_reconciliation_ledger ledger
+          WHERE ledger.business_id = $1
+          FOR UPDATE`,
+        [businessId],
+      );
+      if (priorLedger.rows.length === 0) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "A reconciliation ledger record is required before a map pin can be attached" });
+        return;
+      }
+
+      const actorId = typeof (req as any).user?.id === "string" ? (req as any).user.id : "automation";
+      const addressEvidenceId = randomUUID();
+      const mapPinEvidenceId = randomUUID();
+      const patch = mapPinOnlyPatch(input, addressEvidenceId, mapPinEvidenceId);
+      for (const [id, evidence] of [[addressEvidenceId, input.addressEvidence], [mapPinEvidenceId, input.mapPinEvidence]] as const) {
+        await client.query(
+          `INSERT INTO business_profile_evidence_receipts (
+             id, business_id, field_name, source_kind, source_url, source_label,
+             observed_at, source_expires_at, confidence, observed_value, captured_by
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7::timestamptz, $8::timestamptz, $9, $10::jsonb, $11)`,
+          [
+            id, businessId, evidence.field, evidence.sourceKind, evidence.sourceUrl, evidence.sourceLabel,
+            evidence.observedAt, evidence.sourceExpiresAt ?? null, evidence.confidence,
+            JSON.stringify(evidence.observedValue ?? {}), actorId,
+          ],
+        );
+      }
+      await client.query(
+        `UPDATE businesses
+            SET latitude = $2::numeric,
+                longitude = $3::numeric,
+                updated_at = now()
+          WHERE id = $1`,
+        [businessId, String(patch.latitude), String(patch.longitude)],
+      );
+      const nextEligibility = await client.query<{ state: Record<string, unknown> }>(
+        `UPDATE business_discovery_eligibility
+            SET address_evidence_id = $2::uuid,
+                map_pin_evidence_id = $3::uuid,
+                updated_at = now()
+          WHERE business_id = $1
+          RETURNING to_jsonb(business_discovery_eligibility) AS state`,
+        [businessId, patch.addressEvidenceId, patch.mapPinEvidenceId],
+      );
+      await client.query(
+        `INSERT INTO business_discovery_eligibility_audit_events (
+           id, business_id, action, actor_id, reason, before_state, after_state
+         ) VALUES ($1, $2, 'map_pin_attached', $3, $4, $5::jsonb, $6::jsonb)`,
+        [
+          randomUUID(), businessId, actorId, input.decisionReason,
+          JSON.stringify(activeEligibility.rows[0].state), JSON.stringify(nextEligibility.rows[0]?.state ?? {}),
+        ],
+      );
+      const nextLedger = await client.query<{ state: Record<string, unknown> }>(
+        `UPDATE business_directory_reconciliation_ledger
+            SET evidence_receipt_ids = evidence_receipt_ids || $2::jsonb,
+                batch_reference = COALESCE($3, batch_reference),
+                reviewed_at = now(),
+                reviewed_by = $4,
+                updated_at = now()
+          WHERE business_id = $1
+          RETURNING to_jsonb(business_directory_reconciliation_ledger) AS state`,
+        [businessId, JSON.stringify([addressEvidenceId, mapPinEvidenceId]), input.batchReference ?? null, actorId],
+      );
+      await client.query(
+        `INSERT INTO business_directory_reconciliation_audit_events (
+           id, business_id, action, actor_user_id, reason_code, reason,
+           evidence_receipt_ids, before_state, after_state
+         ) VALUES ($1, $2, 'review', $3, 'source_ownership_and_official_presence_verified', $4, $5::jsonb, $6::jsonb, $7::jsonb)`,
+        [
+          randomUUID(), businessId, actorId, input.decisionReason,
+          JSON.stringify([addressEvidenceId, mapPinEvidenceId]),
+          JSON.stringify(priorLedger.rows[0].state), JSON.stringify(nextLedger.rows[0]?.state ?? {}),
+        ],
+      );
+      await client.query("COMMIT");
+      res.json({
+        ok: true,
+        businessId,
+        policyVersion: DOCUMENTED_DISCOVERY_POLICY_VERSION,
+        mapEvidence: { addressEvidenceId, mapPinEvidenceId },
+        message: "Audited map evidence attached without changing eligibility, ownership, lifecycle, contacts, or address.",
+      });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      req.log.error({ error, businessId }, "Failed to attach audited map pin evidence");
+      res.status(500).json({ error: "Failed to attach audited map pin evidence" });
     } finally {
       client.release();
     }

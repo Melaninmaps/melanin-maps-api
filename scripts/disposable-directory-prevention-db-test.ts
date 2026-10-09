@@ -4,6 +4,11 @@ import {
   directAdminCreationUnsafeFields,
   validateAdminBusinessProfilePatch,
 } from "../artifacts/api-server/src/businesses/adminBusinessProfilePolicy";
+import {
+  mapPinOnlyPatch,
+  storedAddressMatchesMapEvidence,
+  validateMapPinEvidenceReviewInput,
+} from "../artifacts/api-server/src/businesses/registerDocumentedDiscoveryReviewRoutes";
 import { decideGenericIngestExistingAction } from "../artifacts/api-server/src/routes/business-ingest";
 import { decideSocialFirstIdentityMatch } from "../artifacts/api-server/src/lib/social-first-ingestion";
 
@@ -35,12 +40,15 @@ async function run(): Promise<Result> {
     await client.query(`DROP TABLE IF EXISTS ${namespace}.business_discovery_eligibility`);
     await client.query(`
       CREATE TABLE ${namespace}.businesses (
-        id text PRIMARY KEY,
-        name text NOT NULL,
-        website text,
-        instagram text,
-        listing_status text NOT NULL DEFAULT 'live_unclaimed',
-        is_duplicate boolean NOT NULL DEFAULT false
+      id text PRIMARY KEY,
+      name text NOT NULL,
+      website text,
+      instagram text,
+      address text,
+      latitude numeric,
+      longitude numeric,
+      listing_status text NOT NULL DEFAULT 'live_unclaimed',
+      is_duplicate boolean NOT NULL DEFAULT false
       )
     `);
     await client.query(`
@@ -144,6 +152,85 @@ async function run(): Promise<Result> {
     assert(retainedMap.rows[0]?.address_evidence_id === addressEvidenceId, "source refresh cleared audited address evidence");
     assert(retainedMap.rows[0]?.map_pin_evidence_id === mapEvidenceId, "source refresh cleared audited map-pin evidence");
     checks.source_receipt_refresh_preserves_audited_map_evidence = true;
+
+    // The map-only control requires first-party physical-address evidence and
+    // a matching approved geocoder result. Its mutation payload contains only
+    // latitude/longitude and evidence ids; it cannot carry address, lifecycle,
+    // ownership, or eligibility fields into the update query.
+    const mapInput = validateMapPinEvidenceReviewInput({
+      decisionReason: "Synthetic first-party address and exact approved geocoder match.",
+      addressEvidence: {
+        field: "address",
+        sourceKind: "business_official",
+        sourceUrl: "https://synthetic.example/contact",
+        observedAt: "2026-10-09T00:00:00.000Z",
+        confidence: "high",
+        observedValue: {
+          address: "123 Synthetic Street, Philadelphia, PA 19103",
+          addressType: "physical",
+          identityMatch: true,
+          matchingSignals: ["business_name", "city", "address"],
+        },
+      },
+      mapPinEvidence: {
+        field: "map_pin",
+        sourceKind: "official_geocoder",
+        sourceUrl: "https://maps.googleapis.com/maps/api/geocode/json",
+        observedAt: "2026-10-09T00:00:00.000Z",
+        confidence: "high",
+        observedValue: {
+          latitude: 39.9526,
+          longitude: -75.1652,
+          queryAddress: "123 Synthetic Street, Philadelphia, PA 19103",
+          formattedAddress: "123 Synthetic Street, Philadelphia, PA 19103",
+          addressMatch: true,
+        },
+      },
+    }, new Date("2026-10-09T00:00:00.000Z"));
+    assert(storedAddressMatchesMapEvidence("123 Synthetic Street, Philadelphia, PA 19103", mapInput), "exact stored address did not match receipt");
+    assert(!storedAddressMatchesMapEvidence("124 Synthetic Street, Philadelphia, PA 19103", mapInput), "map receipt was accepted as an address change");
+    const attachedAddressEvidenceId = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb";
+    const attachedMapEvidenceId = "cccccccc-cccc-cccc-cccc-cccccccccccc";
+    const mapPatch = mapPinOnlyPatch(mapInput, attachedAddressEvidenceId, attachedMapEvidenceId);
+    assert(
+      Object.keys(mapPatch).sort().join(",") === "addressEvidenceId,latitude,longitude,mapPinEvidenceId",
+      "map-only patch contains fields outside coordinate/evidence scope",
+    );
+    await client.query(
+      `INSERT INTO ${namespace}.businesses (id, name, address, listing_status, is_duplicate)
+       VALUES ($1, $2, $3, 'live_unclaimed', false)`,
+      ["synthetic-map", "Synthetic Map", "123 Synthetic Street, Philadelphia, PA 19103"],
+    );
+    await client.query(
+      `UPDATE ${namespace}.businesses
+          SET latitude = $2::numeric, longitude = $3::numeric
+        WHERE id = $1`,
+      ["synthetic-map", mapPatch.latitude, mapPatch.longitude],
+    );
+    await client.query(
+      `UPDATE ${namespace}.business_discovery_eligibility
+          SET address_evidence_id = $2::uuid, map_pin_evidence_id = $3::uuid
+        WHERE business_id = $1`,
+      ["synthetic-map", mapPatch.addressEvidenceId, mapPatch.mapPinEvidenceId],
+    );
+    const mapOnlyStored = await client.query<{
+      address: string;
+      latitude: string;
+      longitude: string;
+      listing_status: string;
+      is_duplicate: boolean;
+    }>(`SELECT address, latitude, longitude, listing_status, is_duplicate FROM ${namespace}.businesses WHERE id = 'synthetic-map'`);
+    assert(mapOnlyStored.rows[0]?.address === "123 Synthetic Street, Philadelphia, PA 19103", "map-only update changed address");
+    assert(mapOnlyStored.rows[0]?.latitude === "39.9526" && mapOnlyStored.rows[0]?.longitude === "-75.1652", "map-only update did not save exact coordinates");
+    assert(mapOnlyStored.rows[0]?.listing_status === "live_unclaimed" && mapOnlyStored.rows[0]?.is_duplicate === false, "map-only update changed lifecycle or duplicate state");
+    const mapEligibility = await client.query<{ ownership_designations: string[]; address_evidence_id: string; map_pin_evidence_id: string }>(
+      `SELECT ownership_designations, address_evidence_id, map_pin_evidence_id
+         FROM ${namespace}.business_discovery_eligibility
+        WHERE business_id = 'synthetic-map'`,
+    );
+    assert(JSON.stringify(mapEligibility.rows[0]?.ownership_designations) === JSON.stringify(["Black / African American-Owned"]), "map-only update changed ownership evidence");
+    assert(mapEligibility.rows[0]?.address_evidence_id === attachedAddressEvidenceId && mapEligibility.rows[0]?.map_pin_evidence_id === attachedMapEvidenceId, "map-only evidence ids were not updated");
+    checks.map_only_attachment_preserves_address_lifecycle_and_ownership = true;
 
     await client.query(
       `INSERT INTO ${namespace}.businesses (id, name, website, instagram) VALUES ($1, $2, $3, $4)`,
