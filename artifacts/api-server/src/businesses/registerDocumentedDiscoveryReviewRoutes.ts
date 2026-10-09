@@ -67,6 +67,11 @@ type MapPinEvidenceReviewInput = Readonly<{
   addressEvidence: EvidenceInput;
   mapPinEvidence: EvidenceInput;
 }>;
+type StoredAddressReconciliationInput = Readonly<{
+  expectedStoredAddress: string | null;
+  decisionReason: string;
+  addressEvidence: EvidenceInput;
+}>;
 
 const OFFICIAL_SOCIAL_HOSTS = new Set([
   "instagram.com",
@@ -279,6 +284,85 @@ function samePhysicalAddress(left: PhysicalAddressComponents, right: PhysicalAdd
     && left.postalCode === right.postalCode;
 }
 
+type IncompletePhysicalAddressComponents = Readonly<{
+  houseNumber: string;
+  directional: string | null;
+  streetName: string;
+  streetType: string;
+  city: string | null;
+  state: string | null;
+  postalCode: string | null;
+}>;
+
+/**
+ * This deliberately accepts only a complete street core (number, direction,
+ * name, and type). A missing direction or street type can identify a different
+ * street, so it must remain in review rather than be "completed" from a page.
+ */
+function parseIncompleteUsStreetAddress(value: unknown): IncompletePhysicalAddressComponents | null {
+  const text = normalizedText(value, 300);
+  if (!text || /\b(?:p\.?\s*o\.?\s*box|suite|ste\.?|unit|floor|#)\b/i.test(text)) return null;
+  const parts = text.split(",").map((part) => part.trim()).filter(Boolean);
+  if (parts.length === 0 || parts.length > 3) return null;
+  const street = parts[0].match(/^\s*(\d+[A-Za-z]?)\s+(?:(N(?:orth)?|S(?:outh)?|E(?:ast)?|W(?:est)?)\.?\s+)?(.+?)\s+(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Court|Ct|Place|Pl|Parkway|Pkwy|Terrace|Ter|Highway|Hwy|Circle|Cir)\.?\s*$/i);
+  if (!street) return null;
+  let city: string | null = null;
+  let state: string | null = null;
+  let postalCode: string | null = null;
+  if (parts.length === 2) {
+    const statePart = parts[1].match(/^(.+?)(?:\s+(\d{5}(?:-\d{4})?))?$/);
+    const maybeState = canonicalState(statePart?.[1]);
+    if (maybeState) {
+      state = maybeState;
+      postalCode = statePart?.[2] ?? null;
+    } else {
+      city = componentText(parts[1]);
+    }
+  }
+  if (parts.length === 3) {
+    city = componentText(parts[1]);
+    const statePart = parts[2].match(/^(.+?)(?:\s+(\d{5}(?:-\d{4})?))?$/);
+    state = canonicalState(statePart?.[1]);
+    postalCode = statePart?.[2] ?? null;
+    if (!state) return null;
+  }
+  const houseNumber = componentText(street[1]);
+  const directional = street[2] == null ? null : canonicalDirectional(street[2]);
+  const streetName = componentText(street[3]);
+  const streetType = canonicalStreetType(street[4]);
+  if (!houseNumber || (street[2] != null && !directional) || !streetName || !streetType) return null;
+  return { houseNumber, directional, streetName, streetType, city, state, postalCode };
+}
+
+/**
+ * A controlled stored-address reconciliation may only add missing locality
+ * components to the very same, unambiguous street core. It never rewrites an
+ * already-complete address, fills an ambiguous street core, or treats a unit,
+ * P.O. box, or service area as a public location.
+ */
+export function canSafelyCompleteStoredAddress(
+  storedAddress: unknown,
+  evidencedAddress: unknown,
+): boolean {
+  const evidenced = parseCompleteUsStreetAddress(evidencedAddress);
+  if (!evidenced) return false;
+  // A deliberately supplied null stored address is a separate absence case:
+  // it may be set only from the complete first-party receipt validated above.
+  // It never retains coordinates and never creates a map pin.
+  if (normalizedText(storedAddress, 300) == null) return true;
+  if (parseCompleteUsStreetAddress(storedAddress)) return false;
+  const stored = parseIncompleteUsStreetAddress(storedAddress);
+  if (!stored) return false;
+  if (stored.houseNumber !== evidenced.houseNumber
+      || stored.directional !== evidenced.directional
+      || stored.streetName !== evidenced.streetName
+      || stored.streetType !== evidenced.streetType) return false;
+  if ((stored.city != null && stored.city !== evidenced.city)
+      || (stored.state != null && stored.state !== evidenced.state)
+      || (stored.postalCode != null && stored.postalCode !== evidenced.postalCode)) return false;
+  return stored.city == null || stored.state == null || stored.postalCode == null;
+}
+
 function exactMapEvidenceAddressMatch(addressEvidence: EvidenceInput, mapPinEvidence: EvidenceInput): boolean {
   const firstParty = parseCompleteUsStreetAddress(addressEvidence.observedValue?.address);
   const query = parseCompleteUsStreetAddress(mapPinEvidence.observedValue?.queryAddress);
@@ -427,6 +511,44 @@ export function validateMapPinEvidenceReviewInput(value: unknown, now: Date): Ma
   };
 }
 
+/**
+ * This route is intentionally not a map action. It may complete a current
+ * stored address only from an identity-matched first-party page, clears any
+ * legacy coordinate pair, and leaves map/geocoder evidence absent for a later
+ * independent review.
+ */
+export function validateStoredAddressReconciliationInput(
+  value: unknown,
+  now: Date,
+): StoredAddressReconciliationInput {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("request body must be an object");
+  const raw = value as Record<string, unknown>;
+  if (!Object.prototype.hasOwnProperty.call(raw, "expectedStoredAddress")) {
+    throw new Error("expectedStoredAddress is required for a fresh address reconciliation guard");
+  }
+  const expectedStoredAddress = raw.expectedStoredAddress === null
+    ? null
+    : normalizedText(raw.expectedStoredAddress, 300);
+  if (raw.expectedStoredAddress !== null && !expectedStoredAddress) {
+    throw new Error("expectedStoredAddress must be a non-empty stored address or explicit null");
+  }
+  const decisionReason = normalizedText(raw.decisionReason, 4_000);
+  if (!decisionReason || decisionReason.length < 3) throw new Error("A 3–4,000 character decisionReason is required");
+  const addressEvidence = validateEvidence(raw.addressEvidence, now);
+  if (addressEvidence.field !== "address") throw new Error("addressEvidence must document the address field");
+  if (!OFFICIAL_PRESENCE_SOURCE_KINDS.has(addressEvidence.sourceKind)) {
+    throw new Error("address evidence must be captured from the business or owner-controlled presence");
+  }
+  requireOfficialPresenceIdentity(addressEvidence.observedValue ?? {}, "address");
+  if (addressEvidence.observedValue?.addressType !== "physical" || addressEvidence.observedValue?.isServiceArea !== false) {
+    throw new Error("address evidence must explicitly document a physical street address, not a service area");
+  }
+  if (!parseCompleteUsStreetAddress(addressEvidence.observedValue?.address)) {
+    throw new Error("address reconciliation requires a complete US street address with city, state, and postal code");
+  }
+  return { expectedStoredAddress, decisionReason, addressEvidence };
+}
+
 export function storedAddressMatchesMapEvidence(storedAddress: unknown, input: MapPinEvidenceReviewInput): boolean {
   const stored = normalizedAddress(storedAddress);
   const evidenced = normalizedAddress(input.addressEvidence.observedValue?.address);
@@ -447,6 +569,16 @@ export function mapPinOnlyPatch(
     longitude: input.mapPinEvidence.observedValue?.longitude as number,
     addressEvidenceId,
     mapPinEvidenceId,
+  });
+}
+
+export function storedAddressOnlyPatch(
+  input: StoredAddressReconciliationInput,
+  addressEvidenceId: string,
+): Readonly<{ address: string; addressEvidenceId: string }> {
+  return Object.freeze({
+    address: input.addressEvidence.observedValue?.address as string,
+    addressEvidenceId,
   });
 }
 
@@ -1002,6 +1134,201 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
       await client.query("ROLLBACK");
       req.log.error({ error, businessId }, "Failed to record documented discovery eligibility");
       res.status(500).json({ error: "Failed to record discovery review" });
+    } finally {
+      client.release();
+    }
+  });
+
+  /**
+   * Address-only control path for legitimate records whose historical stored
+   * address lacks locality components. It is deliberately separate from the
+   * map route: it adds one first-party address receipt, clears imported
+   * coordinates, and leaves map evidence empty for a later geocoder review.
+   */
+  app.put("/api/admin/businesses/:id/stored-address-evidence", async (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    const businessId = String(req.params.id ?? "").trim();
+    if (!businessId || businessId.length > 255) {
+      res.status(400).json({ error: "A valid business id is required" });
+      return;
+    }
+    let input: StoredAddressReconciliationInput;
+    try {
+      input = validateStoredAddressReconciliationInput(req.body, new Date());
+    } catch (error) {
+      res.status(400).json({ error: error instanceof Error ? error.message : "Invalid stored-address reconciliation request" });
+      return;
+    }
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      const existingBusiness = await client.query<{
+        id: string;
+        name: string;
+        address: string | null;
+        latitude: string | null;
+        longitude: string | null;
+        is_duplicate: boolean;
+        duplicate_of_id: string | null;
+        is_superseded: boolean;
+      }>(
+        `SELECT b.id, b.name, b.address, b.latitude, b.longitude,
+                COALESCE(b.is_duplicate, false) AS is_duplicate,
+                b.duplicate_of_id,
+                EXISTS (
+                  SELECT 1 FROM business_duplicate_resolutions duplicate_resolution
+                   WHERE duplicate_resolution.superseded_business_id = b.id
+                ) AS is_superseded
+           FROM businesses b
+          WHERE b.id = $1 AND b.status NOT IN ('removed', 'deleted')
+          FOR UPDATE`,
+        [businessId],
+      );
+      if (existingBusiness.rows.length === 0) {
+        await client.query("ROLLBACK");
+        res.status(404).json({ error: "Business not found" });
+        return;
+      }
+      const business = existingBusiness.rows[0];
+      if (business.is_duplicate || business.duplicate_of_id || business.is_superseded) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "Stored address evidence may be reconciled only on the existing canonical business record" });
+        return;
+      }
+      if (normalizedAddress(business.address) !== normalizedAddress(input.expectedStoredAddress)) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "The stored address changed after the supplied read-before-write snapshot; refresh before reconciliation" });
+        return;
+      }
+      if (!canSafelyCompleteStoredAddress(business.address, input.addressEvidence.observedValue?.address)) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "The first-party address may only complete the same incomplete stored street core; conflicting or already-complete addresses require separate review" });
+        return;
+      }
+      const activeEligibility = await client.query<{
+        state: Record<string, unknown>;
+        map_pin_evidence_id: string | null;
+      }>(
+        `SELECT to_jsonb(e) AS state, e.map_pin_evidence_id::text
+           FROM business_discovery_eligibility e
+          WHERE e.business_id = $1
+            AND e.eligibility_status = 'qualified'
+            AND e.identity_evidence_id IS NOT NULL
+            AND e.ownership_evidence_id IS NOT NULL
+            AND (e.official_website_evidence_id IS NOT NULL OR e.official_social_evidence_id IS NOT NULL)
+            AND e.ownership_source_expires_at > now()
+            AND e.review_after > now()
+          FOR UPDATE`,
+        [businessId],
+      );
+      if (activeEligibility.rows.length === 0) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "An active documented eligibility record is required before stored-address reconciliation" });
+        return;
+      }
+      if (activeEligibility.rows[0].map_pin_evidence_id) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "A record with audited map evidence cannot use stored-address reconciliation; address corrections require a separate review" });
+        return;
+      }
+      const priorLedger = await client.query<{ state: Record<string, unknown> }>(
+        `SELECT to_jsonb(ledger) AS state
+           FROM business_directory_reconciliation_ledger ledger
+          WHERE ledger.business_id = $1
+          FOR UPDATE`,
+        [businessId],
+      );
+      if (priorLedger.rows.length === 0) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "A reconciliation ledger record is required before stored-address reconciliation" });
+        return;
+      }
+      const addressAuditSchema = await client.query<{ ready: boolean }>(
+        `SELECT EXISTS (
+           SELECT 1
+             FROM pg_constraint constraint_record
+            WHERE constraint_record.conrelid = 'business_discovery_eligibility_audit_events'::regclass
+              AND constraint_record.contype = 'c'
+              AND pg_get_constraintdef(constraint_record.oid) LIKE '%address_reconciled%'
+         ) AS ready`,
+      );
+      if (!addressAuditSchema.rows[0]?.ready) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "Stored-address reconciliation is unavailable until the separately reviewed immutable audit-schema migration is applied" });
+        return;
+      }
+      const actorId = typeof (req as any).user?.id === "string" ? (req as any).user.id : "automation";
+      const addressEvidenceId = randomUUID();
+      const patch = storedAddressOnlyPatch(input, addressEvidenceId);
+      await client.query(
+        `INSERT INTO business_profile_evidence_receipts (
+           id, business_id, field_name, source_kind, source_url, source_label,
+           observed_at, source_expires_at, confidence, observed_value, captured_by
+         ) VALUES ($1, $2, $3, $4, $5, $6, $7::timestamptz, $8::timestamptz, $9, $10::jsonb, $11)`,
+        [
+          addressEvidenceId, businessId, input.addressEvidence.field, input.addressEvidence.sourceKind,
+          input.addressEvidence.sourceUrl, input.addressEvidence.sourceLabel, input.addressEvidence.observedAt,
+          input.addressEvidence.sourceExpiresAt ?? null, input.addressEvidence.confidence,
+          JSON.stringify(input.addressEvidence.observedValue ?? {}), actorId,
+        ],
+      );
+      const nextBusiness = await client.query<{ state: Record<string, unknown> }>(
+        `UPDATE businesses
+            SET address = $2,
+                latitude = NULL,
+                longitude = NULL
+          WHERE id = $1
+            AND address IS NOT DISTINCT FROM $3
+          RETURNING to_jsonb(businesses) AS state`,
+        [businessId, patch.address, business.address],
+      );
+      if (nextBusiness.rows.length !== 1) throw new Error("stored-address compare-and-set guard failed");
+      const nextEligibility = await client.query<{ state: Record<string, unknown> }>(
+        `UPDATE business_discovery_eligibility
+            SET address_evidence_id = $2::uuid
+          WHERE business_id = $1
+          RETURNING to_jsonb(business_discovery_eligibility) AS state`,
+        [businessId, patch.addressEvidenceId],
+      );
+      await client.query(
+        `INSERT INTO business_discovery_eligibility_audit_events (
+           id, business_id, action, actor_id, reason, before_state, after_state
+         ) VALUES ($1, $2, 'address_reconciled', $3, $4, $5::jsonb, $6::jsonb)`,
+        [
+          randomUUID(), businessId, actorId, input.decisionReason,
+          JSON.stringify({ business, eligibility: activeEligibility.rows[0].state }),
+          JSON.stringify({ business: nextBusiness.rows[0].state, eligibility: nextEligibility.rows[0]?.state ?? {} }),
+        ],
+      );
+      const nextLedger = await client.query<{ state: Record<string, unknown> }>(
+        `UPDATE business_directory_reconciliation_ledger
+            SET evidence_receipt_ids = evidence_receipt_ids || $2::jsonb
+          WHERE business_id = $1
+          RETURNING to_jsonb(business_directory_reconciliation_ledger) AS state`,
+        [businessId, JSON.stringify([addressEvidenceId])],
+      );
+      await client.query(
+        `INSERT INTO business_directory_reconciliation_audit_events (
+           id, business_id, action, actor_user_id, reason_code, reason,
+           evidence_receipt_ids, before_state, after_state
+         ) VALUES ($1, $2, 'review', $3, 'address_reconciled_first_party', $4, $5::jsonb, $6::jsonb, $7::jsonb)`,
+        [
+          randomUUID(), businessId, actorId, input.decisionReason, JSON.stringify([addressEvidenceId]),
+          JSON.stringify(priorLedger.rows[0].state), JSON.stringify(nextLedger.rows[0]?.state ?? {}),
+        ],
+      );
+      await client.query("COMMIT");
+      res.json({
+        ok: true,
+        businessId,
+        policyVersion: DOCUMENTED_DISCOVERY_POLICY_VERSION,
+        addressEvidence: { addressEvidenceId },
+        message: "First-party stored address reconciled; imported coordinates were cleared and no map pin was created.",
+      });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      req.log.error({ error, businessId }, "Failed to reconcile stored business address");
+      res.status(500).json({ error: "Failed to reconcile stored business address" });
     } finally {
       client.release();
     }
