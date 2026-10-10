@@ -19,7 +19,9 @@ describe("website member social experience", () => {
     expect(app).toContain('path="/messages"');
     expect(app).toContain("<PreLaunchRoute><MemberProfile /></PreLaunchRoute>");
     expect(app).toContain("<PreLaunchRoute><Messages /></PreLaunchRoute>");
-    expect(community).toContain('href={`/members/${encodeURIComponent(post.authorId)}`}');
+    expect(community).toContain("function memberProfilePath(userId: string): string {");
+    expect(community).toContain("return `/members/${encodeURIComponent(userId)}`;");
+    expect(community).toContain("href={memberProfilePath(post.authorId)}");
   });
 
   it("starts and displays messages only through server-authorized conversation endpoints", () => {
