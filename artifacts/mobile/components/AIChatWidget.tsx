@@ -39,6 +39,7 @@ import { useAuth } from "@/lib/auth";
 import { parseSafeSourceLink } from "@/lib/sourceLinks";
 import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
 import { createVoiceRecordingControl } from "@/lib/voiceRecordingControl";
+import { prepareKinfolkVoiceUpload, type PreparedKinfolkVoiceUpload } from "@/lib/kinfolkVoiceUpload";
 import {
   KinfolkBusinessRecommendationSheet,
   type KinfolkBusinessRecommendation,
@@ -560,6 +561,8 @@ export function AIChatWidget() {
   const stopVoice = useCallback(async () => {
     if (!recorder.isRecording && !isRecording) return;
     const recordingSession = voiceRecordingSessionRef.current;
+    const preservedDraft = recordingDraftRef.current;
+    let voiceUpload: PreparedKinfolkVoiceUpload | null = null;
     voiceStopRequestedRef.current = true;
     setIsRecording(false);
     setVoiceInputStatus("Turning your words into text…");
@@ -572,6 +575,7 @@ export function AIChatWidget() {
       await recorder.stop();
       const uri = recorder.uri;
       if (!uri) {
+        setInput(preservedDraft);
         setVoiceInputStatus(null);
         Alert.alert("Voice Input", "No recording was captured. Please try again or type your question.");
         return;
@@ -586,28 +590,17 @@ export function AIChatWidget() {
       const base = getApiBase();
       const token = await getToken();
       if (!token) {
-        setInput(recordingDraftRef.current);
+        setInput(preservedDraft);
         throw new Error("Your sign-in expired before transcription. Your draft was restored; please sign in and try again.");
       }
-      const ext = (uri.split(".").pop() ?? "m4a").toLowerCase();
-      const mimeType = ({
-        m4a: "audio/mp4",
-        mp4: "audio/mp4",
-        mp3: "audio/mpeg",
-        wav: "audio/wav",
-        webm: "audio/webm",
-      } as const)[ext as "m4a" | "mp4" | "mp3" | "wav" | "webm"];
-      if (!mimeType) {
-        Alert.alert("Voice Input", "This recording format is not supported. Please try again or type your question.");
-        return;
-      }
+      voiceUpload = await prepareKinfolkVoiceUpload(uri, Platform.OS);
       const form = new FormData();
-      // Expo's native FormData does not support React Native's legacy
-      // `{ uri, name, type }` part shape in every runtime. `File` is a real
-      // Blob, so this reaches the server as a normal multipart attachment.
-      form.append("audio", new FileSystem.File(uri));
+      // Android receives a canonical typed Blob and filename so its multipart
+      // part agrees with the M4A/AAC recorder. iOS keeps its working File
+      // transport. The API still validates complete bytes before transcription.
+      form.append("audio", voiceUpload.body, voiceUpload.filename);
       form.append("durationMs", String(durationMs));
-      form.append("mimeType", mimeType);
+      form.append("mimeType", voiceUpload.mimeType);
 
       if (!voiceRecordingControlRef.current.permitsTranscription(recordingSession)) {
         setInput(recordingDraftRef.current);
@@ -637,6 +630,7 @@ export function AIChatWidget() {
           setInput(text);
           setVoiceInputStatus("Your words are ready to review. Tap Send when you’re ready.");
         } else {
+          setInput(preservedDraft);
           setVoiceInputStatus(null);
           Alert.alert("Voice Input", "I couldn't hear that clearly — please try again or type your question.");
         }
@@ -648,6 +642,7 @@ export function AIChatWidget() {
           if (errBody.message) serverMessage = errBody.message;
         } catch { /* ignore parse error */ }
         if (!voiceRecordingControlRef.current.permitsTranscription(recordingSession)) return;
+        setInput(preservedDraft);
         setVoiceInputStatus(null);
         Alert.alert("Voice Input", serverMessage);
       }
@@ -658,12 +653,14 @@ export function AIChatWidget() {
         return;
       }
       recordingStartedAtRef.current = null;
+      setInput(preservedDraft);
       setVoiceInputStatus(null);
       const msg = err instanceof Error ? err.message : String(err);
       Alert.alert("Voice Input", `Recording error: ${msg}. Please try again.`);
     } finally {
       recordingStartedAtRef.current = null;
       setRecordingElapsedSeconds(0);
+      voiceUpload?.cleanup();
       removeTemporaryVoiceRecording(temporaryRecordingUri);
       voiceRecordingControlRef.current.finish(recordingSession);
       voiceRecordingSessionRef.current = null;
