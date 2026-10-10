@@ -21,7 +21,7 @@ describe("profile-based Safety Check-In contract", () => {
     expect(schema).not.toContain("trustedContactEmail: varchar(\"trusted_contact_email\", { length: 255 }).notNull()");
     expect(migration).toContain("ALTER COLUMN trusted_contact_email DROP NOT NULL");
     expect(migration).toContain("CREATE TABLE IF NOT EXISTS safety_checkin_recipients");
-    expect(route).toContain("Choose either trusted profiles or one legacy email contact, not both");
+    expect(route).toContain("Email recipients are not supported for Safety Check-Ins");
   });
 
   it("limits selectable recipients to consented active in-app safety shares", () => {
@@ -51,5 +51,11 @@ describe("profile-based Safety Check-In contract", () => {
     expect(mobile).toContain("accessibilityRole=\"checkbox\"");
     expect(mobile).toContain("No email is required");
     expect(mobile).not.toContain("placeholder=\"email@example.com\"");
+  });
+
+  it("suppresses historical email delivery without accepted recipient authorization", () => {
+    expect(route).toContain("Choose at least one accepted trusted Kinfolk profile");
+    expect(cron).toContain("Suppressed legacy email check-in delivery without accepted recipient authorization");
+    expect(cron).not.toContain("await sendCheckinOverdueEmail(");
   });
 });

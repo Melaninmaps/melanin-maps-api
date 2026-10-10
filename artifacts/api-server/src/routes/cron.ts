@@ -30,7 +30,6 @@ import {
   sendTrialExpired,
   sendMissionWinBack,
   sendWeeklyDigest,
-  sendCheckinOverdueEmail,
   sendMeetupCheckinMissedEmail,
   sendFoundingAnniversaryEmail,
   sendWeeklyBusinessReport,
@@ -335,13 +334,12 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
     for (const row of overdue) {
       try {
         const memberName = [row.firstName, row.lastName].filter(Boolean).join(" ") || "Your contact";
-        // Preserve legacy email Check-Ins. Profile-based Check-Ins have no
-        // email address and instead receive durable in-app notifications.
+        // Legacy email records predate accepted-recipient authorization. They
+        // remain available to their owner as overdue history, but may never
+        // disclose a stored location or send an alert outside the in-app,
+        // accepted Trusted Safety Share delivery path.
         if (row.trustedContactEmail) {
-          await sendCheckinOverdueEmail(
-            row.trustedContactEmail, row.trustedContactName, memberName,
-            row.scheduledAt, row.location, row.city,
-          );
+          logger.warn({ checkinId: row.id }, "Suppressed legacy email check-in delivery without accepted recipient authorization");
         }
         profileAlerts += await notifySelectedCheckinProfiles(row.id, row.userId, memberName, row.city);
         const [updated] = await db.update(safetyCheckinsTable)

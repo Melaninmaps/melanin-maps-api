@@ -236,13 +236,12 @@ router.post("/safety/checkins", requireFamilySafety, async (req: Request, res: R
       return;
     }
 
-    const hasLegacyEmailRecipient = Boolean(trustedContactName?.trim() && trustedContactEmail?.includes("@"));
-    if (selectedShareIds.length > 0 && hasLegacyEmailRecipient) {
-      res.status(400).json({ error: "Choose either trusted profiles or one legacy email contact, not both" });
+    if (trustedContactName?.trim() || trustedContactEmail?.trim()) {
+      res.status(400).json({ error: "Email recipients are not supported for Safety Check-Ins. Choose accepted trusted Kinfolk profiles." });
       return;
     }
-    if (selectedShareIds.length === 0 && !hasLegacyEmailRecipient) {
-      res.status(400).json({ error: "Choose an accepted trusted profile or provide a trusted contact name and email" });
+    if (selectedShareIds.length === 0) {
+      res.status(400).json({ error: "Choose at least one accepted trusted Kinfolk profile" });
       return;
     }
 
@@ -264,8 +263,8 @@ router.post("/safety/checkins", requireFamilySafety, async (req: Request, res: R
          RETURNING *`,
         [
           userId,
-          selectedRecipients.length > 0 ? displayName(selectedRecipients.map((recipient) => recipient.recipientName)) : trustedContactName!.trim(),
-          selectedRecipients.length > 0 ? null : trustedContactEmail!.toLowerCase().trim(),
+          displayName(selectedRecipients.map((recipient) => recipient.recipientName)),
+          null,
           scheduledDate,
           note?.trim() || null,
           location?.trim() || null,
