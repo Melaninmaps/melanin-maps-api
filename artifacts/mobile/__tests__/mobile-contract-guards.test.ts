@@ -239,11 +239,15 @@ describe("Build 106 protected-read and Kinfolk response contracts", () => {
 
   it("uploads native Kinfolk voice as bounded multipart audio with duration metadata", () => {
     const widget = source("../components/AIChatWidget.tsx");
-    expect(widget).toContain('form.append("audio"');
+    const voiceUpload = source("../lib/kinfolkVoiceUpload.ts");
+    expect(widget).toContain("prepareKinfolkVoiceUpload(uri, Platform.OS)");
+    expect(widget).toContain('form.append("audio", voiceUpload.body, voiceUpload.filename)');
     expect(widget).toContain('form.append("durationMs", String(durationMs))');
-    expect(widget).toContain('form.append("mimeType", mimeType)');
-    expect(widget).toContain('webm: "audio/webm"');
-    expect(widget).toContain('m4a: "audio/mp4"');
+    expect(widget).toContain('form.append("mimeType", voiceUpload.mimeType)');
+    expect(widget).toContain("voiceUpload?.cleanup()");
+    expect(widget).toContain("setInput(preservedDraft)");
+    expect(voiceUpload).toContain('new Blob([recordingFile], { type: plan.mimeType })');
+    expect(voiceUpload).toContain("readBytes(12)");
     expect(widget).toContain("if (errBody.message) serverMessage = errBody.message");
     expect(widget).not.toContain('"Content-Type": "multipart/form-data"');
   });
