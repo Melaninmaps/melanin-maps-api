@@ -186,7 +186,7 @@ describe("governed Kinfolk business repository", () => {
     },
   );
 
-  it("keeps every public listing in the temporary Kinfolk catalog without treating provenance as ownership evidence", async () => {
+  it("uses current documented eligibility without treating provenance as ownership evidence", async () => {
     const pool = { query: vi.fn().mockResolvedValue({ rows: [] }) };
     await createGovernedKinfolkBusinessRepository(pool).findDestinationCatalog({
       city: "Allentown",
@@ -198,7 +198,10 @@ describe("governed Kinfolk business repository", () => {
     expect(sql).not.toContain("completed_cohort_directory_discovery_receipts");
     expect(sql).not.toContain("national_diaspora_master_18294");
     expect(sql).not.toContain("source_backed_held_live");
-    expect(sql).toContain("AND TRUE");
+    expect(sql).toContain("FROM public.business_discovery_eligibility AS documented_eligibility");
+    expect(sql).toContain("documented_eligibility.eligibility_status = 'qualified'");
+    expect(sql).toContain("documented_eligibility.ownership_evidence_id IS NOT NULL");
+    expect(sql).toContain("documented_eligibility.official_social_evidence_id IS NOT NULL");
     expect(sql).not.toContain("jsonb_array_elements_text");
   });
 
