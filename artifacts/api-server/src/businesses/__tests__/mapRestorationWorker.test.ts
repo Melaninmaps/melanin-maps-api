@@ -6,6 +6,7 @@ import {
   isFounderMapRestorationV4Candidate,
   matchingCensusLocation,
   parseCompleteStoredPhysicalAddress,
+  startFounderMapRestorationWorker,
 } from "../mapRestorationWorker";
 
 const source = readFileSync(
@@ -14,6 +15,19 @@ const source = readFileSync(
 );
 
 describe("founder map restoration", () => {
+  it("never starts the map worker in explicitly isolated Kinfolk-memory staging", () => {
+    expect(
+      startFounderMapRestorationWorker(
+        {} as never,
+        {} as never,
+        {
+          MAP_RESTORATION_WORKER_ENABLED: "1",
+          KINFOLK_MEMORY_STAGING_ISOLATION: "1",
+        },
+      ),
+    ).toBeNull();
+  });
+
   it("accepts a stored U.S. physical address with every map-identifying component", () => {
     expect(
       parseCompleteStoredPhysicalAddress({

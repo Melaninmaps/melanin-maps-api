@@ -898,6 +898,11 @@ export function startFounderMapRestorationWorker(
   logger: WorkerLogger,
   environment: NodeJS.ProcessEnv = process.env,
 ): (() => void) | null {
+  // The disposable Kinfolk-memory environment must never execute this
+  // unrelated publishing/geocoding worker, even if a shared Railway variable
+  // is inherited unexpectedly. This guard is opt-in and has no production
+  // effect unless the isolated-staging flag is explicitly set.
+  if (environment.KINFOLK_MEMORY_STAGING_ISOLATION === "1") return null;
   if (environment.MAP_RESTORATION_WORKER_ENABLED !== "1") return null;
   const batchSize = Math.max(
     1,
