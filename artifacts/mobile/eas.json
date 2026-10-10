@@ -111,6 +111,30 @@
         "APP_RELEASE_CHANNEL": "production"
       }
     },
+    "build136-device-acceptance": {
+      "extends": "production",
+      "distribution": "internal",
+      "environment": "production",
+      "autoIncrement": false,
+      "ios": {
+        "credentialsSource": "remote",
+        "resourceClass": "m-medium",
+        "image": "sdk-57"
+      },
+      "android": {
+        "buildType": "apk",
+        "image": "ubuntu-26.04-jdk-17-ndk-r27b-sdk-57"
+      },
+      "env": {
+        "EXPO_PUBLIC_DOMAIN": "www.mappingwithmelanin.com",
+        "EXPO_PUBLIC_API_ORIGIN": "https://api.melaninmaps.com",
+        "PNPM_VERSION": "10.26.1",
+        "EXPO_PUBLIC_REVENUECAT_ENABLED": "false",
+        "EXPO_PUBLIC_APP_ENV": "production",
+        "APP_ENV": "production",
+        "APP_RELEASE_CHANNEL": "production"
+      }
+    },
     "production-android": {
       "extends": "production",
       "env": {

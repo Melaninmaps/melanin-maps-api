@@ -20,7 +20,9 @@ type AppJson = {
 };
 
 const projectRoot = path.resolve(__dirname, "..");
-const appJson = JSON.parse(fs.readFileSync(path.join(projectRoot, "app.json"), "utf8")) as AppJson;
+const appJson = JSON.parse(
+  fs.readFileSync(path.join(projectRoot, "app.json"), "utf8"),
+) as AppJson;
 const buildRecord = JSON.parse(
   fs.readFileSync(path.join(projectRoot, ".build-record.json"), "utf8"),
 ) as {
@@ -29,7 +31,9 @@ const buildRecord = JSON.parse(
   lastAndroidSubmitted: number;
   lastAndroidReserved?: number;
 };
-const eas = JSON.parse(fs.readFileSync(path.join(projectRoot, "eas.json"), "utf8")) as {
+const eas = JSON.parse(
+  fs.readFileSync(path.join(projectRoot, "eas.json"), "utf8"),
+) as {
   build: { production: { env: { EXPO_PUBLIC_API_ORIGIN: string } } };
   submit: { production: { ios: { ascAppId: string } } };
 };
@@ -39,15 +43,18 @@ describe("iOS App Review background-audio configuration", () => {
     // The build record is historical evidence, not the EAS source of truth.
     // It deliberately remains conservative when a newer identifier was reserved
     // by EAS after the record was written. The release gate enforces this
-    // reviewed source's exact 134/100 identifiers before a build is allowed.
+    // reviewed source's exact 136/102 identifiers before a build is allowed.
     expect(Number(appJson.expo.ios.buildNumber)).toBeGreaterThan(
       Math.max(buildRecord.lastIosSubmitted, buildRecord.lastIosReserved ?? 0),
     );
     expect(appJson.expo.android.versionCode).toBeGreaterThan(
-      Math.max(buildRecord.lastAndroidSubmitted, buildRecord.lastAndroidReserved ?? 0),
+      Math.max(
+        buildRecord.lastAndroidSubmitted,
+        buildRecord.lastAndroidReserved ?? 0,
+      ),
     );
-    expect(appJson.expo.ios.buildNumber).toBe("134");
-    expect(appJson.expo.android.versionCode).toBe(100);
+    expect(appJson.expo.ios.buildNumber).toBe("136");
+    expect(appJson.expo.android.versionCode).toBe(102);
     expect(appJson.expo.version).toBe("1.1.10");
     expect(appJson.expo.android.version).toBe("1.1.10");
     expect(appJson.expo.runtimeVersion).toBe("1.1.9-native.1");
@@ -63,14 +70,20 @@ describe("iOS App Review background-audio configuration", () => {
     expect(audioPlugin).toBeDefined();
     expect(audioPlugin?.[1].microphonePermission).toEqual(expect.any(String));
     expect(audioPlugin?.[1].recordAudioAndroid).toBe(true);
-    expect(appJson.expo.ios.infoPlist?.NSMicrophoneUsageDescription).toEqual(expect.any(String));
+    expect(appJson.expo.ios.infoPlist?.NSMicrophoneUsageDescription).toEqual(
+      expect.any(String),
+    );
     expect(audioPlugin?.[1].enableBackgroundPlayback).toBe(false);
     expect(audioPlugin?.[1].enableBackgroundRecording).toBe(false);
-    expect(appJson.expo.ios.infoPlist?.UIBackgroundModes ?? []).not.toContain("audio");
+    expect(appJson.expo.ios.infoPlist?.UIBackgroundModes ?? []).not.toContain(
+      "audio",
+    );
   });
 
   it("uses the production API and App Store Connect profile for TestFlight", () => {
-    expect(eas.build.production.env.EXPO_PUBLIC_API_ORIGIN).toBe("https://api.melaninmaps.com");
+    expect(eas.build.production.env.EXPO_PUBLIC_API_ORIGIN).toBe(
+      "https://api.melaninmaps.com",
+    );
     expect(eas.submit.production.ios.ascAppId).toBe("6783773366");
   });
 });
