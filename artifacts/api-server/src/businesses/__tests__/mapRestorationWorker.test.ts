@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   FOUNDER_MAP_RESTORATION_POLICY_VERSION,
+  isFounderMapRestorationV4Candidate,
   matchingCensusLocation,
   parseCompleteStoredPhysicalAddress,
 } from "../mapRestorationWorker";
@@ -320,6 +321,44 @@ describe("founder map restoration", () => {
     ).toBeNull();
   });
 
+  it("scopes v4 writes to parser-ready records and prior exact-geocoder exceptions", () => {
+    const base = {
+      id: "scoped-business",
+      name: "Scoped Business",
+      address: "4600 Silver Hill Road",
+      city: "Washington",
+      state: "DC",
+      country: "US",
+      postalCode: null,
+    } as const;
+    expect(isFounderMapRestorationV4Candidate({
+      ...base,
+      priorOutcome: "missing_complete_stored_address",
+    })).toBe(true);
+    expect(isFounderMapRestorationV4Candidate({
+      ...base,
+      priorOutcome: "geocoder_no_exact_match",
+    })).toBe(true);
+    expect(isFounderMapRestorationV4Candidate({
+      ...base,
+      priorOutcome: "geocoder_error",
+    })).toBe(true);
+    expect(isFounderMapRestorationV4Candidate({
+      ...base,
+      address: "Silver Hill Road",
+      priorOutcome: "missing_complete_stored_address",
+    })).toBe(false);
+    expect(isFounderMapRestorationV4Candidate({
+      ...base,
+      priorOutcome: "geocoder_unavailable",
+    })).toBe(false);
+    expect(isFounderMapRestorationV4Candidate({
+      ...base,
+      publicLocationKind: "service_area",
+      priorOutcome: "geocoder_no_exact_match",
+    })).toBe(false);
+  });
+
   it("accepts a Census coordinate only after every map-identifying address component matches", () => {
     const expected = parseCompleteStoredPhysicalAddress({
       id: "business-census",
@@ -396,6 +435,12 @@ describe("founder map restoration", () => {
     expect(source).toContain("matchedHouseNumber");
     expect(source).toContain("splitTerminalEmbeddedPostalCode");
     expect(source).toContain("JOIN public.business_discovery_eligibility e ON e.business_id::text = b.id::text");
+    expect(source).toContain("o.outcome IN (");
+    expect(source).toContain("isFounderMapRestorationV4Candidate");
+    expect(source).toContain('"missing_complete_stored_address"');
+    expect(source).toContain('"geocoder_no_exact_match"');
+    expect(source).toContain('"geocoder_error"');
+    expect(source).toContain("Scoped map restoration queue is empty; worker stopped");
     expect(source).not.toContain("SET ownership_designations");
     expect(source).not.toContain("SET website =");
   });

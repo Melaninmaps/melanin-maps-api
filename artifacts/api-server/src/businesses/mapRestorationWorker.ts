@@ -37,6 +37,7 @@ export type MapRestorationCandidate = Readonly<{
   postalCode: string | null;
   serviceArea?: string | null;
   publicLocationKind?: string | null;
+  priorOutcome?: MapRestorationOutcome | null;
 }>;
 
 type PhysicalAddress = Readonly<{
@@ -251,10 +252,10 @@ function matchedHouseNumber(matchedAddress: string | null | undefined): string |
 
 function explicitlyNonphysicalLocation(candidate: MapRestorationCandidate): boolean {
   const kind = normalized(candidate.publicLocationKind);
-  const explicitlyPhysical = ["address", "physical", "storefront", "customer_facing"].includes(kind);
+  const explicitlyPhysical = ["address", "physical", "storefront", "customer facing"].includes(kind);
   return !explicitlyPhysical && (
     Boolean(candidate.serviceArea?.trim())
-    || ["online", "online_only", "service_area", "private", "private_residence", "home_based"].includes(kind)
+    || ["online", "online only", "service area", "private", "private residence", "home based"].includes(kind)
   );
 }
 
@@ -497,10 +498,11 @@ async function loadPendingCandidates(
   const { rows } = await pool.query<MapRestorationCandidate>(
     `SELECT b.id, b.name, b.address, b.city, b.state, b.country, b.postal_code AS "postalCode",
             to_jsonb(b)->>'service_area' AS "serviceArea",
-            to_jsonb(b)->>'public_location_kind' AS "publicLocationKind"
+            to_jsonb(b)->>'public_location_kind' AS "publicLocationKind",
+            o.outcome AS "priorOutcome"
        FROM public.public_businesses b
        JOIN public.business_discovery_eligibility e ON e.business_id::text = b.id::text
-       LEFT JOIN public.business_map_restoration_outcomes o ON o.business_id::text = b.id::text
+       JOIN public.business_map_restoration_outcomes o ON o.business_id::text = b.id::text
       WHERE e.eligibility_status = 'qualified'
         AND e.policy_version = 'documented_diaspora_discovery_v1'
         AND e.ownership_evidence_id IS NOT NULL
@@ -522,22 +524,46 @@ async function loadPendingCandidates(
                 FROM public.business_legacy_map_location_attestation_events AS legacy_event
                WHERE legacy_event.attestation_id = legacy_location.id
                ORDER BY legacy_event.created_at DESC, legacy_event.id DESC
-               LIMIT 1
+                LIMIT 1
             ), 'active') <> 'revoked'
        )
        AND (
-          o.business_id IS NULL
-          OR o.policy_version <> $2
+          o.policy_version <> $1
           -- A profile edit changes businesses.updated_at, which makes a prior
           -- exception eligible for a fresh exact-geocode attempt without
           -- relying on an optional database hashing extension.
           OR o.updated_at < b.updated_at
        )
-      ORDER BY b.id ASC
-      LIMIT $1`,
-    [limit, FOUNDER_MAP_RESTORATION_POLICY_VERSION],
+       AND o.outcome IN (
+         'missing_complete_stored_address',
+         'geocoder_no_exact_match',
+         'geocoder_error'
+       )
+      ORDER BY CASE WHEN o.outcome = 'missing_complete_stored_address' THEN 0 ELSE 1 END,
+               b.id ASC
+      LIMIT 10000`,
+    [FOUNDER_MAP_RESTORATION_POLICY_VERSION],
   );
-  return rows;
+  return rows
+    .filter(isFounderMapRestorationV4Candidate)
+    .slice(0, limit);
+}
+
+/**
+ * V4 deliberately restores only records that now parse safely and prior
+ * exact-geocoder exceptions. Formatting holds stay read-only until a later,
+ * independently validated parser rule covers their exact format.
+ */
+export function isFounderMapRestorationV4Candidate(
+  candidate: MapRestorationCandidate,
+): boolean {
+  if (
+    candidate.priorOutcome !== "missing_complete_stored_address"
+    && candidate.priorOutcome !== "geocoder_no_exact_match"
+    && candidate.priorOutcome !== "geocoder_error"
+  ) return false;
+  if (explicitlyNonphysicalLocation(candidate)) return false;
+  return parseCompleteStoredPhysicalAddress(candidate) !== null;
 }
 
 function responseFingerprint(
@@ -891,11 +917,19 @@ export function startFounderMapRestorationWorker(
         environment,
         batchSize,
       );
-      if (result.processed > 0)
+      if (result.processed > 0) {
         logger.info(
           { ...result, policyVersion: FOUNDER_MAP_RESTORATION_POLICY_VERSION },
           "Founder map restoration batch completed",
         );
+      } else {
+        stopped = true;
+        clearInterval(timer);
+        logger.info(
+          { policyVersion: FOUNDER_MAP_RESTORATION_POLICY_VERSION },
+          "Scoped map restoration queue is empty; worker stopped",
+        );
+      }
     } catch (error) {
       logger.error({ error }, "Founder map restoration batch failed");
     } finally {
