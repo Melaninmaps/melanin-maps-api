@@ -6262,6 +6262,36 @@ export async function ensureSafetyOperationalSchema(logger?: Logger): Promise<vo
   logger?.info("Safety Hub trusted-contact and Check-In schemas ready before traffic acceptance");
 }
 
+// The authenticated Kinfolk staging proof must read the exact same catalog
+// schema as the isolated API. Keep this gate scoped to the disposable staging
+// environment; it is additive, creates no business data, and starts no worker.
+const ISOLATED_GOVERNED_DISCOVERY_SCHEMA_MIGRATIONS = [
+  "business_profile_evidence_receipts_v1",
+  "business_discovery_eligibility_v1",
+  "business_discovery_eligibility_audit_events_v1",
+] as const;
+
+export async function ensureIsolatedGovernedDiscoverySchema(
+  logger?: Logger,
+): Promise<void> {
+  if (process.env.KINFOLK_MEMORY_STAGING_ISOLATION !== "true") return;
+
+  for (const name of ISOLATED_GOVERNED_DISCOVERY_SCHEMA_MIGRATIONS) {
+    const migration = MIGRATIONS.find((candidate) => candidate.name === name);
+    if (!migration) {
+      throw new Error(`Governed discovery schema migration is unavailable: ${name}`);
+    }
+    await pool.query(migration.sql);
+  }
+
+  await Promise.all([
+    pool.query("SELECT id, business_id, field_name FROM business_profile_evidence_receipts LIMIT 0"),
+    pool.query("SELECT business_id, eligibility_status FROM business_discovery_eligibility LIMIT 0"),
+    pool.query("SELECT id, business_id, action FROM business_discovery_eligibility_audit_events LIMIT 0"),
+  ]);
+  logger?.info("Isolated governed discovery schemas ready before traffic acceptance");
+}
+
 export const COMMUNITY_PUBLICATION_REQUIRED_COLUMNS: Readonly<
   Record<string, readonly string[]>
 > = {

@@ -17,6 +17,7 @@ import {
   ensureKinfolkPrivatePlacesSchema,
   ensureKinfolkPreferredNameSchema,
   ensureKinfolkTemporaryStaysSchema,
+  ensureIsolatedGovernedDiscoverySchema,
   ensureRequiredPublicationSchema,
   ensureSafetyOperationalSchema,
   publicationSchemaFailureLogLines,
@@ -190,6 +191,8 @@ try {
   // notifications, so explicit release mode can safely enforce them here.
   await ensureSafetyOperationalSchema(logger);
   logger.info("Safety Hub operational schema ready before traffic acceptance");
+  await ensureIsolatedGovernedDiscoverySchema(logger);
+  logger.info("Isolated governed discovery schema ready before traffic acceptance");
   if (explicitFeatureReleaseMode) {
     logger.info("Explicit feature release mode: skipping boot-time schema and publication writers");
   } else {
