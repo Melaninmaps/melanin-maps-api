@@ -467,7 +467,7 @@ router.post("/safety/trusted-shares", async (req: Request, res: Response) => {
               AND COALESCE(owner.account_status, 'active') = 'active'
               AND owner_blocks.id IS NULL
               AND contact_blocks.id IS NULL
-            FOR KEY SHARE`,
+            `,
           [ownerId, contactUserId],
         );
         if (!eligibleContact.rows[0]) {

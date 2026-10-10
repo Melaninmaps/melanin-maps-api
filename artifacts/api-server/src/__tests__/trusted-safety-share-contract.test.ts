@@ -174,6 +174,15 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
     expect(delivery).not.toContain('deliveryStatus = "delivered"');
   });
 
+  it("uses the transaction advisory lock without applying a row lock to an outer join", () => {
+    const route = readFileSync(
+      fileURLToPath(new URL("../routes/trusted-safety-share.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(route).toContain("SELECT pg_advisory_xact_lock(hashtext($1))");
+    expect(route).not.toContain("FOR KEY SHARE");
+  });
+
   it("minimizes retained coordinates and refuses future or stale coordinate timestamps", () => {
     const now = Date.parse("2026-10-10T12:00:00.000Z");
     expect(minimizeLocationCoordinate(33.749123)).toBe(33.7491);
