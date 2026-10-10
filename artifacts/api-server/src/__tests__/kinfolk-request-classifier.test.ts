@@ -82,13 +82,14 @@ describe("classifyKinfolkRequest — stylist proof-of-concept", () => {
     });
   });
 
-  it("asks a hair-specific location question without restaurant language", () => {
+  it("keeps a declarative stylist definition in general knowledge", () => {
     const result = classifyKinfolkRequest("a stylist is a hairdresser or a salon");
-    expect(result.route).toBe("clarification");
-    expect(result.clarification).toMatch(/stylist|salon/i);
-    expect(result.clarification).toMatch(/city|neighborhood/i);
-    expect(result.clarification).toMatch(/locs|braids|natural hair/i);
-    expect(result.clarification).not.toMatch(/cuisine/i);
+    expect(result).toMatchObject({
+      route: "general_knowledge",
+      discoveryKind: "general",
+      clarification: null,
+      reason: "no_discovery_signal",
+    });
   });
 
   it.each([
@@ -180,9 +181,17 @@ describe("classifyKinfolkRequest — general current-affairs protection", () => 
     });
   });
 
-  it("retains explicit travel planning as an additive capability", () => {
-    expect(classifyKinfolkRequest("I am going to Atlanta this weekend").route).toBe("travel_planning");
-    expect(classifyKinfolkRequest("I am traveling to Atlanta").route).toBe("travel_planning");
+  it("does not infer a travel-planning request from a destination statement alone", () => {
+    expect(classifyKinfolkRequest("I am going to Atlanta this weekend")).toMatchObject({
+      route: "general_knowledge",
+      location: "Atlanta",
+      reason: "resolved_city_context",
+    });
+    expect(classifyKinfolkRequest("I am traveling to Atlanta")).toMatchObject({
+      route: "general_knowledge",
+      location: "Atlanta",
+      reason: "resolved_city_context",
+    });
   });
 });
 

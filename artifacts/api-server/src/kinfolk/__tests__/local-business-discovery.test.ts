@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 const responsesCreate = vi.hoisted(() => vi.fn());
 vi.mock("@workspace/integrations-openai-ai-server", () => ({
@@ -21,12 +21,6 @@ import { classifyKinfolkRequest } from "../request-classifier";
 import { searchAllQueriesWithState, searchLocalBusinessQueriesWithState } from "../web-search";
 
 const originalFetch = globalThis.fetch;
-
-beforeEach(() => {
-  // Legacy behavioral fixtures exercise general discovery. Production defaults
-  // to the documented Diaspora Promotion Catalog and is covered separately.
-  vi.stubEnv("MWM_PROMOTION_CATALOG_MODE", "all_public");
-});
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -336,6 +330,7 @@ describe("deterministic local business discovery", () => {
         matchReasons: ["category", "dietary: vegan"],
       }] }),
       webSearch,
+      allowAllPublicPlaces: true,
     });
 
     expect(result.recommendations?.summary).toContain("vegan restaurants");
@@ -379,6 +374,7 @@ describe("deterministic local business discovery", () => {
           { title: "Ethiopian restaurant guide", url: "https://example.com/ethiopian", content: "Ethiopian food in Minneapolis.", providerScore: 0.8, sourceQuery: { text: "Ethiopian restaurants Minneapolis, MN", role: "general", reason: "neutral" } },
         ],
       }),
+      allowAllPublicPlaces: true,
     });
 
     expect(result.discovery.platformBusinesses).toEqual([
@@ -524,6 +520,7 @@ describe("deterministic local business discovery", () => {
       subject: bookstore,
       repository: db,
       webSearch,
+      allowAllPublicPlaces: true,
     });
 
     expect(db.findBySubject).toHaveBeenCalledBefore(webSearch);
@@ -677,7 +674,7 @@ describe("deterministic local business discovery", () => {
     expect(result.discovery.platformBusinesses[0]?.ownershipEvidence).toBeNull();
   });
 
-  it("keeps current public discovery available during founder-led cleanup", async () => {
+  it("keeps explicit all-places discovery available during founder-led cleanup", async () => {
     const webSearch = vi.fn().mockResolvedValue({
       state: "completed",
       attempted: true,
@@ -695,6 +692,7 @@ describe("deterministic local business discovery", () => {
       subject: bookstore,
       repository: repository(),
       webSearch,
+      allowAllPublicPlaces: true,
     });
     expect(webSearch).toHaveBeenCalled();
     expect(result.discovery.webFindings).toEqual([
@@ -771,6 +769,7 @@ describe("deterministic local business discovery", () => {
             sourceQuery: { text: "bookstores Atlanta, GA", role: "general", reason: "neutral" },
           }],
         }),
+        allowAllPublicPlaces: true,
       });
 
       const serialized = JSON.stringify(result);
@@ -789,6 +788,7 @@ describe("deterministic local business discovery", () => {
       subject: bookstore,
       repository: repository(),
       webSearch: vi.fn().mockResolvedValue({ state: "completed", attempted: true, provider: "openai", results: [] }),
+      allowAllPublicPlaces: true,
     });
     expect(completed.reply).toContain("couldn’t find matching MWM records or current web results");
 
@@ -797,6 +797,7 @@ describe("deterministic local business discovery", () => {
       subject: bookstore,
       repository: repository(),
       webSearch: vi.fn().mockResolvedValue({ state: "unavailable", attempted: false, provider: null, results: [] }),
+      allowAllPublicPlaces: true,
     });
     expect(unavailable.reply).toContain("Current external details are unavailable");
     expect(unavailable.reply).not.toContain("or current web results");
@@ -808,6 +809,7 @@ describe("deterministic local business discovery", () => {
       subject: bookstore,
       repository: repository({ places: [forKeepsPlace] }),
       webSearch: vi.fn().mockRejectedValue(Object.assign(new Error("rate limited"), { status: 429 })),
+      allowAllPublicPlaces: true,
     });
     expect(result.discovery.webSearch.state).toBe("degraded");
     expect(result.discovery.webSearch).toMatchObject({ fallbackUsed: false, partial: false });
@@ -827,6 +829,7 @@ describe("deterministic local business discovery", () => {
       repository: repository(),
       signalRepository,
       webSearch: vi.fn().mockResolvedValue({ state: "completed", attempted: true, provider: "openai", results: [] }),
+      allowAllPublicPlaces: true,
     });
 
     expect(signalRepository.recordCoverageGap).toHaveBeenCalledWith(expect.objectContaining({

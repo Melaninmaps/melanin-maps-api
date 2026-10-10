@@ -286,12 +286,13 @@ describe("Kinfolk business personalization", () => {
     expect(deriveBusinessSubject(message)?.key).toBe("fashion");
   });
 
-  it("asks a skippable service-type question for a broad hair search", () => {
+  it("offers a skippable service-type question when a broad hair refinement is requested", () => {
     const steps = businessDiscoveryClarification({
       message: "Find hair in Philadelphia",
       subjectKey: "salon",
       ageBand: "18_plus",
       city: "Philadelphia",
+      includeOptionalHairRefinement: true,
     });
     expect(steps).toHaveLength(1);
     expect(steps[0]?.question).toContain("What kind of hair service");
@@ -301,7 +302,7 @@ describe("Kinfolk business personalization", () => {
     expect(steps[0]?.persistence).toBe("temporary");
   });
 
-  it("asks the same skippable hair-service question for a plain stylist request", () => {
+  it("offers the same optional hair-service refinement for a plain stylist request", () => {
     const message = "Can you find me a stylist in Philadelphia";
     const subject = deriveBusinessSubject(message);
     expect(subject?.key).toBe("salon");
@@ -310,6 +311,7 @@ describe("Kinfolk business personalization", () => {
       subjectKey: subject!.key,
       ageBand: "18_plus",
       city: "Philadelphia",
+      includeOptionalHairRefinement: true,
     })[0]).toMatchObject({
       id: "business-hair-service",
       question: "What kind of hair service should I focus on?",

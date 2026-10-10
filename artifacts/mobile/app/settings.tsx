@@ -67,6 +67,12 @@ export default function SettingsScreen() {
         { id: "safetyhub", icon: "shield", label: "Safety Hub", sub: "Check-ins, location sharing & meetup verification", route: "/safety-hub" },
         { id: "trusted-safety", icon: "users", label: "Trusted Safety Share", sub: "Share safety alerts with family — nothing else", route: "/trusted-safety-share" },
         { id: "appearance", icon: "moon", label: "Dark Mode", value: isDark ? "On" : "Off", route: null },
+        { id: "kinfolk-chat", icon: "message-circle", label: "Chat with KinfolkAI™", sub: "Continue a private, member-controlled conversation", route: "/travel" },
+        { id: "circles", icon: "users", label: "Circles", sub: "Your private group spaces", route: "/circles" },
+        { id: "creator-profile", icon: "edit-3", label: "Creator Profile", sub: "Manage your public creator profile", route: "/creator-profile" },
+        { id: "business-submissions", icon: "clipboard", label: "My business submissions", sub: "Review the status of your submitted businesses", route: "/my-business-submissions" },
+        { id: "add-my-business", icon: "briefcase", label: "Add My Business", sub: "Start an owner submission for your business", route: "/list-business?intent=owner" },
+        { id: "share-business", icon: "share-2", label: "Share Another Business", sub: "Recommend a community business for review", route: "/list-business?intent=community" },
       ],
     },
   ];

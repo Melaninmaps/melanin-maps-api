@@ -34,7 +34,10 @@ describe("mobile social profile hub", () => {
     expect(settings).toContain('route: "/(tabs)/profile"');
     expect(settings).toContain('label: "KinfolkAI™"');
     expect(settings).toContain('route: "/kinfolk-settings"');
-    expect(settings).toContain('title: "Your Spaces"');
+    // Settings intentionally stays a two-section, mutually-exclusive control
+    // center. Social and contribution links remain reachable within App Settings
+    // rather than reviving a third accordion.
+    expect(settings).not.toContain('title: "Your Spaces"');
     expect(settings).toContain('label: "Chat with KinfolkAI™"');
     expect(settings).toContain('route: "/travel"');
     expect(settings).toContain('route: "/circles"');

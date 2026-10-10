@@ -1,11 +1,9 @@
-import { configDefaults, defineConfig } from "vitest/config";
+import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
     environment: "node",
-    include: ["src/**/__tests__/**/*.test.ts", "src/__tests__/**/*.test.ts"],
-    exclude: [
-      ...configDefaults.exclude,
+    include: [
       "src/kinfolk/__tests__/alias-release-gate.test.ts",
       "src/kinfolk/__tests__/cultural-context-release-gate.test.ts",
     ],

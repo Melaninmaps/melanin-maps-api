@@ -379,13 +379,15 @@ describe("contextual intelligence behavior integration", () => {
       now: () => NOW,
     });
     const payload = {
-      reply: `The catalog context is supported. ${bundle.gaps.length || bundle.degraded ? "The current metric could not be verified." : ""}`,
+      reply: bundle.gaps.length || bundle.degraded
+        ? "The current metric could not be verified."
+        : "The current metric is supported.",
       sources: bundle.internal.map(({ title, url }) => ({ title, url })),
     };
     expect(bundle).toMatchObject({ degraded: true, degradedReason: "A retrieval provider was unavailable." });
     expect(payload.reply).toMatch(/could not be verified/i);
     expect(payload.reply).not.toMatch(/\b\d[\d,.]*\s*(streams?|views?|million|billion)\b/i);
-    expect(payload.sources).toEqual([{ title: stable.title, url: stable.url }]);
+    expect(payload.sources).toEqual([]);
   });
 
   it("searches only published Brazil records and never writes memory, even when consent is merely offered", async () => {

@@ -83,7 +83,10 @@ describe("named Kinfolk business resolution", () => {
       stateCode: "PA",
     });
     expect(namedBusinessPromptBlock(AMINA)).toContain(
-      `Any recommendation must use businessId "${AMINA.id}" and exact name "AMINA".`,
+      "NAMED BUSINESS — SERVER-AUTHORITATIVE EXACT RECORD:",
+    );
+    expect(namedBusinessPromptBlock(AMINA)).toContain(
+      `Do not emit a recommendation card for businessId "${AMINA.id}" unless a separate documented-discovery query independently qualifies it.`,
     );
   });
 

@@ -16,8 +16,8 @@ describe("Expo config plugin imports", () => {
       "utf8",
     );
 
-    expect(pluginSource).toContain('require("@expo/config-plugins")');
-    expect(pluginSource).not.toContain('require("expo/config-plugins")');
+    expect(pluginSource).toContain('require("expo/config-plugins")');
+    expect(pluginSource).not.toContain('require("@expo/config-plugins")');
   });
 });
 
