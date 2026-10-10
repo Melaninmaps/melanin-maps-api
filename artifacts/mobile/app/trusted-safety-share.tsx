@@ -52,8 +52,6 @@ interface TrustedShare {
   id: string;
   contact_type: ContactType;
   contact_name: string;
-  contact_phone: string | null;
-  contact_email: string | null;
   contact_first_name: string | null;
   contact_avatar: string | null;
   owner_enabled: boolean;
@@ -61,6 +59,7 @@ interface TrustedShare {
   status: ShareStatus;
   activated_at: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 // ── Status Badge ──────────────────────────────────────────────────────────────
@@ -91,7 +90,8 @@ export default function TrustedSafetyShareScreen() {
 
   const [shares, setShares] = useState<TrustedShare[]>([]);
   const [loading, setLoading] = useState(true);
-  const [masterEnabled, setMasterEnabled] = useState(true);
+  const [masterEnabled, setMasterEnabled] = useState(false);
+  const [consentSaving, setConsentSaving] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
 
   const [fadeIn] = useState(() => new Animated.Value(0));
@@ -108,7 +108,9 @@ export default function TrustedSafetyShareScreen() {
       });
       if (!res.ok) return;
       const data = await res.json();
-      setShares((data.shares ?? []).filter((s: TrustedShare) => s.status !== "revoked"));
+      const visibleShares = (data.shares ?? []).filter((s: TrustedShare) => s.status !== "revoked");
+      setShares(visibleShares);
+      setMasterEnabled(visibleShares.length > 0 && visibleShares.some((share: TrustedShare) => share.owner_enabled));
     } catch {
       // silent
     } finally {
@@ -118,6 +120,31 @@ export default function TrustedSafetyShareScreen() {
   }, [isAuthenticated, fadeIn]);
 
   useEffect(() => { queueMicrotask(() => { void loadShares(); }); }, [loadShares]);
+
+  const updateAllContactConsent = async (enabled: boolean) => {
+    if (consentSaving || !isAuthenticated) return;
+    setConsentSaving(true);
+    try {
+      const token = await getAuthToken();
+      if (!token) throw new Error("Sign in required");
+      const response = await fetch(`${getApiBase()}/api/safety/trusted-shares/consent`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ enabled }),
+      });
+      const data = await response.json() as { shares?: TrustedShare[]; error?: string };
+      if (!response.ok || !data.shares) throw new Error(data.error ?? "Unable to update consent");
+      setShares(data.shares.filter((share) => share.status !== "revoked"));
+      setMasterEnabled(enabled);
+    } catch {
+      Alert.alert(
+        "Consent Not Updated",
+        "The server did not confirm this change, so your trusted safety sharing setting was left unchanged.",
+      );
+    } finally {
+      setConsentSaving(false);
+    }
+  };
 
   // ── Revoke ──────────────────────────────────────────────────────────────────
 
@@ -134,10 +161,11 @@ export default function TrustedSafetyShareScreen() {
             try {
               const token = await getAuthToken();
               if (!token) throw new Error("Sign in required");
-              await fetch(`${getApiBase()}/api/safety/trusted-shares/${share.id}`, {
+              const response = await fetch(`${getApiBase()}/api/safety/trusted-shares/${share.id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
               });
+              if (!response.ok) throw new Error("Unable to remove trusted contact");
               setShares((prev) => prev.filter((s) => s.id !== share.id));
             } catch {
               Alert.alert("Error", "Couldn't remove contact. Please try again.");
@@ -163,7 +191,7 @@ export default function TrustedSafetyShareScreen() {
           <Text style={[styles.cardDetail, { color: colors.mutedForeground }]}>
             {item.contact_type === "mwm_user"
               ? "MWM Member"
-              : item.contact_phone ?? item.contact_email ?? ""}
+              : item.contact_accepted ? "Invite accepted" : "Invite pending"}
           </Text>
           <View style={styles.statusRow}>
             <View style={[styles.statusDot, { backgroundColor: statusColor(item.status, colors) }]} />
@@ -258,7 +286,8 @@ export default function TrustedSafetyShareScreen() {
             <Text style={s.toggleLabel}>Trusted Safety Share</Text>
             <Switch
               value={masterEnabled}
-              onValueChange={setMasterEnabled}
+              onValueChange={(enabled) => { void updateAllContactConsent(enabled); }}
+              disabled={loading || consentSaving || shares.length === 0}
               trackColor={{ true: colors.tint, false: colors.border }}
               thumbColor="#fff"
             />
@@ -344,6 +373,7 @@ export default function TrustedSafetyShareScreen() {
         onClose={() => setShowAddModal(false)}
         onAdded={(share) => {
           setShares((prev) => [share, ...prev]);
+          setMasterEnabled(share.owner_enabled);
           setShowAddModal(false);
         }}
         colors={colors}
@@ -463,7 +493,7 @@ function AddContactModal({
           <Text style={ms.title}>Add Trusted Contact</Text>
           <Text style={ms.subtitle}>
             They&apos;ll receive an invite. Once accepted, they&apos;ll get the same safety
-            alerts you receive — nothing else.
+            alerts you receive — nothing else. Live location is never sent by this invite.
           </Text>
 
           <Text style={ms.label}>Name</Text>

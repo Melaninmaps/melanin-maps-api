@@ -84,6 +84,7 @@ export async function projectApprovedIncident(
        ${policeEncounterType ? "AND encounter_type = $5" : ""}
        AND status = 'approved'
        AND withdrawn_at IS NULL
+       AND corrected_at IS NULL
        AND display_expires_at > NOW()
        AND created_at >= $4`,
     policeEncounterType

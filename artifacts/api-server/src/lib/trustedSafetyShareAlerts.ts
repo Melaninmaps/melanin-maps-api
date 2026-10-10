@@ -27,6 +27,11 @@
 
 import { pool } from "@workspace/db";
 import pino from "pino";
+import {
+  deactivateTrustedLocationShares,
+  expireTrustedSafetySessions,
+  TRUSTED_SAFETY_SESSION_INTERVAL,
+} from "./trustedSafetyShareLifecycle";
 
 const logger = pino({ name: "trusted-safety-share-alerts" });
 
@@ -55,8 +60,6 @@ const SEVERE_TYPES: TrustedSafetyAlertPayload["alertType"][] = [
   "natural_disaster",
   "community_safety",
 ];
-
-const ACTIVE_SESSION_INTERVAL = "30 days";
 
 export type TrustedSafetyDeliveryStatus =
   | "pending"
@@ -94,6 +97,13 @@ function emptyDispatchResult(skipped = false): TrustedSafetyDispatchResult {
 export function isTrustedSafetyAlertPayload(value: unknown): value is TrustedSafetyAlertPayload {
   if (!value || typeof value !== "object") return false;
   const payload = value as Record<string, unknown>;
+  // Allowlisting is deliberate: this handoff cannot grow to contain a precise
+  // position, recipient identity, or behavioral context through a new caller.
+  const allowedKeys = new Set([
+    "ownerId", "ownerFirstName", "locationCity", "locationRegion",
+    "alertTitle", "alertDescription", "alertType", "alertSource",
+  ]);
+  if (Object.keys(payload).some((key) => !allowedKeys.has(key))) return false;
   const strings = [
     payload.ownerId,
     payload.ownerFirstName,
@@ -104,12 +114,10 @@ export function isTrustedSafetyAlertPayload(value: unknown): value is TrustedSaf
   ];
   if (strings.some((field) => typeof field !== "string" || !field.trim() || field.length > 500)) return false;
   if (!SEVERE_TYPES.includes(payload.alertType as TrustedSafetyAlertPayload["alertType"])) return false;
-  // This pathway accepts general place labels only. Coordinates, recipient
-  // identifiers, and behavioral context are not valid alert inputs.
-  return ![
-    "lat", "lng", "latitude", "longitude", "coordinates",
-    "recipient", "recipientId", "recipientEmail", "searches", "saves", "activity",
-  ].some((key) => key in payload);
+  return payload.alertSource === undefined
+    || payload.alertSource === "noaa"
+    || payload.alertSource === "fema"
+    || payload.alertSource === "mwm_community";
 }
 
 /** A 2xx Expo response is a provider acknowledgement, not device delivery. */
@@ -352,6 +360,9 @@ export async function notifyTrustedSafetyContacts(
   const result = emptyDispatchResult();
   const alertSource = payload.alertSource ?? "mwm_community";
   try {
+    // Expiry is a lifecycle event, not an eventual retention job. It must end
+    // alert eligibility and delete linked precise locations before dispatch.
+    await expireTrustedSafetySessions(payload.ownerId);
     const ownerResult = await pool.query<{ home_city: string | null }>(
       `SELECT home_city
          FROM users
@@ -366,16 +377,21 @@ export async function notifyTrustedSafetyContacts(
     const homeCity = owner.home_city?.trim().toLocaleLowerCase() ?? "";
     const alertCity = payload.locationCity.trim().toLocaleLowerCase();
     if (homeCity && homeCity === alertCity) {
-      await pool.query(
+      const paused = await pool.query<{ contact_user_id: string | null }>(
         `UPDATE trusted_safety_shares
             SET status = 'paused_home', updated_at = NOW()
           WHERE owner_id = $1
             AND status = 'active'
             AND owner_enabled = true
             AND contact_accepted = true
-            AND activated_at > NOW() - INTERVAL '30 days'
-            AND activated_at <= NOW()`,
+            AND activated_at > NOW() - INTERVAL '${TRUSTED_SAFETY_SESSION_INTERVAL}'
+            AND activated_at <= NOW()
+          RETURNING contact_user_id`,
         [payload.ownerId],
+      );
+      await deactivateTrustedLocationShares(
+        payload.ownerId,
+        paused.rows.flatMap((share) => share.contact_user_id ? [share.contact_user_id] : []),
       );
       return emptyDispatchResult(true);
     }
@@ -389,7 +405,7 @@ export async function notifyTrustedSafetyContacts(
           AND status = 'paused_home'
           AND owner_enabled = true
           AND contact_accepted = true
-          AND activated_at > NOW() - INTERVAL '30 days'
+          AND activated_at > NOW() - INTERVAL '${TRUSTED_SAFETY_SESSION_INTERVAL}'
           AND activated_at <= NOW()`,
       [payload.ownerId],
     );
@@ -408,7 +424,7 @@ export async function notifyTrustedSafetyContacts(
           AND tss.status = 'active'
           AND tss.owner_enabled = true
           AND tss.contact_accepted = true
-          AND tss.activated_at > NOW() - INTERVAL '30 days'
+          AND tss.activated_at > NOW() - INTERVAL '${TRUSTED_SAFETY_SESSION_INTERVAL}'
           AND tss.activated_at <= NOW()
           AND (
             (tss.contact_type = 'mwm_user'

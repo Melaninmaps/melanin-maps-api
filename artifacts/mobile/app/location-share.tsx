@@ -7,6 +7,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  AppState,
+  type AppStateStatus,
   Platform,
   ScrollView,
   StyleSheet,
@@ -29,8 +31,6 @@ type LocationShare = {
   shareToken: string;
   isActive: boolean;
   expiresAt: string;
-  currentLat: number | null;
-  currentLng: number | null;
   lastUpdatedAt: string | null;
   coordinateState?: "published" | "waiting_for_first_update";
   updateMode?: "foreground_while_screen_open";
@@ -57,7 +57,7 @@ const DURATION_OPTIONS = [
 ];
 
 function hasPublishedCoordinate(share: LocationShare): boolean {
-  return share.currentLat !== null && share.currentLng !== null && Boolean(share.lastUpdatedAt);
+  return share.coordinateState === "published" && Boolean(share.lastUpdatedAt);
 }
 
 export default function LocationShareScreen() {
@@ -79,6 +79,7 @@ export default function LocationShareScreen() {
   const [activeShareId, setActiveShareId] = useState<number | null>(null);
   const activeShareRef = useRef<LocationShare | null>(null);
   const locationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
 
   const fetchShares = useCallback(async () => {
     setLoading(true);
@@ -96,6 +97,11 @@ export default function LocationShareScreen() {
         );
         setRecipients(eligible);
         setSelectedRecipientId((current) => eligible.some((share) => share.id === current) ? current : eligible[0]?.id ?? null);
+      } else {
+        // Never leave a prior recipient selectable when current authorization
+        // could not be revalidated.
+        setRecipients([]);
+        setSelectedRecipientId(null);
       }
       if (res.ok) {
         const d = await res.json() as { shares: LocationShare[] };
@@ -116,8 +122,9 @@ export default function LocationShareScreen() {
   const publishCurrentLocation = useCallback(async (
     share: LocationShare,
     token: string,
-  ): Promise<{ lat: number; lng: number } | null> => {
+  ): Promise<string | null> => {
     try {
+      if (appStateRef.current !== "active") return null;
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       const response = await fetch(`${getApiBase()}/api/safety/location-shares/${share.shareToken}/update`, {
         method: "PATCH",
@@ -125,7 +132,8 @@ export default function LocationShareScreen() {
         body: JSON.stringify({ lat: loc.coords.latitude, lng: loc.coords.longitude }),
       });
       if (!response.ok) return null;
-      return { lat: loc.coords.latitude, lng: loc.coords.longitude };
+      const data = await response.json() as { lastUpdatedAt?: string };
+      return typeof data.lastUpdatedAt === "string" ? data.lastUpdatedAt : new Date().toISOString();
     } catch {
       return null;
     }
@@ -134,14 +142,13 @@ export default function LocationShareScreen() {
   const startLocationUpdates = useCallback((share: LocationShare, token: string) => {
     if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
     locationIntervalRef.current = setInterval(() => {
-      void publishCurrentLocation(share, token).then((position) => {
-        if (!position) return;
+      void publishCurrentLocation(share, token).then((lastUpdatedAt) => {
+        if (!lastUpdatedAt) return;
         setShares((current) => current.map((candidate) => candidate.id === share.id
           ? {
               ...candidate,
-              currentLat: position.lat,
-              currentLng: position.lng,
-              lastUpdatedAt: new Date().toISOString(),
+              coordinateState: "published",
+              lastUpdatedAt,
             }
           : candidate));
       });
@@ -150,13 +157,29 @@ export default function LocationShareScreen() {
 
   useEffect(() => {
     const activeShare = activeShareRef.current?.id === activeShareId ? activeShareRef.current : null;
-    if (activeShare) {
+    if (activeShare && appStateRef.current === "active") {
       SecureStore.getItemAsync("auth_session_token")
         .then((token) => { if (token) startLocationUpdates(activeShare, token); })
         .catch(() => {});
     }
     return () => { if (locationIntervalRef.current) clearInterval(locationIntervalRef.current); };
   }, [activeShareId, startLocationUpdates]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      appStateRef.current = nextState;
+      if (nextState !== "active") {
+        if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
+        return;
+      }
+      const activeShare = activeShareRef.current;
+      if (!activeShare) return;
+      SecureStore.getItemAsync("auth_session_token")
+        .then((token) => { if (token) startLocationUpdates(activeShare, token); })
+        .catch(() => {});
+    });
+    return () => subscription.remove();
+  }, [startLocationUpdates]);
 
   const handleCreate = async () => {
     setCreating(true);
@@ -184,13 +207,12 @@ export default function LocationShareScreen() {
       const d = await res.json() as { share?: LocationShare; error?: string };
       if (res.ok && d.share) {
         const createdShare = d.share;
-        const firstLocation = await publishCurrentLocation(createdShare, token);
-        const readyShare = firstLocation
+        const firstLocationUpdatedAt = await publishCurrentLocation(createdShare, token);
+        const readyShare = firstLocationUpdatedAt
           ? {
               ...createdShare,
-              currentLat: firstLocation.lat,
-              currentLng: firstLocation.lng,
-              lastUpdatedAt: new Date().toISOString(),
+              coordinateState: "published" as const,
+              lastUpdatedAt: firstLocationUpdatedAt,
             }
           : createdShare;
         setShares((prev) => [readyShare, ...prev]);
@@ -200,9 +222,9 @@ export default function LocationShareScreen() {
         setLabel("");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         Alert.alert(
-          firstLocation ? "Location Sharing Active" : "Location Share Ready",
-          firstLocation
-            ? "Your current location is available only to the accepted Kinfolk contact you selected. Updates continue only while this screen remains open."
+          firstLocationUpdatedAt ? "Location Sharing Active" : "Location Share Ready",
+          firstLocationUpdatedAt
+            ? "Your minimized current location is available only to the accepted Kinfolk contact you selected. Updates continue only while this screen remains open and the app is in the foreground."
             : "The authorized contact will not see a location until the first update succeeds. Keep this screen open and we will retry.",
           [{ text: "Done" }],
         );
@@ -277,7 +299,7 @@ export default function LocationShareScreen() {
           <View style={[styles.infoBanner, { backgroundColor: "#2563EB0F", borderColor: "#2563EB30" }]}>
             <Feather name="map-pin" size={18} color="#2563EB" />
             <Text style={[styles.infoText, { color: colors.foreground }]}>
-              This is temporary location sharing, not an emergency alert. Select an accepted Kinfolk trusted contact; only that currently authorized contact can access fresh coordinates. Updates refresh about every 30 seconds only while this screen is open; background updates are not enabled.
+              This is temporary location sharing, not an emergency alert. Select an accepted Kinfolk trusted contact; only that currently authorized contact can access fresh minimized coordinates. Updates refresh about every 30 seconds only while this screen is open and the app is in the foreground; background updates are not enabled.
             </Text>
           </View>
 

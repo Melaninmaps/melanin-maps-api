@@ -145,7 +145,10 @@ router.post("/directions/safety-context", requireMembership("navigator"), async 
       }>(
         `SELECT id, type, lat, lng, description, confirmed_count, expires_at
          FROM community_alerts
-         WHERE is_active = true AND expires_at > NOW()
+         WHERE is_active = true
+           AND withdrawn_at IS NULL
+           AND corrected_at IS NULL
+           AND expires_at > NOW()
            AND lat::float BETWEEN $1 AND $2
            AND lng::float BETWEEN $3 AND $4
          ORDER BY confirmed_count DESC, created_at DESC
@@ -166,6 +169,7 @@ router.post("/directions/safety-context", requireMembership("navigator"), async 
          WHERE sr.category = 'sundown'
            AND sr.status = 'approved'
            AND sr.withdrawn_at IS NULL
+           AND sr.corrected_at IS NULL
            AND sr.display_expires_at > NOW()
            AND b.latitude IS NOT NULL AND b.longitude IS NOT NULL
            AND b.latitude::float BETWEEN $1 AND $2
@@ -221,6 +225,9 @@ router.post("/directions/safety-context", requireMembership("navigator"), async 
          FROM businesses b
          LEFT JOIN community_alerts ca ON (
            ca.is_active = true
+           AND ca.withdrawn_at IS NULL
+           AND ca.corrected_at IS NULL
+           AND ca.expires_at > NOW()
            AND ca.created_at > NOW() - INTERVAL '6 months'
            AND ca.lat::float BETWEEN b.latitude::float - 0.0015 AND b.latitude::float + 0.0015
            AND ca.lng::float BETWEEN b.longitude::float - 0.0015 AND b.longitude::float + 0.0015

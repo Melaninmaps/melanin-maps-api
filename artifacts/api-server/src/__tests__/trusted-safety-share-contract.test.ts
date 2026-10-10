@@ -14,7 +14,11 @@ import {
   isTrustedSafetyAlertPayload,
   trustedSafetyInAppNotification,
 } from "../lib/trustedSafetyShareAlerts";
-import { publicLocationShare } from "../routes/location-shares";
+import {
+  isFreshLocationCoordinate,
+  minimizeLocationCoordinate,
+  publicLocationShare,
+} from "../routes/location-shares";
 
 describe("Trusted Safety Share contact and delivery privacy", () => {
   it("normalizes cosmetic email and phone differences before deduplication", () => {
@@ -54,6 +58,7 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
     expect(isTrustedSafetyAlertPayload(alert)).toBe(true);
     expect(isTrustedSafetyAlertPayload({ ...alert, latitude: 33.749 })).toBe(false);
     expect(isTrustedSafetyAlertPayload({ ...alert, activity: "searched restaurants" })).toBe(false);
+    expect(isTrustedSafetyAlertPayload({ ...alert, nearbyAddress: "123 Main St" })).toBe(false);
   });
 
   it("records provider acknowledgement rather than claiming device delivery", async () => {
@@ -141,22 +146,41 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
       fileURLToPath(new URL("../lib/trustedSafetyShareAlerts.ts", import.meta.url)),
       "utf8",
     );
+    const lifecycle = readFileSync(
+      fileURLToPath(new URL("../lib/trustedSafetyShareLifecycle.ts", import.meta.url)),
+      "utf8",
+    );
     expect(route).toContain('router.patch("/safety/trusted-shares/:id/enabled"');
+    expect(route).toContain('router.patch("/safety/trusted-shares/consent"');
+    expect(route).toContain("expireTrustedSafetySessions(ownerId)");
+    expect(route).toContain("deactivateTrustedLocationShares");
     expect(route).toContain("invite_token = NULL");
-    expect(route).toContain("UPDATE location_shares");
-    expect(route).toContain("current_lat = NULL");
-    expect(route).toContain("current_lng = NULL");
+    expect(lifecycle).toContain("UPDATE location_shares");
+    expect(lifecycle).toContain("current_lat = NULL");
+    expect(lifecycle).toContain("current_lng = NULL");
+    expect(lifecycle).toContain("owner_enabled = false");
     expect(route).toContain("owner_blocks.id IS NULL");
     expect(route).toContain("contact_blocks.id IS NULL");
     expect(route).toContain("ownerShareResponse");
     expect(route).toContain("receivedShareResponse");
     expect(delivery).toContain("notification_preferences");
     expect(delivery).toContain("np.topics @> ARRAY['safety']::text[]");
-    expect(delivery).toContain("activated_at > NOW() - INTERVAL '30 days'");
+    expect(delivery).toContain("TRUSTED_SAFETY_SESSION_INTERVAL");
+    expect(delivery).toContain("await expireTrustedSafetySessions(payload.ownerId)");
+    expect(delivery).toContain("await deactivateTrustedLocationShares(");
     expect(delivery).toContain("provider_accepted");
     expect(delivery).toContain("in_app_created");
     expect(delivery).not.toContain('deliveryStatus = "sent"');
     expect(delivery).not.toContain('deliveryStatus = "delivered"');
+  });
+
+  it("minimizes retained coordinates and refuses future or stale coordinate timestamps", () => {
+    const now = Date.parse("2026-10-10T12:00:00.000Z");
+    expect(minimizeLocationCoordinate(33.749123)).toBe(33.7491);
+    expect(minimizeLocationCoordinate(-84.388987)).toBe(-84.389);
+    expect(isFreshLocationCoordinate(new Date(now - 119_999), now)).toBe(true);
+    expect(isFreshLocationCoordinate(new Date(now - 120_001), now)).toBe(false);
+    expect(isFreshLocationCoordinate(new Date(now + 1), now)).toBe(false);
   });
 
   it("does not expose a copyable bearer link for precise location access", () => {
@@ -169,5 +193,16 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
     expect(mobile).not.toContain("Copy Share Link");
     expect(mobile).not.toContain("Copy Pending Link");
     expect(mobile).not.toContain("expo-clipboard");
+  });
+
+  it("persists the mobile owner consent control and never renders external contact addresses", () => {
+    const mobile = readFileSync(
+      fileURLToPath(new URL("../../../mobile/app/trusted-safety-share.tsx", import.meta.url)),
+      "utf8",
+    );
+    expect(mobile).toContain("/api/safety/trusted-shares/consent");
+    expect(mobile).toContain("The server did not confirm this change");
+    expect(mobile).not.toContain("contact_phone");
+    expect(mobile).not.toContain("contact_email");
   });
 });

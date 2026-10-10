@@ -31,6 +31,7 @@ export async function updateBusinessSafetyRating(
        AND target_type = 'business'
        AND status = 'approved'
        AND withdrawn_at IS NULL
+       AND corrected_at IS NULL
        AND display_expires_at > NOW()
      GROUP BY severity`,
     [businessId],

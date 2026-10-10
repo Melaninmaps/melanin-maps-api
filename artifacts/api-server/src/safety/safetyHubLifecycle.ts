@@ -42,12 +42,14 @@ export interface SafetyReportLifecycleFields {
   status: string | null | undefined;
   displayExpiresAt: Date | string | null | undefined;
   withdrawnAt?: Date | string | null;
+  correctedAt?: Date | string | null;
 }
 
 export interface CommunityAlertLifecycleFields {
   isActive: boolean | null | undefined;
   expiresAt: Date | string | null | undefined;
   withdrawnAt?: Date | string | null;
+  correctedAt?: Date | string | null;
 }
 
 export interface SafetyLifecycleUpdate {
@@ -124,23 +126,25 @@ function isStrictlyFuture(value: Date | string | null | undefined, now: Date): b
   return Number.isFinite(timestamp) && timestamp > now.getTime();
 }
 
-/** Public display fails closed for unapproved, withdrawn, malformed, or expired reports. */
+/** Public display fails closed for unapproved, withdrawn, corrected, malformed, or expired reports. */
 export function isCurrentSafetyReportForDisplay(
   report: SafetyReportLifecycleFields,
   now = new Date(),
 ): boolean {
   return report.status === "approved"
     && !report.withdrawnAt
+    && !report.correctedAt
     && isStrictlyFuture(report.displayExpiresAt, now);
 }
 
-/** Public display fails closed for inactive, withdrawn, malformed, or expired alerts. */
+/** Public display fails closed for inactive, withdrawn, corrected, malformed, or expired alerts. */
 export function isCurrentCommunityAlertForDisplay(
   alert: CommunityAlertLifecycleFields,
   now = new Date(),
 ): boolean {
   return alert.isActive === true
     && !alert.withdrawnAt
+    && !alert.correctedAt
     && isStrictlyFuture(alert.expiresAt, now);
 }
 

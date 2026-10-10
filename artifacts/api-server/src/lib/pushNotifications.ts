@@ -13,6 +13,23 @@ interface PushMessage {
 /** A provider submission result, never a device-receipt confirmation. */
 export type PushSubmissionResult = "submitted" | "no_token" | "failed";
 
+/**
+ * Expo's immediate response is a provider-submission ticket, not proof that a
+ * device received or displayed the notification. A transport-level 2xx alone
+ * is insufficient: Expo can return a rejected ticket in a successful response.
+ */
+function isAcceptedProviderSubmission(ticket: unknown): boolean {
+  if (!ticket || typeof ticket !== "object" || !("data" in ticket)) return false;
+  const data = (ticket as { data?: unknown }).data;
+  if (!Array.isArray(data) || data.length !== 1) return false;
+  const result = data[0];
+  return Boolean(
+    result
+    && typeof result === "object"
+    && (result as { status?: unknown }).status === "ok",
+  );
+}
+
 async function sendToToken(token: string, message: PushMessage): Promise<boolean> {
   try {
     const response = await fetch("https://exp.host/--/api/v2/push/send", {
@@ -33,8 +50,14 @@ async function sendToToken(token: string, message: PushMessage): Promise<boolean
     });
     if (!response.ok) {
       logger.warn({ status: response.status }, "[push] Expo push failed");
+      return false;
     }
-    return response.ok;
+    const ticket = await response.json().catch(() => null);
+    if (!isAcceptedProviderSubmission(ticket)) {
+      logger.warn({ status: response.status }, "[push] Expo push submission was not accepted");
+      return false;
+    }
+    return true;
   } catch (err) {
     logger.warn({ err }, "[push] Failed to send push notification");
     return false;

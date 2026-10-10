@@ -177,6 +177,7 @@ import testerReportRouter from "./tester-report";
 import communityLanguageRouter from "./community-language";
 import officialPublicAlertsRouter from "./official-public-alerts";
 import seriousCredibleThreatRouter from "./serious-credible-threats";
+import seriousCredibleThreatPrivateModeratorRouter from "./serious-credible-threat-reviewer";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
@@ -304,6 +305,10 @@ router.use(officialPublicAlertsRouter);
 // Dedicated, member-only private-review intake. This is intentionally separate
 // from Police/ICE observations and exposes no notice or delivery operation.
 router.use(seriousCredibleThreatRouter);
+// The paired named-admin interface is isolated from ordinary moderation. Its
+// default adapter remains unavailable until separately approved durable storage
+// is explicitly wired; mounting this route does not activate retention.
+router.use(seriousCredibleThreatPrivateModeratorRouter);
 router.use(adminUsersRouter);
 router.use(adminTestersRouter);
 router.use(adminAuditRouter);

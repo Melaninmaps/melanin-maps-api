@@ -23,28 +23,20 @@
 import { Router, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
 import { createHash, randomUUID } from "crypto";
+import {
+  deactivateTrustedLocationShares,
+  expireTrustedSafetySessions,
+  isFiniteTrustedSafetySession,
+} from "../lib/trustedSafetyShareLifecycle";
+
+export { isFiniteTrustedSafetySession } from "../lib/trustedSafetyShareLifecycle";
 
 const router = Router();
 
 const MAX_SHARES = 5;
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-// A trusted-share authorization is deliberately finite. An owner must explicitly
-// resume or re-enable it to begin a fresh session after this window expires.
-const ACTIVE_SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
 type TrustedSafetyShareRow = Record<string, unknown>;
-
-/** An active relationship without a recent explicit activation is not eligible. */
-export function isFiniteTrustedSafetySession(
-  activatedAt: Date | string | null | undefined,
-  now = Date.now(),
-): boolean {
-  if (!activatedAt) return false;
-  const activatedMs = new Date(activatedAt).getTime();
-  return Number.isFinite(activatedMs)
-    && activatedMs <= now
-    && now - activatedMs < ACTIVE_SESSION_TTL_MS;
-}
 
 function isBoolean(value: unknown): value is boolean {
   return typeof value === "boolean";
@@ -571,6 +563,7 @@ router.get("/safety/trusted-shares", async (req: Request, res: Response) => {
   if (!requireAuth(req, res)) return;
   try {
     const ownerId = req.user!.id;
+    await expireTrustedSafetySessions(ownerId);
     const result = await pool.query(
       `SELECT tss.*,
               u.first_name AS contact_first_name,
@@ -586,6 +579,51 @@ router.get("/safety/trusted-shares", async (req: Request, res: Response) => {
   } catch (err) {
     req.log?.error({ err }, "GET /safety/trusted-shares error");
     res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// ── PATCH /safety/trusted-shares/consent ───────────────────────────────────────
+// Owner's explicit all-contact consent control. Turning it off immediately
+// halts and scrubs every linked live-location share; turning it on starts a
+// fresh finite authorization only for contacts that already accepted.
+router.patch("/safety/trusted-shares/consent", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  try {
+    const ownerId = req.user!.id;
+    const { enabled } = req.body as { enabled?: unknown };
+    if (!isBoolean(enabled)) {
+      res.status(400).json({ error: "enabled (boolean) is required" });
+      return;
+    }
+    await expireTrustedSafetySessions(ownerId);
+    const result = await pool.query(
+      `UPDATE trusted_safety_shares
+          SET owner_enabled = $1,
+              status = CASE
+                WHEN $1 = false AND status IN ('active', 'paused_home') THEN 'paused_manual'
+                WHEN $1 = true AND status = 'paused_manual' AND contact_accepted = true THEN 'active'
+                ELSE status
+              END,
+              activated_at = CASE
+                WHEN $1 = true AND status = 'paused_manual' AND contact_accepted = true THEN NOW()
+                ELSE activated_at
+              END,
+              updated_at = NOW()
+        WHERE owner_id = $2
+          AND status NOT IN ('revoked', 'declined')
+        RETURNING *`,
+      [enabled, ownerId],
+    );
+    if (!enabled) {
+      await deactivateTrustedLocationShares(
+        ownerId,
+        result.rows.flatMap((share) => typeof share.contact_user_id === "string" ? [share.contact_user_id] : []),
+      );
+    }
+    res.json({ shares: result.rows.map(ownerShareResponse) });
+  } catch (err) {
+    req.log?.error({ err }, "PATCH /safety/trusted-shares/consent error");
+    res.status(500).json({ error: "Unable to update trusted safety consent" });
   }
 });
 
@@ -608,6 +646,13 @@ router.get("/safety/trusted-shares/received", async (req: Request, res: Response
          ON contact_blocks.blocker_id = $1 AND contact_blocks.blocked_id = tss.owner_id
        WHERE tss.contact_user_id = $1
          AND tss.status NOT IN ('revoked')
+         AND (
+           tss.status NOT IN ('active', 'paused_home')
+           OR (
+             tss.activated_at > NOW() - INTERVAL '30 days'
+             AND tss.activated_at <= NOW()
+           )
+         )
          AND owner_blocks.id IS NULL
          AND contact_blocks.id IS NULL
        ORDER BY tss.created_at DESC`,
@@ -645,19 +690,9 @@ router.delete("/safety/trusted-shares/:id", async (req: Request, res: Response) 
       return;
     }
     // The read boundary independently re-authorizes every coordinate access,
-    // and this explicit scrub removes the last precise location immediately.
+    // and this explicit scrub stops and removes the last precise location.
     if (revoked.rows[0].contact_user_id) {
-      await pool.query(
-        `UPDATE location_shares
-            SET is_active = false,
-                current_lat = NULL,
-                current_lng = NULL,
-                last_updated_at = NULL
-          WHERE sharer_id = $1
-            AND recipient_user_id = $2
-            AND is_active = true`,
-        [ownerId, revoked.rows[0].contact_user_id],
-      );
+      await deactivateTrustedLocationShares(ownerId, [revoked.rows[0].contact_user_id]);
     }
     res.json({ revoked: true });
   } catch (err) {
@@ -678,6 +713,7 @@ router.patch("/safety/trusted-shares/:id/enabled", async (req: Request, res: Res
       res.status(400).json({ error: "enabled (boolean) is required" });
       return;
     }
+    await expireTrustedSafetySessions(ownerId);
 
     const result = enabled
       ? await pool.query(
@@ -710,6 +746,9 @@ router.patch("/safety/trusted-shares/:id/enabled", async (req: Request, res: Res
       res.status(409).json({ error: "This share cannot be enabled or disabled" });
       return;
     }
+    if (!enabled && typeof result.rows[0].contact_user_id === "string") {
+      await deactivateTrustedLocationShares(ownerId, [result.rows[0].contact_user_id]);
+    }
     res.json({ share: ownerShareResponse(result.rows[0]) });
   } catch (err) {
     req.log?.error({ err }, "PATCH /safety/trusted-shares/:id/enabled error");
@@ -729,6 +768,7 @@ router.patch("/safety/trusted-shares/:id/pause", async (req: Request, res: Respo
       res.status(400).json({ error: "pause (boolean) is required" });
       return;
     }
+    await expireTrustedSafetySessions(ownerId);
 
     const existing = await pool.query(
       `SELECT * FROM trusted_safety_shares WHERE id = $1`,
@@ -773,6 +813,9 @@ router.patch("/safety/trusted-shares/:id/pause", async (req: Request, res: Respo
     if (!result.rows[0]) {
       res.status(409).json({ error: "The share changed before this request completed. Refresh and try again." });
       return;
+    }
+    if (pause && typeof result.rows[0].contact_user_id === "string") {
+      await deactivateTrustedLocationShares(ownerId, [result.rows[0].contact_user_id]);
     }
     res.json({ share: ownerShareResponse(result.rows[0]) });
   } catch (err) {
@@ -834,6 +877,9 @@ router.patch("/safety/trusted-shares/:id/respond", async (req: Request, res: Res
     if (!result.rows[0]) {
       res.status(409).json({ error: "This share request is no longer pending or has expired" });
       return;
+    }
+    if (!accept && typeof result.rows[0].contact_user_id === "string") {
+      await deactivateTrustedLocationShares(result.rows[0].owner_id, [result.rows[0].contact_user_id]);
     }
     res.json({ share: receivedShareResponse(result.rows[0]) });
   } catch (err) {
@@ -903,6 +949,8 @@ router.post("/safety/trusted-shares/accept-token", async (req: Request, res: Res
            END,
            contact_accepted = $1,
            activated_at = CASE WHEN $1 THEN NOW() ELSE NULL END,
+           invite_token = NULL,
+           invite_expires_at = NOW(),
            updated_at = NOW()
        FROM users owner
        WHERE trusted_safety_shares.invite_token = $2

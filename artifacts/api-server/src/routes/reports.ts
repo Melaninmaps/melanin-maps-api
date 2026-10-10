@@ -313,6 +313,7 @@ router.get("/reports", async (req: Request, res: Response): Promise<void> => {
       .where(and(
         eq(safetyReportsTable.status, "approved"),
         isNull(safetyReportsTable.withdrawnAt),
+        isNull(safetyReportsTable.correctedAt),
         gt(safetyReportsTable.displayExpiresAt, new Date()),
       ))
       .orderBy(desc(safetyReportsTable.createdAt))
@@ -351,6 +352,7 @@ router.get("/incidents", async (req: Request, res: Response): Promise<void> => {
            AND (si.category NOT LIKE 'police:%' OR sr.encounter_type = SUBSTRING(si.category FROM '^police:(.+)$'))
            AND sr.status = 'approved'
            AND sr.withdrawn_at IS NULL
+           AND sr.corrected_at IS NULL
            AND sr.display_expires_at > NOW()
            AND sr.created_at > NOW() - INTERVAL '7 days'
        ) approved ON approved.report_count >= $1
@@ -423,9 +425,9 @@ router.patch("/admin/safety-reports/:id", async (req: any, res: Response): Promi
 });
 
 /**
- * Reversible Safety Hub lifecycle control. This endpoint never deletes or
- * overwrites report evidence; it adds an auditable withdrawal, correction, or
- * display-expiry record and invalidates cached public warnings immediately.
+ * Source-preserving Safety Hub lifecycle control. This endpoint never deletes
+ * or overwrites report evidence; it records an auditable withdrawal or
+ * correction, or changes only the current display expiry.
  */
 router.patch("/admin/safety-reports/:id/lifecycle", async (req: Request, res: Response): Promise<void> => {
   if (!isNamedAdmin(req)) {
@@ -468,12 +470,33 @@ router.patch("/admin/safety-reports/:id/lifecycle", async (req: Request, res: Re
             correctedAt: now,
             correctedBy: req.user!.id,
             correctionNote,
+            // A correction records source metadata and immediately ends only
+            // the current display window; the original report is retained.
+            displayExpiresAt: now,
           }
         : { displayExpiresAt: displayExpiresAt! };
+    // A withdrawal or correction must preserve its first audit record. A
+    // withdrawn/corrected source row can never be reactivated by merely moving
+    // its display expiry.
+    const lifecycleWhere = action === "withdraw"
+      ? and(
+          eq(safetyReportsTable.id, String(req.params.id)),
+          isNull(safetyReportsTable.withdrawnAt),
+        )
+      : action === "correct"
+        ? and(
+            eq(safetyReportsTable.id, String(req.params.id)),
+            isNull(safetyReportsTable.correctedAt),
+          )
+        : and(
+            eq(safetyReportsTable.id, String(req.params.id)),
+            isNull(safetyReportsTable.withdrawnAt),
+            isNull(safetyReportsTable.correctedAt),
+          );
     const [report] = await db
       .update(safetyReportsTable)
       .set(lifecycleUpdate)
-      .where(eq(safetyReportsTable.id, String(req.params.id)))
+      .where(lifecycleWhere)
       .returning();
 
     if (!report) {
@@ -586,6 +609,7 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
         sr.target_type = 'business'
         AND sr.status = 'approved'
         AND sr.withdrawn_at IS NULL
+        AND sr.corrected_at IS NULL
         AND sr.display_expires_at > NOW()
         AND sr.created_at > NOW() - INTERVAL '7 days'
       GROUP BY sr.target_id, b.name, sr.category, b.latitude, b.longitude
@@ -626,6 +650,7 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
            AND sr.category = si.category
            AND sr.status = 'approved'
            AND sr.withdrawn_at IS NULL
+           AND sr.corrected_at IS NULL
            AND sr.display_expires_at > NOW()
            AND sr.created_at > NOW() - INTERVAL '7 days'
        ) approved ON approved.report_count >= $1

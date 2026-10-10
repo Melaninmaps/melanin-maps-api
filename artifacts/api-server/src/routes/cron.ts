@@ -255,7 +255,6 @@ async function createSafetyCheckinInAppNotifications(
   checkinId: number,
   ownerId: string,
   ownerName: string,
-  city: string | null,
 ): Promise<SafetyCheckinNotificationResult> {
   const result = emptySafetyCheckinNotificationResult();
   const client = await pool.connect();
@@ -280,6 +279,11 @@ async function createSafetyCheckinInAppNotifications(
                 AND COALESCE(np.topics @> ARRAY['safety']::text[], true)
               ) AS is_eligible
          FROM safety_checkin_recipients scr
+         JOIN safety_checkins checkin
+           ON checkin.id = scr.checkin_id
+          AND checkin.user_id = $2
+          AND checkin.status = 'overdue'
+          AND checkin.confirmed_at IS NULL
          LEFT JOIN trusted_safety_shares tss
            ON tss.id = scr.trusted_share_id
           AND tss.owner_id = $2
@@ -295,12 +299,13 @@ async function createSafetyCheckinInAppNotifications(
          LEFT JOIN user_blocks recipient_blocks
            ON recipient_blocks.blocker_id = scr.recipient_user_id AND recipient_blocks.blocked_id = $2
         WHERE scr.checkin_id = $1
+          AND scr.in_app_attempt_count < $3
           AND (
             scr.delivery_status = 'pending'
             OR (scr.delivery_status = 'in_app_failed' AND scr.next_retry_at <= NOW())
           )
-        FOR UPDATE`,
-      [checkinId, ownerId],
+        FOR UPDATE OF scr`,
+      [checkinId, ownerId, MAX_IN_APP_ATTEMPTS],
     );
 
     for (const recipient of recipients.rows) {
@@ -330,14 +335,13 @@ async function createSafetyCheckinInAppNotifications(
             WHERE id = $1::uuid`,
           [recipient.id, attemptCount],
         );
-        const locationPhrase = city ? ` in ${city}` : "";
         const notification = await client.query<{ id: string }>(
           `INSERT INTO notifications (user_id, type, title, body, entity_id, entity_type, data)
            VALUES ($1, 'safety', 'Safety Check-In Overdue', $2, $3, 'safety_checkin', $4::jsonb)
            RETURNING id`,
           [
             recipient.recipient_user_id,
-            `${ownerName} has not checked in${locationPhrase}. Open Safety for more information.`,
+            `${ownerName} has not checked in. Open Safety for more information.`,
             String(checkinId),
             JSON.stringify({ screen: "safety-hub", checkinId, type: "safety_checkin_overdue" }),
           ],
@@ -417,6 +421,11 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
                 AND COALESCE(np.topics @> ARRAY['safety']::text[], true)
               ) AS is_eligible
          FROM safety_checkin_recipients scr
+         JOIN safety_checkins checkin
+           ON checkin.id = scr.checkin_id
+          AND checkin.user_id = $2
+          AND checkin.status = 'overdue'
+          AND checkin.confirmed_at IS NULL
          LEFT JOIN trusted_safety_shares tss
            ON tss.id = scr.trusted_share_id
           AND tss.owner_id = $2
@@ -440,7 +449,7 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
               AND scr.push_attempted_at <= NOW() - INTERVAL '5 minutes'
             )
           )
-        FOR UPDATE`,
+        FOR UPDATE OF scr`,
       [checkinId, ownerId],
     );
 
@@ -514,27 +523,36 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
 }
 
 /** Persist an in-app safety alert, then record only the push provider outcome. */
-async function notifySelectedCheckinProfiles(checkinId: number, ownerId: string, ownerName: string, city: string | null) {
-  const result = await createSafetyCheckinInAppNotifications(checkinId, ownerId, ownerName, city);
+async function notifySelectedCheckinProfiles(checkinId: number, ownerId: string, ownerName: string) {
+  const result = await createSafetyCheckinInAppNotifications(checkinId, ownerId, ownerName);
   const claimed = await claimSafetyCheckinPushAttempts(checkinId, ownerId);
   result.skipped += claimed.skipped;
   result.pushFailed += claimed.pushFailed;
 
   for (const candidate of claimed.candidates) {
-    // This intentionally omits the owner's name, city, and any location on both
-    // initial sends and retries. The accepted recipient can open Safety after
-    // the in-app record; a retry never expands the original disclosure.
-    const submission = await sendPushToUser(candidate.recipientUserId, {
-      title: "Safety Check-In Overdue",
-      body: "A trusted member's scheduled check-in is overdue. Open Safety for more information.",
-      data: { screen: "safety-hub", checkinId, type: "safety_checkin_overdue" },
-    });
+    // This intentionally omits the owner's name and every location value on
+    // both initial sends and retries. The accepted recipient can open Safety
+    // after the in-app record; a retry never expands the original disclosure.
+    let submission: "submitted" | "no_token" | "failed" = "failed";
+    try {
+      submission = await sendPushToUser(candidate.recipientUserId, {
+        title: "Safety Check-In Overdue",
+        body: "A trusted member's scheduled check-in is overdue. Open Safety for more information.",
+        data: { screen: "safety-hub", checkinId, type: "safety_checkin_overdue" },
+      });
+    } catch (error) {
+      // The helper normally converts transport errors to "failed", but retain
+      // a fail-closed state transition if a future provider implementation
+      // throws instead of returning a submission result.
+      logger.warn({ error, checkinId, recipientId: candidate.id }, "Safety check-in push submission threw");
+    }
     if (submission === "submitted") {
       const completed = await pool.query(
         `UPDATE safety_checkin_recipients
             SET delivery_status = 'push_submitted',
                 push_submitted_at = NOW(),
                 push_failed_at = NULL,
+                push_attempt_id = NULL,
                 next_retry_at = NULL,
                 last_error_code = NULL
           WHERE id = $1::uuid
@@ -560,6 +578,7 @@ async function notifySelectedCheckinProfiles(checkinId: number, ownerId: string,
       `UPDATE safety_checkin_recipients
           SET delivery_status = 'push_failed',
               push_failed_at = NOW(),
+              push_attempt_id = NULL,
               next_retry_at = $3,
               last_error_code = $4
         WHERE id = $1::uuid
@@ -585,9 +604,8 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
       .select({
         id: safetyCheckinsTable.id,
         userId: safetyCheckinsTable.userId,
+        status: safetyCheckinsTable.status,
         trustedContactEmail: safetyCheckinsTable.trustedContactEmail,
-        location: safetyCheckinsTable.location,
-        city: safetyCheckinsTable.city,
         firstName: usersTable.firstName,
         lastName: usersTable.lastName,
       })
@@ -623,6 +641,24 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
     for (const row of overdue) {
       try {
         const memberName = [row.firstName, row.lastName].filter(Boolean).join(" ") || "Your contact";
+        // Claim the lifecycle transition before any recipient work. If the
+        // owner confirmed or changed the Check-In after it was selected, the
+        // compare-and-set fails and no notification path is entered.
+        let newlyOverdue = false;
+        if (row.status === "pending") {
+          const [transitioned] = await db.update(safetyCheckinsTable)
+            .set({ status: "overdue" })
+            .where(and(
+              eq(safetyCheckinsTable.id, row.id),
+              eq(safetyCheckinsTable.status, "pending"),
+              isNull(safetyCheckinsTable.notifiedAt),
+            ))
+            .returning({ id: safetyCheckinsTable.id });
+          if (!transitioned) continue;
+          newlyOverdue = true;
+          overdueMarked++;
+        }
+
         // Legacy email records predate accepted-recipient authorization. They
         // remain available to their owner as overdue history, but may never
         // disclose a stored location or send an alert outside the in-app,
@@ -630,30 +666,34 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
         if (row.trustedContactEmail) {
           logger.warn({ checkinId: row.id }, "Suppressed legacy email check-in delivery without accepted recipient authorization");
         }
-        const notificationResult = await notifySelectedCheckinProfiles(row.id, row.userId, memberName, row.city);
+        const notificationResult = await notifySelectedCheckinProfiles(row.id, row.userId, memberName);
         attempts.inAppCreated += notificationResult.inAppCreated;
         attempts.inAppFailed += notificationResult.inAppFailed;
         attempts.pushSubmitted += notificationResult.pushSubmitted;
         attempts.pushFailed += notificationResult.pushFailed;
         attempts.skipped += notificationResult.skipped;
 
-        const [updated] = await db.update(safetyCheckinsTable)
-          .set({ status: "overdue", notifiedAt: now })
+        // The parent timestamp is legacy compatibility data, not delivery
+        // evidence. Set it only after at least one durable in-app record is
+        // created; recipient delivery_status remains the source of truth.
+        if (notificationResult.inAppCreated > 0) {
+          await db.update(safetyCheckinsTable)
+          .set({ notifiedAt: now })
           .where(and(
             eq(safetyCheckinsTable.id, row.id),
-            eq(safetyCheckinsTable.status, "pending"),
+            eq(safetyCheckinsTable.status, "overdue"),
             isNull(safetyCheckinsTable.notifiedAt),
-          ))
-          .returning({ id: safetyCheckinsTable.id });
-        if (!updated) continue;
-        overdueMarked++;
-        // Retain the existing creator alert without exposing location to the
-        // selected recipient profiles.
-        void sendPushToUser(row.userId, {
-          title: "Safety Check-In Overdue",
-          body: `Your scheduled check-in${row.location ? ` at ${row.location}` : ""} is overdue.`,
-          data: { screen: "safety-hub" },
-        });
+          ));
+        }
+        if (newlyOverdue) {
+          // This creator-only reminder is intentionally generic as well:
+          // stored location text can be an address or raw coordinates.
+          void sendPushToUser(row.userId, {
+            title: "Safety Check-In Overdue",
+            body: "Your scheduled check-in is overdue. Open Safety for more information.",
+            data: { screen: "safety-hub", checkinId: row.id, type: "safety_checkin_overdue" },
+          });
+        }
       } catch (error) {
         logger.error({ error, id: row.id }, "Failed to process overdue safety checkin");
       }

@@ -10,9 +10,9 @@ import { invalidateProximityWarningCache } from "./proximityWarningCache";
  * withdrawal/correction audit fields, or sends a new notification.
  *
  * Expiration is represented by the already-recorded display/alert expiry
- * timestamp. Corrections are made non-current until a separate governed review
- * explicitly establishes a new display window. Withdrawals are already
- * non-current at write time; this runner removes their dependent projections.
+ * timestamp. Corrected source records remain audit-retained but are excluded
+ * from current display. Withdrawals are already non-current at write time;
+ * this runner removes their dependent projections.
  */
 export interface SafetyHubLifecycleRunResult {
   expiredReportDisplaysObserved: number;
@@ -67,6 +67,7 @@ export async function runSafetyHubLifecycleReconciliation(input: {
        FROM safety_reports
        WHERE status = 'approved'
          AND withdrawn_at IS NULL
+         AND corrected_at IS NULL
          AND display_expires_at <= $1`,
       [now],
     );
@@ -90,6 +91,7 @@ export async function runSafetyHubLifecycleReconciliation(input: {
       `UPDATE community_alerts
        SET is_active = false
        WHERE is_active = true
+         AND corrected_at IS NULL
          AND expires_at <= $1
        RETURNING id`,
       [now],

@@ -71,6 +71,7 @@ router.get("/community-alerts/nearby", async (req: Request, res: Response) => {
        FROM community_alerts
        WHERE is_active = true
          AND withdrawn_at IS NULL
+         AND corrected_at IS NULL
          AND expires_at > NOW()
          AND type NOT IN ('police', 'ice', 'checkpoint')
          AND (6371 * acos(
@@ -178,6 +179,7 @@ router.post("/community-alerts/:id/confirm", async (req: Request, res: Response)
        WHERE id = $1
          AND is_active = true
          AND withdrawn_at IS NULL
+         AND corrected_at IS NULL
          AND expires_at > NOW()
          AND type NOT IN ('police', 'ice', 'checkpoint')
        RETURNING confirmed_count, type, lat::text, lng::text`,
@@ -211,6 +213,7 @@ router.post("/community-alerts/:id/clear", async (req: Request, res: Response) =
        WHERE id = $1
          AND is_active = true
          AND withdrawn_at IS NULL
+         AND corrected_at IS NULL
          AND expires_at > NOW()
          AND type NOT IN ('police', 'ice', 'checkpoint')
        RETURNING cleared_count`,
@@ -275,10 +278,15 @@ router.patch("/community-alerts/:id/lifecycle", async (req: Request, res: Respon
     return;
   }
   const action = typeof req.body?.action === "string" ? req.body.action : "";
+  const reason = normalizeLifecycleText(req.body?.reason, 500);
   const correctionNote = normalizeLifecycleText(req.body?.correctionNote, 2000);
   const displayExpiresAt = parseLifecycleExpiry(req.body?.expiresAt);
-  if (action !== "correct" && action !== "set_expiration") {
+  if (action !== "withdraw" && action !== "correct" && action !== "set_expiration") {
     res.status(400).json({ error: "Invalid lifecycle action" });
+    return;
+  }
+  if (action === "withdraw" && !reason) {
+    res.status(400).json({ error: "A withdrawal reason is required" });
     return;
   }
   if (action === "correct" && !correctionNote) {
@@ -291,11 +299,27 @@ router.patch("/community-alerts/:id/lifecycle", async (req: Request, res: Respon
   }
 
   try {
-    const result = action === "correct"
+    const result = action === "withdraw"
+      ? await pool.query<{ id: string; withdrawn_at: string }>(
+          `UPDATE community_alerts
+           SET is_active = false,
+               withdrawn_at = NOW(),
+               withdrawn_by = $2,
+               withdrawal_reason = $3
+           WHERE id = $1
+             AND withdrawn_at IS NULL
+           RETURNING id, withdrawn_at`,
+          [String(req.params.id), req.user!.id, reason],
+        )
+      : action === "correct"
       ? await pool.query<{ id: string; corrected_at: string }>(
           `UPDATE community_alerts
-           SET corrected_at = NOW(), corrected_by = $2, correction_note = $3
+           SET is_active = false,
+               corrected_at = NOW(),
+               corrected_by = $2,
+               correction_note = $3
            WHERE id = $1
+             AND corrected_at IS NULL
            RETURNING id, corrected_at`,
           [String(req.params.id), req.user!.id, correctionNote],
         )
@@ -303,6 +327,8 @@ router.patch("/community-alerts/:id/lifecycle", async (req: Request, res: Respon
           `UPDATE community_alerts
            SET expires_at = $2
            WHERE id = $1
+             AND withdrawn_at IS NULL
+             AND corrected_at IS NULL
            RETURNING id, expires_at`,
           [String(req.params.id), displayExpiresAt!.toISOString()],
         );
@@ -409,12 +435,16 @@ router.get("/community-alerts/flagged-businesses", async (req: Request, res: Res
           cos(radians($1)) * cos(radians(b.latitude::float)) * cos(radians(b.longitude::float) - radians($2))
           + sin(radians($1)) * sin(radians(b.latitude::float))
         )))) AS distance_km
-      FROM businesses b
-      LEFT JOIN community_alerts ca ON (
-        ca.created_at > NOW() - INTERVAL '${alertWindowMonths} months'
-        AND (6371 * acos(GREATEST(-1, LEAST(1,
-          cos(radians(b.latitude::float)) * cos(radians(ca.lat::float)) * cos(radians(ca.lng::float) - radians(b.longitude::float))
-          + sin(radians(b.latitude::float)) * sin(radians(ca.lat::float))
+         FROM businesses b
+         LEFT JOIN community_alerts ca ON (
+           ca.created_at > NOW() - INTERVAL '${alertWindowMonths} months'
+           AND ca.is_active = true
+           AND ca.withdrawn_at IS NULL
+           AND ca.corrected_at IS NULL
+           AND ca.expires_at > NOW()
+           AND (6371 * acos(GREATEST(-1, LEAST(1,
+             cos(radians(b.latitude::float)) * cos(radians(ca.lat::float)) * cos(radians(ca.lng::float) - radians(b.longitude::float))
+             + sin(radians(b.latitude::float)) * sin(radians(ca.lat::float))
         )))) < $3
       )
       WHERE b.black_owned = false
