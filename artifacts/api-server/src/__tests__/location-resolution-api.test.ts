@@ -31,6 +31,24 @@ describe("GET /api/locations/resolve", () => {
     });
   });
 
+  it("retains approved Philadelphia fallback when the optional resolver relation is absent", async () => {
+    const { app, pool } = createApp([]);
+    pool.query.mockRejectedValueOnce(Object.assign(new Error("missing relation"), { code: "42P01" }));
+    const response = await request(app).get("/api/locations/resolve").query({ q: "Philadelphia, PA" });
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ label: "Philadelphia, PA", stateCode: "PA" });
+  });
+
+  it("fails closed as not found when optional resolver and inventory relations are absent", async () => {
+    const { app, pool } = createApp([]);
+    pool.query
+      .mockRejectedValueOnce(Object.assign(new Error("missing resolver"), { code: "42P01" }))
+      .mockRejectedValueOnce(Object.assign(new Error("missing inventory"), { code: "42P01" }));
+    const response = await request(app).get("/api/locations/resolve").query({ q: "Unknownville ZZ" });
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({ code: "AREA_NOT_FOUND" });
+  });
+
   it("returns candidates rather than silently selecting a duplicate city name", async () => {
     const candidates = [
       { id: "1", label: "Springfield, IL", cityName: "Springfield", stateCode: "IL", neighborhoodName: null, latitude: 1, longitude: 1 },
