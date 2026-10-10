@@ -17,6 +17,7 @@ import {
   safeExternalSourceHref,
   safeLibraryHref,
 } from "../components/kinfolk/KinfolkChatPresentation";
+import { KinfolkMemoryUseNotice } from "../components/kinfolk/KinfolkMemoryUseNotice";
 import { businessClarificationContinuation } from "../features/kinfolk/businessClarificationContinuation";
 import { createVoicePlaybackGuard } from "../lib/voicePlaybackGuard";
 
@@ -167,6 +168,19 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).toContain("KinfolkInlineMemoryConsent");
     expect(travelPageSource).toContain("memoryConsentPlan?: KinfolkInlineMemoryConsentPlan | null");
     expect(travelPageSource).toContain("inlineMemoryConsent: data.memoryConsentPlan");
+  });
+
+  it("renders only a generic acknowledgement when an approved memory influenced a usable answer", () => {
+    const markup = renderToStaticMarkup(React.createElement(KinfolkMemoryUseNotice, {
+      memoryUse: { applied: true, message: "private preference must not render" },
+    }));
+
+    expect(markup).toContain('data-testid="kinfolk-memory-use-notice"');
+    expect(markup).toContain("Saved Kinfolk preference used");
+    expect(markup).toContain("Your saved preference helped tailor this answer.");
+    expect(markup).not.toContain("private preference must not render");
+    expect(travelPageSource).toContain("memoryUse: data.memoryUse?.applied === true ? data.memoryUse : null");
+    expect(travelPageSource).toContain("<KinfolkMemoryUseNotice memoryUse={msg.memoryUse} />");
   });
 
   it("renders deterministic business recommendations with active detail and website links", () => {
