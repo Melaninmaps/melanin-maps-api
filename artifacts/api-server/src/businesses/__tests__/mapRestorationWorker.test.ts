@@ -343,6 +343,7 @@ describe("founder map restoration", () => {
       ...base,
       priorOutcome: "geocoder_error",
     })).toBe(true);
+    expect(isFounderMapRestorationV4Candidate(base)).toBe(true);
     expect(isFounderMapRestorationV4Candidate({
       ...base,
       address: "Silver Hill Road",
@@ -435,6 +436,10 @@ describe("founder map restoration", () => {
     expect(source).toContain("matchedHouseNumber");
     expect(source).toContain("splitTerminalEmbeddedPostalCode");
     expect(source).toContain("JOIN public.business_discovery_eligibility e ON e.business_id::text = b.id::text");
+    expect(source).toContain("LEFT JOIN public.business_map_restoration_outcomes o ON o.business_id::text = b.id::text");
+    expect(source).toContain("o.business_id IS NULL");
+    expect(source).toContain("AND (\n         o.business_id IS NULL\n         OR o.outcome IN (");
+    expect(source).not.toContain("AND o.outcome IN (");
     expect(source).toContain("o.outcome IN (");
     expect(source).toContain("isFounderMapRestorationV4Candidate");
     expect(source).toContain('"missing_complete_stored_address"');

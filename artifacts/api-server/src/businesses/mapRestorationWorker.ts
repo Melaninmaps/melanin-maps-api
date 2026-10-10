@@ -502,7 +502,7 @@ async function loadPendingCandidates(
             o.outcome AS "priorOutcome"
        FROM public.public_businesses b
        JOIN public.business_discovery_eligibility e ON e.business_id::text = b.id::text
-       JOIN public.business_map_restoration_outcomes o ON o.business_id::text = b.id::text
+       LEFT JOIN public.business_map_restoration_outcomes o ON o.business_id::text = b.id::text
       WHERE e.eligibility_status = 'qualified'
         AND e.policy_version = 'documented_diaspora_discovery_v1'
         AND e.ownership_evidence_id IS NOT NULL
@@ -528,18 +528,26 @@ async function loadPendingCandidates(
             ), 'active') <> 'revoked'
        )
        AND (
-          o.policy_version <> $1
+          o.business_id IS NULL
+          OR o.policy_version <> $1
           -- A profile edit changes businesses.updated_at, which makes a prior
           -- exception eligible for a fresh exact-geocode attempt without
           -- relying on an optional database hashing extension.
           OR o.updated_at < b.updated_at
        )
-       AND o.outcome IN (
-         'missing_complete_stored_address',
-         'geocoder_no_exact_match',
-         'geocoder_error'
+       AND (
+         o.business_id IS NULL
+         OR o.outcome IN (
+           'missing_complete_stored_address',
+           'geocoder_no_exact_match',
+           'geocoder_error'
+         )
        )
-      ORDER BY CASE WHEN o.outcome = 'missing_complete_stored_address' THEN 0 ELSE 1 END,
+      ORDER BY CASE
+                 WHEN o.business_id IS NULL THEN 0
+                 WHEN o.outcome = 'missing_complete_stored_address' THEN 1
+                 ELSE 2
+               END,
                b.id ASC
       LIMIT 10000`,
     [FOUNDER_MAP_RESTORATION_POLICY_VERSION],
@@ -550,15 +558,17 @@ async function loadPendingCandidates(
 }
 
 /**
- * V4 deliberately restores only records that now parse safely and prior
- * exact-geocoder exceptions. Formatting holds stay read-only until a later,
- * independently validated parser rule covers their exact format.
+ * V4 deliberately restores current parse-ready records, including records that
+ * had no earlier outcome row, plus prior exact-geocoder exceptions. Formatting
+ * holds stay read-only until a later, independently validated parser rule covers
+ * their exact format.
  */
 export function isFounderMapRestorationV4Candidate(
   candidate: MapRestorationCandidate,
 ): boolean {
   if (
-    candidate.priorOutcome !== "missing_complete_stored_address"
+    candidate.priorOutcome != null
+    && candidate.priorOutcome !== "missing_complete_stored_address"
     && candidate.priorOutcome !== "geocoder_no_exact_match"
     && candidate.priorOutcome !== "geocoder_error"
   ) return false;
