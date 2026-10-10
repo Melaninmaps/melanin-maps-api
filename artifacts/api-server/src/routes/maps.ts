@@ -13,9 +13,8 @@ router.use(requireAuth);
 //
 //   GOOGLE_MAPS_BROWSER_KEY  — browser-facing routes only (js-key, embed-url).
 //     Google receives the request with the user's page URL as the Referer, so
-//     this key must be restricted to HTTP referrer origins (mappingwithmelanin.com).
-//     Falls back to GOOGLE_MAPS_API_KEY during the transition period so production
-//     never breaks before the new key is added to Railway.
+//     this key must be restricted to the actual web origins, including
+//     api.melaninmaps.com while that is the deployed SPA origin.
 //
 //   GOOGLE_MAPS_API_KEY      — server-side routes only (directions).
 //     Server calls Google directly with no Referer header; referrer restrictions
@@ -28,7 +27,7 @@ router.use(requireAuth);
 router.get("/maps/embed-url", mapsLimiter, (req: Request, res: Response) => {
   // Uses browser key: the embed URL is loaded by the browser as an iframe src,
   // so Google receives the Referer from the user's page — referrer restrictions apply.
-  const apiKey = process.env.GOOGLE_MAPS_BROWSER_KEY ?? process.env.GOOGLE_MAPS_API_KEY;
+  const apiKey = process.env.GOOGLE_MAPS_BROWSER_KEY;
   if (!apiKey) {
     res.status(503).json({ error: "Maps not configured" });
     return;
@@ -44,11 +43,11 @@ router.get("/maps/embed-url", mapsLimiter, (req: Request, res: Response) => {
 
 // Exposes the Maps JS API browser key so the frontend can load the interactive map.
 // GOOGLE_MAPS_BROWSER_KEY must have HTTP referrer restrictions set in Google Cloud Console:
-//   https://www.mappingwithmelanin.com/*
-//   https://mappingwithmelanin.com/*
-// Falls back to GOOGLE_MAPS_API_KEY during the key-split transition period only.
+//   https://api.melaninmaps.com/*
+//   https://www.mappingwithmelanin.com/* (when this domain serves the SPA)
+// A server-only GOOGLE_MAPS_API_KEY must never be returned to the browser.
 router.get("/maps/js-key", mapsLimiter, (req: Request, res: Response) => {
-  const apiKey = process.env.GOOGLE_MAPS_BROWSER_KEY ?? process.env.GOOGLE_MAPS_API_KEY;
+  const apiKey = process.env.GOOGLE_MAPS_BROWSER_KEY;
   if (!apiKey) {
     res.status(503).json({ error: "Maps not configured" });
     return;
