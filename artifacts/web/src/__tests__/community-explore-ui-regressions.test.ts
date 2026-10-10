@@ -59,4 +59,13 @@ describe("Community and Explore UI regressions", () => {
     expect(directoryExplore).toContain('aria-label="View listings on map"');
     expect(directoryExplore).not.toContain('<Link href={`/businesses/${business.id}`} className="mt-auto">');
   });
+
+  it("does not promise automatic owner publication or preferential ranking", () => {
+    const owners = source("../pages/for-business-owners.tsx");
+    expect(owners).toContain("Submission starts review; it does not publish a listing automatically.");
+    expect(owners).toContain("evidence and eligibility checks");
+    expect(owners).toContain("shown separately from ownership and evidence");
+    expect(owners).not.toContain("business will appear on the platform");
+    expect(owners).not.toContain("will find you first");
+  });
 });

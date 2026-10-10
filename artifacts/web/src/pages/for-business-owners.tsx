@@ -189,9 +189,9 @@ export default function ForBusinessOwners() {
 
           <div className="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-[#CA922B]/30 before:to-transparent">
             {[
-              { t: "List Your Business Free", d: "Any qualifying minority-owned business can claim a listing at no cost — no waitlist, no upfront fee. Submit your information and your business will appear on the platform. Listing is separate from community verification: your free listing comes first, and you can pursue a Verified Badge when you are ready." },
+              { t: "Submit Your Business Free", d: "Qualifying minority-owned businesses can submit a listing at no cost — no waitlist, no upfront fee. Submission starts review; it does not publish a listing automatically. Public listing, Map and Kinfolk discovery, and any verification each require their own evidence and eligibility checks." },
               { t: "Build Your Profile", d: "Add photos, hours, menu, services, and your story. Make your listing shine." },
-              { t: "Get Discovered", d: "Members searching your city and category will find you first — with your Community Confidence Score front and center." },
+              { t: "Get Discovered", d: "After review confirms an eligible, active public listing, members can find it in relevant directory and discovery surfaces. Community experience feedback and confidence are shown separately from ownership and evidence." },
               { t: "Grow With the Community", d: "Respond to reviews, engage with members, and track your visibility with the business analytics dashboard." }
             ].map((s, i) => (
               <div key={i} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
