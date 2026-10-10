@@ -22,7 +22,7 @@
  */
 import { Router, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
-import { randomUUID } from "crypto";
+import { createHash, randomUUID } from "crypto";
 
 const router = Router();
 
@@ -96,6 +96,9 @@ function receivedShareResponse(share: TrustedSafetyShareRow) {
 }
 
 type InviteDeliveryState = "not_attempted" | "in_app_created" | "provider_accepted" | "provider_rejected" | "not_configured" | "failed";
+type InviteDeliveryAuditState = "attempted" | "accepted" | "failed";
+type InviteDeliveryChannel = "in_app" | "push" | "sms" | "email";
+type InviteDeliveryProvider = "in_app" | "expo" | "twilio" | "resend";
 
 type ExpoPushResponse = {
   ok: boolean;
@@ -104,19 +107,95 @@ type ExpoPushResponse = {
 };
 
 /**
- * Expo's send endpoint only acknowledges a request/ticket. It is never a
- * device-delivery confirmation; a receipt workflow would be required for that.
+ * The Expo send endpoint returns a ticket identifier after accepting a request.
+ * That ticket is not a device-delivery receipt; callers must never describe it
+ * as delivery to a device.
  */
-export async function expoPushRequestState(response: ExpoPushResponse): Promise<"provider_accepted" | "provider_rejected"> {
-  if (!response.ok) return "provider_rejected";
+export async function expoPushProviderReceipt(response: ExpoPushResponse): Promise<{
+  state: "provider_accepted" | "provider_rejected";
+  receipt: string | null;
+}> {
+  if (!response.ok) return { state: "provider_rejected", receipt: null };
   try {
-    const body = await response.json() as { data?: { status?: string } | Array<{ status?: string }> };
+    const body = await response.json() as {
+      data?: { id?: unknown; status?: string } | Array<{ id?: unknown; status?: string }>;
+    };
     const tickets = Array.isArray(body.data) ? body.data : body.data ? [body.data] : [];
-    if (tickets.some((ticket) => ticket.status && ticket.status !== "ok")) return "provider_rejected";
+    const ticket = tickets.length === 1 ? tickets[0] : null;
+    if (ticket?.status === "ok" && isProviderReceiptReference(ticket.id)) {
+      return { state: "provider_accepted", receipt: ticket.id.trim() };
+    }
   } catch {
-    // A successful HTTP request still means only that the provider accepted it.
+    // A transport response without a parseable provider ticket is not proof of
+    // acceptance. Do not promote it to a delivery claim.
   }
-  return "provider_accepted";
+  return { state: "provider_rejected", receipt: null };
+}
+
+/** Kept for alert-contract callers that need only the non-delivery state. */
+export async function expoPushRequestState(response: ExpoPushResponse): Promise<"provider_accepted" | "provider_rejected"> {
+  return (await expoPushProviderReceipt(response)).state;
+}
+
+function isProviderReceiptReference(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0 && value.trim().length <= 512;
+}
+
+/**
+ * Provider receipt references are useful to audit but must not become a route
+ * to recipient data. Persist only a non-reversible fingerprint, never a raw
+ * recipient address, bearer token, or provider receipt reference.
+ */
+export function providerReceiptFingerprint(receipt: string): string {
+  return createHash("sha256").update(receipt).digest("hex");
+}
+
+/**
+ * Every actual invitation handoff is audit-first. The audit table intentionally
+ * contains only the share relation, method/provider, state, timestamps, and an
+ * optional receipt fingerprint; it has no phone, email, invite token, or raw
+ * provider receipt columns.
+ */
+async function beginInviteDeliveryAttempt(
+  shareId: string,
+  channel: InviteDeliveryChannel,
+  provider: InviteDeliveryProvider,
+): Promise<string | null> {
+  try {
+    const result = await pool.query<{ id: string }>(
+      `INSERT INTO trusted_safety_invitation_delivery_attempts
+         (id, share_id, delivery_channel, provider, state, attempted_at, created_at, updated_at)
+       VALUES (gen_random_uuid(), $1, $2, $3, 'attempted', NOW(), NOW(), NOW())
+       RETURNING id`,
+      [shareId, channel, provider],
+    );
+    return result.rows[0]?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function finishInviteDeliveryAttempt(
+  attemptId: string,
+  state: Exclude<InviteDeliveryAuditState, "attempted">,
+  receipt: string | null = null,
+): Promise<boolean> {
+  try {
+    const result = await pool.query<{ id: string }>(
+      `UPDATE trusted_safety_invitation_delivery_attempts
+          SET state = $1,
+              provider_receipt_fingerprint = $2,
+              completed_at = NOW(),
+              updated_at = NOW()
+        WHERE id = $3
+          AND state = 'attempted'
+        RETURNING id`,
+      [state, receipt ? providerReceiptFingerprint(receipt) : null, attemptId],
+    );
+    return Boolean(result.rows[0]);
+  } catch {
+    return false;
+  }
 }
 
 async function createMwmInviteNotification(
@@ -124,13 +203,22 @@ async function createMwmInviteNotification(
   contactUserId: string,
   shareId: string,
 ): Promise<{ inApp: InviteDeliveryState; push: InviteDeliveryState }> {
+  let ownerName: string;
   try {
     const ownerResult = await pool.query<{ first_name: string | null }>(
       `SELECT first_name FROM users WHERE id = $1 AND approved = true
        AND COALESCE(account_status, 'active') = 'active'`,
       [ownerId],
     );
-    const ownerName = ownerResult.rows[0]?.first_name?.trim() || "Someone";
+    ownerName = ownerResult.rows[0]?.first_name?.trim() || "Someone";
+  } catch {
+    return { inApp: "failed", push: "not_attempted" };
+  }
+
+  const inAppAttemptId = await beginInviteDeliveryAttempt(shareId, "in_app", "in_app");
+  if (!inAppAttemptId) return { inApp: "failed", push: "not_attempted" };
+
+  try {
     const notification = await pool.query(
       `INSERT INTO notifications (id, user_id, type, title, body, data, read, created_at)
        VALUES (gen_random_uuid(), $1, 'safety', $2, $3, $4::jsonb, false, NOW())
@@ -142,8 +230,22 @@ async function createMwmInviteNotification(
         JSON.stringify({ type: "trusted_safety_share_request", shareId }),
       ],
     );
-    if (!notification.rows[0]) return { inApp: "failed", push: "not_attempted" };
+    if (!notification.rows[0]) {
+      await finishInviteDeliveryAttempt(inAppAttemptId, "failed");
+      return { inApp: "failed", push: "not_attempted" };
+    }
+  } catch {
+    await finishInviteDeliveryAttempt(inAppAttemptId, "failed");
+    return { inApp: "failed", push: "not_attempted" };
+  }
 
+  // Do not represent an un-audited in-app record as successfully created.
+  if (!await finishInviteDeliveryAttempt(inAppAttemptId, "accepted")) {
+    return { inApp: "failed", push: "not_attempted" };
+  }
+
+  let pushAttemptId: string | null = null;
+  try {
     const tokenResult = await pool.query<{ token: string }>(
       `SELECT pt.token
          FROM push_tokens pt
@@ -157,6 +259,9 @@ async function createMwmInviteNotification(
     const token = tokenResult.rows[0]?.token;
     if (!token) return { inApp: "in_app_created", push: "not_attempted" };
 
+    pushAttemptId = await beginInviteDeliveryAttempt(shareId, "push", "expo");
+    if (!pushAttemptId) return { inApp: "in_app_created", push: "failed" };
+
     const response = await fetch("https://exp.host/--/api/v2/push/send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -168,10 +273,17 @@ async function createMwmInviteNotification(
         sound: "default",
       }),
     });
-    return { inApp: "in_app_created", push: await expoPushRequestState(response) };
+    const push = await expoPushProviderReceipt(response);
+    const persisted = await finishInviteDeliveryAttempt(
+      pushAttemptId,
+      push.state === "provider_accepted" ? "accepted" : "failed",
+      push.receipt,
+    );
+    return { inApp: "in_app_created", push: persisted ? push.state : "failed" };
   } catch {
     // Do not log a provider error object: it can contain a phone, email, or token.
-    return { inApp: "failed", push: "not_attempted" };
+    if (pushAttemptId) await finishInviteDeliveryAttempt(pushAttemptId, "failed");
+    return { inApp: "in_app_created", push: "failed" };
   }
 }
 
@@ -185,29 +297,45 @@ function trustedSafetyInviteUrl(token: string): string | null {
 }
 
 async function deliverExternalInvite(
+  shareId: string,
   contactType: "phone" | "email",
   contactAddress: string,
   inviteToken: string,
 ): Promise<InviteDeliveryState> {
+  const channel: InviteDeliveryChannel = contactType === "phone" ? "sms" : "email";
+  const provider: InviteDeliveryProvider = contactType === "phone" ? "twilio" : "resend";
+  const attemptId = await beginInviteDeliveryAttempt(shareId, channel, provider);
+  if (!attemptId) return "failed";
+
+  const finalize = async (state: InviteDeliveryState, receipt: string | null = null) => {
+    const persisted = await finishInviteDeliveryAttempt(
+      attemptId,
+      state === "provider_accepted" ? "accepted" : "failed",
+      receipt,
+    );
+    return persisted ? state : "failed";
+  };
   const inviteUrl = trustedSafetyInviteUrl(inviteToken);
-  if (!inviteUrl) return "not_configured";
+  if (!inviteUrl) return finalize("not_configured");
   try {
     if (contactType === "phone") {
       const sid = process.env.TWILIO_ACCOUNT_SID;
       const authToken = process.env.TWILIO_AUTH_TOKEN;
       const from = process.env.TWILIO_FROM_NUMBER;
-      if (!sid || !authToken || !from) return "not_configured";
+      if (!sid || !authToken || !from) return finalize("not_configured");
       const { default: twilio } = await import("twilio");
       const message = await twilio(sid, authToken).messages.create({
         from,
         to: contactAddress,
         body: `You have been invited to receive severe safety alerts from a Mapping With Melanin member. Review or decline: ${inviteUrl}`,
       });
-      return message.sid ? "provider_accepted" : "provider_rejected";
+      return isProviderReceiptReference(message.sid)
+        ? finalize("provider_accepted", message.sid)
+        : finalize("provider_rejected");
     }
 
     const resendKey = process.env.RESEND_API_KEY;
-    if (!resendKey) return "not_configured";
+    if (!resendKey) return finalize("not_configured");
     const { Resend } = await import("resend");
     const response = await new Resend(resendKey).emails.send({
       from: "Mapping With Melanin <safety@mappingwithmelanin.com>",
@@ -215,10 +343,12 @@ async function deliverExternalInvite(
       subject: "Trusted Safety Share invitation",
       html: `<p>You have been invited to receive severe safety alerts from a Mapping With Melanin member.</p><p><a href="${inviteUrl}">Review or decline this invitation</a>.</p>`,
     });
-    return response.error || !response.data?.id ? "provider_rejected" : "provider_accepted";
+    return !response.error && isProviderReceiptReference(response.data?.id)
+      ? finalize("provider_accepted", response.data.id)
+      : finalize("provider_rejected");
   } catch {
     // Provider exceptions may echo a phone number, email, or token: do not log them.
-    return "failed";
+    return finalize("failed");
   }
 }
 
@@ -420,9 +550,9 @@ router.post("/safety/trusted-shares", async (req: Request, res: Response) => {
     if (type === "mwm_user" && contactUserId) {
       invitationDelivery = await createMwmInviteNotification(ownerId, contactUserId, share.id);
     } else if (type === "phone" && normalizedPhone) {
-      invitationDelivery = { provider: await deliverExternalInvite("phone", normalizedPhone, inviteToken) };
+      invitationDelivery = { provider: await deliverExternalInvite(share.id, "phone", normalizedPhone, inviteToken) };
     } else if (type === "email" && normalizedEmail) {
-      invitationDelivery = { provider: await deliverExternalInvite("email", normalizedEmail, inviteToken) };
+      invitationDelivery = { provider: await deliverExternalInvite(share.id, "email", normalizedEmail, inviteToken) };
     }
 
     res.status(201).json({

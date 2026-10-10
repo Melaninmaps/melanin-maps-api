@@ -176,6 +176,7 @@ import knowledgeGraphRouter from "./knowledge-graph";
 import testerReportRouter from "./tester-report";
 import communityLanguageRouter from "./community-language";
 import officialPublicAlertsRouter from "./official-public-alerts";
+import seriousCredibleThreatRouter from "./serious-credible-threats";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
@@ -300,6 +301,9 @@ router.use(canonicalMwmOwnerAttachmentRouter);
 router.use(businessOwnerInsightsRouter);
 router.use(notificationsRouter);
 router.use(officialPublicAlertsRouter);
+// Dedicated, member-only private-review intake. This is intentionally separate
+// from Police/ICE observations and exposes no notice or delivery operation.
+router.use(seriousCredibleThreatRouter);
 router.use(adminUsersRouter);
 router.use(adminTestersRouter);
 router.use(adminAuditRouter);

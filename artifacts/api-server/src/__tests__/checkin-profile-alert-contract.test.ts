@@ -35,12 +35,29 @@ describe("profile-based Safety Check-In contract", () => {
     expect(route).not.toContain("recipientUserIds");
   });
 
-  it("makes an overdue profile alert durable before attempting push delivery", () => {
+  it("records retryable in-app and provider attempts without claiming device delivery", () => {
     expect(cron).toContain("INSERT INTO notifications");
     expect(cron).toContain("UPDATE safety_checkin_recipients");
-    expect(cron).toContain("delivery_status = 'delivered'");
+    expect(cron).toContain("delivery_status = 'in_app_created'");
+    expect(cron).toContain("delivery_status = 'push_pending'");
+    expect(cron).toContain("delivery_status = 'push_attempting'");
+    expect(cron).toContain("delivery_status = 'push_submitted'");
+    expect(cron).toContain("delivery_status = 'push_failed'");
+    expect(cron).toContain("in_app_notification_create_failed");
+    expect(cron).toContain("push_submission_failed");
+    expect(cron).toContain("push_token_unavailable");
+    expect(cron).toContain("MAX_IN_APP_ATTEMPTS = 3");
+    expect(cron).toContain("MAX_PUSH_ATTEMPTS = 3");
+    expect(cron).toContain("recipient_no_longer_eligible");
     expect(cron).toContain("delivery_status = 'skipped'");
-    expect(cron).toContain("void sendPushToUser(recipientUserId");
+    expect(cron).toContain('submission === "submitted"');
+    expect(cron).toContain("A trusted member's scheduled check-in is overdue");
+    expect(cron).not.toContain("delivery_status = 'delivered'");
+    expect(schema).toContain("inAppAttemptCount");
+    expect(schema).toContain("pushAttemptCount");
+    expect(schema).toContain('"push_pending"');
+    expect(schema).toContain("pushSubmittedAt");
+    expect(schema).not.toContain('"delivered"');
     expect(cron).not.toContain("latitude");
     expect(cron).not.toContain("longitude");
   });

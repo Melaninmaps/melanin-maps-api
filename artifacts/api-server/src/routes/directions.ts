@@ -165,6 +165,8 @@ router.post("/directions/safety-context", requireMembership("navigator"), async 
          JOIN businesses b ON sr.target_id = b.id AND sr.target_type = 'business'
          WHERE sr.category = 'sundown'
            AND sr.status = 'approved'
+           AND sr.withdrawn_at IS NULL
+           AND sr.display_expires_at > NOW()
            AND b.latitude IS NOT NULL AND b.longitude IS NOT NULL
            AND b.latitude::float BETWEEN $1 AND $2
            AND b.longitude::float BETWEEN $3 AND $4

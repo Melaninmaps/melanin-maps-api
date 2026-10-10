@@ -10,6 +10,9 @@ interface PushMessage {
   data?: Record<string, unknown>;
 }
 
+/** A provider submission result, never a device-receipt confirmation. */
+export type PushSubmissionResult = "submitted" | "no_token" | "failed";
+
 async function sendToToken(token: string, message: PushMessage): Promise<boolean> {
   try {
     const response = await fetch("https://exp.host/--/api/v2/push/send", {
@@ -38,7 +41,7 @@ async function sendToToken(token: string, message: PushMessage): Promise<boolean
   }
 }
 
-export async function sendPushToUser(userId: string, message: PushMessage): Promise<void> {
+export async function sendPushToUser(userId: string, message: PushMessage): Promise<PushSubmissionResult> {
   try {
     const [row] = await db
       .select({ token: pushTokensTable.token })
@@ -46,10 +49,11 @@ export async function sendPushToUser(userId: string, message: PushMessage): Prom
       .where(eq(pushTokensTable.userId, userId))
       .limit(1);
 
-    if (!row?.token) return;
-    await sendToToken(row.token, message);
+    if (!row?.token) return "no_token";
+    return (await sendToToken(row.token, message)) ? "submitted" : "failed";
   } catch (err) {
     logger.warn({ err }, "[push] Failed to send push notification to user");
+    return "failed";
   }
 }
 

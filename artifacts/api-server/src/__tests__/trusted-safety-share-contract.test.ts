@@ -2,10 +2,12 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  expoPushProviderReceipt,
   expoPushRequestState as invitePushRequestState,
   isFiniteTrustedSafetySession,
   normalizeTrustedContactEmail,
   normalizeTrustedContactPhone,
+  providerReceiptFingerprint,
 } from "../routes/trusted-safety-share";
 import {
   expoPushRequestState,
@@ -55,11 +57,48 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
   });
 
   it("records provider acknowledgement rather than claiming device delivery", async () => {
-    const accepted = { ok: true, json: async () => ({ data: { status: "ok" } }) } as never;
+    const accepted = { ok: true, json: async () => ({ data: { status: "ok", id: "expo-ticket-123" } }) } as never;
     const rejected = { ok: true, json: async () => ({ data: { status: "error" } }) } as never;
+    const missingReceipt = { ok: true, json: async () => ({ data: { status: "ok" } }) } as never;
     await expect(expoPushRequestState(accepted)).resolves.toBe("provider_accepted");
     await expect(expoPushRequestState(rejected)).resolves.toBe("provider_rejected");
     await expect(invitePushRequestState(accepted)).resolves.toBe("provider_accepted");
+    await expect(expoPushProviderReceipt(accepted)).resolves.toEqual({
+      state: "provider_accepted",
+      receipt: "expo-ticket-123",
+    });
+    await expect(expoPushProviderReceipt(missingReceipt)).resolves.toEqual({
+      state: "provider_rejected",
+      receipt: null,
+    });
+    const fingerprint = providerReceiptFingerprint("expo-ticket-123");
+    expect(fingerprint).toMatch(/^[a-f0-9]{64}$/);
+    expect(fingerprint).not.toContain("expo-ticket-123");
+  });
+
+  it("persists invitation attempts as audit-only accepted or failed evidence", () => {
+    const route = readFileSync(
+      fileURLToPath(new URL("../routes/trusted-safety-share.ts", import.meta.url)),
+      "utf8",
+    );
+    const migrations = readFileSync(
+      fileURLToPath(new URL("../lib/startup-migrations.ts", import.meta.url)),
+      "utf8",
+    );
+    const auditMigration = migrations.slice(
+      migrations.indexOf('name: "trusted_safety_invitation_delivery_audit_v1"'),
+      migrations.indexOf('name: "safety_checkin_profile_recipients_v1"'),
+    );
+
+    expect(route).toContain("beginInviteDeliveryAttempt(shareId, channel, provider)");
+    expect(route).toContain("finishInviteDeliveryAttempt");
+    expect(route).toContain("providerReceiptFingerprint");
+    expect(route).toContain('push.state === "provider_accepted" ? "accepted" : "failed"');
+    expect(auditMigration).toContain("trusted_safety_invitation_delivery_attempts");
+    expect(auditMigration).toContain("CHECK (state IN ('attempted', 'accepted', 'failed'))");
+    expect(auditMigration).toContain("provider_receipt_fingerprint CHAR(64)");
+    expect(auditMigration).toContain("provider = 'in_app' OR provider_receipt_fingerprint IS NOT NULL");
+    expect(auditMigration).not.toMatch(/contact_phone|contact_email|invite_token|push_token|provider_receipt_id/);
   });
 
   it("keeps the recipient-authorized location payload free of account identity", () => {

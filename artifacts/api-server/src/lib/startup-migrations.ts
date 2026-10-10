@@ -1844,6 +1844,38 @@ ON CONFLICT (city_slug) DO UPDATE SET
     )`,
   },
   {
+    // Invitation handoffs are audit-first. This stores lifecycle evidence only:
+    // no recipient address, invite token, push token, message content, or raw
+    // provider receipt can be persisted in this table.
+    name: "trusted_safety_invitation_delivery_audit_v1",
+    sql: `CREATE TABLE IF NOT EXISTS trusted_safety_invitation_delivery_attempts (
+      id                           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      share_id                     UUID        NOT NULL REFERENCES trusted_safety_shares(id) ON DELETE CASCADE,
+      delivery_channel             VARCHAR(20) NOT NULL
+        CHECK (delivery_channel IN ('in_app', 'push', 'sms', 'email')),
+      provider                     VARCHAR(20) NOT NULL
+        CHECK (provider IN ('in_app', 'expo', 'twilio', 'resend')),
+      state                        VARCHAR(20) NOT NULL DEFAULT 'attempted'
+        CHECK (state IN ('attempted', 'accepted', 'failed')),
+      provider_receipt_fingerprint CHAR(64),
+      attempted_at                 TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      completed_at                 TIMESTAMPTZ,
+      created_at                   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at                   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CHECK (
+        (state = 'attempted' AND completed_at IS NULL AND provider_receipt_fingerprint IS NULL)
+        OR (
+          state = 'accepted'
+          AND completed_at IS NOT NULL
+          AND (provider = 'in_app' OR provider_receipt_fingerprint IS NOT NULL)
+        )
+        OR (state = 'failed' AND completed_at IS NOT NULL AND provider_receipt_fingerprint IS NULL)
+      )
+    );
+    CREATE INDEX IF NOT EXISTS trusted_safety_invitation_delivery_attempts_share_created_idx
+      ON trusted_safety_invitation_delivery_attempts (share_id, created_at DESC);`,
+  },
+  {
     // New Check-Ins can alert an already accepted Kinfolk profile without
     // collecting an email address. Existing email Check-Ins retain every value
     // and the email column becomes nullable only for these new records.
@@ -1868,6 +1900,66 @@ ON CONFLICT (city_slug) DO UPDATE SET
 
       CREATE INDEX IF NOT EXISTS safety_checkin_recipients_pending_idx
         ON safety_checkin_recipients(checkin_id, delivery_status, notified_at);
+    `,
+  },
+  {
+    // A durable in-app record and a provider-accepted push submission are not
+    // device-receipt evidence. Retry only the attempted channel, with bounded
+    // metadata, and re-evaluate recipient authorization before every retry.
+    name: "safety_checkin_recipient_delivery_attempts_v1",
+    sql: `
+      ALTER TABLE safety_checkin_recipients
+        ADD COLUMN IF NOT EXISTS in_app_attempt_count INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS push_attempt_count INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS in_app_attempted_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS in_app_created_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS in_app_failed_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS push_attempted_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS push_attempt_id UUID,
+        ADD COLUMN IF NOT EXISTS push_submitted_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS push_failed_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS next_retry_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS last_error_code VARCHAR(80);
+
+      DO $$
+      DECLARE delivery_status_constraint TEXT;
+      BEGIN
+        SELECT c.conname INTO delivery_status_constraint
+          FROM pg_constraint AS c
+         WHERE c.conrelid = 'safety_checkin_recipients'::regclass
+           AND c.contype = 'c'
+           AND pg_get_constraintdef(c.oid) LIKE '%delivery_status%'
+         LIMIT 1;
+        IF delivery_status_constraint IS NOT NULL THEN
+          EXECUTE format(
+            'ALTER TABLE safety_checkin_recipients DROP CONSTRAINT %I',
+            delivery_status_constraint
+          );
+        END IF;
+      END $$;
+
+      -- Older code used delivered when the in-app row was inserted. Preserve
+      -- that durable fact but remove the unsupported device-delivery claim.
+      UPDATE safety_checkin_recipients
+         SET delivery_status = 'in_app_created',
+             in_app_created_at = COALESCE(in_app_created_at, notified_at)
+       WHERE delivery_status = 'delivered';
+
+      ALTER TABLE safety_checkin_recipients
+        ADD CONSTRAINT safety_checkin_recipients_delivery_status_check
+        CHECK (delivery_status IN (
+          'pending',
+          'in_app_created',
+          'in_app_failed',
+          'push_pending',
+          'push_attempting',
+          'push_failed',
+          'push_submitted',
+          'skipped'
+        ));
+
+      CREATE INDEX IF NOT EXISTS safety_checkin_recipients_retry_idx
+        ON safety_checkin_recipients(checkin_id, delivery_status, next_retry_at);
     `,
   },
   {

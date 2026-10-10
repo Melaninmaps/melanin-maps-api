@@ -19,31 +19,70 @@ type CheckinRecipient = {
   recipientUserId: string;
   recipientName: string;
   profileImageUrl: string | null;
-  deliveryStatus: "pending" | "delivered" | "skipped";
+  deliveryStatus:
+    | "pending"
+    | "in_app_created"
+    | "in_app_failed"
+    | "push_pending"
+    | "push_attempting"
+    | "push_failed"
+    | "push_submitted"
+    | "skipped";
   notifiedAt: Date | null;
+  inAppCreatedAt: Date | null;
+  pushAttemptedAt: Date | null;
+  pushSubmittedAt: Date | null;
+  pushFailedAt: Date | null;
+  nextRetryAt: Date | null;
 };
 
 export function checkinDeliverySummary(recipients: CheckinRecipient[]) {
-  const delivered = recipients.filter((recipient) => recipient.deliveryStatus === "delivered").length;
+  const inAppCreated = recipients.filter((recipient) => (
+    recipient.deliveryStatus === "in_app_created"
+    || recipient.deliveryStatus === "push_pending"
+    || recipient.deliveryStatus === "push_attempting"
+    || recipient.deliveryStatus === "push_failed"
+    || recipient.deliveryStatus === "push_submitted"
+  )).length;
+  const pushSubmitted = recipients.filter((recipient) => recipient.deliveryStatus === "push_submitted").length;
+  const retryScheduled = recipients.filter((recipient) => (
+    (recipient.deliveryStatus === "in_app_failed" || recipient.deliveryStatus === "push_failed")
+    && recipient.nextRetryAt !== null
+  )).length;
+  const pushAttempting = recipients.filter((recipient) => (
+    recipient.deliveryStatus === "push_attempting"
+  )).length;
+  const failed = recipients.filter((recipient) => (
+    (recipient.deliveryStatus === "in_app_failed" || recipient.deliveryStatus === "push_failed")
+    && recipient.nextRetryAt === null
+  )).length;
   const skipped = recipients.filter((recipient) => recipient.deliveryStatus === "skipped").length;
-  const pending = recipients.length - delivered - skipped;
+  const pending = recipients.filter((recipient) => recipient.deliveryStatus === "pending").length;
   return {
-    channel: "in_app_notification",
+    channel: "in_app_and_push",
     total: recipients.length,
     pending,
-    delivered,
+    inAppCreated,
+    pushSubmitted,
+    retryScheduled,
+    pushAttempting,
+    failed,
     skipped,
     state: recipients.length === 0
       ? "legacy_email_unobserved"
       : pending === recipients.length
         ? "scheduled_not_sent"
-        : delivered === recipients.length
-          ? "delivered"
-          : pending > 0
-            ? "partially_processed"
-            : delivered > 0
-              ? "partially_delivered"
-              : "skipped",
+        : pushAttempting > 0
+          ? "push_attempt_in_progress"
+          : retryScheduled > 0
+          ? "retry_scheduled"
+            : failed > 0
+              ? "retry_exhausted"
+              : pushSubmitted > 0
+                ? "push_submitted_unconfirmed"
+                : inAppCreated > 0
+                  ? "in_app_created"
+                  : "skipped",
   } as const;
 }
 
@@ -127,8 +166,13 @@ async function loadCheckinRecipients(checkinIds: number[]): Promise<Map<number, 
       recipient_user_id: string;
       recipient_name: string;
       profile_image_url: string | null;
-      delivery_status: "pending" | "delivered" | "skipped";
+      delivery_status: CheckinRecipient["deliveryStatus"];
       notified_at: Date | null;
+      in_app_created_at: Date | null;
+      push_attempted_at: Date | null;
+      push_submitted_at: Date | null;
+      push_failed_at: Date | null;
+      next_retry_at: Date | null;
     }>(
       `SELECT scr.checkin_id,
               scr.trusted_share_id::text,
@@ -136,7 +180,12 @@ async function loadCheckinRecipients(checkinIds: number[]): Promise<Map<number, 
               scr.recipient_name,
               u.profile_image_url,
               scr.delivery_status,
-              scr.notified_at
+              scr.notified_at,
+              scr.in_app_created_at,
+              scr.push_attempted_at,
+              scr.push_submitted_at,
+              scr.push_failed_at,
+              scr.next_retry_at
          FROM safety_checkin_recipients scr
          LEFT JOIN users u ON u.id = scr.recipient_user_id
         WHERE scr.checkin_id = ANY($1::integer[])
@@ -152,6 +201,11 @@ async function loadCheckinRecipients(checkinIds: number[]): Promise<Map<number, 
         profileImageUrl: row.profile_image_url,
         deliveryStatus: row.delivery_status,
         notifiedAt: row.notified_at,
+        inAppCreatedAt: row.in_app_created_at,
+        pushAttemptedAt: row.push_attempted_at,
+        pushSubmittedAt: row.push_submitted_at,
+        pushFailedAt: row.push_failed_at,
+        nextRetryAt: row.next_retry_at,
       });
       grouped.set(row.checkin_id, recipients);
     }
@@ -286,6 +340,11 @@ router.post("/safety/checkins", requireFamilySafety, async (req: Request, res: R
         ...recipient,
         deliveryStatus: "pending" as const,
         notifiedAt: null,
+        inAppCreatedAt: null,
+        pushAttemptedAt: null,
+        pushSubmittedAt: null,
+        pushFailedAt: null,
+        nextRetryAt: null,
       }));
       res.status(201).json({
         checkin: {

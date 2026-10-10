@@ -35,12 +35,16 @@ type SafetyCheckin = {
   location: string | null;
   recipients?: TrustedProfile[];
   deliverySummary?: {
-    channel: "in_app_notification";
+    channel: "in_app_and_push";
     total: number;
     pending: number;
-    delivered: number;
+    inAppCreated: number;
+    pushSubmitted: number;
+    retryScheduled: number;
+    pushAttempting: number;
+    failed: number;
     skipped: number;
-    state: "legacy_email_unobserved" | "scheduled_not_sent" | "delivered" | "partially_processed" | "partially_delivered" | "skipped";
+    state: "legacy_email_unobserved" | "scheduled_not_sent" | "push_attempt_in_progress" | "retry_scheduled" | "retry_exhausted" | "push_submitted_unconfirmed" | "in_app_created" | "skipped";
   };
 };
 
@@ -50,8 +54,13 @@ type TrustedProfile = {
   recipientName: string;
   profileImageUrl: string | null;
   pushEnabled?: boolean;
-  deliveryStatus?: "pending" | "delivered" | "skipped";
+  deliveryStatus?: "pending" | "in_app_created" | "in_app_failed" | "push_pending" | "push_attempting" | "push_failed" | "push_submitted" | "skipped";
   notifiedAt?: string | null;
+  inAppCreatedAt?: string | null;
+  pushAttemptedAt?: string | null;
+  pushSubmittedAt?: string | null;
+  pushFailedAt?: string | null;
+  nextRetryAt?: string | null;
 };
 
 const DURATION_OPTIONS = [
@@ -87,12 +96,20 @@ function deliveryLabel(checkin: SafetyCheckin): string {
   if (summary.state === "scheduled_not_sent") {
     return `Alert scheduled, not sent · ${summary.pending}/${summary.total} waiting`;
   }
+  if (summary.state === "retry_scheduled") {
+    return `Safety alert retry scheduled · ${summary.retryScheduled} waiting`;
+  }
+  if (summary.state === "push_attempt_in_progress") {
+    return `Safety alert push attempt in progress · ${summary.pushAttempting} waiting`;
+  }
   const parts = [
-    summary.delivered > 0 ? `${summary.delivered} delivered` : null,
+    summary.inAppCreated > 0 ? `${summary.inAppCreated} in-app record${summary.inAppCreated === 1 ? "" : "s"}` : null,
+    summary.pushSubmitted > 0 ? `${summary.pushSubmitted} push submission${summary.pushSubmitted === 1 ? "" : "s"} (arrival unconfirmed)` : null,
+    summary.failed > 0 ? `${summary.failed} retry limit reached` : null,
     summary.pending > 0 ? `${summary.pending} waiting` : null,
     summary.skipped > 0 ? `${summary.skipped} skipped` : null,
   ].filter(Boolean);
-  return `In-app alert delivery · ${parts.join(" · ")}`;
+  return `Safety alert status · ${parts.join(" · ")}`;
 }
 
 export default function CheckinScreen() {

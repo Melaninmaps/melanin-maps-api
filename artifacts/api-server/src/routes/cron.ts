@@ -40,6 +40,7 @@ import { logger } from "../lib/logger";
 import { sendPushToUser } from "../lib/pushNotifications";
 import { refreshOfficialPublicAlerts } from "../alerts/refreshOfficialPublicAlerts";
 import { FOUNDER_APPROVED_TESTER_EMAILS } from "../constants/testerRoster";
+import { runSafetyHubLifecycleReconciliation } from "../safety/safetyHubLifecycleRunner";
 
 const router: IRouter = Router();
 
@@ -213,10 +214,51 @@ router.post("/cron/trial-reminders", async (req, res): Promise<void> => {
   }
 });
 
-/** Persist an in-app safety alert before attempting a best-effort push. */
-async function notifySelectedCheckinProfiles(checkinId: number, ownerId: string, ownerName: string, city: string | null) {
+type SafetyCheckinNotificationResult = {
+  inAppCreated: number;
+  inAppFailed: number;
+  pushSubmitted: number;
+  pushFailed: number;
+  skipped: number;
+};
+
+type SafetyCheckinPushCandidate = {
+  id: string;
+  recipientUserId: string;
+  attemptId: string;
+};
+
+const MAX_IN_APP_ATTEMPTS = 3;
+const MAX_PUSH_ATTEMPTS = 3;
+
+function retryAt(attemptCount: number): Date | null {
+  if (attemptCount >= MAX_IN_APP_ATTEMPTS) return null;
+  const minutes = Math.min(30, 2 ** Math.max(0, attemptCount - 1));
+  return new Date(Date.now() + minutes * 60_000);
+}
+
+function pushRetryAt(attemptCount: number): Date | null {
+  if (attemptCount >= MAX_PUSH_ATTEMPTS) return null;
+  const minutes = Math.min(30, 2 ** Math.max(0, attemptCount - 1));
+  return new Date(Date.now() + minutes * 60_000);
+}
+
+function emptySafetyCheckinNotificationResult(): SafetyCheckinNotificationResult {
+  return { inAppCreated: 0, inAppFailed: 0, pushSubmitted: 0, pushFailed: 0, skipped: 0 };
+}
+
+/**
+ * Persist the recipient's in-app record transactionally. A retry must pass the
+ * same accepted-share, block, approval, and safety-preference checks again.
+ */
+async function createSafetyCheckinInAppNotifications(
+  checkinId: number,
+  ownerId: string,
+  ownerName: string,
+  city: string | null,
+): Promise<SafetyCheckinNotificationResult> {
+  const result = emptySafetyCheckinNotificationResult();
   const client = await pool.connect();
-  const readyForPush: string[] = [];
   try {
     await client.query("BEGIN");
     const recipients = await client.query<{
@@ -224,9 +266,11 @@ async function notifySelectedCheckinProfiles(checkinId: number, ownerId: string,
       recipient_user_id: string;
       push_enabled: boolean;
       is_eligible: boolean;
+      in_app_attempt_count: number;
     }>(
       `SELECT scr.id::text,
               scr.recipient_user_id,
+              scr.in_app_attempt_count,
               COALESCE(np.push_enabled, true) AS push_enabled,
               (
                 tss.id IS NOT NULL
@@ -251,8 +295,10 @@ async function notifySelectedCheckinProfiles(checkinId: number, ownerId: string,
          LEFT JOIN user_blocks recipient_blocks
            ON recipient_blocks.blocker_id = scr.recipient_user_id AND recipient_blocks.blocked_id = $2
         WHERE scr.checkin_id = $1
-          AND scr.delivery_status = 'pending'
-          AND scr.notified_at IS NULL
+          AND (
+            scr.delivery_status = 'pending'
+            OR (scr.delivery_status = 'in_app_failed' AND scr.next_retry_at <= NOW())
+          )
         FOR UPDATE`,
       [checkinId, ownerId],
     );
@@ -261,31 +307,74 @@ async function notifySelectedCheckinProfiles(checkinId: number, ownerId: string,
       if (!recipient.is_eligible) {
         await client.query(
           `UPDATE safety_checkin_recipients
-              SET delivery_status = 'skipped', notified_at = NOW()
-            WHERE id = $1::uuid AND delivery_status = 'pending'`,
+              SET delivery_status = 'skipped',
+                  next_retry_at = NULL,
+                  last_error_code = 'recipient_no_longer_eligible'
+            WHERE id = $1::uuid`,
           [recipient.id],
         );
+        result.skipped++;
         continue;
       }
-      const locationPhrase = city ? ` in ${city}` : "";
-      const notification = await client.query<{ id: string }>(
-        `INSERT INTO notifications (user_id, type, title, body, entity_id, entity_type, data)
-         VALUES ($1, 'safety', 'Safety Check-In Overdue', $2, $3, 'safety_checkin', $4::jsonb)
-         RETURNING id`,
-        [
-          recipient.recipient_user_id,
-          `${ownerName} has not checked in${locationPhrase}. Open Safety for more information.`,
-          String(checkinId),
-          JSON.stringify({ screen: "safety-hub", checkinId, type: "safety_checkin_overdue" }),
-        ],
-      );
-      await client.query(
-        `UPDATE safety_checkin_recipients
-            SET delivery_status = 'delivered', notified_at = NOW(), notification_id = $2
-          WHERE id = $1::uuid AND delivery_status = 'pending'`,
-        [recipient.id, notification.rows[0].id],
-      );
-      if (recipient.push_enabled) readyForPush.push(recipient.recipient_user_id);
+
+      await client.query("SAVEPOINT safety_checkin_in_app_attempt");
+      try {
+        const attemptCount = recipient.in_app_attempt_count + 1;
+        const nextStatus = recipient.push_enabled ? "push_pending" : "in_app_created";
+        await client.query(
+          `UPDATE safety_checkin_recipients
+              SET in_app_attempt_count = $2,
+                  in_app_attempted_at = NOW(),
+                  last_error_code = NULL,
+                  next_retry_at = NULL
+            WHERE id = $1::uuid`,
+          [recipient.id, attemptCount],
+        );
+        const locationPhrase = city ? ` in ${city}` : "";
+        const notification = await client.query<{ id: string }>(
+          `INSERT INTO notifications (user_id, type, title, body, entity_id, entity_type, data)
+           VALUES ($1, 'safety', 'Safety Check-In Overdue', $2, $3, 'safety_checkin', $4::jsonb)
+           RETURNING id`,
+          [
+            recipient.recipient_user_id,
+            `${ownerName} has not checked in${locationPhrase}. Open Safety for more information.`,
+            String(checkinId),
+            JSON.stringify({ screen: "safety-hub", checkinId, type: "safety_checkin_overdue" }),
+          ],
+        );
+        await client.query(
+          `UPDATE safety_checkin_recipients
+              SET delivery_status = $3,
+                  notification_id = $2,
+                  notified_at = COALESCE(notified_at, NOW()),
+                  in_app_created_at = NOW(),
+                  in_app_failed_at = NULL,
+                  next_retry_at = NULL,
+                  last_error_code = NULL
+            WHERE id = $1::uuid`,
+          [recipient.id, notification.rows[0].id, nextStatus],
+        );
+        await client.query("RELEASE SAVEPOINT safety_checkin_in_app_attempt");
+        result.inAppCreated++;
+      } catch (error) {
+        await client.query("ROLLBACK TO SAVEPOINT safety_checkin_in_app_attempt");
+        const attemptCount = recipient.in_app_attempt_count + 1;
+        const nextRetry = retryAt(attemptCount);
+        await client.query(
+          `UPDATE safety_checkin_recipients
+              SET delivery_status = 'in_app_failed',
+                  in_app_attempt_count = $2,
+                  in_app_attempted_at = NOW(),
+                  in_app_failed_at = NOW(),
+                  next_retry_at = $3,
+                  last_error_code = 'in_app_notification_create_failed'
+            WHERE id = $1::uuid`,
+          [recipient.id, attemptCount, nextRetry],
+        );
+        await client.query("RELEASE SAVEPOINT safety_checkin_in_app_attempt");
+        result.inAppFailed++;
+        logger.warn({ checkinId, attemptCount, hasRetry: Boolean(nextRetry) }, "Safety check-in in-app notification creation failed");
+      }
     }
     await client.query("COMMIT");
   } catch (error) {
@@ -294,15 +383,198 @@ async function notifySelectedCheckinProfiles(checkinId: number, ownerId: string,
   } finally {
     client.release();
   }
+  return result;
+}
 
-  for (const recipientUserId of readyForPush) {
-    void sendPushToUser(recipientUserId, {
+/** Claim due push attempts after re-checking recipient authorization. */
+async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string): Promise<{
+  candidates: SafetyCheckinPushCandidate[];
+  skipped: number;
+  pushFailed: number;
+}> {
+  const client = await pool.connect();
+  const candidates: SafetyCheckinPushCandidate[] = [];
+  let skipped = 0;
+  let pushFailed = 0;
+  try {
+    await client.query("BEGIN");
+    const recipients = await client.query<{
+      id: string;
+      recipient_user_id: string;
+      push_enabled: boolean;
+      is_eligible: boolean;
+      push_attempt_count: number;
+    }>(
+      `SELECT scr.id::text,
+              scr.recipient_user_id,
+              scr.push_attempt_count,
+              COALESCE(np.push_enabled, true) AS push_enabled,
+              (
+                tss.id IS NOT NULL
+                AND recipient.approved = true
+                AND owner_blocks.id IS NULL
+                AND recipient_blocks.id IS NULL
+                AND COALESCE(np.topics @> ARRAY['safety']::text[], true)
+              ) AS is_eligible
+         FROM safety_checkin_recipients scr
+         LEFT JOIN trusted_safety_shares tss
+           ON tss.id = scr.trusted_share_id
+          AND tss.owner_id = $2
+          AND tss.contact_user_id = scr.recipient_user_id
+          AND tss.contact_type = 'mwm_user'
+          AND tss.status = 'active'
+          AND tss.owner_enabled = true
+          AND tss.contact_accepted = true
+         LEFT JOIN users recipient ON recipient.id = scr.recipient_user_id
+         LEFT JOIN notification_preferences np ON np.user_id = scr.recipient_user_id
+         LEFT JOIN user_blocks owner_blocks
+           ON owner_blocks.blocker_id = $2 AND owner_blocks.blocked_id = scr.recipient_user_id
+         LEFT JOIN user_blocks recipient_blocks
+           ON recipient_blocks.blocker_id = scr.recipient_user_id AND recipient_blocks.blocked_id = $2
+        WHERE scr.checkin_id = $1
+          AND (
+            scr.delivery_status = 'push_pending'
+            OR (scr.delivery_status = 'push_failed' AND scr.next_retry_at <= NOW())
+            OR (
+              scr.delivery_status = 'push_attempting'
+              AND scr.push_attempted_at <= NOW() - INTERVAL '5 minutes'
+            )
+          )
+        FOR UPDATE`,
+      [checkinId, ownerId],
+    );
+
+    for (const recipient of recipients.rows) {
+      if (!recipient.is_eligible) {
+        await client.query(
+          `UPDATE safety_checkin_recipients
+              SET delivery_status = 'skipped',
+                  next_retry_at = NULL,
+                  last_error_code = 'recipient_no_longer_eligible'
+            WHERE id = $1::uuid`,
+          [recipient.id],
+        );
+        skipped++;
+        continue;
+      }
+      if (!recipient.push_enabled) {
+        // Keep the durable in-app state; an opt-out is not a failed device send.
+        await client.query(
+          `UPDATE safety_checkin_recipients
+              SET delivery_status = 'in_app_created',
+                  next_retry_at = NULL,
+                  last_error_code = NULL
+            WHERE id = $1::uuid`,
+          [recipient.id],
+        );
+        continue;
+      }
+
+      const attemptCount = recipient.push_attempt_count + 1;
+      if (attemptCount > MAX_PUSH_ATTEMPTS) {
+        await client.query(
+          `UPDATE safety_checkin_recipients
+              SET delivery_status = 'push_failed',
+                  push_failed_at = NOW(),
+                  next_retry_at = NULL,
+                  last_error_code = 'push_attempt_limit_reached'
+            WHERE id = $1::uuid`,
+          [recipient.id],
+        );
+        pushFailed++;
+        continue;
+      }
+
+      const claimed = await client.query<{ push_attempt_id: string }>(
+        `UPDATE safety_checkin_recipients
+            SET delivery_status = 'push_attempting',
+                push_attempt_count = $2,
+                push_attempted_at = NOW(),
+                push_attempt_id = gen_random_uuid(),
+                next_retry_at = NULL,
+                last_error_code = NULL
+          WHERE id = $1::uuid
+          RETURNING push_attempt_id`,
+        [recipient.id, attemptCount],
+      );
+      candidates.push({
+        id: recipient.id,
+        recipientUserId: recipient.recipient_user_id,
+        attemptId: claimed.rows[0].push_attempt_id,
+      });
+    }
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+  return { candidates, skipped, pushFailed };
+}
+
+/** Persist an in-app safety alert, then record only the push provider outcome. */
+async function notifySelectedCheckinProfiles(checkinId: number, ownerId: string, ownerName: string, city: string | null) {
+  const result = await createSafetyCheckinInAppNotifications(checkinId, ownerId, ownerName, city);
+  const claimed = await claimSafetyCheckinPushAttempts(checkinId, ownerId);
+  result.skipped += claimed.skipped;
+  result.pushFailed += claimed.pushFailed;
+
+  for (const candidate of claimed.candidates) {
+    // This intentionally omits the owner's name, city, and any location on both
+    // initial sends and retries. The accepted recipient can open Safety after
+    // the in-app record; a retry never expands the original disclosure.
+    const submission = await sendPushToUser(candidate.recipientUserId, {
       title: "Safety Check-In Overdue",
-      body: `${ownerName} has not checked in${city ? ` in ${city}` : ""}.`,
+      body: "A trusted member's scheduled check-in is overdue. Open Safety for more information.",
       data: { screen: "safety-hub", checkinId, type: "safety_checkin_overdue" },
     });
+    if (submission === "submitted") {
+      const completed = await pool.query(
+        `UPDATE safety_checkin_recipients
+            SET delivery_status = 'push_submitted',
+                push_submitted_at = NOW(),
+                push_failed_at = NULL,
+                next_retry_at = NULL,
+                last_error_code = NULL
+          WHERE id = $1::uuid
+            AND delivery_status = 'push_attempting'
+            AND push_attempt_id = $2::uuid`,
+        [candidate.id, candidate.attemptId],
+      );
+      if (completed.rowCount === 1) result.pushSubmitted++;
+      continue;
+    }
+
+    const current = await pool.query<{ push_attempt_count: number }>(
+      `SELECT push_attempt_count
+         FROM safety_checkin_recipients
+        WHERE id = $1::uuid
+          AND delivery_status = 'push_attempting'
+          AND push_attempt_id = $2::uuid`,
+      [candidate.id, candidate.attemptId],
+    );
+    if (current.rows.length === 0) continue;
+    const nextRetry = pushRetryAt(current.rows[0].push_attempt_count);
+    const completed = await pool.query(
+      `UPDATE safety_checkin_recipients
+          SET delivery_status = 'push_failed',
+              push_failed_at = NOW(),
+              next_retry_at = $3,
+              last_error_code = $4
+        WHERE id = $1::uuid
+          AND delivery_status = 'push_attempting'
+          AND push_attempt_id = $2::uuid`,
+      [
+        candidate.id,
+        candidate.attemptId,
+        nextRetry,
+        submission === "no_token" ? "push_token_unavailable" : "push_submission_failed",
+      ],
+    );
+    if (completed.rowCount === 1) result.pushFailed++;
   }
-  return readyForPush.length;
+  return result;
 }
 
 router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
@@ -314,8 +586,6 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
         id: safetyCheckinsTable.id,
         userId: safetyCheckinsTable.userId,
         trustedContactEmail: safetyCheckinsTable.trustedContactEmail,
-        trustedContactName: safetyCheckinsTable.trustedContactName,
-        scheduledAt: safetyCheckinsTable.scheduledAt,
         location: safetyCheckinsTable.location,
         city: safetyCheckinsTable.city,
         firstName: usersTable.firstName,
@@ -324,13 +594,32 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
       .from(safetyCheckinsTable)
       .leftJoin(usersTable, eq(usersTable.id, safetyCheckinsTable.userId))
       .where(and(
-        eq(safetyCheckinsTable.status, "pending"),
         lte(safetyCheckinsTable.scheduledAt, now),
-        isNull(safetyCheckinsTable.notifiedAt),
+        or(
+          and(eq(safetyCheckinsTable.status, "pending"), isNull(safetyCheckinsTable.notifiedAt)),
+          and(
+            eq(safetyCheckinsTable.status, "overdue"),
+            sql`EXISTS (
+              SELECT 1
+                FROM safety_checkin_recipients AS scr
+               WHERE scr.checkin_id = ${safetyCheckinsTable.id}
+                 AND (
+                   scr.delivery_status = 'pending'
+                   OR (scr.delivery_status = 'in_app_failed' AND scr.next_retry_at <= NOW())
+                   OR scr.delivery_status = 'push_pending'
+                   OR (scr.delivery_status = 'push_failed' AND scr.next_retry_at <= NOW())
+                   OR (
+                     scr.delivery_status = 'push_attempting'
+                     AND scr.push_attempted_at <= NOW() - INTERVAL '5 minutes'
+                   )
+                 )
+            )`,
+          ),
+        ),
       ));
 
-    let notified = 0;
-    let profileAlerts = 0;
+    let overdueMarked = 0;
+    const attempts = emptySafetyCheckinNotificationResult();
     for (const row of overdue) {
       try {
         const memberName = [row.firstName, row.lastName].filter(Boolean).join(" ") || "Your contact";
@@ -341,7 +630,13 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
         if (row.trustedContactEmail) {
           logger.warn({ checkinId: row.id }, "Suppressed legacy email check-in delivery without accepted recipient authorization");
         }
-        profileAlerts += await notifySelectedCheckinProfiles(row.id, row.userId, memberName, row.city);
+        const notificationResult = await notifySelectedCheckinProfiles(row.id, row.userId, memberName, row.city);
+        attempts.inAppCreated += notificationResult.inAppCreated;
+        attempts.inAppFailed += notificationResult.inAppFailed;
+        attempts.pushSubmitted += notificationResult.pushSubmitted;
+        attempts.pushFailed += notificationResult.pushFailed;
+        attempts.skipped += notificationResult.skipped;
+
         const [updated] = await db.update(safetyCheckinsTable)
           .set({ status: "overdue", notifiedAt: now })
           .where(and(
@@ -351,7 +646,7 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
           ))
           .returning({ id: safetyCheckinsTable.id });
         if (!updated) continue;
-        notified++;
+        overdueMarked++;
         // Retain the existing creator alert without exposing location to the
         // selected recipient profiles.
         void sendPushToUser(row.userId, {
@@ -363,8 +658,8 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
         logger.error({ error, id: row.id }, "Failed to process overdue safety checkin");
       }
     }
-    logger.info({ notified, profileAlerts }, "Safety checkin cron completed");
-    res.json({ ok: true, notified, profileAlerts });
+    logger.info({ overdueMarked, ...attempts }, "Safety checkin cron completed");
+    res.json({ ok: true, overdueMarked, ...attempts });
   } catch (error: unknown) {
     logger.error({ error }, "Safety checkin cron failed");
     res.status(500).json({ error: "Cron failed" });
@@ -390,6 +685,23 @@ router.post("/cron/official-public-alerts", async (req, res): Promise<void> => {
   } catch (error) {
     logger.error({ error }, "Official public alert cron failed");
     res.status(500).json({ error: "Official public alert refresh failed" });
+  }
+});
+
+/**
+ * Reconciles only Safety Hub display projections after lifecycle events. The
+ * CRON_SECRET guard keeps evidence-preserving state reconciliation out of the
+ * member-facing API and does not create, delete, or notify on any record.
+ */
+router.post("/cron/safety-hub-lifecycle", async (req, res): Promise<void> => {
+  if (!verifyCronSecret(req, res)) return;
+  try {
+    const result = await runSafetyHubLifecycleReconciliation();
+    logger.info(result, "Safety Hub lifecycle reconciliation completed");
+    res.json({ ok: true, ...result });
+  } catch (error) {
+    logger.error({ error }, "Safety Hub lifecycle reconciliation failed");
+    res.status(500).json({ error: "Safety Hub lifecycle reconciliation failed" });
   }
 });
 
