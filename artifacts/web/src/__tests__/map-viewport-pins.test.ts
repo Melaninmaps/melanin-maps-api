@@ -4,11 +4,17 @@ import { describe, expect, it } from "vitest";
 const mapSource = readFileSync(new URL("../pages/map.tsx", import.meta.url), "utf8");
 
 describe("web map viewport pin retrieval", () => {
-  it("loads pin pages only after a local scope and map idle debounce", () => {
+  it("loads verified business pin pages for every map viewport after idle debounce", () => {
     expect(mapSource).toContain("const loadViewportPins = useCallback");
-    expect(mapSource).toContain("if (!activeLocalScope && !exploreAllAreas)");
+    expect(mapSource).toContain("Verified business pins are public map data");
     expect(mapSource).toContain('g.event.addListener(map, "idle", schedule)');
     expect(mapSource).toContain("south: String(south), west: String(west), north: String(north), east: String(east)");
+  });
+
+  it("clusters default viewport pins before a member searches or shares a location", () => {
+    expect(mapSource).toContain("const markerBusinesses = businessSearchActive || isDiscoveryFilterActive");
+    expect(mapSource).toContain("const showBiz = !localSearchOwnsPins");
+    expect(mapSource).toContain("const activeIds = new Set(markerBusinesses.map");
   });
 
   it("cancels stale movement requests and reconciles stale viewport markers", () => {

@@ -489,12 +489,10 @@ export default function MapPage() {
 
   useEffect(() => {
     if (!ready || !mapRef.current) return;
-    if (!activeLocalScope && !exploreAllAreas) {
-      mapPinsAbortRef.current?.abort();
-      setMapPins([]);
-      setIsLoading(false);
-      return;
-    }
+    // Verified business pins are public map data: fetch them for the map's
+    // visible geography even when a member declines location sharing and has
+    // no saved home area. Local scope still governs distance presentation and
+    // non-business contextual layers below.
     const g = (window as any).google?.maps;
     const map = mapRef.current;
     if (!g?.event || !map) return;
@@ -509,7 +507,7 @@ export default function MapPage() {
       listener.remove?.();
       mapPinsAbortRef.current?.abort();
     };
-  }, [activeLocalScope, loadViewportPins, mapRefreshGeneration, ready]);
+  }, [loadViewportPins, mapRefreshGeneration, ready]);
 
   const requestMapDeviceLocation = useCallback((options?: {
     forceViewport?: boolean;
@@ -1632,9 +1630,15 @@ export default function MapPage() {
     const localSearchOwnsPins = businessSearchActive && (
       detectedLocation !== null || (userCoords !== null && localSearchIntent.usesDeviceLocation === true)
     );
-    const showBiz = (businessSearchActive || isDiscoveryFilterActive) && Boolean(activeLocalScope || exploreAllAreas) && !localSearchOwnsPins && (!legendFilter || legendFilter === "business");
-    // When universal search returned results, only show those businesses as markers
-    const activeIds = new Set(displayedBusinessResults.map((business: any) => business.id as string));
+    // A normal map visit clusters every verified business in the visible
+    // viewport. Direct search and discovery filters remain narrow overlays;
+    // their result sets are the only time the default viewport collection is
+    // reduced. A local-search layer continues to own its own result markers.
+    const markerBusinesses = businessSearchActive || isDiscoveryFilterActive
+      ? displayedBusinessResults
+      : businesses;
+    const showBiz = !localSearchOwnsPins && (!legendFilter || legendFilter === "business");
+    const activeIds = new Set(markerBusinesses.map((business: any) => business.id as string));
     markerClustererRef.current?.clearMarkers();
     markerClustererRef.current = null;
     if (!showBiz) return;
@@ -1648,7 +1652,7 @@ export default function MapPage() {
       clusterer.clearMarkers();
       if (markerClustererRef.current === clusterer) markerClustererRef.current = null;
     };
-  }, [activeLocalScope, displayedBusinessResults, isDiscoveryFilterActive, legendFilter, businessSearchActive, exploreAllAreas, detectedLocation, userCoords, search]);
+  }, [businesses, displayedBusinessResults, isDiscoveryFilterActive, legendFilter, businessSearchActive, detectedLocation, userCoords, search]);
 
   // ── Sidebar ─────────────────────────────────────────────────────────────
   const activeCulturalSites = legendFilter && legendFilter !== "business"

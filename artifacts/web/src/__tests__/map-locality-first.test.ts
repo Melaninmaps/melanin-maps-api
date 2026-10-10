@@ -7,9 +7,11 @@ const mapSource = readFileSync(
 );
 
 describe("website map locality-first presentation", () => {
-  it("does not display business, cultural, or historical map pins without a local scope", () => {
+  it("keeps business map pins viewport-based while cultural and historical layers remain local", () => {
     expect(mapSource).toContain("const exploreAllAreas = false");
     expect(mapSource).toContain("const [nearMeRadius, setNearMeRadius] = useState<number | null>(25)");
+    expect(mapSource).toContain("Verified business pins are public map data");
+    expect(mapSource).toContain("const markerBusinesses = businessSearchActive || isDiscoveryFilterActive");
     expect(mapSource).toContain("if (!activeLocalScope) return false");
     expect(mapSource).toContain("activeLocalScope.lat");
     expect(mapSource).toContain("visibleCulturalSites");
