@@ -1,4 +1,5 @@
 import { canonicalizeContextualUrl } from "./contextual-url";
+import { normalizeKinfolkLinkUrl } from "./link-understanding";
 
 // A temporal word tells Kinfolk when a member is thinking or planning, not
 // whether a fact outside the conversation has changed. Research is therefore
@@ -190,7 +191,10 @@ const PUBLIC_NET_WORTH_ESTIMATE_RE = /\b(?:net[\s-]?worth|how\s+(?:much|rich)\s+
 const INTRINSIC_CURRENT_LEADERSHIP_STATUS_RE = /\b(?:who\s+(?:is|are)\s+(?:the\s+)?(?:current\s+)?(?:ceo|chief\s+executive(?:\s+officer)?|president|chair(?:person|man)?|director|governor|mayor|prime\s+minister)|(?:is|are)\s+[\p{L}'’.-]{2,}(?:\s+[\p{L}'’.-]{2,}){0,5}\s+(?:still\s+)?(?:the\s+)?(?:ceo|chief\s+executive(?:\s+officer)?|president|chair(?:person|man)?|director|governor|mayor|prime\s+minister)|who\s+(?:leads?|runs?|heads?)\s+(?:the\s+)?(?:company|organization|organisation|agency|department|administration))\b/iu;
 const INTRINSIC_CURRENT_PUBLIC_EVENT_STATUS_RE = /\b(?:is|are|will|when|where|what\s+time)\b[\s\S]{0,90}\b(?:tour(?:ing|\s+dates?)?|concerts?|events?|games?|appearances?|showtimes?|schedule)\b|\b(?:upcoming|next)\s+(?:tour|concert|event|game|appearance|show)\b/iu;
 
-const ARTICLE_SUMMARY_RE = /\b(?:summari[sz]e|summary)\b/i;
+// Fetching a supplied page is an explicit member action. Do not fetch a URL
+// merely because it appears in a conversation; require a request to summarize,
+// read, explain, review, or identify the page.
+const LINK_UNDERSTANDING_REQUEST_RE = /\b(?:summari[sz]e|summary|read|explain|review|what(?:'s|\s+is)\s+(?:this|on)\s+(?:link|page|site|article|website)|what\s+does\s+(?:this|the)\s+(?:link|page|site|article|website)\s+say|tell\s+me\s+about\s+(?:this|the)\s+(?:link|page|site|article|website))\b/i;
 const ARTICLE_LINK_CANDIDATE_RE = /(?:https?:\/\/|www\.)[^\s<>'"`]+/i;
 
 export type ArticleSummaryRetrievalState =
@@ -233,12 +237,24 @@ export function requestedArticleSummaryUrl(message: string): string | null {
 }
 
 /**
+ * Returns the member-supplied public HTTPS URL for the bounded page reader.
+ * Unlike the evidence-comparison key above, this preserves a meaningful query
+ * string so the reader fetches the member's selected page rather than a
+ * loosely canonicalized sibling URL.
+ */
+export function requestedArticleSummaryFetchUrl(message: string): string | null {
+  if (inspectArticleSummaryRequest(message).state !== "ready") return null;
+  const raw = message.match(ARTICLE_LINK_CANDIDATE_RE)?.[0]?.replace(/[),.;!?]+$/, "") ?? "";
+  return normalizeKinfolkLinkUrl(raw);
+}
+
+/**
  * Distinguishes an ordinary request to summarize a linked article from a link
  * that must not enter retrieval at all. The route returns a static, clear
  * response for unsupported links before memory, providers, or model work.
  */
 export function inspectArticleSummaryRequest(message: string): ArticleSummaryRequest {
-  if (!ARTICLE_SUMMARY_RE.test(message)) {
+  if (!LINK_UNDERSTANDING_REQUEST_RE.test(message)) {
     return { state: "not_requested", url: null };
   }
   const raw = message.match(ARTICLE_LINK_CANDIDATE_RE)?.[0]?.replace(/[),.;!?]+$/, "") ?? "";

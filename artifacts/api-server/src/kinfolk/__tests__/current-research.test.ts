@@ -4,6 +4,7 @@ import {
   inspectArticleSummaryRequest,
   isPublicNetWorthEstimateRequest,
   isPreferredNameRecallRequest,
+  requestedArticleSummaryFetchUrl,
   requestedArticleSummaryUrl,
   requiresCurrentResearch,
   requiresTimeSpecificResearch,
@@ -183,6 +184,9 @@ describe("current research routing", () => {
     expect(requiresCurrentResearch(message)).toBe(true);
     expect(hasRequestedArticleEvidence(requested, [{ url: "https://example.com/news/gas-prices" }])).toBe(true);
     expect(hasRequestedArticleEvidence(requested, [{ url: "https://example.com/another-story" }])).toBe(false);
+    expect(requestedArticleSummaryFetchUrl(message)).toBe(
+      "https://example.com/news/gas-prices?ref=kinfolk",
+    );
   });
 
   it("treats a provider's terminal-slash URL canonicalization as the same exact article", () => {
@@ -202,6 +206,21 @@ describe("current research routing", () => {
   it("does not accept a non-public or non-summary URL as an article request", () => {
     expect(requestedArticleSummaryUrl("Open https://example.com/news/gas-prices")).toBeNull();
     expect(requestedArticleSummaryUrl("Summarize https://localhost/private")).toBeNull();
+  });
+
+  it("recognizes an explicit request to explain a supplied public website without fetching a casually shared link", () => {
+    expect(inspectArticleSummaryRequest(
+      "Can you explain this website? https://example.org/services?city=philly",
+    )).toEqual({
+      state: "ready",
+      url: "https://example.org/services",
+    });
+    expect(requestedArticleSummaryFetchUrl(
+      "Can you explain this website? https://example.org/services?city=philly",
+    )).toBe("https://example.org/services?city=philly");
+    expect(inspectArticleSummaryRequest(
+      "I saved https://example.org/services for later.",
+    )).toEqual({ state: "not_requested", url: null });
   });
 
   it("classifies only unsupported linked summaries before provider or memory work", () => {

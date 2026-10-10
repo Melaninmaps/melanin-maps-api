@@ -165,9 +165,11 @@ import {
   hasRequestedArticleEvidence,
   inspectArticleSummaryRequest,
   isPreferredNameRecallRequest,
+  requestedArticleSummaryFetchUrl,
   requiresCurrentResearch,
   temporalEvidencePolicy,
 } from "../kinfolk/current-research";
+import { understandKinfolkLink } from "../kinfolk/link-understanding";
 import {
   buildKinfolkEvidenceRecoveryReply,
   buildKinfolkPartialEvidenceInstruction,
@@ -8616,6 +8618,97 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     return;
   }
 
+  // A member explicitly asking Kinfolk to read a public page gets a bounded,
+  // server-extracted answer before private memory, catalog retrieval, or model
+  // generation. The page reader has SSRF/redirect/content guards and returns
+  // only extractive text from this exact URL; it never turns page claims into
+  // independently verified facts.
+  if (articleSummaryRequest.state === "ready") {
+    const requestedLinkUrl = requestedArticleSummaryFetchUrl(message);
+    const linkedPage = requestedLinkUrl
+      ? await understandKinfolkLink(requestedLinkUrl)
+      : null;
+    if (linkedPage?.state === "fetched") {
+      const sourceTitle = linkedPage.source.title
+        ?? linkedPage.source.siteName
+        ?? linkedPage.source.host;
+      const linkedPageSource: SafeSource = {
+        id: linkedPage.source.url,
+        title: sourceTitle,
+        url: linkedPage.source.url,
+        label: "web_search",
+        fetchedAt: new Date().toISOString(),
+      };
+      return void res.status(200).json({
+        sessionId,
+        reply: [
+          `Here is an extractive summary of ${sourceTitle}:`,
+          linkedPage.summary.text,
+          "This reflects claims on the linked page. Kinfolk has not independently verified those claims.",
+        ].join("\n\n"),
+        recommendations: null,
+        itinerary: null,
+        followUpSuggestions: ["Ask about a specific part of the linked page"],
+        smartPromotion: null,
+        taskAction: null,
+        libraryAction: null,
+        intentClass: "general_knowledge",
+        sources: [linkedPageSource],
+        needsClarification: false,
+        originalQuery: message,
+        answerMode: "linked_page_extractive_summary",
+        structuredContent: null,
+        mediaLinks: [],
+        relatedConnections: [],
+        researchStatus: {
+          usedInternal: false,
+          usedLiveWeb: true,
+          degraded: false,
+          web: {
+            attempted: true,
+            state: "available",
+            provider: "kinfolk_link_reader",
+            fallbackUsed: false,
+            partial: false,
+          },
+          asOf: new Date().toISOString(),
+        },
+      });
+    }
+    const articleFailureReply = articleSummaryFailureReply("inaccessible")
+      ?? TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY;
+    return void res.status(200).json({
+      sessionId,
+      reply: articleFailureReply,
+      recommendations: null,
+      itinerary: null,
+      followUpSuggestions: ["Open the original public source or try again later"],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "general_knowledge",
+      sources: [],
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "linked_page_unavailable",
+      structuredContent: null,
+      mediaLinks: [],
+      relatedConnections: [],
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: true,
+        degraded: true,
+        web: {
+          attempted: true,
+          state: "degraded",
+          provider: "kinfolk_link_reader",
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
+    });
+  }
   // Resolve the server flag and the authenticated member's own setting before
   // any session/history lookup. A settings-read failure disables memory for this
   // request rather than risking reinjection or persistence after an opt-out.

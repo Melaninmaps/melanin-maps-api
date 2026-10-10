@@ -222,6 +222,20 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("!requestedArticleUrl &&");
   });
 
+  it("uses the bounded page reader for an explicit member-supplied link before private memory or model work", () => {
+    const linkReader = chatRoute.indexOf("await understandKinfolkLink(requestedLinkUrl)");
+    const explicitMemory = chatRoute.indexOf("persistExplicitMemberMemory({");
+    const providerCall = chatRoute.indexOf('chatStage = "provider_call"');
+
+    expect(routeSource).toContain('import { understandKinfolkLink } from "../kinfolk/link-understanding";');
+    expect(linkReader).toBeGreaterThan(-1);
+    expect(linkReader).toBeLessThan(explicitMemory);
+    expect(linkReader).toBeLessThan(providerCall);
+    expect(chatRoute).toContain('answerMode: "linked_page_extractive_summary"');
+    expect(chatRoute).toContain('provider: "kinfolk_link_reader"');
+    expect(chatRoute).toContain("Kinfolk has not independently verified those claims.");
+  });
+
   it("ranks the governed travel catalog with canonical age assurance and explicit preferences before prompting", () => {
     const ageContext = chatRoute.indexOf("await loadKinfolkMemberContext(req.user.id, intentClass, message)");
     const audienceFilter = chatRoute.indexOf("businessCatalog = rankGovernedBusinessesForMember(businessCatalog");
