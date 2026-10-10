@@ -203,7 +203,7 @@ type PhysicalAddressComponents = Readonly<{
   streetType: string;
   city: string;
   state: string;
-  postalCode: string;
+  postalCode: string | null;
 }>;
 
 const DIRECTIONAL_ALIASES: Record<string, string> = {
@@ -217,6 +217,9 @@ const STREET_TYPE_ALIASES: Record<string, string> = {
   ct: "court", court: "court", pl: "place", place: "place",
   pkwy: "parkway", parkway: "parkway", ter: "terrace", terrace: "terrace",
   hwy: "highway", highway: "highway", cir: "circle", circle: "circle",
+  way: "way", trl: "trail", trail: "trail", plz: "plaza", plaza: "plaza",
+  sq: "square", square: "square", aly: "alley", alley: "alley", loop: "loop",
+  expy: "expressway", expressway: "expressway", pike: "pike",
 };
 const STATE_ALIASES: Record<string, string> = {
   al: "alabama", ak: "alaska", az: "arizona", ar: "arkansas", ca: "california",
@@ -264,7 +267,7 @@ function normalizePhysicalAddressComponents(value: unknown): PhysicalAddressComp
   const city = componentText(raw.city);
   const state = canonicalState(raw.state);
   const postalCode = normalizedText(raw.postalCode, 10)?.replace(/\s/g, "") ?? null;
-  if (!houseNumber || !streetName || !streetType || !city || !state || !postalCode || !/^\d{5}(?:-\d{4})?$/.test(postalCode)) {
+  if (!houseNumber || !streetName || !streetType || !city || !state || (postalCode != null && !/^\d{5}(?:-\d{4})?$/.test(postalCode))) {
     return null;
   }
   return { houseNumber, directional, streetName, streetType, city, state, postalCode };
@@ -273,7 +276,7 @@ function normalizePhysicalAddressComponents(value: unknown): PhysicalAddressComp
 function parseCompleteUsStreetAddress(value: unknown): PhysicalAddressComponents | null {
   const text = normalizedText(value, 300);
   if (!text) return null;
-  const match = text.match(/^\s*(\d+[A-Za-z]?)\s+(?:(N(?:orth)?|S(?:outh)?|E(?:ast)?|W(?:est)?)\.?\s+)?(.+?)\s+(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Court|Ct|Place|Pl|Parkway|Pkwy|Terrace|Ter|Highway|Hwy|Circle|Cir)\.?\s*,\s*([^,]+?)\s*,\s*([A-Za-z]{2}|[A-Za-z ]+)\s+(\d{5}(?:-\d{4})?)\s*$/i);
+  const match = text.match(/^\s*(\d+[A-Za-z]?)\s+(?:(N(?:orth)?|S(?:outh)?|E(?:ast)?|W(?:est)?)\.?\s+)?(.+?)\s+(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Court|Ct|Place|Pl|Parkway|Pkwy|Terrace|Ter|Highway|Hwy|Circle|Cir|Way|Trail|Trl|Plaza|Plz|Square|Sq|Alley|Aly|Loop|Expressway|Expy|Pike)\.?\s*,\s*([^,]+?)\s*,\s*([A-Za-z]{2}|[A-Za-z ]+?)(?:\s+(\d{5}(?:-\d{4})?))?\s*$/i);
   if (!match) return null;
   return normalizePhysicalAddressComponents({
     houseNumber: match[1], directional: match[2] ?? null, streetName: match[3], streetType: match[4],
@@ -288,7 +291,7 @@ function samePhysicalAddress(left: PhysicalAddressComponents, right: PhysicalAdd
     && left.streetType === right.streetType
     && left.city === right.city
     && left.state === right.state
-    && left.postalCode === right.postalCode;
+    && (left.postalCode == null || left.postalCode === right.postalCode);
 }
 
 type IncompletePhysicalAddressComponents = Readonly<{
@@ -311,7 +314,7 @@ function parseIncompleteUsStreetAddress(value: unknown): IncompletePhysicalAddre
   if (!text || /\b(?:p\.?\s*o\.?\s*box|suite|ste\.?|unit|floor|#)\b/i.test(text)) return null;
   const parts = text.split(",").map((part) => part.trim()).filter(Boolean);
   if (parts.length === 0 || parts.length > 3) return null;
-  const street = parts[0].match(/^\s*(\d+[A-Za-z]?)\s+(?:(N(?:orth)?|S(?:outh)?|E(?:ast)?|W(?:est)?)\.?\s+)?(.+?)\s+(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Court|Ct|Place|Pl|Parkway|Pkwy|Terrace|Ter|Highway|Hwy|Circle|Cir)\.?\s*$/i);
+  const street = parts[0].match(/^\s*(\d+[A-Za-z]?)\s+(?:(N(?:orth)?|S(?:outh)?|E(?:ast)?|W(?:est)?)\.?\s+)?(.+?)\s+(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Court|Ct|Place|Pl|Parkway|Pkwy|Terrace|Ter|Highway|Hwy|Circle|Cir|Way|Trail|Trl|Plaza|Plz|Square|Sq|Alley|Aly|Loop|Expressway|Expy|Pike)\.?\s*$/i);
   if (!street) return null;
   let city: string | null = null;
   let state: string | null = null;
@@ -554,7 +557,7 @@ export function validateStoredAddressReconciliationInput(
     throw new Error("address evidence must explicitly document a physical street address, not a service area");
   }
   if (!parseCompleteUsStreetAddress(addressEvidence.observedValue?.address)) {
-    throw new Error("address reconciliation requires a complete US street address with city, state, and postal code");
+    throw new Error("address reconciliation requires a complete US street address with street number, street, city, and state; ZIP is optional");
   }
   return { expectedStoredAddress, decisionReason, addressEvidence };
 }

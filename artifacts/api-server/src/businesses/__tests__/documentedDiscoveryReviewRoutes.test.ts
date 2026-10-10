@@ -240,7 +240,7 @@ describe("documented discovery review input", () => {
     });
   });
 
-  it("accepts only complete address-component equivalents for directional and street-type abbreviations", () => {
+  it("accepts complete address-component equivalents for directional and street-type abbreviations with or without ZIP", () => {
     const request = mapEvidenceRequest();
     request.addressEvidence.observedValue.address = "1226 N 52nd St, Philadelphia, PA 19131";
     request.mapPinEvidence.sourceUrl = "https://nominatim.openstreetmap.org/search?format=jsonv2";
@@ -258,7 +258,7 @@ describe("documented discovery review input", () => {
 
     const result = validateMapPinEvidenceReviewInput(request, now);
     expect(storedAddressMatchesMapEvidence("1226 N. 52nd Street, Philadelphia, PA 19131", result)).toBe(true);
-    expect(storedAddressMatchesMapEvidence("1226 N. 52nd Street, Philadelphia, PA", result)).toBe(false);
+    expect(storedAddressMatchesMapEvidence("1226 N. 52nd Street, Philadelphia, PA", result)).toBe(true);
   });
 
   it("rejects a component-equivalent map request when the approved geocoder postcode conflicts", () => {
@@ -300,17 +300,29 @@ describe("documented discovery review input", () => {
     expect(() => validateMapPinEvidenceReviewInput(request, now)).toThrow("exact approved-geocoder address match");
   });
 
-  it("rejects an incomplete stored address even when legacy receipt strings match literally", () => {
+  it("accepts a documented physical street address without ZIP when exact components still match", () => {
     const request = mapEvidenceRequest();
     request.addressEvidence.observedValue.address = "123 Example Street, Philadelphia, PA";
     request.mapPinEvidence.observedValue.queryAddress = "123 Example Street, Philadelphia, PA";
-    request.mapPinEvidence.observedValue.formattedAddress = "123 Example Street, Philadelphia, PA";
+    request.mapPinEvidence.observedValue.formattedAddress = "123 Example Street, Philadelphia, PA 19103";
+    request.mapPinEvidence.sourceUrl = "https://geocoding.geo.census.gov/geocoder/locations/onelineaddress";
+    (request.mapPinEvidence.observedValue as Record<string, unknown>).addressComponents = {
+      houseNumber: "123",
+      directional: null,
+      streetName: "Example",
+      streetType: "Street",
+      city: "Philadelphia",
+      state: "Pennsylvania",
+      postalCode: "19103",
+    };
     const result = validateMapPinEvidenceReviewInput(request, now);
-    expect(storedAddressMatchesMapEvidence("123 Example Street, Philadelphia, PA", result)).toBe(false);
+    expect(storedAddressMatchesMapEvidence("123 Example Street, Philadelphia, PA", result)).toBe(true);
   });
 
   it("permits only a first-party completion of the same incomplete stored street core", () => {
-    const result = validateStoredAddressReconciliationInput(storedAddressReconciliationRequest(), now);
+    const request = storedAddressReconciliationRequest();
+    request.expectedStoredAddress = "123 Example Street";
+    const result = validateStoredAddressReconciliationInput(request, now);
     expect(canSafelyCompleteStoredAddress(result.expectedStoredAddress, result.addressEvidence.observedValue?.address)).toBe(true);
     expect(storedAddressOnlyPatch(result, "address-receipt")).toEqual({
       address: "123 Example Street, Philadelphia, PA 19103",
@@ -325,7 +337,7 @@ describe("documented discovery review input", () => {
     }, now);
     expect(result.expectedStoredAddress).toBeNull();
     expect(canSafelyCompleteStoredAddress(null, result.addressEvidence.observedValue?.address)).toBe(true);
-    expect(canSafelyCompleteStoredAddress(null, "123 Example Street, Philadelphia, PA")).toBe(false);
+    expect(canSafelyCompleteStoredAddress(null, "Example Street, Philadelphia, PA")).toBe(false);
   });
 
   it("preserves the supplied address snapshot exactly for the route-level compare-and-set guard", () => {
@@ -350,8 +362,8 @@ describe("documented discovery review input", () => {
 
   it("rejects an incomplete or identity-unmatched first-party address receipt before reconciliation", () => {
     const incomplete = storedAddressReconciliationRequest();
-    incomplete.addressEvidence.observedValue.address = "123 Example Street, Philadelphia, PA";
-    expect(() => validateStoredAddressReconciliationInput(incomplete, now)).toThrow("complete US street address");
+    incomplete.addressEvidence.observedValue.address = "123 Example Street, Philadelphia";
+    expect(() => validateStoredAddressReconciliationInput(incomplete, now)).toThrow("street number, street, city, and state");
     const unmatched = storedAddressReconciliationRequest();
     unmatched.addressEvidence.observedValue.identityMatch = false;
     expect(() => validateStoredAddressReconciliationInput(unmatched, now)).toThrow("address evidence requires identityMatch: true");

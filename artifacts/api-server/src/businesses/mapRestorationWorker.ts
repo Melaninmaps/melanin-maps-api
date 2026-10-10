@@ -4,7 +4,7 @@ import type { Pool, PoolClient } from "pg";
 import { isAdmin } from "../lib/adminAuth";
 
 export const FOUNDER_MAP_RESTORATION_POLICY_VERSION =
-  "founder-map-restoration-v2" as const;
+  "founder-map-restoration-v3-no-zip" as const;
 export const FOUNDER_MAP_RESTORATION_ACTOR =
   "founder-authorized-map-restoration-2026-10-09" as const;
 
@@ -19,6 +19,7 @@ const MIN_REQUEST_INTERVAL_MS = 300;
 
 export type MapRestorationOutcome =
   | "published"
+  | "explicitly_nonphysical_location"
   | "missing_complete_stored_address"
   | "geocoder_unavailable"
   | "geocoder_no_exact_match"
@@ -34,6 +35,8 @@ export type MapRestorationCandidate = Readonly<{
   state: string | null;
   country: string | null;
   postalCode: string | null;
+  serviceArea?: string | null;
+  publicLocationKind?: string | null;
 }>;
 
 type PhysicalAddress = Readonly<{
@@ -45,7 +48,7 @@ type PhysicalAddress = Readonly<{
   streetType: string;
   city: string;
   state: string;
-  postalCode: string;
+  postalCode: string | null;
 }>;
 
 type CensusGeocodeResult = Readonly<{
@@ -74,7 +77,7 @@ type GeocodedLocation = Readonly<{
     streetType: string;
     city: string;
     state: string;
-    postalCode: string;
+    postalCode: string | null;
   }>;
 }>;
 
@@ -174,6 +177,19 @@ const STREET_TYPES: Record<string, string> = {
   highway: "highway",
   cir: "circle",
   circle: "circle",
+  way: "way",
+  trl: "trail",
+  trail: "trail",
+  plz: "plaza",
+  plaza: "plaza",
+  sq: "square",
+  square: "square",
+  aly: "alley",
+  alley: "alley",
+  loop: "loop",
+  expy: "expressway",
+  expressway: "expressway",
+  pike: "pike",
 };
 
 let geocoderTurn: Promise<void> = Promise.resolve();
@@ -215,6 +231,15 @@ function addressFingerprint(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
 
+function explicitlyNonphysicalLocation(candidate: MapRestorationCandidate): boolean {
+  const kind = normalized(candidate.publicLocationKind);
+  const explicitlyPhysical = ["address", "physical", "storefront", "customer_facing"].includes(kind);
+  return !explicitlyPhysical && (
+    Boolean(candidate.serviceArea?.trim())
+    || ["online", "online_only", "service_area", "private", "private_residence", "home_based"].includes(kind)
+  );
+}
+
 function completeStoredAddress(
   candidate: MapRestorationCandidate,
 ): string | null {
@@ -224,11 +249,11 @@ function completeStoredAddress(
     /,?\s*(?:USA|US|United States(?: of America)?)\.?$/i,
     "",
   );
-  // Some import sources store the complete street, city, state, and ZIP in a
-  // single address field. Preserve that exact stored form rather than requiring
-  // duplicate city/state/postal columns.
+  // Some import sources store the complete street, city, state, and optional
+  // ZIP in one field. A ZIP is not a map-identity gate when the street number,
+  // street, city, and state are already known.
   if (
-    /,[^,]+,\s*(?:[A-Za-z]{2}|[A-Za-z ]+)\s*,?\s*\d{5}(?:-\d{4})?\s*$/i.test(
+    /,[^,]+,\s*(?:[A-Za-z]{2}|[A-Za-z ]+?)(?:\s+\d{5}(?:-\d{4})?)?\s*$/i.test(
       withoutCountry,
     )
   ) {
@@ -240,26 +265,28 @@ function completeStoredAddress(
   const city = candidate.city?.trim().replace(/\s+/g, " ");
   const state = candidate.state?.trim();
   const postalCode = normalizePostalCode(candidate.postalCode);
-  if (!city || !state || !postalCode) return null;
+  if (!city || !state || !canonicalState(state)) return null;
   const hasCity = normalized(withoutCountry).includes(normalized(city));
-  const hasStatePostal =
+  const hasState =
     new RegExp(
-      `${state.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*,?\\s*${postalCode.slice(0, 5)}`,
+      `${state.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:\\s*,?\\s*\\d{5}(?:-\\d{4})?)?`,
       "i",
     ).test(withoutCountry) ||
     new RegExp(
-      `${(canonicalState(state) ?? state).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*,?\\s*${postalCode.slice(0, 5)}`,
+      `${(canonicalState(state) ?? state).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:\\s*,?\\s*\\d{5}(?:-\\d{4})?)?`,
       "i",
     ).test(withoutCountry);
-  return hasCity && hasStatePostal
-    ? withoutCountry.replace(
-        /,?\s*([A-Z]{2})\s*,\s*(\d{5}(?:-\d{4})?)/i,
-        ", $1 $2",
-      )
-    : `${withoutCountry}, ${city}, ${state} ${postalCode}`;
+  if (hasCity && hasState) {
+    return withoutCountry.replace(
+      /,?\s*([A-Z]{2})\s*,\s*(\d{5}(?:-\d{4})?)/i,
+      ", $1 $2",
+    );
+  }
+  if (hasCity) return `${withoutCountry}, ${state}${postalCode ? ` ${postalCode}` : ""}`;
+  return `${withoutCountry}, ${city}, ${state}${postalCode ? ` ${postalCode}` : ""}`;
 }
 
-/** Strictly parses a complete U.S. street address. Unit labels are retained in the query but not used as map identity. */
+/** Strictly parses a U.S. physical street address. ZIP is optional; units are not map identity. */
 export function parseCompleteStoredPhysicalAddress(
   candidate: MapRestorationCandidate,
 ): PhysicalAddress | null {
@@ -270,7 +297,7 @@ export function parseCompleteStoredPhysicalAddress(
     ", $1 $2",
   );
   const match = normalizedQuery.match(
-    /^\s*(\d+[A-Za-z]?)\s+(?:(N(?:orth)?|S(?:outh)?|E(?:ast)?|W(?:est)?)\.?\s+)?(.+?)\s+(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Court|Ct|Place|Pl|Parkway|Pkwy|Terrace|Ter|Highway|Hwy|Circle|Cir)\.?\s*(?:(?:,|-)\s*(?:Suite|Ste|Unit|Apt|Apartment|Floor|Fl|#)\s*[^,]+)?\s*,\s*([^,]+?)\s*,\s*([A-Za-z]{2}|[A-Za-z ]+)\s+(\d{5}(?:-\d{4})?)\s*$/i,
+    /^\s*(\d+[A-Za-z]?)\s+(?:(N(?:orth)?|S(?:outh)?|E(?:ast)?|W(?:est)?)\.?\s+)?(.+?)\s+(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Drive|Dr|Lane|Ln|Court|Ct|Place|Pl|Parkway|Pkwy|Terrace|Ter|Highway|Hwy|Circle|Cir|Way|Trail|Trl|Plaza|Plz|Square|Sq|Alley|Aly|Loop|Expressway|Expy|Pike)\.?\s*(?:(?:,|-)\s*(?:Suite|Ste|Unit|Apt|Apartment|Floor|Fl|#)\s*[^,]+)?\s*,\s*([^,]+?)\s*,\s*([A-Za-z]{2}|[A-Za-z ]+?)(?:\s+(\d{5}(?:-\d{4})?))?\s*$/i,
   );
   if (!match) return null;
   const houseNumber = normalized(match[1]);
@@ -279,14 +306,13 @@ export function parseCompleteStoredPhysicalAddress(
   const streetType = canonicalStreetType(match[4]);
   const city = normalized(match[5]);
   const state = canonicalState(match[6]);
-  const postalCode = normalizePostalCode(match[7]);
+  const postalCode = normalizePostalCode(match[7] ?? null);
   if (
     !houseNumber ||
     !streetName ||
     !streetType ||
     !city ||
-    !state ||
-    !postalCode
+    !state
   )
     return null;
   return {
@@ -329,7 +355,7 @@ export function matchingCensusLocation(
     streetType !== expected.streetType ||
     city !== expected.city ||
     state !== expected.state ||
-    postalCode?.slice(0, 5) !== expected.postalCode.slice(0, 5) ||
+    (expected.postalCode != null && postalCode?.slice(0, 5) !== expected.postalCode.slice(0, 5)) ||
     !result.matchedAddress
   ) return null;
   return {
@@ -393,7 +419,7 @@ async function geocodeExactAddress(expected: PhysicalAddress): Promise<{
       location: null,
       outcome: "geocoder_no_exact_match",
       reason:
-        "No Census result matched the complete stored street, city, state, and ZIP components.",
+        "No Census result matched the stored street number, street, city, state, and ZIP when present.",
     };
   } catch (error) {
     return {
@@ -445,7 +471,9 @@ async function loadPendingCandidates(
   limit: number,
 ): Promise<MapRestorationCandidate[]> {
   const { rows } = await pool.query<MapRestorationCandidate>(
-    `SELECT b.id, b.name, b.address, b.city, b.state, b.country, b.postal_code AS "postalCode"
+    `SELECT b.id, b.name, b.address, b.city, b.state, b.country, b.postal_code AS "postalCode",
+            to_jsonb(b)->>'service_area' AS "serviceArea",
+            to_jsonb(b)->>'public_location_kind' AS "publicLocationKind"
        FROM public.public_businesses b
        JOIN public.business_discovery_eligibility e ON e.business_id::text = b.id::text
        LEFT JOIN public.business_map_restoration_outcomes o ON o.business_id::text = b.id::text
@@ -526,10 +554,14 @@ async function persistMapEvidence(
     city: string | null;
     state: string | null;
     postal_code: string | null;
+    service_area: string | null;
+    public_location_kind: string | null;
     eligibility: Record<string, unknown>;
     ledger: Record<string, unknown> | null;
   }>(
     `SELECT b.id, b.address, b.city, b.state, b.postal_code,
+            to_jsonb(b)->>'service_area' AS service_area,
+            to_jsonb(b)->>'public_location_kind' AS public_location_kind,
             to_jsonb(e) AS eligibility, to_jsonb(ledger) AS ledger
        FROM public.businesses b
        JOIN public.public_businesses visible ON visible.id::text = b.id::text
@@ -556,8 +588,18 @@ async function persistMapEvidence(
     state: row.state,
     country: candidate.country,
     postalCode: row.postal_code,
+    serviceArea: row.service_area,
+    publicLocationKind: row.public_location_kind,
   });
-  if (!currentAddress || currentAddress.fingerprint !== expected.fingerprint)
+  if (
+    explicitlyNonphysicalLocation({
+      ...candidate,
+      serviceArea: row.service_area,
+      publicLocationKind: row.public_location_kind,
+    })
+    || !currentAddress
+    || currentAddress.fingerprint !== expected.fingerprint
+  )
     return "candidate_changed";
   if (!row.ledger) return "reconciliation_ledger_missing";
 
@@ -570,7 +612,7 @@ async function persistMapEvidence(
     isServiceArea: false,
     identityMatch: true,
     matchingSignals: ["address"],
-    verificationMethod: "existing_stored_address_exact_census_component_match",
+    verificationMethod: "existing_stored_address_exact_census_component_match_no_zip_allowed",
   };
   const mapEvidence = {
     queryAddress: expected.queryAddress,
@@ -588,7 +630,7 @@ async function persistMapEvidence(
     `${FOUNDER_MAP_RESTORATION_POLICY_VERSION}|${candidate.id}|map_pin|${JSON.stringify(mapEvidence)}`,
   );
   const reason =
-    "Founder-authorized map restoration: an existing complete stored physical address exactly matched Census Geocoder address components. Existing documented identity, ownership, official-presence eligibility, business fields, and lifecycle were retained.";
+    "Founder-authorized map restoration: an existing stored physical street address exactly matched Census Geocoder street-number, street, city, state, and ZIP-when-present components. Existing documented identity, ownership, official-presence eligibility, business fields, and lifecycle were retained.";
 
   await client.query(
     `INSERT INTO business_profile_evidence_receipts
@@ -694,6 +736,20 @@ async function processCandidate(
   candidate: MapRestorationCandidate,
   environment: NodeJS.ProcessEnv,
 ): Promise<MapRestorationOutcome> {
+  if (explicitlyNonphysicalLocation(candidate)) {
+    await recordOutcome(
+      pool,
+      candidate,
+      responseFingerprint(candidate, null),
+      "explicitly_nonphysical_location",
+      "The current public profile explicitly identifies this location as online, service-area, private, or home-based; no storefront pin was created.",
+      {
+        serviceArea: candidate.serviceArea,
+        publicLocationKind: candidate.publicLocationKind,
+      },
+    );
+    return "explicitly_nonphysical_location";
+  }
   const expected = parseCompleteStoredPhysicalAddress(candidate);
   const fingerprint = responseFingerprint(candidate, expected);
   if (!expected) {
@@ -702,7 +758,7 @@ async function processCandidate(
       candidate,
       fingerprint,
       "missing_complete_stored_address",
-      "No complete U.S. stored street address with city, state, and ZIP was available for exact geocoding.",
+      "No usable U.S. stored street-number, street, city, and state address was available for exact geocoding.",
     );
     return "missing_complete_stored_address";
   }
@@ -771,6 +827,7 @@ export async function processFounderMapRestorationBatch(
   const results: Record<MapRestorationOutcome | "processed", number> = {
     processed: 0,
     published: 0,
+    explicitly_nonphysical_location: 0,
     missing_complete_stored_address: 0,
     geocoder_unavailable: 0,
     geocoder_no_exact_match: 0,

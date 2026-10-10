@@ -13,7 +13,7 @@ const source = readFileSync(
 );
 
 describe("founder map restoration", () => {
-  it("accepts only a complete stored U.S. physical address with every map-identifying component", () => {
+  it("accepts a stored U.S. physical address with every map-identifying component", () => {
     expect(
       parseCompleteStoredPhysicalAddress({
         id: "business-1",
@@ -52,6 +52,76 @@ describe("founder map restoration", () => {
       city: "phoenix",
       state: "arizona",
       postalCode: "85001",
+    });
+  });
+
+  it("accepts a street-number, street, city, and state without a ZIP while preserving exact Census component matching", () => {
+    const expected = parseCompleteStoredPhysicalAddress({
+      id: "business-no-zip",
+      name: "Example Shop",
+      address: "4600 Silver Hill Road",
+      city: "Washington",
+      state: "DC",
+      country: "United States",
+      postalCode: null,
+    });
+    expect(expected).toMatchObject({
+      houseNumber: "4600",
+      streetName: "silver hill",
+      streetType: "road",
+      city: "washington",
+      state: "district of columbia",
+      postalCode: null,
+    });
+    expect(
+      matchingCensusLocation(expected!, {
+        matchedAddress: "4600 SILVER HILL RD, WASHINGTON, DC, 20233",
+        coordinates: { x: -76.9274872, y: 38.8460162 },
+        addressComponents: {
+          fromAddress: "4600",
+          streetName: "SILVER HILL",
+          suffixType: "RD",
+          city: "WASHINGTON",
+          state: "DC",
+          zip: "20233",
+        },
+      }),
+    ).toMatchObject({ latitude: 38.8460162, longitude: -76.9274872 });
+    expect(
+      matchingCensusLocation(expected!, {
+        matchedAddress: "4600 SILVER HILL RD, ARLINGTON, VA, 22201",
+        coordinates: { x: -77.0, y: 38.8 },
+        addressComponents: {
+          fromAddress: "4600",
+          streetName: "SILVER HILL",
+          suffixType: "RD",
+          city: "ARLINGTON",
+          state: "VA",
+          zip: "22201",
+        },
+      }),
+    ).toBeNull();
+  });
+
+  it("normalizes documented directional and street-type abbreviations without requiring a ZIP", () => {
+    expect(
+      parseCompleteStoredPhysicalAddress({
+        id: "business-abbreviated",
+        name: "Example Shop",
+        address: "101 W Magnolia Ave",
+        city: "Orlando",
+        state: "Florida",
+        country: "United States",
+        postalCode: null,
+      }),
+    ).toMatchObject({
+      houseNumber: "101",
+      directional: "west",
+      streetName: "magnolia",
+      streetType: "avenue",
+      city: "orlando",
+      state: "florida",
+      postalCode: null,
     });
   });
 
@@ -118,7 +188,7 @@ describe("founder map restoration", () => {
 
   it("keeps the write scope to coordinates plus required map receipts and audits", () => {
     expect(FOUNDER_MAP_RESTORATION_POLICY_VERSION).toBe(
-      "founder-map-restoration-v2",
+      "founder-map-restoration-v3-no-zip",
     );
     expect(source).toContain(
       "Census Geocoder exact match for stored physical address",
@@ -140,6 +210,8 @@ describe("founder map restoration", () => {
     expect(source).toContain("currentEligibleOutcomes");
     expect(source).toContain("unmappedCurrentEligibleOutcomes");
     expect(source).toContain("outcomesOutsideCurrentPopulation");
+    expect(source).toContain("explicitly_nonphysical_location");
+    expect(source).toContain("ZIP when present");
     expect(source).toContain("JOIN public.business_discovery_eligibility e ON e.business_id::text = b.id::text");
     expect(source).not.toContain("SET ownership_designations");
     expect(source).not.toContain("SET website =");

@@ -138,6 +138,19 @@ const videoUpload = multer({
 
 const router: IRouter = Router();
 
+// Explicit online, service-area, private, and home-based declarations remain
+// searchable but never render as public storefront pins.
+const MAP_PHYSICAL_LOCATION_SQL = `
+  AND LOWER(BTRIM(COALESCE(to_jsonb(public.public_businesses)->>'public_location_kind', ''))) NOT IN (
+    'online', 'online_only', 'service_area', 'private', 'private_residence', 'home_based'
+  )
+  AND (
+    NULLIF(BTRIM(COALESCE(to_jsonb(public.public_businesses)->>'service_area', '')), '') IS NULL
+    OR LOWER(BTRIM(COALESCE(to_jsonb(public.public_businesses)->>'public_location_kind', ''))) IN (
+      'address', 'physical', 'storefront', 'customer_facing'
+    )
+  )`;
+
 /**
  * Normalize common city alias forms to the canonical city name stored in the DB.
  * e.g. "Washington DC", "Washington, DC" → "Washington"
@@ -648,6 +661,7 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
             AND NOT (latitude::numeric = 0 AND longitude::numeric = 0)
             AND COALESCE(name, '') NOT ILIKE '%[demo]%'
             AND COALESCE(description, '') NOT ILIKE '%[demo]%'
+            ${MAP_PHYSICAL_LOCATION_SQL}
             ${designationWhere}
             AND latitude::numeric >= $${southParameter}
             AND latitude::numeric <= $${northParameter}
@@ -692,6 +706,7 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
         AND NOT (latitude::numeric = 0 AND longitude::numeric = 0)
         AND COALESCE(name, '') NOT ILIKE '%[demo]%'
         AND COALESCE(description, '') NOT ILIKE '%[demo]%'
+        ${MAP_PHYSICAL_LOCATION_SQL}
         ${designationWhere}
       ORDER BY confidence_score DESC NULLS LAST, created_at DESC
     `, designationParams);
