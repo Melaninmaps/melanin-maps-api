@@ -218,7 +218,10 @@ describe("Kinfolk private-memory production control", () => {
     expect(chatRoute).toContain("isPreferredNameRecallRequest(message)");
     expect(chatRoute).toContain("buildPreferredNameRecallReply({");
     expect(chatRoute).toContain("buildLeanGeneralChatPrompt(conversationVoiceMode)");
-    expect(chatRoute).toContain("${privateMemoryBlock}");
+    expect(chatRoute).toContain("privateMemoryPersonalizationBlock");
+    expect(chatRoute).toContain("privateMemoryState: privateMemoryUseDecision.state");
+    expect(chatRoute).toContain("memoryUse: privateMemoryUseDecision.memberFacingUse");
+    expect(chatRoute).toContain("privateMemoryUseDecision.shouldApply");
     expect(chatRoute).toContain("applyPreferredNameAddress({ name: activePreferredName, reply })");
     expect(chatRoute).toContain('generalAnswerRoute.strategy === "stable_knowledge"');
     expect(chatRoute).toContain("memory.purpose === \"preferred_name\"\n          ? explicitMemberMemoryEnabled");

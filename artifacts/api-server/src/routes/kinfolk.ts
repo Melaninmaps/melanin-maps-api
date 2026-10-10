@@ -336,7 +336,6 @@ import {
 import { eligibleForDefaultLearning } from "../kinfolk/adaptive-delivery";
 import { getMemberAgeBand } from "../lib/audience-policy";
 import {
-  buildPrivateMemoryPromptBlock,
   isExplicitMemberMemoryEnabled,
   isKinfolkPrivateMemoryEnabled,
   mergeActivePreferredNameForPrompt,
@@ -344,6 +343,12 @@ import {
   resolveKinfolkMemoryAccess,
   resolvePublicSharedKinfolkSession,
 } from "../kinfolk/private-memory";
+import {
+  buildPrivateMemoryPersonalizationBlock,
+  isApprovedPrivateMemoryRelevant,
+  resolvePrivateMemoryUseDecision,
+  type PrivateMemoryUseState,
+} from "../kinfolk/private-memory-personalization";
 import {
   applyPreferredNameAddress,
   buildPreferredNameRecallReply,
@@ -846,6 +851,8 @@ type KinfolkTelemetry = {
   taskMode?: KinfolkTaskMode | null;
   retrievalState?: "not_used" | "internal" | "live" | "mixed" | "degraded";
   sourceCount?: number;
+  /** Coarse state only; never a saved preference, member identifier, or note. */
+  privateMemoryState?: PrivateMemoryUseState;
 };
 const _kinfolkDegradedWindow: Array<{ at: number; degraded: boolean }> = [];
 const _KINFOLK_DEGRADED_WINDOW_MS = 15 * 60 * 1000;
@@ -877,6 +884,7 @@ function recordKinfolkTelemetry(event: KinfolkTelemetry): void {
       taskMode: event.taskMode ?? null,
       retrievalState: event.retrievalState ?? "not_used",
       sourceCount: event.sourceCount ?? 0,
+      privateMemoryState: event.privateMemoryState ?? "not_evaluated",
       degradedWindowRequests: total,
       degradedWindowPercent: Number(degradedPct.toFixed(2)),
     }),
@@ -12100,6 +12108,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // opt-out, and only relevant selected facts reach the response prompt.
     const explicitMemberMemoryEnabled = isExplicitMemberMemoryEnabled();
     const memberMemoryEnabled = memoryEnabled;
+    let privateMemoryStorageUnavailable = false;
     const activePrivateMemories = memberMemoryEnabled && req.user?.id
         ? await db
             .select({
@@ -12125,11 +12134,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             )
             .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
             .limit(12)
-            .catch(() => [])
+            .catch(() => {
+              privateMemoryStorageUnavailable = true;
+              return [];
+            })
         : [];
     const relevantPrivateMemories = activePrivateMemories.filter(
-      (memory) =>
-        (memory.purpose === "preferred_name"
+      (memory) => {
+        const legacyRelevant =
+          (memory.purpose === "preferred_name"
           ? explicitMemberMemoryEnabled
           : memory.purpose === "planning_context"
           ? isConsentedPlanningMemoryRelevant(memory, message)
@@ -12139,9 +12152,30 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               ? isOrdinaryContinuityMemoryRelevant(memory, message)
             : (!memory.isSensitive ||
               isSensitiveMemoryRelevant(memory.content, message))) &&
-        (memory.purpose !== "companion_context" ||
-          isCompanionMemoryRelevant(memory.content, message)),
+          (memory.purpose !== "companion_context" ||
+            isCompanionMemoryRelevant(memory.content, message));
+        return isApprovedPrivateMemoryRelevant({
+          memory,
+          currentMessage: message,
+          legacyRelevant,
+        });
+      },
     );
+    const personalizationRelevantMemories = relevantPrivateMemories.filter(
+      (memory) => memory.purpose !== "preferred_name",
+    );
+    const privateMemoryUseDecision = resolvePrivateMemoryUseDecision({
+      runtimeEnabled: isKinfolkPrivateMemoryEnabled(),
+      memberEnabled: memberMemoryEnabled,
+      storageUnavailable: privateMemoryStorageUnavailable,
+      activeMemoryCount: activePrivateMemories.length,
+      relevantMemoryCount: personalizationRelevantMemories.length,
+      // Research-backed answers can use a relevant, non-sensitive preference as
+      // an optional consideration. High-consequence evidence remains fail-closed.
+      allowPersonalization:
+        !isPrivateImageTurn &&
+        !(contextualPlan?.taskMode === "high_consequence" && Boolean(contextualEvidence)),
+    });
     // Preferred names are an explicitly saved, revocable address choice. They
     // remain usable while ordinary continuity is off, without admitting any
     // other private memory into the prompt.
@@ -12150,13 +12184,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         ? await findPreferredNameMemory(req.user.id).catch(() => null)
         : null;
     const promptPrivateMemories = mergeActivePreferredNameForPrompt({
-      memories: relevantPrivateMemories,
+      memories: privateMemoryUseDecision.shouldApply
+        ? personalizationRelevantMemories
+        : [],
       preferredNameMemory: activePreferredNameMemory,
       explicitMemoryEnabled: explicitMemberMemoryEnabled,
     });
-    const privateMemoryBlock = buildPrivateMemoryPromptBlock(
-      promptPrivateMemories.length > 0 && !contextualEvidence,
-      contextualEvidence ? [] : promptPrivateMemories,
+    const privateMemoryPersonalizationBlock = buildPrivateMemoryPersonalizationBlock(
+      promptPrivateMemories,
     );
     const activePreferredName = promptPrivateMemories
       .map(parsePreferredNameMemory)
@@ -12255,11 +12290,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       }) +
       (lifeGuidance ? `\n\n${lifeGuidance.responseInstruction}` : "") +
       ownerBusinessContext +
-      privateMemoryBlock +
       buildConsentedPlanningContextPrompt(
-        relevantPrivateMemories.filter(
-          (memory) => memory.purpose === "planning_context",
-        ),
+        privateMemoryUseDecision.shouldApply
+          ? personalizationRelevantMemories.filter(
+              (memory) => memory.purpose === "planning_context",
+            )
+          : [],
       ) +
       (contextualPlan
         ? [
@@ -12430,14 +12466,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       ...modelPolicy,
       maxOutputTokens: resolveKinfolkOutputTokenBudget(modelPolicy, responseDepth),
     };
+    const privateMemoryPromptSuffix = privateMemoryPersonalizationBlock
+      ? `\n\n${privateMemoryPersonalizationBlock}`
+      : "";
     const systemPromptWithLibrary = leanGeneralChat
-      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${temporalContext}${privateMemoryBlock}\n\n${responseDepthPrompt}`
+      ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${temporalContext}\n\n${responseDepthPrompt}${privateMemoryPromptSuffix}`
       : (!contextualHighConsequence && libraryGroundingBlock
           ? `${systemPrompt}\n\n${libraryGroundingBlock}`
           : systemPrompt) +
         `\n\n${responseDepthPrompt}` +
         (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "") +
-        (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "");
+        (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "") +
+        privateMemoryPromptSuffix;
     const explicitResumeResponsePolicy =
       conversationContextScope?.handoff?.state === "resumed"
         ? "\n\nEXPLICIT RESUMED THREAD: The member deliberately resumed only the bounded private thread supplied in this conversation. Answer a clear follow-up directly with details supported by that thread. Do not ask a confirmation question or request repetition when the thread already answers the member's question."
@@ -13246,6 +13286,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           contextualEvidence.external.length +
           contextualEvidence.media.length
         : 0,
+      privateMemoryState: privateMemoryUseDecision.state,
     });
     const memberFacingSources = isPrivateImageTurn
       ? []
@@ -13310,6 +13351,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // Private response metadata for the current member only. It is never used
       // for profile identity, business eligibility, ranking, or promotion.
       memberContextApplied: savedMemberResearchContextTags,
+      // Generic only: confirms relevant approved preference use without exposing
+      // a private note, the selection reason, or a memory record identifier.
+      memoryUse: privateMemoryUseDecision.memberFacingUse,
       recommendations,
       itinerary,
       followUpSuggestions,

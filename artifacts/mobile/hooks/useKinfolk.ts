@@ -5,6 +5,7 @@ import {
   canRenderKinfolkBusinessCards,
   type KinfolkResponseMeta,
 } from "@workspace/constants";
+import type { KinfolkMemoryUse } from "@/components/KinfolkMemoryUseNotice";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 
@@ -187,6 +188,8 @@ export type ChatMessage = {
   sensitiveMemoryDraft?: { content: string; purpose: string; sessionId?: string | null } | null;
   /** Direct memory choices remain local until the member explicitly saves selected items. */
   inlineMemoryConsent?: { message: string; plan: InlineMemoryConsentPlan; sessionId?: string | null } | null;
+  /** Generic acknowledgement only; never includes a saved private note. */
+  memoryUse?: KinfolkMemoryUse | null;
   /** Server decision metadata; clients fail closed when cards are not authorized. */
   responseMeta?: KinfolkResponseMeta | null;
 };
@@ -337,6 +340,7 @@ export function useKinfolk() {
           location?: { city: string; state: string | null; source: string } | null;
           locationSource?: string | null;
           companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
+          memoryUse?: KinfolkMemoryUse | null;
           responseMeta?: KinfolkResponseMeta | null;
           conversationHandoff?: ConversationHandoffStatus | null;
           sensitiveMemoryConfirmation?: {
@@ -392,6 +396,7 @@ export function useKinfolk() {
           companionMemoryOffer: data.companionMemoryOffer ?? null,
           sensitiveMemoryDraft,
           inlineMemoryConsent,
+          memoryUse: data.memoryUse ?? null,
           responseMeta,
         };
         setPendingRetryText(null); // clear retry on success

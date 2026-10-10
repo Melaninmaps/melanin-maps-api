@@ -55,6 +55,7 @@ import { KinfolkCompanionMemoryOfferCard } from "@/components/KinfolkCompanionMe
 import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDisclosure";
 import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiveMemoryConfirmation";
 import { KinfolkInlineMemoryConsent } from "@/components/KinfolkInlineMemoryConsent";
+import { KinfolkMemoryUseNotice } from "@/components/KinfolkMemoryUseNotice";
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
 const NATIVE_VOICE_MAX_DURATION_MS = 60_000;
@@ -2806,6 +2807,7 @@ export default function TravelScreen() {
           spokenVoiceText={spokenVoiceText}
           colors={colors}
         />
+        {item.memoryUse && <KinfolkMemoryUseNotice memoryUse={item.memoryUse} />}
         {item.inlineMemoryConsent && <KinfolkInlineMemoryConsent
           message={item.inlineMemoryConsent.message}
           plan={item.inlineMemoryConsent.plan}
