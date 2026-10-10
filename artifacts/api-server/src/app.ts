@@ -138,6 +138,13 @@ app.get("/api/healthz", (_req: Request, res: Response) => {
   }
   res.json({ status: "ok", bundleBytes: spaHtml.length });
 });
+// Railway's disposable staging service retained this legacy path despite its
+// service configuration requesting /api/healthz.  Keep it a process-only,
+// public liveness response so the isolated validation service can be routed;
+// this candidate is not connected to production.
+app.get("/api/health", (_req: Request, res: Response) => {
+  res.json({ status: "ok" });
+});
 app.get("/healthz", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
 });
