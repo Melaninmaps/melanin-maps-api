@@ -1053,7 +1053,7 @@ export default function Community() {
   useEffect(() => { loadPosts(); }, [loadPosts]);
 
   useEffect(() => {
-    authenticatedFetch(`${BASE}api/community/hashtags/trending`)
+    authenticatedFetch(`${BASE}api/hashtags/trending`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.trending) setTrending(d.trending); })
       .catch(() => {});

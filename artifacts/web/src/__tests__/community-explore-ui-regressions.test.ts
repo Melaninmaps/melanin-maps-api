@@ -19,6 +19,8 @@ describe("Community and Explore UI regressions", () => {
     expect(community).toContain('data-testid="community-my-groups-error"');
     expect(community).toContain('aria-label="Search community members"');
     expect(community).toContain('aria-pressed={feedMode === mode}');
+    expect(community).toContain('api/hashtags/trending');
+    expect(community).not.toContain('api/community/hashtags/trending');
   });
 
   it("never embeds or opens credentialed and non-HTTP Community attachments", () => {
