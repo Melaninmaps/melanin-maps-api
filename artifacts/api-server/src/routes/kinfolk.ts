@@ -8243,9 +8243,17 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     destination: location.city,
     vibes: input.vibes,
   });
+  // A governed catalog request intentionally does not run unbounded public-web
+  // discovery. That deliberate `unavailable` state is not a degraded catalog
+  // answer: the documented directory query completed. An unavailable web
+  // provider is degraded only after the member explicitly chooses all-public
+  // expansion, or when an attempted provider fails.
   const directDiscoveryDegraded =
     discoveryResult.discovery.platformStatus === "degraded" ||
-    discoveryResult.discovery.webSearch.state !== "completed";
+    (explicitAllPlacesExpansion &&
+      discoveryResult.discovery.webSearch.state !== "completed") ||
+    (discoveryResult.discovery.webSearch.attempted &&
+      discoveryResult.discovery.webSearch.state !== "completed");
   recordKinfolkTelemetry({
     requestId: crypto.randomUUID(),
     questionClass: "business_discovery",
