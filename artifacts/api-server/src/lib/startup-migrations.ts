@@ -129,6 +129,34 @@ export function getProtectedAdminAccessRecoveryStatus():
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
+    // Approval is distinct from activation. This table stores only an
+    // email-bound token hash and minimized lifecycle state; it never backfills
+    // an account, alters an existing password, or stores a plaintext token.
+    name: "member_activation_invitations_v1",
+    sql: `CREATE TABLE IF NOT EXISTS member_activation_invitations (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      email VARCHAR(255) NOT NULL,
+      token_hash CHAR(64) NOT NULL UNIQUE,
+      status VARCHAR(24) NOT NULL DEFAULT 'pending_delivery'
+        CHECK (status IN ('pending_delivery', 'sent', 'failed_delivery', 'activated', 'revoked', 'expired')),
+      provider VARCHAR(32),
+      provider_receipt_fingerprint CHAR(64),
+      delivery_failure_code VARCHAR(80),
+      delivery_attempted_at TIMESTAMPTZ,
+      delivery_accepted_at TIMESTAMPTZ,
+      expires_at TIMESTAMPTZ NOT NULL,
+      used_at TIMESTAMPTZ,
+      revoked_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CHECK ((status <> 'activated') OR used_at IS NOT NULL),
+      CHECK ((status <> 'revoked') OR revoked_at IS NOT NULL)
+    );
+    CREATE INDEX IF NOT EXISTS member_activation_invitations_email_active_idx
+      ON member_activation_invitations (email, expires_at DESC)
+      WHERE used_at IS NULL AND revoked_at IS NULL;`,
+  },
+  {
     // Owner-confirmed inputs for future business-facing Kinfolk drafts. This is
     // additive schema only: no member, directory, language, or profile data is
     // copied into the table at deploy time.
@@ -7232,6 +7260,27 @@ export async function ensureLegacyMapLocationAttestationSchema(logger?: Logger):
     throw new Error("Legacy map location attestation schema verification failed.");
   }
   logger?.info("Legacy map location attestation schema is ready before traffic acceptance");
+}
+
+/**
+ * Member approval may issue an account-activation capability during an explicit
+ * feature release, where the broad migration runner is intentionally skipped.
+ * This narrow prerequisite creates only an empty additive table/index and then
+ * probes its request-path shape before any approval or registration route can
+ * accept traffic.
+ */
+export async function ensureMemberActivationInvitationSchema(logger?: Logger): Promise<void> {
+  const migration = MIGRATIONS.find(
+    (entry) => entry.name === "member_activation_invitations_v1",
+  );
+  if (!migration) {
+    throw new Error("Member activation invitation schema migration definition is missing.");
+  }
+  await pool.query(migration.sql);
+  await pool.query(
+    "SELECT email, token_hash, status, expires_at, used_at, revoked_at FROM member_activation_invitations LIMIT 0",
+  );
+  logger?.info("Member activation invitation schema is ready before traffic acceptance");
 }
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {

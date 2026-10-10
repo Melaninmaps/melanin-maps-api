@@ -6,6 +6,13 @@ import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, s
 import { runWeeklyNudge } from "../lib/nudgeScheduler";
 import { isAdmin } from "../lib/adminAuth";
 import { isApprovalRequired } from "../lib/approvalGate";
+import {
+  buildMemberActivationDeepLink,
+  buildMemberActivationUrl,
+  createMemberActivationInvitation,
+  recordMemberActivationInvitationDelivery,
+  revokeMemberActivationInvitations,
+} from "../auth/memberActivationInvitation";
 
 const router: IRouter = Router();
 
@@ -93,6 +100,33 @@ function parseStoredCityNomination(raw: unknown): { city: string; state: string 
   return /^[A-Za-z][A-Za-z .'-]{1,99}$/.test(nomination)
     ? { city: nomination, state: null }
     : null;
+}
+
+async function issueMemberActivationInvitation(
+  email: string,
+  firstName: string | null,
+): Promise<{ status: "sent" | "failed_delivery"; expiresAt: Date }> {
+  const invitation = await createMemberActivationInvitation(email);
+  try {
+    const providerReceipt = await sendApprovalNotification(email, firstName, {
+      activationUrl: buildMemberActivationUrl(invitation.token),
+      mobileActivationUrl: buildMemberActivationDeepLink(invitation.token),
+      activationExpiresAt: invitation.expiresAt,
+    });
+    await recordMemberActivationInvitationDelivery(email, invitation.token, {
+      accepted: true,
+      providerReceiptId: providerReceipt?.id ?? null,
+    });
+    return { status: "sent", expiresAt: invitation.expiresAt };
+  } catch (_error: unknown) {
+    // Do not log the activation URL, token, recipient email, or provider body.
+    // The database lifecycle row retains only a bounded failure code.
+    await recordMemberActivationInvitationDelivery(email, invitation.token, {
+      accepted: false,
+      failureCode: "provider_send_failed",
+    });
+    return { status: "failed_delivery", expiresAt: invitation.expiresAt };
+  }
 }
 
 // ── Public: join waitlist ────────────────────────────────────────────────────
@@ -691,7 +725,7 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
     const entryEmails = entriesResult
       .map((entry) => entry.email?.trim().toLowerCase())
       .filter((email): email is string => Boolean(email));
-    const [testerUsers, pendingTesters] = entryEmails.length > 0
+    const [testerUsers, pendingTesters, activationInvitations] = entryEmails.length > 0
       ? await Promise.all([
           pool.query<{
             email: string;
@@ -710,12 +744,42 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
                 AND applied_at IS NULL`,
             [entryEmails],
           ),
+          pool.query<{
+            email: string;
+            status: string;
+            expires_at: Date;
+            delivery_failure_code: string | null;
+            delivery_accepted_at: Date | null;
+          }>(
+            `SELECT DISTINCT ON (LOWER(TRIM(email)))
+                    LOWER(TRIM(email)) AS email,
+                    CASE
+                      WHEN status IN ('pending_delivery', 'sent', 'failed_delivery') AND expires_at <= NOW()
+                        THEN 'expired'
+                      ELSE status
+                    END AS status,
+                    expires_at,
+                    delivery_failure_code,
+                    delivery_accepted_at
+               FROM member_activation_invitations
+              WHERE LOWER(TRIM(email)) = ANY($1::text[])
+              ORDER BY LOWER(TRIM(email)), created_at DESC`,
+            [entryEmails],
+          ),
         ])
-      : [{ rows: [] }, { rows: [] }];
+      : [{ rows: [] }, { rows: [] }, { rows: [] }];
     const testerByEmail = new Map(
       testerUsers.rows.map((row) => [row.email, row]),
     );
     const pendingTesterEmails = new Set(pendingTesters.rows.map((row) => row.email));
+    const activationInvitationByEmail = new Map(
+      activationInvitations.rows.map((row) => [row.email, {
+        status: row.status,
+        expiresAt: row.expires_at,
+        deliveryFailureCode: row.delivery_failure_code,
+        deliveryAcceptedAt: row.delivery_accepted_at,
+      }]),
+    );
 
     const entriesWithPosition = entriesResult.map((e) => {
       const email = e.email?.trim().toLowerCase() ?? "";
@@ -726,6 +790,8 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
         testerStatus: tester?.tester_status ?? null,
         testerAccessSource: tester?.tester_access_source ?? null,
         pendingTesterAccess: pendingTesterEmails.has(email),
+        hasAccount: Boolean(tester),
+        activationInvitation: activationInvitationByEmail.get(email) ?? null,
       };
     });
 
@@ -775,6 +841,15 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
     return;
   }
   try {
+    const [priorEntry] = await db
+      .select({ status: waitlistTable.status, email: waitlistTable.email, firstName: waitlistTable.firstName })
+      .from(waitlistTable)
+      .where(eq(waitlistTable.id, id))
+      .limit(1);
+    if (!priorEntry) {
+      res.status(404).json({ error: "Entry not found" });
+      return;
+    }
     const updates: Record<string, unknown> = {};
     if (status) {
       updates.status = status;
@@ -786,15 +861,10 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
       .set(updates)
       .where(eq(waitlistTable.id, id))
       .returning();
-    if (!updated) {
-      res.status(404).json({ error: "Entry not found" });
-      return;
-    }
-
-    // When approved: also approve their user account (if they have one) and
-    // send the right next action. A waitlist approval is enough to register;
-    // it must not tell a person to sign in before an account exists.
-    if (status === "approved" && updated.email) {
+    // An approval transition issues one expiring, single-use account-activation
+    // capability for an unregistered member. Repeating the same approval is
+    // idempotent and does not silently rotate a previously issued capability.
+    if (status === "approved" && priorEntry.status !== "approved" && updated.email) {
       const [existingUser] = await db
         .select({ id: usersTable.id, firstName: usersTable.firstName, approved: usersTable.approved })
         .from(usersTable)
@@ -808,16 +878,70 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
           .where(eq(usersTable.id, existingUser.id));
       }
 
-      sendApprovalNotification(updated.email, updated.firstName ?? null, {
-        hasExistingAccount: Boolean(existingUser),
-      })
-        .catch((err: unknown) => req.log.error({ err }, "Failed to send waitlist approval email"));
+      if (existingUser) {
+        sendApprovalNotification(updated.email, updated.firstName ?? null, {
+          hasExistingAccount: true,
+        }).catch(() => req.log.warn({ event: "WAITLIST_APPROVAL_SIGNIN_EMAIL_FAILED" }, "Approval sign-in email failed"));
+      } else {
+        await issueMemberActivationInvitation(updated.email, updated.firstName ?? null);
+      }
+    } else if (status && status !== "approved" && priorEntry.status === "approved" && priorEntry.email) {
+      // Revocation/rejection/reset makes every unused activation capability
+      // unusable immediately. It never changes an existing account or password.
+      await revokeMemberActivationInvitations(priorEntry.email);
     }
 
     res.json({ entry: updated });
   } catch (err) {
     req.log.error({ err }, "Failed to update waitlist entry");
     res.status(500).json({ error: "Failed to update entry" });
+  }
+});
+
+// ── Admin: resend or revoke an unused account-activation invitation ──────────
+
+router.post("/admin/waitlist/:id/invitation/resend", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const [entry] = await db
+      .select({ email: waitlistTable.email, firstName: waitlistTable.firstName, status: waitlistTable.status })
+      .from(waitlistTable)
+      .where(eq(waitlistTable.id, String(req.params.id)))
+      .limit(1);
+    if (!entry) { res.status(404).json({ error: "Entry not found" }); return; }
+    if (entry.status !== "approved") {
+      res.status(409).json({ error: "Approve the waitlist entry before issuing an activation invitation." });
+      return;
+    }
+    const [existingUser] = await db
+      .select({ id: usersTable.id })
+      .from(usersTable)
+      .where(eq(usersTable.email, entry.email.toLowerCase()))
+      .limit(1);
+    if (existingUser) {
+      res.status(409).json({ error: "This member already has an account. Direct them to sign in or recover their password." });
+      return;
+    }
+    const invitation = await issueMemberActivationInvitation(entry.email, entry.firstName ?? null);
+    res.json({ invitation });
+  } catch (_error) {
+    res.status(500).json({ error: "Could not resend the activation invitation." });
+  }
+});
+
+router.post("/admin/waitlist/:id/invitation/revoke", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  try {
+    const [entry] = await db
+      .select({ email: waitlistTable.email })
+      .from(waitlistTable)
+      .where(eq(waitlistTable.id, String(req.params.id)))
+      .limit(1);
+    if (!entry) { res.status(404).json({ error: "Entry not found" }); return; }
+    await revokeMemberActivationInvitations(entry.email);
+    res.json({ revoked: true });
+  } catch (_error) {
+    res.status(500).json({ error: "Could not revoke the activation invitation." });
   }
 });
 
@@ -1165,10 +1289,17 @@ router.post("/admin/waitlist/bulk", async (req: Request, res: Response) => {
   }
 
   try {
+    if (status === "approved" && (!hasIds || ids!.length > 50)) {
+      res.status(400).json({
+        error: "Approve up to 50 selected members at a time so each account receives a tracked activation invitation.",
+      });
+      return;
+    }
     const { inArray: drizzleInArray } = await import("drizzle-orm");
     const updates = { status, approvedAt: status === "approved" ? new Date() : null };
 
     let updatedCount = 0;
+    let priorEntries: Array<{ id: string; email: string; firstName: string | null; status: string }> = [];
 
     if (hasFilter) {
       // Filter-based: update all entries matching the given filter (cross-page bulk)
@@ -1186,6 +1317,10 @@ router.post("/admin/waitlist/bulk", async (req: Request, res: Response) => {
           : undefined,
       );
 
+      priorEntries = await db
+        .select({ id: waitlistTable.id, email: waitlistTable.email, firstName: waitlistTable.firstName, status: waitlistTable.status })
+        .from(waitlistTable)
+        .where(whereClause);
       const result = await db
         .update(waitlistTable)
         .set(updates)
@@ -1195,19 +1330,18 @@ router.post("/admin/waitlist/bulk", async (req: Request, res: Response) => {
       updatedCount = result.length;
     } else {
       // ID-based: update specific entries
+      priorEntries = await db
+        .select({ id: waitlistTable.id, email: waitlistTable.email, firstName: waitlistTable.firstName, status: waitlistTable.status })
+        .from(waitlistTable)
+        .where(drizzleInArray(waitlistTable.id, ids!));
       await db.update(waitlistTable)
         .set(updates)
         .where(drizzleInArray(waitlistTable.id, ids!));
       updatedCount = ids!.length;
     }
 
-    // Fire approval emails for newly approved entries (filter-based only for explicit IDs; skip for large filter updates to avoid email floods)
-    if (status === "approved" && hasIds && ids!.length <= 50) {
-      const approvedEntries = await db.select({ id: waitlistTable.id, email: waitlistTable.email, firstName: waitlistTable.firstName })
-        .from(waitlistTable)
-        .where(drizzleInArray(waitlistTable.id, ids!));
-      for (const entry of approvedEntries) {
-        if (!entry.email) continue;
+    if (status === "approved") {
+      for (const entry of priorEntries.filter((candidate) => candidate.status !== "approved")) {
         const [existingUser] = await db
           .select({ id: usersTable.id, approved: usersTable.approved })
           .from(usersTable)
@@ -1216,11 +1350,19 @@ router.post("/admin/waitlist/bulk", async (req: Request, res: Response) => {
         if (existingUser && !existingUser.approved) {
           await db.update(usersTable).set({ approved: true }).where(eq(usersTable.id, existingUser.id));
         }
-        sendApprovalNotification(entry.email, entry.firstName ?? null, {
-          hasExistingAccount: Boolean(existingUser),
-        })
-          .catch((err: unknown) => req.log.error({ err }, "Failed to send bulk approval email"));
+        if (existingUser) {
+          sendApprovalNotification(entry.email, entry.firstName ?? null, { hasExistingAccount: true })
+            .catch(() => req.log.warn({ event: "WAITLIST_BULK_APPROVAL_SIGNIN_EMAIL_FAILED" }, "Bulk approval sign-in email failed"));
+        } else {
+          await issueMemberActivationInvitation(entry.email, entry.firstName ?? null);
+        }
       }
+    } else {
+      await Promise.all(
+        priorEntries
+          .filter((entry) => entry.status === "approved")
+          .map((entry) => revokeMemberActivationInvitations(entry.email)),
+      );
     }
 
     res.json({ updated: updatedCount });

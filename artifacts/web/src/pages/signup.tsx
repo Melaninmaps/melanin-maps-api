@@ -73,6 +73,20 @@ export default function Signup() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [activationToken] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("invite")?.trim() ?? "";
+  });
+
+  useEffect(() => {
+    if (!activationToken) return;
+    // Keep the one-time capability out of browser history after it is captured
+    // for the in-memory registration request.
+    const params = new URLSearchParams(window.location.search);
+    params.delete("invite");
+    const query = params.toString();
+    window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
+  }, [activationToken]);
 
   useEffect(() => {
     if (!authLoading && authData?.user) {
@@ -130,6 +144,7 @@ export default function Signup() {
           password,
           dateOfBirth,
           agreeToTerms,
+          activationToken: activationToken || undefined,
         }),
       });
       const data = await response.json() as { token?: string } & ApiError;
@@ -183,7 +198,7 @@ export default function Signup() {
 
           <form onSubmit={handleSubmit} noValidate className="px-6 py-7 space-y-5 sm:px-10 sm:py-8">
             <div className="rounded-xl border border-[#CA922B]/25 bg-[#FFF8E8] px-4 py-3 text-sm text-[#5C3A12] leading-5">
-              <span className="font-semibold">Invite-only access:</span> eligibility is verified securely when you submit. If you have not been approved yet, please join the waitlist.
+              <span className="font-semibold">Invite-only access:</span> {activationToken ? "your secure activation link will be verified when you submit." : "eligibility is verified securely when you submit."} If you have not been approved yet, please join the waitlist.
             </div>
 
             {error && (

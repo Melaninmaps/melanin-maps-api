@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState, useRef, useCallback } from "react";
 import {
   ActivityIndicator,
@@ -63,6 +63,8 @@ export default function SignupScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { invite } = useLocalSearchParams<{ invite?: string | string[] }>();
+  const activationToken = typeof invite === "string" ? invite.trim() : "";
   const { refreshUser } = useAuth();
 
   const [step, setStep] = useState(0);
@@ -247,6 +249,7 @@ export default function SignupScreen() {
           username,
           dateOfBirth,
           agreeToTerms,
+          activationToken: activationToken || undefined,
         }),
       });
       const data = await res.json() as { token?: string; error?: string };
@@ -298,7 +301,9 @@ export default function SignupScreen() {
           </Text>
           <Text style={[styles.sub, { color: c.mutedForeground }]}>
             {step === 0
-              ? "Join thousands discovering minority-owned businesses"
+              ? activationToken
+                ? "Your approved invitation will be verified when you create your account"
+                : "Join thousands discovering minority-owned businesses"
               : step === 1
               ? "Your @handle is your public identity on the platform"
               : "Just a couple final details before you're in"}
@@ -333,7 +338,7 @@ export default function SignupScreen() {
           </View>
         )}
 
-        {step === 0 && appleAvailable && (
+        {step === 0 && appleAvailable && !activationToken && (
           <>
             <AppleAuthentication.AppleAuthenticationButton
               buttonType={AppleAuthentication.AppleAuthenticationButtonType.SIGN_UP}

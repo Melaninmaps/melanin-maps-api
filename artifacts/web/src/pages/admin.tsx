@@ -273,6 +273,13 @@ type WaitlistEntry = {
   testerStatus: string | null;
   testerAccessSource: string | null;
   pendingTesterAccess: boolean;
+  hasAccount: boolean;
+  activationInvitation: {
+    status: "pending_delivery" | "sent" | "failed_delivery" | "activated" | "revoked" | "expired";
+    expiresAt: string;
+    deliveryFailureCode: string | null;
+    deliveryAcceptedAt: string | null;
+  } | null;
 };
 
 type WaitlistCityRollup = {
@@ -1845,6 +1852,32 @@ export default function Admin() {
       waitlistCityFilter,
     );
     setUpdating(null);
+  };
+
+  const manageActivationInvitation = async (
+    entry: WaitlistEntry,
+    action: "resend" | "revoke",
+  ) => {
+    const verb = action === "resend"
+      ? "send a fresh secure activation link to"
+      : "revoke the unused activation link for";
+    if (!window.confirm(`Are you sure you want to ${verb} ${entry.email}? This does not create an account, change a password, or alter tester access.`)) return;
+    const updatingKey = `${entry.id}-activation-${action}`;
+    setUpdating(updatingKey);
+    try {
+      const response = await fetch(`${BASE}api/admin/waitlist/${entry.id}/invitation/${action}`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const body = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) {
+        window.alert(body.error ?? "The activation invitation could not be updated.");
+        return;
+      }
+      await loadWaitlist(waitlistPage, statusFilter, showSyntheticWaitlist, waitlistCityFilter);
+    } finally {
+      setUpdating(null);
+    }
   };
 
   const updateWaitlistTesterAccess = async (
@@ -4022,6 +4055,9 @@ Selected: ${summary}`,
                           Status
                         </th>
                         <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
+                          Activation
+                        </th>
+                        <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                           Tester access
                         </th>
                         <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
@@ -4128,6 +4164,28 @@ Selected: ${summary}`,
                             <td className="px-4 py-3">
                               {statusBadge(entry.status)}
                             </td>
+                            <td className="px-4 py-3 text-xs text-[#3A1F0E]/65">
+                              {entry.hasAccount ? (
+                                <span className="text-[#3A1F0E]/45">Account activated</span>
+                              ) : entry.activationInvitation ? (
+                                <div>
+                                  <span className={`font-semibold ${entry.activationInvitation.status === "sent" ? "text-green-700" : entry.activationInvitation.status === "failed_delivery" ? "text-red-700" : "text-[#8D5C17]"}`}>
+                                    {entry.activationInvitation.status === "sent"
+                                      ? "Email accepted"
+                                      : entry.activationInvitation.status === "failed_delivery"
+                                        ? "Delivery failed"
+                                        : entry.activationInvitation.status.replace(/_/g, " ")}
+                                  </span>
+                                  <div className="mt-0.5 text-[10px] text-[#3A1F0E]/45">
+                                    Expires {new Date(entry.activationInvitation.expiresAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                  </div>
+                                </div>
+                              ) : entry.status === "approved" ? (
+                                <span className="text-[#8D5C17]">No issued link</span>
+                              ) : (
+                                <span className="text-[#3A1F0E]/30">—</span>
+                              )}
+                            </td>
                             <td className="px-4 py-3">
                               {entry.testerStatus === "active" ? (
                                 <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-700">
@@ -4190,6 +4248,30 @@ Selected: ${summary}`,
                                   >
                                     Reset
                                   </Button>
+                                )}
+                                {entry.status === "approved" && !entry.hasAccount && (
+                                  <>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={() => manageActivationInvitation(entry, "resend")}
+                                      disabled={updating === `${entry.id}-activation-resend`}
+                                      className="h-7 rounded-full border-[#CA922B]/45 px-3 text-xs text-[#8D5C17] hover:bg-[#FFF8E8]"
+                                    >
+                                      {updating === `${entry.id}-activation-resend` ? "Sending…" : "Resend activation"}
+                                    </Button>
+                                    {entry.activationInvitation && ["pending_delivery", "sent", "failed_delivery"].includes(entry.activationInvitation.status) && (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => manageActivationInvitation(entry, "revoke")}
+                                        disabled={updating === `${entry.id}-activation-revoke`}
+                                        className="h-7 rounded-full border-red-200 px-3 text-xs text-red-700 hover:bg-red-50"
+                                      >
+                                        Revoke activation
+                                      </Button>
+                                    )}
+                                  </>
                                 )}
                                 {entry.testerStatus === "active" || entry.pendingTesterAccess ? (
                                   <Button

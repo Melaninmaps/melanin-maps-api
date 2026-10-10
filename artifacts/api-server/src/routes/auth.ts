@@ -54,6 +54,11 @@ import {
   ISSUER_URL,
   type SessionData,
 } from "../lib/auth";
+import {
+  consumeMemberActivationInvitation,
+  hasCurrentMemberActivationInvitation,
+  validateMemberActivationInvitation,
+} from "../auth/memberActivationInvitation";
 import jwt from "jsonwebtoken";
 import {
   encryptToken,
@@ -696,6 +701,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
     username,
     dateOfBirth,
     agreeToTerms,
+    activationToken: rawActivationToken,
   } = req.body as {
     firstName?: string;
     lastName?: string;
@@ -704,6 +710,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
     username?: string;
     dateOfBirth?: string;
     agreeToTerms?: boolean;
+    activationToken?: string;
   };
 
   if (
@@ -890,6 +897,31 @@ router.post("/auth/register", async (req: Request, res: Response) => {
           });
           return;
         }
+        const activationToken = typeof rawActivationToken === "string"
+          ? rawActivationToken.trim()
+          : "";
+        if (waitlistEntry?.approvedAt) {
+          const invitationRequired = await hasCurrentMemberActivationInvitation(cleanEmail);
+          if (invitationRequired && !activationToken) {
+            res.status(403).json({
+              error: "Use the secure activation link from your approval email, or ask an administrator to resend it.",
+              code: "ACTIVATION_INVITATION_REQUIRED",
+            });
+            return;
+          }
+          if (activationToken) {
+            const invitation = await validateMemberActivationInvitation(cleanEmail, activationToken);
+            if (!invitation.valid) {
+              res.status(403).json({
+                error: invitation.code === "ACTIVATION_INVITATION_EXPIRED"
+                  ? "This activation link has expired. Ask an administrator to resend your invitation."
+                  : "This activation link is no longer valid. Ask an administrator to resend your invitation.",
+                code: invitation.code,
+              });
+              return;
+            }
+          }
+        }
         // ── End authorization gate ────────────────────────────────────────────────
 
         const referralCode = crypto
@@ -937,6 +969,10 @@ router.post("/auth/register", async (req: Request, res: Response) => {
           .catch(() => {});
 
         sendWelcomeEmail(user.email!, user.firstName).catch(() => {});
+        if (activationToken) {
+          // Account creation succeeded before the capability is consumed.
+          await consumeMemberActivationInvitation(cleanEmail, activationToken);
+        }
         // Auto-attach any pre-approved tester entitlement for this email
         await applyPendingTesterEntitlement(user.id, user.email!);
 

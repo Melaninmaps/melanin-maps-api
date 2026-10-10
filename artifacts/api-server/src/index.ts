@@ -18,6 +18,7 @@ import {
   ensureKinfolkPreferredNameSchema,
   ensureKinfolkTemporaryStaysSchema,
   ensureIsolatedGovernedDiscoverySchema,
+  ensureMemberActivationInvitationSchema,
   ensureRequiredPublicationSchema,
   ensureSafetyOperationalSchema,
   publicationSchemaFailureLogLines,
@@ -142,6 +143,11 @@ try {
   // accepting traffic rather than returning a misleading save/read 500.
   await ensureKinfolkPreferredNameSchema(logger);
   logger.info("Kinfolk preferred-name schema ready before traffic acceptance");
+  // Approval issuance and self-registration share this narrow, additive table.
+  // Keep it outside the broad runner so explicit feature-release mode cannot
+  // expose a route that would fail closed only after an administrator acts.
+  await ensureMemberActivationInvitationSchema(logger);
+  logger.info("Member activation invitation schema ready before traffic acceptance");
   if (process.env.KINFOLK_MEDIA_BUCKET_ID?.trim()) {
     // This is the only D18 schema bootstrap allowed in explicit feature-release
     // mode: idempotent columns plus a cleanup index, with no row mutation.
