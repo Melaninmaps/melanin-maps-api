@@ -851,7 +851,7 @@ export function registerFounderMapRestorationRoutes(
   app.get("/api/admin/map-restoration/status", async (req, res) => {
     if (!requireAdmin(req, res)) return;
     try {
-      const [catalog, outcomes, currentEligibleOutcomes, outcomesOutsideCurrentPopulation] = await Promise.all([
+      const [catalog, outcomes, currentEligibleOutcomes, unmappedCurrentEligibleOutcomes, outcomesOutsideCurrentPopulation] = await Promise.all([
         pool.query<{
           total: string;
           mapped: string;
@@ -915,6 +915,37 @@ export function registerFounderMapRestorationRoutes(
             ORDER BY o.outcome`,
           [FOUNDER_MAP_RESTORATION_POLICY_VERSION],
         ),
+        pool.query<{ outcome: MapRestorationOutcome; total: string }>(
+          `SELECT o.outcome, COUNT(*)::text AS total
+             FROM business_map_restoration_outcomes o
+             JOIN public.public_businesses b ON b.id::text = o.business_id::text
+             JOIN public.business_discovery_eligibility e ON e.business_id::text = b.id::text
+            WHERE o.policy_version = $1
+              AND e.eligibility_status = 'qualified'
+              AND e.policy_version = 'documented_diaspora_discovery_v1'
+              AND e.ownership_evidence_id IS NOT NULL
+              AND (e.official_website_evidence_id IS NOT NULL OR e.official_social_evidence_id IS NOT NULL)
+              AND e.ownership_source_expires_at > CURRENT_TIMESTAMP
+              AND e.review_after > CURRENT_TIMESTAMP
+              AND NOT (
+                e.map_pin_evidence_id IS NOT NULL
+                OR EXISTS (
+                  SELECT 1
+                    FROM public.business_legacy_map_location_attestations legacy_location
+                   WHERE legacy_location.business_id::text = e.business_id::text
+                     AND COALESCE((
+                       SELECT legacy_event.action
+                         FROM public.business_legacy_map_location_attestation_events legacy_event
+                        WHERE legacy_event.attestation_id = legacy_location.id
+                        ORDER BY legacy_event.created_at DESC, legacy_event.id DESC
+                        LIMIT 1
+                     ), 'active') <> 'revoked'
+                )
+              )
+            GROUP BY o.outcome
+            ORDER BY o.outcome`,
+          [FOUNDER_MAP_RESTORATION_POLICY_VERSION],
+        ),
         pool.query<{ total: string }>(
           `SELECT COUNT(*)::text AS total
              FROM business_map_restoration_outcomes o
@@ -946,6 +977,10 @@ export function registerFounderMapRestorationRoutes(
           total: Number(row.total),
         })),
         currentEligibleOutcomes: currentEligibleOutcomes.rows.map((row) => ({
+          outcome: row.outcome,
+          total: Number(row.total),
+        })),
+        unmappedCurrentEligibleOutcomes: unmappedCurrentEligibleOutcomes.rows.map((row) => ({
           outcome: row.outcome,
           total: Number(row.total),
         })),

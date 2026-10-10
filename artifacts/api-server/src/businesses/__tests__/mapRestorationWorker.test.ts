@@ -138,6 +138,7 @@ describe("founder map restoration", () => {
       "WHERE business_map_restoration_outcomes.outcome <> 'published'",
     );
     expect(source).toContain("currentEligibleOutcomes");
+    expect(source).toContain("unmappedCurrentEligibleOutcomes");
     expect(source).toContain("outcomesOutsideCurrentPopulation");
     expect(source).toContain("JOIN public.business_discovery_eligibility e ON e.business_id::text = b.id::text");
     expect(source).not.toContain("SET ownership_designations");
