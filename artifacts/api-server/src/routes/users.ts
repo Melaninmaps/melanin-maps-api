@@ -547,6 +547,36 @@ router.post("/users/:userId/tags", async (req: Request, res: Response) => {
     const taggerId = req.user.id;
     if (taggerId === taggedUserId) { res.status(400).json({ error: "Cannot tag yourself" }); return; }
 
+    const [target] = await db
+      .select({ id: usersTable.id, isPrivate: usersTable.isPrivate })
+      .from(usersTable)
+      .where(eq(usersTable.id, taggedUserId))
+      .limit(1);
+    if (!target) { res.status(404).json({ error: "User not found" }); return; }
+
+    const [block] = await db
+      .select({ id: userBlocksTable.id })
+      .from(userBlocksTable)
+      .where(or(
+        and(eq(userBlocksTable.blockerId, taggerId), eq(userBlocksTable.blockedId, taggedUserId)),
+        and(eq(userBlocksTable.blockerId, taggedUserId), eq(userBlocksTable.blockedId, taggerId)),
+      ))
+      .limit(1);
+    if (block) { res.status(404).json({ error: "User not found" }); return; }
+
+    if (target.isPrivate) {
+      const [acceptedFollow] = await db
+        .select({ id: userFollowsTable.id })
+        .from(userFollowsTable)
+        .where(and(
+          eq(userFollowsTable.followerId, taggerId),
+          eq(userFollowsTable.followingId, taggedUserId),
+          eq(userFollowsTable.status, "accepted"),
+        ))
+        .limit(1);
+      if (!acceptedFollow) { res.status(403).json({ error: "This profile is private" }); return; }
+    }
+
     const { content } = req.body as { content?: string };
     if (!content?.trim()) { res.status(400).json({ error: "content is required" }); return; }
     if (content.trim().length > 280) { res.status(400).json({ error: "Tag must be 280 chars or fewer" }); return; }
@@ -565,8 +595,38 @@ router.post("/users/:userId/tags", async (req: Request, res: Response) => {
 });
 
 router.get("/users/:userId/tags", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   try {
     const taggedUserId = String(req.params.userId);
+    const callerId = req.user.id;
+    const [target] = await db
+      .select({ id: usersTable.id, isPrivate: usersTable.isPrivate })
+      .from(usersTable)
+      .where(eq(usersTable.id, taggedUserId))
+      .limit(1);
+    if (!target) { res.status(404).json({ error: "User not found" }); return; }
+
+    const [block] = callerId === taggedUserId ? [undefined] : await db
+      .select({ id: userBlocksTable.id })
+      .from(userBlocksTable)
+      .where(or(
+        and(eq(userBlocksTable.blockerId, callerId), eq(userBlocksTable.blockedId, taggedUserId)),
+        and(eq(userBlocksTable.blockerId, taggedUserId), eq(userBlocksTable.blockedId, callerId)),
+      ))
+      .limit(1);
+    if (block) { res.status(404).json({ error: "User not found" }); return; }
+
+    let canSeeTags = callerId === taggedUserId || !target.isPrivate;
+    if (!canSeeTags) {
+      const [follow] = await db
+        .select({ status: userFollowsTable.status })
+        .from(userFollowsTable)
+        .where(and(eq(userFollowsTable.followerId, callerId), eq(userFollowsTable.followingId, taggedUserId)))
+        .limit(1);
+      canSeeTags = follow?.status === "accepted";
+    }
+    if (!canSeeTags) { res.json({ tags: [] }); return; }
+
     const tags = await db
       .select({
         id: profileTagsTable.id,

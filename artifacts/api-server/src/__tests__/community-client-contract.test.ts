@@ -31,7 +31,9 @@ describe("Community client contract", () => {
     expect(route).toContain("hasUnattributedLikes: totalLikes > members.length");
     expect(route).toContain("fetchViewerReactionIds");
     expect(web).toContain("community-reactions-dialog");
-    expect(web).toContain("href={`/members/${encodeURIComponent(member.userId)}`}");
+    expect(web).toContain("function memberProfilePath(userId: string): string {");
+    expect(web).toContain("return `/members/${encodeURIComponent(userId)}`;");
+    expect(web).toContain("href={memberProfilePath(member.userId)}");
     expect(mobile).toContain("onLikesPress?: () => void");
     expect(mobileFeed).toContain("<CommunityReactionsModal");
     expect(reactionsModal).toContain("/api/community/posts/${postId}/reactions");
