@@ -3,6 +3,7 @@ import {
   buildPrivateMemoryPersonalizationBlock,
   governedDiscoveryPreferenceTermsForMemories,
   isApprovedPrivateMemoryRelevant,
+  memberFacingPrivateMemoryUseForAnswer,
   preferenceScopesForMemory,
   resolvePrivateMemoryUseDecision,
 } from "../private-memory-personalization";
@@ -116,6 +117,32 @@ describe("private memory personalization", () => {
     const applied = resolvePrivateMemoryUseDecision(base);
     expect(applied).toMatchObject({ state: "applied", shouldApply: true });
     expect(applied.memberFacingUse?.message).not.toContain("vegan");
+  });
+
+  it("shows a generic notice only after a usable personalized answer", () => {
+    const decision = resolvePrivateMemoryUseDecision({
+      runtimeEnabled: true,
+      memberEnabled: true,
+      storageUnavailable: false,
+      activeMemoryCount: 1,
+      relevantMemoryCount: 1,
+      allowPersonalization: true,
+    });
+    expect(
+      memberFacingPrivateMemoryUseForAnswer({
+        decision,
+        answerUsedPersonalization: false,
+      }),
+    ).toBeNull();
+    expect(
+      memberFacingPrivateMemoryUseForAnswer({
+        decision,
+        answerUsedPersonalization: true,
+      }),
+    ).toEqual({
+      applied: true,
+      message: "Your saved preference helped tailor this answer.",
+    });
   });
 
   it("marks private preference content as separate from evidence and promotion", () => {

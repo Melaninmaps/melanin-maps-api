@@ -238,6 +238,21 @@ export function resolvePrivateMemoryUseDecision(input: {
 }
 
 /**
+ * A selected preference can reach a provider prompt before the provider response
+ * is accepted. The member-facing notice must remain absent when that response is
+ * malformed, blocked, or replaced with a truthful non-personalized fallback.
+ * Telemetry retains the selection decision without exposing private content.
+ */
+export function memberFacingPrivateMemoryUseForAnswer(input: {
+  decision: PrivateMemoryUseDecision;
+  answerUsedPersonalization: boolean;
+}): PrivateMemoryUseDecision["memberFacingUse"] {
+  return input.answerUsedPersonalization
+    ? input.decision.memberFacingUse
+    : null;
+}
+
+/**
  * Keeps private preference context separate from evidence: source-backed facts
  * and citations stay authoritative, while approved memory can only add a
  * practical, optional personalization for the same authenticated member.

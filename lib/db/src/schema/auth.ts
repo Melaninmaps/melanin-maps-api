@@ -34,6 +34,9 @@ export const usersTable = pgTable("users", {
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   pushToken: varchar("push_token"),
+  // Safe, internal-only marker for disposable/test accounts. This must remain
+  // in the Drizzle schema because access and feed queries read it at runtime.
+  isLoadTest: boolean("is_load_test").notNull().default(false),
   approved: boolean("approved").notNull().default(false),
   // Administrators may hide or suspend an account without deleting its record,
   // contributions, or consent history. Hidden accounts are omitted from the

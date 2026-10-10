@@ -347,6 +347,7 @@ import {
   buildPrivateMemoryPersonalizationBlock,
   governedDiscoveryPreferenceTermsForMemories,
   isApprovedPrivateMemoryRelevant,
+  memberFacingPrivateMemoryUseForAnswer,
   resolvePrivateMemoryUseDecision,
   type PrivateMemoryUseState,
 } from "../kinfolk/private-memory-personalization";
@@ -13396,6 +13397,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const memberFacingReply = contextualPartialEvidenceSourceContext
       ? `${reply}\n\nEvidence note: ${contextualPartialEvidenceSourceContext}`
       : reply;
+    const memberFacingMemoryUse = memberFacingPrivateMemoryUseForAnswer({
+      decision: privateMemoryUseDecision,
+      answerUsedPersonalization:
+        modelPayload.valid &&
+        !protectedReply.blocked &&
+        !isPrivateImageTurn &&
+        !(travelPlanning && destination && !hasGovernedItineraryCoverage),
+    });
     res.json({
       sessionId: finalSessionId,
       reply: memberFacingReply,
@@ -13407,7 +13416,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       memberContextApplied: savedMemberResearchContextTags,
       // Generic only: confirms relevant approved preference use without exposing
       // a private note, the selection reason, or a memory record identifier.
-      memoryUse: privateMemoryUseDecision.memberFacingUse,
+      memoryUse: memberFacingMemoryUse,
       recommendations,
       itinerary,
       followUpSuggestions,
