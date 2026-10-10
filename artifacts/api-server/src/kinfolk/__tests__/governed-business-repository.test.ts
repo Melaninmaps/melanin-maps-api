@@ -544,7 +544,7 @@ describe("governed Kinfolk business repository", () => {
     expect(params).toEqual([
       "Philadelphia",
       "PA",
-      ["\\msalon\\M", "\\mhair[[:space:]-]+salon\\M", "\\mhair[[:space:]-]+stylist\\M", "\\mhair[[:space:]-]+color\\M", "\\mwash[[:space:]-]+and[[:space:]-]+style\\M"],
+      ["\\msalon\\M", "\\mhair[[:space:]-]+salon\\M", "\\mhair[[:space:]-]+stylist\\M", "\\mhair[[:space:]-]+color\\M", "\\mwash[[:space:]-]+and[[:space:]-]+style\\M", "\\mwig\\M", "\\mbundle\\M", "\\mhair[[:space:]-]+extension\\M"],
       12,
       "salon",
       subject.vibeKeys ?? [],
@@ -552,6 +552,97 @@ describe("governed Kinfolk business repository", () => {
       ["\\mfull[[:space:]-]+wash[[:space:]-]+and[[:space:]-]+detangle\\M"],
       [],
     ]);
+  });
+
+  it("requires documented wig-installation evidence after matching the salon category", async () => {
+    const subject = deriveBusinessSubject(
+      "Find wig installation in Philadelphia",
+    )!;
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [
+      {
+        ...AMINA_ROW,
+        id: "wig-installation-salon",
+        name: "Crown Studio",
+        category: "Beauty & Wellness",
+        subcategory: "Hair Salon",
+        description: "Appointments include wig installation and styling.",
+        tags: ["wig services"],
+        specialties: [],
+      },
+      {
+        ...AMINA_ROW,
+        id: "general-salon-no-wig-documentation",
+        name: "Everyday Hair Studio",
+        category: "Beauty & Wellness",
+        subcategory: "Hair Salon",
+        description: "Hair color and natural styling appointments.",
+        tags: ["natural hair care"],
+        specialties: [],
+      },
+    ] }) };
+
+    const results = await createGovernedKinfolkBusinessRepository(pool).findBySubject(
+      { city: "Philadelphia", stateCode: "PA" },
+      subject,
+    );
+
+    expect(results).toEqual([
+      expect.objectContaining({
+        id: "wig-installation-salon",
+        matchReasons: expect.arrayContaining([
+          "subcategory",
+          "service detail: wig installation",
+        ]),
+      }),
+    ]);
+    const [sql, params] = pool.query.mock.calls[0] as [string, unknown[]];
+    expect(sql).toContain("documented-evidence");
+    expect(params[7]).toEqual(expect.arrayContaining(["\\mwig[[:space:]-]+installation\\M"]));
+  });
+
+  it("requires documented bundle-installation evidence after matching the salon category", async () => {
+    const subject = deriveBusinessSubject(
+      "Find bundle installs in Philadelphia",
+    )!;
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [
+      {
+        ...AMINA_ROW,
+        id: "bundle-installation-salon",
+        name: "Extension Room",
+        category: "Beauty & Wellness",
+        subcategory: "Hair Salon",
+        description: "Bundle installs and extension installation appointments.",
+        tags: ["hair extensions"],
+        specialties: [],
+      },
+      {
+        ...AMINA_ROW,
+        id: "general-salon-no-bundle-documentation",
+        name: "Everyday Hair Studio",
+        category: "Beauty & Wellness",
+        subcategory: "Hair Salon",
+        description: "Hair color and natural styling appointments.",
+        tags: ["natural hair care"],
+        specialties: [],
+      },
+    ] }) };
+
+    const results = await createGovernedKinfolkBusinessRepository(pool).findBySubject(
+      { city: "Philadelphia", stateCode: "PA" },
+      subject,
+    );
+
+    expect(results).toEqual([
+      expect.objectContaining({
+        id: "bundle-installation-salon",
+        matchReasons: expect.arrayContaining([
+          "subcategory",
+          "service detail: bundle or extension installation",
+        ]),
+      }),
+    ]);
+    const [, params] = pool.query.mock.calls[0] as [string, unknown[]];
+    expect(params[7]).toEqual(expect.arrayContaining(["\\mbundle[[:space:]-]+installs\\M"]));
   });
 
   it("requires both a documented street and amenity before returning a bookstore card", async () => {

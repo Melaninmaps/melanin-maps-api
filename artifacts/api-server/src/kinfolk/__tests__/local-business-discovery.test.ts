@@ -286,6 +286,18 @@ describe("local business subject classification", () => {
       expect(subject?.searchTerms).toEqual(expect.arrayContaining(["braider", "braiding", "braids", "protective styles"]));
     },
   );
+
+  it.each([
+    ["wig installation", "wig installation"],
+    ["bundle install", "bundle or extension installation"],
+  ])("requires documented %s service evidence", (request, serviceLabel) => {
+    const subject = deriveBusinessSubject(`Find a ${request} in Philadelphia PA`);
+    expect(subject).toMatchObject({
+      key: "salon",
+      documentedServiceRequirement: { label: serviceLabel },
+    });
+    expect(subject?.searchTerms).toEqual(expect.arrayContaining(["wig", "bundle", "hair extension"]));
+  });
 });
 
 describe("deterministic local business discovery", () => {

@@ -160,13 +160,16 @@ const SUBJECTS: readonly SubjectDefinition[] = [
     key: "salon",
     label: "salons",
     match:
-      /\b(?:hair|salons?|hair stylists?|hairdressers?|hair color|wash and style)\b/i,
+      /\b(?:hair|salons?|hair stylists?|hairdressers?|hair color|wash and style|wigs?|bundles?|extensions?)\b/i,
     searchTerms: [
       "salon",
       "hair salon",
       "hair stylist",
       "hair color",
       "wash and style",
+      "wig",
+      "bundle",
+      "hair extension",
     ],
   },
   {
@@ -398,6 +401,32 @@ const WASHING_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
   ],
 };
 
+// Wigs and bundles are not interchangeable with a generic salon listing. The
+// member's current-turn wording is a hard published-service requirement, so a
+// general stylist cannot be substituted for documented installation work.
+const WIG_INSTALLATION_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "wig installation",
+  searchTerms: [
+    "wig installation",
+    "wig install",
+    "wig installs",
+    "wigs",
+  ],
+};
+
+const BUNDLE_INSTALLATION_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "bundle or extension installation",
+  searchTerms: [
+    "bundle installation",
+    "bundle install",
+    "bundle installs",
+    "hair extension",
+    "hair extensions",
+    "extension installation",
+    "extension install",
+  ],
+};
+
 /**
  * A cuisine is a current-turn capability, not a generic restaurant category.
  * “Ethiopian food” must therefore match documented published business data;
@@ -489,6 +518,12 @@ export function deriveDocumentedServiceRequirement(
   const quoted = quotedServiceRequirement(message);
   if (quoted) return quoted;
   if (/\bethiopian\b/i.test(message)) return ETHIOPIAN_CUISINE_REQUIREMENT;
+  if (/\b(?:wig(?:s)?|wig[ -]?install(?:ation|s)?)\b/i.test(message)) {
+    return WIG_INSTALLATION_SERVICE_REQUIREMENT;
+  }
+  if (/\b(?:bundles?|hair[ -]?extensions?|extension[ -]?install(?:ation|s)?)\b/i.test(message)) {
+    return BUNDLE_INSTALLATION_SERVICE_REQUIREMENT;
+  }
   return /\b(?:full\s+wash\s+and\s+detangle|wash\s+and\s+detangle|washing\s+and\s+detangling|wash\s+and\s+braid(?:ing)?|wash\s+and\s+style)\b/i.test(
     message,
   )
