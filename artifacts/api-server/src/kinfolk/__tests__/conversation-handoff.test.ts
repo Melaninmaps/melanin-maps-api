@@ -118,6 +118,35 @@ describe("Kinfolk conversation handoffs", () => {
     expect(scoped.handoff).toBeNull();
   });
 
+  it("keeps a bounded same-session comparison thread for a semantic follow-up", () => {
+    const messages = [
+      message("user", "Help me evaluate two job offers."),
+      message("assistant", "Let us compare the risk, compensation, and growth trade-offs."),
+    ];
+
+    const scoped = resolveConversationContextScope({
+      messages: messages as never,
+      currentMessage: "Which option is less risky if hiring freezes?",
+    });
+
+    expect(scoped.messages).toEqual(messages);
+    expect(scoped.handoff).toBeNull();
+  });
+
+  it("does not treat a new same-session topic as a continuation without a reference", () => {
+    const messages = [
+      message("user", "Help me evaluate two job offers."),
+      message("assistant", "Let us compare the risk and growth trade-offs."),
+    ];
+
+    const scoped = resolveConversationContextScope({
+      messages: messages as never,
+      currentMessage: "How do I make lentil soup?",
+    });
+
+    expect(scoped.messages).toEqual([]);
+  });
+
   it("does not echo sensitive address or health content in a handoff preview", () => {
     const messages = [
       message("user", "My home address is 10 Example Street and I need help after my diagnosis."),

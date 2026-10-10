@@ -62,6 +62,32 @@ export function isDirectConversationFollowUp(message: string): boolean {
     || /\b(?:based\s+on\s+that|from\s+the\s+last\s+(?:answer|message)|earlier\s+in\s+this\s+(?:chat|conversation))\b/.test(value);
 }
 
+const CURRENT_THREAD_REFERENCE_RE = /\b(?:which|what|how|why|when|where|who|can|could|should|would|is|are|do|does|did|will)\b[\s\S]{0,72}\b(?:one|option|choice|approach|plan|draft|version|idea|recommendation|alternative|them|those|it|that|this)\b/i;
+const COMPARISON_THREAD_RE = /\b(?:compare|comparison|evaluate|evaluat(?:e|ing|ion)|weigh|trade[ -]?off|pros?\s*(?:and|&)\s*cons?|offer|options?|choices?|alternatives?)\b/i;
+const COMPARATIVE_FOLLOW_UP_RE = /\b(?:which|better|best|worse|less|more|safer|risk(?:y|ier)?|stronger|weaker|prefer|recommend)\b/i;
+
+/**
+ * Resolves a clear reference to the immediately preceding private session
+ * thread without treating every new question in that session as a continuation.
+ * This is deliberately bounded to recent, non-sensitive same-session turns;
+ * cross-session context still requires the explicit handoff path below.
+ */
+export function isBoundedSameSessionContinuation(input: {
+  messages: readonly SessionMessage[];
+  currentMessage: string;
+}): boolean {
+  const current = input.currentMessage.trim();
+  if (!current || SENSITIVE_HANDOFF_TOPIC.test(current)) return false;
+  const recent = input.messages.slice(-4);
+  const priorText = recent.map((message) => message.content).join(" ");
+  if (!priorText || SENSITIVE_HANDOFF_TOPIC.test(priorText)) return false;
+
+  if (CURRENT_THREAD_REFERENCE_RE.test(current)) return true;
+  return COMPARISON_THREAD_RE.test(priorText)
+    && COMPARATIVE_FOLLOW_UP_RE.test(current)
+    && /\b(?:one|option|choice|alternative|risk|safer|better|worse|less|more)\b/i.test(current);
+}
+
 function latestHandoffIndex(messages: readonly SessionMessage[]): number {
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const message = messages[index] as HandoffMarkedSessionMessage | undefined;
@@ -133,7 +159,10 @@ export function resolveConversationContextScope(input: {
   const savedResume = buildConversationResumePreview(input.messages);
   const resumeRequested = savedResume !== null
     && isExplicitConversationResumeRequest(input.currentMessage);
-  const directFollowUp = !resumeRequested && isDirectConversationFollowUp(input.currentMessage);
+  const directFollowUp = !resumeRequested && (
+    isDirectConversationFollowUp(input.currentMessage)
+    || isBoundedSameSessionContinuation(input)
+  );
 
   return {
     messages: resumeRequested
