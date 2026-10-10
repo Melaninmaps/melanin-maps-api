@@ -1,11 +1,14 @@
 import { Router, type IRouter, type Request, type Response, type NextFunction } from "express";
-import { db, locationSharesTable } from "@workspace/db";
+import { db, locationSharesTable, pool } from "@workspace/db";
 import { and, eq, gt } from "drizzle-orm";
 import crypto from "node:crypto";
 import { requireFamilySafety } from "../middleware/requireFamilySafety";
 
 const router: IRouter = Router();
 const ALLOWED_DURATION_MINUTES = new Set([30, 60, 120, 240, 480, 1440]);
+// The mobile foreground client publishes about every 30 seconds. A stale fix is
+// never shown as live; two minutes tolerates ordinary request jitter only.
+const MAX_COORDINATE_AGE_MS = 2 * 60 * 1000;
 
 function ownerLocationShare<T extends { currentLat: number | null; currentLng: number | null; lastUpdatedAt: Date | null }>(share: T) {
   return {
@@ -55,10 +58,40 @@ router.get("/safety/location-shares", async (req: Request, res: Response) => {
 router.post("/safety/location-shares", requireFamilySafety, async (req: Request, res: Response) => {
   const userId = requireAuth(req, res); if (!userId) return;
   try {
-    const { recipientEmail, label, durationMinutes = 60 } =
-      req.body as { recipientEmail?: string; label?: string; durationMinutes?: number };
+    const { recipientTrustedShareId, label, durationMinutes = 60 } =
+      req.body as { recipientTrustedShareId?: string; label?: string; durationMinutes?: number };
+    if (!recipientTrustedShareId?.trim()) {
+      res.status(400).json({ error: "Choose an accepted trusted Kinfolk contact" });
+      return;
+    }
     if (!Number.isInteger(durationMinutes) || !ALLOWED_DURATION_MINUTES.has(durationMinutes)) {
       res.status(400).json({ error: "Invalid location share duration" });
+      return;
+    }
+    // Server-side recipient authorization: a typed client field never grants
+    // coordinate access. The selected contact must have accepted this owner's
+    // active in-app Trusted Safety Share and neither party may have blocked the other.
+    const recipient = await pool.query<{ recipient_user_id: string }>(
+      `SELECT tss.contact_user_id AS recipient_user_id
+         FROM trusted_safety_shares tss
+         JOIN users recipient ON recipient.id = tss.contact_user_id
+         LEFT JOIN user_blocks owner_blocks ON owner_blocks.blocker_id = $1 AND owner_blocks.blocked_id = recipient.id
+         LEFT JOIN user_blocks recipient_blocks ON recipient_blocks.blocker_id = recipient.id AND recipient_blocks.blocked_id = $1
+        WHERE tss.id = $2
+          AND tss.owner_id = $1
+          AND tss.contact_type = 'mwm_user'
+          AND tss.status = 'active'
+          AND tss.owner_enabled = true
+          AND tss.contact_accepted = true
+          AND recipient.approved = true
+          AND owner_blocks.id IS NULL
+          AND recipient_blocks.id IS NULL
+        LIMIT 1`,
+      [userId, recipientTrustedShareId],
+    );
+    const recipientUserId = recipient.rows[0]?.recipient_user_id;
+    if (!recipientUserId) {
+      res.status(403).json({ error: "That contact is not currently authorized for location sharing" });
       return;
     }
     const token = crypto.randomBytes(24).toString("hex");
@@ -66,7 +99,7 @@ router.post("/safety/location-shares", requireFamilySafety, async (req: Request,
     const [share] = await db.insert(locationSharesTable).values({
       sharerId: userId,
       shareToken: token,
-      recipientEmail: recipientEmail?.toLowerCase().trim() ?? null,
+      recipientUserId,
       label: label?.trim() ?? "Live Location",
       expiresAt,
       isActive: true,
@@ -108,28 +141,43 @@ router.patch("/safety/location-shares/:token/update", async (req: Request, res: 
 });
 
 router.get("/safety/location-shares/:token/view", async (req: Request, res: Response) => {
-  // A location URL is deliberately bearer-style. Do not allow browsers,
-  // intermediary caches, or shared devices to retain a coordinate response.
+  const userId = requireAuth(req, res); if (!userId) return;
   res.set("Cache-Control", "no-store, private, max-age=0");
   res.set("Pragma", "no-cache");
   try {
-    const [share] = await db.select({
-      label: locationSharesTable.label,
-      currentLat: locationSharesTable.currentLat,
-      currentLng: locationSharesTable.currentLng,
-      lastUpdatedAt: locationSharesTable.lastUpdatedAt,
-      expiresAt: locationSharesTable.expiresAt,
-      isActive: locationSharesTable.isActive,
-    }).from(locationSharesTable)
-      .where(eq(locationSharesTable.shareToken, req.params["token"] as string))
-      .limit(1);
-    if (!share) { res.status(404).json({ error: "Share link not found" }); return; }
-    if (!share.isActive || new Date() > share.expiresAt) {
+    // Possession of a URL is never authorization for a precise location. Access
+    // is rechecked against the recipient's active, accepted trusted relationship
+    // and mutual block state on every coordinate read.
+    const result = await pool.query<{
+      label: string; current_lat: number | null; current_lng: number | null;
+      last_updated_at: Date | null; expires_at: Date; is_active: boolean;
+    }>(
+      `SELECT ls.label, ls.current_lat, ls.current_lng, ls.last_updated_at, ls.expires_at, ls.is_active
+         FROM location_shares ls
+         JOIN trusted_safety_shares tss
+           ON tss.owner_id = ls.sharer_id AND tss.contact_user_id = ls.recipient_user_id
+         LEFT JOIN user_blocks owner_blocks ON owner_blocks.blocker_id = ls.sharer_id AND owner_blocks.blocked_id = $2
+         LEFT JOIN user_blocks recipient_blocks ON recipient_blocks.blocker_id = $2 AND recipient_blocks.blocked_id = ls.sharer_id
+        WHERE ls.share_token = $1
+          AND ls.recipient_user_id = $2
+          AND tss.contact_type = 'mwm_user'
+          AND tss.status = 'active'
+          AND tss.owner_enabled = true
+          AND tss.contact_accepted = true
+          AND owner_blocks.id IS NULL
+          AND recipient_blocks.id IS NULL
+        LIMIT 1`,
+      [req.params["token"], userId],
+    );
+    const share = result.rows[0];
+    if (!share) { res.status(403).json({ error: "Recipient authorization required" }); return; }
+    if (!share.is_active || new Date() > share.expires_at) {
       res.status(410).json({ error: "This location share has expired" }); return;
     }
-    // Do not expose the sharer's identity, recipient, token, or internal ID
-    // to a person holding a location link.
-    res.json({ share: publicLocationShare(share) });
+    if (!share.last_updated_at || Date.now() - share.last_updated_at.getTime() > MAX_COORDINATE_AGE_MS) {
+      res.status(410).json({ error: "This location is no longer current" }); return;
+    }
+    res.json({ share: publicLocationShare({ label: share.label, currentLat: share.current_lat, currentLng: share.current_lng, lastUpdatedAt: share.last_updated_at, expiresAt: share.expires_at }) });
   } catch (err) {
     req.log.error({ err }, "GET /safety/location-shares/:token/view error");
     res.status(500).json({ error: "Failed to load share" });
@@ -141,7 +189,7 @@ router.delete("/safety/location-shares/:id", async (req: Request, res: Response)
   try {
     const id = parseInt(req.params["id"] as string, 10);
     await db.update(locationSharesTable)
-      .set({ isActive: false })
+      .set({ isActive: false, currentLat: null, currentLng: null, lastUpdatedAt: null })
       .where(and(eq(locationSharesTable.id, id), eq(locationSharesTable.sharerId, userId)));
     res.json({ ok: true });
   } catch (err) {

@@ -41,6 +41,28 @@ describe("location share public view", () => {
     expect(route).toContain("gt(locationSharesTable.expiresAt, new Date())");
   });
 
+  it("requires an accepted, unblocked recipient relationship for every coordinate read", () => {
+    const route = readFileSync(
+      fileURLToPath(new URL("../routes/location-shares.ts", import.meta.url)),
+      "utf8",
+    );
+    const trustedShares = readFileSync(
+      fileURLToPath(new URL("../routes/trusted-safety-share.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(route).toContain("recipientTrustedShareId");
+    expect(route).toContain("tss.contact_accepted = true");
+    expect(route).toContain("tss.status = 'active'");
+    expect(route).toContain("owner_blocks.id IS NULL");
+    expect(route).toContain("recipient_blocks.id IS NULL");
+    expect(route).toContain("Recipient authorization required");
+    expect(route).toContain("MAX_COORDINATE_AGE_MS");
+    expect(route).toContain("This location is no longer current");
+    expect(route).toContain("currentLat: null, currentLng: null, lastUpdatedAt: null");
+    expect(trustedShares).toContain("UPDATE location_shares");
+    expect(trustedShares).toContain("current_lat = NULL");
+  });
+
   it("publishes a first native coordinate before claiming the share is live", () => {
     const mobile = readFileSync(
       fileURLToPath(new URL("../../../mobile/app/location-share.tsx", import.meta.url)),
@@ -50,7 +72,7 @@ describe("location share public view", () => {
     const activeMessage = mobile.indexOf('"Location Sharing Active"');
     expect(firstUpdate).toBeGreaterThan(-1);
     expect(activeMessage).toBeGreaterThan(firstUpdate);
-    expect(mobile).toContain("still waiting for your first location update");
+    expect(mobile).toContain("will not see a location until the first update succeeds");
     expect(mobile).toContain("startLocationUpdates(activeShare, token)");
     expect(mobile).toContain("const activeShares = unexpiredShares.filter(hasPublishedCoordinate)");
     expect(mobile).toContain("const waitingShares = unexpiredShares.filter");
@@ -60,5 +82,9 @@ describe("location share public view", () => {
     expect(mobile).toContain("activeShareRef.current = resumableShare");
     expect(mobile).toContain("setActiveShareId(resumableShare?.id ?? null)");
     expect(mobile).toContain("activeShareRef.current?.id === activeShareId");
+    expect(mobile).toContain("recipientTrustedShareId: selectedRecipientId");
+    expect(mobile).toContain("Accepted Kinfolk Contact");
+    expect(mobile).not.toContain("Copy Share Link");
+    expect(mobile).not.toContain("Copy Pending Link");
   });
 });

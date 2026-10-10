@@ -28,7 +28,7 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
     expect(JSON.stringify(notification)).not.toMatch(/ownerId|latitude|longitude|token|search|checkin/i);
   });
 
-  it("keeps the bearer location-view payload free of account identity", () => {
+  it("keeps the recipient-authorized location payload free of account identity", () => {
     const view = publicLocationShare({
       label: "Safe arrival",
       currentLat: 33.749,
@@ -59,12 +59,15 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
     expect(delivery).toContain("AND contact_accepted = true");
   });
 
-  it("copies the public browser viewer rather than raw API JSON", () => {
+  it("does not expose a copyable bearer link for precise location access", () => {
     const mobile = readFileSync(
       fileURLToPath(new URL("../../../mobile/app/location-share.tsx", import.meta.url)),
       "utf8",
     );
-    expect(mobile).toContain("/safety/location/${encodeURIComponent(");
-    expect(mobile).not.toContain("/api/safety/location-shares/${token}/view");
+    expect(mobile).toContain("Accepted Kinfolk Contact");
+    expect(mobile).toContain("recipientTrustedShareId: selectedRecipientId");
+    expect(mobile).not.toContain("Copy Share Link");
+    expect(mobile).not.toContain("Copy Pending Link");
+    expect(mobile).not.toContain("expo-clipboard");
   });
 });

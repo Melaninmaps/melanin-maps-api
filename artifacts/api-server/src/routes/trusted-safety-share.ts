@@ -295,6 +295,22 @@ router.delete("/safety/trusted-shares/:id", async (req: Request, res: Response) 
        WHERE id = $1`,
       [id]
     );
+    // A trusted-contact revoke must terminate any dependent live-location
+    // access immediately and remove the last precise coordinate. This is
+    // intentionally separate from later policy-approved audit retention.
+    if (existing.rows[0].contact_user_id) {
+      await pool.query(
+        `UPDATE location_shares
+            SET is_active = false,
+                current_lat = NULL,
+                current_lng = NULL,
+                last_updated_at = NULL
+          WHERE sharer_id = $1
+            AND recipient_user_id = $2
+            AND is_active = true`,
+        [ownerId, existing.rows[0].contact_user_id],
+      );
+    }
     res.json({ revoked: true });
   } catch (err) {
     req.log?.error({ err }, "DELETE /safety/trusted-shares/:id error");

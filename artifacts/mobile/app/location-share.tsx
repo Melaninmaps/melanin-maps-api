@@ -1,5 +1,4 @@
 import { Feather } from "@expo/vector-icons";
-import * as Clipboard from "expo-clipboard";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
@@ -28,7 +27,6 @@ type LocationShare = {
   id: number;
   label: string;
   shareToken: string;
-  recipientEmail: string | null;
   isActive: boolean;
   expiresAt: string;
   currentLat: number | null;
@@ -37,6 +35,16 @@ type LocationShare = {
   coordinateState?: "published" | "waiting_for_first_update";
   updateMode?: "foreground_while_screen_open";
   linkDeliveryState?: "not_sent_by_service";
+};
+
+type TrustedRecipient = {
+  id: string;
+  contact_type: "mwm_user" | string;
+  contact_user_id: string | null;
+  contact_name: string;
+  status: string;
+  contact_accepted: boolean;
+  owner_enabled: boolean;
 };
 
 const DURATION_OPTIONS = [
@@ -64,7 +72,8 @@ export default function LocationShareScreen() {
   const [loading, setLoading] = useState(true);
   const [showNew, setShowNew] = useState(false);
   const [label, setLabel] = useState("");
-  const [recipientEmail, setRecipientEmail] = useState("");
+  const [recipients, setRecipients] = useState<TrustedRecipient[]>([]);
+  const [selectedRecipientId, setSelectedRecipientId] = useState<string | null>(null);
   const [selectedDuration, setSelectedDuration] = useState(60);
   const [creating, setCreating] = useState(false);
   const [activeShareId, setActiveShareId] = useState<number | null>(null);
@@ -75,7 +84,19 @@ export default function LocationShareScreen() {
     setLoading(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const res = await fetch(`${getApiBase()}/api/safety/location-shares`, { headers: { Authorization: `Bearer ${token}` } });
+      const [res, trustedRes] = await Promise.all([
+        fetch(`${getApiBase()}/api/safety/location-shares`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${getApiBase()}/api/safety/trusted-shares`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      if (trustedRes.ok) {
+        const trusted = await trustedRes.json() as { shares?: TrustedRecipient[] };
+        const eligible = (trusted.shares ?? []).filter((share) =>
+          share.contact_type === "mwm_user" && share.status === "active" &&
+          share.contact_accepted === true && share.owner_enabled === true && Boolean(share.contact_user_id),
+        );
+        setRecipients(eligible);
+        setSelectedRecipientId((current) => eligible.some((share) => share.id === current) ? current : eligible[0]?.id ?? null);
+      }
       if (res.ok) {
         const d = await res.json() as { shares: LocationShare[] };
         const fetchedShares = d.shares ?? [];
@@ -156,7 +177,7 @@ export default function LocationShareScreen() {
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           label: label.trim() || "My Live Location",
-          recipientEmail: recipientEmail.trim() || undefined,
+          recipientTrustedShareId: selectedRecipientId,
           durationMinutes: selectedDuration,
         }),
       });
@@ -176,18 +197,14 @@ export default function LocationShareScreen() {
         activeShareRef.current = readyShare;
         setActiveShareId(readyShare.id);
         setShowNew(false);
-        setLabel(""); setRecipientEmail("");
+        setLabel("");
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        const shareUrl = `${getApiBase()}/safety/location/${encodeURIComponent(readyShare.shareToken)}`;
         Alert.alert(
-          firstLocation ? "Location Sharing Active" : "Share Link Ready",
+          firstLocation ? "Location Sharing Active" : "Location Share Ready",
           firstLocation
-            ? `Your current location is now available. Copy the link to send to ${recipientEmail || "your contact"}. Updates continue only while this screen remains open.`
-            : "The secure link is ready but is still waiting for your first location update. Keep this screen open and we will retry.",
-          [
-            { text: "Copy Link", onPress: () => { void Clipboard.setStringAsync(shareUrl); Haptics.selectionAsync(); } },
-            { text: "Done" },
-          ],
+            ? "Your current location is available only to the accepted Kinfolk contact you selected. Updates continue only while this screen remains open."
+            : "The authorized contact will not see a location until the first update succeeds. Keep this screen open and we will retry.",
+          [{ text: "Done" }],
         );
       } else {
         Alert.alert("Error", d.error ?? "Failed to start location share.");
@@ -203,7 +220,11 @@ export default function LocationShareScreen() {
       {
         text: "Stop", style: "destructive", onPress: async () => {
           const token = await SecureStore.getItemAsync("auth_session_token");
-          await fetch(`${getApiBase()}/api/safety/location-shares/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+          const response = await fetch(`${getApiBase()}/api/safety/location-shares/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+          if (!response.ok) {
+            Alert.alert("Unable to Stop Sharing", "The server did not confirm that location sharing stopped. Please try again.");
+            return;
+          }
           setShares((prev) => prev.map((s) => s.id === id ? { ...s, isActive: false } : s));
           if (activeShareId === id) {
             activeShareRef.current = null;
@@ -215,12 +236,6 @@ export default function LocationShareScreen() {
     ]);
   };
 
-  const handleCopyLink = async (token: string) => {
-    const url = `${getApiBase()}/safety/location/${encodeURIComponent(token)}`;
-    await Clipboard.setStringAsync(url);
-    if (Platform.OS !== "web") Haptics.selectionAsync();
-    Alert.alert("Copied!", "Location link copied to clipboard.");
-  };
 
   const formatExpiry = (iso: string) => {
     const d = new Date(iso);
@@ -262,7 +277,7 @@ export default function LocationShareScreen() {
           <View style={[styles.infoBanner, { backgroundColor: "#2563EB0F", borderColor: "#2563EB30" }]}>
             <Feather name="map-pin" size={18} color="#2563EB" />
             <Text style={[styles.infoText, { color: colors.foreground }]}>
-              This is temporary location sharing, not an emergency alert. Coordinates refresh about every 30 seconds only while this screen is open; background updates are not enabled. Copy and send the link yourself.
+              This is temporary location sharing, not an emergency alert. Select an accepted Kinfolk trusted contact; only that currently authorized contact can access fresh coordinates. Updates refresh about every 30 seconds only while this screen is open; background updates are not enabled.
             </Text>
           </View>
 
@@ -285,16 +300,19 @@ export default function LocationShareScreen() {
                 value={label}
                 onChangeText={setLabel}
               />
-              <Text style={[styles.formLabel, { color: colors.foreground }]}>Recipient Email Label (optional)</Text>
-              <TextInput
-                style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
-                placeholder="For your reference; no email is sent"
-                placeholderTextColor={colors.mutedForeground}
-                value={recipientEmail}
-                onChangeText={setRecipientEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
+              <Text style={[styles.formLabel, { color: colors.foreground }]}>Accepted Kinfolk Contact</Text>
+              {recipients.length === 0 ? (
+                <Text style={[styles.lastUpdated, { color: colors.mutedForeground }]}>Add and obtain acceptance from a trusted Kinfolk contact before sharing location.</Text>
+              ) : (
+                <View style={styles.durationRow}>
+                  {recipients.map((recipient) => {
+                    const selected = selectedRecipientId === recipient.id;
+                    return <TouchableOpacity key={recipient.id} style={[styles.durationChip, { borderColor: selected ? "#2563EB" : colors.border, backgroundColor: selected ? "#2563EB" : colors.background }]} onPress={() => setSelectedRecipientId(recipient.id)} activeOpacity={0.7} accessibilityRole="button" accessibilityState={{ selected }}>
+                      <Text style={[styles.durationText, { color: selected ? "#fff" : colors.foreground }]}>{recipient.contact_name}</Text>
+                    </TouchableOpacity>;
+                  })}
+                </View>
+              )}
               <Text style={[styles.formLabel, { color: colors.foreground }]}>Duration</Text>
               <ScrollView
         keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false}>
@@ -317,7 +335,7 @@ export default function LocationShareScreen() {
               <TouchableOpacity
                 style={[styles.saveBtn, { opacity: creating ? 0.6 : 1 }]}
                 onPress={() => void handleCreate()}
-                disabled={creating}
+                disabled={creating || !selectedRecipientId}
                 activeOpacity={0.85}
               >
                 {creating ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="map-pin" size={16} color="#fff" />}
@@ -339,7 +357,7 @@ export default function LocationShareScreen() {
                       <Text style={[styles.shareLabel, { color: colors.foreground }]}>{share.label}</Text>
                       <Text style={[styles.shareExpiry, { color: "#D97706" }]}>Waiting for first location — retrying</Text>
                       <Text style={[styles.lastUpdated, { color: colors.mutedForeground }]}>{formatExpiry(share.expiresAt)}</Text>
-                      <Text style={[styles.lastUpdated, { color: colors.mutedForeground }]}>Link not sent by the app · updates require this screen to stay open</Text>
+                      <Text style={[styles.lastUpdated, { color: colors.mutedForeground }]}>Only the selected accepted contact can access a fresh location · updates require this screen to stay open</Text>
                     </View>
                     <TouchableOpacity
                       style={[styles.stopBtn, { borderColor: "#DC2626" }]}
@@ -350,14 +368,6 @@ export default function LocationShareScreen() {
                       <Text style={styles.stopBtnText}>Stop</Text>
                     </TouchableOpacity>
                   </View>
-                  <TouchableOpacity
-                    style={[styles.copyBtn, { backgroundColor: "#D9770618", borderColor: "#D9770630" }]}
-                    onPress={() => void handleCopyLink(share.shareToken)}
-                    activeOpacity={0.7}
-                  >
-                    <Feather name="copy" size={14} color="#D97706" />
-                    <Text style={[styles.copyBtnText, { color: "#D97706" }]}>Copy Pending Link</Text>
-                  </TouchableOpacity>
                 </View>
               ))}
             </View>
@@ -390,15 +400,6 @@ export default function LocationShareScreen() {
                       Last update received: {new Date(s.lastUpdatedAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })} · foreground only
                     </Text>
                   )}
-                  <Text style={[styles.lastUpdated, { color: colors.mutedForeground }]}>Link delivery: not sent by the app; copy it below.</Text>
-                  <TouchableOpacity
-                    style={[styles.copyBtn, { backgroundColor: "#2563EB18", borderColor: "#2563EB30" }]}
-                    onPress={() => void handleCopyLink(s.shareToken)}
-                    activeOpacity={0.7}
-                  >
-                    <Feather name="copy" size={14} color="#2563EB" />
-                    <Text style={[styles.copyBtnText, { color: "#2563EB" }]}>Copy Share Link</Text>
-                  </TouchableOpacity>
                 </View>
               ))}
             </View>
@@ -409,7 +410,7 @@ export default function LocationShareScreen() {
               <Feather name="map-pin" size={28} color={colors.mutedForeground} />
               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No location shares yet</Text>
               <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
-                Start a temporary link before a meetup or trip. It updates while this screen is open and must be sent manually.
+                Start a temporary share for an accepted Kinfolk trusted contact. It updates only while this screen is open and access ends on stop, expiry, block, or revoked contact consent.
               </Text>
             </View>
           )}
