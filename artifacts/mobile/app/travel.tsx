@@ -57,6 +57,7 @@ import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiv
 import { KinfolkInlineMemoryConsent } from "@/components/KinfolkInlineMemoryConsent";
 import { KinfolkMemoryUseNotice } from "@/components/KinfolkMemoryUseNotice";
 import { KinfolkContextualPresentation } from "@/components/KinfolkContextualPresentation";
+import { KinfolkAnswerText } from "@/components/KinfolkAnswerText";
 import { KinfolkVoiceSourceControls } from "@/components/KinfolkVoiceSourceControls";
 import { useKinfolkVoiceSource } from "@/hooks/useKinfolkVoiceSource";
 // ─── Constants ───────────────────────────────────────────────────────────────
@@ -692,7 +693,12 @@ function AiMessageBubble({
       <View style={aiStyles.contentCol}>
         {/* Reply text */}
         <View style={[aiStyles.bubble, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text selectable style={[aiStyles.bubbleText, { color: colors.text }]}>{msg.content}</Text>
+          <KinfolkAnswerText
+            content={msg.content}
+            color={colors.text}
+            linkColor={GOLD}
+            textStyle={aiStyles.bubbleText}
+          />
           {visibleSpokenText ? (
             <View
               testID="kinfolk-visible-spoken-text"

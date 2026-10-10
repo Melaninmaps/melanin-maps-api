@@ -36,6 +36,7 @@ import { useColors } from "@/hooks/useColors";
 import { getApiBase } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { parseSafeSourceLink } from "@/lib/sourceLinks";
+import { KinfolkAnswerText } from "@/components/KinfolkAnswerText";
 import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
 import {
   KinfolkBusinessRecommendationSheet,
@@ -102,30 +103,6 @@ const GREETING = "Kinfolk's here. Let's map it out.";
 const AAVE_LEVEL_KEY = "@kinfolk_aave_level";
 const KINFOLK_PREVIEW_TEXT = "Kinfolk is here. I will give you the direct answer, explain what matters, and help you decide what comes next.";
 const NATIVE_VOICE_MAX_DURATION_MS = 60_000;
-
-function renderKinfolkMessageText(text: string, color: string, linkColor: string): React.ReactNode[] {
-  const tokens = text.split(/(\[[^\]]+\]\(https?:\/\/[^\s)]+\)|\*\*[^*]+\*\*)/g);
-  return tokens.filter(Boolean).map((token, index) => {
-    const markdownLink = token.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);
-    if (markdownLink) {
-      const safe = parseSafeSourceLink({ title: markdownLink[1], url: markdownLink[2] });
-      return safe ? (
-        <Text
-          key={`${safe.url}-${index}`}
-          style={{ color: linkColor, textDecorationLine: "underline", fontFamily: "Inter_600SemiBold" }}
-          accessibilityRole="link"
-          onPress={() => void Linking.openURL(safe.url).catch(() => undefined)}
-        >
-          {safe.title}
-        </Text>
-      ) : <Text key={index} style={{ color }}>{markdownLink[1]}</Text>;
-    }
-    const bold = token.match(/^\*\*([^*]+)\*\*$/);
-    return bold ? (
-      <Text key={index} style={{ color, fontFamily: "Inter_700Bold" }}>{bold[1]}</Text>
-    ) : <Text key={index} style={{ color }}>{token}</Text>;
-  });
-}
 
 const AAVE_OPTIONS = [
   { level: 0, label: "Off",       desc: "Standard Kinfolk voice" },
@@ -1337,13 +1314,12 @@ export function AIChatWidget() {
                       ? { backgroundColor: colors.primary, borderBottomRightRadius: 4 }
                       : { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderBottomLeftRadius: 4 },
                   ]}>
-                    <Text style={[styles.bubbleTxt, { color: item.fromUser ? "#FFF" : colors.foreground }]}>
-                      {renderKinfolkMessageText(
-                        item.text,
-                        item.fromUser ? "#FFF" : colors.foreground,
-                        item.fromUser ? "#FFF" : colors.primary,
-                      )}
-                    </Text>
+                    <KinfolkAnswerText
+                      content={item.text}
+                      color={item.fromUser ? "#FFF" : colors.foreground}
+                      linkColor={item.fromUser ? "#FFF" : colors.primary}
+                      textStyle={styles.bubbleTxt}
+                    />
                   </View>
                 </View>
                 {/* Location resolution pill — shows which city Kinfolk resolved */}
