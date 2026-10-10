@@ -345,6 +345,7 @@ import {
 } from "../kinfolk/private-memory";
 import {
   buildPrivateMemoryPersonalizationBlock,
+  governedDiscoveryPreferenceTermsForMemories,
   isApprovedPrivateMemoryRelevant,
   resolvePrivateMemoryUseDecision,
   type PrivateMemoryUseState,
@@ -6101,6 +6102,46 @@ function isSensitiveMemoryRelevant(
   );
 }
 
+type PrivateMemoryForTurn = {
+  content: string;
+  purpose: string;
+  isSensitive: boolean;
+};
+
+/**
+ * One member-scoped selection boundary for ordinary conversation and the
+ * deterministic governed-discovery path. This does not persist, log, or expose
+ * a private value; callers receive only already-authorized records for the
+ * same authenticated member and decide separately whether a response can use
+ * them after evidence and usable-result gates have passed.
+ */
+function selectRelevantPrivateMemoriesForTurn(input: {
+  memories: readonly PrivateMemoryForTurn[];
+  currentMessage: string;
+  explicitMemoryEnabled: boolean;
+}): PrivateMemoryForTurn[] {
+  return input.memories.filter((memory) => {
+    const legacyRelevant =
+      (memory.purpose === "preferred_name"
+        ? input.explicitMemoryEnabled
+        : memory.purpose === "planning_context"
+          ? isConsentedPlanningMemoryRelevant(memory, input.currentMessage)
+          : memory.purpose === "profile_context"
+            ? isExplicitProfileMemoryRelevant(memory, input.currentMessage)
+            : ["preference", "goal", "ongoing_context"].includes(memory.purpose)
+              ? isOrdinaryContinuityMemoryRelevant(memory, input.currentMessage)
+              : (!memory.isSensitive ||
+                isSensitiveMemoryRelevant(memory.content, input.currentMessage))) &&
+      (memory.purpose !== "companion_context" ||
+        isCompanionMemoryRelevant(memory.content, input.currentMessage));
+    return isApprovedPrivateMemoryRelevant({
+      memory,
+      currentMessage: input.currentMessage,
+      legacyRelevant,
+    });
+  });
+}
+
 async function findPreferredNameMemory(userId: string) {
   const [memory] = await db
     .select({
@@ -7623,6 +7664,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   /** Current-turn public origin only; never sent to memory or session storage. */
   publicOrigin?: unknown;
 }): Promise<boolean> {
+  const directDiscoveryStartedAt = Date.now();
   // A city-bearing health, safety, legal, or financial question must never be
   // consumed by the ordinary business-card fast path. It continues below to the
   // evidence and care-navigation policies instead.
@@ -7721,11 +7763,14 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   } catch {
     return false;
   }
-  // Deterministic business search has no model prompt. Load only member-approved
-  // planning notes that directly match this practical request so its follow-up
-  // can surface timing or budget tradeoffs without inventing facts.
-  const explicitMemberMemoryEnabled = input.memoryEnabled;
-  const relevantPlanningMemories = explicitMemberMemoryEnabled
+  // Deterministic discovery does not call a model. It still uses the same
+  // owner-scoped relevance boundary as ordinary Kinfolk so an approved
+  // preference can be a soft metadata-ranking cue without changing eligibility.
+  const explicitMemberMemoryEnabled = isExplicitMemberMemoryEnabled();
+  const directPrivateMemoryRuntimeEnabled = isKinfolkPrivateMemoryEnabled();
+  let directPrivateMemoryStorageUnavailable = false;
+  const directActivePrivateMemories =
+    input.memoryEnabled && directPrivateMemoryRuntimeEnabled
     ? await db
         .select({
           content: kinfolkPrivateMemoriesTable.content,
@@ -7736,7 +7781,6 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
         .where(
           and(
             eq(kinfolkPrivateMemoriesTable.userId, input.req.user!.id),
-            eq(kinfolkPrivateMemoriesTable.purpose, "planning_context"),
             or(
               eq(kinfolkPrivateMemoriesTable.isSensitive, false),
               isNotNull(kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt),
@@ -7751,13 +7795,22 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
         )
         .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
         .limit(8)
-        .then((memories) =>
-          memories.filter((memory) =>
-            isConsentedPlanningMemoryRelevant(memory, input.message),
-          ),
-        )
-        .catch(() => [])
+        .catch(() => {
+          directPrivateMemoryStorageUnavailable = true;
+          return [];
+        })
     : [];
+  const directRelevantPrivateMemories = selectRelevantPrivateMemoriesForTurn({
+    memories: directActivePrivateMemories,
+    currentMessage: input.message,
+    explicitMemoryEnabled: explicitMemberMemoryEnabled,
+  });
+  const directPersonalizationMemories = directRelevantPrivateMemories.filter(
+    (memory) => memory.purpose !== "preferred_name",
+  );
+  const relevantPlanningMemories = directPersonalizationMemories.filter(
+    (memory) => memory.purpose === "planning_context",
+  );
   const planningFollowUp = buildPlanningDiscoveryFollowUp(
     relevantPlanningMemories,
     input.message,
@@ -7765,43 +7818,25 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const planningDiscoveryTerms = planningDiscoveryPreferenceTerms(
     relevantPlanningMemories,
   );
-  // Profile notes can refine a matching service search only where their own
-  // documented listing metadata supports it. They never become a designation
-  // filter or an inferred ownership claim.
-  const relevantProfileDiscoveryTerms = explicitMemberMemoryEnabled
-    ? await db
-        .select({
-          content: kinfolkPrivateMemoriesTable.content,
-          purpose: kinfolkPrivateMemoriesTable.purpose,
-        })
-        .from(kinfolkPrivateMemoriesTable)
-        .where(
-          and(
-            eq(kinfolkPrivateMemoriesTable.userId, input.req.user!.id),
-            eq(kinfolkPrivateMemoriesTable.purpose, "profile_context"),
-            or(
-              eq(kinfolkPrivateMemoriesTable.isSensitive, false),
-              isNotNull(kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt),
-            ),
-            isNull(kinfolkPrivateMemoriesTable.revokedAt),
-            isNull(kinfolkPrivateMemoriesTable.pausedAt),
-            or(
-              isNull(kinfolkPrivateMemoriesTable.expiresAt),
-              gt(kinfolkPrivateMemoriesTable.expiresAt, new Date()),
-            ),
-          ),
-        )
-        .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
-        .limit(8)
-        .then((memories) =>
-          memories.flatMap((memory) =>
-            isExplicitProfileMemoryRelevant(memory, input.message)
-              ? profileDiscoveryContextTerms(memory)
-              : [],
-          ),
-        )
-        .catch(() => [])
-    : [];
+  // These controlled tokens are extracted only from already relevant,
+  // non-sensitive preferences. They are soft ranking cues for published listing
+  // metadata, never an ownership designation, eligibility filter, or fact.
+  const governedPrivateMemoryTerms = governedDiscoveryPreferenceTermsForMemories(
+    directPersonalizationMemories,
+  );
+  const relevantProfileDiscoveryTerms = directPersonalizationMemories.flatMap(
+    (memory) =>
+      memory.purpose === "profile_context"
+        ? profileDiscoveryContextTerms(memory)
+        : [],
+  );
+  const directPrivateDiscoveryTerms = [
+    ...new Set([
+      ...planningDiscoveryTerms,
+      ...relevantProfileDiscoveryTerms,
+      ...governedPrivateMemoryTerms,
+    ]),
+  ];
   const [prefs, assuredAgeBand] = input.memoryEnabled
     ? await Promise.all([
         getCachedPrefs(input.req.user!.id),
@@ -8043,12 +8078,14 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
         ...preferredDesignationLabels,
         ...memberContextTerms,
         ...planningDiscoveryTerms,
+        ...governedPrivateMemoryTerms,
       ],
       priorityPreferenceTerms: [
         ...(prefs?.favoriteCategories ?? []),
         ...preferredDesignationLabels,
         ...memberContextTerms,
         ...planningDiscoveryTerms,
+        ...governedPrivateMemoryTerms,
       ],
       avoidTerms: prefs?.avoidCategories ?? [],
       currentRequest: input.message,
@@ -8135,6 +8172,24 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
           stage: noResultStage,
         })
       : null;
+  // A private preference is considered applied only when it supplied a
+  // controlled metadata-ranking term and a completed governed catalog returned
+  // at least one eligible business. Empty, degraded, or evidence-limited paths
+  // never claim personalization.
+  const governedDiscoveryHasUsableRecommendation =
+    platformCount > 0 &&
+    discoveryResult.discovery.platformStatus === "completed" &&
+    !noResultOffer;
+  const directPrivateMemoryUseDecision = resolvePrivateMemoryUseDecision({
+    runtimeEnabled: directPrivateMemoryRuntimeEnabled,
+    memberEnabled: input.memoryEnabled,
+    storageUnavailable: directPrivateMemoryStorageUnavailable,
+    activeMemoryCount: directActivePrivateMemories.length,
+    relevantMemoryCount: directPersonalizationMemories.length,
+    allowPersonalization:
+      governedDiscoveryHasUsableRecommendation &&
+      directPrivateDiscoveryTerms.length > 0,
+  });
   const conciseDirectoryReply =
     noResultOffer
       ? noResultOffer.reply
@@ -8184,6 +8239,23 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     destination: location.city,
     vibes: input.vibes,
   });
+  const directDiscoveryDegraded =
+    discoveryResult.discovery.platformStatus === "degraded" ||
+    discoveryResult.discovery.webSearch.state !== "completed";
+  recordKinfolkTelemetry({
+    requestId: crypto.randomUUID(),
+    questionClass: "business_discovery",
+    status: 200,
+    degraded: directDiscoveryDegraded,
+    degradedReason: directDiscoveryDegraded
+      ? "governed_discovery_partially_available"
+      : null,
+    providerStatus: null,
+    latencyMs: Date.now() - directDiscoveryStartedAt,
+    retrievalState: "internal",
+    sourceCount: responseSources.length,
+    privateMemoryState: directPrivateMemoryUseDecision.state,
+  });
 
   input.res.status(200).json({
     sessionId: finalSessionId,
@@ -8195,6 +8267,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     smartPromotion: null,
     taskAction: null,
     libraryAction: null,
+    memoryUse: directPrivateMemoryUseDecision.memberFacingUse,
     intentClass: "business_discovery",
     responseMeta: {
       schemaVersion: 1,
@@ -8231,9 +8304,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       source: location.source,
     },
     locationSource: location.source,
-    degraded:
-      discoveryResult.discovery.platformStatus === "degraded" ||
-      discoveryResult.discovery.webSearch.state !== "completed",
+    degraded: directDiscoveryDegraded,
     researchStatus: {
       usedInternal:
         discoveryResult.discovery.platformBusinesses.length +
@@ -12139,28 +12210,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               return [];
             })
         : [];
-    const relevantPrivateMemories = activePrivateMemories.filter(
-      (memory) => {
-        const legacyRelevant =
-          (memory.purpose === "preferred_name"
-          ? explicitMemberMemoryEnabled
-          : memory.purpose === "planning_context"
-          ? isConsentedPlanningMemoryRelevant(memory, message)
-          : memory.purpose === "profile_context"
-            ? isExplicitProfileMemoryRelevant(memory, message)
-            : ["preference", "goal", "ongoing_context"].includes(memory.purpose)
-              ? isOrdinaryContinuityMemoryRelevant(memory, message)
-            : (!memory.isSensitive ||
-              isSensitiveMemoryRelevant(memory.content, message))) &&
-          (memory.purpose !== "companion_context" ||
-            isCompanionMemoryRelevant(memory.content, message));
-        return isApprovedPrivateMemoryRelevant({
-          memory,
-          currentMessage: message,
-          legacyRelevant,
-        });
-      },
-    );
+    const relevantPrivateMemories = selectRelevantPrivateMemoriesForTurn({
+      memories: activePrivateMemories,
+      currentMessage: message,
+      explicitMemoryEnabled: explicitMemberMemoryEnabled,
+    });
     const personalizationRelevantMemories = relevantPrivateMemories.filter(
       (memory) => memory.purpose !== "preferred_name",
     );

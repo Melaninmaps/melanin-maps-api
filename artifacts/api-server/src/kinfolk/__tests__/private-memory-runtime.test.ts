@@ -224,7 +224,10 @@ describe("Kinfolk private-memory production control", () => {
     expect(chatRoute).toContain("privateMemoryUseDecision.shouldApply");
     expect(chatRoute).toContain("applyPreferredNameAddress({ name: activePreferredName, reply })");
     expect(chatRoute).toContain('generalAnswerRoute.strategy === "stable_knowledge"');
-    expect(chatRoute).toContain("memory.purpose === \"preferred_name\"\n          ? explicitMemberMemoryEnabled");
+    expect(chatRoute).toContain("selectRelevantPrivateMemoriesForTurn({");
+    expect(source).toContain("function selectRelevantPrivateMemoriesForTurn(input:");
+    expect(source).toContain("memory.purpose === \"preferred_name\"");
+    expect(source).toContain("? input.explicitMemoryEnabled");
   });
 
   it("keeps revoke and delete scoped to the selected active preferred-name row", () => {

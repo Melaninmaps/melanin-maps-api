@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildPrivateMemoryPersonalizationBlock,
+  governedDiscoveryPreferenceTermsForMemories,
   isApprovedPrivateMemoryRelevant,
   preferenceScopesForMemory,
   resolvePrivateMemoryUseDecision,
@@ -126,6 +127,50 @@ describe("private memory personalization", () => {
     );
     expect(block).toContain("cannot be changed by a private preference");
     expect(block).toContain("business promotion");
-    expect(block).toContain("I prefer vegan restaurants");
+    expect(block).toContain("vegan restaurants");
+  });
+
+  it("uses only controlled soft ranking terms for relevant non-sensitive discovery preferences", () => {
+    const terms = governedDiscoveryPreferenceTermsForMemories([
+      ordinary("I prefer vegan restaurants with step-free entrances and transit access."),
+      ordinary("My budget is tight and I travel with my children."),
+      { ...ordinary("My private diagnosis is sensitive."), isSensitive: true },
+    ]);
+
+    expect(terms).toEqual(
+      expect.arrayContaining([
+        "vegan",
+        "plant based",
+        "wheelchair accessible",
+        "accessible",
+        "transit",
+        "public transportation",
+        "affordable",
+        "budget",
+        "family",
+        "children",
+      ]),
+    );
+    expect(terms.join(" ")).not.toContain("private diagnosis");
+    expect(terms.join(" ")).not.toContain("sensitive");
+  });
+
+  it("recognizes an approved communication preference only for a matching writing task", () => {
+    const memory = ordinary("Please use a concise and direct communication style.");
+    expect(preferenceScopesForMemory(memory)).toContain("communication");
+    expect(
+      isApprovedPrivateMemoryRelevant({
+        memory,
+        currentMessage: "Draft a concise email to my landlord.",
+        legacyRelevant: false,
+      }),
+    ).toBe(true);
+    expect(
+      isApprovedPrivateMemoryRelevant({
+        memory,
+        currentMessage: "Find a restaurant in Philadelphia.",
+        legacyRelevant: false,
+      }),
+    ).toBe(false);
   });
 });

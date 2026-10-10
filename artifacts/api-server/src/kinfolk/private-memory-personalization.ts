@@ -23,7 +23,8 @@ export type PreferenceScope =
   | "budget"
   | "service_specialty"
   | "family"
-  | "travel";
+  | "travel"
+  | "communication";
 
 export type PrivateMemoryUseDecision = Readonly<{
   state: PrivateMemoryUseState;
@@ -85,6 +86,44 @@ const SCOPE_RULES: ReadonlyArray<{
     request:
       /\b(?:travel|trip|visit|vacation|hotel|airport|flight|commute|city|neighborhood|near me|restaurant|things to do|relocat(?:e|ing|ion))\b/i,
   },
+  {
+    scope: "communication",
+    memory:
+      /\b(?:communication|tone|concise|detailed|direct|formal|casual|friendly|emoji|humou?r)\b/i,
+    request:
+      /\b(?:write|draft|revise|rewrite|email|message|letter|proposal|resume|explain|summari[sz]e)\b/i,
+  },
+];
+
+const GOVERNED_DISCOVERY_PREFERENCE_TERMS: ReadonlyArray<{
+  pattern: RegExp;
+  terms: readonly string[];
+}> = [
+  { pattern: /\b(?:vegan|plant[- ]based)\b/i, terms: ["vegan", "plant based"] },
+  { pattern: /\bvegetarian\b/i, terms: ["vegetarian"] },
+  { pattern: /\bhalal\b/i, terms: ["halal"] },
+  { pattern: /\bkosher\b/i, terms: ["kosher"] },
+  { pattern: /\bgluten[- ]free\b/i, terms: ["gluten free"] },
+  { pattern: /\bdairy[- ]free\b/i, terms: ["dairy free"] },
+  { pattern: /\bcaribbean\b/i, terms: ["Caribbean"] },
+  { pattern: /\bethiopian\b/i, terms: ["Ethiopian"] },
+  { pattern: /\bwheelchair|step[- ]free\b/i, terms: ["wheelchair accessible", "accessible"] },
+  { pattern: /\b(?:asl|caption(?:ed|ing)|hearing)\b/i, terms: ["ASL", "captioned"] },
+  { pattern: /\b(?:sensory|quiet(?:er)? environment)\b/i, terms: ["sensory friendly", "quiet"] },
+  { pattern: /\b(?:transit|public transport|subway|bus|train)\b/i, terms: ["transit", "public transportation"] },
+  { pattern: /\bparking\b/i, terms: ["parking"] },
+  { pattern: /\b(?:walk(?:ing)?|car[- ]free|bike)\b/i, terms: ["walkable"] },
+  { pattern: /\b(?:budget|afford(?:able|ability)?|low[- ]?cost|inexpensive|cheap)\b/i, terms: ["affordable", "budget"] },
+  { pattern: /\bluxury\b/i, terms: ["luxury"] },
+  { pattern: /\b(?:barber|barbershop)\b/i, terms: ["barber"] },
+  { pattern: /\b(?:braid(?:s|er|ing)?|locs?|loctician|natural hair)\b/i, terms: ["natural hair", "loctician"] },
+  { pattern: /\bnails?\b/i, terms: ["nails"] },
+  { pattern: /\btattoo\b/i, terms: ["tattoo"] },
+  { pattern: /\bpiercing\b/i, terms: ["piercing"] },
+  { pattern: /\bdoula\b/i, terms: ["doula"] },
+  { pattern: /\bmassage\b/i, terms: ["massage"] },
+  { pattern: /\bchildcare\b/i, terms: ["childcare", "children"] },
+  { pattern: /\b(?:children|kids?|family|caregiv(?:er|ing))\b/i, terms: ["family", "children"] },
 ];
 
 /**
@@ -116,6 +155,26 @@ export function isApprovedPrivateMemoryRelevant(input: {
     ({ memory, request }) =>
       memory.test(input.memory.content) && request.test(input.currentMessage),
   );
+}
+
+/**
+ * Converts a relevant, non-sensitive approved preference into a small controlled
+ * set of *soft* directory-ranking terms. It never returns raw member text,
+ * changes a governed eligibility predicate, or creates a hard service claim.
+ */
+export function governedDiscoveryPreferenceTermsForMemories(
+  memories: readonly PrivateMemoryCandidate[],
+): string[] {
+  const terms = new Set<string>();
+  for (const memory of memories) {
+    if (memory.isSensitive || memory.purpose === "preferred_name") continue;
+    for (const rule of GOVERNED_DISCOVERY_PREFERENCE_TERMS) {
+      if (rule.pattern.test(memory.content)) {
+        for (const term of rule.terms) terms.add(term);
+      }
+    }
+  }
+  return [...terms];
 }
 
 export function resolvePrivateMemoryUseDecision(input: {
