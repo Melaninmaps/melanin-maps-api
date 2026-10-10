@@ -131,7 +131,7 @@ export function parseGenericAnswerRouteDecision(
  */
 export function buildGenericAnswerRouteClassifierPrompt(): string {
   return [
-    "Classify the member's conversational need before an answer is written.",
+    "Classify the member's conversational need before an answer is written. This is not a subject-support gate: an ordinary permitted question remains answerable even when it is unfamiliar or does not match a product capability.",
     "The input JSON contains currentMessage and a bounded recentConversation. Use the history only to resolve the current message's purpose; do not repeat it or infer profile information from it. The classifier never receives profile, memory, identity, location, directory, or community data.",
     "Return JSON only with evidenceNeed, purpose, conversationIntent, and clarificationQuestion.",
     "evidenceNeed must be one of: stable, current, authoritative.",
@@ -146,7 +146,7 @@ export function buildGenericAnswerRouteClassifierPrompt(): string {
     "For emotional support, social interpretation, and low-stakes decision support, offer a safe provisional next step instead of asking for clarification when the turn already supports a useful response.",
     "Choose approved_memory_recall only when the member asks about information they explicitly saved and authorized Kinfolk to use. Do not infer, create, or broaden memory.",
     "Choose clarification only when one missing detail materially prevents a useful response; provide one short, focused clarificationQuestion. Do not ask a question when a safe, useful answer can be given without it.",
-    "Choose unsafe_or_unverifiable only when the requested action is unsafe. Do not use it merely because you do not have sources; the server retrieves evidence after this classification.",
+    "Choose unsafe_or_unverifiable only when the requested action is unsafe. Do not use it because a subject is unfamiliar, because a specialized tool is unavailable, or merely because you do not have sources; the server retrieves evidence after this classification.",
     "Do not answer the member. Do not infer identity, location, preferences, or facts not present in the turn.",
   ].join(" ");
 }

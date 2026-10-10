@@ -310,4 +310,26 @@ describe("strict Kinfolk model envelopes", () => {
       value: { reply: "Here is a safe plan.", recommendations: null },
     });
   });
+
+  it("accepts bounded plain text only when the ordinary no-tool path opts in", () => {
+    const plain = "Here is a clear explanation in ordinary language.";
+    expect(parseKinfolkModelPayload(plain)).toEqual({
+      valid: false,
+      reply: SAFE_MODEL_RESPONSE_FALLBACK,
+      value: null,
+    });
+    expect(parseKinfolkModelPayload(plain, { allowPlainTextReply: true })).toEqual({
+      valid: true,
+      reply: plain,
+      value: { reply: plain },
+    });
+  });
+
+  it("never relabels malformed structured output as a plain-text reply", () => {
+    expect(parseKinfolkModelPayload('{"reply":', { allowPlainTextReply: true })).toEqual({
+      valid: false,
+      reply: SAFE_MODEL_RESPONSE_FALLBACK,
+      value: null,
+    });
+  });
 });

@@ -36,6 +36,16 @@ export type ParsedKinfolkModelPayload = {
   value: Record<string, unknown> | null;
 };
 
+export type ParseKinfolkModelPayloadOptions = Readonly<{
+  /**
+   * The ordinary, no-tool general-chat path may render a bounded plain-text
+   * answer from a compatible provider. Governed, evidence-backed, and action
+   * paths stay envelope-only so unstructured output cannot populate cards,
+   * sources, recommendations, or actions.
+   */
+  allowPlainTextReply?: boolean;
+}>;
+
 export type KinfolkTravelProfile = Readonly<{
   ageBand: BusinessAudienceBand;
   favoriteCategories?: readonly string[] | null;
@@ -70,6 +80,7 @@ const NUMBER_WORDS: Readonly<Record<string, number>> = {
 
 const ITINERARY_SIGNAL = /\b(itinerary|day[- ]by[- ]day|trip plan|travel plan|plan (?:me |my |our |a )?(?:trip|visit|getaway|weekend|vacation)|what (?:should|can) (?:i|we) do each day)\b/i;
 const FENCED_CONTENT = /^\s*```(?:json)?\s*[\s\S]*```\s*$/i;
+const MAX_PLAIN_TEXT_REPLY_LENGTH = 12_000;
 
 export function isTravelPlanningPrompt(message: string): boolean {
   return ITINERARY_SIGNAL.test(message);
@@ -125,11 +136,16 @@ function nonempty(value: unknown): string | null {
 }
 
 /**
- * Parse a model envelope strictly. Fenced, malformed, non-object, or reply-less
- * content is never reflected to a member as raw provider text.
+ * Parse a model envelope strictly. The optional plain-text branch is deliberately
+ * reserved for an ordinary no-tool general answer; every governed response stays
+ * envelope-only so model text cannot populate structured member-facing features.
  */
-export function parseKinfolkModelPayload(rawContent: string): ParsedKinfolkModelPayload {
-  if (!rawContent.trim() || FENCED_CONTENT.test(rawContent)) {
+export function parseKinfolkModelPayload(
+  rawContent: string,
+  options: ParseKinfolkModelPayloadOptions = {},
+): ParsedKinfolkModelPayload {
+  const trimmed = rawContent.trim();
+  if (!trimmed || FENCED_CONTENT.test(rawContent)) {
     return { valid: false, reply: SAFE_MODEL_RESPONSE_FALLBACK, value: null };
   }
   try {
@@ -142,6 +158,17 @@ export function parseKinfolkModelPayload(rawContent: string): ParsedKinfolkModel
     if (!reply) return { valid: false, reply: SAFE_MODEL_RESPONSE_FALLBACK, value: null };
     return { valid: true, reply, value };
   } catch {
+    // A provider that is compatible for ordinary chat may return plain text even
+    // when asked for an envelope. Do not turn that harmless, bounded answer into
+    // a dead end, but never accept a malformed structured payload as text.
+    const looksLikeStructuredPayload = /^[{[]/.test(trimmed);
+    if (
+      options.allowPlainTextReply === true &&
+      !looksLikeStructuredPayload &&
+      trimmed.length <= MAX_PLAIN_TEXT_REPLY_LENGTH
+    ) {
+      return { valid: true, reply: trimmed, value: { reply: trimmed } };
+    }
     return { valid: false, reply: SAFE_MODEL_RESPONSE_FALLBACK, value: null };
   }
 }

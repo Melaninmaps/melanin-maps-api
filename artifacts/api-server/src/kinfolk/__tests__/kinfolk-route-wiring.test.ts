@@ -69,7 +69,9 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("resolvePermittedIdentityContext(message)");
     expect(chatRoute).toContain("classifyEvidenceRoute(message)");
     expect(chatRoute).toContain("evidenceFailureReply({");
-    expect(chatRoute).toContain("parseKinfolkModelPayload(rawContent)");
+    expect(chatRoute).toContain("parseKinfolkModelPayload(rawContent, {");
+    expect(chatRoute).toContain("allowPlainTextReply: leanGeneralChat");
+    expect(chatRoute).toContain("sanitizeKinfolkGeneralReply(modelPayload.reply)");
     expect(chatRoute).toContain("buildValidatedOrRankedItinerary({");
     expect(chatRoute).toContain("recommendations = enforced.recommendations");
     expect(chatRoute).toContain("if (travelPlanning) recommendations = null");

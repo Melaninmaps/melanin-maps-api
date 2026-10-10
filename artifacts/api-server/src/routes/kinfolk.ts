@@ -182,6 +182,7 @@ import {
   resolveKinfolkEvidenceOutcome,
   resolveKinfolkGeneralAnswerRoute,
 } from "../kinfolk/general-answer-routing";
+import { sanitizeKinfolkGeneralReply } from "../kinfolk/general-reply-presentation";
 import { resolveEmotionalSupportGuidance } from "../kinfolk/emotional-support";
 import {
   extractLiveWeatherLocation,
@@ -12827,9 +12828,17 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }
 
     const rawContent = completion.choices[0]?.message?.content ?? "";
-    const modelPayload = parseKinfolkModelPayload(rawContent);
+    // Plain-text compatibility is intentionally limited to the lean ordinary
+    // conversation path. Research, governed discovery, safety, image, named
+    // business, and structured-action responses remain strict envelopes.
+    const modelPayload = parseKinfolkModelPayload(rawContent, {
+      allowPlainTextReply: leanGeneralChat,
+    });
 
-    let reply = modelPayload.reply;
+    let reply =
+      leanGeneralChat && modelPayload.valid
+        ? sanitizeKinfolkGeneralReply(modelPayload.reply)
+        : modelPayload.reply;
     recommendations = null;
     let followUpSuggestions: string[] = [];
     let smartPromotion: Record<string, unknown> | null = null;
