@@ -73,6 +73,7 @@ export default function BusinessOwnerHome() {
 
   const [business, setBusiness] = useState<Business | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [stats, setStats] = useState({ views: 0, saves: 0, reviews: 0 });
   const [clicks, setClicks] = useState<{ tiktok: number; instagram: number; youtube: number; facebook: number; pinterest: number; website: number; phoneCalls: number; directions: number } | null>(null);
   const [analyticsLocked, setAnalyticsLocked] = useState(false);
@@ -81,39 +82,47 @@ export default function BusinessOwnerHome() {
   const [communityNeeds, setCommunityNeeds] = useState<CommunityNeedInsight[]>([]);
 
   const load = useCallback(async () => {
+    setLoading(true);
+    setLoadError(null);
     try {
       const token = await getToken();
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
       const res = await fetch(`${getApiBase()}/api/businesses/mine`, { headers });
-      if (res.ok) {
-        const data = await res.json() as { business: Business | null };
-        setBusiness(data.business);
-        if (data.business) {
-          const aRes = await fetch(`${getApiBase()}/api/businesses/mine/analytics`, { headers });
-          if (aRes.ok) {
-            const aData = await aRes.json() as { metrics?: { views30d?: number; saves?: number; reviews?: number }; clicks30d?: { tiktok: number; instagram: number; youtube: number; facebook: number; pinterest: number; website: number; phoneCalls: number; directions: number } };
-            const m = aData.metrics;
-            if (m) setStats({ views: m.views30d ?? 0, saves: m.saves ?? 0, reviews: m.reviews ?? 0 });
-            if (aData.clicks30d) setClicks(aData.clicks30d);
-          } else if (aRes.status === 403) {
-            setAnalyticsLocked(true);
-          }
-          const sRes = await fetch(`${getApiBase()}/api/kinfolk/skip-feedback`, { headers });
-          if (sRes.ok) {
-            const sData = await sRes.json() as { messages?: string[] };
-            setSkipInsights(sData.messages ?? []);
-          }
-          const needsRes = await fetch(`${getApiBase()}/api/businesses/${data.business.id}/kinfolk-community-needs`, { headers });
-          if (needsRes.ok) {
-            const needsData = await needsRes.json() as { insights?: CommunityNeedInsight[] };
-            setCommunityNeeds(needsData.insights ?? []);
-          } else {
-            setCommunityNeeds([]);
-          }
+      if (!res.ok) {
+        if (res.status === 401) throw new Error("Your session has expired. Please sign in and try again.");
+        if (res.status === 403) throw new Error("Your business access is still under review.");
+        throw new Error("Business Admin could not load right now. Please try again.");
+      }
+      const data = await res.json() as { business: Business | null };
+      setBusiness(data.business);
+      if (data.business) {
+        const aRes = await fetch(`${getApiBase()}/api/businesses/mine/analytics`, { headers });
+        if (aRes.ok) {
+          const aData = await aRes.json() as { metrics?: { views30d?: number; saves?: number; reviews?: number }; clicks30d?: { tiktok: number; instagram: number; youtube: number; facebook: number; pinterest: number; website: number; phoneCalls: number; directions: number } };
+          const m = aData.metrics;
+          if (m) setStats({ views: m.views30d ?? 0, saves: m.saves ?? 0, reviews: m.reviews ?? 0 });
+          if (aData.clicks30d) setClicks(aData.clicks30d);
+        } else if (aRes.status === 403) {
+          setAnalyticsLocked(true);
+        }
+        const sRes = await fetch(`${getApiBase()}/api/kinfolk/skip-feedback`, { headers });
+        if (sRes.ok) {
+          const sData = await sRes.json() as { messages?: string[] };
+          setSkipInsights(sData.messages ?? []);
+        }
+        const needsRes = await fetch(`${getApiBase()}/api/businesses/${data.business.id}/kinfolk-community-needs`, { headers });
+        if (needsRes.ok) {
+          const needsData = await needsRes.json() as { insights?: CommunityNeedInsight[] };
+          setCommunityNeeds(needsData.insights ?? []);
+        } else {
+          setCommunityNeeds([]);
         }
       }
-    } catch { }
+    } catch (error) {
+      setBusiness(null);
+      setLoadError(error instanceof Error ? error.message : "Business Admin could not load right now. Please try again.");
+    }
     finally { setLoading(false); }
   }, []);
 
@@ -281,6 +290,19 @@ export default function BusinessOwnerHome() {
         keyboardDismissMode="on-drag" contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]} showsVerticalScrollIndicator={false}>
         {loading ? (
           <ActivityIndicator color={colors.primary} style={{ marginTop: 60 }} />
+        ) : loadError ? (
+          <View style={styles.emptyWrap}>
+            <Text style={styles.emptyEmoji}>⚠️</Text>
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Business Admin is unavailable</Text>
+            <Text style={[styles.emptySub, { color: colors.mutedForeground }]}>{loadError}</Text>
+            <TouchableOpacity activeOpacity={0.85}
+              style={[styles.listBtn, { backgroundColor: colors.primary }]}
+              onPress={() => { void load(); }}
+            >
+              <Feather name="refresh-cw" size={16} color="#FFF" />
+              <Text style={styles.listBtnTxt}>Try Again</Text>
+            </TouchableOpacity>
+          </View>
         ) : !business ? (
           <View style={styles.emptyWrap}>
             <Text style={styles.emptyEmoji}>🏪</Text>

@@ -152,6 +152,16 @@ describe("community-fed business publication governance", () => {
     expect(settings).toContain('duplicate matches, and information requests');
   });
 
+  it("does not represent an owner-console read failure as an empty business profile", () => {
+    const ownerConsole = source("../app/business-owner/index.tsx");
+
+    expect(ownerConsole).toContain("const [loadError, setLoadError]");
+    expect(ownerConsole).toContain("Business Admin is unavailable");
+    expect(ownerConsole).toContain("Business Admin could not load right now. Please try again.");
+    expect(ownerConsole).toContain("onPress={() => { void load(); }}");
+    expect(ownerConsole.indexOf("loadError ?")).toBeLessThan(ownerConsole.indexOf("!business ?"));
+  });
+
   it("uses the canonical protected claim endpoint and never equates a claim with verification", () => {
     const claimModal = source("../components/ClaimBusinessModal.tsx");
     const businessDetail = source("../app/business/[id].tsx");
