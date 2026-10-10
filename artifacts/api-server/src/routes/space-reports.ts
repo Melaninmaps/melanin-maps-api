@@ -64,7 +64,7 @@ router.post("/space-reports", reportLimiter, requireTrust, async (req: any, res:
     const countResult = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(spaceReportsTable)
-      .where(sql`lower(space_name) = lower(${spaceName.trim()}) and lower(city) = lower(${city.trim()}) and status != 'dismissed'`);
+      .where(sql`lower(space_name) = lower(${spaceName.trim()}) and lower(city) = lower(${city.trim()}) and status = 'actioned'`);
 
     const totalReports = countResult[0]?.count ?? 0;
     const hasWarning = totalReports >= WARNING_THRESHOLD;
@@ -89,7 +89,7 @@ router.get("/space-reports/warnings", async (req: Request, res: Response): Promi
         concernTypes: sql<string>`string_agg(concern_types, ',')`,
       })
       .from(spaceReportsTable)
-      .where(sql`status != 'dismissed'`)
+      .where(sql`status = 'actioned'`)
       .groupBy(
         sql`lower(space_name), lower(city), space_name, city, category`,
       )

@@ -279,6 +279,8 @@ router.use(conversationsRouter);
 // /community/events compat — canonical path is /api/events; audit found /api/community/events 404
 // The compatibility path stays public for the same read-only calendar reason.
 router.use("/community", eventsRouter);
+// Persist Police/ICE preferences before broad legacy users routes can shadow this path.
+router.use(userSettingsRouter);
 router.use(usersRouter);
 router.use(groupsRouter);
 router.use(adminRouter);
@@ -321,7 +323,6 @@ router.use(skipFeedbackRouter);
 router.use(businessesAnalyticsRouter);
 router.use(promoteRouter);
 router.use(postNudgeRouter);
-router.use(userSettingsRouter);
 router.use(spaceReportsRouter);
 router.use(connectRouter);
 router.use(communitySpacesRouter);
