@@ -1363,7 +1363,10 @@ export function FullMapView({
 
       const loc = (await Promise.race([
         Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
+          // This call is reachable only from the explicit, labelled nearby-map
+          // action. Its copy promises precise current location, so do not
+          // silently downgrade its requested accuracy.
+          accuracy: Location.Accuracy.Highest,
           mayShowUserSettingsDialog: true,
         }),
         new Promise<never>((_, reject) =>
