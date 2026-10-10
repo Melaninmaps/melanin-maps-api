@@ -1,3 +1,5 @@
 [deploy]
-healthcheckPath = "/api/healthz"
-healthcheckTimeout = 30
+# Staging-only disposable database bootstrap. This branch is never connected to production.
+startCommand = "pnpm --filter @workspace/db run push-force && pnpm --filter @workspace/api-server run start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
