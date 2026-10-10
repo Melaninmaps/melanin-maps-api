@@ -139,11 +139,11 @@ export default function ForBusinessOwners() {
           </h1>
           
           <p className="text-[#F5EBD8]/80 text-lg md:text-xl max-w-2xl mb-10 font-light">
-            List your minority-owned business on the platform built for conscious consumers who are actively looking to support businesses like yours.
+            Submit a qualifying minority-owned business for review on a platform built for conscious consumers who want to support businesses like yours.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 mb-16">
-            <Button onClick={scrollToForm} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-14 text-lg">Claim Your Free Listing</Button>
+            <Button onClick={scrollToForm} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-14 text-lg">Start a Free Submission</Button>
             <Button variant="outline" onClick={scrollToHow} className="rounded-full border-[#CA922B] text-[#CA922B] hover:bg-[#CA922B] hover:text-white px-8 h-14 text-lg bg-transparent">Learn More</Button>
           </div>
 
@@ -171,7 +171,7 @@ export default function ForBusinessOwners() {
           <div className="grid md:grid-cols-3 gap-8 mb-24">
             <div className="bg-[#FAF6EF] p-8 rounded-2xl border border-[#3A1F0E]/5">
               <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4">Verified Badge</h3>
-              <p className="text-[#3A1F0E]/70 leading-relaxed">Stand out with a community-verified badge that signals trust and authenticity to every member who visits your listing.</p>
+              <p className="text-[#3A1F0E]/70 leading-relaxed">A verification indicator is shown only when documented review supports it; it does not replace ownership, safety, or eligibility evidence.</p>
             </div>
             <div className="bg-[#FAF6EF] p-8 rounded-2xl border border-[#3A1F0E]/5">
               <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4">Community Reviews</h3>
@@ -179,7 +179,7 @@ export default function ForBusinessOwners() {
             </div>
             <div className="bg-[#FAF6EF] p-8 rounded-2xl border border-[#3A1F0E]/5">
               <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4">Map Visibility</h3>
-              <p className="text-[#3A1F0E]/70 leading-relaxed">Appear on the interactive map so members can find you when exploring your city or planning a trip.</p>
+              <p className="text-[#3A1F0E]/70 leading-relaxed">Map visibility is separate from a listing submission and requires an eligible public record plus validated address and map-pin evidence.</p>
             </div>
           </div>
 

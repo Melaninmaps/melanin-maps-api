@@ -65,7 +65,11 @@ describe("Community and Explore UI regressions", () => {
     expect(owners).toContain("Submission starts review; it does not publish a listing automatically.");
     expect(owners).toContain("evidence and eligibility checks");
     expect(owners).toContain("shown separately from ownership and evidence");
+    expect(owners).toContain("Start a Free Submission");
+    expect(owners).toContain("validated address and map-pin evidence");
+    expect(owners).toContain("does not replace ownership, safety, or eligibility evidence");
     expect(owners).not.toContain("business will appear on the platform");
     expect(owners).not.toContain("will find you first");
+    expect(owners).not.toContain("Claim Your Free Listing");
   });
 });
