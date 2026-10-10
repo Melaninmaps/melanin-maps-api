@@ -141,12 +141,12 @@ const router: IRouter = Router();
 // Explicit online, service-area, private, and home-based declarations remain
 // searchable but never render as public storefront pins.
 const MAP_PHYSICAL_LOCATION_SQL = `
-  AND LOWER(BTRIM(COALESCE(to_jsonb(public.public_businesses)->>'public_location_kind', ''))) NOT IN (
+  AND LOWER(BTRIM(COALESCE(to_jsonb(public_businesses)->>'public_location_kind', ''))) NOT IN (
     'online', 'online_only', 'service_area', 'private', 'private_residence', 'home_based'
   )
   AND (
-    NULLIF(BTRIM(COALESCE(to_jsonb(public.public_businesses)->>'service_area', '')), '') IS NULL
-    OR LOWER(BTRIM(COALESCE(to_jsonb(public.public_businesses)->>'public_location_kind', ''))) IN (
+    NULLIF(BTRIM(COALESCE(to_jsonb(public_businesses)->>'service_area', '')), '') IS NULL
+    OR LOWER(BTRIM(COALESCE(to_jsonb(public_businesses)->>'public_location_kind', ''))) IN (
       'address', 'physical', 'storefront', 'customer_facing'
     )
   )`;
@@ -654,10 +654,10 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
           SELECT id, name, latitude, longitude, category, subcategory,
                  city, state, country, listing_status,
                  COUNT(*) OVER()::integer AS total_in_viewport
-          FROM public.public_businesses
+          FROM public.public_businesses AS public_businesses
           WHERE latitude IS NOT NULL
             AND longitude IS NOT NULL
-            AND ${documentedDiscoveryEligibilitySqlPredicate("public.public_businesses.id", "map")}
+            AND ${documentedDiscoveryEligibilitySqlPredicate("public_businesses.id", "map")}
             AND NOT (latitude::numeric = 0 AND longitude::numeric = 0)
             AND COALESCE(name, '') NOT ILIKE '%[demo]%'
             AND COALESCE(description, '') NOT ILIKE '%[demo]%'
@@ -699,10 +699,10 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
     const { rows } = await pool.query<MapPinRow>(`
       SELECT id, name, latitude, longitude, category, subcategory,
              city, state, country, listing_status
-      FROM public.public_businesses
+      FROM public.public_businesses AS public_businesses
       WHERE latitude IS NOT NULL
         AND longitude IS NOT NULL
-        AND ${documentedDiscoveryEligibilitySqlPredicate("public.public_businesses.id", "map")}
+        AND ${documentedDiscoveryEligibilitySqlPredicate("public_businesses.id", "map")}
         AND NOT (latitude::numeric = 0 AND longitude::numeric = 0)
         AND COALESCE(name, '') NOT ILIKE '%[demo]%'
         AND COALESCE(description, '') NOT ILIKE '%[demo]%'

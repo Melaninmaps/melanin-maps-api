@@ -18,6 +18,9 @@ describe("public map physical-location visibility", () => {
     expect(source).toContain("'home_based'");
     expect(source).toContain("'storefront'");
     expect(source).toContain("'customer_facing'");
+    expect(source).toContain("FROM public.public_businesses AS public_businesses");
+    expect(source).toContain("to_jsonb(public_businesses)");
+    expect(source).not.toContain("to_jsonb(public.public_businesses)");
     expect(source).not.toMatch(/map-pins[\s\S]{0,800}postal_code/i);
   });
 });
