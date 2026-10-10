@@ -193,6 +193,100 @@ export async function sendAddressUpdateNotifications(
   }
 }
 
+export async function sendCorroboratedPoliceIceAlert(input: {
+  alertId: string;
+  city: string;
+  region: string;
+  kind: "police" | "ice";
+  reportCount: number;
+  expiresAt: Date;
+}): Promise<{ recipientCount: number; delivered: boolean }> {
+  const generalArea = `${input.city}, ${input.region}`;
+  const title = input.kind === "ice"
+    ? "Corroborated ICE activity report"
+    : "Corroborated Police activity report";
+  const body = `Moderated community reports corroborate activity in the general ${generalArea} area. This is not official confirmation.`;
+
+  try {
+    // The event itself is city-only. A canonical city centroid is used only for
+    // server-side radius matching; it is never delivered to a member or contact.
+    const centroidResult = await pool.query<{ latitude: string; longitude: string }>(
+      `SELECT latitude::text, longitude::text
+       FROM community_locations
+       WHERE LOWER(city_name) = LOWER($1)
+         AND LOWER(state_code) = LOWER($2)
+         AND neighborhood_name IS NULL
+         AND latitude IS NOT NULL
+         AND longitude IS NOT NULL
+       LIMIT 1`,
+      [input.city, input.region],
+    );
+    const centroid = centroidResult.rows[0];
+    if (!centroid) {
+      logger.info({ alertId: input.alertId, generalArea }, "[push] Police/ICE alert not delivered: no canonical coarse area");
+      return { recipientCount: 0, delivered: false };
+    }
+
+    // This path intentionally does not read contacts, location shares, or saved
+    // places. Only a member who has persisted the matching opt-in and radius can
+    // receive a direct alert; their location remains a server-side filter only.
+    const recipientResult = await pool.query<{ token: string; user_id: string }>(
+      `SELECT pt.token, pt.user_id
+       FROM user_locations ul
+       JOIN push_tokens pt ON pt.user_id = ul.user_id
+       JOIN user_settings us ON us.user_id = ul.user_id
+       WHERE ul.updated_at > NOW() - INTERVAL '2 hours'
+         AND pt.token IS NOT NULL
+         AND CASE
+               WHEN $3 = 'ice' THEN us.safety_alert_ice
+               ELSE us.safety_alert_police
+             END = true
+         AND us.safety_alert_radius_miles BETWEEN 1 AND 10
+         AND (6371 * acos(
+           GREATEST(-1, LEAST(1,
+             cos(radians($1)) * cos(radians(ul.lat::float)) * cos(radians(ul.lng::float) - radians($2))
+             + sin(radians($1)) * sin(radians(ul.lat::float))
+           ))
+         )) < (us.safety_alert_radius_miles * 1.60934)`,
+      [Number.parseFloat(centroid.latitude), Number.parseFloat(centroid.longitude), input.kind],
+    );
+
+    const deliveryResults = await Promise.all(recipientResult.rows.map((row) => sendToToken(row.token, {
+      title,
+      body,
+      // Never include latitude, longitude, a reporter identifier, or a contact
+      // identifier. The client receives only the moderated, coarse disclosure.
+      data: {
+        alertId: input.alertId,
+        type: input.kind,
+        screen: "safety",
+        status: "corroborated",
+        generalArea,
+        reportCount: input.reportCount,
+        expiresAt: input.expiresAt.toISOString(),
+      },
+    })));
+    const deliveredCount = deliveryResults.filter(Boolean).length;
+
+    if (recipientResult.rows.length > 0) {
+      await db.insert(notificationsTable).values(
+        recipientResult.rows.map((row) => ({
+          userId: row.user_id,
+          type: "safety" as const,
+          title,
+          body,
+        })),
+      );
+    }
+
+    logger.info({ alertId: input.alertId, kind: input.kind, recipientCount: deliveredCount }, "[push] Corroborated Police/ICE alert delivered");
+    return { recipientCount: deliveredCount, delivered: deliveredCount > 0 };
+  } catch (err) {
+    logger.warn({ err, alertId: input.alertId }, "[push] Failed to deliver corroborated Police/ICE alert");
+    return { recipientCount: 0, delivered: false };
+  }
+}
+
 export async function sendAlertPushToNearbyUsers(
   alertId: string,
   lat: number,
@@ -220,8 +314,8 @@ export async function sendAlertPushToNearbyUsers(
        WHERE ul.updated_at > NOW() - INTERVAL '2 hours'
          AND pt.token IS NOT NULL
          AND CASE
-               WHEN $4 = 'police' THEN COALESCE(us.safety_alert_police, true)
-               WHEN $4 = 'ice'    THEN COALESCE(us.safety_alert_ice, true)
+               WHEN $4 = 'police' THEN COALESCE(us.safety_alert_police, false)
+               WHEN $4 = 'ice'    THEN COALESCE(us.safety_alert_ice, false)
                ELSE true
              END = true
          AND (6371 * acos(
@@ -242,8 +336,8 @@ export async function sendAlertPushToNearbyUsers(
        LEFT JOIN user_settings us ON us.user_id = sp.user_id
        WHERE pt.token IS NOT NULL
          AND CASE
-               WHEN $4 = 'police' THEN COALESCE(us.safety_alert_police, true)
-               WHEN $4 = 'ice'    THEN COALESCE(us.safety_alert_ice, true)
+               WHEN $4 = 'police' THEN COALESCE(us.safety_alert_police, false)
+               WHEN $4 = 'ice'    THEN COALESCE(us.safety_alert_ice, false)
                ELSE true
              END = true
          AND (6371 * acos(

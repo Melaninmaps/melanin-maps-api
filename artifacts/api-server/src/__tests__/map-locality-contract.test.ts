@@ -34,8 +34,9 @@ describe("map locality API contracts", () => {
 
   it("filters safety heatmap data by explicit city while retaining all-area exploration compatibility", () => {
     expect(heatmapRouteSource).toContain('req.query.city === "string"');
-    expect(heatmapRouteSource).toContain('AND LOWER(city) = LOWER($1)');
-    expect(heatmapRouteSource).toContain("city ? [city] : []");
+    expect(heatmapRouteSource).toContain('AND LOWER(city) = LOWER($3)');
+    expect(heatmapRouteSource).toContain("safetyHeatPolicy.recencyWindowDays");
+    expect(heatmapRouteSource).toContain("safetyHeatPolicy.minimumApprovedSurveyCount");
   });
 
   it("keeps coordinate-constrained business pins nearest-first", () => {

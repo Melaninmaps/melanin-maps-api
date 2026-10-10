@@ -1,9 +1,16 @@
 import { pool } from "@workspace/db";
 import type { PoolClient } from "pg";
 import { logger } from "../lib/logger";
-import { sendPushToBusinessOwnersByCity } from "../lib/pushNotifications";
+import { sendCorroboratedPoliceIceAlert, sendPushToBusinessOwnersByCity } from "../lib/pushNotifications";
+import {
+  policeIceAlertExpiresAt,
+  policeIceAlertKind,
+  policeIceIncidentCategory,
+  POLICE_ICE_CORROBORATION_THRESHOLD,
+} from "./policeIceAlertPolicy";
+import { normalizePoliceEncounterType } from "./reportContract";
 
-const INCIDENT_THRESHOLD = 3;
+const INCIDENT_THRESHOLD = POLICE_ICE_CORROBORATION_THRESHOLD;
 const INCIDENT_WINDOW_DAYS = 7;
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -20,6 +27,7 @@ export interface ApprovedIncidentInput {
   city: string | null;
   region: string | null;
   category: string;
+  encounterType?: string | null;
   area: string | null;
 }
 
@@ -35,6 +43,7 @@ interface ScopedApprovedIncidentInput {
   city: string;
   region: string;
   category: string;
+  encounterType?: string | null;
   area: string | null;
 }
 
@@ -43,7 +52,13 @@ export async function projectApprovedIncident(
   input: ScopedApprovedIncidentInput,
 ): Promise<IncidentProjection | null> {
   const sinceDate = new Date(Date.now() - INCIDENT_WINDOW_DAYS * 24 * 60 * 60 * 1000);
-  const identity = [input.city.trim().toLocaleLowerCase(), input.region.trim().toLocaleLowerCase(), input.category].join("|");
+  const policeEncounterType = input.category === "police"
+    ? normalizePoliceEncounterType(input.encounterType)
+    : null;
+  const incidentCategory = policeEncounterType
+    ? policeIceIncidentCategory(policeEncounterType)
+    : input.category;
+  const identity = [input.city.trim().toLocaleLowerCase(), input.region.trim().toLocaleLowerCase(), incidentCategory].join("|");
   await client.query("SELECT pg_advisory_xact_lock(hashtextextended($1, 0))", [identity]);
 
   const aggregateResult = await client.query<{ count: string; severity: string | null }>(
@@ -66,15 +81,20 @@ export async function projectApprovedIncident(
      WHERE LOWER(incident_city) = LOWER($1)
        AND LOWER(incident_region) = LOWER($2)
        AND category = $3
+       ${policeEncounterType ? "AND encounter_type = $5" : ""}
        AND status = 'approved'
+       AND withdrawn_at IS NULL
+       AND display_expires_at > NOW()
        AND created_at >= $4`,
-    [input.city, input.region, input.category, sinceDate],
+    policeEncounterType
+      ? [input.city, input.region, input.category, sinceDate, policeEncounterType]
+      : [input.city, input.region, input.category, sinceDate],
   );
   const reportCount = Number.parseInt(aggregateResult.rows[0]?.count ?? "0", 10);
   const severity = aggregateResult.rows[0]?.severity ?? null;
 
   logger.info(
-    { city: input.city, region: input.region, category: input.category, reportCount, threshold: INCIDENT_THRESHOLD },
+    { city: input.city, region: input.region, category: incidentCategory, reportCount, threshold: INCIDENT_THRESHOLD },
     "[safety] approved threshold check",
   );
 
@@ -87,7 +107,7 @@ export async function projectApprovedIncident(
        AND triggered_at >= $4
      LIMIT 1
      FOR UPDATE`,
-    [input.city, input.region, input.category, sinceDate],
+    [input.city, input.region, incidentCategory, sinceDate],
   );
   const existingIncident = existingResult.rows[0] ?? null;
   const existingId = existingIncident?.id ?? null;
@@ -130,7 +150,7 @@ export async function projectApprovedIncident(
     `INSERT INTO safety_incidents
        (city, region, neighborhood, category, severity, report_count, status, notifications_sent, triggered_at)
      VALUES ($1, $2, $3, $4, $5, $6, 'active', false, NOW()) RETURNING id`,
-    [input.city, input.region, input.area, input.category, rankedSeverity, reportCount],
+    [input.city, input.region, policeEncounterType ? null : input.area, incidentCategory, rankedSeverity, reportCount],
   );
   const incidentId = insertResult.rows[0]?.id;
   return incidentId
@@ -147,6 +167,7 @@ export async function checkApprovedIncidentThreshold(input: ApprovedIncidentInpu
     city: input.city,
     region: input.region,
     category: input.category,
+    encounterType: input.encounterType,
     area: input.area,
   };
   const client = await pool.connect();
@@ -173,6 +194,24 @@ export async function notifyNewApprovedIncident(
   projection: IncidentProjection,
 ): Promise<void> {
   if (!input.city || !input.region || !projection.needsNotification) return;
+
+  const policeEncounterType = input.category === "police"
+    ? normalizePoliceEncounterType(input.encounterType)
+    : null;
+  if (policeEncounterType) {
+    const delivery = await sendCorroboratedPoliceIceAlert({
+      alertId: projection.incidentId,
+      city: input.city,
+      region: input.region,
+      kind: policeIceAlertKind(policeEncounterType)!,
+      reportCount: projection.reportCount,
+      expiresAt: policeIceAlertExpiresAt(new Date()),
+    });
+    if (delivery.delivered && delivery.recipientCount > 0) {
+      await pool.query("UPDATE safety_incidents SET notifications_sent = true WHERE id = $1", [projection.incidentId]);
+    }
+    return;
+  }
 
   const categoryLabel = CATEGORY_LABELS[input.category] ?? input.category;
   const cityRegion = `${input.city}, ${input.region}`;

@@ -10,6 +10,11 @@ interface ProximityCacheEntry {
   expiresAt: number;
 }
 
+export type ProximityWarningCacheInvalidationReason =
+  | "moderation_changed"
+  | "report_lifecycle_changed"
+  | "incident_lifecycle_changed";
+
 const proximityCache = new Map<string, ProximityCacheEntry>();
 
 export function proximityCacheKey(lat: number, lng: number, radius: number): string {
@@ -30,6 +35,8 @@ export function setCachedProximityWarnings(key: string, data: ProximityWarningPa
   proximityCache.set(key, { data, expiresAt: Date.now() + PROXIMITY_CACHE_TTL_MS });
 }
 
-export function invalidateProximityWarningCache(): void {
+export function invalidateProximityWarningCache(
+  _reason: ProximityWarningCacheInvalidationReason = "moderation_changed",
+): void {
   proximityCache.clear();
 }

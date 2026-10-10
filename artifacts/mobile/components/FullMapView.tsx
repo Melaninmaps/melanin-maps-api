@@ -113,8 +113,17 @@ interface HeatmapPoint {
   lat: number;
   lng: number;
   avgScore: number;
-  surveyCount: number;
-  tier: "safe" | "moderate" | "alert";
+  approvedSurveyCount: number;
+  signal: "higher_reported_safety" | "mixed_reported_safety" | "lower_reported_safety";
+  evidence: {
+    confidence: "minimum_sample" | "larger_sample";
+    observationCount: number;
+  };
+}
+
+interface SafetyHeatmapResponse {
+  points: HeatmapPoint[];
+  dataStatus: "sufficient_evidence" | "insufficient_evidence";
 }
 
 interface CulturalSite {
@@ -982,8 +991,12 @@ export function FullMapView({
           if (!base) return;
           const res = await fetch(`${base}/api/safety/heatmap${collectionScopeSuffix}`);
           if (res.ok) {
-            const data = (await res.json()) as { points: HeatmapPoint[] };
-            setHeatmapPoints(data.points ?? []);
+            const data = (await res.json()) as SafetyHeatmapResponse;
+            setHeatmapPoints(
+              data.dataStatus === "sufficient_evidence" && Array.isArray(data.points)
+                ? data.points
+                : [],
+            );
           }
         } catch {}
       })();
@@ -1564,15 +1577,15 @@ export function FullMapView({
         {showHeatmap &&
           heatmapPoints.map((p) => {
             const fillColor =
-              p.avgScore >= 70
+              p.signal === "higher_reported_safety"
                 ? "rgba(34,197,94,0.18)"
-                : p.avgScore >= 50
+                : p.signal === "mixed_reported_safety"
                   ? "rgba(251,191,36,0.18)"
                   : "rgba(239,68,68,0.18)";
             const strokeColor =
-              p.avgScore >= 70
+              p.signal === "higher_reported_safety"
                 ? "rgba(34,197,94,0.60)"
-                : p.avgScore >= 50
+                : p.signal === "mixed_reported_safety"
                   ? "rgba(251,191,36,0.60)"
                   : "rgba(239,68,68,0.60)";
             return (
@@ -1885,10 +1898,7 @@ export function FullMapView({
           >
             <Feather name="alert-triangle" size={13} color="#fff" />
             <Text style={[s.bannerSub, { flex: 1, marginLeft: 6 }]}>
-              Safety alert · {geoAlert.city}
-              {geoAlert.neighborhood ? ` · ${geoAlert.neighborhood}` : ""} — avg
-              score {geoAlert.avgSafetyScore}/100 from {geoAlert.surveyCount}{" "}
-              reports
+              Community survey signal · {geoAlert.city} — score {geoAlert.avgSafetyScore}/100 from {geoAlert.approvedSurveyCount} approved surveys ({geoAlert.confidence === "minimum_sample" ? "minimum sample" : "larger sample"}). Not a safety guarantee.
             </Text>
           </TouchableOpacity>
         )}

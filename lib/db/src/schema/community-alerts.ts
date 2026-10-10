@@ -12,6 +12,12 @@ export const communityAlertsTable = pgTable("community_alerts", {
   clearedCount: integer("cleared_count").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
   expiresAt: timestamp("expires_at").notNull(),
+  withdrawnAt: timestamp("withdrawn_at", { withTimezone: true }),
+  withdrawnBy: varchar("withdrawn_by"),
+  withdrawalReason: text("withdrawal_reason"),
+  correctedAt: timestamp("corrected_at", { withTimezone: true }),
+  correctedBy: varchar("corrected_by"),
+  correctionNote: text("correction_note"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

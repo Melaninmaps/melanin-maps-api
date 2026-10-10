@@ -165,6 +165,13 @@ describe("safety report location and privacy contract", () => {
           "incident_area",
           "incident_location_source",
           "incident_location_precision",
+          "display_expires_at",
+          "withdrawn_at",
+          "withdrawn_by",
+          "withdrawal_reason",
+          "corrected_at",
+          "corrected_by",
+          "correction_note",
         ].map((column_name) => ({ column_name })),
       })
       .mockResolvedValueOnce({ rows: [] });
@@ -254,7 +261,8 @@ describe("safety report location and privacy contract", () => {
     expect(route).toContain("targetId: sensitive ? null : report.targetId");
     expect(route).toContain("normalizeReportTarget(targetType, targetId, sensitiveReport)");
     expect(route).toContain("FROM community_locations");
-    expect(route).toContain("storedIncidentLocation = sensitiveReport");
+    expect(route).toContain('storedIncidentLocation = resolvedCategory === "police"');
+    expect(route).toContain("Police/ICE intake is city-only");
     expect(route).toContain("incidentLocationSource: storedIncidentLocation.source");
     expect(route).toContain("`${report.incidentArea}, ${cityRegion}`");
     expect(route).toContain("encounterType: resolvedEncounterType");

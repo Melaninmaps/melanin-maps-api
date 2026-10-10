@@ -42,8 +42,10 @@ const DEFAULT_SETTINGS = {
   kinfolkMemoryEnabled: isKinfolkPrivateMemoryEnabled(),
   profileViewTrackingEnabled: true,
   postNudgesEnabled: true,
-  safetyAlertPolice: true,
-  safetyAlertIce: true,
+  // Police/ICE alerts are an affirmative, separate choice. A missing settings
+  // row must never be treated as consent to receive sensitive safety alerts.
+  safetyAlertPolice: false,
+  safetyAlertIce: false,
   safetyAlertRadiusMiles: 5,
 };
 

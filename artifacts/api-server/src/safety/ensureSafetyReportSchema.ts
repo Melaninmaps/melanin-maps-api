@@ -7,9 +7,24 @@ const REQUIRED_COLUMNS = [
   "incident_area",
   "incident_location_source",
   "incident_location_precision",
+  "display_expires_at",
+  "withdrawn_at",
+  "withdrawn_by",
+  "withdrawal_reason",
+  "corrected_at",
+  "corrected_by",
+  "correction_note",
 ] as const;
 
 const REQUIRED_INCIDENT_COLUMNS = ["region"] as const;
+const REQUIRED_COMMUNITY_ALERT_COLUMNS = [
+  "withdrawn_at",
+  "withdrawn_by",
+  "withdrawal_reason",
+  "corrected_at",
+  "corrected_by",
+  "correction_note",
+] as const;
 
 export async function ensureRequiredSafetyReportSchema(pool: Pool): Promise<void> {
   await pool.query(`
@@ -32,6 +47,25 @@ export async function ensureRequiredSafetyReportSchema(pool: Pool): Promise<void
       ALTER COLUMN incident_location_source SET NOT NULL,
       ALTER COLUMN incident_location_precision SET DEFAULT 'city',
       ALTER COLUMN incident_location_precision SET NOT NULL;
+
+    -- Lifecycle fields only add reversible metadata. No safety evidence is
+    -- deleted, overwritten, or automatically purged by this bootstrap.
+    ALTER TABLE safety_reports
+      ADD COLUMN IF NOT EXISTS display_expires_at timestamptz,
+      ADD COLUMN IF NOT EXISTS withdrawn_at timestamptz,
+      ADD COLUMN IF NOT EXISTS withdrawn_by varchar,
+      ADD COLUMN IF NOT EXISTS withdrawal_reason text,
+      ADD COLUMN IF NOT EXISTS corrected_at timestamptz,
+      ADD COLUMN IF NOT EXISTS corrected_by varchar,
+      ADD COLUMN IF NOT EXISTS correction_note text;
+
+    ALTER TABLE community_alerts
+      ADD COLUMN IF NOT EXISTS withdrawn_at timestamptz,
+      ADD COLUMN IF NOT EXISTS withdrawn_by varchar,
+      ADD COLUMN IF NOT EXISTS withdrawal_reason text,
+      ADD COLUMN IF NOT EXISTS corrected_at timestamptz,
+      ADD COLUMN IF NOT EXISTS corrected_by varchar,
+      ADD COLUMN IF NOT EXISTS correction_note text;
 
     ALTER TABLE safety_incidents
       ADD COLUMN IF NOT EXISTS region varchar(100);
@@ -66,5 +100,19 @@ export async function ensureRequiredSafetyReportSchema(pool: Pool): Promise<void
   const missingIncident = REQUIRED_INCIDENT_COLUMNS.filter((column) => !incidentReady.has(column));
   if (missingIncident.length > 0) {
     throw new Error(`Required safety incident schema is incomplete: ${missingIncident.join(", ")}`);
+  }
+
+  const alertResult = await pool.query<{ column_name: string }>(
+    `SELECT column_name
+     FROM information_schema.columns
+     WHERE table_schema = 'public'
+       AND table_name = 'community_alerts'
+       AND column_name = ANY($1::text[])`,
+    [REQUIRED_COMMUNITY_ALERT_COLUMNS],
+  );
+  const alertReady = new Set(alertResult.rows.map((row) => row.column_name));
+  const missingAlert = REQUIRED_COMMUNITY_ALERT_COLUMNS.filter((column) => !alertReady.has(column));
+  if (missingAlert.length > 0) {
+    throw new Error(`Required community alert lifecycle schema is incomplete: ${missingAlert.join(", ")}`);
   }
 }

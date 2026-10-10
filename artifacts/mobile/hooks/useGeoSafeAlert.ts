@@ -14,9 +14,18 @@ function getApiBase(): string {
 
 export interface GeoAlert {
   city: string;
-  neighborhood: string | null;
   avgSafetyScore: number;
-  surveyCount: number;
+  approvedSurveyCount: number;
+  confidence: "minimum_sample" | "larger_sample";
+}
+
+interface SafetyHeatmapPoint {
+  city: string;
+  avgScore: number;
+  approvedSurveyCount: number;
+  evidence: {
+    confidence: "minimum_sample" | "larger_sample";
+  };
 }
 
 export function useGeoSafeAlert() {
@@ -44,16 +53,13 @@ export function useGeoSafeAlert() {
       const GOOGLE_KEY = process.env.EXPO_PUBLIC_GOOGLE_MAPS_KEY;
       if (!GOOGLE_KEY) return;
       const geoRes = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&result_type=locality|sublocality&key=${GOOGLE_KEY}`
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&result_type=locality&key=${GOOGLE_KEY}`
       );
       const geoData = await geoRes.json() as { results: { address_components: { long_name: string; types: string[] }[] }[] };
       let city = "";
-      let neighborhood = "";
       for (const result of geoData.results ?? []) {
         for (const comp of result.address_components) {
           if (comp.types.includes("locality") && !city) city = comp.long_name;
-          if (comp.types.includes("neighborhood") && !neighborhood) neighborhood = comp.long_name;
-          if (comp.types.includes("sublocality") && !neighborhood) neighborhood = comp.long_name;
         }
         if (city) break;
       }
@@ -64,18 +70,30 @@ export function useGeoSafeAlert() {
       if (lastAlerted && Date.now() - parseInt(lastAlerted, 10) < ALERT_COOLDOWN_MS) return;
 
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const surveysRes = await fetch(
-        `${getApiBase()}/api/surveys?city=${encodeURIComponent(city)}&limit=20`,
+      // The Safety Heat API receives only a city and returns no raw surveys,
+      // reporter identity, reporter location, or device coordinates.
+      const heatmapRes = await fetch(
+        `${getApiBase()}/api/safety/heatmap?city=${encodeURIComponent(city)}`,
         token ? { headers: { Authorization: `Bearer ${token}` } } : {}
       );
-      if (!surveysRes.ok) return;
-      const surveysData = await surveysRes.json() as { surveys?: { safetyScore: number }[] };
-      const surveys = surveysData.surveys ?? [];
-      if (surveys.length < 3) return;
+      if (!heatmapRes.ok) return;
+      const heatmapData = await heatmapRes.json() as {
+        dataStatus?: "sufficient_evidence" | "insufficient_evidence";
+        points?: SafetyHeatmapPoint[];
+      };
+      if (heatmapData.dataStatus !== "sufficient_evidence") return;
+      const point = heatmapData.points?.find(
+        (candidate) => candidate.city.toLocaleLowerCase() === city.toLocaleLowerCase(),
+      );
+      if (!point) return;
 
-      const avg = surveys.reduce((sum, s) => sum + (s.safetyScore ?? 0), 0) / surveys.length;
-      if (avg < LOW_SAFETY_THRESHOLD) {
-        setAlert({ city, neighborhood: neighborhood || null, avgSafetyScore: Math.round(avg), surveyCount: surveys.length });
+      if (point.avgScore < LOW_SAFETY_THRESHOLD) {
+        setAlert({
+          city: point.city,
+          avgSafetyScore: Math.round(point.avgScore),
+          approvedSurveyCount: point.approvedSurveyCount,
+          confidence: point.evidence.confidence,
+        });
         await AsyncStorage.setItem(cacheKey, String(Date.now()));
       }
     } catch { /* silent */ } finally {

@@ -3,35 +3,25 @@ import { db, communityAlertsTable, userLocationsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { pool } from "@workspace/db";
 import { sendAlertPushToNearbyUsers } from "../lib/pushNotifications";
+import { isNamedAdmin } from "../lib/adminAuth";
+import {
+  calculateCommunityAlertExpiry,
+  getSafetyHubLifecycleConfig,
+  normalizeLifecycleText,
+  parseLifecycleExpiry,
+} from "../safety/safetyHubLifecycle";
 
 const router: IRouter = Router();
 
 // ─── Type registry ────────────────────────────────────────────────────────────
 
-const EXPIRY_MINUTES: Record<string, number> = {
-  // Legacy safety types
-  ice: 120,
-  police: 60,
-  checkpoint: 60,
-  traffic: 45,
-  other: 60,
-  // Community Intelligence types
-  road_closure: 240,
-  celebration: 480,
-  protest: 240,
-  festival: 1440,
-  construction: 2880,
-  emergency: 120,
-  severe_weather: 360,
-  transit_disruption: 180,
-  avoid_area: 240,
-  situation_cleared: 60,
-  road_reopened: 60,
-};
-
-const VALID_TYPES = new Set(Object.keys(EXPIRY_MINUTES));
+const LIFECYCLE_CONFIG = getSafetyHubLifecycleConfig();
+const VALID_TYPES = new Set(Object.keys(LIFECYCLE_CONFIG.communityAlertExpiryMinutes));
 const CLEAR_THRESHOLD = 3;
 const CONFIRM_THRESHOLD = 3;
+// Police, ICE, and checkpoints are governed observations. They may never be
+// created as immediate coordinate-based alerts by this legacy endpoint.
+const DIRECT_POLICE_ICE_TYPES = new Set(["police", "ice", "checkpoint"]);
 
 function requireAuth(req: Request, res: Response): boolean {
   if (!req.user?.id) {
@@ -47,6 +37,7 @@ function computeStatus(confirmedCount: number): "possible" | "confirmed" {
 
 // ─── GET /community-alerts/nearby ─────────────────────────────────────────────
 router.get("/community-alerts/nearby", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
   try {
     const lat = parseFloat(String(req.query.lat));
     const lng = parseFloat(String(req.query.lng));
@@ -66,10 +57,11 @@ router.get("/community-alerts/nearby", async (req: Request, res: Response) => {
       confirmed_count: number;
       cleared_count: number;
       expires_at: string;
+      withdrawn_at: string | null;
       created_at: string;
       distance_km: number;
     }>(
-      `SELECT id, type, lat, lng, description, confirmed_count, cleared_count, expires_at, created_at,
+      `SELECT id, type, lat, lng, description, confirmed_count, cleared_count, expires_at, withdrawn_at, created_at,
         (6371 * acos(
           GREATEST(-1, LEAST(1,
             cos(radians($1)) * cos(radians(lat::float)) * cos(radians(lng::float) - radians($2))
@@ -78,7 +70,9 @@ router.get("/community-alerts/nearby", async (req: Request, res: Response) => {
         )) AS distance_km
        FROM community_alerts
        WHERE is_active = true
+         AND withdrawn_at IS NULL
          AND expires_at > NOW()
+         AND type NOT IN ('police', 'ice', 'checkpoint')
          AND (6371 * acos(
            GREATEST(-1, LEAST(1,
              cos(radians($1)) * cos(radians(lat::float)) * cos(radians(lng::float) - radians($2))
@@ -102,6 +96,7 @@ router.get("/community-alerts/nearby", async (req: Request, res: Response) => {
       distanceMeters: Math.round(r.distance_km * 1000),
       distanceKm: r.distance_km,
       expiresAt: r.expires_at,
+      withdrawnAt: r.withdrawn_at,
       createdAt: r.created_at,
     }));
 
@@ -133,9 +128,18 @@ router.post("/community-alerts", async (req: Request, res: Response) => {
       res.status(400).json({ error: "Invalid alert type" });
       return;
     }
+    if (DIRECT_POLICE_ICE_TYPES.has(type)) {
+      res.status(400).json({
+        error: "Police/ICE observations require anonymous intake, moderation, and corroboration before any alert",
+      });
+      return;
+    }
 
-    const mins = EXPIRY_MINUTES[type] ?? 60;
-    const expiresAt = new Date(Date.now() + mins * 60_000);
+    const expiresAt = calculateCommunityAlertExpiry(type, new Date(), LIFECYCLE_CONFIG);
+    if (!expiresAt) {
+      res.status(400).json({ error: "Alert type does not have a configured expiry" });
+      return;
+    }
 
     const [alert] = await db
       .insert(communityAlertsTable)
@@ -171,11 +175,19 @@ router.post("/community-alerts/:id/confirm", async (req: Request, res: Response)
     const result = await pool.query<{ confirmed_count: number; type: string; lat: string; lng: string }>(
       `UPDATE community_alerts
        SET confirmed_count = confirmed_count + 1
-       WHERE id = $1 AND is_active = true
+       WHERE id = $1
+         AND is_active = true
+         AND withdrawn_at IS NULL
+         AND expires_at > NOW()
+         AND type NOT IN ('police', 'ice', 'checkpoint')
        RETURNING confirmed_count, type, lat::text, lng::text`,
       [alertId],
     );
     const row = result.rows[0];
+    if (!row) {
+      res.status(404).json({ error: "Alert is no longer current" });
+      return;
+    }
     if (row && row.confirmed_count === CONFIRM_THRESHOLD) {
       const lat = parseFloat(row.lat);
       const lng = parseFloat(row.lng);
@@ -194,10 +206,21 @@ router.post("/community-alerts/:id/clear", async (req: Request, res: Response) =
   try {
     const alertId = String(req.params.id);
     const result = await pool.query<{ cleared_count: number }>(
-      `UPDATE community_alerts SET cleared_count = cleared_count + 1 WHERE id = $1 AND is_active = true RETURNING cleared_count`,
+      `UPDATE community_alerts
+       SET cleared_count = cleared_count + 1
+       WHERE id = $1
+         AND is_active = true
+         AND withdrawn_at IS NULL
+         AND expires_at > NOW()
+         AND type NOT IN ('police', 'ice', 'checkpoint')
+       RETURNING cleared_count`,
       [alertId],
     );
-    if (result.rows[0] && result.rows[0].cleared_count >= CLEAR_THRESHOLD) {
+    if (!result.rows[0]) {
+      res.status(404).json({ error: "Alert is no longer current" });
+      return;
+    }
+    if (result.rows[0].cleared_count >= CLEAR_THRESHOLD) {
       await db
         .update(communityAlertsTable)
         .set({ isActive: false })
@@ -207,6 +230,90 @@ router.post("/community-alerts/:id/clear", async (req: Request, res: Response) =
   } catch (err) {
     req.log.error({ err }, "POST /community-alerts/:id/clear error");
     res.status(500).json({ error: "Failed to clear alert." });
+  }
+});
+
+// ─── POST /community-alerts/:id/withdraw ──────────────────────────────────────
+// The original alert remains preserved with an auditable withdrawal record.
+router.post("/community-alerts/:id/withdraw", async (req: Request, res: Response) => {
+  if (!requireAuth(req, res)) return;
+  const reason = normalizeLifecycleText(req.body?.reason, 500);
+  if (!reason) {
+    res.status(400).json({ error: "A withdrawal reason is required" });
+    return;
+  }
+
+  try {
+    const result = await pool.query<{ id: string; withdrawn_at: string }>(
+      `UPDATE community_alerts
+       SET is_active = false,
+           withdrawn_at = NOW(),
+           withdrawn_by = $2,
+           withdrawal_reason = $3
+       WHERE id = $1
+         AND reported_by = $2
+         AND withdrawn_at IS NULL
+       RETURNING id, withdrawn_at`,
+      [String(req.params.id), req.user!.id, reason],
+    );
+    const alert = result.rows[0];
+    if (!alert) {
+      res.status(404).json({ error: "Current alert not found or not owned by this member" });
+      return;
+    }
+    res.json({ alert: { id: alert.id, withdrawnAt: alert.withdrawn_at } });
+  } catch (err) {
+    req.log.error({ err }, "POST /community-alerts/:id/withdraw error");
+    res.status(500).json({ error: "Failed to withdraw alert." });
+  }
+});
+
+// ─── PATCH /community-alerts/:id/lifecycle ────────────────────────────────────
+router.patch("/community-alerts/:id/lifecycle", async (req: Request, res: Response) => {
+  if (!isNamedAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const action = typeof req.body?.action === "string" ? req.body.action : "";
+  const correctionNote = normalizeLifecycleText(req.body?.correctionNote, 2000);
+  const displayExpiresAt = parseLifecycleExpiry(req.body?.expiresAt);
+  if (action !== "correct" && action !== "set_expiration") {
+    res.status(400).json({ error: "Invalid lifecycle action" });
+    return;
+  }
+  if (action === "correct" && !correctionNote) {
+    res.status(400).json({ error: "A correction note is required" });
+    return;
+  }
+  if (action === "set_expiration" && !displayExpiresAt) {
+    res.status(400).json({ error: "A valid expiresAt timestamp is required" });
+    return;
+  }
+
+  try {
+    const result = action === "correct"
+      ? await pool.query<{ id: string; corrected_at: string }>(
+          `UPDATE community_alerts
+           SET corrected_at = NOW(), corrected_by = $2, correction_note = $3
+           WHERE id = $1
+           RETURNING id, corrected_at`,
+          [String(req.params.id), req.user!.id, correctionNote],
+        )
+      : await pool.query<{ id: string; expires_at: string }>(
+          `UPDATE community_alerts
+           SET expires_at = $2
+           WHERE id = $1
+           RETURNING id, expires_at`,
+          [String(req.params.id), displayExpiresAt!.toISOString()],
+        );
+    if (!result.rows[0]) {
+      res.status(404).json({ error: "Alert not found" });
+      return;
+    }
+    res.json({ alert: result.rows[0] });
+  } catch (err) {
+    req.log.error({ err }, "PATCH /community-alerts/:id/lifecycle error");
+    res.status(500).json({ error: "Failed to update alert lifecycle." });
   }
 });
 

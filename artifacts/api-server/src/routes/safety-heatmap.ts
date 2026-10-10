@@ -1,6 +1,12 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
 import { requireAuth } from "../middlewares/requireAuth";
+import {
+  getCachedSafetyHeatmap,
+  safetyHeatCacheKey,
+  setCachedSafetyHeatmap,
+} from "../safety/safetyHeatCache";
+import { safetyHeatConfidence, safetyHeatPolicy } from "../safety/safetyHeatPolicy";
 
 const router: IRouter = Router();
 router.use(requireAuth);
@@ -55,18 +61,35 @@ const CITY_COORDS: Record<string, { lat: number; lng: number; state: string }> =
 router.get("/safety/heatmap", async (req: Request, res: Response) => {
   try {
     const city = typeof req.query.city === "string" ? req.query.city.trim() : "";
+    const cacheKey = safetyHeatCacheKey(city);
+    const cached = getCachedSafetyHeatmap(cacheKey);
+    if (cached) {
+      res.json(cached);
+      return;
+    }
+
     const result = await pool.query<{ city: string; avg_score: number; count: number }>(
       `SELECT city,
               ROUND(AVG(safety_score)::numeric, 1)::float AS avg_score,
               COUNT(*)::int AS count
        FROM neighborhood_surveys
        WHERE status = 'approved' AND city IS NOT NULL AND city <> ''
-         ${city ? "AND LOWER(city) = LOWER($1)" : ""}
+         AND created_at >= NOW() - ($1::int * INTERVAL '1 day')
+         ${city ? "AND LOWER(city) = LOWER($3)" : ""}
        GROUP BY city
-       HAVING COUNT(*) >= 1
+       HAVING COUNT(*) >= $2
        ORDER BY count DESC
        LIMIT 100`,
-      city ? [city] : [],
+      city
+        ? [
+            safetyHeatPolicy.recencyWindowDays,
+            safetyHeatPolicy.minimumApprovedSurveyCount,
+            city,
+          ]
+        : [
+            safetyHeatPolicy.recencyWindowDays,
+            safetyHeatPolicy.minimumApprovedSurveyCount,
+          ],
     );
 
     const points = result.rows
@@ -79,16 +102,35 @@ router.get("/safety/heatmap", async (req: Request, res: Response) => {
           lat: coords.lat,
           lng: coords.lng,
           avgScore: row.avg_score,
-          surveyCount: row.count,
-          tier:
-            row.avg_score >= 70 ? "safe"
-            : row.avg_score >= 50 ? "moderate"
-            : "alert",
+          approvedSurveyCount: row.count,
+          signal:
+            row.avg_score >= 70 ? "higher_reported_safety"
+            : row.avg_score >= 50 ? "mixed_reported_safety"
+            : "lower_reported_safety",
+          evidence: {
+            confidence: safetyHeatConfidence(row.count),
+            observationCount: row.count,
+          },
         };
       })
       .filter(Boolean);
 
-    res.json({ points });
+    // Never return an individual survey, contributor identity, device location,
+    // neighborhood, or report location from this map-only aggregate endpoint.
+    const payload = {
+      points,
+      dataStatus: points.length > 0 ? "sufficient_evidence" as const : "insufficient_evidence" as const,
+      evidence: {
+        source: "approved_neighborhood_survey_aggregate" as const,
+        geography: "city_centroid_only" as const,
+        rawReportsIncluded: false as const,
+        reporterLocationsIncluded: false as const,
+        minimumApprovedSurveyCount: safetyHeatPolicy.minimumApprovedSurveyCount,
+        recencyWindowDays: safetyHeatPolicy.recencyWindowDays,
+      },
+    };
+    setCachedSafetyHeatmap(cacheKey, payload);
+    res.json(payload);
   } catch (err) {
     req.log.error({ err }, "Failed to fetch safety heatmap");
     res.status(500).json({ error: "Failed to fetch safety heatmap" });

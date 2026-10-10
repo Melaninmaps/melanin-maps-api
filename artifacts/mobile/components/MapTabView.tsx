@@ -270,12 +270,12 @@ export function MapTabView() {
           style={styles.geoAlertBanner}
           onPress={dismissGeoAlert}
           activeOpacity={0.85}
-        >
-          <Feather name="alert-triangle" size={15} color="#fff" />
-          <Text style={styles.geoAlertText}>
-            Community safety alert for {geoAlert.city}{geoAlert.neighborhood ? ` · ${geoAlert.neighborhood}` : ""} — avg score {geoAlert.avgSafetyScore}/100 from {geoAlert.surveyCount} reports. Tap to dismiss.
-          </Text>
-        </TouchableOpacity>
+          >
+            <Feather name="alert-triangle" size={15} color="#fff" />
+            <Text style={styles.geoAlertText}>
+            Community survey signal for {geoAlert.city} — score {geoAlert.avgSafetyScore}/100 from {geoAlert.approvedSurveyCount} approved surveys ({geoAlert.confidence === "minimum_sample" ? "minimum sample" : "larger sample"}). This is not a safety guarantee. Tap to dismiss.
+            </Text>
+          </TouchableOpacity>
       )}
 
       {warnings.length > 1 && (
@@ -511,7 +511,7 @@ export function MapTabView() {
           <View style={styles.modalHandle} />
           <Text style={[styles.modalTitle, { color: colors.foreground }]}>Report Nearby Activity</Text>
           <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>
-            ICE & Police alerts reach everyone within 10 miles + anyone who saved a nearby business. Other alerts reach 1.5 km. All reports expire automatically.
+            Police, ICE, and checkpoint observations go through anonymous review and corroboration. They never send an immediate alert. Other alerts expire automatically.
           </Text>
           <View style={{ gap: 10, marginTop: 8 }}>
             {ALERT_TYPES.map(({ type, label, icon }) => {
@@ -545,6 +545,11 @@ export function MapTabView() {
             onPress={async () => {
               if (!reportingType) return;
               setShowReportModal(false);
+              if (["police", "ice", "checkpoint"].includes(reportingType)) {
+                setReportingType(null);
+                router.push("/report-police");
+                return;
+              }
               const ok = await reportAlert(reportingType);
               setReportingType(null);
               if (Platform.OS !== "web") {
@@ -560,7 +565,7 @@ export function MapTabView() {
             </Text>
           </TouchableOpacity>
           <Text style={[styles.reportDisclaimer, { color: colors.mutedForeground }]}>
-            Only report real, immediate activity. Alerts auto-clear after community votes or time expiry.
+            Police/ICE observations are not verified threats at intake. Only moderation and corroboration can create a time-limited general-area alert.
           </Text>
         </View>
       </Modal>

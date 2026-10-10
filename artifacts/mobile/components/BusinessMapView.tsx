@@ -38,8 +38,21 @@ interface HeatmapPoint {
   lat: number;
   lng: number;
   avgScore: number;
-  surveyCount: number;
-  tier: "safe" | "moderate" | "alert";
+  approvedSurveyCount: number;
+  signal: "higher_reported_safety" | "mixed_reported_safety" | "lower_reported_safety";
+  evidence: {
+    confidence: "minimum_sample" | "larger_sample";
+    observationCount: number;
+  };
+}
+
+interface SafetyHeatmapResponse {
+  points: HeatmapPoint[];
+  dataStatus: "sufficient_evidence" | "insufficient_evidence";
+  evidence: {
+    minimumApprovedSurveyCount: number;
+    recencyWindowDays: number;
+  };
 }
 
 interface CulturalSite {
@@ -71,6 +84,8 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showCulturalSites, setShowCulturalSites] = useState(false);
   const [heatmapPoints, setHeatmapPoints] = useState<HeatmapPoint[]>([]);
+  const [heatmapStatus, setHeatmapStatus] = useState<"idle" | "loading" | "sufficient" | "insufficient" | "unavailable">("idle");
+  const [heatmapEvidence, setHeatmapEvidence] = useState<SafetyHeatmapResponse["evidence"] | null>(null);
   const [culturalSites, setCulturalSites] = useState<CulturalSite[]>([]);
   const [selectedCulturalSite, setSelectedCulturalSite] = useState<CulturalSite | null>(null);
 
@@ -121,20 +136,31 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
   }, []);
 
   useEffect(() => {
-    if (showHeatmap && heatmapPoints.length === 0) {
+    if (showHeatmap && heatmapStatus === "idle") {
       void (async () => {
+        setHeatmapStatus("loading");
         try {
           const base = getApiBase();
-          if (!base) return;
+          if (!base) {
+            setHeatmapStatus("unavailable");
+            return;
+          }
           const res = await fetch(`${base}/api/safety/heatmap`);
           if (res.ok) {
-            const data = await res.json() as { points: HeatmapPoint[] };
-            setHeatmapPoints(data.points ?? []);
+            const data = await res.json() as SafetyHeatmapResponse;
+            const hasSufficientEvidence = data.dataStatus === "sufficient_evidence" && Array.isArray(data.points);
+            setHeatmapPoints(hasSufficientEvidence ? data.points : []);
+            setHeatmapEvidence(data.evidence ?? null);
+            setHeatmapStatus(hasSufficientEvidence ? "sufficient" : "insufficient");
+          } else {
+            setHeatmapStatus("unavailable");
           }
-        } catch {}
+        } catch {
+          setHeatmapStatus("unavailable");
+        }
       })();
     }
-  }, [showHeatmap, heatmapPoints.length]);
+  }, [showHeatmap, heatmapStatus]);
 
   useEffect(() => {
     if (showCulturalSites && culturalSites.length === 0) {
@@ -193,15 +219,15 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
           />
         ))}
 
-        {showHeatmap && heatmapPoints.map((p) => {
-          const fillColor = p.avgScore >= 70
+        {showHeatmap && heatmapStatus === "sufficient" && heatmapPoints.map((p) => {
+          const fillColor = p.signal === "higher_reported_safety"
             ? "rgba(34,197,94,0.18)"
-            : p.avgScore >= 50
+            : p.signal === "mixed_reported_safety"
             ? "rgba(251,191,36,0.18)"
             : "rgba(239,68,68,0.18)";
-          const strokeColor = p.avgScore >= 70
+          const strokeColor = p.signal === "higher_reported_safety"
             ? "rgba(34,197,94,0.60)"
-            : p.avgScore >= 50
+            : p.signal === "mixed_reported_safety"
             ? "rgba(251,191,36,0.60)"
             : "rgba(239,68,68,0.60)";
           return (
@@ -344,9 +370,7 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
           >
             <Feather name="alert-triangle" size={13} color="#fff" />
             <Text style={[s.bannerSub, { flex: 1, marginLeft: 6 }]}>
-              Safety alert · {geoAlert.city}
-              {geoAlert.neighborhood ? ` · ${geoAlert.neighborhood}` : ""} — avg score{" "}
-              {geoAlert.avgSafetyScore}/100 from {geoAlert.surveyCount} reports
+              Community survey signal · {geoAlert.city} — score {geoAlert.avgSafetyScore}/100 from {geoAlert.approvedSurveyCount} approved surveys ({geoAlert.confidence === "minimum_sample" ? "minimum sample" : "larger sample"}). Not a safety guarantee.
             </Text>
           </TouchableOpacity>
         )}
@@ -376,7 +400,7 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
             activeOpacity={0.85}
           >
             <Feather name="thermometer" size={12} color={showHeatmap ? "#fff" : GOLD} />
-            <Text style={[s.layerBtnTxt, { color: showHeatmap ? "#fff" : GOLD }]}>Safety Heat</Text>
+            <Text style={[s.layerBtnTxt, { color: showHeatmap ? "#fff" : GOLD }]}>Community survey signal</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[s.layerBtn, showCulturalSites && { backgroundColor: CULTURAL_COLOR, borderColor: "transparent" }]}
@@ -387,6 +411,27 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
             <Text style={[s.layerBtnTxt, { color: showCulturalSites ? "#fff" : GOLD }]}>Cultural Sites</Text>
           </TouchableOpacity>
         </View>
+        {showHeatmap && heatmapStatus === "loading" && (
+          <View style={s.signalNotice}>
+            <ActivityIndicator size="small" color={GOLD} />
+            <Text style={s.signalNoticeText}>Checking recent approved community survey evidence…</Text>
+          </View>
+        )}
+        {showHeatmap && heatmapStatus === "sufficient" && heatmapEvidence && (
+          <View style={s.signalNotice}>
+            <Text style={s.signalNoticeText}>City-centroid survey signal only: each circle has at least {heatmapEvidence.minimumApprovedSurveyCount} approved surveys from the last {heatmapEvidence.recencyWindowDays} days. Colors reflect reported scores, not a safety guarantee.</Text>
+          </View>
+        )}
+        {showHeatmap && heatmapStatus === "insufficient" && (
+          <View style={s.signalNotice}>
+            <Text style={s.signalNoticeText}>Not enough recent approved community surveys to show a map signal. This does not mean an area is safe or unsafe.</Text>
+          </View>
+        )}
+        {showHeatmap && heatmapStatus === "unavailable" && (
+          <View style={s.signalNotice}>
+            <Text style={s.signalNoticeText}>Community survey evidence is unavailable right now; no map signal is shown.</Text>
+          </View>
+        )}
       </View>
 
       {/* ── Locating spinner (centered, non-blocking) ── */}
@@ -581,6 +626,18 @@ const s = StyleSheet.create({
     borderColor: "rgba(202,146,43,0.35)",
   },
   layerBtnTxt: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  signalNotice: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginHorizontal: 12,
+    marginBottom: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 8,
+    backgroundColor: "rgba(0,0,0,0.62)",
+  },
+  signalNoticeText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15, color: "#fff" },
 
   locatingWrap: { flex: 1, justifyContent: "center", alignItems: "center" },
   locatingPill: {

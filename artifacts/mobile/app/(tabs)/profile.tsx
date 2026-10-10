@@ -137,8 +137,8 @@ const privStyles = StyleSheet.create({
 const RADIUS_OPTIONS = [1, 2, 3, 5, 10] as const;
 
 function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors> }) {
-  const [alertPolice, setAlertPolice] = useState(true);
-  const [alertIce, setAlertIce] = useState(true);
+  const [alertPolice, setAlertPolice] = useState(false);
+  const [alertIce, setAlertIce] = useState(false);
   const [radiusMiles, setRadiusMiles] = useState(5);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -206,7 +206,7 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[safetyStyles.title, { color: colors.foreground }]}>Safety Alerts</Text>
-          <Text style={[safetyStyles.sub, { color: colors.mutedForeground }]}>Get notified when community activity is reported near you</Text>
+          <Text style={[safetyStyles.sub, { color: colors.mutedForeground }]}>Opt in to moderated, corroborated general-area alerts near you</Text>
         </View>
         {saving && <ActivityIndicator size="small" color={colors.primary} />}
       </View>
@@ -216,7 +216,7 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
       <View style={safetyStyles.row}>
         <View style={{ flex: 1 }}>
           <Text style={[safetyStyles.rowLabel, { color: colors.foreground }]}>Police activity</Text>
-          <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Traffic stops, checkpoints & police presence</Text>
+          <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Corroborated community reports only — not official confirmation</Text>
         </View>
         <Switch value={alertPolice} onValueChange={togglePolice} trackColor={{ true: colors.primary, false: colors.border }} thumbColor="#FFF" />
       </View>
@@ -224,7 +224,7 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
       <View style={safetyStyles.row}>
         <View style={{ flex: 1 }}>
           <Text style={[safetyStyles.rowLabel, { color: colors.foreground }]}>ICE / immigration activity</Text>
-          <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Enforcement activity reported by community</Text>
+          <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Corroborated community reports only — not official confirmation</Text>
         </View>
         <Switch value={alertIce} onValueChange={toggleIce} trackColor={{ true: colors.primary, false: colors.border }} thumbColor="#FFF" />
       </View>
@@ -233,6 +233,7 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
 
       <View style={safetyStyles.radiusSection}>
         <Text style={[safetyStyles.rowLabel, { color: colors.foreground }]}>Alert radius</Text>
+        <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Saved with your opt-in. Alerts name only a general city area and expire.</Text>
         <View style={safetyStyles.pillRow}>
           {RADIUS_OPTIONS.map((r) => (
             <TouchableOpacity activeOpacity={0.85}

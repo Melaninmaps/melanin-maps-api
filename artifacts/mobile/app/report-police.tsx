@@ -80,6 +80,7 @@ interface ReportForm {
   city: string;
   locationSource: "manual_area" | "current_device";
   description: string;
+  reportingConsent: boolean;
 }
 
 const INITIAL: ReportForm = {
@@ -88,6 +89,7 @@ const INITIAL: ReportForm = {
   city: "",
   locationSource: "manual_area",
   description: "",
+  reportingConsent: false,
 };
 
 export default function ReportPoliceScreen() {
@@ -177,6 +179,8 @@ export default function ReportPoliceScreen() {
           description: form.description.trim(),
           severity: form.severity,
           isAnonymous: true,
+          reportingConsent: form.reportingConsent,
+          reportingConsentVersion: "police-ice-p0-v1",
         }),
       });
 
@@ -197,7 +201,7 @@ export default function ReportPoliceScreen() {
   };
 
   const canProceed1 = form.encounterType !== "" && form.severity !== "";
-  const canProceed2 = form.city.trim().length > 0 && form.description.trim().length > 10;
+  const canProceed2 = form.city.trim().length > 0 && form.description.trim().length > 10 && form.reportingConsent;
   const isSuccess = step === 3;
 
   return (
@@ -240,7 +244,7 @@ export default function ReportPoliceScreen() {
               </View>
               <Text style={[styles.successTitle, { color: colors.foreground }]}>Report Received — Under Review</Text>
               <Text style={[styles.successBody, { color: colors.mutedForeground }]}>
-                Your report was submitted anonymously. It will not become a public or real-time alert unless the moderation and safety rules allow it.
+                Your anonymous observation is under review. No alert has been sent, and this is not a verified threat.
               </Text>
             </View>
 
@@ -266,8 +270,8 @@ export default function ReportPoliceScreen() {
                 <Text style={[styles.nextStepsTitle, { color: colors.foreground }]}>What Happens Next</Text>
                 {[
                   "Moderation team reviews your report",
-                  "Approved reports may appear as a coarse community alert",
-                  "Repeat locations are escalated automatically",
+                  "Only moderated, corroborated reports may create a time-limited general-area alert",
+                  "Any correction or withdrawal by the moderation team updates the alert state",
                 ].map((item, i) => (
                   <View key={i} style={styles.nextStepRow}>
                     <View style={[styles.nextStepDot, { backgroundColor: colors.primary }]} />
@@ -425,6 +429,21 @@ export default function ReportPoliceScreen() {
                       Police, ICE, profiling, and misconduct reports are always stored without your account identity. Only the incident city is stored; neighborhood, street, and exact GPS are not sent with this report.
                     </Text>
                   </View>
+
+                  <TouchableOpacity
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: form.reportingConsent }}
+                    onPress={() => setForm((f) => ({ ...f, reportingConsent: !f.reportingConsent }))}
+                    activeOpacity={0.8}
+                    style={[styles.consentRow, { backgroundColor: colors.card, borderColor: form.reportingConsent ? colors.primary : colors.border }]}
+                  >
+                    <View style={[styles.consentBox, { borderColor: form.reportingConsent ? colors.primary : colors.mutedForeground, backgroundColor: form.reportingConsent ? colors.primary : "transparent" }]}>
+                      {form.reportingConsent && <Feather name="check" size={13} color={colors.primaryForeground} />}
+                    </View>
+                    <Text style={[styles.consentText, { color: colors.mutedForeground }]}>
+                      I understand this is an anonymous community observation, not a verified threat. I consent to moderation and, only after corroboration, a time-limited alert naming the general city area only.
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               )}
             </Animated.View>
@@ -496,6 +515,9 @@ const styles = StyleSheet.create({
   charCount: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 4, textAlign: "right" },
   disclaimer: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 12, borderWidth: 1, marginTop: 4 },
   disclaimerText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, flex: 1 },
+  consentRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 12, borderWidth: 1, marginTop: 12 },
+  consentBox: { width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, alignItems: "center", justifyContent: "center", marginTop: 1 },
+  consentText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18 },
   footer: { position: "absolute", bottom: 0, left: 0, right: 0, flexDirection: "row", gap: 12, padding: 16, paddingTop: 14, borderTopWidth: 1 },
   backFooterBtn: { width: 52, height: 52, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   nextBtn: { flex: 1, height: 52, borderRadius: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },

@@ -1,8 +1,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, safetyReportsTable, safetyIncidentsTable, businessesTable } from "@workspace/db";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, gt, isNull } from "drizzle-orm";
 import { reportLimiter } from "../middleware/rateLimiter";
 import { sendAdminSafetyReportAlert } from "../lib/email";
+import { isNamedAdmin } from "../lib/adminAuth";
 import { moderateSafetyReport } from "../safety/moderateSafetyReport";
 import {
   getCachedProximityWarnings,
@@ -17,6 +18,16 @@ import {
   reportMustBeAnonymous,
   type IncidentLocation,
 } from "../safety/reportContract";
+import {
+  hasPoliceIceReportingConsent,
+  POLICE_ICE_ALERT_TTL_MS,
+  POLICE_ICE_REPORTING_CONSENT_VERSION,
+} from "../safety/policeIceAlertPolicy";
+import {
+  calculateSafetyReportDisplayExpiry,
+  normalizeLifecycleText,
+  parseLifecycleExpiry,
+} from "../safety/safetyHubLifecycle";
 
 const router: IRouter = Router();
 
@@ -131,6 +142,8 @@ function publicSafetyReport(report: typeof safetyReportsTable.$inferSelect) {
     severity: report.severity,
     status: report.status,
     businessResponseText: report.businessResponseText,
+    displayExpiresAt: report.displayExpiresAt,
+    correctedAt: report.correctedAt,
     createdAt: report.createdAt,
   };
 }
@@ -151,6 +164,8 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
     incidentDescription,
     evidenceLinks,
     encounterType,  // police/ICE sub-type (e.g. "Excessive Force/Misconduct")
+    reportingConsent,
+    reportingConsentVersion,
   } = body;
 
   // Build 105 sent the selected Police/ICE subtype in `category`. Accept it as
@@ -177,6 +192,16 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
     res.status(400).json({ error: "A valid Police/ICE encounter type is required" });
     return;
   }
+  if (resolvedCategory === "police" && !hasPoliceIceReportingConsent({
+    reportingConsent,
+    reportingConsentVersion,
+  })) {
+    res.status(400).json({
+      error: "Explicit consent is required before submitting a Police/ICE observation",
+      requiredConsentVersion: POLICE_ICE_REPORTING_CONSENT_VERSION,
+    });
+    return;
+  }
 
   // Accept internal severity values OR spoken-language labels from the UI
   const resolvedSeverity: typeof VALID_SEVERITIES[number] =
@@ -198,7 +223,12 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
   }
 
   try {
-    const storedIncidentLocation = sensitiveReport
+    // Police/ICE intake is city-only even when a canonical location ID is
+    // supplied. A member observation must never become a street, neighborhood,
+    // or device-location record before moderation/corroboration.
+    const storedIncidentLocation = resolvedCategory === "police"
+      ? incidentLocation
+      : sensitiveReport
       ? await canonicalSensitiveIncidentLocation(pool, body, incidentLocation)
       : incidentLocation;
     const [report] = await db
@@ -234,6 +264,9 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
         incidentDescription: typeof incidentDescription === "string" ? incidentDescription.slice(0, 2000) : null,
         evidenceLinks: typeof evidenceLinks === "string" ? evidenceLinks : null,
         status: "pending",
+        // Expiry controls display only; safety evidence remains available for
+        // review and audit after the public-current window ends.
+        displayExpiresAt: calculateSafetyReportDisplayExpiry(),
       })
       .returning();
 
@@ -277,7 +310,11 @@ router.get("/reports", async (req: Request, res: Response): Promise<void> => {
     const reports = await db
       .select()
       .from(safetyReportsTable)
-      .where(eq(safetyReportsTable.status, "approved"))
+      .where(and(
+        eq(safetyReportsTable.status, "approved"),
+        isNull(safetyReportsTable.withdrawnAt),
+        gt(safetyReportsTable.displayExpiresAt, new Date()),
+      ))
       .orderBy(desc(safetyReportsTable.createdAt))
       .limit(100);
     res.json({ reports: reports.map(publicSafetyReport) });
@@ -288,9 +325,19 @@ router.get("/reports", async (req: Request, res: Response): Promise<void> => {
 });
 
 router.get("/incidents", async (req: Request, res: Response): Promise<void> => {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return;
+  }
   try {
     const incidents = await pool.query(
-      `SELECT si.id, si.city, si.region, si.neighborhood, si.category, si.severity,
+      `SELECT si.id, si.city, si.region,
+              CASE WHEN si.category LIKE 'police:%' THEN NULL ELSE si.neighborhood END AS neighborhood,
+              CASE WHEN si.category LIKE 'police:%' THEN 'police' ELSE si.category END AS category,
+              NULLIF(SUBSTRING(si.category FROM '^police:(.+)$'), '') AS "encounterType",
+              CASE WHEN si.category LIKE 'police:%' THEN 'corroborated' ELSE 'active' END AS "alertState",
+              CASE WHEN si.category LIKE 'police:%' THEN si.triggered_at + ($2::bigint * INTERVAL '1 millisecond') ELSE NULL END AS "expiresAt",
+              si.severity,
               approved.report_count::int AS "reportCount",
               si.status, si.notifications_sent AS "notificationsSent",
               si.triggered_at AS "triggeredAt"
@@ -300,16 +347,20 @@ router.get("/incidents", async (req: Request, res: Response): Promise<void> => {
          FROM safety_reports sr
          WHERE LOWER(sr.incident_city) = LOWER(si.city)
            AND LOWER(sr.incident_region) = LOWER(si.region)
-           AND sr.category = si.category
+           AND sr.category = CASE WHEN si.category LIKE 'police:%' THEN 'police' ELSE si.category END
+           AND (si.category NOT LIKE 'police:%' OR sr.encounter_type = SUBSTRING(si.category FROM '^police:(.+)$'))
            AND sr.status = 'approved'
+           AND sr.withdrawn_at IS NULL
+           AND sr.display_expires_at > NOW()
            AND sr.created_at > NOW() - INTERVAL '7 days'
        ) approved ON approved.report_count >= $1
        WHERE si.status = 'active'
          AND si.region IS NOT NULL
          AND si.triggered_at > NOW() - INTERVAL '7 days'
+         AND (si.category NOT LIKE 'police:%' OR si.triggered_at + ($2::bigint * INTERVAL '1 millisecond') > NOW())
        ORDER BY si.triggered_at DESC
        LIMIT 50`,
-      [INCIDENT_THRESHOLD],
+      [INCIDENT_THRESHOLD, POLICE_ICE_ALERT_TTL_MS],
     );
 
     res.json({ incidents: incidents.rows });
@@ -368,6 +419,80 @@ router.patch("/admin/safety-reports/:id", async (req: any, res: Response): Promi
   } catch (err) {
     req.log.error({ err }, "Failed to update safety report");
     res.status(500).json({ error: "Failed to update report" });
+  }
+});
+
+/**
+ * Reversible Safety Hub lifecycle control. This endpoint never deletes or
+ * overwrites report evidence; it adds an auditable withdrawal, correction, or
+ * display-expiry record and invalidates cached public warnings immediately.
+ */
+router.patch("/admin/safety-reports/:id/lifecycle", async (req: Request, res: Response): Promise<void> => {
+  if (!isNamedAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const action = typeof req.body?.action === "string" ? req.body.action : "";
+  const reason = normalizeLifecycleText(req.body?.reason, 500);
+  const correctionNote = normalizeLifecycleText(req.body?.correctionNote, 2000);
+  const displayExpiresAt = parseLifecycleExpiry(req.body?.displayExpiresAt);
+  const now = new Date();
+
+  if (action !== "withdraw" && action !== "correct" && action !== "set_expiration") {
+    res.status(400).json({ error: "Invalid lifecycle action" });
+    return;
+  }
+  if (action === "withdraw" && !reason) {
+    res.status(400).json({ error: "A withdrawal reason is required" });
+    return;
+  }
+  if (action === "correct" && !correctionNote) {
+    res.status(400).json({ error: "A correction note is required" });
+    return;
+  }
+  if (action === "set_expiration" && !displayExpiresAt) {
+    res.status(400).json({ error: "A valid displayExpiresAt timestamp is required" });
+    return;
+  }
+
+  try {
+    const lifecycleUpdate = action === "withdraw"
+      ? {
+          withdrawnAt: now,
+          withdrawnBy: req.user!.id,
+          withdrawalReason: reason,
+        }
+      : action === "correct"
+        ? {
+            correctedAt: now,
+            correctedBy: req.user!.id,
+            correctionNote,
+          }
+        : { displayExpiresAt: displayExpiresAt! };
+    const [report] = await db
+      .update(safetyReportsTable)
+      .set(lifecycleUpdate)
+      .where(eq(safetyReportsTable.id, String(req.params.id)))
+      .returning();
+
+    if (!report) {
+      res.status(404).json({ error: "Report not found" });
+      return;
+    }
+    invalidateProximityWarningCache("report_lifecycle_changed");
+    res.json({
+      report: {
+        id: report.id,
+        status: report.status,
+        displayExpiresAt: report.displayExpiresAt,
+        withdrawnAt: report.withdrawnAt,
+        correctedAt: report.correctedAt,
+      },
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update safety report lifecycle");
+    res.status(500).json({ error: "Failed to update report lifecycle" });
   }
 });
 
@@ -460,6 +585,8 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
       WHERE
         sr.target_type = 'business'
         AND sr.status = 'approved'
+        AND sr.withdrawn_at IS NULL
+        AND sr.display_expires_at > NOW()
         AND sr.created_at > NOW() - INTERVAL '7 days'
       GROUP BY sr.target_id, b.name, sr.category, b.latitude, b.longitude
       HAVING COUNT(*) >= $3
@@ -498,6 +625,8 @@ router.get("/reports/proximity-warnings", async (req: Request, res: Response): P
            AND LOWER(sr.incident_region) = LOWER(si.region)
            AND sr.category = si.category
            AND sr.status = 'approved'
+           AND sr.withdrawn_at IS NULL
+           AND sr.display_expires_at > NOW()
            AND sr.created_at > NOW() - INTERVAL '7 days'
        ) approved ON approved.report_count >= $1
        WHERE si.status = 'active'

@@ -5,6 +5,7 @@ import { surveyLimiter } from "../middleware/rateLimiter";
 import { requireTrust } from "../middleware/requireTrust";
 import { sendNominationAlert } from "../lib/email.js";
 import { sendSafetyReportPushForCity } from "../lib/pushNotifications";
+import { invalidateSafetyHeatmapCache } from "../safety/safetyHeatCache";
 
 const router: IRouter = Router();
 
@@ -104,6 +105,9 @@ router.post("/surveys", surveyLimiter, requireTrust, async (req: Request, res: R
     // Push alert to community members in this city about the new safety report
     void sendSafetyReportPushForCity(city as string);
 
+    // This is a reversible derived-data invalidation only. It does not modify
+    // retention or delete any source survey.
+    invalidateSafetyHeatmapCache();
     res.status(201).json({ survey, scores });
   } catch (err) {
     req.log.error({ err }, "Failed to submit survey");
@@ -202,6 +206,7 @@ router.post("/surveys/welcome", async (req: Request, res: Response) => {
       [welcomeRating, whatStoodOut?.length ? whatStoodOut : null, survey.id]
     );
 
+    invalidateSafetyHeatmapCache();
     res.status(201).json({ survey, communityScore });
   } catch (err) {
     req.log.error({ err }, "POST /surveys/welcome error");
