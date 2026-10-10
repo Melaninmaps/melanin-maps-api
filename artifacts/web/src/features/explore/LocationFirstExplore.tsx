@@ -24,6 +24,18 @@ export function safeExploreDetailUrl(value: string): string | null {
   }
 }
 
+/** Carries only the member-selected public area into the existing Map handoff. */
+export function exploreMapUrl(location: {
+  city: string | null;
+  stateCode: string | null;
+}): string | null {
+  const city = location.city?.trim();
+  const stateCode = location.stateCode?.trim();
+  if (!city) return null;
+  const area = [city, stateCode].filter(Boolean).join(", ");
+  return `/map?${new URLSearchParams({ area }).toString()}`;
+}
+
 export function LocationFirstExplore() {
   const { location, setExplicitLocation } = useDiscoveryLocation();
   const [lens, setLens] = useState<string | null>(null);
@@ -94,6 +106,7 @@ export function LocationFirstExplore() {
   }, [query, requestAttempt]);
 
   const locationLabel = [location.neighborhood, location.city, location.stateCode].filter(Boolean).join(", ");
+  const mapUrl = exploreMapUrl(location);
 
 
   return (
@@ -126,6 +139,17 @@ export function LocationFirstExplore() {
             }}
           />
         </div>
+
+        {mapUrl && (
+          <Link
+            href={mapUrl}
+            data-testid="explore-map-handoff"
+            aria-label={`View ${[location.city, location.stateCode].filter(Boolean).join(", ")} on map`}
+            className="mb-6 inline-flex rounded-full border border-[#3A1F0E]/20 bg-white px-4 py-2 text-sm font-semibold text-[#3A1F0E] hover:border-[#CA922B]/60"
+          >
+            View this area on the map
+          </Link>
+        )}
 
         {/* Lens filters */}
         <div role="group" aria-label="Explore themes" className="flex flex-wrap gap-2">

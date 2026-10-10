@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { classifyCommunityMedia, safeHttpUrl } from "../components/community/CommunityMedia";
-import { safeExploreDetailUrl } from "../features/explore/LocationFirstExplore";
+import { exploreMapUrl, safeExploreDetailUrl } from "../features/explore/LocationFirstExplore";
 
 const source = (relativePath: string) => readFileSync(
   fileURLToPath(new URL(relativePath, import.meta.url)),
@@ -42,12 +42,16 @@ describe("Community and Explore UI regressions", () => {
     expect(safeExploreDetailUrl("/\\example.com/redirect")).toBeNull();
     expect(safeExploreDetailUrl("https://example.com/redirect")).toBeNull();
     expect(safeExploreDetailUrl("javascript:alert(1)")).toBeNull();
+    expect(exploreMapUrl({ city: "Philadelphia", stateCode: "PA" })).toBe("/map?area=Philadelphia%2C+PA");
+    expect(exploreMapUrl({ city: null, stateCode: "PA" })).toBeNull();
 
     const activeExplore = source("../features/explore/LocationFirstExplore.tsx");
     expect(activeExplore).toContain('data-testid="explore-loading"');
     expect(activeExplore).toContain('data-testid="explore-error"');
     expect(activeExplore).toContain('testId="explore-empty-results"');
     expect(activeExplore).toContain('role="group" aria-label="Explore themes"');
+    expect(activeExplore).toContain('data-testid="explore-map-handoff"');
+    expect(activeExplore).toContain("View this area on the map");
 
     const directoryExplore = source("../pages/explore.tsx");
     expect(directoryExplore).toContain('data-testid="explore-directory-error"');
