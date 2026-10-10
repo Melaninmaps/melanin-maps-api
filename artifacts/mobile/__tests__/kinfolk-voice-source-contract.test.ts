@@ -77,4 +77,15 @@ describe("Kinfolk native voice source contract", () => {
     expect(controls).toContain("It will not be sent until you review it");
     expect(controls).not.toContain("/api/kinfolk/chat");
   });
+
+  it("integrates the native lifecycle into the primary chat without auto-sending a turn", () => {
+    const travel = source("app/travel.tsx");
+    expect(travel).toContain("useKinfolkVoiceSource");
+    expect(travel).toContain("KinfolkVoiceSourceControls");
+    expect(travel).toContain("startPrimaryVoiceSource");
+    expect(travel).toContain("addPrimaryVoiceTranscriptToDraft");
+    expect(travel).toContain("It never creates a");
+    expect(travel).toContain("chat turn—the member must still review");
+    expect(travel).toContain("setInputText(transcript)");
+  });
 });
