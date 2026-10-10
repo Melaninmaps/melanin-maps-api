@@ -4,7 +4,7 @@ import type { Pool, PoolClient } from "pg";
 import { isAdmin } from "../lib/adminAuth";
 
 export const FOUNDER_MAP_RESTORATION_POLICY_VERSION =
-  "founder-map-restoration-v3-no-zip" as const;
+  "founder-map-restoration-v4-parser-comparator" as const;
 export const FOUNDER_MAP_RESTORATION_ACTOR =
   "founder-authorized-map-restoration-2026-10-09" as const;
 
@@ -231,6 +231,24 @@ function addressFingerprint(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
 
+function splitTerminalEmbeddedPostalCode(value: string): Readonly<{
+  streetAddress: string;
+  postalCode: string | null;
+}> {
+  const match = value.match(/^(.*?)(?:\s*,?\s*)(\d{5}(?:-\d{4})?)\s*$/);
+  const postalCode = normalizePostalCode(match?.[2] ?? null);
+  if (!match || !postalCode || !match[1].trim()) {
+    return { streetAddress: value, postalCode: null };
+  }
+  return { streetAddress: match[1].trim(), postalCode };
+}
+
+function matchedHouseNumber(matchedAddress: string | null | undefined): string | null {
+  const match = matchedAddress?.match(/^\s*(\d+[A-Za-z]?)(?:\s|,|$)/);
+  const value = normalized(match?.[1] ?? null);
+  return value || null;
+}
+
 function explicitlyNonphysicalLocation(candidate: MapRestorationCandidate): boolean {
   const kind = normalized(candidate.publicLocationKind);
   const explicitlyPhysical = ["address", "physical", "storefront", "customer_facing"].includes(kind);
@@ -264,26 +282,28 @@ function completeStoredAddress(
   }
   const city = candidate.city?.trim().replace(/\s+/g, " ");
   const state = candidate.state?.trim();
-  const postalCode = normalizePostalCode(candidate.postalCode);
+  const embeddedPostal = splitTerminalEmbeddedPostalCode(withoutCountry);
+  const streetAddress = embeddedPostal.streetAddress;
+  const postalCode = normalizePostalCode(candidate.postalCode) ?? embeddedPostal.postalCode;
   if (!city || !state || !canonicalState(state)) return null;
-  const hasCity = normalized(withoutCountry).includes(normalized(city));
+  const hasCity = normalized(streetAddress).includes(normalized(city));
   const hasState =
     new RegExp(
       `${state.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:\\s*,?\\s*\\d{5}(?:-\\d{4})?)?`,
       "i",
-    ).test(withoutCountry) ||
+    ).test(streetAddress) ||
     new RegExp(
       `${(canonicalState(state) ?? state).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:\\s*,?\\s*\\d{5}(?:-\\d{4})?)?`,
       "i",
-    ).test(withoutCountry);
+    ).test(streetAddress);
   if (hasCity && hasState) {
-    return withoutCountry.replace(
+    return streetAddress.replace(
       /,?\s*([A-Z]{2})\s*,\s*(\d{5}(?:-\d{4})?)/i,
       ", $1 $2",
     );
   }
-  if (hasCity) return `${withoutCountry}, ${state}${postalCode ? ` ${postalCode}` : ""}`;
-  return `${withoutCountry}, ${city}, ${state}${postalCode ? ` ${postalCode}` : ""}`;
+  if (hasCity) return `${streetAddress}, ${state}${postalCode ? ` ${postalCode}` : ""}`;
+  return `${streetAddress}, ${city}, ${state}${postalCode ? ` ${postalCode}` : ""}`;
 }
 
 /** Strictly parses a U.S. physical street address. ZIP is optional; units are not map identity. */
@@ -335,7 +355,11 @@ export function matchingCensusLocation(
   const latitude = Number(result.coordinates?.y);
   const longitude = Number(result.coordinates?.x);
   const components = result.addressComponents;
-  const houseNumber = normalized(components?.fromAddress ?? null);
+  // Census's `fromAddress` is the start of the street range, not necessarily
+  // the house number returned in `matchedAddress`. Bind the pin to the actual
+  // matched house number and retain strict direction, street, city, state, and
+  // ZIP-when-present comparison below.
+  const houseNumber = matchedHouseNumber(result.matchedAddress);
   const directional = canonicalDirectional(components?.preDirection ?? null);
   const streetName = normalized(components?.streetName ?? null);
   const streetType = canonicalStreetType(components?.suffixType ?? null);

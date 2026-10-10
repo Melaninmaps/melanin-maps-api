@@ -125,6 +125,187 @@ describe("founder map restoration", () => {
     });
   });
 
+  it("normalizes terminal ZIP tokens held in the street field when city and state are stored separately", () => {
+    expect(
+      parseCompleteStoredPhysicalAddress({
+        id: "cohort-1dbe1d2d4111f27dc02f1684",
+        name: "Hourigan Construction",
+        address: "411 E. Franklin Street, Suite 400 23219",
+        city: "Richmond",
+        state: "VA",
+        country: "US",
+        postalCode: null,
+      }),
+    ).toMatchObject({
+      queryAddress: "411 E. Franklin Street, Suite 400, Richmond, VA 23219",
+      houseNumber: "411",
+      directional: "east",
+      postalCode: "23219",
+    });
+    expect(
+      parseCompleteStoredPhysicalAddress({
+        id: "cohort-1f364139f5c15179c7618504",
+        name: "Velocity Systems AI",
+        address: "9021 Patterson Ave 23229",
+        city: "Richmond",
+        state: "VA",
+        country: "US",
+        postalCode: null,
+      }),
+    ).toMatchObject({
+      queryAddress: "9021 Patterson Ave, Richmond, VA 23229",
+      houseNumber: "9021",
+      directional: null,
+      postalCode: "23229",
+    });
+    expect(
+      parseCompleteStoredPhysicalAddress({
+        id: "cohort-25d7fee5dbd96fc6729db3ed",
+        name: "ColonialWebb",
+        address: "1920 E Parham Rd 23228",
+        city: "Richmond",
+        state: "VA",
+        country: "US",
+        postalCode: null,
+      }),
+    ).toMatchObject({
+      queryAddress: "1920 E Parham Rd, Richmond, VA 23228",
+      houseNumber: "1920",
+      directional: "east",
+      postalCode: "23228",
+    });
+  });
+
+  it("uses the Census matched house number rather than the range start and retains directional safety", () => {
+    const hourigan = parseCompleteStoredPhysicalAddress({
+      id: "cohort-1dbe1d2d4111f27dc02f1684",
+      name: "Hourigan Construction",
+      address: "411 E. Franklin Street, Suite 400 23219",
+      city: "Richmond",
+      state: "VA",
+      country: "US",
+      postalCode: null,
+    });
+    expect(
+      matchingCensusLocation(hourigan!, {
+        matchedAddress: "411 E FRANKLIN ST, RICHMOND, VA, 23219",
+        coordinates: { x: -77.439884584772, y: 37.541631012405 },
+        addressComponents: {
+          fromAddress: "401",
+          preDirection: "E",
+          streetName: "FRANKLIN",
+          suffixType: "ST",
+          city: "RICHMOND",
+          state: "VA",
+          zip: "23219",
+        },
+      }),
+    ).toMatchObject({
+      latitude: 37.541631012405,
+      longitude: -77.439884584772,
+      components: { houseNumber: "411" },
+    });
+
+    const julia = parseCompleteStoredPhysicalAddress({
+      id: "cohort-10bcaf2f0a8eb2977e7df14b",
+      name: "Julia de Burgos Bookstore at Taller Puertorriqueño",
+      address: "2600 N. 5th Street, Philadelphia, PA",
+      city: "Philadelphia",
+      state: "PA",
+      country: "US",
+      postalCode: null,
+    });
+    expect(
+      matchingCensusLocation(julia!, {
+        matchedAddress: "2600 N 5TH ST, PHILADELPHIA, PA, 19133",
+        coordinates: { x: -75.140604466051, y: 39.990563944951 },
+        addressComponents: {
+          fromAddress: "2600",
+          preDirection: "N",
+          streetName: "5TH",
+          suffixType: "ST",
+          city: "PHILADELPHIA",
+          state: "PA",
+          zip: "19133",
+        },
+      }),
+    ).toMatchObject({ components: { houseNumber: "2600" } });
+
+    const velocity = parseCompleteStoredPhysicalAddress({
+      id: "cohort-1f364139f5c15179c7618504",
+      name: "Velocity Systems AI",
+      address: "9021 Patterson Ave 23229",
+      city: "Richmond",
+      state: "VA",
+      country: "US",
+      postalCode: null,
+    });
+    expect(
+      matchingCensusLocation(velocity!, {
+        matchedAddress: "9021 PATTERSON AVE, RICHMOND, VA, 23229",
+        coordinates: { x: -77.576356025638, y: 37.595116939437 },
+        addressComponents: {
+          fromAddress: "8933",
+          streetName: "PATTERSON",
+          suffixType: "AVE",
+          city: "RICHMOND",
+          state: "VA",
+          zip: "23229",
+        },
+      }),
+    ).toMatchObject({ components: { houseNumber: "9021" } });
+
+    const colonialWebb = parseCompleteStoredPhysicalAddress({
+      id: "cohort-25d7fee5dbd96fc6729db3ed",
+      name: "ColonialWebb",
+      address: "1920 E Parham Rd 23228",
+      city: "Richmond",
+      state: "VA",
+      country: "US",
+      postalCode: null,
+    });
+    expect(
+      matchingCensusLocation(colonialWebb!, {
+        matchedAddress: "1920 E PARHAM RD, RICHMOND, VA, 23228",
+        coordinates: { x: -77.482856947124, y: 37.638860273872 },
+        addressComponents: {
+          fromAddress: "1900",
+          preDirection: "E",
+          streetName: "PARHAM",
+          suffixType: "RD",
+          city: "RICHMOND",
+          state: "VA",
+          zip: "23228",
+        },
+      }),
+    ).toMatchObject({ components: { houseNumber: "1920" } });
+
+    const nemi = parseCompleteStoredPhysicalAddress({
+      id: "cohort-0f7f9a5100265004210efbaf",
+      name: "Nemi",
+      address: "2636 Ann Street",
+      city: "Philadelphia",
+      state: "PA",
+      country: "US",
+      postalCode: null,
+    });
+    expect(
+      matchingCensusLocation(nemi!, {
+        matchedAddress: "2636 E ANN ST, PHILADELPHIA, PA, 19134",
+        coordinates: { x: -75.10893026842, y: 39.981693504284 },
+        addressComponents: {
+          fromAddress: "2620",
+          preDirection: "E",
+          streetName: "ANN",
+          suffixType: "ST",
+          city: "PHILADELPHIA",
+          state: "PA",
+          zip: "19134",
+        },
+      }),
+    ).toBeNull();
+  });
+
   it("records an exception rather than guessing when a stored address is incomplete", () => {
     expect(
       parseCompleteStoredPhysicalAddress({
@@ -188,7 +369,7 @@ describe("founder map restoration", () => {
 
   it("keeps the write scope to coordinates plus required map receipts and audits", () => {
     expect(FOUNDER_MAP_RESTORATION_POLICY_VERSION).toBe(
-      "founder-map-restoration-v3-no-zip",
+      "founder-map-restoration-v4-parser-comparator",
     );
     expect(source).toContain(
       "Census Geocoder exact match for stored physical address",
@@ -212,6 +393,8 @@ describe("founder map restoration", () => {
     expect(source).toContain("outcomesOutsideCurrentPopulation");
     expect(source).toContain("explicitly_nonphysical_location");
     expect(source).toContain("ZIP when present");
+    expect(source).toContain("matchedHouseNumber");
+    expect(source).toContain("splitTerminalEmbeddedPostalCode");
     expect(source).toContain("JOIN public.business_discovery_eligibility e ON e.business_id::text = b.id::text");
     expect(source).not.toContain("SET ownership_designations");
     expect(source).not.toContain("SET website =");
