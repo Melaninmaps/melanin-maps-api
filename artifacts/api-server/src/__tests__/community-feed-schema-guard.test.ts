@@ -35,4 +35,10 @@ describe("Community feed pre-traffic schema guard", () => {
       startupSource.indexOf("const server = host"),
     );
   });
+
+  it("runs the guard before narrow release mode can skip broad startup migrations", () => {
+    expect(startupSource.indexOf("await ensureCommunityFeedReadSchema(logger)")).toBeLessThan(
+      startupSource.indexOf('if (explicitFeatureReleaseMode) {'),
+    );
+  });
 });

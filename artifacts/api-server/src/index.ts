@@ -191,6 +191,11 @@ try {
   // notifications, so explicit release mode can safely enforce them here.
   await ensureSafetyOperationalSchema(logger);
   logger.info("Safety Hub operational schema ready before traffic acceptance");
+  // The protected Community feed reads reactions and block/follow boundaries on
+  // every authenticated request. These additive relations must exist even when
+  // narrow release mode skips broad publication migrations and background work.
+  await ensureCommunityFeedReadSchema(logger);
+  logger.info("Community feed read schema ready before traffic acceptance");
   await ensureIsolatedGovernedDiscoverySchema(logger);
   logger.info("Isolated governed discovery schema ready before traffic acceptance");
   if (explicitFeatureReleaseMode) {
@@ -224,7 +229,6 @@ try {
       logger,
     );
     logger.info("Required publication schema ready before traffic acceptance");
-    await ensureCommunityFeedReadSchema(logger);
   }
 } catch (error) {
   for (const detail of publicationSchemaFailureLogLines(error)) {
