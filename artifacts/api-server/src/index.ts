@@ -18,6 +18,7 @@ import {
   ensureKinfolkPreferredNameSchema,
   ensureKinfolkTemporaryStaysSchema,
   ensureRequiredPublicationSchema,
+  ensureSafetyOperationalSchema,
   publicationSchemaFailureLogLines,
   runStartupMigrations,
 } from "./lib/startup-migrations";
@@ -183,6 +184,12 @@ try {
   // feature-release mode correctly skips unrelated startup migration writers.
   await ensureAdminBusinessProfileReceiptsAndCatalogSchema(logger);
   logger.info("Admin profile receipt and Kinfolk Catalog schemas ready before traffic acceptance");
+  // Trusted contacts and profile-only Check-Ins have authenticated request paths
+  // even during a narrow feature release. Their canonical migrations are
+  // additive and do not start workers, seed data, publish content, or send
+  // notifications, so explicit release mode can safely enforce them here.
+  await ensureSafetyOperationalSchema(logger);
+  logger.info("Safety Hub operational schema ready before traffic acceptance");
   if (explicitFeatureReleaseMode) {
     logger.info("Explicit feature release mode: skipping boot-time schema and publication writers");
   } else {

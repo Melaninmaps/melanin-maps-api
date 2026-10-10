@@ -6230,6 +6230,38 @@ export async function ensureAdminBusinessProfileReceiptsAndCatalogSchema(
   logger?.info("Admin profile receipt and Kinfolk Catalog schemas ready before traffic acceptance");
 }
 
+/**
+ * Trusted contacts and profile-only Safety Check-Ins are request-path controls,
+ * not optional publishing or seed work. Explicit feature-release mode therefore
+ * must provision their additive schema before serving the authenticated Safety
+ * Hub, while continuing to leave every worker, notification, and data writer
+ * disabled.
+ */
+const SAFETY_OPERATIONAL_SCHEMA_MIGRATIONS = [
+  "create_trusted_safety_shares",
+  "create_trusted_safety_alert_log",
+  "trusted_safety_invitation_delivery_audit_v1",
+  "safety_checkin_profile_recipients_v1",
+  "safety_checkin_recipient_delivery_attempts_v1",
+] as const;
+
+export async function ensureSafetyOperationalSchema(logger?: Logger): Promise<void> {
+  for (const name of SAFETY_OPERATIONAL_SCHEMA_MIGRATIONS) {
+    const migration = MIGRATIONS.find((candidate) => candidate.name === name);
+    if (!migration) {
+      throw new Error(`Safety operational schema migration is unavailable: ${name}`);
+    }
+    await pool.query(migration.sql);
+  }
+
+  await Promise.all([
+    pool.query("SELECT id, status, contact_accepted FROM trusted_safety_shares LIMIT 0"),
+    pool.query("SELECT id, share_id, state FROM trusted_safety_invitation_delivery_attempts LIMIT 0"),
+    pool.query("SELECT checkin_id, trusted_share_id, delivery_status FROM safety_checkin_recipients LIMIT 0"),
+  ]);
+  logger?.info("Safety Hub trusted-contact and Check-In schemas ready before traffic acceptance");
+}
+
 export const COMMUNITY_PUBLICATION_REQUIRED_COLUMNS: Readonly<
   Record<string, readonly string[]>
 > = {
