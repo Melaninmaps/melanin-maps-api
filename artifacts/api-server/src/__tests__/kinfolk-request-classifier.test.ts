@@ -83,7 +83,7 @@ describe("classifyKinfolkRequest — stylist proof-of-concept", () => {
   });
 
   it("asks a hair-specific location question without restaurant language", () => {
-    const result = classifyKinfolkRequest("a stylist is a hairdresser or a salon");
+    const result = classifyKinfolkRequest("Find a hairdresser or salon");
     expect(result.route).toBe("clarification");
     expect(result.clarification).toMatch(/stylist|salon/i);
     expect(result.clarification).toMatch(/city|neighborhood/i);
@@ -181,8 +181,26 @@ describe("classifyKinfolkRequest — general current-affairs protection", () => 
   });
 
   it("retains explicit travel planning as an additive capability", () => {
-    expect(classifyKinfolkRequest("I am going to Atlanta this weekend").route).toBe("travel_planning");
-    expect(classifyKinfolkRequest("I am traveling to Atlanta").route).toBe("travel_planning");
+    expect(classifyKinfolkRequest("I am going to Atlanta this weekend")).toMatchObject({
+      route: "travel_planning",
+      discoveryKind: "travel",
+      location: "Atlanta",
+    });
+    expect(classifyKinfolkRequest("I am traveling to Atlanta")).toMatchObject({
+      route: "travel_planning",
+      discoveryKind: "travel",
+      location: "Atlanta",
+    });
+  });
+
+  it("does not turn a stale destination into travel planning", () => {
+    expect(
+      classifyKinfolkRequest("I am going to see a movie", "Atlanta"),
+    ).toMatchObject({
+      route: "general_knowledge",
+      discoveryKind: "general",
+      location: "Atlanta",
+    });
   });
 });
 

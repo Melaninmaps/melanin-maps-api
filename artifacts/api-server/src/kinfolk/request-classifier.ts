@@ -142,14 +142,23 @@ export function classifyKinfolkRequest(
     text,
     hasBusinessSubject: normalizedBusinessSubject,
   });
+  const currentTurnLocation = cleanLocation(text.match(LOCATION_RE)?.[1]);
+  // A direct travel declaration is actionable only when it names a destination
+  // in this turn. This admits “I am going to Atlanta” without allowing a stale
+  // resolved city to turn ordinary “going to see a movie” language into travel.
+  const explicitCurrentTurnTravelDeclaration =
+    Boolean(currentTurnLocation) &&
+    /\b(?:heading|going|traveling|travelling)\s+to\s+/i.test(text);
   const explicitTravelPlanningIntent =
-    (TRAVEL_RE.test(text) && TRAVEL_PLANNING_RE.test(text)) ||
+    (TRAVEL_RE.test(text) &&
+      (TRAVEL_PLANNING_RE.test(text) ||
+        explicitCurrentTurnTravelDeclaration)) ||
     DAY_PLAN_RE.test(text);
   const postalCode = text.match(POSTAL_CODE_RE)?.[1] ?? null;
   // Use server-resolved city (alias-aware) when available; fall back to regex.
   const location = resolvedDestination
     ? resolvedDestination
-    : cleanLocation(text.match(LOCATION_RE)?.[1]);
+    : currentTurnLocation;
   const ownershipPreference =
     text.match(OWNERSHIP_RE)?.[1]?.toLowerCase() ?? null;
   const culturalContext: string[] = [];

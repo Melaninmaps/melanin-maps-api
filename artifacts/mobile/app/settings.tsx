@@ -47,12 +47,15 @@ export default function SettingsScreen() {
     {
       id: "account",
       title: "Account",
-      summary: "Profile, identity, password, and connected accounts",
+      summary: "Profile, identity, accounts, and business submission tools",
       rows: [
         { id: "profile", icon: "user", label: "Edit Profile", sub: "Name, photo, bio", route: "/(tabs)/profile" },
         { id: "identity", icon: "heart", label: "Gender & Pronouns", sub: "Private — used only by Kinfolk", route: "/identity-context" },
         { id: "password", icon: "lock", label: "Change Password", sub: "Managed through your account provider", route: null },
         { id: "connected", icon: "link", label: "Connected Accounts", sub: "Managed through your account provider", route: null },
+        { id: "add-my-business", icon: "briefcase", label: "Add My Business", sub: "Create a profile tied to your owner request", route: "/list-business?intent=owner" },
+        { id: "share-another-business", icon: "share-2", label: "Share Another Business", sub: "Recommend a business without claiming ownership", route: "/list-business" },
+        { id: "my-business-submissions", icon: "clock", label: "My Business Submissions", sub: "Review status and information requests", route: "/my-business-submissions" },
       ],
     },
     {
