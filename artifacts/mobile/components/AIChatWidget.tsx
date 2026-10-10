@@ -1568,6 +1568,7 @@ export function AIChatWidget() {
                       mutedColor={colors.mutedForeground}
                       borderColor={colors.border}
                       accentColor={colors.primary}
+                      onOpenLibrary={(href) => router.push(href as never)}
                     />
                   </View>
                 ) : null}

@@ -31,5 +31,10 @@ describe("Kinfolk contextual response surfaces", () => {
     expect(presentation).toContain("safeLibraryHref");
     expect(presentation).toContain('testID="kinfolk-contextual-presentation"');
     expect(presentation).toContain("Evidence-backed details");
+    expect(presentation).toContain("content.criteria.slice(0, 5)");
+    expect(presentation).toContain("content.pathways.slice(0, 5)");
+    expect(presentation).toContain("Open Library context");
+    expect(travel).toContain("onOpenLibrary={(href) => router.push(href as never)}");
+    expect(widget).toContain("onOpenLibrary={(href) => router.push(href as never)}");
   });
 });

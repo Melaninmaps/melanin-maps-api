@@ -978,6 +978,7 @@ function AiMessageBubble({
           mutedColor={colors.mutedForeground}
           borderColor={colors.border}
           accentColor={GOLD}
+          onOpenLibrary={(href) => router.push(href as never)}
         />
 
         {msg.provenanceNote ? (

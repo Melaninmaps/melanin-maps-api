@@ -59,7 +59,19 @@ function SafeExternalLink({ title, url, color }: { title: string; url: string; c
   );
 }
 
-function StructuredDetails({ content, color, mutedColor }: { content: KinfolkStructuredContent; color: string; mutedColor: string }) {
+function StructuredDetails({
+  content,
+  color,
+  mutedColor,
+  accentColor,
+  onOpenLibrary,
+}: {
+  content: KinfolkStructuredContent;
+  color: string;
+  mutedColor: string;
+  accentColor: string;
+  onOpenLibrary?: (href: string) => void;
+}) {
   if (content.kind === "recipe_options") {
     return (
       <View style={styles.stack}>
@@ -95,6 +107,9 @@ function StructuredDetails({ content, color, mutedColor }: { content: KinfolkStr
   if (content.kind === "ranked_perspectives") {
     return (
       <View style={styles.stack}>
+        {content.criteria.slice(0, 5).map((criterion) => (
+          <Text key={criterion} style={[styles.detailText, { color: mutedColor }]}>• {criterion}</Text>
+        ))}
         {content.entries.slice(0, 5).map((entry, index) => (
           <View key={entry.name} style={styles.detailBlock}>
             <Text style={[styles.detailTitle, { color }]}>{index + 1}. {entry.name}</Text>
@@ -109,6 +124,21 @@ function StructuredDetails({ content, color, mutedColor }: { content: KinfolkStr
     <View style={styles.stack}>
       <Text style={[styles.detailTitle, { color }]}>{content.canonicalName}</Text>
       <Text style={[styles.detailText, { color: mutedColor }]}>{content.overview}</Text>
+      {content.pathways.slice(0, 5).map((pathway) => {
+        const libraryHref = safeLibraryHref(pathway.libraryHref);
+        return (
+          <View key={`${pathway.label}-${pathway.libraryHref ?? ""}`} style={styles.detailBlock}>
+            <Text style={[styles.detailTitle, { color }]}>{pathway.label}</Text>
+            <Text style={[styles.detailText, { color: mutedColor }]}>{pathway.description}</Text>
+            {libraryHref && onOpenLibrary ? (
+              <TouchableOpacity accessibilityRole="link" onPress={() => onOpenLibrary(libraryHref)} style={styles.link}>
+                <Feather name="book-open" size={12} color={accentColor} />
+                <Text style={[styles.linkText, { color: accentColor }]}>Open Library context</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+        );
+      })}
     </View>
   );
 }
@@ -132,7 +162,13 @@ export function KinfolkContextualPresentation({
       {structuredContent ? (
         <View style={styles.section}>
           <Text style={[styles.heading, { color }]}>Evidence-backed details</Text>
-          <StructuredDetails content={structuredContent} color={color} mutedColor={mutedColor} />
+          <StructuredDetails
+            content={structuredContent}
+            color={color}
+            mutedColor={mutedColor}
+            accentColor={accentColor}
+            onOpenLibrary={onOpenLibrary}
+          />
         </View>
       ) : null}
       {safeMedia.length > 0 ? (
