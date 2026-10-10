@@ -1,5 +1,6 @@
 import { MapPin, ShieldCheck, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "wouter";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -15,6 +16,39 @@ type PrivatePlacesStatus = {
   disclosureVersion: string;
   disclosure: string;
 };
+
+/** The nearby endpoint returns full governed records; retain only safe directory-card fields. */
+type NearbyDirectoryBusiness = Readonly<{
+  id: string;
+  name: string;
+  category: string;
+  city: string;
+  stateCode: string | null;
+  verified: boolean;
+}>;
+
+function readPublicDirectoryBusinesses(payload: unknown): NearbyDirectoryBusiness[] {
+  const businesses = payload && typeof payload === "object"
+    ? (payload as { businesses?: unknown }).businesses
+    : null;
+  if (!Array.isArray(businesses)) return [];
+
+  return businesses.flatMap((candidate): NearbyDirectoryBusiness[] => {
+    if (!candidate || typeof candidate !== "object") return [];
+    const result = candidate as Record<string, unknown>;
+    const id = typeof result.id === "string" ? result.id.trim() : "";
+    const name = typeof result.name === "string" ? result.name.trim() : "";
+    if (!id || !name) return [];
+    return [{
+      id,
+      name,
+      category: typeof result.category === "string" ? result.category.trim() : "",
+      city: typeof result.city === "string" ? result.city.trim() : "",
+      stateCode: typeof result.stateCode === "string" && result.stateCode.trim() ? result.stateCode.trim() : null,
+      verified: result.verified === true,
+    }];
+  });
+}
 
 async function responseMessage(response: Response, fallback: string): Promise<string> {
   const body = (await response.json().catch(() => ({}))) as { error?: unknown };
@@ -34,7 +68,8 @@ export function PrivatePlacesSettings() {
   const [acceptedDisclosure, setAcceptedDisclosure] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [nearbySummary, setNearbySummary] = useState<string | null>(null);
+  const [nearbyBusinesses, setNearbyBusinesses] = useState<NearbyDirectoryBusiness[]>([]);
+  const [nearbySearched, setNearbySearched] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
@@ -47,6 +82,8 @@ export function PrivatePlacesSettings() {
     setStatus(nextStatus);
     if (!nextStatus.enabled) {
       setPlaces([]);
+      setNearbyBusinesses([]);
+      setNearbySearched(false);
       return;
     }
     const placeResponse = await fetch(`${BASE}api/kinfolk/private-places`, { credentials: "include" });
@@ -90,6 +127,8 @@ export function PrivatePlacesSettings() {
 
   const setActive = async (place: PrivatePlace, isActive: boolean) => {
     setError(null);
+    setNearbyBusinesses([]);
+    setNearbySearched(false);
     const response = await fetch(`${BASE}api/kinfolk/private-places/${encodeURIComponent(place.id)}/active`, {
       method: "PATCH",
       credentials: "include",
@@ -105,6 +144,8 @@ export function PrivatePlacesSettings() {
 
   const remove = async (place: PrivatePlace) => {
     setError(null);
+    setNearbyBusinesses([]);
+    setNearbySearched(false);
     const response = await fetch(`${BASE}api/kinfolk/private-places/${encodeURIComponent(place.id)}`, {
       method: "DELETE",
       credentials: "include",
@@ -118,7 +159,8 @@ export function PrivatePlacesSettings() {
 
   const useForNearbySearch = async (place: PrivatePlace) => {
     setError(null);
-    setNearbySummary(null);
+    setNearbyBusinesses([]);
+    setNearbySearched(false);
     const response = await fetch(`${BASE}api/kinfolk/private-places/${encodeURIComponent(place.id)}/nearby`, {
       method: "POST",
       credentials: "include",
@@ -129,8 +171,9 @@ export function PrivatePlacesSettings() {
       setError(await responseMessage(response, "Nearby directory search could not run."));
       return;
     }
-    const payload = (await response.json()) as { businesses?: unknown[] };
-    setNearbySummary(`${Array.isArray(payload.businesses) ? payload.businesses.length : 0} nearby directory results loaded from ${place.label}.`);
+    const payload = (await response.json()) as unknown;
+    setNearbyBusinesses(readPublicDirectoryBusinesses(payload));
+    setNearbySearched(true);
   };
 
   return (
@@ -166,7 +209,29 @@ export function PrivatePlacesSettings() {
               </div>
             </div>
           ))}
-          {nearbySummary ? <p className="rounded-xl bg-[#FFF8EC] px-3 py-2 text-xs text-[#3A1F0E]/70">{nearbySummary}</p> : null}
+          {nearbySearched ? (
+            <section data-testid="private-places-nearby-results" aria-label="Nearby public business results" className="overflow-hidden rounded-2xl border border-[#3A1F0E]/10 bg-white">
+              <p className="border-b border-[#3A1F0E]/10 bg-[#FFF8EC] px-4 py-3 text-xs font-bold text-[#2B1507]">Nearby public businesses</p>
+              {nearbyBusinesses.length === 0 ? (
+                <p className="px-4 py-3 text-xs leading-5 text-[#3A1F0E]/60">No public businesses were found in this search area.</p>
+              ) : (
+                <ul className="divide-y divide-[#3A1F0E]/10">
+                  {nearbyBusinesses.map((business) => (
+                    <li key={business.id} data-testid="private-places-nearby-result" className="hover:bg-[#FAF6EF]">
+                      <Link href={`/businesses/${encodeURIComponent(business.id)}`} className="flex items-start justify-between gap-3 px-4 py-3">
+                        <span className="min-w-0">
+                          <strong className="block truncate text-sm text-[#2B1507]">{business.name}</strong>
+                          <span className="mt-1 block text-xs text-[#3A1F0E]/60">{[business.category, business.city, business.stateCode].filter(Boolean).join(" · ")}</span>
+                          {business.verified ? <span className="mt-1 block text-[11px] font-bold text-[#8D5C17]">Verified business</span> : null}
+                        </span>
+                        <span className="shrink-0 text-xs font-bold text-[#8D5C17]">View →</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          ) : null}
           <div className="rounded-2xl border border-[#3A1F0E]/10 bg-white p-4">
             <p className="text-sm font-semibold text-[#2B1507]">Save a new Private Place</p>
             <input value={label} onChange={(event) => setLabel(event.target.value)} maxLength={80} placeholder="Nickname, for example Mom’s house" aria-label="Private Place nickname" className="mt-3 w-full rounded-xl border border-[#3A1F0E]/15 px-3 py-2 text-sm" />

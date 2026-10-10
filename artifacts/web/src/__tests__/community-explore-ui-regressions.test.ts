@@ -23,6 +23,16 @@ describe("Community and Explore UI regressions", () => {
     expect(community).not.toContain('api/community/hashtags/trending');
   });
 
+  it("routes Community author and people-search profile links through the canonical visitor route", () => {
+    const community = source("../pages/community.tsx");
+
+    expect(community).toContain("function memberProfilePath(userId: string): string {");
+    expect(community).toContain("return `/members/${encodeURIComponent(userId)}`;");
+    expect(community.match(/href=\{memberProfilePath\(post\.authorId\)\}/g)).toHaveLength(2);
+    expect(community).toContain("onClick={() => navigate(memberProfilePath(m.id))}");
+    expect(community).not.toContain("navigate(`/profile/${encodeURIComponent(m.id)}`)");
+  });
+
   it("never embeds or opens credentialed and non-HTTP Community attachments", () => {
     expect(safeHttpUrl("javascript:alert(1)")).toBeNull();
     expect(safeHttpUrl("https://member:secret@example.com/photo.jpg")).toBeNull();

@@ -193,14 +193,17 @@ export default function SignupScreen() {
     }
     if (step === 2) {
       if (!agreeToTerms) { setError("You must agree to the Terms of Service to continue."); return false; }
-      const hasPartialDob = dobMonth || dobDay || dobYear;
-      if (hasPartialDob) {
-        const m = parseInt(dobMonth), d = parseInt(dobDay), y = parseInt(dobYear);
-        const valid = m >= 1 && m <= 12 && d >= 1 && d <= 31 && y >= 1900 && y <= new Date().getFullYear();
-        if (!valid) { setError("Please enter a valid date of birth."); return false; }
-        const age = (Date.now() - new Date(y, m - 1, d).getTime()) / (1000 * 60 * 60 * 24 * 365.25);
-        if (age < 13) { setError("You must be at least 13 years old to sign up."); return false; }
-      }
+      if (!dobMonth || !dobDay || !dobYear) { setError("Date of birth is required to create an account."); return false; }
+      const m = parseInt(dobMonth), d = parseInt(dobDay), y = parseInt(dobYear);
+      const dob = new Date(Date.UTC(y, m - 1, d));
+      const now = new Date();
+      const valid = m >= 1 && m <= 12 && d >= 1 && d <= 31 && y >= 1900 && y <= now.getUTCFullYear()
+        && dob.getUTCFullYear() === y && dob.getUTCMonth() === m - 1 && dob.getUTCDate() === d && dob <= now;
+      if (!valid) { setError("Please enter a valid date of birth."); return false; }
+      let age = now.getUTCFullYear() - y;
+      if (now.getUTCMonth() < m - 1 || (now.getUTCMonth() === m - 1 && now.getUTCDate() < d)) age--;
+      if (age > 120) { setError("Please enter a valid date of birth."); return false; }
+      if (age < 13) { setError("You must be at least 13 years old to use this platform."); return false; }
     }
     return true;
   };
@@ -228,7 +231,7 @@ export default function SignupScreen() {
     let dateOfBirth: string | undefined;
     if (dobMonth && dobDay && dobYear) {
       const m = parseInt(dobMonth), d = parseInt(dobDay), y = parseInt(dobYear);
-      dateOfBirth = new Date(y, m - 1, d).toISOString();
+      dateOfBirth = new Date(Date.UTC(y, m - 1, d)).toISOString();
     }
 
     try {
@@ -472,7 +475,7 @@ export default function SignupScreen() {
         {step === 2 && (
           <View style={styles.fields}>
             <View>
-              <Text style={[styles.label, { color: c.foreground }]}>Date of Birth <Text style={{ color: c.mutedForeground, fontFamily: "Inter_400Regular" }}>(optional)</Text></Text>
+              <Text style={[styles.label, { color: c.foreground }]}>Date of Birth <Text style={{ color: c.mutedForeground, fontFamily: "Inter_400Regular" }}>(required)</Text></Text>
               <Text style={[styles.hint, { color: c.mutedForeground, marginBottom: 8 }]}>Used only to confirm you&apos;re 13+. Never shown publicly.</Text>
               <View style={styles.dobRow}>
                 <TextInput

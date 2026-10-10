@@ -34,6 +34,10 @@ const disclosureSource = readFileSync(
   fileURLToPath(new URL("../components/kinfolk/KinfolkContinuityDisclosure.tsx", import.meta.url)),
   "utf8",
 );
+const inlineMemoryConsentSource = readFileSync(
+  fileURLToPath(new URL("../components/kinfolk/KinfolkInlineMemoryConsent.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("Kinfolk chat presentation", () => {
   it("continues the original local search for both a clarification answer and Skip", () => {
@@ -190,6 +194,22 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).toContain("KinfolkInlineMemoryConsent");
     expect(travelPageSource).toContain("memoryConsentPlan?: KinfolkInlineMemoryConsentPlan | null");
     expect(travelPageSource).toContain("inlineMemoryConsent: data.memoryConsentPlan");
+  });
+
+  it("keeps all inline choices while requiring separate confirmation for sensitive selections", () => {
+    expect(inlineMemoryConsentSource).toContain('"Save all for relevant use"');
+    expect(inlineMemoryConsentSource).toContain("Save only preferences and interests");
+    expect(inlineMemoryConsentSource).toContain("Choose individually");
+    expect(inlineMemoryConsentSource).toContain("Don’t save");
+    expect(inlineMemoryConsentSource).toContain("const saveAll = () => {");
+    expect(inlineMemoryConsentSource).toContain("if (plan.sensitive.length > 0)");
+    expect(inlineMemoryConsentSource).toContain("setSelected(allItems.map((item) => item.id));");
+    expect(inlineMemoryConsentSource).toContain("I agree to save the selected sensitive details for relevant use.");
+    expect(inlineMemoryConsentSource).toContain("selectedSensitive && !sensitiveConsent");
+    expect(inlineMemoryConsentSource).toContain("sensitiveConsent: true");
+    expect(inlineMemoryConsentSource).not.toContain(
+      "onClick={() => void save(allItems.map((item) => item.id))}",
+    );
   });
 
   it("renders only a generic acknowledgement when an approved memory influenced a usable answer", () => {

@@ -156,10 +156,22 @@ describe("community-fed business publication governance", () => {
     const ownerConsole = source("../app/business-owner/index.tsx");
 
     expect(ownerConsole).toContain("const [loadError, setLoadError]");
+    expect(ownerConsole).toContain("const [businesses, setBusinesses]");
+    expect(ownerConsole).toContain("/api/businesses/mine/managed");
+    expect(ownerConsole).toContain("if (!Array.isArray(data.businesses))");
     expect(ownerConsole).toContain("Business Admin is unavailable");
     expect(ownerConsole).toContain("Business Admin could not load right now. Please try again.");
     expect(ownerConsole).toContain("onPress={() => { void load(); }}");
-    expect(ownerConsole.indexOf("loadError ?")).toBeLessThan(ownerConsole.indexOf("!business ?"));
+    expect(ownerConsole.indexOf("loadError ?")).toBeLessThan(ownerConsole.indexOf("businesses.length === 0"));
+  });
+
+  it("lists multiple approved businesses without sending a generic console to an arbitrary business", () => {
+    const ownerConsole = source("../app/business-owner/index.tsx");
+
+    expect(ownerConsole).toContain("businesses.length > 1");
+    expect(ownerConsole).toContain('testID="managed-businesses-list"');
+    expect(ownerConsole).toContain("Business-specific admin tools stay unavailable here until they can target a selected business by ID.");
+    expect(ownerConsole).toContain("if (data.businesses.length === 1)");
   });
 
   it("uses the canonical protected claim endpoint and never equates a claim with verification", () => {

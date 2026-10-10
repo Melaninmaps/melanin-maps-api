@@ -2,6 +2,10 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const memory = readFileSync(new URL("../app/kinfolk-memory.tsx", import.meta.url), "utf8");
+const inlineMemoryConsent = readFileSync(
+  new URL("../components/KinfolkInlineMemoryConsent.tsx", import.meta.url),
+  "utf8",
+);
 
 describe("native generic private-memory lifecycle controls", () => {
   it("lists reviewable paused notes and sends only the owner-scoped pause mutation", () => {
@@ -18,5 +22,21 @@ describe("native generic private-memory lifecycle controls", () => {
     expect(memory).toContain("Paused — Kinfolk will not use this note until you resume it.");
     expect(memory).toContain("Revoke use");
     expect(memory).not.toContain("Delete this memory permanently");
+  });
+
+  it("keeps inline choices while separately confirming sensitive selections", () => {
+    expect(inlineMemoryConsent).toContain('"Save all for relevant use"');
+    expect(inlineMemoryConsent).toContain("Save only preferences and interests");
+    expect(inlineMemoryConsent).toContain("Choose individually");
+    expect(inlineMemoryConsent).toContain("Don’t save");
+    expect(inlineMemoryConsent).toContain("const saveAll = () => {");
+    expect(inlineMemoryConsent).toContain("if (plan.sensitive.length > 0)");
+    expect(inlineMemoryConsent).toContain("setSelected(allItems.map((item) => item.id));");
+    expect(inlineMemoryConsent).toContain("I agree to save the selected sensitive details for relevant use.");
+    expect(inlineMemoryConsent).toContain("selectedSensitive && !sensitiveConsent");
+    expect(inlineMemoryConsent).toContain("sensitiveConsent: true");
+    expect(inlineMemoryConsent).not.toContain(
+      "onPress={() => void save(allItems.map((item) => item.id))}",
+    );
   });
 });

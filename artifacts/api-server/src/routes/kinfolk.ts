@@ -6602,6 +6602,14 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
   if (selected.length !== selectedIds.length) {
     return void res.status(400).json({ error: "One or more memory choices are no longer valid.", code: "MEMORY_CONSENT_SELECTION_INVALID" });
   }
+  const selectedSensitive = selected.some((item) => item.kind === "sensitive");
+  if (selectedSensitive && body.sensitiveConsent !== true) {
+    return void res.status(409).json({
+      error: "Separate confirmation is required before saving this sensitive detail.",
+      code: "SENSITIVE_MEMORY_CONFIRMATION_REQUIRED",
+      ...sensitiveMemoryConfirmation(null),
+    });
+  }
 
   try {
     const result = await withSerializedPrivateMemoryWrite({

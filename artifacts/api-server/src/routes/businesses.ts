@@ -1587,6 +1587,37 @@ router.get(
   },
 );
 
+// Owner-console discovery is intentionally separate from the legacy single
+// business read below. Existing business-specific flows still consume the
+// latter, while this read-only contract lists every active owner relationship.
+router.get("/businesses/mine/managed", async (req: any, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const businesses = await db
+      .select({
+        id: businessesTable.id,
+        name: businessesTable.name,
+        category: businessesTable.category,
+        city: businessesTable.city,
+        state: businessesTable.state,
+        verified: businessesTable.verified,
+      })
+      .from(businessesTable)
+      .where(approvedOwnerPredicate(String(userId)))
+      .orderBy(asc(businessesTable.name), asc(businessesTable.id));
+
+    res.json({ businesses });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch managed businesses");
+    res.status(500).json({ error: "Failed to fetch managed businesses" });
+  }
+});
+
 router.get("/businesses/mine", async (req: any, res: Response) => {
   try {
     const userId = req.user?.id;

@@ -120,6 +120,12 @@ function categoryLabel(cat: string): string {
   return map[cat] ?? cat;
 }
 
+// /members/:userId is the single visitor-profile route. The destination keeps
+// profile visibility and block decisions on the existing server-backed page.
+function memberProfilePath(userId: string): string {
+  return `/members/${encodeURIComponent(userId)}`;
+}
+
 function normalizeMediaUrls(value: unknown): string[] | undefined {
   let current = value;
   for (let depth = 0; depth < 3; depth += 1) {
@@ -190,7 +196,7 @@ function ReactionsDialog({ post, onClose }: { post: Post; onClose: () => void })
         ) : members.length ? (
           <div className="mt-5 space-y-2">
             {members.map((member) => (
-              <Link key={member.userId} href={`/members/${encodeURIComponent(member.userId)}`} onClick={onClose} className="flex items-center gap-3 rounded-2xl px-2 py-2 hover:bg-[#FAF6EF]">
+              <Link key={member.userId} href={memberProfilePath(member.userId)} onClick={onClose} className="flex items-center gap-3 rounded-2xl px-2 py-2 hover:bg-[#FAF6EF]">
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#CA922B] text-sm font-bold text-white">
                   {member.profileImageUrl ? <img src={member.profileImageUrl} alt="" className="h-full w-full object-cover" /> : reactionMemberInitials(member)}
                 </span>
@@ -301,7 +307,7 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
       {/* Header */}
       <div className="flex items-start gap-3 p-4 pb-3">
         {post.authorId ? (
-          <Link href={`/members/${encodeURIComponent(post.authorId)}`} aria-label={`View ${post.authorName}'s profile`} className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#CA922B]" style={{ backgroundColor: post.authorColor }}>
+          <Link href={memberProfilePath(post.authorId)} aria-label={`View ${post.authorName}'s profile`} className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 overflow-hidden focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#CA922B]" style={{ backgroundColor: post.authorColor }}>
             {post.authorProfileImageUrl
               ? <img src={post.authorProfileImageUrl} alt="" className="w-full h-full object-cover" />
               : post.authorInitials}
@@ -315,7 +321,7 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            {post.authorId ? <Link href={`/members/${encodeURIComponent(post.authorId)}`} className="font-bold text-sm text-[#2B1507] truncate hover:underline">{post.authorName}</Link> : <span className="font-bold text-sm text-[#2B1507] truncate">{post.authorName}</span>}
+            {post.authorId ? <Link href={memberProfilePath(post.authorId)} className="font-bold text-sm text-[#2B1507] truncate hover:underline">{post.authorName}</Link> : <span className="font-bold text-sm text-[#2B1507] truncate">{post.authorName}</span>}
             <span className="px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider"
               style={{ backgroundColor: "#CA922B18", color: "#CA922B" }}>
               {categoryLabel(post.category)}
@@ -865,7 +871,7 @@ function MemberCard({ m }: { m: MemberResult }) {
   return (
     <button
       type="button"
-      onClick={() => navigate(`/profile/${encodeURIComponent(m.id)}`)}
+      onClick={() => navigate(memberProfilePath(m.id))}
       aria-label={`View ${displayName}'s profile`}
       className="flex items-center gap-3 w-full p-3 bg-white rounded-2xl border border-[#3A1F0E]/8 hover:border-[#CA922B]/30 hover:shadow-sm transition-all text-left"
     >
