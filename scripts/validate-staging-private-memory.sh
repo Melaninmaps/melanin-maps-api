@@ -4,11 +4,14 @@
 set -euo pipefail
 
 base="${KINFOLK_STAGING_BASE:?set KINFOLK_STAGING_BASE}"
-email="${KINFOLK_STAGING_TEST_EMAIL:-kinfolk-memory-validation-20261010@example.test}"
-password="${KINFOLK_STAGING_TEST_PASSWORD:-MemoryValidation!2026}"
 run_id="${KINFOLK_STAGING_RUN_ID:-$(date +%s)}"
+email="${KINFOLK_STAGING_TEST_EMAIL:-kinfolk-memory-validation-${run_id}@example.test}"
+password="${KINFOLK_STAGING_TEST_PASSWORD:-MemoryValidation!2026}"
+username="kinfolkmemory${run_id//[^a-zA-Z0-9]/}"
 work="$(mktemp -d)"
-trap 'rm -rf "$work"' EXIT
+token=""
+baseline_memory_ids="$work/baseline-memory-ids.txt"
+cleanup_safe=false
 
 request() {
   local method="$1" path="$2" token="$3" data="$4" output="$5"
@@ -49,13 +52,42 @@ if not eval(expr, {'__builtins__': {'len': len}}, {'d':data}):
 PY
 }
 
+# This script normally creates a per-run disposable staging member. When an
+# invite-only staging gate requires an explicitly supplied existing test member,
+# retain that member's baseline memories and delete only records created by this
+# run. Existing staging records are never reused or removed.
+cleanup() {
+  set +e
+  if [[ -n "${token:-}" && "$cleanup_safe" == "true" ]]; then
+    cleanup_list="$work/cleanup-memories.json"
+    status=$(request GET /api/kinfolk/memories "$token" "" "$cleanup_list")
+    if [[ "$status" == "200" ]]; then
+      cleanup_ids="$work/cleanup-memory-ids.txt"
+      python3 - "$cleanup_list" "$baseline_memory_ids" > "$cleanup_ids" <<'PY'
+import json,sys
+baseline=set(open(sys.argv[2]).read().splitlines())
+for memory in json.load(open(sys.argv[1])).get("memories", []):
+    value=memory.get("id")
+    if isinstance(value, str) and value and value not in baseline:
+        print(value)
+PY
+      while IFS= read -r id; do
+        request DELETE "/api/kinfolk/memories/$id" "$token" "" "$work/cleanup-$id.json" >/dev/null
+      done < "$cleanup_ids"
+      printf 'sanitized_cleanup_new_memories=%s\n' "$(wc -l < "$cleanup_ids")"
+    fi
+  fi
+  rm -rf "$work"
+}
+trap cleanup EXIT
+
 # 1. Register a disposable staging member through the actual server flow.
 register="$work/register.json"
 status=$(request POST /api/auth/register "" "$(python3 - <<PY
 import json
 print(json.dumps({
   'firstName':'Kinfolk', 'lastName':'Validation', 'email':'$email',
-  'password':'$password', 'username':'kinfolk_memory_validation',
+  'password':'$password', 'username':'$username',
   'dateOfBirth':'1990-01-01', 'agreeToTerms':True
 }))
 PY
@@ -70,9 +102,25 @@ fi
 require_one_of "$status" "$register" 200 201
 token=$(read_json "$register" token)
 
+# Capture the member's starting state before any test mutation. This makes the
+# cleanup trap safe even when an invite-only staging gate forces use of the
+# pre-provisioned disposable test member.
+: > "$baseline_memory_ids"
+baseline="$work/baseline-memories.json"
+status=$(request GET /api/kinfolk/memories "$token" "" "$baseline")
+require_status "$status" 200 "$baseline"
+python3 - "$baseline" > "$baseline_memory_ids" <<'PY'
+import json,sys
+for memory in json.load(open(sys.argv[1])).get("memories", []):
+    value=memory.get("id")
+    if isinstance(value, str) and value:
+        print(value)
+PY
+cleanup_safe=true
+
 # 2. An explicit preference creates a selectable consent plan but saves nothing.
 plan="$work/plan.json"
-message="Remember that I prefer affordable vegan restaurants with quiet seating and wheelchair access."
+message="Remember that I prefer affordable vegan restaurants with quiet seating and wheelchair access. Validation marker $run_id."
 status=$(request POST /api/kinfolk/chat "$token" "$(python3 - <<PY
 import json
 print(json.dumps({'sessionId':'staging-memory-$run_id-a','message':'''$message'''}))
@@ -100,14 +148,14 @@ assert_json "$consent" "d.get('saved',0) >= 1 and d.get('enabled') is True"
 # 4. A new conversation uses only the relevant approved preference and returns
 # a generic member-facing notice, never private content or an eligibility claim.
 recall="$work/recall.json"
-relevant_message="Rewrite this dinner invitation for a vegan-friendly, wheelchair-accessible gathering on a modest budget."
+relevant_message="Write a friendly dinner invitation for a vegan-friendly, wheelchair-accessible gathering with quiet seating."
 status=$(request POST /api/kinfolk/chat "$token" "$(python3 - <<PY
 import json
 print(json.dumps({'sessionId':'staging-memory-$run_id-b','message':'''$relevant_message'''}))
 PY
 )" "$recall")
 require_status "$status" 200 "$recall"
-assert_json "$recall" "d.get('memoryUse',{}).get('applied') is True"
+assert_json "$recall" "(d.get('memoryUse') or {}).get('applied') is True"
 
 # 5. An empty governed catalog must not claim that a preference changed an
 # answer merely because the preference was relevant to the request.
@@ -118,7 +166,7 @@ print(json.dumps({'sessionId':'staging-memory-$run_id-governed-empty','message':
 PY
 )" "$governed_empty")
 require_status "$status" 200 "$governed_empty"
-assert_json "$governed_empty" "not d.get('memoryUse',{}).get('applied',False)"
+assert_json "$governed_empty" "not (d.get('memoryUse') or {}).get('applied',False)"
 
 # 6. Unrelated turns do not apply the dining/accessibility preference.
 unrelated="$work/unrelated.json"
@@ -128,13 +176,22 @@ print(json.dumps({'sessionId':'staging-memory-$run_id-c','message':'How do I org
 PY
 )" "$unrelated")
 require_status "$status" 200 "$unrelated"
-assert_json "$unrelated" "not d.get('memoryUse',{}).get('applied',False)"
+assert_json "$unrelated" "not (d.get('memoryUse') or {}).get('applied',False)"
 
 # 7. Pause disables recall immediately.
 memories="$work/memories.json"
 status=$(request GET /api/kinfolk/memories "$token" "" "$memories")
 require_status "$status" 200 "$memories"
-memory_id=$(read_json "$memories" memories.0.id)
+memory_id=$(python3 - "$memories" "staging-memory-$run_id-a" <<'PY'
+import json,sys
+for memory in json.load(open(sys.argv[1])).get("memories", []):
+    if memory.get("sourceSessionId") == sys.argv[2] and isinstance(memory.get("id"), str):
+        print(memory["id"])
+        break
+else:
+    raise SystemExit("Could not locate this run's saved memory for pause/revoke.")
+PY
+)
 pause="$work/pause.json"
 status=$(request PATCH "/api/kinfolk/memories/$memory_id/pause" "$token" '{"paused":true}' "$pause")
 require_status "$status" 200 "$pause"
@@ -145,7 +202,7 @@ print(json.dumps({'sessionId':'staging-memory-$run_id-d','message':'''$relevant_
 PY
 )" "$after_pause")
 require_status "$status" 200 "$after_pause"
-assert_json "$after_pause" "not d.get('memoryUse',{}).get('applied',False)"
+assert_json "$after_pause" "not (d.get('memoryUse') or {}).get('applied',False)"
 
 # 8. Revoke removes the preference from future retrieval and active review.
 revoke="$work/revoke.json"
@@ -158,7 +215,7 @@ print(json.dumps({'sessionId':'staging-memory-$run_id-e','message':'''$relevant_
 PY
 )" "$after_revoke")
 require_status "$status" 200 "$after_revoke"
-assert_json "$after_revoke" "not d.get('memoryUse',{}).get('applied',False)"
+assert_json "$after_revoke" "not (d.get('memoryUse') or {}).get('applied',False)"
 
 # Store only sanitized decision metadata as evidence.
 python3 - "$work" <<'PY'
