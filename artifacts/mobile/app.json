@@ -10,14 +10,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.melaninmaps.app",
-      "buildNumber": "134",
-      "associatedDomains": [
-        "applinks:mappingwithmelanin.com"
-      ],
+      "buildNumber": "136",
+      "associatedDomains": ["applinks:mappingwithmelanin.com"],
       "entitlements": {
-        "com.apple.developer.applesignin": [
-          "Default"
-        ]
+        "com.apple.developer.applesignin": ["Default"]
       },
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
@@ -31,9 +27,7 @@
         "NSPrivacyAccessedAPICategoryUserDefaults": [
           {
             "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
-            "NSPrivacyAccessedAPITypeReasons": [
-              "CA92.1"
-            ]
+            "NSPrivacyAccessedAPITypeReasons": ["CA92.1"]
           }
         ]
       }
@@ -53,10 +47,7 @@
               "host": "mappingwithmelanin.com"
             }
           ],
-          "category": [
-            "BROWSABLE",
-            "DEFAULT"
-          ]
+          "category": ["BROWSABLE", "DEFAULT"]
         }
       ],
       "adaptiveIcon": {
@@ -80,7 +71,7 @@
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
         "android.permission.READ_MEDIA_VIDEO"
       ],
-      "versionCode": 100,
+      "versionCode": 102,
       "blockedPermissions": [
         "android.permission.READ_EXTERNAL_STORAGE",
         "android.permission.WRITE_EXTERNAL_STORAGE",
