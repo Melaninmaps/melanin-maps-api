@@ -48,6 +48,13 @@ import {
 import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiveMemoryConfirmation";
 import { KinfolkInlineMemoryConsent, type KinfolkInlineMemoryConsentPlan } from "@/components/KinfolkInlineMemoryConsent";
 import { KinfolkMemoryUseNotice, type KinfolkMemoryUse } from "@/components/KinfolkMemoryUseNotice";
+import {
+  KinfolkContextualPresentation,
+  type KinfolkMediaLink,
+  type KinfolkRelatedConnection,
+  type KinfolkStructuredContent,
+} from "@/components/KinfolkContextualPresentation";
+import { canRenderKinfolkBusinessCards, type KinfolkResponseMeta } from "@workspace/constants";
 
 interface Message {
   id: string;
@@ -59,8 +66,11 @@ interface Message {
   taskActionDone?: boolean;
   location?: { city: string; state: string | null; source: string } | null;
   locationSource?: string | null;
+  provenanceNote?: string | null;
   sourceNote?: string | null;
+  sourceContext?: string | null;
   sources?: Array<{ title: string; url: string }>;
+  clarificationSteps?: Array<{ id: string; question: string; explanation?: string; options: Array<{ value: string; label: string }>; skippable: boolean }>;
   libraryAction?: { type: "open_library_node"; topicId: string; focus: "evidence"; label: string } | null;
   recommendations?: KinfolkBusinessRecommendation[];
   intentClass?: string | null;
@@ -68,6 +78,10 @@ interface Message {
   sensitiveMemoryDraft?: { content: string; purpose: string; sessionId?: string | null } | null;
   inlineMemoryConsent?: { message: string; plan: KinfolkInlineMemoryConsentPlan; sessionId?: string | null } | null;
   memoryUse?: KinfolkMemoryUse | null;
+  responseMeta?: KinfolkResponseMeta | null;
+  structuredContent?: KinfolkStructuredContent | null;
+  mediaLinks?: KinfolkMediaLink[];
+  relatedConnections?: KinfolkRelatedConnection[];
 }
 
 interface TaskActionPayload {
@@ -180,8 +194,11 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
   followUpSuggestions: string[];
   location?: { city: string; state: string | null; source: string } | null;
   locationSource?: string | null;
+  provenanceNote?: string | null;
   sourceNote?: string | null;
+  sourceContext?: string | null;
   sources: Array<{ title: string; url: string }>;
+  clarificationSteps?: Array<{ id: string; question: string; explanation?: string; options: Array<{ value: string; label: string }>; skippable: boolean }>;
   libraryAction?: { type: "open_library_node"; topicId: string; focus: "evidence"; label: string } | null;
   recommendations: KinfolkBusinessRecommendation[];
   intentClass?: string | null;
@@ -189,6 +206,10 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
   sensitiveMemoryDraft?: { content: string; purpose: string; sessionId?: string | null } | null;
   inlineMemoryConsent?: { message: string; plan: KinfolkInlineMemoryConsentPlan; sessionId?: string | null } | null;
   memoryUse?: KinfolkMemoryUse | null;
+  responseMeta?: KinfolkResponseMeta | null;
+  structuredContent?: KinfolkStructuredContent | null;
+  mediaLinks?: KinfolkMediaLink[];
+  relatedConnections?: KinfolkRelatedConnection[];
 }> {
   const base = getApiBase();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -222,8 +243,11 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
     followUpSuggestions?: string[];
     location?: { city: string; state: string | null; source: string } | null;
     locationSource?: string | null;
+    provenanceNote?: string | null;
     sourceNote?: string | null;
+    sourceContext?: string | null;
     sources?: Array<{ title: string; url: string }> | null;
+    clarificationSteps?: Array<{ id: string; question: string; explanation?: string; options: Array<{ value: string; label: string }>; skippable: boolean }> | null;
     libraryAction?: { type: "open_library_node"; topicId: string; focus: "evidence"; label: string } | null;
     recommendations?: { businesses?: KinfolkBusinessRecommendation[] } | null;
     intentClass?: string | null;
@@ -231,15 +255,22 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
     sensitiveMemoryConfirmation?: { confirmationRequired?: boolean; purpose?: string } | null;
     memoryConsentPlan?: KinfolkInlineMemoryConsentPlan | null;
     memoryUse?: KinfolkMemoryUse | null;
+    responseMeta?: KinfolkResponseMeta | null;
+    structuredContent?: KinfolkStructuredContent | null;
+    mediaLinks?: KinfolkMediaLink[] | null;
+    relatedConnections?: KinfolkRelatedConnection[] | null;
   };
   if (data.sessionId) sessionId = data.sessionId;
+  const responseMeta = data.responseMeta ?? null;
   return {
     reply: data.reply ?? "Sorry, something went sideways on my end.",
     taskAction: data.taskAction,
     followUpSuggestions: data.followUpSuggestions ?? [],
     location: data.location ?? null,
     locationSource: data.locationSource ?? null,
+    provenanceNote: data.provenanceNote ?? null,
     sourceNote: data.sourceNote ?? null,
+    sourceContext: data.sourceContext ?? null,
     sources: (data.sources ?? []).flatMap((source) => {
       const safe = parseSafeSourceLink(source);
       return safe ? [safe] : [];
@@ -248,6 +279,11 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
     intentClass: data.intentClass ?? null,
     companionMemoryOffer: data.companionMemoryOffer ?? null,
     memoryUse: data.memoryUse ?? null,
+    responseMeta,
+    structuredContent: data.structuredContent ?? null,
+    mediaLinks: Array.isArray(data.mediaLinks) ? data.mediaLinks.slice(0, 5) : [],
+    relatedConnections: Array.isArray(data.relatedConnections) ? data.relatedConnections.slice(0, 5) : [],
+    clarificationSteps: Array.isArray(data.clarificationSteps) ? data.clarificationSteps.slice(0, 3) : [],
     inlineMemoryConsent: data.memoryConsentPlan ? { message, plan: data.memoryConsentPlan, sessionId: data.sessionId ?? sessionId } : null,
     sensitiveMemoryDraft:
       data.sensitiveMemoryConfirmation?.confirmationRequired === true
@@ -257,7 +293,7 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
             sessionId: data.sessionId ?? sessionId,
           }
         : null,
-    recommendations: Array.isArray(data.recommendations?.businesses)
+    recommendations: canRenderKinfolkBusinessCards(responseMeta) && Array.isArray(data.recommendations?.businesses)
       ? data.recommendations.businesses
         .filter((business) => Boolean(business?.id && business?.name))
         .slice(0, 6)
@@ -965,14 +1001,22 @@ export function AIChatWidget() {
         followUpSuggestions,
         location,
         locationSource,
+        provenanceNote,
         sourceNote,
+        sourceContext,
         sources,
+        clarificationSteps,
         libraryAction,
         recommendations,
         intentClass,
         companionMemoryOffer,
         sensitiveMemoryDraft,
+        inlineMemoryConsent,
         memoryUse,
+        responseMeta,
+        structuredContent,
+        mediaLinks,
+        relatedConnections,
       } = await sendToKinfolk(text, token, voiceMode, await nearbyCityHint(text));
 
       const aiMsg: Message = {
@@ -986,14 +1030,22 @@ export function AIChatWidget() {
         taskAction: taskAction ?? null,
         location,
         locationSource,
+        provenanceNote,
         sourceNote,
+        sourceContext,
         sources,
+        clarificationSteps,
         libraryAction,
         recommendations,
         intentClass,
         companionMemoryOffer,
         sensitiveMemoryDraft,
+        inlineMemoryConsent,
         memoryUse,
+        responseMeta,
+        structuredContent,
+        mediaLinks,
+        relatedConnections,
       };
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
@@ -1489,6 +1541,36 @@ export function AIChatWidget() {
                     ))}
                   </View>
                 ) : null}
+                {!item.fromUser && item.clarificationSteps?.length ? (
+                  <View style={[styles.contextualDisclosure, { marginLeft: 42, backgroundColor: colors.card, borderColor: colors.border }]}>
+                    {item.clarificationSteps.map((step: NonNullable<Message["clarificationSteps"]>[number]) => (
+                      <View key={step.id} style={styles.contextualDisclosureSection}>
+                        <Text style={[styles.contextualDisclosureTitle, { color: colors.foreground }]}>{step.question}</Text>
+                        {step.explanation ? <Text style={[styles.contextualDisclosureText, { color: colors.mutedForeground }]}>{step.explanation}</Text> : null}
+                        <View style={styles.clarificationOptions}>
+                          {step.options.slice(0, 5).map((option: typeof step.options[number]) => (
+                            <TouchableOpacity key={option.value} accessibilityRole="button" onPress={() => void sendMessage(option.label)} style={[styles.clarificationOption, { borderColor: colors.border }]}>
+                              <Text style={[styles.clarificationOptionText, { color: colors.primary }]}>{option.label}</Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                ) : null}
+                {!item.fromUser ? (
+                  <View style={{ marginLeft: 42 }}>
+                    <KinfolkContextualPresentation
+                      structuredContent={item.structuredContent}
+                      mediaLinks={item.mediaLinks}
+                      relatedConnections={item.relatedConnections}
+                      color={colors.foreground}
+                      mutedColor={colors.mutedForeground}
+                      borderColor={colors.border}
+                      accentColor={colors.primary}
+                    />
+                  </View>
+                ) : null}
                 {!item.fromUser && item.companionMemoryOffer ? (
                   <KinfolkCompanionMemoryOfferCard
                     offer={item.companionMemoryOffer}
@@ -1524,6 +1606,19 @@ export function AIChatWidget() {
                   <Text style={[styles.sourceNote, { color: colors.mutedForeground, borderTopColor: colors.border }]}>
                     {item.sourceNote}
                   </Text>
+                ) : null}
+                {!item.fromUser && item.provenanceNote ? (
+                  <View style={[styles.contextualDisclosure, { marginLeft: 42, backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Text style={[styles.contextualDisclosureText, { color: colors.mutedForeground }]}>{item.provenanceNote}</Text>
+                  </View>
+                ) : null}
+                {!item.fromUser && item.sourceContext && item.sources?.length ? (
+                  <View style={[styles.contextualDisclosure, { marginLeft: 42, backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Text style={[styles.contextualDisclosureText, { color: colors.mutedForeground }]}>
+                      <Text style={[styles.contextualDisclosureTitle, { color: colors.foreground }]}>Why these sources fit: </Text>
+                      {item.sourceContext}
+                    </Text>
+                  </View>
                 ) : null}
                 {!item.fromUser && item.sources?.length ? (
                   <View style={[styles.sourceLinks, { marginLeft: 42 }]}>
@@ -1892,6 +1987,13 @@ const styles = StyleSheet.create({
   recommendationMeta: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
   recommendationReason: { fontSize: 11, fontFamily: "Inter_400Regular", lineHeight: 15, marginTop: 4 },
   sourceNote: { alignSelf: "flex-start", maxWidth: "78%", marginLeft: 42, marginTop: 8, borderTopWidth: 1, paddingTop: 7, fontSize: 10, fontFamily: "Inter_400Regular", fontStyle: "italic", lineHeight: 14 },
+  contextualDisclosure: { maxWidth: "78%", marginTop: 7, padding: 9, borderRadius: 10, borderWidth: 1, gap: 7 },
+  contextualDisclosureSection: { gap: 5 },
+  contextualDisclosureTitle: { fontSize: 11, fontFamily: "Inter_700Bold", lineHeight: 16 },
+  contextualDisclosureText: { fontSize: 11, fontFamily: "Inter_400Regular", lineHeight: 16 },
+  clarificationOptions: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
+  clarificationOption: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 9, paddingVertical: 6 },
+  clarificationOptionText: { fontSize: 10, fontFamily: "Inter_600SemiBold", lineHeight: 14 },
   sourceLinks: { maxWidth: "78%", marginTop: 7, gap: 5 },
   sourceActionRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   sourceLink: { fontSize: 11, fontFamily: "Inter_500Medium", lineHeight: 16, textDecorationLine: "underline" },

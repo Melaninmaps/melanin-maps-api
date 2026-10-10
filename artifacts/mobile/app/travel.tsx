@@ -56,6 +56,7 @@ import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDiscl
 import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiveMemoryConfirmation";
 import { KinfolkInlineMemoryConsent } from "@/components/KinfolkInlineMemoryConsent";
 import { KinfolkMemoryUseNotice } from "@/components/KinfolkMemoryUseNotice";
+import { KinfolkContextualPresentation } from "@/components/KinfolkContextualPresentation";
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
 const NATIVE_VOICE_MAX_DURATION_MS = 60_000;
@@ -967,6 +968,16 @@ function AiMessageBubble({
         )}
 
         {/* Provenance disclaimer — shown for medical, legal, financial, and emergency intents */}
+        <KinfolkContextualPresentation
+          structuredContent={msg.structuredContent}
+          mediaLinks={msg.mediaLinks}
+          relatedConnections={msg.relatedConnections}
+          color={colors.text}
+          mutedColor={colors.mutedForeground}
+          borderColor={colors.border}
+          accentColor={GOLD}
+        />
+
         {msg.provenanceNote ? (
           <View style={[aiStyles.provenanceBox, { backgroundColor: "#FFF8EC", borderColor: "#CA922B33" }]}>
             <Ionicons name="information-circle-outline" size={12} color="#CA922B" style={{ marginTop: 1 }} />

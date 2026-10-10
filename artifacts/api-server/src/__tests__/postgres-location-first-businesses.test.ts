@@ -53,6 +53,17 @@ describe("location-first business repository", () => {
     expect(pool.query.mock.calls[0][1]).toContainEqual(["food", "food drink", "restaurant", "restaurants"]);
   });
 
+  it("requires documented map evidence when the shared repository serves the map surface", async () => {
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [AMINA_ROW] }) };
+    const mapQuery = { ...query("Food & Drink", "Restaurant"), surface: "map" as const };
+
+    await findExactRecords(pool, mapQuery);
+
+    const sql = pool.query.mock.calls[0][0] as string;
+    expect(sql).toContain("documented_eligibility.map_pin_evidence_id");
+    expect(sql).toContain("business_legacy_map_location_attestations");
+  });
+
   it("keeps only live Philadelphia AMINA when hidden, duplicate, staged, and wrong-state fixtures exist", () => {
     const fixtures = [
       { name: "AMINA", city: "Philadelphia", state: "PA", category: "Food", subcategory: "Restaurants", listingStatus: "live_unclaimed", status: "active", isDuplicate: false },
@@ -68,7 +79,7 @@ describe("location-first business repository", () => {
       && matchesBusinessCategoryIntent("Food & Drink", fixture.category, fixture.subcategory)
       && matchesBusinessCategoryIntent("Restaurant", fixture.category, fixture.subcategory),
     );
-    expect(results.map((fixture) => fixture.name)).toEqual(["AMINA"]);
+    expect(results.map((fixture) => fixture.name)).toEqual(["AMINA", "Duplicate AMINA"]);
   });
 
   it("uses the same visibility gate and subcategory text on the local Map search", async () => {
@@ -78,7 +89,7 @@ describe("location-first business repository", () => {
     expect(sql).toContain("FROM public.public_businesses AS b");
     expect(sql).not.toContain("b.is_active");
     expect(sql).not.toContain("b.state_code");
-    expect(sql).toContain("AND TRUE");
+    expect(sql).toContain("documented_eligibility.map_pin_evidence_id");
     expect(sql).toContain("b.state AS \"stateCode\"");
     expect(sql).toContain("COALESCE(b.subcategory, '')");
     expect(pool.query.mock.calls[0][1]).toContainEqual([

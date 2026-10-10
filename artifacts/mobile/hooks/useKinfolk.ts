@@ -6,6 +6,11 @@ import {
   type KinfolkResponseMeta,
 } from "@workspace/constants";
 import type { KinfolkMemoryUse } from "@/components/KinfolkMemoryUseNotice";
+import type {
+  KinfolkMediaLink,
+  KinfolkRelatedConnection,
+  KinfolkStructuredContent,
+} from "@/components/KinfolkContextualPresentation";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 
@@ -192,6 +197,10 @@ export type ChatMessage = {
   memoryUse?: KinfolkMemoryUse | null;
   /** Server decision metadata; clients fail closed when cards are not authorized. */
   responseMeta?: KinfolkResponseMeta | null;
+  /** Evidence-bound optional presentation data from the server. */
+  structuredContent?: KinfolkStructuredContent | null;
+  mediaLinks?: KinfolkMediaLink[];
+  relatedConnections?: KinfolkRelatedConnection[];
 };
 type ConversationHandoffStatus = {
   state: "saved" | "resumed";
@@ -342,6 +351,9 @@ export function useKinfolk() {
           companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
           memoryUse?: KinfolkMemoryUse | null;
           responseMeta?: KinfolkResponseMeta | null;
+          structuredContent?: KinfolkStructuredContent | null;
+          mediaLinks?: KinfolkMediaLink[] | null;
+          relatedConnections?: KinfolkRelatedConnection[] | null;
           conversationHandoff?: ConversationHandoffStatus | null;
           sensitiveMemoryConfirmation?: {
             confirmationRequired?: boolean;
@@ -398,6 +410,9 @@ export function useKinfolk() {
           inlineMemoryConsent,
           memoryUse: data.memoryUse ?? null,
           responseMeta,
+          structuredContent: data.structuredContent ?? null,
+          mediaLinks: Array.isArray(data.mediaLinks) ? data.mediaLinks.slice(0, 5) : [],
+          relatedConnections: Array.isArray(data.relatedConnections) ? data.relatedConnections.slice(0, 5) : [],
         };
         setPendingRetryText(null); // clear retry on success
         setMessages((prev) => [...prev, aiMsg]);

@@ -12,6 +12,7 @@ import type {
   DiscoveryRecord,
   LocationFirstQuery,
 } from "../shared/discoveryContracts";
+import { documentedDiscoveryEligibilitySqlPredicate } from "../businesses/documentedDiscoveryEligibility";
 import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 
 type Pool = {
@@ -148,6 +149,9 @@ export async function findExactRecords(
 
   // ── Business records ────────────────────────────────────────────────────────
   if (recordTypes.includes("business")) {
+    const businessEligibility = query.surface === "map"
+      ? documentedDiscoveryEligibilitySqlPredicate("b.id", "map")
+      : mwmDiasporaPromotionSqlPredicate("b.id");
     const params: unknown[] = [city];
     let stateClause = "";
     if (state) {
@@ -214,7 +218,7 @@ export async function findExactRecords(
       WHERE LOWER(l.city_name) = $1
         AND COALESCE(b.name, '') NOT ILIKE '%[demo]%'
         AND COALESCE(b.description, '') NOT ILIKE '%[demo]%'
-        AND ${mwmDiasporaPromotionSqlPredicate("b.id")}
+        AND ${businessEligibility}
         ${stateClause}
         ${specialtyClause}
         ${categoryClause}

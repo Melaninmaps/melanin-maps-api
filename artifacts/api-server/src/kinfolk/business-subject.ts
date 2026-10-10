@@ -233,9 +233,10 @@ const SUBJECTS: readonly SubjectDefinition[] = [
     key: "locs",
     label: "loc and natural-hair care",
     match:
-      /\b(?:locs?|dreadlocks?|protective styles?|braids?|natural[ -]?hair)\b/i,
+      /\b(?:locs?|locticians?|dreadlocks?|protective styles?|braids?|natural[ -]?hair)\b/i,
     searchTerms: [
       "locs",
+      "loctician",
       "loc maintenance",
       "natural hair",
       "protective styles",
@@ -410,7 +411,6 @@ const WIG_INSTALLATION_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
     "wig installation",
     "wig install",
     "wig installs",
-    "wigs",
   ],
 };
 
@@ -420,10 +420,9 @@ const BUNDLE_INSTALLATION_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
     "bundle installation",
     "bundle install",
     "bundle installs",
-    "hair extension",
-    "hair extensions",
     "extension installation",
     "extension install",
+    "extension installs",
   ],
 };
 

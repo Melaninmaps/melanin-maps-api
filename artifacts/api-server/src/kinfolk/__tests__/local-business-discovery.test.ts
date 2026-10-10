@@ -287,6 +287,12 @@ describe("local business subject classification", () => {
     },
   );
 
+  it("recognizes a loctician as exact loc-care discovery rather than a generic salon", () => {
+    const subject = deriveBusinessSubject("Find a loctician near me in Philadelphia PA");
+    expect(subject).toMatchObject({ key: "locs", label: "loc and natural-hair care" });
+    expect(subject?.searchTerms).toEqual(expect.arrayContaining(["loctician", "locs", "loc maintenance"]));
+  });
+
   it.each([
     ["wig installation", "wig installation"],
     ["bundle install", "bundle or extension installation"],
