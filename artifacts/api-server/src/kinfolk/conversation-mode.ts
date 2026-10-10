@@ -1,25 +1,45 @@
-export const KINFOLK_CONVERSATION_MODES = [
-  "community",
+export const KINFOLK_APPROVED_PERSONAS = [
+  "big_cousin",
   "professor",
   "business_manager",
   "best_friend",
 ] as const;
 
+/** The canonical four product personalities. */
+export const KINFOLK_CONVERSATION_MODES = KINFOLK_APPROVED_PERSONAS;
+
 export type KinfolkConversationMode =
   (typeof KINFOLK_CONVERSATION_MODES)[number];
 
 /**
- * Older preference rows used descriptive labels that predate the four visible
- * Kinfolk Voices. Keep those rows working by mapping them to the default
- * Big Cousin experience instead of rejecting or silently inventing a tone.
+ * Older preference rows and clients used labels that predate the four approved
+ * personalities. Retain them as input aliases, but route all of them to the
+ * canonical Big Cousin profile rather than inventing a fifth personality.
  */
+export const KINFOLK_LEGACY_PERSONA_VALUES = [
+  "community",
+  "neighborhood_guide",
+  "cultural_curator",
+  "travel_companion",
+] as const;
+
+const CONVERSATION_MODE_ALIASES = new Map<string, KinfolkConversationMode>([
+  ["big_cousin", "big_cousin"],
+  ["community", "big_cousin"],
+  ["neighborhood_guide", "big_cousin"],
+  ["cultural_curator", "big_cousin"],
+  ["travel_companion", "big_cousin"],
+  ["professor", "professor"],
+  ["business_manager", "business_manager"],
+  ["best_friend", "best_friend"],
+]);
+
 export function normalizeKinfolkConversationMode(
   value: unknown,
 ): KinfolkConversationMode {
-  return typeof value === "string" &&
-    KINFOLK_CONVERSATION_MODES.includes(value as KinfolkConversationMode)
-    ? (value as KinfolkConversationMode)
-    : "community";
+  if (typeof value !== "string") return "big_cousin";
+  const key = value.trim().toLowerCase().replace(/[\s-]+/g, "_");
+  return CONVERSATION_MODE_ALIASES.get(key) ?? "big_cousin";
 }
 
 export function buildKinfolkConversationModeInstruction(
@@ -32,7 +52,7 @@ export function buildKinfolkConversationModeInstruction(
       return "Use Business Manager mode: be practical, organized, and candid. Translate the answer into a Priority, Decision, and Next action framing when that improves execution. Name a concrete risk or trade-off when relevant. Do not use generic pep-talk closers in place of an action.";
     case "best_friend":
       return "Use Best Friend mode: lead with one human, emotionally aware sentence, then give the honest, useful answer in natural contractions and supportive phrasing. For ordinary advice, use a warm 'here is the move' transition before the practical steps. Never manufacture intimacy or agree with something false.";
-    case "community":
+    case "big_cousin":
     default:
       return "Use Big Cousin mode: warm, grounded, conversational, and direct. Sound like the capable older cousin who gives the clear answer, names what matters, and helps with the next step. For ordinary advice, use a steady 'here is how to go about it' framing and leave the member with one clear next move—never robotic, preachy, stereotyped, or forced.";
   }
@@ -41,13 +61,14 @@ export function buildKinfolkConversationModeInstruction(
 export function buildKinfolkConversationModePrompt(
   mode: KinfolkConversationMode,
 ): string {
+  const normalizedMode = normalizeKinfolkConversationMode(mode);
   const title: Record<KinfolkConversationMode, string> = {
-    community: "BIG COUSIN",
+    big_cousin: "BIG COUSIN",
     professor: "PROFESSOR",
     business_manager: "BUSINESS MANAGER",
     best_friend: "BEST FRIEND",
   };
-  return `KINFOLK VOICES™ — ${title[mode]} MODE:\n${buildKinfolkConversationModeInstruction(mode)}\n\n${buildKinfolkModeIsolationContract()}`;
+  return `KINFOLK VOICES™ — ${title[normalizedMode]} MODE:\n${buildKinfolkConversationModeInstruction(normalizedMode)}\n\n${buildKinfolkModeIsolationContract()}`;
 }
 
 /**
@@ -111,8 +132,9 @@ export function normalizeKinfolkFormalDocumentReply(reply: string): string {
 export function buildKinfolkEmotionalCheckInContract(
   mode: KinfolkConversationMode,
 ): string {
+  const normalizedMode = normalizeKinfolkConversationMode(mode);
   const voiceGuidance: Record<KinfolkConversationMode, string> = {
-    community:
+    big_cousin:
       "Big Cousin: be steady, warm, and reassuring. For a hard day, let the member know they do not have to make it sound pretty and offer a small choice such as venting, taking a breath, or figuring out one next step. For a good day, celebrate them and invite them to enjoy and share it.",
     professor:
       "Professor: be calm, clear, and grounding without becoming clinical. For a hard day, acknowledge that piled-up stress can feel bigger in the moment and ask one gentle question about the hardest part or what would help tonight. For a good day, affirm its meaning and invite reflection on what gave the member energy or progress.",
@@ -122,7 +144,7 @@ export function buildKinfolkEmotionalCheckInContract(
       "Best Friend: be warm, familiar, and supportive without manufacturing intimacy. For a hard day, offer to listen, distract, or sit with it; use playful language only if it fits the member's tone. For a good day, celebrate enthusiastically and invite the full story.",
   };
   return `EMOTIONAL CHECK-INS:
-When a member says they had a bad, hard, overwhelming, or amazing day, respond to the emotion before offering advice. ${voiceGuidance[mode]}
+When a member says they had a bad, hard, overwhelming, or amazing day, respond to the emotion before offering advice. ${voiceGuidance[normalizedMode]}
 - Do not turn a check-in into a business recommendation, directory card, task, promotion, or formal document unless the member explicitly asks.
 - Ask at most one gentle follow-up question. Do not over-diagnose, minimize, lecture, or assume the reason for the member's feelings.
 	- Keep the factual content of any later guidance accurate; the selected voice changes warmth, structure, and practical framing only.`;

@@ -12,6 +12,18 @@ const EXPLORE_LENSES = [
   "HBCUs", "Living Culture", "Family", "Nightlife", "Faith & Community",
 ];
 
+export function safeExploreDetailUrl(value: string): string | null {
+  // Discovery detail URLs are internal routes. Never turn malformed or external
+  // response data into a navigable destination in the member experience.
+  if (!value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return null;
+  try {
+    const parsed = new URL(value, "https://mappingwithmelanin.invalid");
+    return parsed.origin === "https://mappingwithmelanin.invalid" ? `${parsed.pathname}${parsed.search}${parsed.hash}` : null;
+  } catch {
+    return null;
+  }
+}
+
 export function LocationFirstExplore() {
   const { location, setExplicitLocation } = useDiscoveryLocation();
   const [lens, setLens] = useState<string | null>(null);
@@ -116,7 +128,7 @@ export function LocationFirstExplore() {
         </div>
 
         {/* Lens filters */}
-        <div className="flex flex-wrap gap-2">
+        <div role="group" aria-label="Explore themes" className="flex flex-wrap gap-2">
           {EXPLORE_LENSES.map((item) => (
             <button
               key={item}
@@ -141,9 +153,9 @@ export function LocationFirstExplore() {
             body="Explore begins with the place you want to understand. Select an area to find local heritage, culture, and community experiences."
           />
         )}
-        {loading && <p className="mt-8 text-sm text-[#3A1F0E]/60">Loading local experiences…</p>}
+        {loading && <p data-testid="explore-loading" role="status" aria-live="polite" aria-atomic="true" className="mt-8 text-sm text-[#3A1F0E]/60">Loading local experiences…</p>}
         {!loading && error && (
-          <section className="mt-8 rounded-2xl border border-[#CA922B]/30 bg-white p-6" role="alert">
+          <section data-testid="explore-error" className="mt-8 rounded-2xl border border-[#CA922B]/30 bg-white p-6" role="alert">
             <h2 className="font-serif text-2xl font-bold text-[#2B1507]">Explore could not load this area</h2>
             <p className="mt-2 leading-7 text-[#3A1F0E]/70">{error}</p>
             <button
@@ -157,8 +169,16 @@ export function LocationFirstExplore() {
         )}
         {!loading && response?.coverageGap && (
           <EmptyExplore
+            testId="explore-coverage-gap"
             title="We are still building this local cultural map"
             body="You can expand to a nearby city, browse a guide, or help the community add a place that matters here."
+          />
+        )}
+        {!loading && !error && response && !response.coverageGap && response.records.length === 0 && (
+          <EmptyExplore
+            testId="explore-empty-results"
+            title="No local experiences match this theme yet"
+            body="Try another theme or choose a nearby city or neighborhood to continue exploring."
           />
         )}
 
@@ -174,25 +194,34 @@ export function LocationFirstExplore() {
 }
 
 function ExploreCard({ record }: { record: DiscoveryRecord }) {
+  const detailUrl = safeExploreDetailUrl(record.detailUrl);
+  const content = <>
+    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#8D5C17]">
+      {record.recordType.replace(/_/g, " ")}
+    </p>
+    <h2 className="mt-2 text-xl font-bold text-[#2B1507]">{record.name}</h2>
+    <p className="mt-2 text-sm text-[#3A1F0E]/70">
+      {[record.category, record.neighborhood, record.city].filter(Boolean).join(" · ")}
+    </p>
+  </>;
+
+  if (!detailUrl) {
+    return <article data-testid="explore-record-without-detail" className="rounded-2xl border border-[#3A1F0E]/10 bg-white p-5 shadow-sm">{content}</article>;
+  }
+
   return (
     <Link
-      href={record.detailUrl}
+      href={detailUrl}
       className="rounded-2xl border border-[#3A1F0E]/10 bg-white p-5 shadow-sm transition hover:border-[#CA922B]/60 block"
     >
-      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-[#8D5C17]">
-        {record.recordType.replace(/_/g, " ")}
-      </p>
-      <h2 className="mt-2 text-xl font-bold text-[#2B1507]">{record.name}</h2>
-      <p className="mt-2 text-sm text-[#3A1F0E]/70">
-        {[record.category, record.neighborhood, record.city].filter(Boolean).join(" · ")}
-      </p>
+      {content}
     </Link>
   );
 }
 
-function EmptyExplore({ title, body }: { title: string; body: string }) {
+function EmptyExplore({ testId, title, body }: { testId?: string; title: string; body: string }) {
   return (
-    <section className="mt-8 rounded-2xl border border-[#CA922B]/30 bg-white p-6">
+    <section data-testid={testId} role="status" className="mt-8 rounded-2xl border border-[#CA922B]/30 bg-white p-6">
       <h2 className="font-serif text-2xl font-bold text-[#2B1507]">{title}</h2>
       <p className="mt-2 leading-7 text-[#3A1F0E]/70">{body}</p>
     </section>

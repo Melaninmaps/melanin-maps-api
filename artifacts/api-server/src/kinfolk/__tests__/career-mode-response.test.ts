@@ -13,7 +13,7 @@ describe("Kinfolk deterministic raise-preparation modes", () => {
   });
 
   it("renders visibly distinct, truthful coaching structures for all four modes", () => {
-    const replies = ["community", "best_friend", "professor", "business_manager"]
+    const replies = ["big_cousin", "best_friend", "professor", "business_manager"]
       .map((mode) => renderKinfolkRaisePreparation(mode as never).reply);
 
     expect(new Set(replies).size).toBe(4);

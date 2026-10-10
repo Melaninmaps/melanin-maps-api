@@ -127,11 +127,29 @@ describe("community-fed business publication governance", () => {
     expect(listBusiness).toContain('submissionIntent: isOwnerIntent ? "owner" : "community"');
     expect(listBusiness).toContain('ownerAttestation: form.ownerAttestation');
     expect(listBusiness).toContain('This is a community recommendation. It will not be connected to your profile as an owner.');
-    expect(listBusiness).toContain('This creates a business page tied to your profile.');
-    expect(listBusiness).toContain('Your claim is reviewed separately from the public listing and does not create a verification badge.');
+    expect(listBusiness).toContain('This saves a private owner and profile request.');
+    expect(listBusiness).toContain('does not publish a page, verify the business, or grant management access automatically');
+    expect(listBusiness).toContain('Send ownership request for review');
+    expect(listBusiness).toContain('skipDuplicatePreflight');
     expect(profile).toContain('params: { intent: "owner" }');
     expect(settings).toContain('label: "Add My Business"');
     expect(settings).toContain('label: "Share Another Business"');
+  });
+
+  it("keeps owner review status private and reachable from direct account tools", () => {
+    const listBusiness = source("../app/list-business.tsx");
+    const status = source("../app/my-business-submissions.tsx");
+    const settings = source("../app/settings.tsx");
+
+    expect(listBusiness).toContain('Owner Request Saved');
+    expect(listBusiness).toContain('Private owner review in progress');
+    expect(listBusiness).toContain('Ownership control not granted yet');
+    expect(listBusiness).not.toContain('Manage My Business');
+    expect(status).toContain('Owner request under review');
+    expect(status).toContain('Existing listing under review');
+    expect(status).toContain('Existing listing unchanged');
+    expect(settings).toContain('listing and ownership are reviewed separately');
+    expect(settings).toContain('duplicate matches, and information requests');
   });
 
   it("uses the canonical protected claim endpoint and never equates a claim with verification", () => {

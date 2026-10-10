@@ -49,7 +49,7 @@ export function renderKinfolkRaisePreparation(
         ].join("\n"),
         followUpSuggestions: ["Build the evidence packet", "Draft the follow-up email"],
       };
-    case "community":
+    case "big_cousin":
     default:
       return {
         reply: [

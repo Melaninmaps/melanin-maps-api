@@ -46,7 +46,7 @@ export function canUseLeanGeneralChat(input: LeanGeneralChatInput): boolean {
  * Keeps ordinary conversations fast and direct without changing the member,
  * session, safety, directory, or personalization contracts in the main route.
  */
-export function buildLeanGeneralChatPrompt(voiceMode = "community"): string {
+export function buildLeanGeneralChatPrompt(voiceMode = "big_cousin"): string {
   const normalizedVoiceMode = normalizeKinfolkConversationMode(voiceMode);
   const tone = buildKinfolkConversationModeInstruction(normalizedVoiceMode);
   const emotionalCheckIn = buildKinfolkEmotionalCheckInContract(normalizedVoiceMode);

@@ -683,7 +683,7 @@ describe("POST /api/community/business-submissions", () => {
     expect(tx.release).toHaveBeenCalledOnce();
   });
 
-  it("publishes an owner-created page with management access but without verification", async () => {
+  it("keeps an owner-created request private for review without a business, claim, or management link", async () => {
     const ownerSubmission = submission({
       submission_intent: "owner",
       owner_name: "Jo Smith",
@@ -712,23 +712,25 @@ describe("POST /api/community/business-submissions", () => {
 
     expect(response.status).toBe(201);
     expect(response.body).toMatchObject({
-      status: "published",
-      publicationOutcome: "published",
+      status: "pending_review",
+      publicationOutcome: "owner_review",
       mapPin: false,
     });
-    expect(response.body.message).toContain("connected to your profile");
+    expect(response.body.message).toContain("private");
     const claimInsert = tx.query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO business_claims"));
     expect(claimInsert).toBeUndefined();
-    expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO business_owner_links"))).toBe(true);
+    expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO business_owner_links"))).toBe(false);
     const businessInsert = tx.query.mock.calls.find(([sql]) => String(sql).includes("INSERT INTO businesses"));
-    expect(businessInsert?.[1]).toEqual(expect.arrayContaining([
-      "owner_self_created",
-      "live_claimed",
-      "claimed",
-      "approved-member",
-    ]));
-    expect(businessInsert?.[1]).not.toEqual(expect.arrayContaining([true]));
+    expect(businessInsert).toBeUndefined();
     expect(tx.query.mock.calls.some(([sql]) => String(sql).includes("INSERT INTO canonical_record_locations"))).toBe(false);
+    expect(repository.finalizeAutomaticPublication).not.toHaveBeenCalled();
+    expect(repository.logAuditEvent).toHaveBeenCalledWith(
+      ownerSubmission.id,
+      "approved-member",
+      "owner_request_pending_review",
+      expect.stringContaining("private review"),
+      expect.anything(),
+    );
   });
 
   it("publishes an explicit non-minority report without making a public ownership assertion", async () => {
@@ -898,6 +900,35 @@ describe("POST /api/community/business-submissions", () => {
       expect.anything(),
     );
   });
+
+  it("queues an owner duplicate request privately without changing the canonical listing or granting control", async () => {
+    const repository = repositoryMock({
+      findPublishedDuplicate: vi.fn().mockResolvedValue({ id: "existing-business", name: "Community Books" }),
+    });
+    const tx = transactionHarness();
+    const response = await request(appWith(repository, "approved", tx.pool))
+      .post("/api/community/business-submissions")
+      .send(completeBody({
+        submissionIntent: "owner",
+        ownerName: "Jo Smith",
+        ownerBusinessEmail: "owner@communitybooks.example",
+        ownerRole: "owner",
+        ownerVerificationMethod: "domain_email",
+        ownerAttestation: true,
+      }));
+
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({
+      isDuplicate: true,
+      businessId: "existing-business",
+      status: "pending_review",
+      publicationOutcome: "possible_duplicate_review",
+      mapPin: false,
+    });
+    expect(response.body.message).toContain("existing listing was not changed");
+    expect(tx.query.mock.calls.some(([sql]) => /INSERT INTO businesses|UPDATE businesses|business_owner_links|business_claims/.test(String(sql)))).toBe(false);
+    expect(repository.finalizeAutomaticPublication).not.toHaveBeenCalled();
+  });
 });
 
 describe("member-owned submission status and amendment", () => {
@@ -932,6 +963,51 @@ describe("member-owned submission status and amendment", () => {
       expect.any(String),
     );
     expect(repository.finalizeAutomaticPublication).toHaveBeenCalled();
+  });
+
+  it("keeps a corrected owner request private even when its evidence is complete", async () => {
+    const ownerSubmission = submission({
+      submission_intent: "owner",
+      owner_name: "Jo Smith",
+      owner_business_email: "owner@communitybooks.example",
+      owner_role: "owner",
+      owner_verification_method: "domain_email",
+      owner_attested_at: "2026-09-27T12:00:00.000Z",
+      status: "pending_review",
+    });
+    const repository = repositoryMock({
+      amendNeedsInfo: vi.fn().mockResolvedValue(ownerSubmission),
+    });
+    const tx = transactionHarness();
+    const resolveLocation = vi.fn();
+    const response = await request(appWith(repository, "approved", tx.pool, resolveLocation))
+      .patch(`/api/community/business-submissions/${ownerSubmission.id}`)
+      .send(completeBody({
+        clientRequestId: undefined,
+        submissionIntent: "owner",
+        ownerName: "Jo Smith",
+        ownerBusinessEmail: "owner@communitybooks.example",
+        ownerRole: "owner",
+        ownerVerificationMethod: "domain_email",
+        ownerAttestation: true,
+      }));
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      status: "pending_review",
+      publicationOutcome: "owner_review",
+      mapPin: false,
+    });
+    expect(resolveLocation).not.toHaveBeenCalled();
+    expect(tx.query.mock.calls.some(([sql]) => /INSERT INTO businesses|business_owner_links|business_claims/.test(String(sql)))).toBe(false);
+    expect(repository.finalizeAutomaticPublication).not.toHaveBeenCalled();
+    expect(repository.logAuditEvent).toHaveBeenCalledWith(
+      ownerSubmission.id,
+      "approved-member",
+      "owner_request_resubmitted_for_review",
+      expect.stringContaining("private review"),
+      expect.anything(),
+    );
   });
 });
 
@@ -1141,9 +1217,11 @@ describe("source contracts", () => {
     expect(route).toContain("pg_advisory_xact_lock");
     expect(route).toContain("business_publication_identities");
     expect(route).toContain("canonical_record_locations");
-    expect(route).toContain('ownerSelfCreated ? "live_claimed" : "live_unclaimed"');
-    expect(route).toContain('ownerSelfCreated ? "claimed" : "community_listed"');
-    expect(route).toContain('ownerSelfCreated ? "owner_self_created" : "unclaimed_community_submission"');
+    expect(route).toContain("assessOwnerSubmissionReview");
+    expect(route).toContain("owner_request_pending_review");
+    expect(route).toContain("owner_request_resubmitted_for_review");
+    expect(route).toContain('ownerSelfCreated ? "owner_submission" : "community_submission"');
+    expect(route).not.toContain("grantOwnerSelfCreatedManagement");
     expect(route).toContain('if (hasPreciseLocation && coordinates)');
     expect(route).not.toContain("ownershipClaimValue(submission)");
     expect(route).not.toContain('return { lat: "0", lng: "0" }');

@@ -771,28 +771,45 @@ function EventsTab() {
 function MyGroupsPage({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const res = await authenticatedFetch(`${BASE}api/groups/mine`);
-      if (res.ok) {
-        const d = await res.json() as { groups: Group[] };
-        setGroups(d.groups ?? []);
-      }
-    } catch { /* ignore */ } finally { setLoading(false); }
+      if (!res.ok) throw new Error("Could not load groups");
+      const d = await res.json() as { groups: Group[] };
+      setGroups(d.groups ?? []);
+    } catch {
+      // Do not clear a currently visible list if a later refresh fails.
+      setLoadError(true);
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { load(); }, [load]);
 
-  if (loading) return <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#CA922B]" /></div>;
+  if (loading) return <div data-testid="community-my-groups-loading" role="status" aria-live="polite" className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#CA922B]" aria-hidden="true" /><span className="sr-only">Loading your groups</span></div>;
 
   return (
     <div className="space-y-3">
+      {loadError && groups.length === 0 && (
+        <div data-testid="community-my-groups-error" role="alert" className="rounded-2xl border border-[#CA922B]/30 bg-white p-6 text-center">
+          <p className="text-sm font-bold text-[#2B1507]">We couldn't load your groups</p>
+          <p className="mt-1 text-sm text-[#3A1F0E]/60">Your memberships have not changed. Please try again.</p>
+          <button type="button" onClick={() => void load()} className="mt-3 text-sm font-bold text-[#CA922B] hover:underline">Try again</button>
+        </div>
+      )}
+      {loadError && groups.length > 0 && (
+        <div data-testid="community-my-groups-stale-warning" role="alert" className="flex items-center justify-between gap-3 rounded-2xl border border-[#CA922B]/25 bg-[#CA922B]/8 px-4 py-3">
+          <p className="text-sm text-[#3A1F0E]/70">We couldn't refresh your groups. The memberships already shown are still available.</p>
+          <button type="button" onClick={() => void load()} className="shrink-0 text-xs font-bold text-[#CA922B] hover:underline">Try again</button>
+        </div>
+      )}
       {groups.length === 0 && (
-        <div data-testid="community-my-groups-empty" className="text-center py-16">
+        <div data-testid="community-my-groups-empty" role="status" className="text-center py-16">
           <Users className="w-10 h-10 text-[#CA922B]/40 mx-auto mb-3" />
           <p className="text-sm text-[#3A1F0E]/50 font-medium">You have not joined any groups yet</p>
           <p className="text-xs text-[#3A1F0E]/35 mt-1">When you join a group, it will appear here.</p>
@@ -847,7 +864,9 @@ function MemberCard({ m }: { m: MemberResult }) {
   const initials = ((m.firstName?.[0] ?? "") + (m.lastName?.[0] ?? "")) || displayName[0]?.toUpperCase() || "?";
   return (
     <button
-      onClick={() => navigate(`/profile/${m.id}`)}
+      type="button"
+      onClick={() => navigate(`/profile/${encodeURIComponent(m.id)}`)}
+      aria-label={`View ${displayName}'s profile`}
       className="flex items-center gap-3 w-full p-3 bg-white rounded-2xl border border-[#3A1F0E]/8 hover:border-[#CA922B]/30 hover:shadow-sm transition-all text-left"
     >
       {m.profileImageUrl ? (
@@ -932,7 +951,9 @@ export default function Community() {
   const [hashtagFilter, setHashtagFilter] = useState<string | null>(null);
   const [trending, setTrending] = useState<Array<{ tag: string; weeklyPostCount: number }>>([]);
   const [refreshing, setRefreshing] = useState(false);
-  const [communityFeedDisplay, setCommunityFeedDisplay] = useState<CommunityFeedDisplay>("mixed");
+  // Conversation is the safe default. Members can opt into another saved
+  // presentation, but post text remains first until they explicitly choose it.
+  const [communityFeedDisplay, setCommunityFeedDisplay] = useState<CommunityFeedDisplay>("text_first");
   const [showFeedControls, setShowFeedControls] = useState(false);
   const [savingFeedDisplay, setSavingFeedDisplay] = useState(false);
 
@@ -988,7 +1009,7 @@ export default function Community() {
     setLoadErrorStatus(null);
     setLoadErrorRequestId(null);
     try {
-      const url = `${BASE}api/community/posts?feed=${feedMode}${activeGroupId ? `&groupId=${encodeURIComponent(String(activeGroupId))}` : ""}${hashtagFilter ? `&hashtag=${hashtagFilter}` : ""}`;
+      const url = `${BASE}api/community/posts?feed=${feedMode}${activeGroupId ? `&groupId=${encodeURIComponent(String(activeGroupId))}` : ""}${hashtagFilter ? `&hashtag=${encodeURIComponent(hashtagFilter)}` : ""}`;
       const res = await authenticatedFetch(url);
       if (res.ok) {
         const d = await res.json() as { posts: Record<string, unknown>[] };
@@ -1098,11 +1119,12 @@ export default function Community() {
                 type="text"
                 value={peopleQuery}
                 onChange={e => handlePeopleSearch(e.target.value)}
+                aria-label="Search community members"
                 placeholder="Search community members…"
                 className="w-full bg-white/10 border border-white/15 rounded-2xl pl-9 pr-10 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:border-[#CA922B]/60 focus:bg-white/15 transition-all"
               />
               {peopleQuery && (
-                <button onClick={clearSearch} className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
+                <button type="button" onClick={clearSearch} aria-label="Clear member search" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white">
                   <X className="w-4 h-4" />
                 </button>
               )}
@@ -1177,7 +1199,7 @@ export default function Community() {
               {/* Feed mode toggle */}
               <div className="flex items-center gap-2">
                 {(["everyone", "following"] as const).map(mode => (
-                  <button key={mode} onClick={() => setFeedMode(mode)}
+                  <button key={mode} type="button" onClick={() => setFeedMode(mode)} aria-pressed={feedMode === mode}
                     className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider transition-colors ${
                       feedMode === mode ? "bg-[#2B1507] text-white" : "bg-white text-[#3A1F0E]/50 border border-[#3A1F0E]/10 hover:border-[#CA922B]/40"
                     }`}>
@@ -1196,7 +1218,7 @@ export default function Community() {
                     <span className="hidden sm:inline">Feed settings</span>
                   </button>
                 )}
-                <button onClick={handleRefresh} aria-label="Refresh Community feed" className="p-2 rounded-xl bg-white border border-[#3A1F0E]/8 text-[#3A1F0E]/40 hover:text-[#CA922B] transition-colors">
+                <button type="button" onClick={handleRefresh} disabled={refreshing} aria-label="Refresh Community feed" className="p-2 rounded-xl bg-white border border-[#3A1F0E]/8 text-[#3A1F0E]/40 hover:text-[#CA922B] transition-colors disabled:cursor-wait disabled:opacity-60">
                   <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin" : ""}`} />
                 </button>
               </div>
@@ -1239,7 +1261,7 @@ export default function Community() {
 
             {/* Posts */}
             {loading ? (
-              <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#CA922B]" /></div>
+              <div data-testid="community-feed-loading" role="status" aria-live="polite" className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#CA922B]" aria-hidden="true" /><span className="sr-only">Loading Community posts</span></div>
             ) : feedError.kind === "auth" ? (
               <div data-testid="community-feed-auth-required" className="text-center py-16">
                 <AlertCircle className="w-8 h-8 text-[#CA922B] mx-auto mb-3" />
@@ -1252,10 +1274,10 @@ export default function Community() {
                 <AlertCircle className="w-8 h-8 text-red-400 mx-auto mb-3" />
                 <p className="text-sm font-bold text-[#2B1507]">{feedError.title}</p>
                 <p className="text-sm text-[#3A1F0E]/60 mt-1 mb-3">{feedError.message} No posts or comments were removed.</p>
-                <button onClick={loadPosts} className="text-sm font-bold text-[#CA922B] hover:underline">Try again</button>
+                <button type="button" onClick={() => void loadPosts()} className="text-sm font-bold text-[#CA922B] hover:underline">Try again</button>
               </div>
             ) : posts.length === 0 ? (
-              <div className="text-center py-16">
+              <div data-testid="community-feed-empty" role="status" className="text-center py-16">
                 <MessageSquare className="w-10 h-10 text-[#CA922B]/40 mx-auto mb-3" />
                 <p className="text-sm text-[#3A1F0E]/50 font-medium">No posts yet{hashtagFilter ? ` for #${hashtagFilter}` : ""}</p>
                 {isAuthenticated && (

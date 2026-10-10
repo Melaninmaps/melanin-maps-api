@@ -1,3 +1,8 @@
+import {
+  KINFOLK_APPROVED_PERSONAS,
+  KINFOLK_LEGACY_PERSONA_VALUES,
+} from "./conversation-mode";
+
 export const KINFOLK_VOICES = [
   "alloy",
   "echo",
@@ -213,17 +218,12 @@ const ENUM_FIELDS: Record<string, readonly string[]> = {
     "conversational",
   ],
   personalityMode: [
-    // Current member-facing Kinfolk Voices. These values are shared by the
-    // web chat, mobile chat, and saved preference controls.
-    "community",
-    "professor",
-    "business_manager",
-    "best_friend",
+    // Canonical member-facing Kinfolk personalities.
+    ...KINFOLK_APPROVED_PERSONAS,
     // Legacy rows and older clients remain accepted so a preference update
-    // never erases an existing member's chosen setting.
-    "neighborhood_guide",
-    "cultural_curator",
-    "travel_companion",
+    // never erases an existing member's chosen setting; routing maps these
+    // values to canonical Big Cousin rather than creating a fifth persona.
+    ...KINFOLK_LEGACY_PERSONA_VALUES,
   ],
   emojiLevel: ["none", "some", "lots"],
   humorLevel: ["none", "light", "playful"],

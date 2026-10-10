@@ -159,10 +159,10 @@ export function resolveKinfolkVoiceDelivery(
         styleInstruction:
           "Speak in English with genuine warmth and natural conversational energy. Sound supportive and candid without exaggeration, imitation, or forced familiarity; never imitate an accent or perform a stereotype.",
       };
-    case "community":
+    case "big_cousin":
     default:
       return {
-        mode: "community",
+        mode: "big_cousin",
         label: "Big Cousin",
         styleInstruction:
           "Speak in English with a warm, grounded, steady conversational cadence. Sound like a capable older cousin who is direct, caring, and easy to understand; never imitate an accent or perform a stereotype.",

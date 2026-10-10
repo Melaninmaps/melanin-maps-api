@@ -59,11 +59,13 @@ describe("lean general Kinfolk chat", () => {
     expect(buildLeanGeneralChatPrompt("professor")).toContain("Professor mode");
     expect(buildLeanGeneralChatPrompt("business_manager")).toContain("Business Manager mode");
     expect(buildLeanGeneralChatPrompt("best_friend")).toContain("Best Friend mode");
+    expect(buildLeanGeneralChatPrompt("big_cousin")).toContain("Big Cousin mode");
+    expect(buildLeanGeneralChatPrompt("community")).toContain("Big Cousin mode");
     expect(buildLeanGeneralChatPrompt("professional")).toContain("Big Cousin mode");
   });
 
   it("keeps current evidence, safety, memory, and speaker boundaries invariant across every lean mode", () => {
-    for (const mode of ["community", "professor", "business_manager", "best_friend"] as const) {
+    for (const mode of ["big_cousin", "professor", "business_manager", "best_friend"] as const) {
       const prompt = buildLeanGeneralChatPrompt(mode);
       expect(prompt).toContain("MODE ISOLATION — NON-NEGOTIABLE");
       expect(prompt).toContain("must not change the factual answer");
@@ -75,7 +77,7 @@ describe("lean general Kinfolk chat", () => {
   });
 
   it("keeps the solar-science core factual across all four conversational voices", () => {
-    for (const mode of ["community", "best_friend", "professor", "business_manager"]) {
+    for (const mode of ["big_cousin", "best_friend", "professor", "business_manager"]) {
       const prompt = buildLeanGeneralChatPrompt(mode);
       expect(prompt).toContain("hydrogen fusion in the sun's core releases energy");
       expect(prompt).toContain("gravity compresses the core");
@@ -86,7 +88,7 @@ describe("lean general Kinfolk chat", () => {
   });
 
   it("keeps emotional check-ins supportive and free of discovery output", () => {
-    for (const mode of ["community", "best_friend", "professor", "business_manager"]) {
+    for (const mode of ["big_cousin", "best_friend", "professor", "business_manager"]) {
       const prompt = buildLeanGeneralChatPrompt(mode);
       expect(prompt).toContain("EMOTIONAL CHECK-INS");
       expect(prompt).toContain("Do not turn a check-in into a business recommendation");

@@ -28,10 +28,13 @@ function hostMatches(hostname: string, domain: string): boolean {
   return normalized === domain || normalized.endsWith(`.${domain}`);
 }
 
-function safeHttpUrl(rawUrl: string): URL | null {
+export function safeHttpUrl(rawUrl: string): URL | null {
   try {
-    const url = new URL(rawUrl);
-    return url.protocol === "https:" || url.protocol === "http:" ? url : null;
+    const url = new URL(rawUrl.trim());
+    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+    // Credentials in a displayed media URL are both misleading and unnecessary.
+    // Do not turn them into an embedded or externally opened link.
+    return !url.username && !url.password ? url : null;
   } catch {
     return null;
   }
@@ -149,6 +152,36 @@ function NativeVideo({ url, compact }: { url: string; compact: boolean }) {
   );
 }
 
+function ImagePreview({ url, index, compact }: { url: string; index: number; compact: boolean }) {
+  const [unavailable, setUnavailable] = useState(false);
+
+  if (unavailable) {
+    return (
+      <div
+        data-testid="community-image-unavailable"
+        role="status"
+        className={`flex flex-col items-center justify-center gap-2 rounded-xl bg-[#FAF6EF] px-4 text-center text-[#3A1F0E] ${compact ? "h-20 w-20" : "min-h-40 w-full"}`}
+      >
+        <AlertCircle className="h-5 w-5 text-[#CA922B]" aria-hidden="true" />
+        {!compact && <span className="text-xs font-semibold">Image preview unavailable</span>}
+        <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-[#3A1F0E] underline underline-offset-2">
+          Open image
+        </a>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      data-testid={`community-image-preview-${index}`}
+      src={url}
+      alt={`Community attachment ${index + 1}`}
+      onError={() => setUnavailable(true)}
+      className={compact ? "h-full w-full object-cover" : "max-h-72 w-full object-cover"}
+    />
+  );
+}
+
 function TikTokPreviewCard({
   url,
   index,
@@ -172,7 +205,8 @@ function TikTokPreviewCard({
           signal: controller.signal,
         });
         const body = await response.json().catch(() => ({})) as { preview?: TikTokVideoPreview | null };
-        if (active && response.ok && body.preview?.thumbnailUrl) setPreview(body.preview);
+        const thumbnailUrl = body.preview?.thumbnailUrl ? safeHttpUrl(body.preview.thumbnailUrl)?.toString() : null;
+        if (active && response.ok && thumbnailUrl) setPreview({ ...body.preview!, thumbnailUrl });
       } catch {
         // The link remains available even if TikTok's public metadata is unavailable.
       } finally {
@@ -250,7 +284,6 @@ export function CommunityMedia({
   const { allows } = useSocialVideoPreferences();
   const media = classifyCommunityMedia(url);
   const safeUrl = safeHttpUrl(url)?.toString();
-  if (!allows(detectSocialVideoPlatform(url))) return null;
   const removeButton = onRemove ? (
     <button
       type="button"
@@ -261,6 +294,18 @@ export function CommunityMedia({
       <X className="h-3 w-3" aria-hidden="true" />
     </button>
   ) : null;
+
+  // A hidden provider should not appear in the feed, but a person composing a
+  // post must still be able to remove it after changing source preferences.
+  if (!allows(detectSocialVideoPlatform(url))) {
+    if (!removeButton) return null;
+    return (
+      <div data-testid={`community-media-hidden-${index}`} role="status" className="relative flex min-h-11 items-center rounded-xl border border-[#CA922B]/25 bg-[#FAF6EF] py-2 pl-3 pr-10 text-xs font-semibold text-[#3A1F0E]/70">
+        Attachment hidden by your video source preferences
+        {removeButton}
+      </div>
+    );
+  }
 
   if (media.type === "provider-link") {
     return (
@@ -297,17 +342,24 @@ export function CommunityMedia({
 
   if (media.type === "youtube") {
     return (
-      <div className={`relative overflow-hidden rounded-xl ${compact ? "h-24 w-44" : "aspect-video w-full"}`}>
-        <iframe
-          data-testid="community-youtube-embed"
-          src={media.embedUrl}
-          title={`YouTube attachment ${index + 1}`}
-          className="h-full w-full"
-          allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-          sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
-          referrerPolicy="strict-origin-when-cross-origin"
-          allowFullScreen
-        />
+      <div className={`relative ${compact ? "w-44" : "w-full"}`}>
+        <div className={`overflow-hidden rounded-xl ${compact ? "h-24 w-44" : "aspect-video w-full"}`}>
+          <iframe
+            data-testid="community-youtube-embed"
+            src={media.embedUrl}
+            title={`YouTube attachment ${index + 1}`}
+            className="h-full w-full"
+            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+            sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+            referrerPolicy="strict-origin-when-cross-origin"
+            allowFullScreen
+          />
+        </div>
+        {safeUrl && (
+          <a href={safeUrl} target="_blank" rel="noopener noreferrer" className="mt-2 flex min-h-10 items-center justify-center gap-2 rounded-full border border-red-600/25 bg-white px-4 py-2 text-sm font-bold text-[#3A1F0E]">
+            Open on YouTube <ExternalLink className="h-4 w-4" aria-hidden="true" />
+          </a>
+        )}
         {removeButton}
       </div>
     );
@@ -349,7 +401,7 @@ export function CommunityMedia({
   if (media.type === "native-video") {
     return (
       <div className="relative">
-        <NativeVideo url={url} compact={compact} />
+        <NativeVideo url={safeUrl ?? url} compact={compact} />
         {removeButton}
       </div>
     );
@@ -357,7 +409,7 @@ export function CommunityMedia({
 
   return (
     <div className={`relative overflow-hidden rounded-xl ${compact ? "h-20 w-20" : "w-full"}`}>
-      <img src={url} alt={`Community attachment ${index + 1}`} className={compact ? "h-full w-full object-cover" : "max-h-72 w-full object-cover"} />
+      <ImagePreview url={safeUrl ?? url} index={index} compact={compact} />
       {removeButton}
     </div>
   );
