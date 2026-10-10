@@ -598,10 +598,33 @@ export async function discoverLocalBusinesses(input: {
   ]);
   if (platformResults[0].status === "fulfilled")
     businessRows = platformResults[0].value;
-  else platformStatus = "degraded";
+  else {
+    platformStatus = "degraded";
+    const failure = platformResults[0].reason as {
+      code?: unknown;
+      name?: unknown;
+    } | null;
+    // Keep member prompts, preferences, business names, and SQL text out of logs.
+    // The code/class is enough to distinguish a schema dependency from a policy
+    // zero-result in the isolated staging validation path.
+    console.warn("[kinfolk_governed_business_repository_failure]", {
+      code: typeof failure?.code === "string" ? failure.code : null,
+      errorClass: typeof failure?.name === "string" ? failure.name : "UnknownError",
+    });
+  }
   if (platformResults[1].status === "fulfilled")
     mapRows = platformResults[1].value;
-  else platformStatus = "degraded";
+  else {
+    platformStatus = "degraded";
+    const failure = platformResults[1].reason as {
+      code?: unknown;
+      name?: unknown;
+    } | null;
+    console.warn("[kinfolk_governed_map_repository_failure]", {
+      code: typeof failure?.code === "string" ? failure.code : null,
+      errorClass: typeof failure?.name === "string" ? failure.name : "UnknownError",
+    });
+  }
 
   const repositoryMatchedCount = businessRows.length;
   businessRows = withinVerifiedRadius(businessRows, input.verifiedRadius);
