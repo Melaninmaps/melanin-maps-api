@@ -250,9 +250,9 @@ router.patch("/safety/location-shares/:token/update", async (req: Request, res: 
          JOIN users owner ON owner.id = tss.owner_id
          JOIN users recipient ON recipient.id = tss.contact_user_id
          LEFT JOIN user_blocks owner_blocks
-           ON owner_blocks.blocker_id = ls.sharer_id AND owner_blocks.blocked_id = recipient.id
+           ON owner_blocks.blocker_id = tss.owner_id AND owner_blocks.blocked_id = recipient.id
          LEFT JOIN user_blocks recipient_blocks
-           ON recipient_blocks.blocker_id = recipient.id AND recipient_blocks.blocked_id = ls.sharer_id
+           ON recipient_blocks.blocker_id = recipient.id AND recipient_blocks.blocked_id = tss.owner_id
         WHERE ls.share_token = $3
           AND ls.sharer_id = $4
           AND ls.recipient_user_id = tss.contact_user_id

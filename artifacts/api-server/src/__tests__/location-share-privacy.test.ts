@@ -73,6 +73,21 @@ describe("location share public view", () => {
     expect(lifecycle).toContain("current_lat = NULL");
   });
 
+  it("keeps coordinate-update block checks in joined authorization relations", () => {
+    const route = readFileSync(
+      fileURLToPath(new URL("../routes/location-shares.ts", import.meta.url)),
+      "utf8",
+    );
+    const updateRoute = route.slice(
+      route.indexOf('router.patch("/safety/location-shares/:token/update"'),
+      route.indexOf('router.get("/safety/location-shares/:token/view"'),
+    );
+    expect(updateRoute).toContain("owner_blocks.blocker_id = tss.owner_id");
+    expect(updateRoute).toContain("recipient_blocks.blocked_id = tss.owner_id");
+    expect(updateRoute).not.toContain("owner_blocks.blocker_id = ls.sharer_id");
+    expect(updateRoute).not.toContain("recipient_blocks.blocked_id = ls.sharer_id");
+  });
+
   it("publishes a first native coordinate before claiming the share is live", () => {
     const mobile = readFileSync(
       fileURLToPath(new URL("../../../mobile/app/location-share.tsx", import.meta.url)),
