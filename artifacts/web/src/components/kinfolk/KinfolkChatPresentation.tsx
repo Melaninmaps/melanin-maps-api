@@ -95,14 +95,72 @@ export function safeLibraryHref(url: string): string | null {
   return /^\/library\/topics\/[A-Za-z0-9._~%-]+(?:#[A-Za-z0-9._~%-]+)?$/.test(url) ? url : null;
 }
 
+export type KinfolkAnswerBlock =
+  | { kind: "paragraph"; text: string }
+  | { kind: "bullets"; items: string[] }
+  | { kind: "steps"; items: string[] }
+  | { kind: "code"; text: string };
+
+/**
+ * Formats ordinary model text into a small, safe semantic surface without
+ * interpreting markdown as HTML. Structured API payloads still use their
+ * dedicated renderers below; this is the universal fallback for every other
+ * useful answer, including draft, explanation, and link-summary replies.
+ */
+export function kinfolkAnswerBlocks(content: string): KinfolkAnswerBlock[] {
+  const normalized = content.replace(/\r\n?/g, "\n").trim();
+  if (!normalized) return [];
+
+  const blocks: KinfolkAnswerBlock[] = [];
+  for (const group of normalized.split(/\n\s*\n/)) {
+    const lines = group.split("\n").map((line) => line.trim()).filter(Boolean);
+    if (lines.length === 0) continue;
+
+    const codeFence = lines[0]!.match(/^```(?:[A-Za-z0-9_-]+)?$/);
+    if (codeFence && lines.at(-1) === "```") {
+      const text = lines.slice(1, -1).join("\n").trim();
+      if (text) blocks.push({ kind: "code", text });
+      continue;
+    }
+
+    const bullets = lines.map((line) => line.match(/^[-*•]\s+(.+)$/)?.[1]?.trim() ?? null);
+    if (bullets.every((item): item is string => Boolean(item))) {
+      blocks.push({ kind: "bullets", items: bullets });
+      continue;
+    }
+
+    const steps = lines.map((line) => line.match(/^\d+[.)]\s+(.+)$/)?.[1]?.trim() ?? null);
+    if (steps.every((item): item is string => Boolean(item))) {
+      blocks.push({ kind: "steps", items: steps });
+      continue;
+    }
+
+    blocks.push({ kind: "paragraph", text: lines.join("\n") });
+  }
+  return blocks;
+}
+
 export function KinfolkAssistantText({ content }: { content: string }) {
+  const blocks = kinfolkAnswerBlocks(content);
+  if (blocks.length === 0) return null;
   return (
-    <p
+    <div
       data-testid="kinfolk-assistant-text"
-      className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[15px] leading-7"
+      className="space-y-3 break-words [overflow-wrap:anywhere] text-[15px] leading-7"
     >
-      {content}
-    </p>
+      {blocks.map((block, index) => {
+        if (block.kind === "bullets") {
+          return <ul key={`bullets-${index}`} className="list-disc space-y-1 pl-5">{block.items.map((item, itemIndex) => <li key={`${item}-${itemIndex}`}>{item}</li>)}</ul>;
+        }
+        if (block.kind === "steps") {
+          return <ol key={`steps-${index}`} className="list-decimal space-y-1 pl-5">{block.items.map((item, itemIndex) => <li key={`${item}-${itemIndex}`}>{item}</li>)}</ol>;
+        }
+        if (block.kind === "code") {
+          return <pre key={`code-${index}`} className="overflow-x-auto rounded-lg bg-[#2B1507] p-3 text-xs leading-5 text-[#F5EBD8]"><code>{block.text}</code></pre>;
+        }
+        return <p key={`paragraph-${index}`} className="whitespace-pre-wrap">{block.text}</p>;
+      })}
+    </div>
   );
 }
 

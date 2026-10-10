@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import {
   hasItineraryDays,
   isSerializedItineraryContent,
+  kinfolkAnswerBlocks,
   KinfolkAssistantText,
   KinfolkItinerary,
   KinfolkSpokenText,
@@ -45,14 +46,35 @@ describe("Kinfolk chat presentation", () => {
     );
   });
 
-  it("preserves assistant paragraph and list line breaks as safe plain text", () => {
-    const content = "A first paragraph.\n\n- First detail\n- Second detail";
+  it("presents ordinary assistant text as safe semantic paragraphs and lists", () => {
+    const content = "A first paragraph.\n\n- First detail\n- Second detail\n\n1. A first step\n2. A second step";
     const markup = renderToStaticMarkup(React.createElement(KinfolkAssistantText, { content }));
 
-    expect(markup).toContain("whitespace-pre-wrap");
+    expect(kinfolkAnswerBlocks(content)).toEqual([
+      { kind: "paragraph", text: "A first paragraph." },
+      { kind: "bullets", items: ["First detail", "Second detail"] },
+      { kind: "steps", items: ["A first step", "A second step"] },
+    ]);
+    expect(markup).toContain("<p");
+    expect(markup).toContain("<ul");
+    expect(markup).toContain("<ol");
+    expect(markup).toContain("First detail");
+    expect(markup).toContain("A second step");
     expect(markup).toContain("break-words");
-    expect(markup).toContain(content);
     expect(markup).not.toContain("dangerouslySetInnerHTML");
+  });
+
+  it("keeps code blocks as text and never executes model-supplied markup", () => {
+    const content = "```ts\nconst unsafe = '<img src=x onerror=alert(1)>';\n```";
+    const markup = renderToStaticMarkup(React.createElement(KinfolkAssistantText, { content }));
+
+    expect(kinfolkAnswerBlocks(content)).toEqual([{
+      kind: "code",
+      text: "const unsafe = '<img src=x onerror=alert(1)>';",
+    }]);
+    expect(markup).toContain("<pre");
+    expect(markup).toContain("&lt;img");
+    expect(markup).not.toContain("<img src=x");
   });
 
   it("keeps the exact full audio text visibly available during and after playback", () => {
