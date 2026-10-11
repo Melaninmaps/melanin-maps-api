@@ -125,6 +125,24 @@ export async function validateMemberActivationInvitation(
   return { valid: true };
 }
 
+/**
+ * A legacy approved waitlist row may predate activation invitations entirely,
+ * but once an invitation has been issued its lifecycle is authoritative. In
+ * particular, expiry, revocation, or a provider delivery failure must never
+ * reopen direct registration for that email.
+ */
+export async function hasMemberActivationInvitationHistory(email: string): Promise<boolean> {
+  const { rows } = await pool.query<{ exists: boolean }>(
+    `SELECT EXISTS (
+       SELECT 1
+         FROM member_activation_invitations
+        WHERE email = $1
+     ) AS exists`,
+    [normalizeEmail(email)],
+  );
+  return rows[0]?.exists === true;
+}
+
 /** Returns true only when a current invitation exists, so legacy approvals stay usable. */
 export async function hasCurrentMemberActivationInvitation(email: string): Promise<boolean> {
   const { rows } = await pool.query<{ exists: boolean }>(
@@ -143,12 +161,12 @@ export async function hasCurrentMemberActivationInvitation(email: string): Promi
 }
 
 /**
- * Consumption happens only after account creation succeeds. A stale concurrent
- * request cannot create a second account because the user-email uniqueness
- * check remains authoritative.
+ * Consumption happens only after account creation succeeds. The boolean result
+ * allows registration to fail closed if an administrator revokes the capability
+ * between validation and consumption.
  */
-export async function consumeMemberActivationInvitation(email: string, token: string): Promise<void> {
-  await pool.query(
+export async function consumeMemberActivationInvitation(email: string, token: string): Promise<boolean> {
+  const result = await pool.query<{ id: string }>(
     `UPDATE member_activation_invitations
         SET status = 'activated', used_at = NOW(), updated_at = NOW()
       WHERE email = $1
@@ -159,6 +177,7 @@ export async function consumeMemberActivationInvitation(email: string, token: st
         AND status IN ('pending_delivery', 'sent', 'failed_delivery')`,
     [normalizeEmail(email), hashToken(token)],
   );
+  return (result.rowCount ?? 0) === 1;
 }
 
 export async function revokeMemberActivationInvitations(email: string): Promise<void> {

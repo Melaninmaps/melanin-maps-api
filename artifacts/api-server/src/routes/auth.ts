@@ -56,7 +56,7 @@ import {
 } from "../lib/auth";
 import {
   consumeMemberActivationInvitation,
-  hasCurrentMemberActivationInvitation,
+  hasMemberActivationInvitationHistory,
   validateMemberActivationInvitation,
 } from "../auth/memberActivationInvitation";
 import jwt from "jsonwebtoken";
@@ -901,7 +901,10 @@ router.post("/auth/register", async (req: Request, res: Response) => {
           ? rawActivationToken.trim()
           : "";
         if (waitlistEntry?.approvedAt) {
-          const invitationRequired = await hasCurrentMemberActivationInvitation(cleanEmail);
+          // Preserve pre-invitation legacy approvals, but never let an expired,
+          // revoked, or failed-delivery activation capability fall back to an
+          // unprotected approved-waitlist registration path.
+          const invitationRequired = await hasMemberActivationInvitationHistory(cleanEmail);
           if (invitationRequired && !activationToken) {
             res.status(403).json({
               error: "Use the secure activation link from your approval email, or ask an administrator to resend it.",
@@ -945,6 +948,21 @@ router.post("/auth/register", async (req: Request, res: Response) => {
           })
           .returning();
 
+        if (activationToken) {
+          // A concurrent admin revocation can happen after validation. Do not
+          // issue a usable account if the final single-use consumption loses
+          // that race; no agreement, email, entitlement, or session exists yet.
+          const consumed = await consumeMemberActivationInvitation(cleanEmail, activationToken);
+          if (!consumed) {
+            await db.delete(usersTable).where(eq(usersTable.id, user.id));
+            res.status(403).json({
+              error: "This activation link is no longer valid. Ask an administrator to resend your invitation.",
+              code: "ACTIVATION_INVITATION_REVOKED",
+            });
+            return;
+          }
+        }
+
         req.log.info(
           {
             ...diagBase,
@@ -969,10 +987,6 @@ router.post("/auth/register", async (req: Request, res: Response) => {
           .catch(() => {});
 
         sendWelcomeEmail(user.email!, user.firstName).catch(() => {});
-        if (activationToken) {
-          // Account creation succeeded before the capability is consumed.
-          await consumeMemberActivationInvitation(cleanEmail, activationToken);
-        }
         // Auto-attach any pre-approved tester entitlement for this email
         await applyPendingTesterEntitlement(user.id, user.email!);
 

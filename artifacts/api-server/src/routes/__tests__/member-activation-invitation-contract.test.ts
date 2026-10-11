@@ -43,12 +43,15 @@ describe("member activation invitation contract", () => {
     expect(waitlist).not.toContain("res.json({ invitation: invitation.token");
   });
 
-  it("requires a current invitation at registration and consumes it only after account creation", () => {
-    expect(auth).toContain("hasCurrentMemberActivationInvitation(cleanEmail)");
+  it("requires issued invitation history at registration and consumes it only after account creation", () => {
+    expect(invitation).toContain("export async function hasMemberActivationInvitationHistory");
+    expect(invitation).toContain("return (result.rowCount ?? 0) === 1");
+    expect(auth).toContain("hasMemberActivationInvitationHistory(cleanEmail)");
     expect(auth).toContain("validateMemberActivationInvitation(cleanEmail, activationToken)");
     expect(auth).toContain('code: "ACTIVATION_INVITATION_REQUIRED"');
-    expect(auth).toContain("await consumeMemberActivationInvitation(cleanEmail, activationToken)");
-    expect(auth.indexOf("await consumeMemberActivationInvitation(cleanEmail, activationToken)")).toBeGreaterThan(
+    expect(auth).toContain("const consumed = await consumeMemberActivationInvitation(cleanEmail, activationToken)");
+    expect(auth).toContain("await db.delete(usersTable).where(eq(usersTable.id, user.id))");
+    expect(auth.indexOf("const consumed = await consumeMemberActivationInvitation(cleanEmail, activationToken)")).toBeGreaterThan(
       auth.indexOf("const [user] = await db"),
     );
   });

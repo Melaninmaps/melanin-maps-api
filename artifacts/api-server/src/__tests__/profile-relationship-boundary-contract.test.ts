@@ -11,6 +11,7 @@ describe("profile relationship block boundary", () => {
   const users = source("../routes/users.ts");
   const follows = source("../routes/follows.ts");
   const connections = source("../routes/connections.ts");
+  const conversations = source("../routes/conversations.ts");
 
   it("makes a block transactional across both relationship directions and dependent safety shares", () => {
     expect(boundary).toContain("export async function usersAreBlocked");
@@ -27,6 +28,7 @@ describe("profile relationship block boundary", () => {
   it("does not rediscover a blocked member through member search or suggestions", () => {
     expect(users).toContain("filterBlockedRelationships(req.user.id, results)");
     expect(users).toContain("filterBlockedRelationships(myId, rows.rows)");
+    expect(conversations).toContain("filterBlockedRelationships(req.user.id, candidates)");
   });
 
   it("prevents blocked members from creating, accepting, or reading follow relationships", () => {
