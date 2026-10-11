@@ -164,7 +164,10 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
     expect(route).toContain("ownerShareResponse");
     expect(route).toContain("receivedShareResponse");
     expect(delivery).toContain("notification_preferences");
-    expect(delivery).toContain("np.topics @> ARRAY['safety']::text[]");
+    expect(delivery).toContain("np.topics::text AS topics_text");
+    expect(delivery).toContain("allowsSafetyCheckinNotification(share.topics_text)");
+    expect(delivery).toContain("lower(contact.approved::text) IN ('true', 't', '1')");
+    expect(delivery).not.toContain("np.topics @> ARRAY['safety']::text[]");
     expect(delivery).toContain("TRUSTED_SAFETY_SESSION_INTERVAL");
     expect(delivery).toContain("await expireTrustedSafetySessions(payload.ownerId)");
     expect(delivery).toContain("await deactivateTrustedLocationShares(");

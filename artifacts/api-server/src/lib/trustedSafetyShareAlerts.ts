@@ -32,6 +32,7 @@ import {
   expireTrustedSafetySessions,
   TRUSTED_SAFETY_SESSION_INTERVAL,
 } from "./trustedSafetyShareLifecycle";
+import { allowsSafetyCheckinNotification } from "./safetyNotificationPreferences";
 
 const logger = pino({ name: "trusted-safety-share-alerts" });
 
@@ -171,6 +172,7 @@ type EligibleTrustedSafetyShare = {
   contact_phone: string | null;
   contact_email: string | null;
   push_enabled: boolean;
+  topics_text: string | null;
 };
 
 type DeliveryAttempt = {
@@ -367,7 +369,7 @@ export async function notifyTrustedSafetyContacts(
       `SELECT home_city
          FROM users
         WHERE id = $1
-          AND approved = true
+          AND COALESCE(lower(approved::text) IN ('true', 't', '1'), false)
           AND COALESCE(account_status, 'active') = 'active'`,
       [payload.ownerId],
     );
@@ -412,7 +414,8 @@ export async function notifyTrustedSafetyContacts(
 
     const sharesResult = await pool.query<EligibleTrustedSafetyShare>(
       `SELECT tss.id, tss.contact_type, tss.contact_user_id, tss.contact_phone, tss.contact_email,
-              COALESCE(np.push_enabled, false) AS push_enabled
+              COALESCE(np.push_enabled, false) AS push_enabled,
+              np.topics::text AS topics_text
          FROM trusted_safety_shares tss
          LEFT JOIN users contact ON contact.id = tss.contact_user_id
          LEFT JOIN notification_preferences np ON np.user_id = contact.id
@@ -429,9 +432,8 @@ export async function notifyTrustedSafetyContacts(
           AND (
             (tss.contact_type = 'mwm_user'
              AND tss.contact_user_id IS NOT NULL
-             AND contact.approved = true
+             AND COALESCE(lower(contact.approved::text) IN ('true', 't', '1'), false)
              AND COALESCE(contact.account_status, 'active') = 'active'
-             AND np.topics @> ARRAY['safety']::text[]
              AND owner_blocks.id IS NULL
              AND contact_blocks.id IS NULL)
             OR (tss.contact_type = 'phone' AND tss.contact_phone IS NOT NULL)
@@ -439,14 +441,18 @@ export async function notifyTrustedSafetyContacts(
           )`,
       [payload.ownerId],
     );
-    result.eligibleContacts = sharesResult.rows.length;
-    if (sharesResult.rows.length === 0) return result;
+    const eligibleShares = sharesResult.rows.filter(
+      (share) => share.contact_type !== "mwm_user"
+        || allowsSafetyCheckinNotification(share.topics_text),
+    );
+    result.eligibleContacts = eligibleShares.length;
+    if (eligibleShares.length === 0) return result;
 
     const location = `${payload.locationCity.trim()}, ${payload.locationRegion.trim()}`;
     const title = `Safety Alert — ${payload.ownerFirstName.trim()}`;
     const body = `${payload.ownerFirstName.trim()} is currently in ${location}. ${payload.alertTitle.trim()}: ${payload.alertDescription.trim()} This alert was also sent to them. No action is required unless you hear otherwise.`;
 
-    for (const share of sharesResult.rows) {
+    for (const share of eligibleShares) {
       const auditId = await beginDeliveryAudit(share.id, { ...payload, alertSource }, body);
       if (!auditId) {
         result.auditFailures += 1;

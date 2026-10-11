@@ -41,6 +41,7 @@ import { sendPushToUser } from "../lib/pushNotifications";
 import { refreshOfficialPublicAlerts } from "../alerts/refreshOfficialPublicAlerts";
 import { FOUNDER_APPROVED_TESTER_EMAILS } from "../constants/testerRoster";
 import { runSafetyHubLifecycleReconciliation } from "../safety/safetyHubLifecycleRunner";
+import { allowsSafetyCheckinNotification } from "../lib/safetyNotificationPreferences";
 
 const router: IRouter = Router();
 
@@ -248,26 +249,6 @@ function emptySafetyCheckinNotificationResult(): SafetyCheckinNotificationResult
 }
 
 /**
- * Notification preferences have existed as arrays, JSON values, and legacy text
- * across isolated databases. Normalize the serialized value after the query so
- * the overdue-alert worker can re-check an explicit safety opt-out without a
- * schema-specific PostgreSQL containment operator.
- */
-export function allowsSafetyCheckinNotification(topicsText: string | null): boolean {
-  if (topicsText === null) return true;
-  const value = topicsText.trim();
-  if (!value) return false;
-  try {
-    const parsed: unknown = JSON.parse(value);
-    if (Array.isArray(parsed)) return parsed.some((topic) => topic === "safety");
-    if (typeof parsed === "string") return parsed === "safety";
-  } catch {
-    // PostgreSQL text-array output (for example, {community,safety}) is not JSON.
-  }
-  return /(^|[,\[{])\s*"?safety"?\s*(?=$|[,}\]])/.test(value);
-}
-
-/**
  * Persist the recipient's in-app record transactionally. A retry must pass the
  * same accepted-share, block, approval, and safety-preference checks again.
  */
@@ -330,7 +311,7 @@ async function createSafetyCheckinInAppNotifications(
     );
 
     for (const recipient of recipients.rows) {
-      if (!recipient.is_eligible || !allowsSafetyCheckinNotification(recipient.topics_text)) {
+      if (!recipient.is_eligible || !allowsSafetyCheckinNotification(recipient.topics_text, true)) {
         await client.query(
           `UPDATE safety_checkin_recipients
               SET delivery_status = 'skipped',
@@ -476,7 +457,7 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
     );
 
     for (const recipient of recipients.rows) {
-      if (!recipient.is_eligible || !allowsSafetyCheckinNotification(recipient.topics_text)) {
+      if (!recipient.is_eligible || !allowsSafetyCheckinNotification(recipient.topics_text, true)) {
         await client.query(
           `UPDATE safety_checkin_recipients
               SET delivery_status = 'skipped',

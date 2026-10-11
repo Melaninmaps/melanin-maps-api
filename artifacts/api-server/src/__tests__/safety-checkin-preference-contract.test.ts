@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allowsSafetyCheckinNotification } from "../routes/cron";
+import { allowsSafetyCheckinNotification } from "../lib/safetyNotificationPreferences";
 
 describe("Safety Check-In notification preference normalization", () => {
   it("honors safety across array, JSON, and legacy scalar serializations", () => {
@@ -16,7 +16,8 @@ describe("Safety Check-In notification preference normalization", () => {
     expect(allowsSafetyCheckinNotification('safety_updates')).toBe(false);
   });
 
-  it("keeps legacy recipients with no stored preference eligible by default", () => {
-    expect(allowsSafetyCheckinNotification(null)).toBe(true);
+  it("permits a legacy fallback only when the caller explicitly requests it", () => {
+    expect(allowsSafetyCheckinNotification(null)).toBe(false);
+    expect(allowsSafetyCheckinNotification(null, true)).toBe(true);
   });
 });
