@@ -288,8 +288,8 @@ function Router() {
       <Route path="/referral-redirect" component={MyReferral} />
       <Route path="/business-response/:token" component={BusinessResponse} />
       <Route path="/shared/trip/:shareId" component={SharedTrip} />
-      {/* Mobile location links open without account access; the opaque token is
-          the only capability and the viewer returns no identity information. */}
+      {/* Legacy location links resolve only to the safety/privacy retirement
+          message. They never fetch a token, location, identity, or visit data. */}
       <Route path="/safety/location/:token" component={LocationShareView} />
       <Route path="/admin">
         <ProtectedRoute><Admin /></ProtectedRoute>
