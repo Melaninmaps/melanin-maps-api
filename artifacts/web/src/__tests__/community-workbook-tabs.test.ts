@@ -58,4 +58,15 @@ describe("Community workbook tabs", () => {
     expect(groupDetail).toContain("Only current members can open a group’s posts, media, and member information.");
     expect(groupDetail).toContain("<CommunityMedia");
   });
+
+  it("lets a current member publish a bounded group post without exposing the group feed outside membership", () => {
+    expect(groupDetail).toContain('data-testid="community-group-compose"');
+    expect(groupDetail).toContain('data-testid="community-group-post-content"');
+    expect(groupDetail).toContain('data-testid="community-group-media-toggle"');
+    expect(groupDetail).toContain('data-testid="community-group-post-submit"');
+    expect(groupDetail).toContain("api/community/posts");
+    expect(groupDetail).toContain("groupId,");
+    expect(groupDetail).toContain("Only current group members can open this group feed.");
+    expect(groupDetail).toContain("Posts and media shared here remain available only to current group members.");
+  });
 });

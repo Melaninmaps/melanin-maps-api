@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link, useRoute } from "wouter";
-import { ArrowLeft, Image as ImageIcon, Lock, MapPin, MessageSquare, Users } from "lucide-react";
+import { ArrowLeft, Image as ImageIcon, Link2, Loader2, Lock, MapPin, MessageSquare, Send, Users, X } from "lucide-react";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
 import { CommunityMedia } from "@/components/community/CommunityMedia";
+import { useToast } from "@/hooks/use-toast";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -66,6 +67,11 @@ export default function CommunityGroup() {
   const [posts, setPosts] = useState<GroupPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [unavailable, setUnavailable] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [mediaUrl, setMediaUrl] = useState("");
+  const [showMediaInput, setShowMediaInput] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const { toast } = useToast();
 
   const load = useCallback(async () => {
     if (!groupId) {
@@ -116,6 +122,50 @@ export default function CommunityGroup() {
 
   useEffect(() => { void load(); }, [load]);
 
+  const submitGroupPost = async () => {
+    if (!groupId || !draft.trim() || submitting) return;
+    const trimmedMediaUrl = mediaUrl.trim();
+    if (trimmedMediaUrl) {
+      try {
+        const parsed = new URL(trimmedMediaUrl);
+        if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error("unsupported protocol");
+      } catch {
+        toast({ title: "Invalid media link", description: "Use a complete HTTP or HTTPS URL, or remove the link before posting.", variant: "destructive" });
+        return;
+      }
+    }
+
+    setSubmitting(true);
+    try {
+      const response = await authenticatedFetch(`${BASE}api/community/posts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: draft.trim(),
+          postType: "community",
+          category: "general",
+          groupId,
+          visibility: "public",
+          commentPolicy: "everyone",
+          mediaUrls: trimmedMediaUrl ? [trimmedMediaUrl] : undefined,
+        }),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({})) as { error?: string };
+        throw new Error(error.error ?? "Could not publish the group post");
+      }
+      setDraft("");
+      setMediaUrl("");
+      setShowMediaInput(false);
+      toast({ title: "Posted to the group", description: "Only current group members can open this group feed." });
+      await load();
+    } catch (error) {
+      toast({ title: "Could not post to the group", description: error instanceof Error ? error.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) {
     return <main className="min-h-screen bg-[#FAF6EF] px-4 py-20 text-center text-sm text-[#3A1F0E]/60">Loading group…</main>;
   }
@@ -153,6 +203,13 @@ export default function CommunityGroup() {
       <div className="mx-auto grid max-w-2xl gap-5 px-4 py-6 md:grid-cols-[minmax(0,1fr)_210px]">
         <section aria-labelledby="group-posts-heading" className="space-y-3">
           <div className="flex items-center justify-between"><h2 id="group-posts-heading" className="font-serif text-xl font-bold text-[#2B1507]">Group Posts</h2><span className="text-xs font-semibold text-[#3A1F0E]/45">Members only</span></div>
+          <form data-testid="community-group-compose" onSubmit={(event) => { event.preventDefault(); void submitGroupPost(); }} className="rounded-2xl border border-[#CA922B]/25 bg-white p-4">
+            <label htmlFor="community-group-post-content" className="text-sm font-bold text-[#2B1507]">Share with this group</label>
+            <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/55">Posts and media shared here remain available only to current group members.</p>
+            <textarea id="community-group-post-content" data-testid="community-group-post-content" value={draft} onChange={(event) => setDraft(event.target.value)} maxLength={1000} placeholder="Start a conversation with your group…" className="mt-3 min-h-24 w-full resize-none rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] px-3 py-2.5 text-sm text-[#3A1F0E] outline-none focus:border-[#CA922B]/50" />
+            {showMediaInput ? <div className="mt-2 flex gap-2"><input aria-label="Group media link" value={mediaUrl} onChange={(event) => setMediaUrl(event.target.value)} placeholder="Paste an image or video link" className="min-w-0 flex-1 rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] px-3 py-2 text-xs text-[#3A1F0E] outline-none focus:border-[#CA922B]/50" /><button type="button" aria-label="Remove group media link" onClick={() => { setMediaUrl(""); setShowMediaInput(false); }} className="rounded-xl p-2 text-[#3A1F0E]/45 hover:bg-[#FAF6EF]"><X className="h-4 w-4" /></button></div> : null}
+            <div className="mt-3 flex items-center justify-between gap-3"><button type="button" data-testid="community-group-media-toggle" onClick={() => setShowMediaInput((current) => !current)} className="inline-flex items-center gap-1.5 text-xs font-bold text-[#CA922B] hover:underline"><Link2 className="h-3.5 w-3.5" /> Add a media link</button><button type="submit" data-testid="community-group-post-submit" disabled={!draft.trim() || submitting} className="inline-flex items-center gap-1.5 rounded-full bg-[#CA922B] px-4 py-2 text-xs font-bold text-white hover:bg-[#B38024] disabled:cursor-wait disabled:opacity-50">{submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />} Post to group</button></div>
+          </form>
           {posts.length === 0 ? (
             <div className="rounded-2xl border border-[#3A1F0E]/8 bg-white p-7 text-center"><MessageSquare className="mx-auto h-7 w-7 text-[#CA922B]/50" /><p className="mt-3 text-sm font-semibold text-[#3A1F0E]/65">No group posts yet</p><p className="mt-1 text-xs text-[#3A1F0E]/45">The first member post will appear here.</p></div>
           ) : posts.map((post) => (
