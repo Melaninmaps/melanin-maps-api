@@ -32,6 +32,7 @@ describe("Explore category lenses", () => {
     const [statement, params] = query.mock.calls[0];
     expect(String(statement)).toContain("FROM cultural_sites");
     expect(String(statement)).toContain("heritage_category");
+    expect(String(statement)).toContain("COALESCE(is_published, TRUE) = TRUE");
     expect(String(statement)).not.toContain("tour_cultural_sites");
     expect(String(statement)).not.toContain("recurring_events");
     expect(params).toBeUndefined();

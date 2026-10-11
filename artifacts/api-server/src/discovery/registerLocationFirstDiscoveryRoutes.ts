@@ -9,8 +9,14 @@ const LOCATION_MODES = new Set(["exact", "expanded_radius", "nearest_city", "all
 function missingLocationInventoryRelation(error: unknown): boolean {
   const candidate = error as { code?: unknown; message?: unknown };
   const message = typeof candidate?.message === "string" ? candidate.message : "";
-  return candidate?.code === "42P01"
-    && /canonical_record_locations|tour_cultural_sites|recurring_events|community_organizations|cultural_sites/i.test(message);
+  if (candidate?.code === "42P01") {
+    return /canonical_record_locations|tour_cultural_sites|recurring_events|community_organizations|cultural_sites/i.test(message);
+  }
+  // HBCU Explore reads the canonical cultural-site catalogue and must never
+  // translate a legacy missing publication column into a misleading member 500.
+  // The pre-traffic schema gate supplies this column; this fallback still
+  // returns an empty coverage gap if a partially provisioned catalogue races it.
+  return candidate?.code === "42703" && /column "is_published" does not exist/i.test(message);
 }
 
 function isValidQuery(value: unknown): value is LocationFirstQuery {

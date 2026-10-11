@@ -15,6 +15,7 @@ import {
   ensureFounderMapRestorationSchema,
   ensureLegacyMapLocationAttestationSchema,
   ensureCommunityFeedReadSchema,
+  ensureHbcuExplorePublicationSchema,
   ensureKinfolkQuestionImageSchemaOnly,
   ensureKinfolkPrivatePlacesSchema,
   ensureKinfolkPreferredNameSchema,
@@ -214,6 +215,11 @@ try {
   // Explore deep link into a 500 while leaving site and contribution data untouched.
   await ensureTourCulturalSiteContributionSchema(logger);
   logger.info("Tour cultural-site contribution schema ready before traffic acceptance");
+  // The Explore HBCU lens reads the canonical cultural-site catalogue directly.
+  // Verify its additive publication column before traffic so feature-release
+  // mode cannot convert a valid empty result into a generic server failure.
+  await ensureHbcuExplorePublicationSchema(logger);
+  logger.info("Explore HBCU publication schema ready before traffic acceptance");
   await ensureIsolatedGovernedDiscoverySchema(logger);
   logger.info("Isolated governed discovery schema ready before traffic acceptance");
   if (explicitFeatureReleaseMode) {

@@ -48,6 +48,31 @@ describe("location-first discovery route", () => {
     ]);
   });
 
+  it("fails closed with a coverage gap when a legacy HBCU publication column is absent", async () => {
+    const app = express();
+    app.use(express.json());
+    registerLocationFirstDiscoveryRoutes(app, {
+      async findExact() {
+        throw Object.assign(new Error('column "is_published" does not exist'), { code: "42703" });
+      },
+      async findNearestAvailableLocation() { return null; },
+      async recordCoverageGap() {},
+      async recordFlywheelSignal() {},
+    });
+
+    const response = await supertest(app).post("/api/discovery/query").send({
+      ...query,
+      filters: { ...query.filters, category: "HBCUs" },
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      requiresLocation: false,
+      records: [],
+      coverageGap: { city: "Philadelphia", stateCode: "PA", category: "HBCUs" },
+    });
+  });
+
   it("retains the 500 boundary for unexpected repository failures", async () => {
     const app = express();
     app.use(express.json());

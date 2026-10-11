@@ -7410,6 +7410,32 @@ export async function ensureTourCulturalSiteContributionSchema(logger?: Logger):
   logger?.info("Tour cultural-site contribution schema is ready before traffic acceptance");
 }
 
+/**
+ * The Explore HBCU lens queries the canonical cultural-site catalogue directly.
+ * Feature-release mode intentionally postpones broad migrations, so a legacy
+ * staging database can otherwise have the table but not its publication column
+ * and turn a valid, empty HBCU lens into a 500. This is schema-only: it creates
+ * no cultural-site records and does not publish, seed, or alter existing content.
+ */
+export async function ensureHbcuExplorePublicationSchema(logger?: Logger): Promise<void> {
+  const culturalSitesTable = MIGRATIONS.find(
+    (entry) => entry.name === "create_cultural_sites_table",
+  );
+  if (!culturalSitesTable) {
+    throw new Error("Cultural-site schema migration definition is missing.");
+  }
+
+  await pool.query(culturalSitesTable.sql);
+  await pool.query(`
+    ALTER TABLE public.cultural_sites
+      ADD COLUMN IF NOT EXISTS is_published BOOLEAN DEFAULT TRUE
+  `);
+  await pool.query(
+    "SELECT id, name, category, heritage_category, city, state, latitude, longitude, is_published FROM public.cultural_sites LIMIT 0",
+  );
+  logger?.info("Explore HBCU publication schema is ready before traffic acceptance");
+}
+
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
   const log = (msg: string) =>
     logger ? logger.info(msg) : console.log(`[startup-migrations] ${msg}`);
