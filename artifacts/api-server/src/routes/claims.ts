@@ -21,6 +21,31 @@ import { sendClaimReceived, sendClaimApproved } from "../lib/email.js";
 
 const router: IRouter = Router();
 
+/**
+ * A listing is marked claim_pending only while at least one reviewable claim
+ * remains. This shared guard is deliberately used by claimant withdrawal and
+ * every admin rejection path so a declined claim cannot strand a business in
+ * an unclaimable state. It never changes verification, publication, ownership
+ * designations, or an approved/revoked ownership audit record.
+ */
+async function releaseBusinessFromClaimPendingIfNoOpenClaims(businessId: string): Promise<void> {
+  const { rows: openClaims } = await pool.query(
+    `SELECT 1 FROM business_claims
+     WHERE business_id = $1 AND status IN ('pending', 'needs_info')
+     LIMIT 1`,
+    [businessId],
+  );
+
+  if (!openClaims[0]) {
+    await pool.query(
+      `UPDATE businesses
+       SET ownership_control_status = 'unclaimed', updated_at = NOW()
+       WHERE id = $1 AND ownership_control_status = 'claim_pending'`,
+      [businessId],
+    );
+  }
+}
+
 // ── GET /businesses/claim-candidates ─────────────────────────────────────────
 // Disambiguation helper: show every listing matching name+city+state so the
 // claimant can confirm which one is theirs by address.
@@ -192,6 +217,19 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
       res.status(409).json({ error: "You already have an open claim for this business", claimId: existing[0].id }); return;
     }
 
+    // A listing has one active review path at a time. The eligibility route
+    // exposes the same rule; enforcing it here prevents a caller from bypassing
+    // the client-side state and creating a competing pending claim.
+    const { rows: competingClaims } = await pool.query(
+      `SELECT id FROM business_claims
+       WHERE business_id = $1 AND user_id <> $2 AND status IN ('pending', 'needs_info')
+       LIMIT 1`,
+      [businessId, userId],
+    );
+    if (competingClaims[0]) {
+      res.status(409).json({ error: "Another ownership claim is already being reviewed for this business" }); return;
+    }
+
     const claimId = `clm_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const safeNotes = typeof notes === "string" ? notes.replace(/<[^>]*>/g, "").slice(0, 1000) : null;
 
@@ -285,17 +323,7 @@ router.patch("/me/business-claims/:id", async (req: Request, res: Response) => {
         `UPDATE business_claims SET status='withdrawn', withdrawn_at=NOW(), updated_at=NOW() WHERE id=$1`,
         [claimId]
       );
-      // Reset business status if no other open claims for this listing
-      const { rows: others } = await pool.query(
-        `SELECT 1 FROM business_claims WHERE business_id=$1 AND id!=$2 AND status IN ('pending','needs_info') LIMIT 1`,
-        [claim.business_id, claimId]
-      );
-      if (!others[0]) {
-        await pool.query(
-          `UPDATE businesses SET ownership_control_status='unclaimed' WHERE id=$1 AND ownership_control_status='claim_pending'`,
-          [claim.business_id]
-        );
-      }
+      await releaseBusinessFromClaimPendingIfNoOpenClaims(claim.business_id);
       res.json({ ok: true, message: "Claim withdrawn" });
       return;
     }
@@ -375,6 +403,9 @@ router.patch("/admin/business-claims/:id", async (req: Request, res: Response) =
       [status, decisionReason.trim(), req.user!.id, claimId]
     );
     if (!rows[0]) { res.status(404).json({ error: "Claim not found" }); return; }
+    if (status === "rejected") {
+      await releaseBusinessFromClaimPendingIfNoOpenClaims(rows[0].business_id);
+    }
     res.json({ claim: rows[0] });
   } catch (err) {
     req.log.error({ err }, "PATCH /admin/business-claims/:id failed");
@@ -585,6 +616,9 @@ router.patch("/admin/claims/:id", async (req: Request, res: Response) => {
       [status ?? null, adminNotes ?? null, id]
     );
     if (!rows[0]) { res.status(404).json({ error: "Claim not found" }); return; }
+    if (status === "rejected") {
+      await releaseBusinessFromClaimPendingIfNoOpenClaims(rows[0].business_id);
+    }
     res.json({ claim: rows[0] });
   } catch (err) {
     req.log.error({ err }, "PATCH /admin/claims/:id failed");
