@@ -9,7 +9,7 @@ import { deleteAllSessionsForUser } from "../lib/auth";
 import { decryptToken, generateClientSecret, revokeAppleToken } from "../lib/apple";
 import { isAdmin } from "../lib/adminAuth";
 import { getUserTier, TIER_DISPLAY } from "../middleware/requireMembership";
-import { blockMemberAndCleanupRelationships } from "../social/profileRelationshipAccess";
+import { blockMemberAndCleanupRelationships, filterBlockedRelationships } from "../social/profileRelationshipAccess";
 
 const avatarUpload = multer({
   storage: multer.memoryStorage(),
@@ -220,7 +220,9 @@ router.get("/users/search", async (req: Request, res: Response) => {
       )
       .limit(20);
 
-    res.json({ users: results });
+    // Search is a social discovery surface, so a block must conceal identity
+    // here as well as on profile, follow, and connection routes.
+    res.json({ users: await filterBlockedRelationships(req.user.id, results) });
   } catch (err) {
     req.log.error({ err }, "GET /api/users/search error");
     res.status(500).json({ error: "Internal server error" });
@@ -268,7 +270,9 @@ router.get("/users/suggestions", async (req: Request, res: Response) => {
       [myId],
     );
 
-    res.json({ suggestions: rows.rows });
+    // Do not surface a blocked member through a recommendation after hiding
+    // their profile; blocks are intentionally bidirectional social boundaries.
+    res.json({ suggestions: await filterBlockedRelationships(myId, rows.rows) });
   } catch (err) {
     req.log.error({ err }, "GET /api/users/suggestions error");
     res.status(500).json({ error: "Internal server error" });

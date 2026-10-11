@@ -24,6 +24,11 @@ describe("profile relationship block boundary", () => {
     expect(users).toContain('if (!result.targetFound) { res.status(404).json({ error: "User not found" }); return; }');
   });
 
+  it("does not rediscover a blocked member through member search or suggestions", () => {
+    expect(users).toContain("filterBlockedRelationships(req.user.id, results)");
+    expect(users).toContain("filterBlockedRelationships(myId, rows.rows)");
+  });
+
   it("prevents blocked members from creating, accepting, or reading follow relationships", () => {
     expect(follows).toContain("import { filterBlockedRelationships, usersAreBlocked }");
     expect(follows).toContain("if (await usersAreBlocked(followerId, followingId))");
