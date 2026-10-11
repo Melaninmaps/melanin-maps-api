@@ -538,6 +538,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="serious-credible-threat"
+        options={{
+          headerShown: false,
+          presentation: "modal",
+        }}
+      />
+      <Stack.Screen
         name="travel"
         options={{
           headerShown: false,

@@ -22,6 +22,10 @@ const receivedCheckin = readFileSync(
   fileURLToPath(new URL("../app/safety-checkin-alert.tsx", import.meta.url)),
   "utf8",
 );
+const seriousThreat = readFileSync(
+  fileURLToPath(new URL("../app/serious-credible-threat.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("mobile Home safety entry boundaries", () => {
   it("removes only the Discover Home safety promotion and neighborhood-rating action", () => {
@@ -39,6 +43,8 @@ describe("mobile Home safety entry boundaries", () => {
     expect(safetyHub).toContain('route: "/location-share"');
     expect(safetyHub).not.toContain("api/safety/location-shares");
     expect(safetyHub).toContain("Submit Safety Tip");
+    expect(safetyHub).toContain("Serious Threat Report");
+    expect(safetyHub).toContain('route: "/serious-credible-threat"');
   });
 
   it("routes a private Check-In recipient alert to a recipient-authorized view", () => {
@@ -55,5 +61,20 @@ describe("mobile Home safety entry boundaries", () => {
     expect(receivedCheckin).not.toContain("new Date(");
     expect(notificationCenter).toContain('group: isPrivateCheckinAlert ? "Private alerts"');
     expect(notificationCenter).toContain("time: isPrivateCheckinAlert ? null");
+  });
+
+  it("keeps serious threat reporting city-level, consented, and private-review-only", () => {
+    const reportPayload = seriousThreat.slice(
+      seriousThreat.indexOf("body: JSON.stringify({"),
+      seriousThreat.indexOf("if (response.status === 202)"),
+    );
+    expect(seriousThreat).toContain("/api/safety/serious-credible-threats/reports");
+    expect(seriousThreat).toContain("privateReview: true");
+    expect(seriousThreat).toContain("anonymousCityLevelNotice: true");
+    expect(seriousThreat).toContain("No street, venue, neighborhood, landmark, or coordinates.");
+    expect(seriousThreat).toContain("Private review is unavailable right now. Your report was not saved.");
+    expect(seriousThreat).toContain("does not contact emergency services");
+    expect(reportPayload).not.toContain("latitude");
+    expect(reportPayload).not.toContain("longitude");
   });
 });
