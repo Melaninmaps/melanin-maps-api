@@ -48,6 +48,9 @@ describe("profile-based Safety Check-In contract", () => {
     expect(cron.match(/np\.push_enabled::text/g)).toHaveLength(2);
     expect(cron.match(/tss\.contact_user_id::text = scr\.recipient_user_id::text/g)).toHaveLength(2);
     expect(cron.match(/recipient\.id::text = scr\.recipient_user_id::text/g)).toHaveLength(2);
+    expect(cron.match(/WHERE id::text = \$1::text/g)).toHaveLength(11);
+    expect(cron.match(/push_attempt_id::text = \$2::text/g)).toHaveLength(3);
+    expect(cron).not.toContain("WHERE id = $1::uuid");
     expect(cron.match(/allowsSafetyCheckinNotification\(recipient\.topics_text, true\)/g)).toHaveLength(2);
     expect(cron).toContain('from "../lib/safetyNotificationPreferences"');
     expect(cron).not.toContain("to_jsonb(np.topics)");

@@ -330,7 +330,7 @@ async function createSafetyCheckinInAppNotifications(
               SET delivery_status = 'skipped',
                   next_retry_at = NULL,
                   last_error_code = 'recipient_no_longer_eligible'
-            WHERE id = $1::uuid`,
+            WHERE id::text = $1::text`,
           [recipient.id],
         );
         result.skipped++;
@@ -347,7 +347,7 @@ async function createSafetyCheckinInAppNotifications(
                   in_app_attempted_at = NOW(),
                   last_error_code = NULL,
                   next_retry_at = NULL
-            WHERE id = $1::uuid`,
+            WHERE id::text = $1::text`,
           [recipient.id, attemptCount],
         );
         const notification = await client.query<{ id: string }>(
@@ -370,7 +370,7 @@ async function createSafetyCheckinInAppNotifications(
                   in_app_failed_at = NULL,
                   next_retry_at = NULL,
                   last_error_code = NULL
-            WHERE id = $1::uuid`,
+            WHERE id::text = $1::text`,
           [recipient.id, notification.rows[0].id, nextStatus],
         );
         await client.query("RELEASE SAVEPOINT safety_checkin_in_app_attempt");
@@ -387,7 +387,7 @@ async function createSafetyCheckinInAppNotifications(
                   in_app_failed_at = NOW(),
                   next_retry_at = $3,
                   last_error_code = 'in_app_notification_create_failed'
-            WHERE id = $1::uuid`,
+            WHERE id::text = $1::text`,
           [recipient.id, attemptCount, nextRetry],
         );
         await client.query("RELEASE SAVEPOINT safety_checkin_in_app_attempt");
@@ -476,7 +476,7 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
               SET delivery_status = 'skipped',
                   next_retry_at = NULL,
                   last_error_code = 'recipient_no_longer_eligible'
-            WHERE id = $1::uuid`,
+            WHERE id::text = $1::text`,
           [recipient.id],
         );
         skipped++;
@@ -489,7 +489,7 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
               SET delivery_status = 'in_app_created',
                   next_retry_at = NULL,
                   last_error_code = NULL
-            WHERE id = $1::uuid`,
+            WHERE id::text = $1::text`,
           [recipient.id],
         );
         continue;
@@ -503,7 +503,7 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
                   push_failed_at = NOW(),
                   next_retry_at = NULL,
                   last_error_code = 'push_attempt_limit_reached'
-            WHERE id = $1::uuid`,
+            WHERE id::text = $1::text`,
           [recipient.id],
         );
         pushFailed++;
@@ -518,7 +518,7 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
                 push_attempt_id = gen_random_uuid(),
                 next_retry_at = NULL,
                 last_error_code = NULL
-          WHERE id = $1::uuid
+          WHERE id::text = $1::text
           RETURNING push_attempt_id`,
         [recipient.id, attemptCount],
       );
@@ -571,9 +571,9 @@ async function notifySelectedCheckinProfiles(checkinId: number, ownerId: string,
                 push_attempt_id = NULL,
                 next_retry_at = NULL,
                 last_error_code = NULL
-          WHERE id = $1::uuid
+          WHERE id::text = $1::text
             AND delivery_status = 'push_attempting'
-            AND push_attempt_id = $2::uuid`,
+            AND push_attempt_id::text = $2::text`,
         [candidate.id, candidate.attemptId],
       );
       if (completed.rowCount === 1) result.pushSubmitted++;
@@ -583,9 +583,9 @@ async function notifySelectedCheckinProfiles(checkinId: number, ownerId: string,
     const current = await pool.query<{ push_attempt_count: number }>(
       `SELECT push_attempt_count
          FROM safety_checkin_recipients
-        WHERE id = $1::uuid
+        WHERE id::text = $1::text
           AND delivery_status = 'push_attempting'
-          AND push_attempt_id = $2::uuid`,
+          AND push_attempt_id::text = $2::text`,
       [candidate.id, candidate.attemptId],
     );
     if (current.rows.length === 0) continue;
@@ -597,9 +597,9 @@ async function notifySelectedCheckinProfiles(checkinId: number, ownerId: string,
               push_attempt_id = NULL,
               next_retry_at = $3,
               last_error_code = $4
-        WHERE id = $1::uuid
+        WHERE id::text = $1::text
           AND delivery_status = 'push_attempting'
-          AND push_attempt_id = $2::uuid`,
+          AND push_attempt_id::text = $2::text`,
       [
         candidate.id,
         candidate.attemptId,
