@@ -60,7 +60,11 @@ type CapacityJoinResult = {
   member?: CircleMemberRow;
 };
 
-async function addCircleMemberWithinCap(circleId: number, userId: string): Promise<CapacityJoinResult> {
+async function addCircleMemberWithinCap(
+  circleId: number,
+  userId: string,
+  role: "host" | "member" = "member",
+): Promise<CapacityJoinResult> {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -95,9 +99,9 @@ async function addCircleMemberWithinCap(circleId: number, userId: string): Promi
 
     const insertedResult = await client.query<CircleMemberRow>(
       `INSERT INTO circle_members (circle_id, user_id, role)
-       VALUES ($1, $2, 'member')
+       VALUES ($1, $2, $3)
        RETURNING id, circle_id AS "circleId", user_id AS "userId", role, joined_at AS "joinedAt"`,
-      [circleId, userId],
+      [circleId, userId, role],
     );
     await client.query("COMMIT");
     return { status: "joined", member: insertedResult.rows[0] };
@@ -194,7 +198,14 @@ router.post("/circles", async (req: Request, res: Response) => {
       state: state ? String(state) : null,
       planningMode: String(planningMode ?? "open"),
     }).returning();
-    await db.insert(circleMembers).values({ circleId: circle.id, userId: uid(req), role: "host" });
+    const circleId = circle.id;
+    const hostJoin = await addCircleMemberWithinCap(circleId, uid(req), "host");
+    if (hostJoin.status !== "joined") {
+      // This record was created in the same request and never became a usable
+      // Circle. Remove it rather than leaving an orphaned, memberless space.
+      await db.delete(kinfolkCircles).where(eq(kinfolkCircles.id, circleId));
+      throw new Error(`Circle host membership could not be created: ${hostJoin.status}`);
+    }
     res.status(201).json({ circle, tier: tierKey, limits });
   } catch (err) {
     (req as any).log.error({ err }, "POST /circles error");
