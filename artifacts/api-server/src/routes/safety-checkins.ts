@@ -256,6 +256,86 @@ router.get("/safety/checkins", async (req: Request, res: Response) => {
   }
 });
 
+/**
+ * A recipient may read only the Check-In alert durably addressed to their own
+ * account. The query intentionally selects no location, note, contact address,
+ * visit history, or map data. It re-checks the accepted active share and both
+ * block directions, failing closed if consent changed after scheduling.
+ */
+router.get("/safety/checkins/received/:notificationId", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res);
+  if (!userId) return;
+  const notificationId = String(req.params["notificationId"] ?? "").trim();
+  if (!notificationId || notificationId.length > 100) {
+    res.status(404).json({ error: "Safety Check-In alert not available" });
+    return;
+  }
+  try {
+    const result = await pool.query<{
+      notification_id: string;
+      title: string;
+      body: string;
+      created_at: Date;
+      status: "overdue" | "resolved";
+    }>(
+      `SELECT n.id::text AS notification_id,
+              n.title,
+              n.body,
+              n.created_at,
+              CASE
+                WHEN c.status = 'overdue' AND c.confirmed_at IS NULL THEN 'overdue'
+                ELSE 'resolved'
+              END AS status
+         FROM notifications n
+         JOIN safety_checkin_recipients scr
+           ON scr.notification_id::text = n.id::text
+          AND scr.recipient_user_id::text = $1::text
+         JOIN safety_checkins c ON c.id::text = scr.checkin_id::text
+         JOIN trusted_safety_shares tss
+           ON tss.id::text = scr.trusted_share_id::text
+          AND tss.owner_id::text = c.user_id::text
+          AND tss.contact_user_id::text = $1::text
+          AND tss.contact_type = 'mwm_user'
+          AND tss.status = 'active'
+          AND COALESCE(lower(tss.owner_enabled::text) IN ('true', 't', '1'), false)
+          AND COALESCE(lower(tss.contact_accepted::text) IN ('true', 't', '1'), false)
+         JOIN users recipient ON recipient.id::text = $1::text
+         LEFT JOIN user_blocks owner_blocks
+           ON owner_blocks.blocker_id::text = c.user_id::text
+          AND owner_blocks.blocked_id::text = $1::text
+         LEFT JOIN user_blocks recipient_blocks
+           ON recipient_blocks.blocker_id::text = $1::text
+          AND recipient_blocks.blocked_id::text = c.user_id::text
+        WHERE n.id::text = $2::text
+          AND n.user_id::text = $1::text
+          AND n.entity_type = 'safety_checkin'
+          AND COALESCE(lower(recipient.approved::text) IN ('true', 't', '1'), false)
+          AND owner_blocks.id IS NULL
+          AND recipient_blocks.id IS NULL
+        LIMIT 1`,
+      [userId, notificationId],
+    );
+    const alert = result.rows[0];
+    if (!alert) {
+      res.status(404).json({ error: "Safety Check-In alert not available" });
+      return;
+    }
+    res.json({
+      alert: {
+        notificationId: alert.notification_id,
+        title: alert.title,
+        body: alert.body,
+        createdAt: alert.created_at,
+        status: alert.status,
+        privacy: "This alert does not include live or recent location, maps, visit history, or the member's private Check-In note.",
+      },
+    });
+  } catch (error) {
+    req.log.error({ error }, "GET /safety/checkins/received/:notificationId error");
+    res.status(500).json({ error: "Safety Check-In alert could not be loaded" });
+  }
+});
+
 router.post("/safety/checkins", requireFamilySafety, async (req: Request, res: Response) => {
   const userId = requireAuth(req, res);
   if (!userId) return;

@@ -756,6 +756,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="safety-checkin-alert"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
         name="itinerary-feedback"
         options={{
           headerShown: false,

@@ -133,4 +133,23 @@ describe("profile-based Safety Check-In contract", () => {
     expect(cron).toContain("Suppressed legacy email check-in delivery without accepted recipient authorization");
     expect(cron).not.toContain("await sendCheckinOverdueEmail(");
   });
+
+  it("allows a recipient to read only an active, accepted private Check-In alert", () => {
+    expect(route).toContain('router.get("/safety/checkins/received/:notificationId"');
+    expect(route).toContain("scr.notification_id::text = n.id::text");
+    expect(route).toContain("scr.recipient_user_id::text = $1::text");
+    expect(route).toContain("n.user_id::text = $1::text");
+    expect(route).toContain("n.entity_type = 'safety_checkin'");
+    expect(route).toContain("tss.contact_accepted::text");
+    expect(route).toContain("owner_blocks.id IS NULL");
+    expect(route).toContain("recipient_blocks.id IS NULL");
+    const receivedAlert = route.slice(
+      route.indexOf('router.get("/safety/checkins/received/:notificationId"'),
+      route.indexOf('router.post("/safety/checkins"'),
+    );
+    expect(receivedAlert).not.toContain("c.location");
+    expect(receivedAlert).not.toContain("c.city");
+    expect(receivedAlert).not.toContain("c.note");
+    expect(receivedAlert).toContain("Safety Check-In alert not available");
+  });
 });

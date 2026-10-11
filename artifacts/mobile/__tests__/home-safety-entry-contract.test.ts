@@ -14,6 +14,14 @@ const safetyHub = readFileSync(
   fileURLToPath(new URL("../app/safety-hub.tsx", import.meta.url)),
   "utf8",
 );
+const notificationCenter = readFileSync(
+  fileURLToPath(new URL("../app/notification-center.tsx", import.meta.url)),
+  "utf8",
+);
+const receivedCheckin = readFileSync(
+  fileURLToPath(new URL("../app/safety-checkin-alert.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("mobile Home safety entry boundaries", () => {
   it("removes only the Discover Home safety promotion and neighborhood-rating action", () => {
@@ -30,5 +38,17 @@ describe("mobile Home safety entry boundaries", () => {
     expect(safetyHub).not.toContain("Location Sharing");
     expect(safetyHub).not.toContain("api/safety/location-shares");
     expect(safetyHub).toContain("Submit Safety Tip");
+  });
+
+  it("routes a private Check-In recipient alert to a recipient-authorized view", () => {
+    expect(notificationCenter).toContain('entityType === "safety_checkin"');
+    expect(notificationCenter).toContain('data?.type === "safety_checkin_overdue"');
+    expect(notificationCenter).toContain('pathname: "/safety-checkin-alert"');
+    expect(notificationCenter).toContain("setNotifs(rows.map(mapApiRow))");
+    expect(notificationCenter).not.toContain("const NOTIFS");
+    expect(receivedCheckin).toContain("/api/safety/checkins/received/");
+    expect(receivedCheckin).toContain("alert.privacy");
+    expect(receivedCheckin).toContain("does not contact emergency services");
+    expect(receivedCheckin).not.toContain("expo-location");
   });
 });
