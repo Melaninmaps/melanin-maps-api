@@ -9,7 +9,9 @@ function source(relativePath: string): string {
 describe("mobile social profile hub", () => {
   const profile = source("../app/(tabs)/profile.tsx");
   const settings = source("../app/settings.tsx");
-  const memberProfile = source("../app/user-profile/[userId].tsx");
+  const memberProfile = source("../app/user/[id].tsx");
+  const legacyMemberProfile = source("../app/user-profile/[userId].tsx");
+  const connections = source("../app/connections.tsx");
   const layout = source("../app/_layout.tsx");
 
   it("keeps social sections as quick links to existing mobile capabilities", () => {
@@ -34,16 +36,15 @@ describe("mobile social profile hub", () => {
     expect(settings).toContain('route: "/(tabs)/profile"');
     expect(settings).toContain('label: "KinfolkAI™"');
     expect(settings).toContain('route: "/kinfolk-settings"');
-    expect(settings).toContain('title: "Your Spaces"');
-    expect(settings).toContain('label: "Chat with KinfolkAI™"');
-    expect(settings).toContain('route: "/travel"');
-    expect(settings).toContain('route: "/circles"');
-    expect(settings).toContain('route: "/creator-profile"');
+    expect(settings).not.toContain('title: "Your Spaces"');
     expect(profile).toContain("Private Account");
-    expect(memberProfile).toContain("const permitted = data.canSeeContent === true");
-    expect(memberProfile).toContain("if (!permitted)");
-    expect(memberProfile).toContain("Follow requests must be accepted before activity is shown.");
-    expect(memberProfile).toContain("isAuthenticated && canSeeContent");
+    expect(memberProfile).toContain("if (!profile?.id || !canSeeContent)");
+    expect(memberProfile).toContain("This profile is private. Follow requests must be accepted before activity is shown.");
+    expect(memberProfile).toContain("profileLoadError === \"retry\"");
+    expect(memberProfile).toContain('pathname: "/chat/[id]"');
+    expect(legacyMemberProfile).toContain('pathname: "/user/[id]"');
+    expect(connections).not.toContain("/user-profile/");
+    expect(connections).toContain("/user/${u.id}");
     expect(layout).toContain('name="connections"');
     expect(layout).toContain('name="circles"');
     expect(layout).toContain('name="settings"');

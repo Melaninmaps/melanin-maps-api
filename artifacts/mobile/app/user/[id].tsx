@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -75,23 +76,38 @@ export default function VisitorProfileScreen() {
   const [followLoading, setFollowLoading] = useState(false);
   const [myId, setMyId] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [profileLoadError, setProfileLoadError] = useState<"unavailable" | "retry" | null>(null);
 
   const loadProfile = useCallback(async () => {
     if (!id) return;
     setLoadingProfile(true);
+    setProfileLoadError(null);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const res = await fetch(`${getApiBase()}/api/users/${id}/profile`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (!res.ok) { setLoadingProfile(false); return; }
+      if (!res.ok) {
+        setProfile(null);
+        setProfileLoadError(res.status >= 500 ? "retry" : "unavailable");
+        return;
+      }
       const data = await res.json() as { profile: UserProfile; isFollowing: boolean; followStatus: string | null; isFollowedBy: boolean; canSeeContent: boolean };
-      setProfile(data.profile);
+      const nextProfile = data.profile;
+      if (!nextProfile) {
+        setProfile(null);
+        setProfileLoadError("unavailable");
+        return;
+      }
+      setProfile(nextProfile);
       setCanSeeContent(data.canSeeContent);
       if (data.isFollowing) setFollowStatus("following");
       else if (data.followStatus === "pending") setFollowStatus("pending");
       else setFollowStatus("not_following");
-    } catch { /* ignore */ } finally {
+    } catch {
+      setProfile(null);
+      setProfileLoadError("retry");
+    } finally {
       setLoadingProfile(false);
     }
   }, [id]);
@@ -148,7 +164,14 @@ export default function VisitorProfileScreen() {
   }, [id]);
 
   useEffect(() => { queueMicrotask(() => { void loadProfile(); }); }, [loadProfile]);
-  useEffect(() => { queueMicrotask(() => { void loadPosts(); }); }, [loadPosts]);
+  useEffect(() => {
+    if (!profile?.id || !canSeeContent) {
+      setPosts([]);
+      setLoadingPosts(false);
+      return;
+    }
+    queueMicrotask(() => { void loadPosts(); });
+  }, [canSeeContent, loadPosts, profile?.id]);
   useEffect(() => {
     SecureStore.getItemAsync("auth_session_token").then((token) => {
       if (!token) return;
@@ -259,6 +282,30 @@ export default function VisitorProfileScreen() {
     }
   };
 
+  const handleStartMessage = async () => {
+    if (!id || !profile) return;
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      if (!token) {
+        Alert.alert("Sign in required", "You need to be signed in to message this member.");
+        return;
+      }
+      const res = await fetch(`${getApiBase()}/api/conversations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ type: "dm", participantId: id, title: profile.username ? `@${profile.username}` : "Direct Message" }),
+      });
+      const data = await res.json() as { conversation?: { id: number }; error?: string };
+      if (!res.ok || !data.conversation) {
+        Alert.alert("Message unavailable", data.error ?? "This member cannot receive direct messages right now.");
+        return;
+      }
+      router.push({ pathname: "/chat/[id]", params: { id: String(data.conversation.id) } });
+    } catch {
+      Alert.alert("Message unavailable", "Could not start a conversation. Please try again.");
+    }
+  };
+
   const displayName = profile?.username ? `@${profile.username}` : "Community Member";
   const initials = (profile?.username ?? "CM").slice(0, 2).toUpperCase();
   const memberBadge = MEMBER_BADGE[(profile?.memberType ?? "free").toLowerCase()];
@@ -316,8 +363,9 @@ export default function VisitorProfileScreen() {
         ) : !profile ? (
           <View style={s.emptyState}>
             <Feather name="user-x" size={40} color={colors.muted} />
-            <Text style={[s.emptyTitle, { color: colors.foreground }]}>Profile not found</Text>
-            <Text style={[s.emptySub, { color: colors.mutedForeground }]}>This user may have deleted their account.</Text>
+            <Text style={[s.emptyTitle, { color: colors.foreground }]}>{profileLoadError === "retry" ? "Profile unavailable" : "Profile unavailable"}</Text>
+            <Text style={[s.emptySub, { color: colors.mutedForeground }]}>{profileLoadError === "retry" ? "We could not load this profile. Please try again." : "This member profile is unavailable or you do not have permission to view it."}</Text>
+            {profileLoadError === "retry" ? <TouchableOpacity style={[s.retryBtn, { backgroundColor: colors.primary }]} onPress={() => void loadProfile()} accessibilityRole="button" accessibilityLabel="Retry loading member profile"><Text style={s.retryBtnText}>Retry</Text></TouchableOpacity> : null}
           </View>
         ) : (
           <>
@@ -325,7 +373,7 @@ export default function VisitorProfileScreen() {
             <View style={[s.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {/* Avatar */}
               <View style={[s.avatar, { backgroundColor: "#CA922B" }]}>
-                <Text style={s.avatarInitials}>{initials}</Text>
+                {profile.profileImageUrl ? <Image source={{ uri: profile.profileImageUrl }} style={s.avatarImage} accessibilityLabel={`${displayName} profile image`} /> : <Text style={s.avatarInitials}>{initials}</Text>}
               </View>
 
               {/* Handle + verified */}
@@ -355,22 +403,22 @@ export default function VisitorProfileScreen() {
               )}
 
               {/* Private account notice */}
-              {profile.isPrivate && !canSeeContent && (
+              {!canSeeContent && (
                 <View style={[s.privateNotice, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                   <Feather name="lock" size={14} color={colors.mutedForeground} />
-                  <Text style={[s.privateText, { color: colors.mutedForeground }]}>This account is private. Follow to see their content.</Text>
+                  <Text style={[s.privateText, { color: colors.mutedForeground }]}>This profile is private. Follow requests must be accepted before activity is shown.</Text>
                 </View>
               )}
 
               {/* Stats row */}
               <View style={[s.statsRow, { borderTopColor: colors.border }]}>
                 <View style={s.statItem}>
-                  <Text style={[s.statValue, { color: colors.primary }]}>{profile.followersCount ?? 0}</Text>
+                  <Text style={[s.statValue, { color: colors.primary }]}>{typeof profile.followersCount === "number" ? profile.followersCount : "—"}</Text>
                   <Text style={[s.statLabel, { color: colors.mutedForeground }]}>Followers</Text>
                 </View>
                 <View style={[s.statDivider, { backgroundColor: colors.border }]} />
                 <View style={s.statItem}>
-                  <Text style={[s.statValue, { color: colors.primary }]}>{profile.followingCount ?? 0}</Text>
+                  <Text style={[s.statValue, { color: colors.primary }]}>{typeof profile.followingCount === "number" ? profile.followingCount : "—"}</Text>
                   <Text style={[s.statLabel, { color: colors.mutedForeground }]}>Following</Text>
                 </View>
                 <View style={[s.statDivider, { backgroundColor: colors.border }]} />
@@ -381,7 +429,12 @@ export default function VisitorProfileScreen() {
               </View>
 
               {/* Actions */}
-              {!isOwnProfile && (
+              {isOwnProfile ? (
+                <TouchableOpacity style={[s.editBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]} onPress={() => router.push("/(tabs)/profile" as never)} accessibilityRole="button" accessibilityLabel="Edit my profile">
+                  <Feather name="edit-2" size={15} color={colors.foreground} />
+                  <Text style={[s.messageBtnText, { color: colors.foreground }]}>Edit profile</Text>
+                </TouchableOpacity>
+              ) : (
                 <View style={s.actionsRow}>
                   <TouchableOpacity
                     style={[
@@ -393,6 +446,9 @@ export default function VisitorProfileScreen() {
                     onPress={handleFollow}
                     disabled={followLoading}
                     activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${followBtnLabel} ${displayName}`}
+                    accessibilityState={{ busy: followLoading, selected: followStatus === "following" }}
                   >
                     {followLoading ? (
                       <ActivityIndicator size="small" color={followStatus !== "not_following" ? colors.foreground : "#FFFFFF"} />
@@ -407,8 +463,10 @@ export default function VisitorProfileScreen() {
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[s.messageBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
-                    onPress={() => router.push(`/messages?userId=${id}` as any)}
+                    onPress={() => void handleStartMessage()}
                     activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Message ${displayName}`}
                   >
                     <Feather name="message-circle" size={15} color={colors.foreground} />
                     <Text style={[s.messageBtnText, { color: colors.foreground }]}>Message</Text>
@@ -490,6 +548,7 @@ const s = StyleSheet.create({
     marginBottom: 4,
   },
   avatarInitials: { fontFamily: "Inter_700Bold", fontSize: 26, color: "#FFFFFF" },
+  avatarImage: { width: "100%", height: "100%", borderRadius: 36 },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   displayName: { fontFamily: "Inter_700Bold", fontSize: 20 },
   username: { fontFamily: "Inter_400Regular", fontSize: 13 },
@@ -562,6 +621,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
   },
   messageBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  editBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, width: "100%", paddingVertical: 10, borderRadius: 10, borderWidth: 1 },
   postsSection: {
     paddingHorizontal: 16,
     paddingBottom: 20,
@@ -586,4 +646,6 @@ const s = StyleSheet.create({
   emptyState: { alignItems: "center", paddingVertical: 60, gap: 12, paddingHorizontal: 32 },
   emptyTitle: { fontFamily: "Inter_700Bold", fontSize: 18 },
   emptySub: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 20 },
+  retryBtn: { marginTop: 6, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10 },
+  retryBtnText: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#FFFFFF" },
 });
