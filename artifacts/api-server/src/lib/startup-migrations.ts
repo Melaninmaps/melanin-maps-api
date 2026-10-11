@@ -3980,6 +3980,17 @@ ON CONFLICT (city_slug) DO UPDATE SET
       ADD COLUMN IF NOT EXISTS revocation_reason text,
       ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT NOW()`,
   },
+  // Claim eligibility and owner control share these business lifecycle fields.
+  // Keep the additions data-neutral: existing listings retain their current
+  // publication/profile state, while a missing control state defaults safely to
+  // unclaimed. Explicit feature-release mode otherwise skips the broad runner.
+  {
+    name: "community_business_claims_v3_business_lifecycle_cols",
+    sql: `ALTER TABLE businesses
+      ADD COLUMN IF NOT EXISTS ownership_control_status varchar(50) NOT NULL DEFAULT 'unclaimed',
+      ADD COLUMN IF NOT EXISTS publication_status varchar(50),
+      ADD COLUMN IF NOT EXISTS profile_status varchar(50)`,
+  },
   // Review queue index for admin claim dashboard.
   {
     name: "community_business_claims_v2_review_queue_idx",
@@ -7291,15 +7302,29 @@ export async function ensureLegacyMapLocationAttestationSchema(logger?: Logger):
  * release mode where the broad migration loop is intentionally skipped.
  */
 export async function ensureBusinessOwnerLinkLifecycleSchema(logger?: Logger): Promise<void> {
-  const migration = MIGRATIONS.find(
-    (entry) => entry.name === "community_business_claims_v2_owner_links_cols",
-  );
-  if (!migration) {
-    throw new Error("Business owner-link lifecycle schema migration definition is missing.");
+  const requiredMigrationNames = [
+    "community_business_claims_v2_claims_cols",
+    "community_business_claims_v2_owner_links_cols",
+    "community_business_claims_v3_business_lifecycle_cols",
+  ] as const;
+  const migrations = requiredMigrationNames.map((name) => {
+    const migration = MIGRATIONS.find((entry) => entry.name === name);
+    if (!migration) {
+      throw new Error(`Business owner-claim lifecycle migration definition is missing: ${name}.`);
+    }
+    return migration;
+  });
+  for (const migration of migrations) {
+    await pool.query(migration.sql);
   }
-  await pool.query(migration.sql);
   await pool.query(
     "SELECT claim_id, approved_by, approved_at, revoked_by, revoked_at, revocation_reason, updated_at FROM business_owner_links LIMIT 0",
+  );
+  await pool.query(
+    "SELECT claim_type, verification_method, evidence_url, evidence_summary, attested_at, reviewed_by, reviewed_at, decision_reason, withdrawn_at FROM business_claims LIMIT 0",
+  );
+  await pool.query(
+    "SELECT ownership_control_status, publication_status, profile_status FROM businesses LIMIT 0",
   );
   logger?.info("Business owner-link lifecycle schema is ready before traffic acceptance");
 }

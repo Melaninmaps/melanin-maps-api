@@ -18,7 +18,12 @@ describe("business owner-link lifecycle schema gate", () => {
     expect(migrations).toContain("ADD COLUMN IF NOT EXISTS revoked_at timestamptz");
     expect(migrations).toContain("ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT NOW()");
     expect(migrations).toContain("export async function ensureBusinessOwnerLinkLifecycleSchema");
+    expect(migrations).toContain('"community_business_claims_v2_claims_cols"');
+    expect(migrations).toContain('"community_business_claims_v3_business_lifecycle_cols"');
+    expect(migrations).toContain("ADD COLUMN IF NOT EXISTS ownership_control_status varchar(50) NOT NULL DEFAULT 'unclaimed'");
     expect(migrations).toContain("SELECT claim_id, approved_by, approved_at, revoked_by, revoked_at, revocation_reason, updated_at FROM business_owner_links LIMIT 0");
+    expect(migrations).toContain("SELECT claim_type, verification_method, evidence_url, evidence_summary, attested_at, reviewed_by, reviewed_at, decision_reason, withdrawn_at FROM business_claims LIMIT 0");
+    expect(migrations).toContain("SELECT ownership_control_status, publication_status, profile_status FROM businesses LIMIT 0");
     expect(startup).toContain("await ensureBusinessOwnerLinkLifecycleSchema(logger);");
   });
 
