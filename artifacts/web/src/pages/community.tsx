@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   MessageSquare, Heart, Users, Calendar, Globe, ChevronDown,
   X, Image as ImageIcon, Video, Hash, MapPin, Send, Loader2,
-  Plus, AlertCircle, Smile, MoreHorizontal, Flag, Trash2,
+  Plus, AlertCircle, Smile, MoreHorizontal, Flag, Trash2, Check, Mail,
   TrendingUp, RefreshCw, Radio, Shield, Link2, Search, UserCircle2, ChevronLeft, SlidersHorizontal
 } from "lucide-react";
 import { CommentsDialog } from "@/components/community/CommentsDialog";
@@ -79,6 +79,18 @@ interface Group {
   state?: string;
   isMember?: boolean;
   isPrivate?: boolean;
+}
+
+interface GroupInvite {
+  id: number;
+  groupId: number;
+  message: string | null;
+  createdAt: string;
+  groupName: string;
+  groupCategory: string;
+  groupCity: string | null;
+  groupState: string | null;
+  groupMemberCount: number;
 }
 
 type CommunityFeedDisplay = "text_first" | "mixed" | "video_first";
@@ -776,19 +788,32 @@ function EventsTab() {
 // a current membership; no unrelated group or group post is rendered here.
 function MyGroupsPage({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [groups, setGroups] = useState<Group[]>([]);
+  const [invites, setInvites] = useState<GroupInvite[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [inviteError, setInviteError] = useState(false);
+  const [respondingInviteId, setRespondingInviteId] = useState<number | null>(null);
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError(false);
+    setInviteError(false);
     try {
-      const res = await authenticatedFetch(`${BASE}api/groups/mine`);
+      const [res, inviteResponse] = await Promise.all([
+        authenticatedFetch(`${BASE}api/groups/mine`),
+        authenticatedFetch(`${BASE}api/groups/my-invites`),
+      ]);
       if (!res.ok) throw new Error("Could not load groups");
       const d = await res.json() as { groups: Group[] };
       setGroups(d.groups ?? []);
+      if (inviteResponse.ok) {
+        const invitePayload = await inviteResponse.json() as { invites?: GroupInvite[] };
+        setInvites(invitePayload.invites ?? []);
+      } else {
+        setInviteError(true);
+      }
     } catch {
       // Do not clear a currently visible list if a later refresh fails.
       setLoadError(true);
@@ -797,10 +822,68 @@ function MyGroupsPage({ isAuthenticated }: { isAuthenticated: boolean }) {
 
   useEffect(() => { load(); }, [load]);
 
+  const respondToInvite = async (invite: GroupInvite, action: "accept" | "decline") => {
+    if (respondingInviteId !== null) return;
+    setRespondingInviteId(invite.id);
+    try {
+      const response = await authenticatedFetch(`${BASE}api/groups/invites/${encodeURIComponent(String(invite.id))}/respond`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({})) as { error?: string };
+        throw new Error(error.error ?? "Could not respond to the invitation");
+      }
+      setInvites((current) => current.filter((item) => item.id !== invite.id));
+      if (action === "accept") {
+        toast({ title: "Group invitation accepted", description: `${invite.groupName} is now in My Groups.` });
+        await load();
+      } else {
+        toast({ title: "Invitation declined", description: "The group has not been changed." });
+      }
+    } catch (error) {
+      toast({ title: "Could not update invitation", description: error instanceof Error ? error.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setRespondingInviteId(null);
+    }
+  };
+
   if (loading) return <div data-testid="community-my-groups-loading" role="status" aria-live="polite" className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#CA922B]" aria-hidden="true" /><span className="sr-only">Loading your groups</span></div>;
 
   return (
     <div className="space-y-3">
+      {isAuthenticated && (invites.length > 0 || inviteError) && (
+        <section aria-labelledby="community-group-invitations-heading" className="rounded-2xl border border-[#CA922B]/25 bg-white p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h2 id="community-group-invitations-heading" className="flex items-center gap-2 font-serif text-lg font-bold text-[#2B1507]"><Mail className="h-4 w-4 text-[#CA922B]" /> Group invitations</h2>
+              <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/55">Private groups require an invitation. Choose whether to join each invitation shown here.</p>
+            </div>
+            {inviteError ? <button type="button" onClick={() => void load()} className="shrink-0 text-xs font-bold text-[#CA922B] hover:underline">Try again</button> : null}
+          </div>
+          {inviteError && invites.length === 0 ? <p data-testid="community-group-invites-error" role="alert" className="mt-3 rounded-xl bg-[#CA922B]/8 px-3 py-2 text-sm text-[#3A1F0E]/70">We couldn't load your invitations. Your group memberships have not changed.</p> : null}
+          {invites.length > 0 ? <div className="mt-4 space-y-3">
+            {invites.map((invite) => {
+              const responding = respondingInviteId === invite.id;
+              return <article key={invite.id} data-testid={`community-group-invite-${invite.id}`} className="rounded-xl border border-[#3A1F0E]/8 bg-[#FAF6EF] p-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${categoryColor(invite.groupCategory)}18` }}><Users className="h-4 w-4" style={{ color: categoryColor(invite.groupCategory) }} /></div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-[#2B1507]">{invite.groupName}</p>
+                    <p className="mt-0.5 text-xs text-[#3A1F0E]/55">{invite.groupMemberCount} {invite.groupMemberCount === 1 ? "member" : "members"}{invite.groupCity || invite.groupState ? ` · ${[invite.groupCity, invite.groupState].filter(Boolean).join(", ")}` : ""}</p>
+                    {invite.message ? <p className="mt-2 rounded-lg bg-white px-2.5 py-2 text-xs italic leading-5 text-[#3A1F0E]/65">“{invite.message}”</p> : null}
+                  </div>
+                </div>
+                <div className="mt-3 flex gap-2">
+                  <button type="button" data-testid={`community-group-invite-decline-${invite.id}`} disabled={responding} onClick={() => void respondToInvite(invite, "decline")} className="flex-1 rounded-xl border border-[#3A1F0E]/12 bg-white px-3 py-2 text-xs font-bold text-[#3A1F0E]/65 hover:border-[#CA922B]/45 disabled:cursor-wait disabled:opacity-50">Decline</button>
+                  <button type="button" data-testid={`community-group-invite-accept-${invite.id}`} disabled={responding} onClick={() => void respondToInvite(invite, "accept")} className="flex flex-[2] items-center justify-center gap-1.5 rounded-xl bg-[#CA922B] px-3 py-2 text-xs font-bold text-white hover:bg-[#B38024] disabled:cursor-wait disabled:opacity-50">{responding ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />} Accept invitation</button>
+                </div>
+              </article>;
+            })}
+          </div> : null}
+        </section>
+      )}
       {loadError && groups.length === 0 && (
         <div data-testid="community-my-groups-error" role="alert" className="rounded-2xl border border-[#CA922B]/30 bg-white p-6 text-center">
           <p className="text-sm font-bold text-[#2B1507]">We couldn't load your groups</p>

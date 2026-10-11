@@ -34,6 +34,22 @@ describe("Community workbook tabs", () => {
     expect(mine).not.toContain('"Leave"');
   });
 
+  it("renders pending private-group invitations separately and responds through the authenticated invite contract", () => {
+    const start = community.indexOf("function MyGroupsPage");
+    const end = community.indexOf("// ── People Search Result", start);
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+    const mine = community.slice(start, end);
+
+    expect(mine).toContain("api/groups/my-invites");
+    expect(mine).toContain("api/groups/invites/${encodeURIComponent(String(invite.id))}/respond");
+    expect(mine).toContain('body: JSON.stringify({ action })');
+    expect(mine).toContain("Private groups require an invitation");
+    expect(mine).toContain("Group invitation accepted");
+    expect(mine).toContain("The group has not been changed.");
+    expect(mine).toContain('data-testid={`community-group-invite-${invite.id}`}');
+  });
+
   it("loads group posts, shared media, and member information only after current membership is confirmed", () => {
     expect(app).toContain('<Route path="/community/groups/:id">');
     expect(groupDetail).toContain("api/groups/${encodeURIComponent(String(groupId))}");
