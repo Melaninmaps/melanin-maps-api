@@ -22,4 +22,12 @@ describe("Web generic private-memory lifecycle controls", () => {
     expect(memoryManager).toContain("Revoke use of this memory");
     expect(memoryManager).not.toContain("Delete this memory permanently");
   });
+
+  it("keeps sensitive content behind the member-controlled vault", () => {
+    expect(memoryManager).toContain("Sensitive Memory Vault");
+    expect(memoryManager).toContain("api/kinfolk/sensitive-memory-vault/reauth");
+    expect(memoryManager).toContain("api/kinfolk/sensitive-memories/${encodeURIComponent(memory.id)}");
+    expect(memoryManager).toContain("Sensitive private memory");
+    expect(memoryManager).toContain("Only mention if I ask");
+  });
 });

@@ -5037,6 +5037,15 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ADD COLUMN IF NOT EXISTS sensitive_consent_granted_at timestamptz`,
   },
   {
+    // A sensitive value is vault-only by default. This additive field changes
+    // no existing content, ownership, consent, or lifecycle state; it merely
+    // prevents sensitive records from being applied proactively until the
+    // member deliberately changes the restricted-use setting after reauth.
+    name: "kinfolk_private_memories_sensitive_vault_v3",
+    sql: `ALTER TABLE kinfolk_private_memories
+      ADD COLUMN IF NOT EXISTS sensitive_restricted boolean NOT NULL DEFAULT true`,
+  },
+  {
     // Personal Memory V1 adds only control metadata. It does not change, pause,
     // revoke, delete, or otherwise backfill any existing member memory.
     name: "kinfolk_private_memories_pause_and_capacity_v3",
@@ -7171,6 +7180,7 @@ export async function ensureKinfolkPreferredNameSchema(logger?: Logger): Promise
     ALTER TABLE kinfolk_private_memories
       ADD COLUMN IF NOT EXISTS consent_granted_at timestamptz NOT NULL DEFAULT now(),
       ADD COLUMN IF NOT EXISTS sensitive_consent_granted_at timestamptz,
+      ADD COLUMN IF NOT EXISTS sensitive_restricted boolean NOT NULL DEFAULT true,
       ADD COLUMN IF NOT EXISTS paused_at timestamptz;
     CREATE INDEX IF NOT EXISTS kinfolk_private_memories_preferred_name_lookup_idx
       ON kinfolk_private_memories (user_id, updated_at DESC)
@@ -7180,7 +7190,7 @@ export async function ensureKinfolkPreferredNameSchema(logger?: Logger): Promise
   // Structural read only: fail before traffic if an older production baseline
   // cannot satisfy the active lifecycle query shape.
   await pool.query(
-    "SELECT id, user_id, content, purpose, expires_at, paused_at, revoked_at, created_at, updated_at FROM kinfolk_private_memories LIMIT 0",
+    "SELECT id, user_id, content, purpose, sensitive_restricted, expires_at, paused_at, revoked_at, created_at, updated_at FROM kinfolk_private_memories LIMIT 0",
   );
   log("Kinfolk preferred-name schema is ready before traffic acceptance");
 }

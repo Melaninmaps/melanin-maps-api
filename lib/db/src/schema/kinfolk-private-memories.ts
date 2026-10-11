@@ -16,6 +16,8 @@ export const kinfolkPrivateMemoriesTable = pgTable(
     consentGrantedAt: timestamp("consent_granted_at", { withTimezone: true }).notNull().defaultNow(),
     /** Null for pre-v2 sensitive memories until the member confirms the individual item again. */
     sensitiveConsentGrantedAt: timestamp("sensitive_consent_granted_at", { withTimezone: true }),
+    /** Sensitive details default to vault-only use and are never applied proactively. */
+    sensitiveRestricted: boolean("sensitive_restricted").notNull().default(true),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
     /** Explicit member pause; distinct from a member-chosen expiry date. */
     pausedAt: timestamp("paused_at", { withTimezone: true }),

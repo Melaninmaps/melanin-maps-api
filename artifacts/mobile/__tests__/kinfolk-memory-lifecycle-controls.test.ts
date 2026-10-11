@@ -39,4 +39,12 @@ describe("native generic private-memory lifecycle controls", () => {
       "onPress={() => void save(allItems.map((item) => item.id))}",
     );
   });
+
+  it("keeps sensitive detail behind the separate recent-authentication vault", () => {
+    expect(memory).toContain("Sensitive Memory Vault");
+    expect(memory).toContain("/api/kinfolk/sensitive-memory-vault/reauth");
+    expect(memory).toContain("/api/kinfolk/sensitive-memories/${encodeURIComponent(memory.id)}");
+    expect(memory).toContain("Sensitive private memory");
+    expect(memory).toContain("Only mention if I ask");
+  });
 });

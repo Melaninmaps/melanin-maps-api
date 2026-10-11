@@ -395,6 +395,11 @@ import {
   sensitiveMemoryTopic,
   type SensitiveMemoryTopic,
 } from "../kinfolk/sensitive-memory";
+import {
+  reauthenticateSensitiveMemoryVault,
+  requireSensitiveMemoryVaultReauth,
+  sensitiveMemoryVaultReauthState,
+} from "../kinfolk/sensitive-memory-vault";
 import { filterMemberFacingSources } from "../kinfolk/source-relevance";
 import {
   buildCompanionMemoryOffer,
@@ -6106,10 +6111,17 @@ function isSensitiveMemoryRelevant(
   );
 }
 
+/** Restricted vault records may be used only after the member explicitly asks
+ * Kinfolk to take a saved sensitive detail into account in this turn. */
+function explicitlyRequestsRestrictedSensitiveMemoryUse(message: string): boolean {
+  return /\b(?:use|consider|take into account|remember|recall|apply)\b[\s\S]{0,100}\b(?:my|saved|private)\b[\s\S]{0,100}\b(?:health|medical|accessibility|location|address|identity|religion|financial|family|child|sensitive)\b/i.test(message);
+}
+
 type PrivateMemoryForTurn = {
   content: string;
   purpose: string;
   isSensitive: boolean;
+  sensitiveRestricted?: boolean;
 };
 
 /**
@@ -6125,6 +6137,10 @@ function selectRelevantPrivateMemoriesForTurn(input: {
   explicitMemoryEnabled: boolean;
 }): PrivateMemoryForTurn[] {
   return input.memories.filter((memory) => {
+    const sensitiveUseAllowed = !memory.isSensitive || (
+      (!memory.sensitiveRestricted || explicitlyRequestsRestrictedSensitiveMemoryUse(input.currentMessage)) &&
+      isSensitiveMemoryRelevant(memory.content, input.currentMessage)
+    );
     const legacyRelevant =
       (memory.purpose === "preferred_name"
         ? input.explicitMemoryEnabled
@@ -6134,8 +6150,7 @@ function selectRelevantPrivateMemoriesForTurn(input: {
             ? isExplicitProfileMemoryRelevant(memory, input.currentMessage)
             : ["preference", "goal", "ongoing_context"].includes(memory.purpose)
               ? isOrdinaryContinuityMemoryRelevant(memory, input.currentMessage)
-              : (!memory.isSensitive ||
-                isSensitiveMemoryRelevant(memory.content, input.currentMessage))) &&
+              : sensitiveUseAllowed) &&
       (memory.purpose !== "companion_context" ||
         isCompanionMemoryRelevant(memory.content, input.currentMessage));
     return isApprovedPrivateMemoryRelevant({
@@ -6488,6 +6503,89 @@ function requirePrivateMemoryCapacity(input: {
   return capacity;
 }
 
+router.get("/kinfolk/sensitive-memory-vault", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  try {
+    res.json(await sensitiveMemoryVaultReauthState(req));
+  } catch (_error) {
+    res.status(503).json({ error: "Sensitive memory vault status is unavailable. Nothing was opened." });
+  }
+});
+
+router.post("/kinfolk/sensitive-memory-vault/reauth", async (req: Request, res: Response) => {
+  try {
+    const result = await reauthenticateSensitiveMemoryVault(req, (req.body as Record<string, unknown> | undefined)?.password);
+    if (!result.ok) return void res.status(result.status).json({ error: result.error, code: result.code });
+    res.json({ reauthenticated: true, expiresAt: result.expiresAt });
+  } catch (_error) {
+    res.status(503).json({ error: "Sensitive memory vault confirmation is unavailable. Nothing was opened.", code: "SENSITIVE_MEMORY_REAUTH_UNAVAILABLE" });
+  }
+});
+
+router.get("/kinfolk/sensitive-memories/:id", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  try {
+    if (!await requireSensitiveMemoryVaultReauth(req, res)) return;
+    const [memory] = await db
+      .select({
+        id: kinfolkPrivateMemoriesTable.id,
+        content: kinfolkPrivateMemoriesTable.content,
+        purpose: kinfolkPrivateMemoriesTable.purpose,
+        isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
+        sensitiveRestricted: kinfolkPrivateMemoriesTable.sensitiveRestricted,
+        sensitiveConsentGrantedAt: kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt,
+        expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
+        pausedAt: kinfolkPrivateMemoriesTable.pausedAt,
+        createdAt: kinfolkPrivateMemoriesTable.createdAt,
+        updatedAt: kinfolkPrivateMemoriesTable.updatedAt,
+      })
+      .from(kinfolkPrivateMemoriesTable)
+      .where(and(
+        eq(kinfolkPrivateMemoriesTable.id, String(req.params.id)),
+        eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+        eq(kinfolkPrivateMemoriesTable.isSensitive, true),
+        isNull(kinfolkPrivateMemoriesTable.revokedAt),
+      ))
+      .limit(1);
+    if (!memory) return void res.status(404).json({ error: "Sensitive memory not found" });
+    res.json({ memory });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Sensitive memory vault read failed");
+    res.status(500).json({ error: "Sensitive memory could not be opened." });
+  }
+});
+
+router.patch("/kinfolk/sensitive-memories/:id/restricted-use", async (req: Request, res: Response) => {
+  if (!req.user?.id) return void res.status(401).json({ error: "Authentication required" });
+  const restricted = (req.body as Record<string, unknown> | undefined)?.restricted;
+  if (typeof restricted !== "boolean") {
+    return void res.status(400).json({ error: "A restricted-use choice is required.", code: "SENSITIVE_MEMORY_RESTRICTED_USE_REQUIRED" });
+  }
+  try {
+    if (!await requireSensitiveMemoryVaultReauth(req, res)) return;
+    const [memory] = await db
+      .update(kinfolkPrivateMemoriesTable)
+      .set({ sensitiveRestricted: restricted, updatedAt: new Date() })
+      .where(and(
+        eq(kinfolkPrivateMemoriesTable.id, String(req.params.id)),
+        eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+        eq(kinfolkPrivateMemoriesTable.isSensitive, true),
+        isNull(kinfolkPrivateMemoriesTable.revokedAt),
+      ))
+      .returning({
+        id: kinfolkPrivateMemoriesTable.id,
+        isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
+        sensitiveRestricted: kinfolkPrivateMemoriesTable.sensitiveRestricted,
+        updatedAt: kinfolkPrivateMemoriesTable.updatedAt,
+      });
+    if (!memory) return void res.status(404).json({ error: "Sensitive memory not found" });
+    res.json({ memory });
+  } catch (err) {
+    req.log.error(safeKinfolkErrorMetadata(err), "Sensitive memory restricted-use update failed");
+    res.status(500).json({ error: "Sensitive memory setting could not be updated." });
+  }
+});
+
 router.get("/kinfolk/memories", async (req: Request, res: Response) => {
   if (!isKinfolkPrivateMemoryEnabled() && !isExplicitMemberMemoryEnabled()) {
     return void res.status(403).json({
@@ -6527,6 +6625,7 @@ router.get("/kinfolk/memories", async (req: Request, res: Response) => {
         isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
         sensitiveConsentGrantedAt:
           kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt,
+        sensitiveRestricted: kinfolkPrivateMemoriesTable.sensitiveRestricted,
         expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
         pausedAt: kinfolkPrivateMemoriesTable.pausedAt,
         createdAt: kinfolkPrivateMemoriesTable.createdAt,
@@ -6553,6 +6652,11 @@ router.get("/kinfolk/memories", async (req: Request, res: Response) => {
     res.json({
       memories: memories.map((memory) => ({
         ...memory,
+        // The regular memory manager is never a sensitive-vault disclosure
+        // channel. A separate, recently reauthenticated endpoint is required
+        // before content can be opened or changed.
+        content: memory.isSensitive ? null : memory.content,
+        vaultLocked: memory.isSensitive,
         state: resolvePrivateMemoryState({
           revokedAt: null,
           pausedAt: memory.pausedAt,
@@ -6610,6 +6714,7 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
       ...sensitiveMemoryConfirmation(null),
     });
   }
+  if (selectedSensitive && !await requireSensitiveMemoryVaultReauth(req, res)) return;
 
   try {
     const result = await withSerializedPrivateMemoryWrite({
@@ -6791,6 +6896,7 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
         ...sensitiveMemoryConfirmation(sensitiveTopic),
       });
     }
+    if (isSensitive && !await requireSensitiveMemoryVaultReauth(req, res)) return;
 
     const result = await withSerializedPrivateMemoryWrite({
       userId: req.user.id,
@@ -6851,6 +6957,7 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
               typeof body.sessionId === "string" ? body.sessionId : null,
             isSensitive,
             sensitiveConsentGrantedAt: isSensitive ? new Date() : null,
+            sensitiveRestricted: isSensitive ? body.sensitiveRestricted !== false : false,
             expiresAt,
           })
           .returning();
@@ -6933,6 +7040,7 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
         ...sensitiveMemoryConfirmation(sensitiveTopic),
       });
     }
+    if (willBeSensitive && !await requireSensitiveMemoryVaultReauth(req, res)) return;
 
     const [memory] = await db
       .update(kinfolkPrivateMemoriesTable)
@@ -6942,6 +7050,9 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
         // change provenance or reduce a prior sensitive classification.
         isSensitive: willBeSensitive,
         sensitiveConsentGrantedAt: willBeSensitive ? new Date() : null,
+        sensitiveRestricted: willBeSensitive
+          ? body.sensitiveRestricted !== false
+          : false,
         updatedAt: new Date(),
       })
       .where(
@@ -6991,6 +7102,7 @@ router.patch("/kinfolk/memories/:id/pause", async (req: Request, res: Response) 
       .select({
         id: kinfolkPrivateMemoriesTable.id,
         expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
+        isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
       })
       .from(kinfolkPrivateMemoriesTable)
       .where(
@@ -7005,6 +7117,7 @@ router.patch("/kinfolk/memories/:id/pause", async (req: Request, res: Response) 
     if (!existing) {
       return void res.status(404).json({ error: "Memory not found" });
     }
+    if (existing.isSensitive && !await requireSensitiveMemoryVaultReauth(req, res)) return;
     const now = new Date();
     if (body.paused === false && existing.expiresAt && existing.expiresAt <= now) {
       return void res.status(409).json({
@@ -7063,6 +7176,18 @@ router.delete("/kinfolk/memories/:id", async (req: Request, res: Response) => {
   if (!req.user?.id)
     return void res.status(401).json({ error: "Authentication required" });
   try {
+    const [existing] = await db
+      .select({ id: kinfolkPrivateMemoriesTable.id, isSensitive: kinfolkPrivateMemoriesTable.isSensitive })
+      .from(kinfolkPrivateMemoriesTable)
+      .where(and(
+        eq(kinfolkPrivateMemoriesTable.id, String(req.params.id)),
+        eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
+        ne(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
+        isNull(kinfolkPrivateMemoriesTable.revokedAt),
+      ))
+      .limit(1);
+    if (!existing) return void res.status(404).json({ error: "Memory not found" });
+    if (existing.isSensitive && !await requireSensitiveMemoryVaultReauth(req, res)) return;
     const [forgotten] = await db
       .update(kinfolkPrivateMemoriesTable)
       .set({ revokedAt: new Date(), updatedAt: new Date() })
@@ -7788,6 +7913,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
           content: kinfolkPrivateMemoriesTable.content,
           purpose: kinfolkPrivateMemoriesTable.purpose,
           isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
+          sensitiveRestricted: kinfolkPrivateMemoriesTable.sensitiveRestricted,
         })
         .from(kinfolkPrivateMemoriesTable)
         .where(
@@ -11175,6 +11301,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // A separately confirmed private identity note may refine group-level health
     // research for this authenticated member only. It cannot enter city safety,
     // discovery ownership, profile, or generic-answer paths.
+    const allowRestrictedHealthContext = explicitlyRequestsRestrictedSensitiveMemoryUse(message);
     const consentedHealthPopulationContext = intentClass === "medical_health" && memoryEnabled
       ? await db
           .select({
@@ -11190,6 +11317,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               eq(kinfolkPrivateMemoriesTable.userId, req.user.id),
               eq(kinfolkPrivateMemoriesTable.purpose, "profile_context"),
               eq(kinfolkPrivateMemoriesTable.isSensitive, true),
+              allowRestrictedHealthContext
+                ? sql`true`
+                : eq(kinfolkPrivateMemoriesTable.sensitiveRestricted, false),
               isNotNull(kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt),
               isNull(kinfolkPrivateMemoriesTable.revokedAt),
               isNull(kinfolkPrivateMemoriesTable.pausedAt),
@@ -12297,6 +12427,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               content: kinfolkPrivateMemoriesTable.content,
               purpose: kinfolkPrivateMemoriesTable.purpose,
               isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
+              sensitiveRestricted: kinfolkPrivateMemoriesTable.sensitiveRestricted,
             })
             .from(kinfolkPrivateMemoriesTable)
             .where(
