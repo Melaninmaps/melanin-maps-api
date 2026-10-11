@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  createPinnedAddressLookup,
   isPrivateOrReservedNetworkAddress,
   normalizeKinfolkLinkUrl,
   understandKinfolkLink,
@@ -45,6 +46,26 @@ describe("Kinfolk link understanding", () => {
     }
     expect(isPrivateOrReservedNetworkAddress("93.184.216.34")).toBe(false);
     expect(isPrivateOrReservedNetworkAddress("2606:2800:220:1:248:1893:25c8:1946")).toBe(false);
+  });
+
+  it("preserves the validated address when Node requests lookup-all results", () => {
+    const lookup = createPinnedAddressLookup(publicAddress[0]);
+    const invoke = lookup as unknown as (
+      hostname: string,
+      options: { all?: boolean },
+      callback: (error: Error | null, value: unknown, family?: number) => void,
+    ) => void;
+
+    invoke("news.example.com", { all: true }, (error, value, family) => {
+      expect(error).toBeNull();
+      expect(value).toEqual(publicAddress);
+      expect(family).toBeUndefined();
+    });
+    invoke("news.example.com", { all: false }, (error, value, family) => {
+      expect(error).toBeNull();
+      expect(value).toBe("93.184.216.34");
+      expect(family).toBe(4);
+    });
   });
 
   it("returns only an extractive, source-labelled article summary from fetched HTML", async () => {

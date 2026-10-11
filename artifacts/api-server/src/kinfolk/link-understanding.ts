@@ -1,6 +1,6 @@
 import { lookup } from "node:dns/promises";
 import { request as httpsRequest } from "node:https";
-import { isIP } from "node:net";
+import { isIP, type LookupFunction } from "node:net";
 
 /**
  * Server-side understanding for a member-supplied public link.
@@ -239,6 +239,30 @@ function headerValue(headers: Readonly<Record<string, string | undefined>>, name
   return undefined;
 }
 
+/**
+ * Node 22 may ask custom DNS lookups for every resolved address (`all: true`)
+ * while establishing a connection. Preserve the already-validated pin in both
+ * callback forms; returning the scalar form for an `all` lookup produces an
+ * undefined address before the HTTPS request is sent.
+ */
+export function createPinnedAddressLookup(address: KinfolkResolvedAddress): LookupFunction {
+  return ((
+    _hostname: string,
+    options: { all?: boolean },
+    callback: (
+      error: NodeJS.ErrnoException | null,
+      result: string | Array<{ address: string; family: number }>,
+      family?: number,
+    ) => void,
+  ) => {
+    if (options.all) {
+      callback(null, [{ address: address.address, family: address.family }]);
+      return;
+    }
+    callback(null, address.address, address.family);
+  }) as LookupFunction;
+}
+
 async function defaultFetchPage(input: Readonly<{
   url: string;
   hostname: string;
@@ -269,7 +293,7 @@ async function defaultFetchPage(input: Readonly<{
       },
       // Pin the request to the address that was checked above. https.request
       // would otherwise perform a second DNS lookup after our safety check.
-      lookup: (_hostname, _options, callback) => callback(null, input.address.address, input.address.family),
+      lookup: createPinnedAddressLookup(input.address),
     }, (response) => {
       const headers: Record<string, string | undefined> = {};
       for (const [name, value] of Object.entries(response.headers)) {
