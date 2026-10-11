@@ -38,7 +38,7 @@ type MeetupVerification = {
   role: "organizer" | "partner";
   counterpartName: string;
   status: "awaiting_partner" | "approved" | "cancelled" | "expired";
-  venue: null;
+  venue: string | null;
   scheduledAt: string | null;
   expiresAt: string | null;
   initiatedAt: string;
@@ -73,9 +73,11 @@ export default function MemberConnectionsScreen() {
   const [meetups, setMeetups] = useState<MeetupVerification[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Meetup request state. The request contains no venue, note, watcher, attendee list, or location data.
+  // Meetup request state. A planned public venue is encrypted at rest and shared only with the selected participant.
   const [selectedConn, setSelectedConn] = useState<Connection | null>(null);
+  const [venue, setVenue] = useState("");
   const [organizerApproval, setOrganizerApproval] = useState(false);
+  const [partnerVenueAcknowledgements, setPartnerVenueAcknowledgements] = useState<number[]>([]);
   const [scheduledLeadMinutes, setScheduledLeadMinutes] = useState(60);
   const [sending, setSending] = useState(false);
   const [confirmingId, setConfirmingId] = useState<number | null>(null);
@@ -107,7 +109,7 @@ export default function MemberConnectionsScreen() {
   useEffect(() => { queueMicrotask(() => { void fetchData(); }); }, [fetchData]);
 
   const sendMeetupRequest = async () => {
-    if (!selectedConn || !organizerApproval || sending) return;
+    if (!selectedConn || !organizerApproval || !venue.trim() || sending) return;
     setSending(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
@@ -123,7 +125,7 @@ export default function MemberConnectionsScreen() {
       const response = await fetch(`${getApiBase()}/api/meetups`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token ?? ""}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ partnerId: selectedConn.otherId, organizerApproval: true, scheduledAt }),
+        body: JSON.stringify({ partnerId: selectedConn.otherId, organizerApproval: true, venue: venue.trim(), scheduledAt }),
       });
       const body = await response.json().catch(() => ({})) as { verification?: MeetupVerification; error?: string };
       if (!response.ok || !body.verification) {
@@ -133,7 +135,7 @@ export default function MemberConnectionsScreen() {
       setMeetups((current) => [body.verification!, ...current]);
       resetModal();
       if (Platform.OS !== "web") void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Verification request sent", "Your connection must independently approve this time-bounded request. Kinfolk does not collect or share a meetup location.");
+      Alert.alert("Private meetup request sent", "Your connection can review the planned venue and must independently approve this time-bounded request. The venue is not public, live location, or shared with anyone else.");
     } catch {
       Alert.alert("Unable to send request", "Check your connection and try again.");
     } finally {
@@ -142,7 +144,7 @@ export default function MemberConnectionsScreen() {
   };
 
   const confirmMeetup = async (id: number) => {
-    if (confirmingId !== null) return;
+    if (confirmingId !== null || !partnerVenueAcknowledgements.includes(id)) return;
     setConfirmingId(id);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
@@ -157,6 +159,7 @@ export default function MemberConnectionsScreen() {
         return;
       }
       setMeetups((current) => current.map((meetup) => meetup.id === id ? body.verification! : meetup));
+      setPartnerVenueAcknowledgements((current) => current.filter((acknowledgedId) => acknowledgedId !== id));
       if (Platform.OS !== "web") void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch {
       Alert.alert("Unable to approve request", "Check your connection and try again.");
@@ -191,8 +194,44 @@ export default function MemberConnectionsScreen() {
     }
   };
 
+  const blockMeetupMember = (id: number) => {
+    Alert.alert(
+      "Block member?",
+      "This cancels the meetup, clears its private venue, and removes the connection. You can still submit a separate safety report if needed.",
+      [
+        { text: "Keep connection", style: "cancel" },
+        {
+          text: "Block member",
+          style: "destructive",
+          onPress: () => {
+            void (async () => {
+              try {
+                const token = await SecureStore.getItemAsync("auth_session_token");
+                const response = await fetch(`${getApiBase()}/api/meetups/${id}/block`, {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${token ?? ""}` },
+                });
+                if (!response.ok) {
+                  const body = await response.json().catch(() => ({})) as { error?: string };
+                  Alert.alert("Unable to block member", body.error ?? "Please try again.");
+                  return;
+                }
+                setMeetups((current) => current.filter((meetup) => meetup.id !== id));
+                void fetchData();
+                Alert.alert("Member blocked", "The connection and private meetup details have been removed.");
+              } catch {
+                Alert.alert("Unable to block member", "Please check your connection and try again.");
+              }
+            })();
+          },
+        },
+      ],
+    );
+  };
+
   const resetModal = () => {
     setSelectedConn(null);
+    setVenue("");
     setOrganizerApproval(false);
     setScheduledLeadMinutes(60);
   };
@@ -200,6 +239,7 @@ export default function MemberConnectionsScreen() {
   const acceptedConnections = connections.filter((connection) => connection.status === "accepted");
   const pendingForMe = meetups.filter((meetup) => meetup.role === "partner" && meetup.status === "awaiting_partner");
   const myMeetups = meetups.filter((meetup) => meetup.role === "organizer");
+  const approvedForMe = meetups.filter((meetup) => meetup.role === "partner" && meetup.status === "approved");
 
   const connName = (connection: Connection) =>
     [connection.otherFirstName, connection.otherLastName].filter(Boolean).join(" ") ||
@@ -207,6 +247,10 @@ export default function MemberConnectionsScreen() {
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+  const formatDateTime = (iso: string | null) => iso
+    ? new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+    : "Time unavailable";
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -236,18 +280,124 @@ export default function MemberConnectionsScreen() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.requestName, { color: "#1D4ED8" }]}>{meetup.counterpartName} requested a meetup verification</Text>
-                      <Text style={[styles.requestMeta, { color: "#1E40AF" }]}>Approval confirms only that both people opted into this time-bounded request. It does not share a venue or make a safety guarantee.</Text>
+                      <Text style={[styles.requestMeta, { color: "#1E40AF" }]}>Approval shares this planned venue only between the two participants for this time-bounded request. It does not make a safety guarantee.</Text>
                     </View>
                   </View>
+                  <View style={[styles.meetupMeta, { borderTopColor: "#BFDBFE" }]}>
+                    <Text style={[styles.meetupMetaText, { color: "#1E40AF" }]}>Private venue: {meetup.venue ?? "Unavailable"}</Text>
+                    <Text style={[styles.meetupMetaText, { color: "#1E40AF" }]}>Scheduled: {formatDateTime(meetup.scheduledAt)}</Text>
+                  </View>
                   <TouchableOpacity
-                    style={[styles.confirmBtn, { opacity: confirmingId === meetup.id ? 0.6 : 1 }]}
-                    onPress={() => void confirmMeetup(meetup.id)}
-                    disabled={confirmingId !== null}
-                    activeOpacity={0.85}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: partnerVenueAcknowledgements.includes(meetup.id) }}
+                    onPress={() => setPartnerVenueAcknowledgements((current) => current.includes(meetup.id)
+                      ? current.filter((acknowledgedId) => acknowledgedId !== meetup.id)
+                      : [...current, meetup.id])}
+                    style={[styles.privacyNote, { backgroundColor: partnerVenueAcknowledgements.includes(meetup.id) ? "#2563EB12" : "#FFFFFF", borderColor: partnerVenueAcknowledgements.includes(meetup.id) ? "#2563EB" : "#BFDBFE" }]}
                   >
-                    {confirmingId === meetup.id ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="check" size={14} color="#fff" />}
-                    <Text style={styles.confirmBtnText}>{confirmingId === meetup.id ? "Approving…" : "Approve meetup request"}</Text>
+                    <Feather name={partnerVenueAcknowledgements.includes(meetup.id) ? "check-square" : "square"} size={18} color={partnerVenueAcknowledgements.includes(meetup.id) ? "#2563EB" : "#1E40AF"} />
+                    <Text style={[styles.privacyNoteText, { color: "#1E40AF", flex: 1 }]}>I reviewed this planned venue and scheduled time. I independently approve this request; it does not guarantee safety or share live location.</Text>
                   </TouchableOpacity>
+                  <View style={styles.meetupActions}>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}
+                      onPress={() => { setCancelTarget(meetup); setCancellationReason(""); }}
+                      activeOpacity={0.7}
+                    >
+                      <Feather name="x-circle" size={13} color="#DC2626" />
+                      <Text style={[styles.actionBtnText, { color: "#DC2626" }]}>Decline</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.confirmBtn, { flex: 1, opacity: confirmingId === meetup.id || !partnerVenueAcknowledgements.includes(meetup.id) ? 0.6 : 1 }]}
+                      onPress={() => void confirmMeetup(meetup.id)}
+                      disabled={confirmingId !== null || !partnerVenueAcknowledgements.includes(meetup.id)}
+                      activeOpacity={0.85}
+                    >
+                      {confirmingId === meetup.id ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="check" size={14} color="#fff" />}
+                      <Text style={styles.confirmBtnText}>{confirmingId === meetup.id ? "Approving…" : "Approve meetup"}</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.meetupActions}>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: "#FFFFFF", borderColor: "#BFDBFE" }]}
+                      onPress={() => router.push("/report-safety")}
+                      activeOpacity={0.7}
+                    >
+                      <Feather name="flag" size={13} color="#1E40AF" />
+                      <Text style={[styles.actionBtnText, { color: "#1E40AF" }]}>Report concern</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}
+                      onPress={() => blockMeetupMember(meetup.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Feather name="slash" size={13} color="#DC2626" />
+                      <Text style={[styles.actionBtnText, { color: "#DC2626" }]}>Block member</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* ── Approved participant meetups ── */}
+          {approvedForMe.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Confirmed meetups</Text>
+              {approvedForMe.map((meetup) => (
+                <View key={meetup.id} style={[styles.meetupCard, { backgroundColor: colors.card, borderColor: "#BBF7D0" }]}>
+                  <View style={styles.meetupCardHeader}>
+                    <View style={[styles.meetupIconWrap, { backgroundColor: "#16A34A18" }]}>
+                      <Feather name="shield" size={15} color="#16A34A" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.meetupCardName, { color: colors.foreground }]}>{meetup.counterpartName}</Text>
+                      <Text style={[styles.meetupCardDate, { color: colors.mutedForeground }]}>Mutually approved, time-bounded meetup</Text>
+                    </View>
+                    <View style={[styles.statusBadge, { backgroundColor: "#16A34A18" }]}>
+                      <Text style={[styles.statusText, { color: "#16A34A" }]}>Approved</Text>
+                    </View>
+                  </View>
+                  <View style={[styles.meetupMeta, { borderTopColor: colors.border }]}>
+                    <Text style={[styles.meetupMetaText, { color: colors.foreground }]}>Private venue: {meetup.venue ?? "Unavailable"}</Text>
+                    <Text style={[styles.meetupMetaText, { color: colors.mutedForeground }]}>Scheduled: {formatDateTime(meetup.scheduledAt)}</Text>
+                  </View>
+                  <View style={[styles.meetupActions, { borderTopColor: colors.border }]}>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}
+                      onPress={() => { setCancelTarget(meetup); setCancellationReason(""); }}
+                      activeOpacity={0.7}
+                    >
+                      <Feather name="x-circle" size={13} color="#DC2626" />
+                      <Text style={[styles.actionBtnText, { color: "#DC2626" }]}>Cancel meetup</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: "#7C3AED12", borderColor: "#7C3AED30" }]}
+                      onPress={() => router.push("/checkin")}
+                      activeOpacity={0.7}
+                    >
+                      <Feather name="shield" size={13} color="#7C3AED" />
+                      <Text style={[styles.actionBtnText, { color: "#7C3AED" }]}>Safety Check-In</Text>
+                    </TouchableOpacity>
+                  </View>
+                  <View style={[styles.meetupActions, { borderTopColor: colors.border }]}>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+                      onPress={() => router.push("/report-safety")}
+                      activeOpacity={0.7}
+                    >
+                      <Feather name="flag" size={13} color={colors.foreground} />
+                      <Text style={[styles.actionBtnText, { color: colors.foreground }]}>Report concern</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.actionBtn, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}
+                      onPress={() => blockMeetupMember(meetup.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Feather name="slash" size={13} color="#DC2626" />
+                      <Text style={[styles.actionBtnText, { color: "#DC2626" }]}>Block member</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
               ))}
             </View>
@@ -279,16 +429,48 @@ export default function MemberConnectionsScreen() {
                       </View>
                     </View>
                     {active ? (
-                      <View style={[styles.meetupActions, { borderTopColor: colors.border }]}>
-                        <TouchableOpacity
-                          style={[styles.actionBtn, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}
-                          onPress={() => { setCancelTarget(meetup); setCancellationReason(""); }}
-                          activeOpacity={0.7}
-                        >
-                          <Feather name="x-circle" size={13} color="#DC2626" />
-                          <Text style={[styles.actionBtnText, { color: "#DC2626" }]}>Cancel request</Text>
-                        </TouchableOpacity>
-                      </View>
+                      <>
+                        <View style={[styles.meetupMeta, { borderTopColor: colors.border }]}>
+                          <Text style={[styles.meetupMetaText, { color: colors.foreground }]}>Private venue: {meetup.venue ?? "Unavailable"}</Text>
+                          <Text style={[styles.meetupMetaText, { color: colors.mutedForeground }]}>Scheduled: {formatDateTime(meetup.scheduledAt)}</Text>
+                        </View>
+                        <View style={[styles.meetupActions, { borderTopColor: colors.border }]}>
+                          <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}
+                            onPress={() => { setCancelTarget(meetup); setCancellationReason(""); }}
+                            activeOpacity={0.7}
+                          >
+                            <Feather name="x-circle" size={13} color="#DC2626" />
+                            <Text style={[styles.actionBtnText, { color: "#DC2626" }]}>Cancel request</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: "#7C3AED12", borderColor: "#7C3AED30" }]}
+                            onPress={() => router.push("/checkin")}
+                            activeOpacity={0.7}
+                          >
+                            <Feather name="shield" size={13} color="#7C3AED" />
+                            <Text style={[styles.actionBtnText, { color: "#7C3AED" }]}>Safety Check-In</Text>
+                          </TouchableOpacity>
+                        </View>
+                        <View style={[styles.meetupActions, { borderTopColor: colors.border }]}>
+                          <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+                            onPress={() => router.push("/report-safety")}
+                            activeOpacity={0.7}
+                          >
+                            <Feather name="flag" size={13} color={colors.foreground} />
+                            <Text style={[styles.actionBtnText, { color: colors.foreground }]}>Report concern</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}
+                            onPress={() => blockMeetupMember(meetup.id)}
+                            activeOpacity={0.7}
+                          >
+                            <Feather name="slash" size={13} color="#DC2626" />
+                            <Text style={[styles.actionBtnText, { color: "#DC2626" }]}>Block member</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </>
                     ) : null}
                   </View>
                 );
@@ -365,6 +547,7 @@ export default function MemberConnectionsScreen() {
                         style={styles.verifyBtn}
                         onPress={() => {
                           setSelectedConn(c);
+                          setVenue("");
                           setOrganizerApproval(false);
                           setScheduledLeadMinutes(60);
                         }}
@@ -405,10 +588,21 @@ export default function MemberConnectionsScreen() {
                     <Text style={[styles.modalInfoText, { color: colors.foreground }]}>Send a time-bounded verification request to <Text style={{ fontFamily: "Inter_700Bold" }}>{connName(selectedConn)}</Text>. They must independently approve before it is mutually approved.</Text>
                   </View>
                   <View style={[styles.privacyNote, { backgroundColor: "#16A34A08", borderColor: "#16A34A25" }]}>
-                    <Text style={[styles.privacyNoteText, { color: "#14532D" }]}>Kinfolk does not request, store, or disclose a meetup venue, member location, note, watcher contact, arrival check-in, or home check-in.</Text>
+                    <Text style={[styles.privacyNoteText, { color: "#14532D" }]}>The planned public venue and scheduled time are encrypted and shared only with this selected participant for this request. Kinfolk does not collect live location, coordinates, home details, a watcher contact, or arrival/home tracking.</Text>
                   </View>
+                  <Text style={[styles.modalLabel, { color: colors.foreground }]}>Private public venue *</Text>
+                  <TextInput
+                    style={[styles.modalInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+                    placeholder="e.g. Community center, lobby, or public café"
+                    placeholderTextColor={colors.mutedForeground}
+                    value={venue}
+                    onChangeText={setVenue}
+                    maxLength={240}
+                    autoCapitalize="sentences"
+                  />
+                  <Text style={[styles.watcherSectionDesc, { color: colors.mutedForeground }]}>Share only a planned public venue. Do not enter a home address, current location, or coordinates.</Text>
                   <Text style={[styles.modalLabel, { color: colors.foreground }]}>Verification window</Text>
-                  <Text style={[styles.watcherSectionDesc, { color: colors.mutedForeground }]}>Choose when this time-bounded request begins. Arrange any location privately off-platform.</Text>
+                  <Text style={[styles.watcherSectionDesc, { color: colors.mutedForeground }]}>Choose when this private, time-bounded request begins. Your connection reviews the venue before deciding.</Text>
                   <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
                     {[{ label: "30 min", minutes: 30 }, { label: "1 hour", minutes: 60 }, { label: "2 hours", minutes: 120 }, { label: "4 hours", minutes: 240 }].map((option) => (
                       <TouchableOpacity key={option.minutes} onPress={() => setScheduledLeadMinutes(option.minutes)} style={[styles.chipBtn, scheduledLeadMinutes === option.minutes && styles.chipBtnActive]}>
@@ -418,9 +612,9 @@ export default function MemberConnectionsScreen() {
                   </View>
                   <TouchableOpacity accessibilityRole="checkbox" accessibilityState={{ checked: organizerApproval }} onPress={() => setOrganizerApproval((current) => !current)} style={[styles.privacyNote, { backgroundColor: organizerApproval ? "#7C3AED12" : colors.background, borderColor: organizerApproval ? "#7C3AED" : colors.border }]}>
                     <Feather name={organizerApproval ? "check-square" : "square"} size={18} color={organizerApproval ? "#7C3AED" : colors.mutedForeground} />
-                    <Text style={[styles.privacyNoteText, { color: colors.foreground, flex: 1 }]}>I explicitly approve sending this time-bounded request. I understand it does not verify a person, guarantee safety, or share a location.</Text>
+                    <Text style={[styles.privacyNoteText, { color: colors.foreground, flex: 1 }]}>I explicitly approve sharing this planned public venue and scheduled time only with this selected connection. I understand identity verification does not guarantee safety and this is not live-location sharing.</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.sendBtn, { opacity: sending || !organizerApproval ? 0.6 : 1 }]} onPress={() => void sendMeetupRequest()} disabled={sending || !organizerApproval} activeOpacity={0.85}>
+                  <TouchableOpacity style={[styles.sendBtn, { opacity: sending || !organizerApproval || !venue.trim() ? 0.6 : 1 }]} onPress={() => void sendMeetupRequest()} disabled={sending || !organizerApproval || !venue.trim()} activeOpacity={0.85}>
                     {sending ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="send" size={16} color="#fff" />}
                     <Text style={styles.sendBtnText}>{sending ? "Sending…" : "Send verification request"}</Text>
                   </TouchableOpacity>
@@ -439,7 +633,7 @@ export default function MemberConnectionsScreen() {
               <Feather name="x-circle" size={24} color="#DC2626" />
             </View>
             <Text style={[styles.centeredTitle, { color: colors.foreground }]}>Cancel meetup request</Text>
-            <Text style={[styles.centeredDesc, { color: colors.mutedForeground }]}>This ends the active request without deleting its audit record. No venue or member location is retained or disclosed.</Text>
+            <Text style={[styles.centeredDesc, { color: colors.mutedForeground }]}>This ends the active request without deleting its non-sensitive audit record. The private venue and any legacy safety details are immediately cleared.</Text>
             <Text style={[styles.modalLabel, { color: colors.foreground, alignSelf: "flex-start", marginTop: 8 }]}>Reason (optional)</Text>
             <TextInput
               style={[styles.modalInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background, width: "100%" }]}

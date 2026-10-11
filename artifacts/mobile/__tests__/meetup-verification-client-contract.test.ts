@@ -15,25 +15,35 @@ const standaloneSafetyHub = readFileSync(
   "utf8",
 );
 
-describe("native privacy-minimized meetup verification client", () => {
+describe("native private meetup verification client", () => {
   it("uses the canonical API origin and current two-party lifecycle routes", () => {
     expect(screen).toContain('import { getApiBase } from "@/lib/api";');
-    expect(screen).toContain('body: JSON.stringify({ partnerId: selectedConn.otherId, organizerApproval: true, scheduledAt })');
+    expect(screen).toContain('body: JSON.stringify({ partnerId: selectedConn.otherId, organizerApproval: true, venue: venue.trim(), scheduledAt })');
     expect(screen).toContain('body: JSON.stringify({ partnerApproval: true })');
     expect(screen).toContain("/api/meetups/${cancelTarget.id}/cancel");
+    expect(screen).toContain("/api/meetups/${id}/block");
     expect(screen).toContain('method: "POST"');
   });
 
-  it("requires explicit organizer approval and presents the reduced API response", () => {
+  it("requires explicit two-party venue consent and presents the reduced API response", () => {
     expect(screen).toContain("const [organizerApproval, setOrganizerApproval] = useState(false)");
+    expect(screen).toContain("partnerVenueAcknowledgements");
     expect(screen).toContain('role: "organizer" | "partner"');
-    expect(screen).toContain('status: "awaiting_partner" | "approved" | "cancelled" | "expired"');
-    expect(screen).toContain("counterpartName");
-    expect(screen).toContain("does not request, store, or disclose a meetup venue");
-    expect(screen).toContain("does not verify a person, guarantee safety, or share a location");
+    expect(screen).toContain('venue: string | null');
+    expect(screen).toContain("Private public venue");
+    expect(screen).toContain("I reviewed this planned venue and scheduled time");
+    expect(screen).toContain("does not collect live location, coordinates, home details");
   });
 
-  it("does not call retired check-in, sharing, or destructive-clear routes", () => {
+  it("provides cancellation, blocking, private reporting, and a separately consented Safety Check-In", () => {
+    expect(screen).toContain("Cancel meetup request");
+    expect(screen).toContain("Block member");
+    expect(screen).toContain('router.push("/report-safety")');
+    expect(screen).toContain('router.push("/checkin")');
+    expect(screen).toContain("The private venue and any legacy safety details are immediately cleared.");
+  });
+
+  it("does not call retired automatic tracking, sharing, or destructive-clear routes", () => {
     for (const retiredRoute of ["/arrival-checkin", "/home-checkin", "/share"]) {
       expect(screen).not.toContain(retiredRoute);
     }
@@ -42,12 +52,13 @@ describe("native privacy-minimized meetup verification client", () => {
     expect(screen).not.toContain('body: JSON.stringify({ clearCode');
   });
 
-  it("keeps both Safety Hub entries on the minimized meetup wire contract", () => {
+  it("keeps both Safety Hub entries on the private venue wire contract", () => {
     for (const source of [tabSafetyHub, standaloneSafetyHub]) {
       expect(source).toContain('role: "organizer" | "partner"');
+      expect(source).toContain('venue: string | null');
       expect(source).toContain('meetup.role === "partner" && meetup.status === "awaiting_partner"');
       expect(source).toContain("counterpartName");
-      expect(source).toContain("No venue or member location is shared.");
+      expect(source).toContain("planned private venue");
       expect(source).not.toContain("/arrival-checkin");
       expect(source).not.toContain("/home-checkin");
     }

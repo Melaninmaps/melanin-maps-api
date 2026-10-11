@@ -36,7 +36,7 @@ function record(overrides: Partial<Parameters<typeof toPrivacyMinimizedMeetup>[0
 }
 
 describe("verified meetup policy", () => {
-  it("fails closed when organizer approval or a bounded future time is missing and rejects venue collection", () => {
+  it("requires organizer consent, a planned venue, and a bounded future time", () => {
     expect(() => normalizeVerifiedMeetupRequest({
       partnerId: "partner-1",
       venue: "Community center",
@@ -46,15 +46,34 @@ describe("verified meetup policy", () => {
       status: 403,
     }));
 
-    expect(() => normalizeVerifiedMeetupRequest({
+    expect(normalizeVerifiedMeetupRequest({
       partnerId: "partner-1",
-      venue: "Community center",
+      venue: " Community center   room 2 ",
       scheduledAt: SCHEDULED_AT.toISOString(),
       organizerApproval: true,
-    }, NOW)).toThrow(/Meetup locations are not collected/);
+    }, NOW)).toMatchObject({
+      partnerId: "partner-1",
+      venue: "Community center room 2",
+      scheduledAt: SCHEDULED_AT,
+    });
 
     expect(() => normalizeVerifiedMeetupRequest({
       partnerId: "partner-1",
+      venue: "my current home",
+      scheduledAt: SCHEDULED_AT.toISOString(),
+      organizerApproval: true,
+    }, NOW)).toThrow(expect.objectContaining<Partial<MeetupPolicyError>>({ code: "MEETUP_VENUE_NOT_ALLOWED" }));
+
+    expect(() => normalizeVerifiedMeetupRequest({
+      partnerId: "partner-1",
+      venue: "33.7490, -84.3880",
+      scheduledAt: SCHEDULED_AT.toISOString(),
+      organizerApproval: true,
+    }, NOW)).toThrow(expect.objectContaining<Partial<MeetupPolicyError>>({ code: "MEETUP_VENUE_NOT_ALLOWED" }));
+
+    expect(() => normalizeVerifiedMeetupRequest({
+      partnerId: "partner-1",
+      venue: "Community center",
       scheduledAt: "2026-10-10T15:05:00.000Z",
       organizerApproval: true,
     }, NOW)).toThrow(/between 15 minutes and 30 days/);
@@ -72,7 +91,7 @@ describe("verified meetup policy", () => {
     }));
   });
 
-  it("does not approve or expose a meetup after its venue/time window expires", () => {
+  it("does not expose a venue or time after its time window expires", () => {
     const expired = record({ expiresAt: new Date("2026-10-10T14:59:59.000Z") });
     expect(effectiveMeetupStatus(expired, NOW)).toBe("expired");
     expect(() => assertActiveMeetup(expired, NOW)).toThrow(expect.objectContaining<Partial<MeetupPolicyError>>({
@@ -88,12 +107,12 @@ describe("verified meetup policy", () => {
     });
   });
 
-  it("does not return venue, attendee IDs, notes, watcher details, clear codes, or a safety guarantee", () => {
+  it("returns a planned venue only to a participant while keeping storage, notes, watchers, and safety claims private", () => {
     const response = toPrivacyMinimizedMeetup(record(), "partner-1", NOW) as Record<string, unknown>;
     expect(response).toMatchObject({
       role: "partner",
       counterpartName: "Ari Organizer",
-      venue: null,
+      venue: "Community center room 2",
       status: "awaiting_partner",
     });
     for (const prohibitedKey of [
@@ -101,6 +120,6 @@ describe("verified meetup policy", () => {
     ]) {
       expect(response).not.toHaveProperty(prohibitedKey);
     }
-    expect(JSON.stringify(response)).not.toMatch(/safe|safety|guarantee/i);
+    expect(JSON.stringify(response)).not.toMatch(/guarantee|live.?location|coordinates/i);
   });
 });

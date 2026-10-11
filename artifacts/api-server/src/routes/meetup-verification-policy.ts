@@ -1,6 +1,7 @@
 export const MINIMUM_MEETUP_LEAD_MS = 15 * 60 * 1000;
 export const MAXIMUM_MEETUP_LEAD_MS = 30 * 24 * 60 * 60 * 1000;
 export const MEETUP_WINDOW_MS = 4 * 60 * 60 * 1000;
+export const MAX_MEETUP_VENUE_LENGTH = 240;
 
 export type VerifiedMeetupStatus = "awaiting_partner" | "approved" | "cancelled" | "expired";
 
@@ -26,7 +27,8 @@ export interface VerifiedMeetupRequestInput {
 
 export interface NormalizedVerifiedMeetupRequest {
   partnerId: string;
-  venue: null;
+  /** Plaintext exists only in request handling; routes seal it before storage. */
+  venue: string;
   scheduledAt: Date;
   expiresAt: Date;
 }
@@ -35,7 +37,7 @@ function requiredString(value: unknown, field: string, maxLength: number): strin
   if (typeof value !== "string") {
     throw new MeetupPolicyError("INVALID_MEETUP_INPUT", `${field} is required`);
   }
-  const normalized = value.trim();
+  const normalized = value.trim().replace(/\s+/g, " ");
   if (!normalized) {
     throw new MeetupPolicyError("INVALID_MEETUP_INPUT", `${field} is required`);
   }
@@ -43,6 +45,22 @@ function requiredString(value: unknown, field: string, maxLength: number): strin
     throw new MeetupPolicyError("INVALID_MEETUP_INPUT", `${field} is too long`);
   }
   return normalized;
+}
+
+function normalizePublicVenue(value: unknown): string {
+  const venue = requiredString(value, "venue", MAX_MEETUP_VENUE_LENGTH);
+  // A participant can choose a private venue, but the product must not collect
+  // current coordinates or use the meetup flow to disclose a member's home.
+  if (
+    /^[-+]?\d{1,2}\.\d{3,}\s*,\s*[-+]?\d{1,3}\.\d{3,}$/.test(venue)
+    || /\b(?:my|our)\s+(?:current\s+)?(?:home|house|apartment|address)\b/i.test(venue)
+  ) {
+    throw new MeetupPolicyError(
+      "MEETUP_VENUE_NOT_ALLOWED",
+      "Choose a planned public venue. Do not enter a home address, current location, or coordinates.",
+    );
+  }
+  return venue;
 }
 
 function requiredFutureDate(value: DateInput, now: Date): Date {
@@ -62,9 +80,10 @@ function requiredFutureDate(value: DateInput, now: Date): Date {
 }
 
 /**
- * Accept only the minimum data needed for a time-bounded meetup request. A
- * meetup venue can reveal a member's current or planned location, so it is not
- * collected, stored, or disclosed by this workflow.
+ * A verified Meetup is deliberately a two-party, time-bounded agreement. The
+ * organizer chooses a planned public venue and explicitly consents to sharing
+ * it with the selected verified connection. The route encrypts it at rest;
+ * the partner sees it only to make an independent approval decision.
  */
 export function normalizeVerifiedMeetupRequest(
   input: VerifiedMeetupRequestInput,
@@ -73,23 +92,17 @@ export function normalizeVerifiedMeetupRequest(
   if (input.organizerApproval !== true) {
     throw new MeetupPolicyError(
       "ORGANIZER_APPROVAL_REQUIRED",
-      "The verified organizer must explicitly approve this meetup request",
+      "The verified organizer must explicitly approve sharing the private venue and scheduled time with this connection",
       403,
     );
   }
-  if (typeof input.venue === "string" && input.venue.trim()) {
-    throw new MeetupPolicyError(
-      "MEETUP_LOCATION_RETIRED",
-      "Meetup locations are not collected or shared. Arrange any venue privately off-platform.",
-      410,
-    );
-  }
 
+  const scheduledAt = requiredFutureDate(input.scheduledAt, now);
   return {
     partnerId: requiredString(input.partnerId, "partnerId", 255),
-    venue: null,
-    scheduledAt: requiredFutureDate(input.scheduledAt, now),
-    expiresAt: new Date(requiredFutureDate(input.scheduledAt, now).getTime() + MEETUP_WINDOW_MS),
+    venue: normalizePublicVenue(input.venue),
+    scheduledAt,
+    expiresAt: new Date(scheduledAt.getTime() + MEETUP_WINDOW_MS),
   };
 }
 
@@ -139,6 +152,7 @@ export interface MeetupResponseRecord extends MeetupLifecycleRecord {
   id: number;
   initiatorId: string;
   partnerId: string;
+  /** Decrypted by the authenticated route only when the relationship is active. */
   location: string | null;
   initiatedAt: Date;
   organizerApprovedAt: Date | null;
@@ -158,9 +172,10 @@ function displayName(firstName: string | null, lastName: string | null, username
 }
 
 /**
- * Deliberately exclude attendee IDs, notes, clear codes, watcher details, and
- * any safety assessment. Each participant sees only the counterpart display
- * name and time window; no personal or meetup location is disclosed.
+ * The response excludes raw attendee IDs, encrypted storage, notes, clear
+ * codes, watcher details, and any safety assessment. The planned public venue
+ * and scheduled window are returned only to one of the two active participants
+ * and only for the current time-bounded request.
  */
 export function toPrivacyMinimizedMeetup(
   record: MeetupResponseRecord,
@@ -169,7 +184,8 @@ export function toPrivacyMinimizedMeetup(
 ) {
   const status = effectiveMeetupStatus(record, now);
   const isOrganizer = record.initiatorId === viewerId;
-  const active = status === "awaiting_partner" || status === "approved";
+  const isParticipant = isOrganizer || record.partnerId === viewerId;
+  const active = isParticipant && (status === "awaiting_partner" || status === "approved");
 
   return {
     id: record.id,
@@ -178,7 +194,7 @@ export function toPrivacyMinimizedMeetup(
       ? displayName(record.partnerFirstName, record.partnerLastName, record.partnerUsername)
       : displayName(record.initiatorFirstName, record.initiatorLastName, record.initiatorUsername),
     status,
-    venue: null,
+    venue: active ? record.location : null,
     scheduledAt: active ? record.scheduledAt : null,
     expiresAt: active ? record.expiresAt : null,
     initiatedAt: record.initiatedAt,

@@ -30,7 +30,6 @@ import {
   sendTrialExpired,
   sendMissionWinBack,
   sendWeeklyDigest,
-  sendMeetupCheckinMissedEmail,
   sendFoundingAnniversaryEmail,
   sendWeeklyBusinessReport,
   type FoundingAnniversaryMetrics,
@@ -1409,125 +1408,53 @@ Keep it under 75 words. Use their business name naturally.`,
 });
 
 // ─── POST /cron/meetup-checkins ──────────────────────────────────────────────
-// Alerts safety friends when a meetup arrival or home check-in is missed.
-// Privacy: alerts go ONLY to the designated safety friend — never to the meetup partner.
+// Legacy automatic arrival/home tracking is retired. This retained cron path is
+// a privacy-only retention job: it clears time-expired meetup details without
+// emailing, pushing, or disclosing a member's venue or location.
 router.post("/cron/meetup-checkins", async (req, res): Promise<void> => {
   if (!verifyCronSecret(req, res)) return;
   const now = new Date();
-  // 15-minute grace period before sending alert
-  const gracePeriodMs = 15 * 60 * 1000;
-  const alertThreshold = new Date(now.getTime() - gracePeriodMs);
 
   try {
-    // Find overdue arrival check-ins (not yet confirmed, past grace period, no alert sent yet)
-    const overdueArrival = await db
-      .select({
-        id: meetupVerificationsTable.id,
-        initiatorId: meetupVerificationsTable.initiatorId,
-        arrivalCheckAt: meetupVerificationsTable.arrivalCheckAt,
-        location: meetupVerificationsTable.location,
-        safetyFriendEmail: meetupVerificationsTable.safetyFriendEmail,
-        safetyFriendName: meetupVerificationsTable.safetyFriendName,
-        firstName: usersTable.firstName,
-        lastName: usersTable.lastName,
+    const result = await db
+      .update(meetupVerificationsTable)
+      .set({
+        location: null,
+        note: null,
+        clearCode: null,
+        safetyWatcherId: null,
+        safetyWatcherEmail: null,
+        arrivalCheckAt: null,
+        arrivalCheckedAt: null,
+        arrivalCheckStatus: null,
+        arrivalAlertSentAt: null,
+        homeCheckAt: null,
+        homeCheckedAt: null,
+        homeCheckStatus: null,
+        homeAlertSentAt: null,
+        safetyFriendName: null,
+        safetyFriendEmail: null,
+        clearedAt: now,
       })
-      .from(meetupVerificationsTable)
-      .leftJoin(usersTable, eq(usersTable.id, meetupVerificationsTable.initiatorId))
       .where(and(
-        eq(meetupVerificationsTable.arrivalCheckStatus, "pending"),
-        lte(meetupVerificationsTable.arrivalCheckAt, alertThreshold),
-        isNull(meetupVerificationsTable.arrivalAlertSentAt),
         isNull(meetupVerificationsTable.clearedAt),
-        isNotNull(meetupVerificationsTable.safetyFriendEmail),
+        lte(meetupVerificationsTable.expiresAt, now),
+        or(
+          isNotNull(meetupVerificationsTable.location),
+          isNotNull(meetupVerificationsTable.note),
+          isNotNull(meetupVerificationsTable.safetyWatcherId),
+          isNotNull(meetupVerificationsTable.safetyWatcherEmail),
+          isNotNull(meetupVerificationsTable.arrivalCheckAt),
+          isNotNull(meetupVerificationsTable.homeCheckAt),
+          isNotNull(meetupVerificationsTable.safetyFriendEmail),
+        ),
       ));
 
-    // Find overdue home check-ins
-    const overdueHome = await db
-      .select({
-        id: meetupVerificationsTable.id,
-        initiatorId: meetupVerificationsTable.initiatorId,
-        homeCheckAt: meetupVerificationsTable.homeCheckAt,
-        location: meetupVerificationsTable.location,
-        safetyFriendEmail: meetupVerificationsTable.safetyFriendEmail,
-        safetyFriendName: meetupVerificationsTable.safetyFriendName,
-        firstName: usersTable.firstName,
-        lastName: usersTable.lastName,
-      })
-      .from(meetupVerificationsTable)
-      .leftJoin(usersTable, eq(usersTable.id, meetupVerificationsTable.initiatorId))
-      .where(and(
-        eq(meetupVerificationsTable.homeCheckStatus, "pending"),
-        lte(meetupVerificationsTable.homeCheckAt, alertThreshold),
-        isNull(meetupVerificationsTable.homeAlertSentAt),
-        isNull(meetupVerificationsTable.clearedAt),
-        isNotNull(meetupVerificationsTable.safetyFriendEmail),
-      ));
-
-    let arrivalAlerted = 0;
-    let homeAlerted = 0;
-
-    for (const row of overdueArrival) {
-      if (!row.safetyFriendEmail || !row.arrivalCheckAt) continue;
-      try {
-        const memberName = [row.firstName, row.lastName].filter(Boolean).join(" ") || "Your friend";
-        await sendMeetupCheckinMissedEmail(
-          row.safetyFriendEmail,
-          row.safetyFriendName,
-          memberName,
-          "arrival",
-          row.arrivalCheckAt,
-          row.location,
-          row.id,
-        );
-        await db.update(meetupVerificationsTable)
-          .set({ arrivalCheckStatus: "overdue", arrivalAlertSentAt: now })
-          .where(eq(meetupVerificationsTable.id, row.id));
-        arrivalAlerted++;
-        if (row.initiatorId) {
-          void sendPushToUser(row.initiatorId, {
-            title: "⚠️ Arrival Check-In Overdue",
-            body: "Your arrival check-in for your meetup is overdue. Your safety friend has been notified.",
-            data: { screen: "member-connections" },
-          });
-        }
-      } catch (err) {
-        logger.error({ err, id: row.id }, "Failed to send meetup arrival alert");
-      }
-    }
-
-    for (const row of overdueHome) {
-      if (!row.safetyFriendEmail || !row.homeCheckAt) continue;
-      try {
-        const memberName = [row.firstName, row.lastName].filter(Boolean).join(" ") || "Your friend";
-        await sendMeetupCheckinMissedEmail(
-          row.safetyFriendEmail,
-          row.safetyFriendName,
-          memberName,
-          "home",
-          row.homeCheckAt,
-          row.location,
-          row.id,
-        );
-        await db.update(meetupVerificationsTable)
-          .set({ homeCheckStatus: "overdue", homeAlertSentAt: now })
-          .where(eq(meetupVerificationsTable.id, row.id));
-        homeAlerted++;
-        if (row.initiatorId) {
-          void sendPushToUser(row.initiatorId, {
-            title: "⚠️ Home Check-In Overdue",
-            body: "Your home check-in for your meetup is overdue. Your safety friend has been notified.",
-            data: { screen: "member-connections" },
-          });
-        }
-      } catch (err) {
-        logger.error({ err, id: row.id }, "Failed to send meetup home alert");
-      }
-    }
-
-    logger.info({ arrivalAlerted, homeAlerted }, "Meetup checkin cron completed");
-    res.json({ ok: true, arrivalAlerted, homeAlerted });
+    const redacted = result.rowCount ?? 0;
+    logger.info({ redacted }, "Meetup privacy retention cron completed");
+    res.json({ ok: true, retiredAutomaticTracking: true, redacted });
   } catch (err: unknown) {
-    logger.error({ err }, "Meetup checkin cron failed");
+    logger.error({ err }, "Meetup privacy retention cron failed");
     res.status(500).json({ error: "Cron failed" });
   }
 });

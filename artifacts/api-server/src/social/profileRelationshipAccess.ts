@@ -2,6 +2,7 @@ import { and, eq, inArray, or, sql } from "drizzle-orm";
 import {
   db,
   memberConnections,
+  meetupVerificationsTable,
   trustedContactShares,
   userBlocksTable,
   userFollowsTable,
@@ -56,8 +57,9 @@ export type BlockCleanupResult = Readonly<{
 
 /**
  * Blocking is the privacy boundary, not merely a profile-display preference.
- * It removes both directions of social relationships and revokes any dependent
- * trusted-contact share inside one transaction before returning success.
+ * It removes both directions of social relationships, revokes dependent
+ * trusted-contact shares, and cancels/redacts any participant-only meetup in
+ * one transaction before returning success.
  */
 export async function blockMemberAndCleanupRelationships(
   blockerId: string,
@@ -79,6 +81,10 @@ export async function blockMemberAndCleanupRelationships(
       and(eq(memberConnections.requesterId, blockerId), eq(memberConnections.recipientId, blockedId)),
       and(eq(memberConnections.requesterId, blockedId), eq(memberConnections.recipientId, blockerId)),
     );
+    const meetupPredicate = or(
+      and(eq(meetupVerificationsTable.initiatorId, blockerId), eq(meetupVerificationsTable.partnerId, blockedId)),
+      and(eq(meetupVerificationsTable.initiatorId, blockedId), eq(meetupVerificationsTable.partnerId, blockerId)),
+    );
     const now = new Date();
     const [acceptedFollows, connections] = await Promise.all([
       tx
@@ -95,6 +101,34 @@ export async function blockMemberAndCleanupRelationships(
       .insert(userBlocksTable)
       .values({ blockerId, blockedId })
       .onConflictDoNothing();
+
+    await tx
+      .update(meetupVerificationsTable)
+      .set({
+        status: "cancelled",
+        cancelledAt: now,
+        cancelledById: blockerId,
+        cancellationReason: "Relationship unavailable",
+        location: null,
+        note: null,
+        clearCode: null,
+        safetyWatcherId: null,
+        safetyWatcherEmail: null,
+        arrivalCheckAt: null,
+        arrivalCheckedAt: null,
+        arrivalCheckStatus: null,
+        arrivalAlertSentAt: null,
+        homeCheckAt: null,
+        homeCheckedAt: null,
+        homeCheckStatus: null,
+        homeAlertSentAt: null,
+        safetyFriendName: null,
+        safetyFriendEmail: null,
+      })
+      .where(and(meetupPredicate, or(
+        eq(meetupVerificationsTable.status, "awaiting_partner"),
+        eq(meetupVerificationsTable.status, "approved"),
+      )));
 
     if (connections.length > 0) {
       await tx

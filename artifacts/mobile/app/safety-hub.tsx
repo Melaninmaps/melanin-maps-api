@@ -39,7 +39,7 @@ type MeetupVerification = {
   role: "organizer" | "partner";
   counterpartName: string;
   status: "awaiting_partner" | "approved" | "cancelled" | "expired";
-  venue: null;
+  venue: string | null;
   scheduledAt: string | null;
   expiresAt: string | null;
   initiatedAt: string;
@@ -224,7 +224,7 @@ export default function SafetyHubScreen() {
                   <Feather name="user-check" size={18} color="#2563EB" />
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.alertTitle, { color: "#1D4ED8" }]}>{meetup.counterpartName} requested meetup verification</Text>
-                    <Text style={[styles.alertSub, { color: "#1E40AF" }]}>Review and independently approve this time-bounded request. No venue or member location is shared.</Text>
+                    <Text style={[styles.alertSub, { color: "#1E40AF" }]}>Review the planned private venue and independently approve this time-bounded request. It does not share live member location.</Text>
                   </View>
                   <TouchableOpacity
                     style={[styles.imSafeBtn, { backgroundColor: "#2563EB" }]}
