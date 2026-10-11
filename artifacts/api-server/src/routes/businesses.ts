@@ -1642,6 +1642,105 @@ router.get("/businesses/mine/managed", async (req: any, res: Response) => {
   }
 });
 
+// The target ID is mandatory for multi-business profile work. This route is
+// intentionally narrower than the legacy /mine profile endpoint: it permits
+// only ordinary profile/contact fields and never changes publication,
+// ownership, evidence, eligibility, map coordinates, or protected status.
+router.get("/businesses/mine/managed/:businessId", async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  const businessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (!businessId) {
+    res.status(400).json({ error: "A business selection is required." });
+    return;
+  }
+  try {
+    const [business] = await db
+      .select()
+      .from(businessesTable)
+      .where(and(
+        eq(businessesTable.id, businessId),
+        approvedOwnerPredicate(String(userId)),
+      ))
+      .limit(1);
+    if (!business) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+    res.json({ business });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch selected managed business");
+    res.status(500).json({ error: "Failed to fetch managed business" });
+  }
+});
+
+router.patch("/businesses/mine/managed/:businessId/profile", async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  const businessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (!businessId) {
+    res.status(400).json({ error: "A business selection is required." });
+    return;
+  }
+
+  const {
+    name, category, subcategory, description, phone, website, hours,
+    instagram, tiktok, facebook, twitter, youtube, pinterest,
+    primarySocialPlatform, businessTagline, ownerName, ownerBio, ownerStory,
+  } = req.body as Record<string, string | null | undefined>;
+  if (category && !ALL_VALID_CATEGORY_NAMES.includes(category)) {
+    res.status(400).json({ error: "Invalid category" });
+    return;
+  }
+
+  const updates: Record<string, unknown> = { updatedAt: new Date() };
+  if (name?.trim()) updates.name = name.trim();
+  if (category) {
+    updates.category = category;
+    updates.subcategory = subcategory?.trim() || category;
+  }
+  if (typeof description === "string") updates.description = description.trim();
+  if (phone !== undefined) updates.phone = phone?.trim() || null;
+  if (website !== undefined) updates.website = website?.trim() || null;
+  if (hours !== undefined) updates.hours = hours?.trim() || null;
+  if (instagram !== undefined) updates.instagram = instagram?.trim() || null;
+  if (tiktok !== undefined) updates.tiktok = tiktok?.trim() || null;
+  if (facebook !== undefined) updates.facebook = facebook?.trim() || null;
+  if (twitter !== undefined) updates.twitter = twitter?.trim() || null;
+  if (youtube !== undefined) updates.youtube = youtube?.trim() || null;
+  if (pinterest !== undefined) updates.pinterest = pinterest?.trim() || null;
+  if (primarySocialPlatform !== undefined) updates.primarySocialPlatform = primarySocialPlatform || null;
+  if (businessTagline !== undefined) updates.businessTagline = businessTagline?.trim() || null;
+  if (ownerName !== undefined) updates.ownerName = ownerName?.trim() || null;
+  if (ownerBio !== undefined) updates.ownerBio = ownerBio?.trim() || null;
+  if (ownerStory !== undefined) updates.ownerStory = ownerStory?.trim() || null;
+
+  try {
+    const [updated] = await db
+      .update(businessesTable)
+      .set(updates)
+      .where(and(
+        eq(businessesTable.id, businessId),
+        approvedOwnerPredicate(String(userId)),
+      ))
+      .returning();
+    if (!updated) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+    res.json({ business: updated });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update selected managed business profile");
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
 router.get("/businesses/mine", async (req: any, res: Response) => {
   try {
     const userId = req.user?.id;

@@ -8,8 +8,8 @@ const businessRoutes = readFileSync(
 
 function managedBusinessRoute(): string {
   const start = businessRoutes.indexOf('router.get("/businesses/mine/managed"');
-  const legacyRead = businessRoutes.indexOf('router.get("/businesses/mine",', start);
-  return businessRoutes.slice(start, legacyRead);
+  const selectedBusinessRead = businessRoutes.indexOf('router.get("/businesses/mine/managed/:businessId"', start);
+  return businessRoutes.slice(start, selectedBusinessRead);
 }
 
 describe("owner-scoped managed business read contract", () => {
@@ -50,5 +50,25 @@ describe("owner-scoped managed business read contract", () => {
     expect(profilePatch).toContain('code: "BUSINESS_SELECTION_REQUIRED"');
     expect(profilePatch).toContain("eq(businessesTable.id, selection.business.id)");
     expect(profilePatch).toContain("approvedOwnerPredicate(String(userId))");
+  });
+
+  it("requires an explicit approved business ID for selected profile reads and ordinary profile edits", () => {
+    const selectedRead = businessRoutes.slice(
+      businessRoutes.indexOf('router.get("/businesses/mine/managed/:businessId"'),
+      businessRoutes.indexOf('router.patch("/businesses/mine/managed/:businessId/profile"'),
+    );
+    const selectedPatch = businessRoutes.slice(
+      businessRoutes.indexOf('router.patch("/businesses/mine/managed/:businessId/profile"'),
+      businessRoutes.indexOf('router.get("/businesses/mine",'),
+    );
+
+    expect(selectedRead).toContain('eq(businessesTable.id, businessId)');
+    expect(selectedRead).toContain('approvedOwnerPredicate(String(userId))');
+    expect(selectedPatch).toContain('eq(businessesTable.id, businessId)');
+    expect(selectedPatch).toContain('approvedOwnerPredicate(String(userId))');
+    expect(selectedPatch).toContain('res.status(404).json({ error: "Managed business not found." })');
+    expect(selectedPatch).not.toContain("listingStatus");
+    expect(selectedPatch).not.toContain("ownershipDesignations");
+    expect(selectedPatch).not.toContain("latitude");
   });
 });

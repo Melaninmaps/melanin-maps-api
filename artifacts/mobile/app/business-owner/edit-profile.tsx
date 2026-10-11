@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useState } from "react";
 import {
@@ -70,6 +70,10 @@ export default function EditBusinessProfile() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { businessId: selectedBusinessId } = useLocalSearchParams<{ businessId?: string }>();
+  const managedBusinessId = typeof selectedBusinessId === "string" && selectedBusinessId.trim()
+    ? selectedBusinessId.trim()
+    : null;
   const topPad = (Platform.OS as string) === "web" ? 67 : insets.top;
   const bottomPad = (Platform.OS as string) === "web" ? 34 : insets.bottom;
 
@@ -106,7 +110,10 @@ export default function EditBusinessProfile() {
       const token = await getToken();
       const headers: Record<string, string> = {};
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${getApiBase()}/api/businesses/mine`, { headers });
+      const selectedPath = managedBusinessId
+        ? `/api/businesses/mine/managed/${encodeURIComponent(managedBusinessId)}`
+        : "/api/businesses/mine";
+      const res = await fetch(`${getApiBase()}${selectedPath}`, { headers });
       if (res.ok) {
         const data = await res.json() as { business: (FormState & { id: string; imageUrl?: string; photos?: string[]; videos?: string[]; introVideoUrl?: string | null; weeklySchedule?: Record<string, { open: string; close: string } | null> | null; showAvailability?: boolean }) | null };
         if (data.business) {
@@ -146,6 +153,19 @@ export default function EditBusinessProfile() {
   const handleSave = async () => {
     if (!form.name.trim()) { Alert.alert("Business name required", "Please enter your business name."); return; }
     if (!form.category) { Alert.alert("Category required", "Please select a business category."); return; }
+    const addressChanged = Boolean(original && (
+      form.address.trim() !== original.address.trim() ||
+      form.city.trim() !== original.city.trim() ||
+      form.state.trim() !== original.state.trim() ||
+      form.zip.trim() !== original.zip.trim()
+    ));
+    if (managedBusinessId && addressChanged) {
+      Alert.alert(
+        "Address change needs review",
+        "Save profile details separately, then submit an address change through the existing review workflow. This selected-business editor never changes a public address directly.",
+      );
+      return;
+    }
     if ((Platform.OS as string) !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSaving(true);
     let profileSaved = false;
@@ -153,7 +173,10 @@ export default function EditBusinessProfile() {
       const token = await getToken();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${getApiBase()}/api/businesses/mine/profile`, {
+      const profilePath = managedBusinessId
+        ? `/api/businesses/mine/managed/${encodeURIComponent(managedBusinessId)}/profile`
+        : "/api/businesses/mine/profile";
+      const res = await fetch(`${getApiBase()}${profilePath}`, {
         method: "PATCH", headers,
         body: JSON.stringify({
           name: form.name.trim(), category: form.category,
@@ -174,12 +197,6 @@ export default function EditBusinessProfile() {
       if (!res.ok) throw new Error("Save failed");
       profileSaved = true;
 
-      const addressChanged = original && (
-        form.address.trim() !== original.address.trim() ||
-        form.city.trim() !== original.city.trim() ||
-        form.state.trim() !== original.state.trim() ||
-        form.zip.trim() !== original.zip.trim()
-      );
       if (addressChanged && businessId && form.address.trim() && form.city.trim() && form.state.trim()) {
         const addressResponse = await fetch(`${getApiBase()}/api/businesses/${businessId}/address`, {
           method: "PATCH", headers,

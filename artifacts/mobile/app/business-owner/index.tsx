@@ -336,7 +336,7 @@ export default function BusinessOwnerHome() {
           <View style={[styles.managedBusinessesCard, { backgroundColor: colors.card, borderColor: colors.border }]} testID="managed-businesses-list">
             <Text style={[styles.managedBusinessesTitle, { color: colors.foreground }]}>My Businesses</Text>
             <Text style={[styles.managedBusinessesSub, { color: colors.mutedForeground }]}>
-              You have approved access to these businesses. Business-specific admin tools stay unavailable here until they can target a selected business by ID.
+              You have approved access to these businesses. Choose one to view its public page or edit its permitted profile details; protected ownership, eligibility, publication, evidence, and address changes remain review-controlled.
             </Text>
             {businesses.map((managedBusiness) => (
               <View key={managedBusiness.id} style={[styles.managedBusinessRow, { borderTopColor: colors.border }]}>
@@ -352,6 +352,26 @@ export default function BusinessOwnerHome() {
                 {managedBusiness.verified && (
                   <Feather name="check-circle" size={16} color={colors.primary} accessibilityLabel="Verified business" />
                 )}
+                <View style={styles.managedBusinessActions}>
+                  <TouchableOpacity
+                    accessibilityLabel={`View public page for ${managedBusiness.name}`}
+                    activeOpacity={0.8}
+                    style={[styles.managedBusinessAction, { borderColor: colors.border }]}
+                    onPress={() => router.push(`/business/${managedBusiness.id}` as never)}
+                  >
+                    <Feather name="eye" size={14} color={colors.foreground} />
+                    <Text style={[styles.managedBusinessActionText, { color: colors.foreground }]}>View public page</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    accessibilityLabel={`Edit permitted profile fields for ${managedBusiness.name}`}
+                    activeOpacity={0.8}
+                    style={[styles.managedBusinessAction, { backgroundColor: colors.primary }]}
+                    onPress={() => router.push({ pathname: "/business-owner/edit-profile", params: { businessId: managedBusiness.id } } as never)}
+                  >
+                    <Feather name="edit-2" size={14} color="#FFF" />
+                    <Text style={[styles.managedBusinessActionText, { color: "#FFF" }]}>Manage profile</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             ))}
             <TouchableOpacity activeOpacity={0.85}
@@ -553,10 +573,13 @@ const styles = StyleSheet.create({
   managedBusinessesCard: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 12 },
   managedBusinessesTitle: { fontSize: 18, fontFamily: "Inter_700Bold" },
   managedBusinessesSub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
-  managedBusinessRow: { flexDirection: "row", alignItems: "center", gap: 12, borderTopWidth: 1, paddingTop: 12 },
+  managedBusinessRow: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 12, borderTopWidth: 1, paddingTop: 12 },
   managedBusinessIcon: { width: 38, height: 38, borderRadius: 11, alignItems: "center", justifyContent: "center" },
   managedBusinessName: { fontSize: 14, fontFamily: "Inter_600SemiBold" },
   managedBusinessMeta: { fontSize: 12, fontFamily: "Inter_400Regular" },
+  managedBusinessActions: { width: "100%", flexDirection: "row", gap: 8, marginTop: 10 },
+  managedBusinessAction: { flex: 1, minHeight: 40, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6 },
+  managedBusinessActionText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   bizCard: { borderRadius: 18, padding: 16, gap: 14 },
   bizCardTop: { flexDirection: "row", alignItems: "center", gap: 12 },
   bizAvatar: { width: 52, height: 52, borderRadius: 14, backgroundColor: "rgba(255,255,255,0.1)", alignItems: "center", justifyContent: "center" },

@@ -165,13 +165,19 @@ describe("community-fed business publication governance", () => {
     expect(ownerConsole.indexOf("loadError ?")).toBeLessThan(ownerConsole.indexOf("businesses.length === 0"));
   });
 
-  it("lists multiple approved businesses without sending a generic console to an arbitrary business", () => {
+  it("requires an explicit business selection for multi-business management", () => {
     const ownerConsole = source("../app/business-owner/index.tsx");
+    const editProfile = source("../app/business-owner/edit-profile.tsx");
 
     expect(ownerConsole).toContain("businesses.length > 1");
     expect(ownerConsole).toContain('testID="managed-businesses-list"');
-    expect(ownerConsole).toContain("Business-specific admin tools stay unavailable here until they can target a selected business by ID.");
+    expect(ownerConsole).toContain("Edit permitted profile fields for");
+    expect(ownerConsole).toContain('pathname: "/business-owner/edit-profile", params: { businessId: managedBusiness.id }');
+    expect(ownerConsole).toContain("View public page for");
     expect(ownerConsole).toContain("if (data.businesses.length === 1)");
+    expect(editProfile).toContain("const { businessId: selectedBusinessId } = useLocalSearchParams");
+    expect(editProfile).toContain("/api/businesses/mine/managed/${encodeURIComponent(managedBusinessId)}");
+    expect(editProfile).toContain("Address change needs review");
   });
 
   it("keeps approved owner access discoverable and never reports an address failure as a completed save", () => {
