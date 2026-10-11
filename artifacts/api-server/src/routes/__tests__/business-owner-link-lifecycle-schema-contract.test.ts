@@ -32,4 +32,11 @@ describe("business owner-link lifecycle schema gate", () => {
       expect(ownerSchema).toContain(field);
     }
   });
+
+  it("provisions the duplicate-resolution dependency before public business detail reads", () => {
+    expect(migrations).toContain("export async function ensureBusinessPublicDetailSchema");
+    expect(migrations).toContain("CREATE TABLE IF NOT EXISTS public.business_duplicate_resolutions");
+    expect(migrations).toContain("SELECT canonical_business_id, superseded_business_id, identity_evidence, policy_version, scoring FROM public.business_duplicate_resolutions LIMIT 0");
+    expect(startup).toContain("await ensureBusinessPublicDetailSchema(logger);");
+  });
 });

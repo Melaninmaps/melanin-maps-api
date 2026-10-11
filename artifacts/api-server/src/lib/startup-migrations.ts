@@ -7305,6 +7305,30 @@ export async function ensureBusinessOwnerLinkLifecycleSchema(logger?: Logger): P
 }
 
 /**
+ * Public business detail reads use the canonical duplicate-resolution relation
+ * to expose supersession context. In explicit feature-release mode the broad
+ * visibility hardening writer is skipped, so establish this empty additive
+ * relation before accepting a detail request rather than returning a 500.
+ */
+export async function ensureBusinessPublicDetailSchema(logger?: Logger): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS public.business_duplicate_resolutions (
+      job_id uuid NOT NULL,
+      canonical_business_id varchar(255) NOT NULL REFERENCES public.businesses(id),
+      superseded_business_id varchar(255) PRIMARY KEY REFERENCES public.businesses(id),
+      identity_evidence jsonb NOT NULL,
+      policy_version varchar(80) NOT NULL,
+      scoring jsonb NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await pool.query(
+    "SELECT canonical_business_id, superseded_business_id, identity_evidence, policy_version, scoring FROM public.business_duplicate_resolutions LIMIT 0",
+  );
+  logger?.info("Business public-detail duplicate-resolution schema is ready before traffic acceptance");
+}
+
+/**
  * Member approval may issue an account-activation capability during an explicit
  * feature release, where the broad migration runner is intentionally skipped.
  * This narrow prerequisite creates only an empty additive table/index and then

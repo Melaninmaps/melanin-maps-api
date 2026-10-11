@@ -9,6 +9,7 @@ import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
 import {
   ensureAdminBusinessProfileReceiptsAndCatalogSchema,
   ensureBusinessOwnerLinkLifecycleSchema,
+  ensureBusinessPublicDetailSchema,
   ensureBusinessWebsiteCleanupAuditSchema,
   ensureDirectoryReconciliationLedgerSchema,
   ensureFounderMapRestorationSchema,
@@ -151,6 +152,8 @@ try {
   logger.info("Member activation invitation schema ready before traffic acceptance");
   await ensureBusinessOwnerLinkLifecycleSchema(logger);
   logger.info("Business owner-link lifecycle schema ready before traffic acceptance");
+  await ensureBusinessPublicDetailSchema(logger);
+  logger.info("Business public-detail schema ready before traffic acceptance");
   if (process.env.KINFOLK_MEDIA_BUCKET_ID?.trim()) {
     // This is the only D18 schema bootstrap allowed in explicit feature-release
     // mode: idempotent columns plus a cleanup index, with no row mutation.
