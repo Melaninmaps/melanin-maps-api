@@ -13,11 +13,62 @@ import {
   recordMemberActivationInvitationDelivery,
   revokeMemberActivationInvitations,
 } from "../auth/memberActivationInvitation";
+import {
+  ACTIVATION_INVITATION_REVIEWER_FIXTURE_HEADER,
+  ACTIVATION_INVITATION_REVIEWER_FIXTURE_SCOPE,
+  configuredActivationDeliveryTestInbox,
+  hasActivationInvitationReviewerEntitlement,
+  isBoundActivationInvitationReviewerFixtureRequest,
+  parseActivationInvitationReviewerFixtureTtl,
+  requireActivationInvitationReviewer,
+} from "../auth/isolatedActivationInvitationReviewerFixture";
 
 const router: IRouter = Router();
 
 const WAITLIST_SIGNUP_SOURCES = ["web", "ios", "android"] as const;
 type WaitlistSignupSource = (typeof WAITLIST_SIGNUP_SOURCES)[number];
+
+async function requireActivationInvitationDecisionReviewer(
+  req: Request,
+  res: Response,
+  waitlistId: string,
+  action: "approve" | "resend" | "revoke",
+): Promise<string | null> {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return null;
+  }
+  if (isAdmin(req)) return req.user.id;
+
+  // The fixture can approve one newly prepared synthetic test record only. It
+  // cannot write notes, reject/archive entries, or invoke bulk admin behavior.
+  if (action === "approve") {
+    const body = req.body;
+    if (
+      !body
+      || typeof body !== "object"
+      || Array.isArray(body)
+      || Object.keys(body).length !== 1
+      || body.status !== "approved"
+    ) {
+      res.status(403).json({ error: "Forbidden" });
+      return null;
+    }
+  } else if (
+    req.body !== undefined
+    && (!req.body || typeof req.body !== "object" || Array.isArray(req.body) || Object.keys(req.body).length !== 0)
+  ) {
+    res.status(403).json({ error: "Forbidden" });
+    return null;
+  }
+
+  const reviewerId = await requireActivationInvitationReviewer(req, waitlistId);
+  if (!reviewerId) {
+    res.status(403).json({ error: "Forbidden" });
+    return null;
+  }
+  return reviewerId;
+}
 
 /**
  * Keep one email-keyed waitlist record even when the same person joins from
@@ -128,6 +179,266 @@ async function issueMemberActivationInvitation(
     return { status: "failed_delivery", expiresAt: invitation.expiresAt };
   }
 }
+
+// ── Isolated staging fixture: activation approval and delivery ───────────────
+// This fixture is deliberately not a general waitlist/admin API. It can operate
+// only on one synthetic row for Resend's non-human delivery test inbox and is
+// unavailable unless the exact staging-only configuration and header binding
+// are present. It never returns an activation URL, capability, or raw receipt.
+router.post("/internal/isolated-fixtures/activation-invitation-reviewer/grant", async (req: Request, res: Response) => {
+  if (!isBoundActivationInvitationReviewerFixtureRequest(req)) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  if (
+    !req.body
+    || typeof req.body !== "object"
+    || Array.isArray(req.body)
+    || Object.keys(req.body).some((key) => key !== "expiresInSeconds")
+  ) {
+    res.status(400).json({ error: "Fixture request is invalid" });
+    return;
+  }
+  const ttlSeconds = parseActivationInvitationReviewerFixtureTtl(req.body.expiresInSeconds);
+  if (ttlSeconds === null) {
+    res.status(400).json({ error: "Fixture request is invalid" });
+    return;
+  }
+  try {
+    const { rows } = await pool.query<{ expires_at: Date }>(
+      `INSERT INTO activation_invitation_reviewer_fixture_entitlements
+         (user_id, bound_email, scope, expires_at)
+       VALUES ($1, $2, $3, NOW() + make_interval(secs => $4::int))
+       ON CONFLICT (user_id) DO UPDATE
+         SET bound_email = EXCLUDED.bound_email,
+             scope = EXCLUDED.scope,
+             expires_at = EXCLUDED.expires_at,
+             created_at = NOW()
+       RETURNING expires_at`,
+      [
+        req.user.id,
+        req.user.email.trim().toLowerCase(),
+        ACTIVATION_INVITATION_REVIEWER_FIXTURE_SCOPE,
+        ttlSeconds,
+      ],
+    );
+    res.status(201).json({
+      ok: true,
+      scope: "isolated_staging_only",
+      expiresAt: rows[0]?.expires_at ?? null,
+    });
+  } catch (error) {
+    req.log.error({ error }, "Isolated activation reviewer fixture grant failed");
+    res.status(503).json({ error: "Fixture entitlement unavailable" });
+  }
+});
+
+router.delete("/internal/isolated-fixtures/activation-invitation-reviewer/grant", async (req: Request, res: Response) => {
+  if (!isBoundActivationInvitationReviewerFixtureRequest(req)) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  try {
+    const result = await pool.query(
+      `DELETE FROM activation_invitation_reviewer_fixture_entitlements
+        WHERE user_id = $1 AND bound_email = $2 AND scope = $3`,
+      [
+        req.user.id,
+        req.user.email.trim().toLowerCase(),
+        ACTIVATION_INVITATION_REVIEWER_FIXTURE_SCOPE,
+      ],
+    );
+    res.json({
+      ok: true,
+      scope: "isolated_staging_only",
+      entitlementRemoved: (result.rowCount ?? 0) > 0,
+    });
+  } catch (error) {
+    req.log.error({ error }, "Isolated activation reviewer fixture cleanup failed");
+    res.status(503).json({ error: "Fixture entitlement unavailable" });
+  }
+});
+
+router.post("/internal/isolated-fixtures/activation-invitation/prepare", async (req: Request, res: Response) => {
+  if (!isBoundActivationInvitationReviewerFixtureRequest(req)) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  if (req.body !== undefined && (!req.body || typeof req.body !== "object" || Array.isArray(req.body) || Object.keys(req.body).length !== 0)) {
+    res.status(400).json({ error: "Fixture request is invalid" });
+    return;
+  }
+  if (!await hasActivationInvitationReviewerEntitlement(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const testInbox = configuredActivationDeliveryTestInbox();
+  if (!testInbox) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  try {
+    const { rows: existingRows } = await pool.query<{
+      id: string;
+      is_synthetic_test: boolean;
+      has_account: boolean;
+    }>(
+      `SELECT entry.id,
+              entry.is_synthetic_test,
+              EXISTS(
+                SELECT 1 FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(entry.email))
+              ) AS has_account
+         FROM waitlist_signups AS entry
+        WHERE LOWER(TRIM(entry.email)) = $1
+        LIMIT 1`,
+      [testInbox],
+    );
+    const existing = existingRows[0];
+    if (existing && (!existing.is_synthetic_test || existing.has_account)) {
+      res.status(409).json({ error: "Fixture recipient is not cleanly reusable" });
+      return;
+    }
+
+    let fixtureId = existing?.id ?? null;
+    if (fixtureId) {
+      await pool.query("DELETE FROM member_activation_invitations WHERE LOWER(TRIM(email)) = $1", [testInbox]);
+      await pool.query(
+        `UPDATE waitlist_signups
+            SET status = 'pending', approved_at = NULL, notes = NULL,
+                signup_sources = 'isolated_activation_delivery_fixture'
+          WHERE id = $1 AND is_synthetic_test = true`,
+        [fixtureId],
+      );
+    } else {
+      const { rows } = await pool.query<{ id: string }>(
+        `INSERT INTO waitlist_signups
+          (email, first_name, status, is_synthetic_test, signup_sources)
+         VALUES ($1, 'Staging delivery fixture', 'pending', true, 'isolated_activation_delivery_fixture')
+         RETURNING id`,
+        [testInbox],
+      );
+      fixtureId = rows[0]?.id ?? null;
+    }
+    if (!fixtureId) {
+      res.status(503).json({ error: "Fixture preparation failed" });
+      return;
+    }
+    res.status(201).json({ id: fixtureId, synthetic: true, recipient: "resend_delivery_test" });
+  } catch (error) {
+    req.log.error({ error }, "Isolated activation delivery fixture preparation failed");
+    res.status(503).json({ error: "Fixture preparation failed" });
+  }
+});
+
+router.get("/internal/isolated-fixtures/activation-invitation/:id/status", async (req: Request, res: Response) => {
+  const fixtureId = String(req.params.id);
+  if (!await requireActivationInvitationReviewer(req, fixtureId)) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const testInbox = configuredActivationDeliveryTestInbox();
+  try {
+    const { rows } = await pool.query<{
+      status: string;
+      provider_receipt_fingerprint: string | null;
+      delivery_accepted_at: Date | null;
+    }>(
+      `SELECT invitation.status, invitation.provider_receipt_fingerprint, invitation.delivery_accepted_at
+         FROM member_activation_invitations AS invitation
+         JOIN waitlist_signups AS entry ON LOWER(TRIM(entry.email)) = LOWER(TRIM(invitation.email))
+        WHERE entry.id = $1
+          AND entry.is_synthetic_test = true
+          AND LOWER(TRIM(entry.email)) = $2
+        ORDER BY invitation.created_at DESC
+        LIMIT 1`,
+      [fixtureId, testInbox],
+    );
+    const invitation = rows[0];
+    res.json({
+      invitation: invitation
+        ? {
+            state: invitation.status,
+            providerReceiptRecorded: Boolean(invitation.provider_receipt_fingerprint),
+            deliveryAccepted: Boolean(invitation.delivery_accepted_at),
+          }
+        : null,
+    });
+  } catch (error) {
+    req.log.error({ error }, "Isolated activation delivery fixture status read failed");
+    res.status(503).json({ error: "Fixture status unavailable" });
+  }
+});
+
+router.post("/internal/isolated-fixtures/activation-invitation/:id/expire", async (req: Request, res: Response) => {
+  const fixtureId = String(req.params.id);
+  if (
+    req.body !== undefined
+    && (!req.body || typeof req.body !== "object" || Array.isArray(req.body) || Object.keys(req.body).length !== 0)
+  ) {
+    res.status(400).json({ error: "Fixture request is invalid" });
+    return;
+  }
+  if (!await requireActivationInvitationReviewer(req, fixtureId)) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const testInbox = configuredActivationDeliveryTestInbox();
+  try {
+    const result = await pool.query(
+      `UPDATE member_activation_invitations AS invitation
+          SET status = 'expired', expires_at = NOW() - INTERVAL '1 second', updated_at = NOW()
+         FROM waitlist_signups AS entry
+        WHERE entry.id = $1
+          AND entry.is_synthetic_test = true
+          AND LOWER(TRIM(entry.email)) = $2
+          AND LOWER(TRIM(invitation.email)) = LOWER(TRIM(entry.email))
+          AND invitation.status IN ('pending_delivery', 'sent', 'failed_delivery')`,
+      [fixtureId, testInbox],
+    );
+    res.json({ expired: (result.rowCount ?? 0) > 0 });
+  } catch (error) {
+    req.log.error({ error }, "Isolated activation delivery fixture expiry failed");
+    res.status(503).json({ error: "Fixture expiry unavailable" });
+  }
+});
+
+router.delete("/internal/isolated-fixtures/activation-invitation/:id", async (req: Request, res: Response) => {
+  const fixtureId = String(req.params.id);
+  if (!isBoundActivationInvitationReviewerFixtureRequest(req)) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const testInbox = configuredActivationDeliveryTestInbox();
+  try {
+    const { rows: fixtureRows } = await pool.query<{ has_account: boolean }>(
+      `SELECT EXISTS(
+         SELECT 1 FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM($2))
+       ) AS has_account
+       FROM waitlist_signups
+       WHERE id = $1 AND is_synthetic_test = true
+         AND LOWER(TRIM(email)) = $2`,
+      [fixtureId, testInbox],
+    );
+    if (!fixtureRows[0]) {
+      res.status(404).json({ error: "Not found" });
+      return;
+    }
+    if (fixtureRows[0].has_account) {
+      res.status(409).json({ error: "Fixture has an account and requires an explicit account cleanup" });
+      return;
+    }
+    await pool.query("DELETE FROM member_activation_invitations WHERE LOWER(TRIM(email)) = $1", [testInbox]);
+    const result = await pool.query(
+      `DELETE FROM waitlist_signups
+        WHERE id = $1 AND is_synthetic_test = true AND LOWER(TRIM(email)) = $2`,
+      [fixtureId, testInbox],
+    );
+    res.json({ cleaned: (result.rowCount ?? 0) === 1 });
+  } catch (error) {
+    req.log.error({ error }, "Isolated activation delivery fixture cleanup failed");
+    res.status(503).json({ error: "Fixture cleanup unavailable" });
+  }
+});
 
 // ── Public: join waitlist ────────────────────────────────────────────────────
 
@@ -827,14 +1138,10 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
 });
 
 // ── Admin: approve / reject a waitlist entry ─────────────────────────────────
-
 router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
-  if (!isAdmin(req)) {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
   const id = String(req.params.id);
   const { status, notes } = req.body as { status?: string; notes?: string };
+  if (!await requireActivationInvitationDecisionReviewer(req, res, id, "approve")) return;
   const allowed = ["pending", "approved", "rejected", "archived"];
   if (status && !allowed.includes(status)) {
     res.status(400).json({ error: "Invalid status" });
@@ -901,7 +1208,12 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
 // ── Admin: resend or revoke an unused account-activation invitation ──────────
 
 router.post("/admin/waitlist/:id/invitation/resend", async (req: Request, res: Response) => {
-  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  if (!await requireActivationInvitationDecisionReviewer(
+    req,
+    res,
+    String(req.params.id),
+    "resend",
+  )) return;
   try {
     const [entry] = await db
       .select({ email: waitlistTable.email, firstName: waitlistTable.firstName, status: waitlistTable.status })
@@ -930,7 +1242,12 @@ router.post("/admin/waitlist/:id/invitation/resend", async (req: Request, res: R
 });
 
 router.post("/admin/waitlist/:id/invitation/revoke", async (req: Request, res: Response) => {
-  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  if (!await requireActivationInvitationDecisionReviewer(
+    req,
+    res,
+    String(req.params.id),
+    "revoke",
+  )) return;
   try {
     const [entry] = await db
       .select({ email: waitlistTable.email })

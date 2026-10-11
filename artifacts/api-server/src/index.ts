@@ -22,6 +22,7 @@ import {
   ensureKinfolkPreferredNameSchema,
   ensureKinfolkTemporaryStaysSchema,
   ensureIsolatedGovernedDiscoverySchema,
+  ensureIsolatedActivationInvitationReviewerFixtureSchema,
   ensureIsolatedOwnerClaimReviewerFixtureSchema,
   ensureIsolatedSeriousThreatPrivateReviewSchema,
   ensureMemberActivationInvitationSchema,
@@ -218,6 +219,10 @@ try {
   // considered only by three canonical claim-decision routes.
   await ensureIsolatedOwnerClaimReviewerFixtureSchema(logger);
   logger.info("Isolated owner-claim reviewer fixture schema gate checked before traffic acceptance");
+  // Activation-delivery validation is separately default-off and accepts only
+  // one synthetic Resend test mailbox; it cannot become general waitlist admin.
+  await ensureIsolatedActivationInvitationReviewerFixtureSchema(logger);
+  logger.info("Isolated activation-invitation reviewer fixture schema gate checked before traffic acceptance");
   // The protected Community feed reads reactions and block/follow boundaries on
   // every authenticated request. These additive relations must exist even when
   // narrow release mode skips broad publication migrations and background work.
