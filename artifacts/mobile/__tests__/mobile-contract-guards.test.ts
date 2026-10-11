@@ -227,15 +227,16 @@ describe("safety report incident-location contract", () => {
     expect(payload).not.toContain("longitude");
   });
 
-  it("requests current location only after the member chooses the incident-location button", () => {
+  it("uses member-entered city or area only and never collects device location for an incident", () => {
     const reportSource = source("../app/report-safety.tsx");
-    expect(reportSource).toContain("handleUseCurrentLocation");
-    expect(reportSource).toContain("Use current location for this incident");
-    expect(reportSource).toContain('locationSource: "current_device"');
-    expect(reportSource).not.toContain("Auto-detect city from GPS on mount");
-    expect(reportSource).not.toContain("useEffect(() =>");
-    expect(reportSource).not.toContain("place.streetNumber");
-    expect(reportSource).not.toContain("place.street");
+    expect(reportSource).toContain('locationSource: "manual_area"');
+    expect(reportSource).toContain("Incident City / Area");
+    expect(reportSource).toContain("Device location collection is disabled.");
+    expect(reportSource).not.toContain("expo-location");
+    expect(reportSource).not.toContain("requestForegroundPermissionsAsync");
+    expect(reportSource).not.toContain("current_device");
+    expect(reportSource).not.toContain("latitude");
+    expect(reportSource).not.toContain("longitude");
   });
 });
 
@@ -252,25 +253,21 @@ describe("Kinfolk verified-radius contract", () => {
   });
 });
 
-describe("Build 106 protected-read and Kinfolk response contracts", () => {
-  it("authenticates nearby safety reads and never substitutes fabricated all-clear alerts", () => {
-    const activityAlerts = source("../hooks/useActivityAlerts.ts");
-    const alerts = source("../hooks/useAlerts.ts");
+describe("privacy-first protected-read and Kinfolk response contracts", () => {
+  it("keeps protected Safety records authenticated and does not fabricate nearby activity", () => {
     const safetyHub = source("../app/(tabs)/safety-hub.tsx");
     const home = source("../app/(tabs)/index.tsx");
 
-    expect(activityAlerts).toContain("Authorization: `Bearer ${token}`");
-    expect(activityAlerts).toContain("setError(cause instanceof Error");
-    expect(alerts).toContain("Authorization: `Bearer ${token}`");
-    expect(alerts).not.toContain('import { ALERTS } from "@/constants/data"');
-    // Discovery no longer renders safety status. Its absence is safer than a
-    // fabricated all-clear state; Safety Hub owns the protected read below.
+    // Discovery never renders a fabricated all-clear state. Safety Hub retains
+    // only authenticated private Check-In and meetup reads; it does not present
+    // nearby member activity, a location-derived radius, or an all-clear claim.
     expect(home).not.toContain('import { ALERTS } from "@/constants/data"');
     expect(home).not.toContain('useAlerts("GA")');
     expect(safetyHub).toContain("Authorization: `Bearer ${token}`");
+    expect(safetyHub).toContain("setIntelAlerts([])");
+    expect(safetyHub).toContain("setIntelChecked(true)");
     expect(safetyHub).toContain("Could not verify nearby conditions");
-    expect(safetyHub).toContain("!intelLoading && !intelError && intelChecked && intelAlerts.length === 0");
-    expect(safetyHub).toContain("!intelLoading && !intelError && !intelChecked");
+    expect(safetyHub).not.toContain("No nearby safety alerts");
     expect(safetyHub).toContain("if (!token) throw new Error");
     expect(safetyHub).toContain("setProtectedDataError");
     expect(safetyHub).toContain("Protected safety records unavailable");
@@ -317,6 +314,7 @@ describe("Build 106 protected-read and Kinfolk response contracts", () => {
       "../app/(tabs)/index.tsx",
       "../app/(tabs)/profile.tsx",
       "../app/(tabs)/safety-hub.tsx",
+      "../app/report-safety.tsx",
       "../app/community-reference.tsx",
       "../app/preview.tsx",
       "../components/AIChatWidget.tsx",

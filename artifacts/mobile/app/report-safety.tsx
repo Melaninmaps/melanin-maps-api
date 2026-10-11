@@ -20,8 +20,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
-
-const API_BASE = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+import { getApiBase } from "@/lib/api";
 
 const REPORT_TYPES = [
   {
@@ -186,7 +185,7 @@ export default function ReportSafetyScreen() {
         : form.city.trim();
 
       const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
-      const res = await fetch(`${API_BASE}/api/reports`, {
+      const res = await fetch(`${getApiBase()}/api/reports`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({
@@ -222,7 +221,7 @@ export default function ReportSafetyScreen() {
   };
 
   const canProceed1 = form.reportType !== "" && form.severity !== "";
-  // City is required (auto-detected); description is optional — a chip selection alone is enough
+  // City is member-entered; description is optional — a category and area are enough to submit a reviewable report.
   const canProceed2 = form.city.trim().length > 0;
 
   const isSuccess = step === 3;
