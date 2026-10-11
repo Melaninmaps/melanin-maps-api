@@ -9,6 +9,7 @@ import type { KinfolkMemoryUse } from "@/components/KinfolkMemoryUseNotice";
 import type {
   KinfolkMediaLink,
   KinfolkRelatedConnection,
+  KinfolkResearchStatus,
   KinfolkStructuredContent,
 } from "@/components/KinfolkContextualPresentation";
 
@@ -201,6 +202,7 @@ export type ChatMessage = {
   structuredContent?: KinfolkStructuredContent | null;
   mediaLinks?: KinfolkMediaLink[];
   relatedConnections?: KinfolkRelatedConnection[];
+  researchStatus?: KinfolkResearchStatus | null;
 };
 type ConversationHandoffStatus = {
   state: "saved" | "resumed";
@@ -354,6 +356,7 @@ export function useKinfolk() {
           structuredContent?: KinfolkStructuredContent | null;
           mediaLinks?: KinfolkMediaLink[] | null;
           relatedConnections?: KinfolkRelatedConnection[] | null;
+          researchStatus?: KinfolkResearchStatus | null;
           conversationHandoff?: ConversationHandoffStatus | null;
           sensitiveMemoryConfirmation?: {
             confirmationRequired?: boolean;
@@ -413,6 +416,7 @@ export function useKinfolk() {
           structuredContent: data.structuredContent ?? null,
           mediaLinks: Array.isArray(data.mediaLinks) ? data.mediaLinks.slice(0, 5) : [],
           relatedConnections: Array.isArray(data.relatedConnections) ? data.relatedConnections.slice(0, 5) : [],
+          researchStatus: data.researchStatus ?? null,
         };
         setPendingRetryText(null); // clear retry on success
         setMessages((prev) => [...prev, aiMsg]);

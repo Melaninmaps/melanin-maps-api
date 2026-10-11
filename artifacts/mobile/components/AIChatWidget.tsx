@@ -53,6 +53,7 @@ import {
   KinfolkContextualPresentation,
   type KinfolkMediaLink,
   type KinfolkRelatedConnection,
+  type KinfolkResearchStatus,
   type KinfolkStructuredContent,
 } from "@/components/KinfolkContextualPresentation";
 import { canRenderKinfolkBusinessCards, type KinfolkResponseMeta } from "@workspace/constants";
@@ -83,6 +84,7 @@ interface Message {
   structuredContent?: KinfolkStructuredContent | null;
   mediaLinks?: KinfolkMediaLink[];
   relatedConnections?: KinfolkRelatedConnection[];
+  researchStatus?: KinfolkResearchStatus | null;
 }
 
 interface TaskActionPayload {
@@ -187,6 +189,7 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
   structuredContent?: KinfolkStructuredContent | null;
   mediaLinks?: KinfolkMediaLink[];
   relatedConnections?: KinfolkRelatedConnection[];
+  researchStatus?: KinfolkResearchStatus | null;
 }> {
   const base = getApiBase();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -236,6 +239,7 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
     structuredContent?: KinfolkStructuredContent | null;
     mediaLinks?: KinfolkMediaLink[] | null;
     relatedConnections?: KinfolkRelatedConnection[] | null;
+    researchStatus?: KinfolkResearchStatus | null;
   };
   if (data.sessionId) sessionId = data.sessionId;
   const responseMeta = data.responseMeta ?? null;
@@ -260,6 +264,7 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
     structuredContent: data.structuredContent ?? null,
     mediaLinks: Array.isArray(data.mediaLinks) ? data.mediaLinks.slice(0, 5) : [],
     relatedConnections: Array.isArray(data.relatedConnections) ? data.relatedConnections.slice(0, 5) : [],
+    researchStatus: data.researchStatus ?? null,
     clarificationSteps: Array.isArray(data.clarificationSteps) ? data.clarificationSteps.slice(0, 3) : [],
     inlineMemoryConsent: data.memoryConsentPlan ? { message, plan: data.memoryConsentPlan, sessionId: data.sessionId ?? sessionId } : null,
     sensitiveMemoryDraft:
@@ -994,6 +999,7 @@ export function AIChatWidget() {
         structuredContent,
         mediaLinks,
         relatedConnections,
+        researchStatus,
       } = await sendToKinfolk(text, token, voiceMode, await nearbyCityHint(text));
 
       const aiMsg: Message = {
@@ -1023,6 +1029,7 @@ export function AIChatWidget() {
         structuredContent,
         mediaLinks,
         relatedConnections,
+        researchStatus,
       };
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
@@ -1540,6 +1547,7 @@ export function AIChatWidget() {
                       structuredContent={item.structuredContent}
                       mediaLinks={item.mediaLinks}
                       relatedConnections={item.relatedConnections}
+                      researchStatus={item.researchStatus}
                       color={colors.foreground}
                       mutedColor={colors.mutedForeground}
                       borderColor={colors.border}

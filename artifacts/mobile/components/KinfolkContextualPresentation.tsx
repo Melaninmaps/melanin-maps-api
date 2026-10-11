@@ -26,10 +26,18 @@ export type KinfolkRelatedConnection = {
   evidenceUrl: string | null;
 };
 
+export type KinfolkResearchStatus = {
+  usedInternal: boolean;
+  usedLiveWeb: boolean;
+  degraded: boolean;
+  asOf: string;
+};
+
 type Props = {
   structuredContent?: KinfolkStructuredContent | null;
   mediaLinks?: KinfolkMediaLink[] | null;
   relatedConnections?: KinfolkRelatedConnection[] | null;
+  researchStatus?: KinfolkResearchStatus | null;
   color: string;
   mutedColor: string;
   borderColor: string;
@@ -41,6 +49,14 @@ function safeLibraryHref(href: string | null | undefined): string | null {
   return typeof href === "string" && /^\/library\/(?:topics?|entries)\/[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*$/.test(href)
     ? href
     : null;
+}
+
+/** Never infer a research source: this label mirrors only server-returned status. */
+export function kinfolkResearchStatusLabel(status: KinfolkResearchStatus): string {
+  if (status.usedInternal && status.usedLiveWeb) return "Research: Library + current sources";
+  if (status.usedInternal) return "Research: Library sources";
+  if (status.usedLiveWeb) return "Research: current sources";
+  return "Research: no linked sources used";
 }
 
 function SafeExternalLink({ title, url, color }: { title: string; url: string; color: string }) {
@@ -147,6 +163,7 @@ export function KinfolkContextualPresentation({
   structuredContent,
   mediaLinks,
   relatedConnections,
+  researchStatus,
   color,
   mutedColor,
   borderColor,
@@ -155,7 +172,7 @@ export function KinfolkContextualPresentation({
 }: Props) {
   const safeMedia = (mediaLinks ?? []).filter((link) => Boolean(parseSafeSourceLink({ title: link.title, url: link.url }))).slice(0, 5);
   const safeConnections = (relatedConnections ?? []).slice(0, 5);
-  if (!structuredContent && safeMedia.length === 0 && safeConnections.length === 0) return null;
+  if (!structuredContent && safeMedia.length === 0 && safeConnections.length === 0 && !researchStatus) return null;
 
   return (
     <View testID="kinfolk-contextual-presentation" style={[styles.container, { borderColor }]}>
@@ -203,6 +220,12 @@ export function KinfolkContextualPresentation({
           })}
         </View>
       ) : null}
+      {researchStatus ? (
+        <Text testID="kinfolk-research-status" style={[styles.researchStatus, { color: mutedColor }]}>
+          {kinfolkResearchStatusLabel(researchStatus)}
+          {researchStatus.degraded ? " · some current details may need a fresh check" : ""}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -216,6 +239,7 @@ const styles = StyleSheet.create({
   detailTitle: { fontFamily: "Inter_700Bold", fontSize: 12, lineHeight: 17 },
   detailText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
   safetyText: { fontFamily: "Inter_600SemiBold", fontSize: 11, lineHeight: 16 },
+  researchStatus: { fontFamily: "Inter_400Regular", fontSize: 10, lineHeight: 15 },
   link: { flexDirection: "row", alignItems: "center", gap: 6, alignSelf: "flex-start", paddingVertical: 2 },
   linkText: { fontFamily: "Inter_600SemiBold", fontSize: 11, lineHeight: 16, textDecorationLine: "underline", flexShrink: 1 },
 });

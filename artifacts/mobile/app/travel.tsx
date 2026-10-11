@@ -980,6 +980,7 @@ function AiMessageBubble({
           structuredContent={msg.structuredContent}
           mediaLinks={msg.mediaLinks}
           relatedConnections={msg.relatedConnections}
+          researchStatus={msg.researchStatus}
           color={colors.text}
           mutedColor={colors.mutedForeground}
           borderColor={colors.border}

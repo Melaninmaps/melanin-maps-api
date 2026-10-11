@@ -11,9 +11,12 @@ describe("Kinfolk contextual response surfaces", () => {
     expect(hook).toContain("structuredContent?: KinfolkStructuredContent | null");
     expect(hook).toContain("mediaLinks?: KinfolkMediaLink[]");
     expect(hook).toContain("relatedConnections?: KinfolkRelatedConnection[]");
+    expect(hook).toContain("researchStatus?: KinfolkResearchStatus | null");
     expect(hook).toContain("structuredContent: data.structuredContent ?? null");
     expect(hook).toContain("mediaLinks: Array.isArray(data.mediaLinks)");
+    expect(hook).toContain("researchStatus: data.researchStatus ?? null");
     expect(travel).toContain("<KinfolkContextualPresentation");
+    expect(travel).toContain("researchStatus={msg.researchStatus}");
   });
 
   it("preserves widget consent and disclosure parity while failing closed for business cards", () => {
@@ -34,6 +37,8 @@ describe("Kinfolk contextual response surfaces", () => {
     expect(presentation).toContain("content.criteria.slice(0, 5)");
     expect(presentation).toContain("content.pathways.slice(0, 5)");
     expect(presentation).toContain("Open Library context");
+    expect(presentation).toContain("Research: Library + current sources");
+    expect(presentation).toContain('testID="kinfolk-research-status"');
     expect(travel).toContain("onOpenLibrary={(href) => router.push(href as never)}");
     expect(widget).toContain("onOpenLibrary={(href) => router.push(href as never)}");
   });
