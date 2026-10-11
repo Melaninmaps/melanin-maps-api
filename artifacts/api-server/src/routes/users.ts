@@ -9,6 +9,7 @@ import { deleteAllSessionsForUser } from "../lib/auth";
 import { decryptToken, generateClientSecret, revokeAppleToken } from "../lib/apple";
 import { isAdmin } from "../lib/adminAuth";
 import { getUserTier, TIER_DISPLAY } from "../middleware/requireMembership";
+import { blockMemberAndCleanupRelationships } from "../social/profileRelationshipAccess";
 
 const avatarUpload = multer({
   storage: multer.memoryStorage(),
@@ -944,14 +945,8 @@ router.post("/users/:id/block", async (req: Request, res: Response) => {
   const targetId = Array.isArray(rawTargetId) ? rawTargetId[0] ?? "" : rawTargetId;
   if (targetId === req.user.id) { res.status(400).json({ error: "Cannot block yourself" }); return; }
   try {
-    await db.insert(userBlocksTable).values({
-      blockerId: req.user.id,
-      blockedId: targetId,
-    }).onConflictDoNothing();
-    // Also unfollow if following
-    await db.delete(userFollowsTable).where(
-      and(eq(userFollowsTable.followerId, req.user.id), eq(userFollowsTable.followingId, targetId))
-    );
+    const result = await blockMemberAndCleanupRelationships(req.user.id, targetId);
+    if (!result.targetFound) { res.status(404).json({ error: "User not found" }); return; }
     res.json({ ok: true, blocked: true });
   } catch (err) {
     req.log.error({ err }, "POST /api/users/:id/block error");
