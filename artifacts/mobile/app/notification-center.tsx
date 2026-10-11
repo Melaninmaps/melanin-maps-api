@@ -27,9 +27,9 @@ interface Notif {
   color: string;
   title: string;
   body: string;
-  time: string;
+  time: string | null;
   read: boolean;
-  group: "Today" | "This Week" | "Earlier";
+  group: "Today" | "This Week" | "Earlier" | "Private alerts";
   entityType?: string | null;
   data?: { type?: string; screen?: string; checkinId?: string | number };
 }
@@ -75,6 +75,9 @@ function mapApiRow(row: Record<string, unknown>): Notif {
   const data = rawData && typeof rawData === "object" && !Array.isArray(rawData)
     ? rawData as Notif["data"]
     : undefined;
+  const entityType = typeof row.entityType === "string" ? row.entityType : null;
+  const isPrivateCheckinAlert = entityType === "safety_checkin" && data?.type === "safety_checkin_overdue";
+  const createdAt = String(row.createdAt ?? row.created_at ?? "");
   return {
     id: String(row.id),
     type,
@@ -82,10 +85,10 @@ function mapApiRow(row: Record<string, unknown>): Notif {
     color: COLOR_MAP[type] ?? "#7B4F2E",
     title: String(row.title ?? ""),
     body: String(row.body ?? ""),
-    time: getRelativeTime(String(row.createdAt ?? row.created_at ?? "")),
+    time: isPrivateCheckinAlert ? null : getRelativeTime(createdAt),
     read: Boolean(row.read),
-    group: getTimeGroup(String(row.createdAt ?? row.created_at ?? new Date().toISOString())),
-    entityType: typeof row.entityType === "string" ? row.entityType : null,
+    group: isPrivateCheckinAlert ? "Private alerts" : getTimeGroup(createdAt || new Date().toISOString()),
+    entityType,
     data,
   };
 }
@@ -129,7 +132,7 @@ export default function NotificationCenterScreen() {
   const filtered = activeTab === "all" ? notifs : notifs.filter((n) => n.type === activeTab);
   const unreadCount = notifs.filter((n) => !n.read).length;
 
-  const groups = ["Today", "This Week", "Earlier"] as const;
+  const groups = ["Private alerts", "Today", "This Week", "Earlier"] as const;
 
   const markAllRead = async () => {
     setNotifs((ns) => ns.map((n) => ({ ...n, read: true })));
@@ -279,7 +282,9 @@ export default function NotificationCenterScreen() {
                         <Text style={[styles.notifText, { color: colors.mutedForeground }]} numberOfLines={2}>
                           {notif.body}
                         </Text>
-                        <Text style={[styles.notifTime, { color: colors.mutedForeground }]}>{notif.time}</Text>
+                        {notif.time && (
+                          <Text style={[styles.notifTime, { color: colors.mutedForeground }]}>{notif.time}</Text>
+                        )}
                       </View>
                     </TouchableOpacity>
                   ))}

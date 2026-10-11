@@ -19,7 +19,6 @@ type ReceivedCheckinAlert = {
   notificationId: string;
   title: string;
   body: string;
-  createdAt: string;
   status: "overdue" | "resolved";
   privacy: string;
 };
@@ -133,9 +132,6 @@ export default function SafetyCheckinAlertScreen() {
 
             <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <Text style={[styles.body, { color: colors.foreground }]}>{alert.body}</Text>
-              <Text style={[styles.timestamp, { color: colors.mutedForeground }]}>
-                Alert received {new Date(alert.createdAt).toLocaleString()}
-              </Text>
             </View>
 
             <View style={[styles.privacyCard, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
@@ -181,7 +177,6 @@ const styles = StyleSheet.create({
   cardTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
   body: { fontSize: 15, fontFamily: "Inter_400Regular", lineHeight: 22 },
   sub: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19 },
-  timestamp: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 3 },
   privacyCard: { borderWidth: 1, borderRadius: 16, padding: 16, flexDirection: "row", gap: 12, alignItems: "flex-start" },
   privacyTitle: { fontSize: 14, fontFamily: "Inter_700Bold", marginBottom: 3 },
   flex: { flex: 1 },

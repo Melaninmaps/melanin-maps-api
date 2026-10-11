@@ -50,5 +50,9 @@ describe("mobile Home safety entry boundaries", () => {
     expect(receivedCheckin).toContain("alert.privacy");
     expect(receivedCheckin).toContain("does not contact emergency services");
     expect(receivedCheckin).not.toContain("expo-location");
+    expect(receivedCheckin).not.toContain("createdAt");
+    expect(receivedCheckin).not.toContain("new Date(");
+    expect(notificationCenter).toContain('group: isPrivateCheckinAlert ? "Private alerts"');
+    expect(notificationCenter).toContain("time: isPrivateCheckinAlert ? null");
   });
 });
