@@ -157,7 +157,7 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
               </View>
               <Text style={[styles.successTitle, { color: colors.text }]}>Claim Submitted!</Text>
               <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
-                Our team will review your claim and reach out within 2-3 business days. Thank you for being part of the community!
+                Your claim is private while our team reviews it. Approval may grant listing-management access; it does not verify the business or its ownership designations.
               </Text>
               <TouchableOpacity style={[styles.doneBtn, { backgroundColor: colors.primary }]} onPress={handleClose}>
                 <Text style={styles.doneBtnText}>Done</Text>
