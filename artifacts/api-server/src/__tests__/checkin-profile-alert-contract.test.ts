@@ -42,7 +42,7 @@ describe("profile-based Safety Check-In contract", () => {
 
   it("records retryable in-app and provider attempts without claiming device delivery", () => {
     expect(cron).toContain("INSERT INTO notifications");
-    expect(cron.match(/tss\.id::text = scr\.trusted_share_id/g)).toHaveLength(2);
+    expect(cron.match(/tss\.id::text = scr\.trusted_share_id::text/g)).toHaveLength(2);
     expect(cron).not.toContain("tss.id = scr.trusted_share_id");
     expect(cron.match(/np\.topics::text AS topics_text/g)).toHaveLength(2);
     expect(cron.match(/allowsSafetyCheckinNotification\(recipient\.topics_text, true\)/g)).toHaveLength(2);
