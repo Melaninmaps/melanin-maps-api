@@ -396,6 +396,13 @@ import {
   type SensitiveMemoryTopic,
 } from "../kinfolk/sensitive-memory";
 import {
+  decryptSensitiveMemoryContent,
+  encryptSensitiveMemoryContent,
+  sensitiveMemoryStoragePlaceholder,
+  SensitiveMemoryEncryptionIntegrityError,
+  SensitiveMemoryEncryptionUnavailableError,
+} from "../kinfolk/sensitive-memory-encryption";
+import {
   reauthenticateSensitiveMemoryVault,
   requireSensitiveMemoryVaultReauth,
   sensitiveMemoryVaultReauthState,
@@ -6529,7 +6536,8 @@ router.get("/kinfolk/sensitive-memories/:id", async (req: Request, res: Response
     const [memory] = await db
       .select({
         id: kinfolkPrivateMemoriesTable.id,
-        content: kinfolkPrivateMemoriesTable.content,
+        sensitiveEncryptedContent: kinfolkPrivateMemoriesTable.sensitiveEncryptedContent,
+        sensitiveEncryptionKeyId: kinfolkPrivateMemoriesTable.sensitiveEncryptionKeyId,
         purpose: kinfolkPrivateMemoriesTable.purpose,
         isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
         sensitiveRestricted: kinfolkPrivateMemoriesTable.sensitiveRestricted,
@@ -6548,8 +6556,18 @@ router.get("/kinfolk/sensitive-memories/:id", async (req: Request, res: Response
       ))
       .limit(1);
     if (!memory) return void res.status(404).json({ error: "Sensitive memory not found" });
-    res.json({ memory });
+    const content = decryptSensitiveMemoryContent(
+      memory.sensitiveEncryptedContent,
+      memory.sensitiveEncryptionKeyId,
+    );
+    res.json({ memory: { ...memory, content } });
   } catch (err) {
+    if (err instanceof SensitiveMemoryEncryptionUnavailableError || err instanceof SensitiveMemoryEncryptionIntegrityError) {
+      return void res.status(409).json({
+        error: "This sensitive memory is locked until it can be securely re-entered.",
+        code: "SENSITIVE_MEMORY_REENTRY_REQUIRED",
+      });
+    }
     req.log.error(safeKinfolkErrorMetadata(err), "Sensitive memory vault read failed");
     res.status(500).json({ error: "Sensitive memory could not be opened." });
   }
@@ -6783,14 +6801,19 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
             });
         }
         for (const item of itemsToSave) {
+          const sensitiveCiphertext = item.kind === "sensitive"
+            ? encryptSensitiveMemoryContent(item.content)
+            : null;
           await tx.insert(kinfolkPrivateMemoriesTable).values({
             userId: req.user!.id,
-            content: item.content,
+            content: sensitiveCiphertext ? sensitiveMemoryStoragePlaceholder() : item.content,
             purpose: plan.purpose,
             sourceSessionId: sessionId,
             isSensitive: item.kind === "sensitive",
             sensitiveConsentGrantedAt:
               item.kind === "sensitive" ? now : null,
+            sensitiveEncryptedContent: sensitiveCiphertext?.encryptedContent ?? null,
+            sensitiveEncryptionKeyId: sensitiveCiphertext?.encryptionKeyId ?? null,
           });
         }
         const saved = itemsToSave.length;
@@ -6897,6 +6920,7 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
       });
     }
     if (isSensitive && !await requireSensitiveMemoryVaultReauth(req, res)) return;
+    const sensitiveCiphertext = isSensitive ? encryptSensitiveMemoryContent(content) : null;
 
     const result = await withSerializedPrivateMemoryWrite({
       userId: req.user.id,
@@ -6951,13 +6975,15 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
           .insert(kinfolkPrivateMemoriesTable)
           .values({
             userId: req.user!.id,
-            content,
+            content: isSensitive ? sensitiveMemoryStoragePlaceholder() : content,
             purpose,
             sourceSessionId:
               typeof body.sessionId === "string" ? body.sessionId : null,
             isSensitive,
             sensitiveConsentGrantedAt: isSensitive ? new Date() : null,
             sensitiveRestricted: isSensitive ? body.sensitiveRestricted !== false : false,
+            sensitiveEncryptedContent: sensitiveCiphertext?.encryptedContent ?? null,
+            sensitiveEncryptionKeyId: sensitiveCiphertext?.encryptionKeyId ?? null,
             expiresAt,
           })
           .returning();
@@ -7041,11 +7067,12 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
       });
     }
     if (willBeSensitive && !await requireSensitiveMemoryVaultReauth(req, res)) return;
+    const sensitiveCiphertext = willBeSensitive ? encryptSensitiveMemoryContent(content) : null;
 
     const [memory] = await db
       .update(kinfolkPrivateMemoriesTable)
       .set({
-        content,
+        content: sensitiveCiphertext ? sensitiveMemoryStoragePlaceholder() : content,
         // Preserve original source session and purpose. An edit cannot silently
         // change provenance or reduce a prior sensitive classification.
         isSensitive: willBeSensitive,
@@ -7053,6 +7080,8 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
         sensitiveRestricted: willBeSensitive
           ? body.sensitiveRestricted !== false
           : false,
+        sensitiveEncryptedContent: sensitiveCiphertext?.encryptedContent ?? null,
+        sensitiveEncryptionKeyId: sensitiveCiphertext?.encryptionKeyId ?? null,
         updatedAt: new Date(),
       })
       .where(

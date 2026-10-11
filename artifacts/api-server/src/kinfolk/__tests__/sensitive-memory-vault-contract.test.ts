@@ -10,6 +10,10 @@ const vaultSource = readFileSync(
   fileURLToPath(new URL("../sensitive-memory-vault.ts", import.meta.url)),
   "utf8",
 );
+const encryptionSource = readFileSync(
+  fileURLToPath(new URL("../sensitive-memory-encryption.ts", import.meta.url)),
+  "utf8",
+);
 
 describe("sensitive private memory vault contract", () => {
   it("redacts sensitive detail from the ordinary memory-management response", () => {
@@ -36,5 +40,13 @@ describe("sensitive private memory vault contract", () => {
     expect(routeSource).toContain("explicitlyRequestsRestrictedSensitiveMemoryUse");
     expect(routeSource).toContain("memory.sensitiveRestricted");
     expect(routeSource).toContain("eq(kinfolkPrivateMemoriesTable.sensitiveRestricted, false)");
+  });
+
+  it("requires authenticated encryption material for sensitive vault content", () => {
+    expect(encryptionSource).toContain('"aes-256-gcm"');
+    expect(encryptionSource).toContain("KINFOLK_SENSITIVE_MEMORY_ENCRYPTION_KEY");
+    expect(encryptionSource).toContain("KINFOLK_SENSITIVE_MEMORY_ENCRYPTION_KEY_ID");
+    expect(encryptionSource).toContain("SensitiveMemoryEncryptionUnavailableError");
+    expect(encryptionSource).toContain("sensitiveMemoryStoragePlaceholder");
   });
 });
