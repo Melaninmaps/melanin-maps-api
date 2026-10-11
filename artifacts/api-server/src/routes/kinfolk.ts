@@ -310,6 +310,7 @@ import {
 } from "../kinfolk/business-subject";
 import { canonicalizeContextualUrl } from "../kinfolk/contextual-url";
 import { discoverLocalBusinesses } from "../kinfolk/local-business-discovery";
+import { governedRequirementEvidenceForMemories } from "../kinfolk/governed-requirement-evidence";
 import {
   audienceAllowsBusinessText,
   rankGovernedBusinessesForMember,
@@ -7986,6 +7987,13 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const directPersonalizationMemories = directRelevantPrivateMemories.filter(
     (memory) => memory.purpose !== "preferred_name",
   );
+  // A hard requirement remains separate from soft preference ranking. This
+  // opaque object contains only server-controlled constraint kinds, never the
+  // member's wording, and makes direct discovery fail closed when the listing
+  // cannot establish a match.
+  const directRequirementEvidence = governedRequirementEvidenceForMemories(
+    directPersonalizationMemories,
+  );
   const relevantPlanningMemories = directPersonalizationMemories.filter(
     (memory) => memory.purpose === "planning_context",
   );
@@ -8277,6 +8285,7 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     documentedOwnershipScope: broadenDocumentedOwnershipScope,
     verifiedRadius: verifiedRadius ?? undefined,
     radiusTraceRequestId: verifiedRadius ? crypto.randomUUID() : undefined,
+    requirementEvidence: directRequirementEvidence,
   });
   const resultView = buildConversationalBusinessResultView({
     businesses: discoveryResult.discovery.platformBusinesses,
@@ -8358,6 +8367,8 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     platformCount > 0 &&
     discoveryResult.discovery.platformStatus === "completed" &&
     !noResultOffer;
+  const directRequirementWasApplied =
+    discoveryResult.discovery.requirementEvidence.outcome === "matched";
   const directPrivateMemoryUseDecision = resolvePrivateMemoryUseDecision({
     runtimeEnabled: directPrivateMemoryRuntimeEnabled,
     memberEnabled: input.memoryEnabled,
@@ -8366,11 +8377,13 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     relevantMemoryCount: directPersonalizationMemories.length,
     allowPersonalization:
       governedDiscoveryHasUsableRecommendation &&
-      directPrivateDiscoveryTerms.length > 0,
+      (directPrivateDiscoveryTerms.length > 0 || directRequirementWasApplied),
   });
   const conciseDirectoryReply =
     noResultOffer
       ? noResultOffer.reply
+      : discoveryResult.discovery.requirementEvidence.outcome === "not_established"
+        ? `I couldn't find a documented MWM listing that meets your saved requirement for this search in ${scope.city}. I won't substitute or relax it. You can try another city or revise the search.`
       : ownershipDocumentationScope === "not_documented" && platformCount > 0
         ? `You chose to see ${platformCount} ${requestedSubjectLabel} ${platformCount === 1 ? "listing" : "listings"} in ${scope.city} whose ownership is not documented. They are not ownership-matched recommendations, and your saved preference has not changed.`
       : explicitAllPlacesExpansion && platformCount > 0

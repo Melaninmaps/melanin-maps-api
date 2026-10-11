@@ -5,6 +5,10 @@ import type {
   GovernedKinfolkMapPlace,
   ValidatedKinfolkCityScope,
 } from "./governedBusinessRepository";
+import {
+  hasDocumentedRequirementEvidence,
+  type GovernedRequirementEvidence,
+} from "./governed-requirement-evidence";
 import type { VerifiedRadiusOrigin } from "./verified-radius-v1";
 import {
   matchesDocumentedDietaryRequirement,
@@ -147,6 +151,11 @@ export type DeterministicBusinessDiscoveryResponse = Readonly<{
       message: string;
     };
     webFindings: BusinessDiscoveryWebFinding[];
+    /** Opaque, non-content-bearing status for an active saved hard requirement. */
+    requirementEvidence: {
+      active: boolean;
+      outcome: "not_applicable" | "matched" | "not_established";
+    };
   };
   sources: SafeSource[];
   sourceNote: string;
@@ -527,6 +536,11 @@ export async function discoverLocalBusinesses(input: {
   verifiedRadius?: VerifiedRadiusOrigin;
   /** Server-generated correlation id for count-only exact-radius diagnostics. */
   radiusTraceRequestId?: string;
+  /**
+   * Controlled, opaque evidence constraints for relevant saved hard requirements.
+   * These filter only this response cohort; they never alter catalog eligibility.
+   */
+  requirementEvidence?: GovernedRequirementEvidence;
 }): Promise<DeterministicBusinessDiscoveryResponse> {
   let platformStatus: "completed" | "degraded" = "completed";
   let businessRows: GovernedKinfolkBusiness[] = [];
@@ -675,6 +689,23 @@ export async function discoverLocalBusinesses(input: {
   }
   const afterServiceEvidenceCount = businessRows.length;
 
+  // A member-approved hard requirement is not a soft ranking preference. Keep
+  // the governed catalog's eligibility and ownership logic unchanged, but do
+  // not surface a response card unless public listing metadata supports every
+  // controlled requirement constraint. Unknown constraint types fail closed.
+  const hasActiveRequirement = input.requirementEvidence?.hasRequirement === true;
+  if (hasActiveRequirement) {
+    businessRows = businessRows.filter((business) =>
+      hasDocumentedRequirementEvidence(
+        business,
+        input.requirementEvidence!,
+      ),
+    );
+    // Cultural-place records and unverified external findings have no business
+    // requirement evidence contract, so they cannot substitute for a match.
+    mapRows = [];
+  }
+
   businessRows = businessRows.filter((business) =>
     eligibleForImmediateDining(business, input.subject),
   );
@@ -732,7 +763,7 @@ export async function discoverLocalBusinesses(input: {
     };
   }
 
-  const rankedWeb = (input.documentedOwnershipScope || input.requiredDesignationIds?.length || (promotionCatalogIsActive && !input.allowAllPublicPlaces)
+  const rankedWeb = (hasActiveRequirement || input.documentedOwnershipScope || input.requiredDesignationIds?.length || (promotionCatalogIsActive && !input.allowAllPublicPlaces)
     ? []
     : rankLocalBusinessResults(webOutcome.results))
     .filter(
@@ -927,6 +958,14 @@ export async function discoverLocalBusinesses(input: {
         message: providerMessage(webOutcome.state, rankedWeb.length),
       },
       webFindings: rankedWeb,
+      requirementEvidence: {
+        active: hasActiveRequirement,
+        outcome: !hasActiveRequirement
+          ? "not_applicable"
+          : businesses.length > 0
+            ? "matched"
+            : "not_established",
+      },
     },
     sources,
     sourceNote: providerMessage(webOutcome.state, rankedWeb.length),

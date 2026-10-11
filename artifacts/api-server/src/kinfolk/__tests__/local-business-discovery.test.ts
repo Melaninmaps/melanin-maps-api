@@ -913,6 +913,76 @@ describe("deterministic local business discovery", () => {
     expect(result.discovery.mapPlaces).toEqual([]);
     expect(result.resultView.cards[0]?.supportingText).toMatch(/straight-line mi from your public origin/i);
   });
+
+  it("returns only documented hard-requirement matches without changing catalog eligibility", async () => {
+    const supported = {
+      ...governedBusiness,
+      id: "documented-accessible-reading-room",
+      tags: ["books", "quiet reading"],
+      accessibilityFeatures: ["Wheelchair accessible entrance"],
+    };
+    const unsupported = {
+      ...governedBusiness,
+      id: "undocumented-accessibility-reading-room",
+      name: "Undocumented Accessibility Reading Room",
+      accessibilityFeatures: [],
+    };
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Atlanta", stateCode: "GA" },
+      subject: bookstore,
+      repository: repository({ businesses: [unsupported, supported], places: [forKeepsPlace] }),
+      webSearch: vi.fn().mockResolvedValue({
+        state: "completed",
+        attempted: false,
+        provider: null,
+        results: [],
+      }),
+      requirementEvidence: {
+        hasRequirement: true,
+        hasUnsupportedRequirement: false,
+        constraints: ["documented_accessibility"],
+      },
+    });
+
+    expect(result.discovery.platformBusinesses.map((business) => business.id)).toEqual([
+      "documented-accessible-reading-room",
+    ]);
+    expect(result.discovery.mapPlaces).toEqual([]);
+    expect(result.discovery.webFindings).toEqual([]);
+    expect(result.recommendations?.businesses.map((business) => business.id)).toEqual([
+      "documented-accessible-reading-room",
+    ]);
+    expect(result.discovery.requirementEvidence).toEqual({
+      active: true,
+      outcome: "matched",
+    });
+  });
+
+  it("returns no substitute when documented hard-requirement evidence is absent", async () => {
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Atlanta", stateCode: "GA" },
+      subject: bookstore,
+      repository: repository({ businesses: [governedBusiness], places: [forKeepsPlace] }),
+      webSearch: vi.fn().mockResolvedValue({
+        state: "completed",
+        attempted: false,
+        provider: null,
+        results: [],
+      }),
+      requirementEvidence: {
+        hasRequirement: true,
+        hasUnsupportedRequirement: false,
+        constraints: ["documented_accessibility"],
+      },
+    });
+
+    expect(result.discovery.platformBusinesses).toEqual([]);
+    expect(result.recommendations).toBeNull();
+    expect(result.discovery.requirementEvidence).toEqual({
+      active: true,
+      outcome: "not_established",
+    });
+  });
 });
 
 describe("local web provider-state contract", () => {
