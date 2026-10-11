@@ -5587,6 +5587,9 @@ router.delete("/kinfolk/reset", async (req: Request, res: Response) => {
         .insert(userSettingsTable)
         .values({
           userId,
+          // Kinfolk flows must not create sensitive Safety alert consent.
+          safetyAlertPolice: false,
+          safetyAlertIce: false,
           kinfolkMemoryEnabled: false,
           kinfolkContinuityEnabled: false,
           kinfolkContinuityUpdatedAt: new Date(),
@@ -5744,7 +5747,13 @@ router.put("/kinfolk/continuity", async (req: Request, res: Response) => {
     if (updatedExisting.length === 0) {
       await db
         .insert(userSettingsTable)
-        .values({ userId: req.user.id, ...continuityUpdate })
+        .values({
+          userId: req.user.id,
+          // Continuity consent is independent from Safety alert consent.
+          safetyAlertPolice: false,
+          safetyAlertIce: false,
+          ...continuityUpdate,
+        })
         .onConflictDoUpdate({
           target: userSettingsTable.userId,
           set: continuityUpdate,
@@ -6791,7 +6800,13 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
         if (updated.length === 0) {
           await tx
             .insert(userSettingsTable)
-            .values({ userId: req.user!.id, ...continuityUpdate })
+            .values({
+              userId: req.user!.id,
+              // Private-memory consent never creates a Safety alert subscription.
+              safetyAlertPolice: false,
+              safetyAlertIce: false,
+              ...continuityUpdate,
+            })
             .onConflictDoUpdate({
               target: userSettingsTable.userId,
               set: continuityUpdate,

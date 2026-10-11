@@ -2985,8 +2985,8 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
     profile_view_tracking_enabled boolean DEFAULT true NOT NULL,
     post_nudges_enabled boolean DEFAULT true NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    safety_alert_police boolean DEFAULT true NOT NULL,
-    safety_alert_ice boolean DEFAULT true NOT NULL,
+    safety_alert_police boolean DEFAULT false NOT NULL,
+    safety_alert_ice boolean DEFAULT false NOT NULL,
     safety_alert_radius_miles integer DEFAULT 5 NOT NULL
 );
 

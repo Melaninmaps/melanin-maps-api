@@ -68,9 +68,8 @@ describe("Police/ICE P0 reporting and alert governance", () => {
     expect(reports).toContain('resolvedCategory === "police"\n      ? incidentLocation');
     expect(reports).toContain("'corroborated' ELSE 'active'");
     expect(reports).toContain("POLICE_ICE_ALERT_TTL_MS");
-    expect(communityAlerts).toContain('const DIRECT_POLICE_ICE_TYPES = new Set(["police", "ice", "checkpoint"])');
+    expect(communityAlerts).toContain("Coordinate-based community alerts have been retired");
     expect(communityAlerts).toContain("type NOT IN ('police', 'ice', 'checkpoint')");
-    expect(communityAlerts).toContain("require anonymous intake, moderation, and corroboration");
     expect(moderation).toContain("encounterType: report.encounterType");
     expect(push).toContain("JOIN user_settings us ON us.user_id = ul.user_id");
     expect(push).toContain("us.safety_alert_radius_miles BETWEEN 1 AND 10");
@@ -80,5 +79,23 @@ describe("Police/ICE P0 reporting and alert governance", () => {
     expect(governedDelivery).not.toContain("saved_places");
     expect(governedDelivery).not.toContain("location_shares");
     expect(governedDelivery).not.toMatch(/data:\s*\{[\s\S]*?(latitude|longitude)/);
+  });
+
+  it("defaults sensitive alert delivery off across schema and independent settings creation paths", () => {
+    const settings = source("../routes/user-settings.ts");
+    const users = source("../routes/users.ts");
+    const kinfolk = source("../routes/kinfolk.ts");
+    const schema = source("../../../../lib/db/src/schema/user-settings.ts");
+    const fullSchema = source("../../railway-migration-full.sql");
+
+    expect(settings).toContain("safetyAlertPolice: false");
+    expect(settings).toContain("safetyAlertIce: false");
+    expect(schema).toContain('boolean("safety_alert_police").notNull().default(false)');
+    expect(schema).toContain('boolean("safety_alert_ice").notNull().default(false)');
+    expect(fullSchema).toContain("safety_alert_police boolean DEFAULT false NOT NULL");
+    expect(fullSchema).toContain("safety_alert_ice boolean DEFAULT false NOT NULL");
+    expect(users).toContain("An unrelated official-alert preference must never create an");
+    expect(kinfolk.match(/safetyAlertPolice: false/g)?.length).toBeGreaterThanOrEqual(3);
+    expect(kinfolk.match(/safetyAlertIce: false/g)?.length).toBeGreaterThanOrEqual(3);
   });
 });

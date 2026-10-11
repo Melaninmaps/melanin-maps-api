@@ -37,6 +37,10 @@ describe("Police/ICE P0 mobile safeguards", () => {
     expect(profile).toContain("save({ safetyAlertRadiusMiles: r })");
     expect(profile).toContain("not official confirmation");
     expect(profile).toContain("Alerts name only a general city area and expire.");
+    expect(profile).toContain("Safety Alert setting did not change");
+    expect(profile).toContain("Alerts never disclose your coordinates, a reporter, or a street.");
+    expect(profile).toContain("if (!response.ok) throw new Error");
+    expect(profile).toContain('accessibilityRole="alert"');
   });
 
   it("does not use the immediate map-alert path for Police, ICE, or checkpoints", () => {

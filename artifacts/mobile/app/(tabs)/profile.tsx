@@ -142,6 +142,7 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
   const [radiusMiles, setRadiusMiles] = useState(5);
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -162,38 +163,43 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
     })();
   }, []);
 
-  const save = async (patch: Record<string, boolean | number>) => {
+  const save = async (patch: Record<string, boolean | number>): Promise<Record<string, unknown> | null> => {
     setSaving(true);
+    setSaveError(null);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const apiBase = getApiBase();
-      await fetch(`${apiBase}/api/users/settings`, {
+      const response = await fetch(`${apiBase}/api/users/settings`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify(patch),
       });
-    } catch { /* silent */ }
-    finally { setSaving(false); }
+      if (!response.ok) throw new Error("Safety alert preference was not saved");
+      return await response.json() as Record<string, unknown>;
+    } catch {
+      setSaveError("Your Safety Alert setting did not change. Check your connection and try again.");
+      return null;
+    } finally { setSaving(false); }
   };
 
-  const togglePolice = () => {
+  const togglePolice = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const next = !alertPolice;
-    setAlertPolice(next);
-    void save({ safetyAlertPolice: next });
+    const saved = await save({ safetyAlertPolice: next });
+    if (saved) setAlertPolice(saved.safetyAlertPolice === true);
   };
 
-  const toggleIce = () => {
+  const toggleIce = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const next = !alertIce;
-    setAlertIce(next);
-    void save({ safetyAlertIce: next });
+    const saved = await save({ safetyAlertIce: next });
+    if (saved) setAlertIce(saved.safetyAlertIce === true);
   };
 
-  const pickRadius = (r: number) => {
+  const pickRadius = async (r: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setRadiusMiles(r);
-    void save({ safetyAlertRadiusMiles: r });
+    const saved = await save({ safetyAlertRadiusMiles: r });
+    if (typeof saved?.safetyAlertRadiusMiles === "number") setRadiusMiles(saved.safetyAlertRadiusMiles);
   };
 
   if (!loaded) return null;
@@ -218,7 +224,7 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
           <Text style={[safetyStyles.rowLabel, { color: colors.foreground }]}>Police activity</Text>
           <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Corroborated community reports only — not official confirmation</Text>
         </View>
-        <Switch value={alertPolice} onValueChange={togglePolice} trackColor={{ true: colors.primary, false: colors.border }} thumbColor="#FFF" />
+        <Switch value={alertPolice} onValueChange={() => { void togglePolice(); }} disabled={saving} trackColor={{ true: colors.primary, false: colors.border }} thumbColor="#FFF" />
       </View>
 
       <View style={safetyStyles.row}>
@@ -226,7 +232,7 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
           <Text style={[safetyStyles.rowLabel, { color: colors.foreground }]}>ICE / immigration activity</Text>
           <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Corroborated community reports only — not official confirmation</Text>
         </View>
-        <Switch value={alertIce} onValueChange={toggleIce} trackColor={{ true: colors.primary, false: colors.border }} thumbColor="#FFF" />
+        <Switch value={alertIce} onValueChange={() => { void toggleIce(); }} disabled={saving} trackColor={{ true: colors.primary, false: colors.border }} thumbColor="#FFF" />
       </View>
 
       <View style={[safetyStyles.divider, { backgroundColor: colors.border }]} />
@@ -238,7 +244,8 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
           {RADIUS_OPTIONS.map((r) => (
             <TouchableOpacity activeOpacity={0.85}
               key={r}
-              onPress={() => pickRadius(r)}
+              onPress={() => { void pickRadius(r); }}
+              disabled={saving}
               style={[
                 safetyStyles.pill,
                 { borderColor: colors.border, backgroundColor: r === radiusMiles ? colors.primary : "transparent" },
@@ -251,6 +258,9 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
           ))}
         </View>
       </View>
+
+      <Text style={[safetyStyles.privacyNote, { color: colors.mutedForeground }]}>If you separately permit a recent app location, it is used only on the server to compare this radius. Alerts never disclose your coordinates, a reporter, or a street.</Text>
+      {saveError ? <Text accessibilityRole="alert" style={[safetyStyles.error, { color: "#B42318" }]}>{saveError}</Text> : null}
     </View>
   );
 }
@@ -269,6 +279,8 @@ const safetyStyles = StyleSheet.create({
   pillRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   pill: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, borderWidth: 1.5 },
   pillText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  privacyNote: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, marginTop: 12 },
+  error: { fontFamily: "Inter_500Medium", fontSize: 12, lineHeight: 16, marginTop: 8 },
 });
 
 type RecSpot = {

@@ -925,7 +925,14 @@ router.put("/users/settings", async (req: Request, res: Response) => {
       Object.keys(officialAlertPatch).length > 0
         ? db
             .insert(userSettingsTable)
-            .values({ userId: req.user.id, ...officialAlertPatch })
+            .values({
+              userId: req.user.id,
+              // An unrelated official-alert preference must never create an
+              // affirmative Police/ICE alert subscription by database default.
+              safetyAlertPolice: false,
+              safetyAlertIce: false,
+              ...officialAlertPatch,
+            })
             .onConflictDoUpdate({
               target: userSettingsTable.userId,
               set: { ...officialAlertPatch, updatedAt: new Date() },
