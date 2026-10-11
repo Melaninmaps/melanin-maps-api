@@ -149,6 +149,7 @@ import { createPostgresLibraryRepository } from "../library/postgresLibraryRepos
 import { createTavilyResearchProvider } from "../library/tavilyResearchProvider";
 import { createOpenAiWebResearchProvider } from "../library/openAiWebResearchProvider";
 import { createOpenAiLibraryWriter } from "../library/openAiLibraryWriter";
+import { resolveKinfolkLivingLibraryWriterConfiguration } from "../kinfolk/living-library-provider-config";
 import {
   createGovernedKinfolkBusinessRepository,
   type GovernedKinfolkBusiness,
@@ -237,18 +238,12 @@ let _researchProvider: ReturnType<typeof createTavilyResearchProvider> | null =
 let _libraryWriter: ReturnType<typeof createOpenAiLibraryWriter> | null = null;
 function getLivingLibraryDeps() {
   const tavilyApiKey = kinfolkTavilyApiKey();
+  const writerConfiguration = resolveKinfolkLivingLibraryWriterConfiguration();
   if (!_libraryRepo) _libraryRepo = createPostgresLibraryRepository(pool);
   if (!_researchProvider && tavilyApiKey)
     _researchProvider = createTavilyResearchProvider(tavilyApiKey);
-  if (!_libraryWriter)
-    _libraryWriter = createOpenAiLibraryWriter({
-      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY ?? "",
-      baseUrl: (
-        process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ??
-        "https://api.openai.com/v1"
-      ).replace(/\/$/, ""),
-      model: kinfolkModel("libraryResearch"),
-    });
+  if (!_libraryWriter && writerConfiguration)
+    _libraryWriter = createOpenAiLibraryWriter(writerConfiguration);
   return {
     repository: _libraryRepo,
     researchProvider: _researchProvider,
@@ -10755,7 +10750,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     ) {
       try {
         const deps = getLivingLibraryDeps();
-        if (!deps.researchProvider)
+        if (!deps.researchProvider || !deps.writer)
           throw new Error("KINFOLK_LIBRARY_RESEARCH_NOT_CONFIGURED");
         const result = await answerWithLivingLibrary({
           memberQuestion: researchPlan.researchQuery,
