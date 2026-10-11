@@ -132,7 +132,7 @@ describe("Kinfolk Community hashtag context", () => {
       routeSource.indexOf('router.get("/kinfolk/business-action-plan'),
     );
     const contextRetrieval = chatRoute.indexOf("retrieveCommunityHashtagContext(pool");
-    const evidenceGate = chatRoute.indexOf("const failClosedReply = evidenceFailureReply");
+    const evidenceGate = chatRoute.indexOf("const routeEvidenceFailureReply = evidenceFailureReply");
     const sourceAssembly = chatRoute.indexOf("const assembledSources: SafeSource[]");
     const safeCatalog = chatRoute.indexOf("const safeCatalog", sourceAssembly);
 

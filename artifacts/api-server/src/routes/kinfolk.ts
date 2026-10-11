@@ -8405,6 +8405,15 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
         resultView.followUp,
         ...(planningFollowUp ? [planningFollowUp] : []),
       ];
+  // These refinements follow a completed governed search; they never withhold
+  // current results or alter a saved member preference. A member can skip a
+  // broad hair or activity refinement and keep the same scoped discovery.
+  const discoveryClarificationSteps = businessDiscoveryClarification({
+    message: input.message,
+    subjectKey: subject.key,
+    ageBand,
+    city: scope.city,
+  });
   const responseSources = [
     ...discoveryResult.sources.map(({ title, url }) => ({ title, url })),
     ...citySafetySources,
@@ -8462,6 +8471,10 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     taskAction: null,
     libraryAction: null,
     memoryUse: directPrivateMemoryUseDecision.memberFacingUse,
+    clarificationSteps:
+      discoveryClarificationSteps.length > 0
+        ? discoveryClarificationSteps
+        : undefined,
     intentClass: "business_discovery",
     responseMeta: {
       schemaVersion: 1,

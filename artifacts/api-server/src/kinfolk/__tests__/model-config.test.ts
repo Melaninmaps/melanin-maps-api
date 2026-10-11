@@ -13,6 +13,7 @@ describe("Kinfolk model configuration", () => {
     expect(kinfolkModel("libraryResearch", {})).toBe("gpt-4o-mini");
     expect(kinfolkModel("transcription", {})).toBe("whisper-1");
     expect(kinfolkModel("transcriptReview", {})).toBe("gpt-4o-mini");
+    expect(kinfolkModel("speech", {})).toBe("gpt-4o-mini-tts");
     expect(kinfolkModel("embedding", {})).toBe("text-embedding-3-small");
   });
 
@@ -21,12 +22,14 @@ describe("Kinfolk model configuration", () => {
     expect(kinfolkModel("fallback", { KINFOLK_FALLBACK_MODEL: "gpt-4.1-mini" })).toBe("gpt-4.1-mini");
     expect(kinfolkModel("webSearch", { KINFOLK_WEB_SEARCH_MODEL: "gpt-5" })).toBe("gpt-5");
     expect(kinfolkModel("libraryResearch", { LIBRARY_RESEARCH_MODEL: "gpt-4o" })).toBe("gpt-4o");
+    expect(kinfolkModel("speech", { KINFOLK_TTS_MODEL: "gpt-4o-mini-tts" })).toBe("gpt-4o-mini-tts");
     expect(kinfolkModel("embedding", {})).toBe("text-embedding-3-small");
   });
 
   it("fails closed to the role default for arbitrary or cross-purpose IDs", () => {
     expect(kinfolkModel("staffDemo", { KINFOLK_STAFF_DEMO_MODEL: "private-preview-model" })).toBe("gpt-4o-mini");
     expect(kinfolkModel("webSearch", { KINFOLK_WEB_SEARCH_MODEL: "gpt-4o-mini-transcribe" })).toBe("gpt-5-mini");
+    expect(kinfolkModel("speech", { KINFOLK_TTS_MODEL: "gpt-audio" })).toBe("gpt-4o-mini-tts");
     expect(kinfolkModel("transcription", { KINFOLK_TRANSCRIPTION_MODEL: "gpt-5" })).toBe("whisper-1");
   });
 
