@@ -285,7 +285,7 @@ async function createSafetyCheckinInAppNotifications(
           AND checkin.status = 'overdue'
           AND checkin.confirmed_at IS NULL
          LEFT JOIN trusted_safety_shares tss
-           ON tss.id = scr.trusted_share_id
+           ON tss.id::text = scr.trusted_share_id
           AND tss.owner_id = $2
           AND tss.contact_user_id = scr.recipient_user_id
           AND tss.contact_type = 'mwm_user'
@@ -427,7 +427,7 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
           AND checkin.status = 'overdue'
           AND checkin.confirmed_at IS NULL
          LEFT JOIN trusted_safety_shares tss
-           ON tss.id = scr.trusted_share_id
+           ON tss.id::text = scr.trusted_share_id
           AND tss.owner_id = $2
           AND tss.contact_user_id = scr.recipient_user_id
           AND tss.contact_type = 'mwm_user'
