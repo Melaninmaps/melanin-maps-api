@@ -17,6 +17,7 @@ import {
   ensureLegacyMapLocationAttestationSchema,
   ensureCommunityFeedReadSchema,
   ensureHbcuExplorePublicationSchema,
+  ensureKinfolkDeliveryProfileSchema,
   ensureKinfolkQuestionImageSchemaOnly,
   ensureKinfolkLivingLibraryReadSchema,
   ensureKinfolkPrivatePlacesSchema,
@@ -150,6 +151,8 @@ try {
   // when their data-neutral structure exists. Explicit feature-release mode
   // skips broad migrations, so verify this exact request-path schema before
   // accepting traffic rather than returning a misleading save/read 500.
+  await ensureKinfolkDeliveryProfileSchema(logger);
+  logger.info("Kinfolk delivery-profile schema ready before traffic acceptance");
   await ensureKinfolkPreferredNameSchema(logger);
   logger.info("Kinfolk preferred-name schema ready before traffic acceptance");
   // Approval issuance and self-registration share this narrow, additive table.

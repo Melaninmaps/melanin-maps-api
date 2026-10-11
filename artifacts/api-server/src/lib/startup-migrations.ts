@@ -7293,6 +7293,42 @@ export async function ensureCanonicalMwmOwnerAttachmentAuditSchema(logger?: Logg
 }
 
 /**
+ * Kinfolk Settings and adaptive answer delivery read this small, member-owned
+ * preference table on authenticated requests. Feature-release mode skips the
+ * broad migration runner, so establish only this additive request-path schema
+ * before traffic rather than returning a generic settings or chat failure.
+ *
+ * The gate never inserts, updates, deletes, or backfills a member preference.
+ */
+const KINFOLK_DELIVERY_PROFILE_SCHEMA_MIGRATIONS = new Set([
+  "kinfolk_delivery_profiles_v1",
+  "kinfolk_delivery_profiles_adaptive_depth_cols",
+]);
+
+export async function ensureKinfolkDeliveryProfileSchema(logger?: Logger): Promise<void> {
+  const log = (msg: string) =>
+    logger ? logger.info(msg) : console.log(`[kinfolk-delivery-profile-schema] ${msg}`);
+  const migrations = MIGRATIONS.filter((migration) =>
+    KINFOLK_DELIVERY_PROFILE_SCHEMA_MIGRATIONS.has(migration.name),
+  );
+
+  if (migrations.length !== KINFOLK_DELIVERY_PROFILE_SCHEMA_MIGRATIONS.size) {
+    throw new Error("Kinfolk delivery-profile schema migration definition is incomplete.");
+  }
+
+  for (const migration of migrations) {
+    await pool.query(migration.sql);
+  }
+
+  // Structural-only assertion after idempotent DDL. Keep it aligned with both
+  // the settings response and the adaptive-delivery query shape.
+  await pool.query(
+    "SELECT user_id, detail_level, tone_preference, learning_mode, notification_cadence, age_band, regional_language_opt_in, regional_reference, allow_related_branches, allow_non_sensitive_recommendations, allow_civic_safety_updates, adaptive_depth_enabled, adaptive_depth_prompt_dismissed_until, depth_updated_from, created_at, updated_at FROM kinfolk_delivery_profiles LIMIT 0",
+  );
+  log("Kinfolk delivery-profile schema is ready before traffic acceptance");
+}
+
+/**
  * Preferred-name save, pause, resume, revoke, and delete are authenticated
  * request paths. Explicit feature-release mode intentionally bypasses the
  * broad migration runner, so this schema-only gate must complete before the
