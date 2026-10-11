@@ -8,6 +8,7 @@ import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
 import {
   ensureAdminBusinessProfileReceiptsAndCatalogSchema,
+  ensureBusinessOwnerLinkLifecycleSchema,
   ensureBusinessWebsiteCleanupAuditSchema,
   ensureDirectoryReconciliationLedgerSchema,
   ensureFounderMapRestorationSchema,
@@ -148,6 +149,8 @@ try {
   // expose a route that would fail closed only after an administrator acts.
   await ensureMemberActivationInvitationSchema(logger);
   logger.info("Member activation invitation schema ready before traffic acceptance");
+  await ensureBusinessOwnerLinkLifecycleSchema(logger);
+  logger.info("Business owner-link lifecycle schema ready before traffic acceptance");
   if (process.env.KINFOLK_MEDIA_BUCKET_ID?.trim()) {
     // This is the only D18 schema bootstrap allowed in explicit feature-release
     // mode: idempotent columns plus a cleanup index, with no row mutation.

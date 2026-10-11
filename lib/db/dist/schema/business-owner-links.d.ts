@@ -98,6 +98,116 @@ export declare const businessOwnerLinksTable: import("drizzle-orm/pg-core").PgTa
         }, {}, {
             length: 20;
         }>;
+        claimId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "claim_id";
+            tableName: "business_owner_links";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
+        approvedBy: import("drizzle-orm/pg-core").PgColumn<{
+            name: "approved_by";
+            tableName: "business_owner_links";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
+        approvedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "approved_at";
+            tableName: "business_owner_links";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        revokedBy: import("drizzle-orm/pg-core").PgColumn<{
+            name: "revoked_by";
+            tableName: "business_owner_links";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
+        revokedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "revoked_at";
+            tableName: "business_owner_links";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        revocationReason: import("drizzle-orm/pg-core").PgColumn<{
+            name: "revocation_reason";
+            tableName: "business_owner_links";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
         verifiedAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "verified_at";
             tableName: "business_owner_links";
@@ -151,15 +261,39 @@ export declare const businessOwnerLinksTable: import("drizzle-orm/pg-core").PgTa
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        updatedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "updated_at";
+            tableName: "business_owner_links";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
     };
     dialect: "pg";
 }>;
 export declare const insertBusinessOwnerLinkSchema: z.ZodObject<{
     role: z.ZodOptional<z.ZodString>;
+    updatedAt: z.ZodOptional<z.ZodDate>;
     userId: z.ZodString;
     status: z.ZodOptional<z.ZodString>;
     businessId: z.ZodString;
+    revokedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
+    approvedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
     verifiedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
+    claimId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    approvedBy: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    revokedBy: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    revocationReason: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     verifiedBy: z.ZodOptional<z.ZodNullable<z.ZodString>>;
 }, {
     out: {};
@@ -261,6 +395,116 @@ export declare const selectBusinessOwnerLinkSchema: import("drizzle-zod").BuildS
     }, {}, {
         length: 20;
     }>;
+    claimId: import("drizzle-orm/pg-core").PgColumn<{
+        name: "claim_id";
+        tableName: "business_owner_links";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: number | undefined;
+    }>;
+    approvedBy: import("drizzle-orm/pg-core").PgColumn<{
+        name: "approved_by";
+        tableName: "business_owner_links";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: number | undefined;
+    }>;
+    approvedAt: import("drizzle-orm/pg-core").PgColumn<{
+        name: "approved_at";
+        tableName: "business_owner_links";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    revokedBy: import("drizzle-orm/pg-core").PgColumn<{
+        name: "revoked_by";
+        tableName: "business_owner_links";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: number | undefined;
+    }>;
+    revokedAt: import("drizzle-orm/pg-core").PgColumn<{
+        name: "revoked_at";
+        tableName: "business_owner_links";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    revocationReason: import("drizzle-orm/pg-core").PgColumn<{
+        name: "revocation_reason";
+        tableName: "business_owner_links";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: number | undefined;
+    }>;
     verifiedAt: import("drizzle-orm/pg-core").PgColumn<{
         name: "verified_at";
         tableName: "business_owner_links";
@@ -299,6 +543,23 @@ export declare const selectBusinessOwnerLinkSchema: import("drizzle-zod").BuildS
     }>;
     createdAt: import("drizzle-orm/pg-core").PgColumn<{
         name: "created_at";
+        tableName: "business_owner_links";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    updatedAt: import("drizzle-orm/pg-core").PgColumn<{
+        name: "updated_at";
         tableName: "business_owner_links";
         dataType: "date";
         columnType: "PgTimestamp";

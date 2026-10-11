@@ -3977,7 +3977,8 @@ ON CONFLICT (city_slug) DO UPDATE SET
       ADD COLUMN IF NOT EXISTS approved_at timestamptz,
       ADD COLUMN IF NOT EXISTS revoked_by varchar(255),
       ADD COLUMN IF NOT EXISTS revoked_at timestamptz,
-      ADD COLUMN IF NOT EXISTS revocation_reason text`,
+      ADD COLUMN IF NOT EXISTS revocation_reason text,
+      ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT NOW()`,
   },
   // Review queue index for admin claim dashboard.
   {
@@ -7281,6 +7282,26 @@ export async function ensureLegacyMapLocationAttestationSchema(logger?: Logger):
     throw new Error("Legacy map location attestation schema verification failed.");
   }
   logger?.info("Legacy map location attestation schema is ready before traffic acceptance");
+}
+
+/**
+ * Owner-scoped profile routes must never infer one business when a member has
+ * multiple relationships. Their approval and revocation predicate is only
+ * safe when every lifecycle column exists, including in explicit feature
+ * release mode where the broad migration loop is intentionally skipped.
+ */
+export async function ensureBusinessOwnerLinkLifecycleSchema(logger?: Logger): Promise<void> {
+  const migration = MIGRATIONS.find(
+    (entry) => entry.name === "community_business_claims_v2_owner_links_cols",
+  );
+  if (!migration) {
+    throw new Error("Business owner-link lifecycle schema migration definition is missing.");
+  }
+  await pool.query(migration.sql);
+  await pool.query(
+    "SELECT claim_id, approved_by, approved_at, revoked_by, revoked_at, revocation_reason, updated_at FROM business_owner_links LIMIT 0",
+  );
+  logger?.info("Business owner-link lifecycle schema is ready before traffic acceptance");
 }
 
 /**
