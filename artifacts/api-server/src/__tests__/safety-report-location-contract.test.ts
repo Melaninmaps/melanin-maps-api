@@ -313,8 +313,10 @@ describe("safety report location and privacy contract", () => {
     expect(police).not.toContain("category: form.encounterType");
     expect(police).not.toMatch(/JSON\.stringify\([\s\S]{0,600}(latitude|longitude)/);
 
-    expect(general).toContain("Use current location for this incident");
+    expect(general).toContain("Device location collection is disabled");
     expect(general).toContain('locationSource: "manual_area"');
+    expect(general).not.toContain("expo-location");
+    expect(general).not.toContain("Use current location");
     expect(general).not.toContain("Auto-detect city from GPS on mount");
     expect(general).not.toMatch(/JSON\.stringify\([\s\S]{0,600}(latitude|longitude)/);
   });

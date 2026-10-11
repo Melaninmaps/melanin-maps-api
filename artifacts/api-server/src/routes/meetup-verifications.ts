@@ -69,7 +69,6 @@ router.get("/meetups", async (req: Request, res: Response) => {
         id: meetupVerificationsTable.id,
         initiatorId: meetupVerificationsTable.initiatorId,
         partnerId: meetupVerificationsTable.partnerId,
-        location: meetupVerificationsTable.location,
         status: meetupVerificationsTable.status,
         initiatedAt: meetupVerificationsTable.initiatedAt,
         scheduledAt: meetupVerificationsTable.scheduledAt,
@@ -99,7 +98,7 @@ router.get("/meetups", async (req: Request, res: Response) => {
       .limit(50);
 
     res.set("Cache-Control", "no-store").json({
-      verifications: verifications.map((verification) => responseFor(verification, userId)),
+      verifications: verifications.map((verification) => responseFor({ ...verification, location: null }, userId)),
     });
   } catch (err) {
     req.log.error({ err }, "GET /meetups error");
@@ -159,7 +158,7 @@ router.post("/meetups", async (req: Request, res: Response) => {
     const [verification] = await db.insert(meetupVerificationsTable).values({
       initiatorId: userId,
       partnerId: request.partnerId,
-      location: request.venue,
+      location: null,
       status: "awaiting_partner",
       initiatedAt: approvedAt,
       scheduledAt: request.scheduledAt,
@@ -210,7 +209,7 @@ router.patch("/meetups/:id", async (req: Request, res: Response) => {
     const correctedAt = new Date();
     const [updated] = await db.update(meetupVerificationsTable)
       .set({
-        location: corrected.venue,
+        location: null,
         scheduledAt: corrected.scheduledAt,
         expiresAt: corrected.expiresAt,
         status: "awaiting_partner",

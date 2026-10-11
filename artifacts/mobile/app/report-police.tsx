@@ -1,10 +1,8 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Animated,
   KeyboardAvoidingView,
@@ -78,7 +76,7 @@ interface ReportForm {
   encounterType: string;
   severity: string;
   city: string;
-  locationSource: "manual_area" | "current_device";
+  locationSource: "manual_area";
   description: string;
   reportingConsent: boolean;
 }
@@ -101,27 +99,6 @@ export default function ReportPoliceScreen() {
   const [cityFocused, setCityFocused] = useState(false);
   const [descFocused, setDescFocused] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [locating, setLocating] = useState(false);
-
-  const handleUseLocation = async () => {
-    setLocating(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") { Alert.alert("Location Access", "Enable location in Settings to use this feature."); return; }
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
-      const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-      if (geo) {
-        const region = geo.region ?? geo.subregion ?? "";
-        setForm((f) => ({
-          ...f,
-          city: geo.city ? `${geo.city}${region ? `, ${region}` : ""}` : f.city,
-          locationSource: "current_device",
-        }));
-      }
-    } catch { Alert.alert("Location Error", "Could not get your location. Try again."); }
-    finally { setLocating(false); }
-  };
-
   const [fadeAnim] = useState(() => new Animated.Value(1));
   const [slideAnim] = useState(() => new Animated.Value(0));
 
@@ -363,7 +340,7 @@ export default function ReportPoliceScreen() {
                 <View>
                   <Text style={[styles.stepTitle, { color: colors.foreground }]}>Incident Location & Details</Text>
                   <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-                    Enter where the incident happened. This may be different from where you are now. City is required; a street or neighborhood is optional.
+                    Enter the incident city manually. Do not enter a street address, neighborhood, or device location.
                   </Text>
 
                   {selectedType && (
@@ -388,19 +365,6 @@ export default function ReportPoliceScreen() {
                       style={[styles.input, { backgroundColor: colors.card, borderColor: cityFocused ? colors.primary : colors.border, color: colors.foreground }]}
                     />
                   </View>
-
-                  <TouchableOpacity
-                    onPress={() => void handleUseLocation()}
-                    disabled={locating}
-                    accessibilityRole="button"
-                    accessibilityLabel="Use my current city as the incident city"
-                    style={[styles.locationButton, { backgroundColor: colors.secondary, borderColor: colors.border, opacity: locating ? 0.65 : 1 }]}
-                  >
-                    {locating
-                      ? <ActivityIndicator size="small" color={colors.primary} />
-                      : <Feather name="navigation" size={16} color={colors.primary} />}
-                    <Text style={[styles.locationButtonText, { color: colors.foreground }]}>Use my current city</Text>
-                  </TouchableOpacity>
 
                   <View style={styles.fieldWrap}>
                     <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Description *</Text>
@@ -509,8 +473,6 @@ const styles = StyleSheet.create({
   fieldLabel: { fontFamily: "Inter_600SemiBold", fontSize: 14, marginBottom: 4 },
   fieldHint: { fontFamily: "Inter_400Regular", fontSize: 12, marginBottom: 8 },
   input: { borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontFamily: "Inter_400Regular", fontSize: 15 },
-  locationButton: { minHeight: 44, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, marginBottom: 18, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
-  locationButtonText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   textarea: { height: 120, textAlignVertical: "top", paddingTop: 12 },
   charCount: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 4, textAlign: "right" },
   disclaimer: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 14, borderRadius: 12, borderWidth: 1, marginTop: 4 },

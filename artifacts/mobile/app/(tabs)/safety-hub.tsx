@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
@@ -96,7 +95,7 @@ const INTEL_TYPE_META: Record<string, { icon: string; label: string; color: stri
 };
 
 const ALL_FEATURES: { id: string; icon: React.ComponentProps<typeof Feather>["name"]; title: string; desc: string; color: string; route: string | null; externalUrl?: string }[] = [
-  { id: "intel",       icon: "radio",         title: "Community Intelligence",       desc: "Report real-time alerts — road closures, protests, celebrations, weather impacts, and more.",          color: "#CA922B", route: "/report-intelligence" },
+  { id: "intel",       icon: "radio",         title: "Community Intelligence",       desc: "Review moderated safety context without collecting or sharing member location.",          color: "#CA922B", route: "/report-intelligence" },
   { id: "tip",         icon: "alert-triangle", title: "Submit Safety Tip",           desc: "Pin a location where violence or hate occurred. Nearby verified members are alerted to confirm.",      color: "#DC2626", route: "/safety-tip" },
   { id: "checkin",     icon: "check-circle",   title: "Safety Check-In",             desc: "Schedule a check-in. Your contact is alerted if you don't confirm.",                                   color: "#16A34A", route: "/checkin" },
   { id: "meetup",      icon: "users",          title: "Meetup Verification",         desc: "Mutually verify in-person meetups with connections you trust.",                                         color: "#7C3AED", route: "/member-connections" },
@@ -168,29 +167,10 @@ export default function SafetyHubTab() {
   }, []);
 
   const fetchIntel = useCallback(async () => {
-    setIntelLoading(true);
+    setIntelLoading(false);
     setIntelError(null);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") throw new Error("Location permission is off. Nearby intelligence was not checked.");
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
-      const token = await SecureStore.getItemAsync("auth_session_token");
-      if (!token) throw new Error("Sign in to load nearby community intelligence.");
-      const base = getApiBase();
-      const res = await fetch(
-        `${base}/api/community-alerts/nearby?lat=${pos.coords.latitude}&lng=${pos.coords.longitude}&radius=16`,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
-      if (!res.ok) throw new Error(`Nearby intelligence is unavailable (${res.status}).`);
-      const data = await res.json() as { alerts: IntelAlert[] };
-      setIntelAlerts(data.alerts ?? []);
-      setIntelChecked(true);
-    } catch (cause) {
-      setIntelAlerts([]);
-      setIntelError(cause instanceof Error ? cause.message : "Nearby intelligence is unavailable.");
-    } finally {
-      setIntelLoading(false);
-    }
+    setIntelAlerts([]);
+    setIntelChecked(true);
   }, []);
 
   const fetchData = useCallback(async () => {
@@ -456,12 +436,12 @@ export default function SafetyHubTab() {
                   style={[styles.reportIntelBtn, { backgroundColor: "#CA922B18", borderColor: "#CA922B40" }]}
                   activeOpacity={0.8}
                 >
-                  {intelLoading ? <ActivityIndicator size="small" color="#CA922B" /> : <Feather name="navigation" size={13} color="#CA922B" />}
-                  <Text style={styles.reportIntelBtnText}>{intelLoading ? "Checking…" : "Check nearby"}</Text>
+                  <Feather name="shield" size={13} color="#CA922B" />
+                  <Text style={styles.reportIntelBtnText}>Privacy notice</Text>
                 </TouchableOpacity>
               </View>
 
-              <Text style={[styles.intelConsentText, { color: colors.mutedForeground }]}>Check nearby uses your device&apos;s precise location only after you tap this button.</Text>
+              <Text style={[styles.intelConsentText, { color: colors.mutedForeground }]}>Safety Hub does not request, retain, display, or use a member&apos;s current or recent location.</Text>
 
               <View style={[styles.threeStarRuleRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={[styles.statusBadge, { backgroundColor: "#F59E0B18", borderColor: "#F59E0B40" }]}>
@@ -492,15 +472,15 @@ export default function SafetyHubTab() {
               {!intelLoading && !intelError && !intelChecked && (
                 <View style={[styles.intelEmptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <Text style={styles.intelEmptyEmoji}>📍</Text>
-                  <Text style={[styles.intelEmptyTitle, { color: colors.foreground }]}>Check nearby safety information</Text>
-                  <Text style={[styles.intelEmptySub, { color: colors.mutedForeground }]}>Tap Check nearby to use your precise location for this request.</Text>
+                  <Text style={[styles.intelEmptyTitle, { color: colors.foreground }]}>Privacy-first community intelligence</Text>
+                  <Text style={[styles.intelEmptySub, { color: colors.mutedForeground }]}>No proximity lookup is available. Moderated reports remain general-area context, not a member activity map.</Text>
                 </View>
               )}
 
               {!intelLoading && !intelError && intelChecked && intelAlerts.length === 0 && (
                 <View style={[styles.intelEmptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <Text style={styles.intelEmptyEmoji}>🟢</Text>
-                  <Text style={[styles.intelEmptyTitle, { color: colors.foreground }]}>No active community alerts found nearby</Text>
+                  <Text style={[styles.intelEmptyTitle, { color: colors.foreground }]}>No location-sensitive community feed</Text>
                   <Text style={[styles.intelEmptySub, { color: colors.mutedForeground }]}>
                     This is not a guarantee that an area is safe. Use the report tools if you witness something the community should know.
                   </Text>

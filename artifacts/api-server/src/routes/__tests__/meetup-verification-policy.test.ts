@@ -36,7 +36,7 @@ function record(overrides: Partial<Parameters<typeof toPrivacyMinimizedMeetup>[0
 }
 
 describe("verified meetup policy", () => {
-  it("fails closed when organizer approval, venue, or a bounded future time is missing", () => {
+  it("fails closed when organizer approval or a bounded future time is missing and rejects venue collection", () => {
     expect(() => normalizeVerifiedMeetupRequest({
       partnerId: "partner-1",
       venue: "Community center",
@@ -48,14 +48,13 @@ describe("verified meetup policy", () => {
 
     expect(() => normalizeVerifiedMeetupRequest({
       partnerId: "partner-1",
-      venue: " ",
+      venue: "Community center",
       scheduledAt: SCHEDULED_AT.toISOString(),
       organizerApproval: true,
-    }, NOW)).toThrow(/venue is required/);
+    }, NOW)).toThrow(/Meetup locations are not collected/);
 
     expect(() => normalizeVerifiedMeetupRequest({
       partnerId: "partner-1",
-      venue: "Community center",
       scheduledAt: "2026-10-10T15:05:00.000Z",
       organizerApproval: true,
     }, NOW)).toThrow(/between 15 minutes and 30 days/);
@@ -89,16 +88,16 @@ describe("verified meetup policy", () => {
     });
   });
 
-  it("does not return attendee IDs, notes, watcher details, clear codes, or a safety guarantee", () => {
+  it("does not return venue, attendee IDs, notes, watcher details, clear codes, or a safety guarantee", () => {
     const response = toPrivacyMinimizedMeetup(record(), "partner-1", NOW) as Record<string, unknown>;
     expect(response).toMatchObject({
       role: "partner",
       counterpartName: "Ari Organizer",
-      venue: "Community center room 2",
+      venue: null,
       status: "awaiting_partner",
     });
     for (const prohibitedKey of [
-      "initiatorId", "partnerId", "note", "clearCode", "safetyWatcherEmail", "safetyWatcherId", "safetyFriendEmail",
+      "initiatorId", "partnerId", "location", "note", "clearCode", "safetyWatcherEmail", "safetyWatcherId", "safetyFriendEmail",
     ]) {
       expect(response).not.toHaveProperty(prohibitedKey);
     }

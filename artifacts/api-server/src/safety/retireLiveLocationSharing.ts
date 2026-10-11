@@ -1,4 +1,4 @@
-import { db, locationSharesTable } from "@workspace/db";
+import { db, locationSharesTable, pool } from "@workspace/db";
 import { eq, isNotNull, or } from "drizzle-orm";
 
 /**
@@ -39,5 +39,15 @@ export async function retireAllLegacyLocationShares(): Promise<number> {
       ),
     )
     .returning({ id: locationSharesTable.id });
-  return retired.length;
+  // The former community-alert path separately retained current member
+  // coordinates, while old Check-Ins accepted a free-text location. Clear both
+  // sources before traffic so no stale Safety record can expose location data.
+  const userLocations = await pool.query("DELETE FROM user_locations");
+  const checkins = await pool.query(
+    "UPDATE safety_checkins SET location = NULL, city = NULL WHERE location IS NOT NULL OR city IS NOT NULL",
+  );
+  const meetups = await pool.query(
+    "UPDATE meetup_verifications SET location = NULL WHERE location IS NOT NULL",
+  );
+  return retired.length + (userLocations.rowCount ?? 0) + (checkins.rowCount ?? 0) + (meetups.rowCount ?? 0);
 }

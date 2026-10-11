@@ -1,12 +1,9 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, communityAlertsTable, userLocationsTable } from "@workspace/db";
+import { db, communityAlertsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { pool } from "@workspace/db";
-import { sendAlertPushToNearbyUsers } from "../lib/pushNotifications";
 import { isNamedAdmin } from "../lib/adminAuth";
 import {
-  calculateCommunityAlertExpiry,
-  getSafetyHubLifecycleConfig,
   normalizeLifecycleText,
   parseLifecycleExpiry,
 } from "../safety/safetyHubLifecycle";
@@ -15,13 +12,8 @@ const router: IRouter = Router();
 
 // ─── Type registry ────────────────────────────────────────────────────────────
 
-const LIFECYCLE_CONFIG = getSafetyHubLifecycleConfig();
-const VALID_TYPES = new Set(Object.keys(LIFECYCLE_CONFIG.communityAlertExpiryMinutes));
 const CLEAR_THRESHOLD = 3;
 const CONFIRM_THRESHOLD = 3;
-// Police, ICE, and checkpoints are governed observations. They may never be
-// created as immediate coordinate-based alerts by this legacy endpoint.
-const DIRECT_POLICE_ICE_TYPES = new Set(["police", "ice", "checkpoint"]);
 
 function requireAuth(req: Request, res: Response): boolean {
   if (!req.user?.id) {
@@ -38,134 +30,13 @@ function computeStatus(confirmedCount: number): "possible" | "confirmed" {
 // ─── GET /community-alerts/nearby ─────────────────────────────────────────────
 router.get("/community-alerts/nearby", async (req: Request, res: Response) => {
   if (!requireAuth(req, res)) return;
-  try {
-    const lat = parseFloat(String(req.query.lat));
-    const lng = parseFloat(String(req.query.lng));
-    const radius = Math.min(parseFloat(String(req.query.radius ?? "16.09")), 16.09);
-
-    if (isNaN(lat) || isNaN(lng)) {
-      res.status(400).json({ error: "lat and lng are required" });
-      return;
-    }
-
-    const result = await pool.query<{
-      id: string;
-      type: string;
-      lat: string;
-      lng: string;
-      description: string | null;
-      confirmed_count: number;
-      cleared_count: number;
-      expires_at: string;
-      withdrawn_at: string | null;
-      created_at: string;
-      distance_km: number;
-    }>(
-      `SELECT id, type, lat, lng, description, confirmed_count, cleared_count, expires_at, withdrawn_at, created_at,
-        (6371 * acos(
-          GREATEST(-1, LEAST(1,
-            cos(radians($1)) * cos(radians(lat::float)) * cos(radians(lng::float) - radians($2))
-            + sin(radians($1)) * sin(radians(lat::float))
-          ))
-        )) AS distance_km
-       FROM community_alerts
-       WHERE is_active = true
-         AND withdrawn_at IS NULL
-         AND corrected_at IS NULL
-         AND expires_at > NOW()
-         AND type NOT IN ('police', 'ice', 'checkpoint')
-         AND (6371 * acos(
-           GREATEST(-1, LEAST(1,
-             cos(radians($1)) * cos(radians(lat::float)) * cos(radians(lng::float) - radians($2))
-             + sin(radians($1)) * sin(radians(lat::float))
-           ))
-         )) < $3
-       ORDER BY distance_km ASC
-       LIMIT 50`,
-      [lat, lng, radius],
-    );
-
-    const alerts = result.rows.map((r) => ({
-      id: r.id,
-      type: r.type,
-      lat: parseFloat(r.lat),
-      lng: parseFloat(r.lng),
-      description: r.description,
-      confirmedCount: r.confirmed_count,
-      clearedCount: r.cleared_count,
-      status: computeStatus(r.confirmed_count),
-      distanceMeters: Math.round(r.distance_km * 1000),
-      distanceKm: r.distance_km,
-      expiresAt: r.expires_at,
-      withdrawnAt: r.withdrawn_at,
-      createdAt: r.created_at,
-    }));
-
-    res.json({ alerts });
-  } catch (err) {
-    req.log.error({ err }, "GET /community-alerts/nearby error");
-    res.status(500).json({ error: "Failed to fetch nearby alerts." });
-  }
+  res.status(410).json({ error: "Member-location safety alerts have been retired. Safety does not use proximity or a member's current or recent location." });
 });
 
 // ─── POST /community-alerts ────────────────────────────────────────────────────
 router.post("/community-alerts", async (req: Request, res: Response) => {
   if (!requireAuth(req, res)) return;
-  try {
-    const userId = req.user!.id;
-    const { type, lat, lng, description } = req.body as {
-      type?: string;
-      lat?: number;
-      lng?: number;
-      description?: string;
-    };
-
-    if (!type || lat == null || lng == null) {
-      res.status(400).json({ error: "type, lat, lng are required" });
-      return;
-    }
-
-    if (!VALID_TYPES.has(type)) {
-      res.status(400).json({ error: "Invalid alert type" });
-      return;
-    }
-    if (DIRECT_POLICE_ICE_TYPES.has(type)) {
-      res.status(400).json({
-        error: "Police/ICE observations require anonymous intake, moderation, and corroboration before any alert",
-      });
-      return;
-    }
-
-    const expiresAt = calculateCommunityAlertExpiry(type, new Date(), LIFECYCLE_CONFIG);
-    if (!expiresAt) {
-      res.status(400).json({ error: "Alert type does not have a configured expiry" });
-      return;
-    }
-
-    const [alert] = await db
-      .insert(communityAlertsTable)
-      .values({
-        type,
-        lat: String(lat),
-        lng: String(lng),
-        description: description?.trim() || null,
-        reportedBy: userId,
-        expiresAt,
-      })
-      .returning();
-
-    await sendAlertPushToNearbyUsers(alert.id, lat, lng, type, 16.09);
-
-    res.json({
-      alert: {
-        ...alert,
-        status: computeStatus(alert.confirmedCount),
-      },
-    });
-  } catch (err) {
-    req.log.error({ err }, "POST /community-alerts error");
-    res.status(500).json({ error: "Failed to create alert." });
-  }
+  res.status(410).json({ error: "Coordinate-based community alerts have been retired. Use the moderated Safety report flow without location." });
 });
 
 // ─── POST /community-alerts/:id/confirm ───────────────────────────────────────
@@ -173,7 +44,7 @@ router.post("/community-alerts/:id/confirm", async (req: Request, res: Response)
   if (!requireAuth(req, res)) return;
   try {
     const alertId = String(req.params.id);
-    const result = await pool.query<{ confirmed_count: number; type: string; lat: string; lng: string }>(
+    const result = await pool.query<{ confirmed_count: number }>(
       `UPDATE community_alerts
        SET confirmed_count = confirmed_count + 1
        WHERE id = $1
@@ -182,18 +53,13 @@ router.post("/community-alerts/:id/confirm", async (req: Request, res: Response)
          AND corrected_at IS NULL
          AND expires_at > NOW()
          AND type NOT IN ('police', 'ice', 'checkpoint')
-       RETURNING confirmed_count, type, lat::text, lng::text`,
+       RETURNING confirmed_count`,
       [alertId],
     );
     const row = result.rows[0];
     if (!row) {
       res.status(404).json({ error: "Alert is no longer current" });
       return;
-    }
-    if (row && row.confirmed_count === CONFIRM_THRESHOLD) {
-      const lat = parseFloat(row.lat);
-      const lng = parseFloat(row.lng);
-      void sendAlertPushToNearbyUsers(alertId, lat, lng, row.type, 16.1);
     }
     res.json({ ok: true, confirmedCount: row?.confirmed_count ?? 0, status: computeStatus(row?.confirmed_count ?? 0) });
   } catch (err) {
@@ -483,25 +349,7 @@ router.get("/community-alerts/flagged-businesses", async (req: Request, res: Res
 // ─── POST /community-alerts/location ──────────────────────────────────────────
 router.post("/community-alerts/location", async (req: Request, res: Response) => {
   if (!requireAuth(req, res)) return;
-  try {
-    const userId = req.user!.id;
-    const { lat, lng } = req.body as { lat?: number; lng?: number };
-    if (lat == null || lng == null) {
-      res.status(400).json({ error: "lat and lng required" });
-      return;
-    }
-    await db
-      .insert(userLocationsTable)
-      .values({ userId, lat: String(lat), lng: String(lng), updatedAt: new Date() })
-      .onConflictDoUpdate({
-        target: userLocationsTable.userId,
-        set: { lat: String(lat), lng: String(lng), updatedAt: new Date() },
-      });
-    res.json({ ok: true });
-  } catch (err) {
-    req.log.error({ err }, "POST /community-alerts/location error");
-    res.status(500).json({ error: "Failed to update location." });
-  }
+  res.status(410).json({ error: "Member location storage has been retired." });
 });
 
 export default router;

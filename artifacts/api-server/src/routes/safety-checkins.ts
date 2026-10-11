@@ -243,6 +243,8 @@ router.get("/safety/checkins", async (req: Request, res: Response) => {
         const recipients = recipientsByCheckin.get(checkin.id) ?? [];
         return {
           ...checkin,
+          location: null,
+          city: null,
           recipients,
           deliverySummary: checkinDeliverySummary(recipients),
         };
@@ -294,6 +296,10 @@ router.post("/safety/checkins", requireFamilySafety, async (req: Request, res: R
       res.status(400).json({ error: "Email recipients are not supported for Safety Check-Ins. Choose accepted trusted Kinfolk profiles." });
       return;
     }
+    if (location?.trim() || city?.trim()) {
+      res.status(400).json({ error: "Safety Check-Ins do not collect, store, or share location. Remove the location fields and try again." });
+      return;
+    }
     if (selectedShareIds.length === 0) {
       res.status(400).json({ error: "Choose at least one accepted trusted Kinfolk profile" });
       return;
@@ -321,8 +327,8 @@ router.post("/safety/checkins", requireFamilySafety, async (req: Request, res: R
           null,
           scheduledDate,
           note?.trim() || null,
-          location?.trim() || null,
-          city?.trim() || null,
+          null,
+          null,
         ],
       );
       const checkin = result.rows[0];

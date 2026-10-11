@@ -8525,52 +8525,16 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
 }
 
 // ─── POST /api/kinfolk/arrival-awareness ───────────────────────────────────
-// Called only after a member opts in on-device. Coordinates are used for this
-// request to match a reviewed city center and are neither persisted nor logged.
-// The reply contains current official evidence or official links — never an
-// inferred neighborhood-risk score or a recommendation based on identity.
+// Retired: current/recent member location may not be collected or used to
+// trigger Safety or Kinfolk content, even transiently.
 router.post("/kinfolk/arrival-awareness", async (req: Request, res: Response) => {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required", code: "AUTH_REQUIRED" });
     return;
   }
-  if (!isCitySafetyBriefingV1Enabled()) {
-    res.status(503).json({ error: "Arrival awareness is not enabled." });
-    return;
-  }
-  const latitude = Number(req.body?.latitude);
-  const longitude = Number(req.body?.longitude);
-  if (!Number.isFinite(latitude) || latitude < -90 || latitude > 90 || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
-    res.status(400).json({ error: "A valid current location is required." });
-    return;
-  }
-  const milesBetween = (latA: number, lngA: number, latB: number, lngB: number) => {
-    const radians = (degrees: number) => degrees * Math.PI / 180;
-    const a = Math.sin(radians(latB - latA) / 2) ** 2
-      + Math.cos(radians(latA)) * Math.cos(radians(latB)) * Math.sin(radians(lngB - lngA) / 2) ** 2;
-    return 3958.7613 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  };
-  const nearby = CITY_SAFETY_CITY_CENTERS
-    .map((city) => ({ city, distanceMiles: milesBetween(latitude, longitude, city.latitude, city.longitude) }))
-    .sort((left, right) => left.distanceMiles - right.distanceMiles)[0];
-  // City-center matching is intentionally coarse; it does not treat a nearby
-  // suburb as a city arrival and it never records device coordinates.
-  if (!nearby || nearby.distanceMiles > 25) {
-    res.json({ matched: false, notices: [], officialLinks: [] });
-    return;
-  }
-  const briefing = await currentCitySafetyBriefing({ cityId: nearby.city.cityId, auditPool: pool });
-  const notices = briefing.evidence
-    .filter((evidence) => evidence.activeOfficialAlert)
-    .map((evidence) => ({ title: evidence.title, summary: evidence.summary, url: evidence.url, expiresAt: evidence.expiresAt }));
-  res.json({
-    matched: true,
-    city: nearby.city.city,
-    stateCode: nearby.city.stateCode,
-    cityId: nearby.city.cityId,
-    notices,
-    officialLinks: briefing.officialLinks,
-    unavailable: briefing.unavailable,
+  res.status(410).json({
+    error: "Arrival Awareness has been retired. Kinfolk does not collect or use a member's current or recent location.",
+    code: "MEMBER_LOCATION_RETIRED",
   });
 });
 

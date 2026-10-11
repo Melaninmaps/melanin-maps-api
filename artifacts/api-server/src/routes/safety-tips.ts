@@ -62,9 +62,8 @@ router.post("/safety-tips", reportLimiter, async (req: Request, res: Response) =
       res.status(400).json({ error: "Select what happened or describe the experience" });
       return;
     }
-    // lat/lng optional — GPS may be unavailable
-    if (lat != null && (typeof lat !== "number" || typeof lng !== "number" || !Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180)) {
-      res.status(400).json({ error: "lat and lng must be finite, valid coordinates when provided" });
+    if (address?.trim() || lat != null || lng != null) {
+      res.status(400).json({ error: "Safety Tips accept only business name, incident city, and report details. Street addresses and coordinates are not collected." });
       return;
     }
 
@@ -76,12 +75,12 @@ router.post("/safety-tips", reportLimiter, async (req: Request, res: Response) =
       .values({
         submittedById: req.user.id,
         businessName: businessName?.trim() || null,
-        address: address?.trim() || null,
+        address: null,
         // DB column is now nullable (migration already ran); Drizzle type hasn't caught up
         city: city?.trim() || "",
         state: state?.trim() || null,
-        lat: lat ?? null,
-        lng: lng ?? null,
+        lat: null,
+        lng: null,
         // description is now nullable in DB; use "" as Drizzle placeholder, pool.query corrects to NULL
         description: description?.trim() || "",
         category: cat,
@@ -122,45 +121,7 @@ router.post("/safety-tips", reportLimiter, async (req: Request, res: Response) =
 });
 
 router.get("/safety-tips/nearby", async (req: Request, res: Response) => {
-  try {
-    const lat = parseFloat(req.query["lat"] as string);
-    const lng = parseFloat(req.query["lng"] as string);
-    if (isNaN(lat) || isNaN(lng)) {
-      res.status(400).json({ error: "lat and lng are required" });
-      return;
-    }
-    const all = await db
-      .select()
-      .from(safetyTipsTable)
-      .where(eq(safetyTipsTable.status, "confirmed"))
-      .orderBy(desc(safetyTipsTable.createdAt))
-      .limit(100);
-
-    const nearby = all
-      .filter((t) => typeof t.lat === "number" && typeof t.lng === "number")
-      .map((t) => ({
-        tip: publicSafetyTip(t),
-        distanceMiles: Math.round(haversineMiles(lat, lng, t.lat, t.lng) * 10) / 10,
-      }))
-      .filter((t) => t.distanceMiles <= MAX_RADIUS_MILES)
-      .sort((a, b) => a.distanceMiles - b.distanceMiles);
-
-    const userId = req.user?.id;
-    if (userId) {
-      const confirmed = await db
-        .select({ tipId: safetyTipConfirmationsTable.tipId })
-        .from(safetyTipConfirmationsTable)
-        .where(eq(safetyTipConfirmationsTable.userId, userId));
-      const confirmedSet = new Set(confirmed.map((c) => c.tipId));
-      res.json({ tips: nearby.map(({ tip, distanceMiles }) => ({ ...tip, distanceMiles, confirmedByMe: confirmedSet.has(tip.id) })) });
-      return;
-    }
-
-    res.json({ tips: nearby.map(({ tip, distanceMiles }) => ({ ...tip, distanceMiles })) });
-  } catch (err) {
-    req.log.error({ err }, "GET /safety-tips/nearby error");
-    res.status(500).json({ error: "Failed to fetch nearby tips" });
-  }
+  res.status(410).json({ error: "Nearby Safety Tips have been retired. Safety does not use member location or proximity." });
 });
 
 router.get("/safety-tips", async (req: Request, res: Response) => {
@@ -190,6 +151,10 @@ router.post("/safety-tips/:id/confirm", async (req: Request, res: Response) => {
       return;
     }
     const { userLat, userLng } = req.body as { userLat?: number; userLng?: number };
+    if (userLat != null || userLng != null) {
+      res.status(400).json({ error: "Safety Tip confirmations do not accept or retain member coordinates." });
+      return;
+    }
 
     const [tip] = await db
       .select()
@@ -206,14 +171,6 @@ router.post("/safety-tips/:id/confirm", async (req: Request, res: Response) => {
       res.status(410).json({ error: "Safety tip is no longer available" });
       return;
     }
-    if (typeof userLat === "number" && typeof userLng === "number") {
-      const dist = haversineMiles(userLat, userLng, tip.lat, tip.lng);
-      if (dist > MAX_RADIUS_MILES) {
-        res.status(422).json({ error: `You must be within ${MAX_RADIUS_MILES} miles to confirm this tip.` });
-        return;
-      }
-    }
-
     const [existing] = await db
       .select({ id: safetyTipConfirmationsTable.id })
       .from(safetyTipConfirmationsTable)
@@ -233,8 +190,8 @@ router.post("/safety-tips/:id/confirm", async (req: Request, res: Response) => {
     await db.insert(safetyTipConfirmationsTable).values({
       tipId: id,
       userId: req.user.id,
-      userLat: typeof userLat === "number" ? userLat : null,
-      userLng: typeof userLng === "number" ? userLng : null,
+      userLat: null,
+      userLng: null,
     });
 
     const [updated] = await db

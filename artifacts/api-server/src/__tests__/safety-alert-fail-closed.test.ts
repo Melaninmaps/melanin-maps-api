@@ -16,9 +16,19 @@ describe("Safety Hub fail-closed alert contracts", () => {
     expect(tips).toContain('"[safety-tips] submitted pending review"');
     expect(tips).not.toContain("sendPushToAllMembers");
     expect(tips).toContain('where(eq(safetyTipsTable.status, "confirmed"))');
-    expect(tips).toContain("lat < -90 || lat > 90 || lng < -180 || lng > 180");
-    expect(tips).not.toContain("address: tip.address");
+    expect(tips).toContain("Street addresses and coordinates are not collected");
+    expect(tips).toContain("lat: null");
+    expect(tips).toContain("lng: null");
     expect(tips).not.toContain("description: tip.description");
+  });
+
+  it("retires proximity safety alerts and member-coordinate storage", () => {
+    const alerts = source("../routes/community-alerts.ts");
+    expect(alerts).toContain("Member-location safety alerts have been retired");
+    expect(alerts).toContain("Coordinate-based community alerts have been retired");
+    expect(alerts).toContain("Member location storage has been retired");
+    expect(alerts).not.toContain("sendAlertPushToNearbyUsers");
+    expect(alerts).not.toContain("userLocationsTable");
   });
 
   it("does not turn unreviewed unsafe-space reports into public warnings", () => {

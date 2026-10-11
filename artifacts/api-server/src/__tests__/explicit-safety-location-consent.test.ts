@@ -24,15 +24,18 @@ describe("explicit safety location consent", () => {
     expect(mapTab).toContain("useSafetyProximity({ enabled: false })");
   });
 
-  it("uses precise location only after a clearly labelled member action", () => {
-    expect(hub).toContain("Check nearby uses your device&apos;s precise location only after you tap this button.");
-    expect(hub).toContain("Location.Accuracy.Highest");
-    expect(tip).toContain("Tap to use my precise current location");
-    expect(tip).toContain("Location.Accuracy.Highest");
+  it("retires device-location collection from all Safety-specific surfaces", () => {
+    expect(hub).toContain("does not request, retain, display, or use a member&apos;s current or recent location");
+    expect(hub).not.toContain("expo-location");
+    expect(hub).not.toContain("Location.Accuracy.Highest");
+    expect(tip).toContain("never collects or shares a member");
+    expect(tip).not.toContain("expo-location");
+    expect(tip).not.toContain("Location.Accuracy.Highest");
     expect(fullMap).toContain("Use my precise location for nearby businesses");
     expect(fullMap).toContain("Location.Accuracy.Highest");
-    expect(activityAlert).toContain("Reporting a nearby activity is an explicit member action");
-    expect(activityAlert).toContain("Location.Accuracy.Highest");
+    expect(activityAlert).toContain("coordinate activity alerts are retired");
+    expect(activityAlert).not.toContain("expo-location");
+    expect(activityAlert).not.toContain("Location.Accuracy.Highest");
   });
 
   it("keeps public safety wording clear and moves heritage discovery out of Safety", () => {

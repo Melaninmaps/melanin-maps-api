@@ -27,6 +27,11 @@ describe("profile-based Safety Check-In contract", () => {
     expect(migration).toContain("ALTER COLUMN trusted_contact_email DROP NOT NULL");
     expect(migration).toContain("CREATE TABLE IF NOT EXISTS safety_checkin_recipients");
     expect(route).toContain("Email recipients are not supported for Safety Check-Ins");
+    expect(route).toContain("Safety Check-Ins do not collect, store, or share location");
+    expect(route).toContain("location: null");
+    expect(route).toContain("city: null");
+    expect(mobile).not.toContain("expo-location");
+    expect(mobile).not.toContain("handleUseLocation");
   });
 
   it("limits selectable recipients to consented active in-app safety shares", () => {

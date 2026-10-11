@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -39,33 +38,9 @@ export default function SafetyTipScreen() {
 
   const [category, setCategory] = useState<CategoryId>("violence");
   const [businessName, setBusinessName] = useState("");
-  const [address, setAddress] = useState("");
   const [city, setCity] = useState("");
   const [description, setDescription] = useState("");
-  const [locating, setLocating] = useState(false);
-  const [lat, setLat] = useState<number | null>(null);
-  const [lng, setLng] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  async function usePreciseLocation() {
-    setLocating(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") return;
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
-      setLat(pos.coords.latitude);
-      setLng(pos.coords.longitude);
-      const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-      if (geo) {
-        if (geo.city) setCity(geo.city);
-        if (geo.street && geo.streetNumber) setAddress(`${geo.streetNumber} ${geo.street}`);
-      }
-    } catch {
-      // ignore
-    } finally {
-      setLocating(false);
-    }
-  }
 
   async function handleSubmit() {
     if (!description.trim()) {
@@ -76,11 +51,6 @@ export default function SafetyTipScreen() {
       Alert.alert("Required", "Please enter a city.");
       return;
     }
-    if (lat === null || lng === null) {
-      Alert.alert("Location Needed", "We need your location to pin this tip. Tap 'Use My Location' to try again.");
-      return;
-    }
-
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSubmitting(true);
     try {
@@ -90,7 +60,7 @@ export default function SafetyTipScreen() {
       const res = await fetch(`${BASE}/safety-tips`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ businessName: businessName.trim() || undefined, address: address.trim() || undefined, city: city.trim(), lat, lng, description: description.trim(), category }),
+        body: JSON.stringify({ businessName: businessName.trim() || undefined, city: city.trim(), description: description.trim(), category }),
       });
       if (!res.ok) {
         const j = (await res.json()) as { error?: string };
@@ -100,7 +70,7 @@ export default function SafetyTipScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
         "Tip Submitted ✓",
-        "Thank you for keeping the community safe. Verified members within 10 miles have been alerted and can confirm your report.",
+        "Thank you for keeping the community safe. Your report remains private while moderation reviews it; no member-location alert is sent.",
         [{ text: "Done", onPress: () => router.back() }]
       );
     } catch {
@@ -127,7 +97,7 @@ export default function SafetyTipScreen() {
           <View style={[styles.banner, { backgroundColor: "#DC26261A", borderColor: "#DC262640" }]}>
             <Feather name="alert-triangle" size={16} color="#DC2626" />
             <Text style={styles.bannerText}>
-              Use this to report acts of violence, hate crimes, or harassment against community members at businesses that are <Text style={{ fontFamily: "Inter_700Bold" }}>not</Text> on this platform. The business is not notified — instead, verified members nearby will be alerted to confirm.
+              Use this to report acts of violence, hate crimes, or harassment against community members at businesses that are <Text style={{ fontFamily: "Inter_700Bold" }}>not</Text> on this platform. The business is not notified, and this flow never collects or shares a member&apos;s location.
             </Text>
           </View>
 
@@ -157,25 +127,9 @@ export default function SafetyTipScreen() {
             onChangeText={setBusinessName}
           />
 
-          {/* Location */}
-          <Text style={[styles.label, { color: colors.foreground }]}>Location</Text>
-          <TouchableOpacity style={[styles.locRow, { borderColor: colors.border, backgroundColor: colors.card }]} onPress={usePreciseLocation} activeOpacity={0.8}>
-            <Feather name={locating ? "loader" : "map-pin"} size={16} color="#CA922B" />
-            <Text style={[styles.locText, { color: lat !== null ? colors.foreground : colors.mutedForeground }]}>
-              {locating ? "Detecting location…" : lat !== null ? `${lat.toFixed(4)}, ${lng?.toFixed(4)} — detected` : "Tap to use my precise current location"}
-            </Text>
-          </TouchableOpacity>
-
           <TextInput
-            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground, marginTop: 8 }]}
-            placeholder="Street address (optional)"
-            placeholderTextColor={colors.mutedForeground}
-            value={address}
-            onChangeText={setAddress}
-          />
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground, marginTop: 8 }]}
-            placeholder="City *"
+            style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
+            placeholder="Incident city *"
             placeholderTextColor={colors.mutedForeground}
             value={city}
             onChangeText={setCity}
@@ -196,7 +150,7 @@ export default function SafetyTipScreen() {
 
           {/* Disclaimer */}
           <Text style={[styles.disclaimer, { color: colors.mutedForeground }]}>
-            Your tip is anonymous to the business. False reports violate our community guidelines and may result in account suspension. Only submit what you witnessed or can confirm.
+            Your tip is anonymous to the business. It records only the city you enter, never device coordinates or a street address. False reports violate our community guidelines and may result in account suspension.
           </Text>
 
           {/* Submit */}
@@ -236,8 +190,6 @@ const styles = StyleSheet.create({
   catEmoji: { fontSize: 14 },
   catLabel: { fontSize: 13, fontFamily: "Inter_500Medium" },
   input: { height: 46, borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, fontSize: 15, fontFamily: "Inter_400Regular" },
-  locRow: { flexDirection: "row", alignItems: "center", gap: 10, height: 46, borderRadius: 10, borderWidth: 1, paddingHorizontal: 14 },
-  locText: { fontSize: 14, fontFamily: "Inter_400Regular" },
   textarea: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingTop: 12, fontSize: 15, fontFamily: "Inter_400Regular", minHeight: 120 },
   disclaimer: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17, marginTop: 14 },
   submitBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: "#DC2626", borderRadius: 12, height: 52, marginTop: 24 },

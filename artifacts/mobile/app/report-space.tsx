@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -42,7 +41,6 @@ const CONCERN_TYPES = [
 
 interface ReportForm {
   spaceName: string;
-  address: string;
   city: string;
   category: string;
   concernTypes: string[];
@@ -52,7 +50,6 @@ interface ReportForm {
 
 const INITIAL: ReportForm = {
   spaceName: "",
-  address: "",
   city: "",
   category: "",
   concernTypes: [],
@@ -104,23 +101,6 @@ export default function ReportSpaceScreen() {
   const [form, setForm] = useState<ReportForm>(INITIAL);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [locating, setLocating] = useState(false);
-
-  const handleUseLocation = async () => {
-    setLocating(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") { Alert.alert("Location Access", "Enable location in Settings to use this feature."); return; }
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
-      const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-      if (geo) {
-        const addr = [geo.streetNumber, geo.street].filter(Boolean).join(" ");
-        setForm((f) => ({ ...f, address: addr, city: geo.city ?? f.city }));
-      }
-    } catch { Alert.alert("Location Error", "Could not get your location. Try again."); }
-    finally { setLocating(false); }
-  };
-
   const [fadeAnim] = useState(() => new Animated.Value(1));
   const [slideAnim] = useState(() => new Animated.Value(0));
 
@@ -177,7 +157,6 @@ export default function ReportSpaceScreen() {
         },
         body: JSON.stringify({
           spaceName: form.spaceName.trim(),
-          address: form.address.trim() || undefined,
           city: form.city.trim(),
           category: form.category,
           concernTypes: form.concernTypes,
@@ -231,7 +210,7 @@ export default function ReportSpaceScreen() {
             <Text style={[styles.summaryTitle, { color: colors.foreground }]}>Report Summary</Text>
             {[
               { icon: "map-pin" as const, label: "Space", value: form.spaceName },
-              { icon: "navigation" as const, label: "Location", value: form.address ? `${form.address}, ${form.city}` : form.city },
+              { icon: "navigation" as const, label: "General area", value: form.city },
               { icon: "tag" as const, label: "Category", value: CATEGORIES.find((c) => c.id === form.category)?.label ?? form.category },
               { icon: "flag" as const, label: "Concerns", value: form.concernTypes.map((id) => CONCERN_TYPES.find((c) => c.id === id)?.label ?? id).join(", ") },
             ].map((row) => (
@@ -361,9 +340,9 @@ export default function ReportSpaceScreen() {
 
             {step === 3 && (
               <View>
-                <Text style={[styles.stepTitle, { color: colors.foreground }]}>Location & Details</Text>
+                <Text style={[styles.stepTitle, { color: colors.foreground }]}>General Area & Details</Text>
                 <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-                  Provide as much detail as you&apos;re comfortable sharing.
+                  Provide only the city for the reported space. Device location and street addresses are not collected.
                 </Text>
 
                 {selectedCategory && (
@@ -388,30 +367,7 @@ export default function ReportSpaceScreen() {
                 </View>
 
                 <View style={styles.fieldWrap}>
-                  <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Address</Text>
-                  <Text style={[styles.fieldHint, { color: colors.mutedForeground }]}>Optional — helps us identify the location</Text>
-                  <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-                    <TextInput
-                      value={form.address}
-                      onChangeText={(v) => setForm((f) => ({ ...f, address: v }))}
-                      placeholder="e.g. 123 Main St"
-                      placeholderTextColor={colors.mutedForeground}
-                      style={[styles.input, { flex: 1, backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
-                    />
-                    <TouchableOpacity
-                      onPress={() => void handleUseLocation()}
-                      disabled={locating}
-                      style={{ padding: 10, borderRadius: 10, backgroundColor: colors.primary, opacity: locating ? 0.6 : 1 }}
-                    >
-                      {locating
-                        ? <ActivityIndicator size="small" color="#fff" />
-                        : <Feather name="navigation" size={16} color="#fff" />}
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                <View style={styles.fieldWrap}>
-                  <Text style={[styles.fieldLabel, { color: colors.foreground }]}>City *</Text>
+                  <Text style={[styles.fieldLabel, { color: colors.foreground }]}>City / general area *</Text>
                   <TextInput
                     value={form.city}
                     onChangeText={(v) => setForm((f) => ({ ...f, city: v }))}
@@ -451,7 +407,7 @@ export default function ReportSpaceScreen() {
                 <View style={[styles.disclaimer, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                   <Feather name="shield" size={14} color={colors.mutedForeground} />
                   <Text style={[styles.disclaimerText, { color: colors.mutedForeground }]}>
-                    Reports are reviewed before any warning is shown. Spaces flagged by 3 or more users will receive a community warning visible to all users.
+                    Reports are reviewed before any warning is shown. This flow never requests or shares device location, street addresses, or member visit history.
                   </Text>
                 </View>
               </View>

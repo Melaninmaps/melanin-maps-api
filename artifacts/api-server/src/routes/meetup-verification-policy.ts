@@ -26,7 +26,7 @@ export interface VerifiedMeetupRequestInput {
 
 export interface NormalizedVerifiedMeetupRequest {
   partnerId: string;
-  venue: string;
+  venue: null;
   scheduledAt: Date;
   expiresAt: Date;
 }
@@ -62,9 +62,9 @@ function requiredFutureDate(value: DateInput, now: Date): Date {
 }
 
 /**
- * Accept only the minimum data needed for a time-bounded meetup request. The
- * explicit approval belongs to the organizer (the request initiator), not a
- * client-side badge or inferred intent.
+ * Accept only the minimum data needed for a time-bounded meetup request. A
+ * meetup venue can reveal a member's current or planned location, so it is not
+ * collected, stored, or disclosed by this workflow.
  */
 export function normalizeVerifiedMeetupRequest(
   input: VerifiedMeetupRequestInput,
@@ -77,10 +77,17 @@ export function normalizeVerifiedMeetupRequest(
       403,
     );
   }
+  if (typeof input.venue === "string" && input.venue.trim()) {
+    throw new MeetupPolicyError(
+      "MEETUP_LOCATION_RETIRED",
+      "Meetup locations are not collected or shared. Arrange any venue privately off-platform.",
+      410,
+    );
+  }
 
   return {
     partnerId: requiredString(input.partnerId, "partnerId", 255),
-    venue: requiredString(input.venue, "venue", 255),
+    venue: null,
     scheduledAt: requiredFutureDate(input.scheduledAt, now),
     expiresAt: new Date(requiredFutureDate(input.scheduledAt, now).getTime() + MEETUP_WINDOW_MS),
   };
@@ -153,7 +160,7 @@ function displayName(firstName: string | null, lastName: string | null, username
 /**
  * Deliberately exclude attendee IDs, notes, clear codes, watcher details, and
  * any safety assessment. Each participant sees only the counterpart display
- * name and the currently active venue/time necessary to decide whether to act.
+ * name and time window; no personal or meetup location is disclosed.
  */
 export function toPrivacyMinimizedMeetup(
   record: MeetupResponseRecord,
@@ -171,7 +178,7 @@ export function toPrivacyMinimizedMeetup(
       ? displayName(record.partnerFirstName, record.partnerLastName, record.partnerUsername)
       : displayName(record.initiatorFirstName, record.initiatorLastName, record.initiatorUsername),
     status,
-    venue: active ? record.location : null,
+    venue: null,
     scheduledAt: active ? record.scheduledAt : null,
     expiresAt: active ? record.expiresAt : null,
     initiatedAt: record.initiatedAt,

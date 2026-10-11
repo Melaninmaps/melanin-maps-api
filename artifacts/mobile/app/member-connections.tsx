@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -44,7 +43,6 @@ type MeetupVerification = {
   initiatorId: string;
   partnerId: string;
   status: string;
-  location: string | null;
   note: string | null;
   initiatedAt: string;
   confirmedAt: string | null;
@@ -109,8 +107,6 @@ export default function MemberConnectionsScreen() {
 
   // Modal state
   const [selectedConn, setSelectedConn] = useState<Connection | null>(null);
-  const [meetupLocation, setMeetupLocation] = useState("");
-  const [locating, setLocating] = useState(false);
   const [meetupNote, setMeetupNote] = useState("");
   const [clearCode, setClearCode] = useState("");
   const [watcherEmail, setWatcherEmail] = useState("");
@@ -223,16 +219,8 @@ export default function MemberConnectionsScreen() {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const body: Record<string, unknown> = {
         partnerId: selectedConn.otherId,
-        connectionId: selectedConn.id,
-        location: meetupLocation.trim() || undefined,
-        note: meetupNote.trim() || undefined,
-        clearCode: clearCode.trim() || undefined,
-        safetyWatcherId: selectedWatcher?.id || undefined,
-        safetyWatcherEmail: watcherEmail.trim() || undefined,
-        arrivalCheckAt: arrivalMinutes != null ? new Date(Date.now() + arrivalMinutes * 60000).toISOString() : undefined,
-        homeCheckAt: homeMinutes != null ? new Date(Date.now() + homeMinutes * 60000).toISOString() : undefined,
-        safetyFriendName: friendName.trim() || undefined,
-        safetyFriendEmail: friendEmail.trim() || undefined,
+        organizerApproval: true,
+        scheduledAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
       };
       const res = await fetch(`${getApiBase()}/api/meetups`, {
         method: "POST",
@@ -252,7 +240,7 @@ export default function MemberConnectionsScreen() {
             : "";
         Alert.alert(
           "Verification Sent ✓",
-          `${name} will receive a meetup verification request. Once they confirm, you're both verified.${watcherNote}`,
+          `${name} will receive a time-bounded verification request. Kinfolk does not store or share a meetup location.${watcherNote}`,
         );
       } else {
         Alert.alert("Error", d.error ?? "Failed to send verification.");
@@ -369,7 +357,6 @@ export default function MemberConnectionsScreen() {
 
   const resetModal = () => {
     setSelectedConn(null);
-    setMeetupLocation("");
     setMeetupNote("");
     setClearCode("");
     setWatcherEmail("");
@@ -438,9 +425,6 @@ export default function MemberConnectionsScreen() {
                       <Text style={[styles.requestName, { color: "#1D4ED8" }]}>
                         {meetupOtherName(m)} wants to verify a meetup
                       </Text>
-                      {m.location && (
-                        <Text style={[styles.requestMeta, { color: "#1E40AF" }]}>📍 {m.location}</Text>
-                      )}
                       {m.note && (
                         <Text style={[styles.requestMeta, { color: "#1E40AF" }]}>&quot;{m.note}&quot;</Text>
                       )}
@@ -513,13 +497,8 @@ export default function MemberConnectionsScreen() {
                     </View>
 
                     {/* Details */}
-                    {(m.location || m.note) && (
+                    {m.note && (
                       <View style={[styles.meetupMeta, { borderTopColor: colors.border }]}>
-                        {m.location && (
-                          <Text style={[styles.meetupMetaText, { color: colors.mutedForeground }]}>
-                            📍 {m.location}
-                          </Text>
-                        )}
                         {m.note && (
                           <Text style={[styles.meetupMetaText, { color: colors.mutedForeground }]}>
                             📝 {m.note}
@@ -684,7 +663,6 @@ export default function MemberConnectionsScreen() {
                         style={styles.verifyBtn}
                         onPress={() => {
                           setSelectedConn(c);
-                          setMeetupLocation("");
                           setMeetupNote("");
                           setClearCode("");
                           setWatcherEmail("");
@@ -733,38 +711,9 @@ export default function MemberConnectionsScreen() {
                     </Text>
                   </View>
 
-                  {/* Location */}
-                  <Text style={[styles.modalLabel, { color: colors.foreground }]}>Location (optional)</Text>
-                  <View style={{ flexDirection: "row", gap: 8, alignItems: "center", marginBottom: 2 }}>
-                    <TextInput
-                      style={[styles.modalInput, { flex: 1, marginBottom: 0, color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
-                      placeholder="e.g. Busy Bean Coffee, Downtown Atlanta"
-                      placeholderTextColor={colors.mutedForeground}
-                      value={meetupLocation}
-                      onChangeText={setMeetupLocation}
-                    />
-                    <TouchableOpacity
-                      onPress={async () => {
-                        setLocating(true);
-                        try {
-                          const { status } = await Location.requestForegroundPermissionsAsync();
-                          if (status !== "granted") { Alert.alert("Location Access", "Enable location in Settings to use this feature."); return; }
-                          const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-                          const [geo] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-                          if (geo) {
-                            const parts = [geo.streetNumber, geo.street, geo.city, geo.region].filter(Boolean);
-                            setMeetupLocation(parts.join(", "));
-                          }
-                        } catch { Alert.alert("Location Error", "Could not get your location. Try again."); }
-                        finally { setLocating(false); }
-                      }}
-                      disabled={locating}
-                      style={{ padding: 10, borderRadius: 10, backgroundColor: "#7C3AED", opacity: locating ? 0.6 : 1 }}
-                    >
-                      {locating
-                        ? <ActivityIndicator size="small" color="#fff" />
-                        : <Feather name="navigation" size={16} color="#fff" />}
-                    </TouchableOpacity>
+                  <View style={[styles.modalInfo, { backgroundColor: "#7C3AED0F", borderColor: "#7C3AED30" }]}>
+                    <Feather name="shield" size={16} color="#7C3AED" />
+                    <Text style={[styles.modalInfoText, { color: colors.foreground }]}>Meetup location sharing is unavailable. Kinfolk does not request, store, or disclose a member&apos;s current, recent, or planned location.</Text>
                   </View>
 
                   {/* Note */}
@@ -992,9 +941,6 @@ export default function MemberConnectionsScreen() {
                 ? "Enter the clear code you set when creating this meetup to permanently remove this record."
                 : "This will permanently remove this meetup record. This cannot be undone."}
             </Text>
-            {clearTarget?.location && (
-              <Text style={[styles.centeredMeta, { color: colors.mutedForeground }]}>📍 {clearTarget.location}</Text>
-            )}
             {clearTarget?.hasClearCode && (
               <TextInput
                 style={[styles.modalInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background, marginTop: 12, width: "100%" }]}

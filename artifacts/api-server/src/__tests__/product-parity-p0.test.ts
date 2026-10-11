@@ -36,14 +36,19 @@ describe("private social-space authorization", () => {
     expect(shares).toContain('router.get("/safety/location-shares/:token/view"');
     expect(shares).toContain("retireLocationSharesForMember");
     expect(shares).not.toContain("minimizeLocationCoordinate");
+    const alerts = source("../routes/community-alerts.ts");
+    const retirement = source("../safety/retireLiveLocationSharing.ts");
+    expect(alerts).toContain("Member location storage has been retired");
+    expect(retirement).toContain("DELETE FROM user_locations");
+    expect(retirement).toContain("UPDATE safety_checkins SET location = NULL, city = NULL");
   });
 
   it("keeps Safety-tip submitter identifiers out of client responses", () => {
     const safetyTips = source("../routes/safety-tips.ts");
     expect(safetyTips).toContain("function publicSafetyTip");
     expect(safetyTips).toContain("tip: publicSafetyTip(tip)");
-    expect(safetyTips).toContain("tips: nearby.map(publicSafetyTip)");
     expect(safetyTips).toContain("tips: tips.map(publicSafetyTip)");
+    expect(safetyTips).toContain("Nearby Safety Tips have been retired");
   });
 
   it("makes anonymous reports unlinkable and keeps reporter fields out of public responses", () => {

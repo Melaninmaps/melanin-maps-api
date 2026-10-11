@@ -12,29 +12,29 @@ describe("web Safety location contract", () => {
   const neighborhood = source("../pages/rate-neighborhood.tsx");
   const picker = source("../features/location/SafetyLocationPicker.tsx");
 
-  it("never assumes Philadelphia for nearby safety alerts", () => {
+  it("removes proximity alerts rather than assuming a member location", () => {
     expect(safety).not.toContain("lat=39.9526");
     expect(safety).not.toContain("lng=-75.1652");
     expect(safety).not.toContain("All clear nearby");
-    expect(safety).toContain("Choose a location to check nearby alerts");
-    expect(safety).toContain("No active community alerts found nearby");
+    expect(safety).toContain("No member-location safety feed");
+    expect(safety).toContain("does not request, retain, display, or use a member");
   });
 
-  it("queries nearby alerts only from an explicitly resolved area", () => {
-    expect(safety).toContain("if (safetyArea?.latitude == null || safetyArea?.longitude == null)");
-    expect(safety).toContain("lat=${encodeURIComponent(safetyArea.latitude)}");
-    expect(safety).toContain("lng=${encodeURIComponent(safetyArea.longitude)}");
-    expect(safety).toContain("radius=16.09");
-    expect(safety).toContain("within 10 miles");
+  it("does not query nearby alerts from a resolved area", () => {
+    expect(safety).not.toContain("community-alerts/nearby");
+    expect(safety).not.toContain("safetyArea?.latitude");
+    expect(safety).not.toContain("radius=16.09");
   });
 
-  it("provides manual area resolution and user-triggered current location", () => {
+  it("provides manual general-area resolution without browser location", () => {
     expect(picker).toContain('type="search"');
     expect(picker).toContain("Use this area");
-    expect(picker).toContain("Use my location");
-    expect(picker).toContain("useBrowserLocation()");
+    expect(picker).toContain("City or general neighborhood");
+    expect(picker).toContain("Device, street-address, and ZIP location collection is disabled");
+    expect(picker).not.toContain("useBrowserLocation()");
+    expect(picker).not.toContain("Use my location");
     expect(picker).toContain("onCleared()");
-    expect((safety.match(/onCleared=/g) ?? [])).toHaveLength(5);
+    expect((safety.match(/onCleared=/g) ?? [])).toHaveLength(4);
     expect(neighborhood).toContain("onCleared=");
     expect(picker).not.toContain("useEffect(() => void resolveCurrentArea");
   });
@@ -55,14 +55,14 @@ describe("web Safety location contract", () => {
     expect(gate.isCurrent(secondRequest)).toBe(true);
   });
 
-  it("uses the location picker for general, Police/ICE, unsafe-space, experience, nearby-alert, and neighborhood flows", () => {
-    expect((safety.match(/<SafetyLocationPicker/g) ?? [])).toHaveLength(5);
+  it("uses the manual picker for reports and keeps community intelligence non-proximity based", () => {
+    expect((safety.match(/<SafetyLocationPicker/g) ?? [])).toHaveLength(4);
     expect(neighborhood).toContain("<SafetyLocationPicker");
     expect(safety).toContain('label="Incident location"');
     expect(safety).toContain('label="Encounter location"');
     expect(safety).toContain('label="Unsafe space location"');
     expect(safety).toContain('label="Experience location"');
-    expect(safety).toContain('label="Check safety near"');
+    expect(safety).not.toContain('label="Check safety near"');
   });
 
   it("sends structured, moderated incident areas without raw report coordinates", () => {
