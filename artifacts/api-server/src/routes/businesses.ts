@@ -545,6 +545,30 @@ function approvedOwnerPredicate(userId: string) {
   )`;
 }
 
+type LegacyManagedBusinessSelection =
+  | { kind: "none" }
+  | { kind: "multiple" }
+  | { kind: "selected"; business: typeof businessesTable.$inferSelect };
+
+/**
+ * Legacy owner routes pre-date multi-business ownership. They may retain the
+ * one-business convenience only when it is unambiguous; silently choosing the
+ * first approved relationship can mutate the wrong public business profile.
+ */
+async function resolveLegacySingleManagedBusiness(
+  userId: string,
+): Promise<LegacyManagedBusinessSelection> {
+  const businesses = await db
+    .select()
+    .from(businessesTable)
+    .where(approvedOwnerPredicate(userId))
+    .orderBy(asc(businessesTable.name), asc(businessesTable.id))
+    .limit(2);
+  if (businesses.length === 0) return { kind: "none" };
+  if (businesses.length > 1) return { kind: "multiple" };
+  return { kind: "selected", business: businesses[0] };
+}
+
 // ── GET /businesses/categories ── master taxonomy (single source of truth) ────
 // Returns the full 22-category taxonomy with subcategories.
 // Used by web dropdowns, mobile filters, business onboarding, and Excel sheets.
@@ -1594,12 +1618,15 @@ router.get("/businesses/mine", async (req: any, res: Response) => {
       res.json({ business: null });
       return;
     }
-    const [business] = await db
-      .select()
-      .from(businessesTable)
-      .where(approvedOwnerPredicate(String(userId)))
-      .limit(1);
-    res.json({ business: business ?? null });
+    const selection = await resolveLegacySingleManagedBusiness(String(userId));
+    if (selection.kind === "multiple") {
+      res.status(409).json({
+        error: "Select a business before opening legacy business tools.",
+        code: "BUSINESS_SELECTION_REQUIRED",
+      });
+      return;
+    }
+    res.json({ business: selection.kind === "selected" ? selection.business : null });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch user business");
     res.status(500).json({ error: "Failed to fetch business" });
@@ -1610,6 +1637,26 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  let selection: LegacyManagedBusinessSelection;
+  try {
+    selection = await resolveLegacySingleManagedBusiness(String(userId));
+  } catch (err) {
+    req.log.error({ err }, "Failed to resolve managed business selection");
+    res.status(500).json({ error: "Failed to load business selection" });
+    return;
+  }
+  if (selection.kind === "multiple") {
+    res.status(409).json({
+      error: "Select a business before updating its profile.",
+      code: "BUSINESS_SELECTION_REQUIRED",
+    });
+    return;
+  }
+  if (selection.kind === "none") {
+    res.status(404).json({ error: "Business not found" });
     return;
   }
 
@@ -1688,7 +1735,10 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
     const [updated] = await db
       .update(businessesTable)
       .set(updates)
-      .where(approvedOwnerPredicate(String(userId)))
+      .where(and(
+        eq(businessesTable.id, selection.business.id),
+        approvedOwnerPredicate(String(userId)),
+      ))
       .returning();
     if (!updated) {
       res.status(404).json({ error: "Business not found" });

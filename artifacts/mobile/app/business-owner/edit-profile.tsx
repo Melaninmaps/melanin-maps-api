@@ -148,6 +148,7 @@ export default function EditBusinessProfile() {
     if (!form.category) { Alert.alert("Category required", "Please select a business category."); return; }
     if ((Platform.OS as string) !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSaving(true);
+    let profileSaved = false;
     try {
       const token = await getToken();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -171,6 +172,7 @@ export default function EditBusinessProfile() {
         }),
       });
       if (!res.ok) throw new Error("Save failed");
+      profileSaved = true;
 
       const addressChanged = original && (
         form.address.trim() !== original.address.trim() ||
@@ -179,13 +181,17 @@ export default function EditBusinessProfile() {
         form.zip.trim() !== original.zip.trim()
       );
       if (addressChanged && businessId && form.address.trim() && form.city.trim() && form.state.trim()) {
-        await fetch(`${getApiBase()}/api/businesses/${businessId}/address`, {
+        const addressResponse = await fetch(`${getApiBase()}/api/businesses/${businessId}/address`, {
           method: "PATCH", headers,
           body: JSON.stringify({
             address: form.address.trim(), city: form.city.trim(),
             state: form.state.trim(), zip: form.zip.trim() || undefined,
           }),
         });
+        if (!addressResponse.ok) {
+          const addressPayload = await addressResponse.json().catch(() => ({})) as { error?: string };
+          throw new Error(addressPayload.error ?? "Address changes require review before they can be saved.");
+        }
       }
 
       if ((Platform.OS as string) !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -202,8 +208,12 @@ export default function EditBusinessProfile() {
       } else {
         Alert.alert("Changes saved!", "Your business profile has been updated.", [{ text: "OK", onPress: () => router.back() }]);
       }
-    } catch {
-      Alert.alert("Save failed", "Something went wrong. Please try again.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Something went wrong. Please try again.";
+      Alert.alert(
+        profileSaved ? "Profile saved; address not changed" : "Save failed",
+        profileSaved ? message : "Something went wrong. Please try again.",
+      );
     } finally { setSaving(false); }
   };
 
