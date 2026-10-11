@@ -248,6 +248,26 @@ function emptySafetyCheckinNotificationResult(): SafetyCheckinNotificationResult
 }
 
 /**
+ * Notification preferences have existed as arrays, JSON values, and legacy text
+ * across isolated databases. Normalize the serialized value after the query so
+ * the overdue-alert worker can re-check an explicit safety opt-out without a
+ * schema-specific PostgreSQL containment operator.
+ */
+export function allowsSafetyCheckinNotification(topicsText: string | null): boolean {
+  if (topicsText === null) return true;
+  const value = topicsText.trim();
+  if (!value) return false;
+  try {
+    const parsed: unknown = JSON.parse(value);
+    if (Array.isArray(parsed)) return parsed.some((topic) => topic === "safety");
+    if (typeof parsed === "string") return parsed === "safety";
+  } catch {
+    // PostgreSQL text-array output (for example, {community,safety}) is not JSON.
+  }
+  return /(^|[,\[{])\s*"?safety"?\s*(?=$|[,}\]])/.test(value);
+}
+
+/**
  * Persist the recipient's in-app record transactionally. A retry must pass the
  * same accepted-share, block, approval, and safety-preference checks again.
  */
@@ -264,6 +284,7 @@ async function createSafetyCheckinInAppNotifications(
       id: string;
       recipient_user_id: string;
       push_enabled: boolean;
+      topics_text: string | null;
       is_eligible: boolean;
       in_app_attempt_count: number;
     }>(
@@ -271,12 +292,12 @@ async function createSafetyCheckinInAppNotifications(
               scr.recipient_user_id,
               scr.in_app_attempt_count,
               COALESCE(np.push_enabled, true) AS push_enabled,
+              np.topics::text AS topics_text,
               (
                 tss.id IS NOT NULL
                 AND recipient.approved = true
                 AND owner_blocks.id IS NULL
                 AND recipient_blocks.id IS NULL
-                AND COALESCE((to_jsonb(np.topics) @> '["safety"]'::jsonb OR to_jsonb(np.topics) = '"safety"'::jsonb), true)
               ) AS is_eligible
          FROM safety_checkin_recipients scr
          JOIN safety_checkins checkin
@@ -309,7 +330,7 @@ async function createSafetyCheckinInAppNotifications(
     );
 
     for (const recipient of recipients.rows) {
-      if (!recipient.is_eligible) {
+      if (!recipient.is_eligible || !allowsSafetyCheckinNotification(recipient.topics_text)) {
         await client.query(
           `UPDATE safety_checkin_recipients
               SET delivery_status = 'skipped',
@@ -406,6 +427,7 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
       id: string;
       recipient_user_id: string;
       push_enabled: boolean;
+      topics_text: string | null;
       is_eligible: boolean;
       push_attempt_count: number;
     }>(
@@ -413,12 +435,12 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
               scr.recipient_user_id,
               scr.push_attempt_count,
               COALESCE(np.push_enabled, true) AS push_enabled,
+              np.topics::text AS topics_text,
               (
                 tss.id IS NOT NULL
                 AND recipient.approved = true
                 AND owner_blocks.id IS NULL
                 AND recipient_blocks.id IS NULL
-                AND COALESCE((to_jsonb(np.topics) @> '["safety"]'::jsonb OR to_jsonb(np.topics) = '"safety"'::jsonb), true)
               ) AS is_eligible
          FROM safety_checkin_recipients scr
          JOIN safety_checkins checkin
@@ -454,7 +476,7 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
     );
 
     for (const recipient of recipients.rows) {
-      if (!recipient.is_eligible) {
+      if (!recipient.is_eligible || !allowsSafetyCheckinNotification(recipient.topics_text)) {
         await client.query(
           `UPDATE safety_checkin_recipients
               SET delivery_status = 'skipped',
