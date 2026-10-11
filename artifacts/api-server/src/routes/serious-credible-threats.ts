@@ -11,6 +11,7 @@ import {
   unavailableSeriousCredibleThreatReviewQueue,
   type SeriousCredibleThreatReviewQueue,
 } from "../safety/seriousCredibleThreatReviewQueue";
+import { configuredIsolatedSeriousThreatReviewerAdapter } from "../safety/postgresSeriousCredibleThreatReviewStore";
 
 const REPORT_KEYS = new Set(["category", "consent", "area"]);
 const CONSENT_KEYS = new Set(["privateReview", "anonymousCityLevelNotice"]);
@@ -206,6 +207,14 @@ export function createSeriousCredibleThreatRouter(
   return router;
 }
 
-const seriousCredibleThreatRouter = createSeriousCredibleThreatRouter();
+// Private retention is disabled by default. A durable adapter exists only when
+// both isolated-staging controls are explicitly enabled; it has no public alert
+// or notification-delivery operation.
+const configuredReviewAdapter = configuredIsolatedSeriousThreatReviewerAdapter();
+const seriousCredibleThreatRouter = createSeriousCredibleThreatRouter(
+  configuredReviewAdapter
+    ? { reviewQueue: configuredReviewAdapter }
+    : { reviewQueue: unavailableSeriousCredibleThreatReviewQueue },
+);
 
 export default seriousCredibleThreatRouter;

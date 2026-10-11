@@ -7,6 +7,7 @@ import {
   type PrivateSeriousThreatReviewRecord,
   type SeriousCredibleThreatPrivateModerator,
 } from "../safety/seriousCredibleThreatReviewQueue";
+import { configuredIsolatedSeriousThreatReviewerAdapter } from "../safety/postgresSeriousCredibleThreatReviewStore";
 
 const APPROVAL_KEYS = new Set([
   "decision",
@@ -260,7 +261,15 @@ export function createSeriousCredibleThreatPrivateModeratorRouter(
   return router;
 }
 
+// A real reviewer adapter is available only to the double-gated isolated
+// validation environment. The adapter deliberately cannot publish or deliver
+// notifications, so this wiring never enables a public alert path.
+const configuredPrivateModerator = configuredIsolatedSeriousThreatReviewerAdapter();
 const seriousCredibleThreatPrivateModeratorRouter =
-  createSeriousCredibleThreatPrivateModeratorRouter();
+  createSeriousCredibleThreatPrivateModeratorRouter(
+    configuredPrivateModerator
+      ? { moderator: configuredPrivateModerator }
+      : { moderator: unavailableSeriousCredibleThreatPrivateModerator },
+  );
 
 export default seriousCredibleThreatPrivateModeratorRouter;

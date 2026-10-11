@@ -6323,6 +6323,49 @@ export async function ensureSafetyOperationalSchema(logger?: Logger): Promise<vo
 // The authenticated Kinfolk staging proof must read the exact same catalog
 // schema as the isolated API. Keep this gate scoped to the disposable staging
 // environment; it is additive, creates no business data, and starts no worker.
+/**
+ * An isolated-only, deliberately private review handoff for synthetic serious
+ * credible-threat validation. The double opt-in prevents a production process
+ * from creating a new retention surface, and this gate creates no notice,
+ * provider delivery, public alert, public member projection, or background worker.
+ */
+export async function ensureIsolatedSeriousThreatPrivateReviewSchema(
+  logger?: Logger,
+): Promise<void> {
+  if (
+    process.env.KINFOLK_MEMORY_STAGING_ISOLATION !== "true"
+    || process.env.KINFOLK_SERIOUS_THREAT_PRIVATE_REVIEW_STAGING_ENABLED !== "true"
+  ) {
+    return;
+  }
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS safety_serious_credible_threat_private_reviews (
+      report_id TEXT PRIMARY KEY CHECK (char_length(report_id) BETWEEN 1 AND 160),
+      reporter_user_id TEXT NOT NULL CHECK (char_length(reporter_user_id) BETWEEN 1 AND 160),
+      received_at TIMESTAMPTZ NOT NULL,
+      review_state TEXT NOT NULL CHECK (review_state IN (
+        'pending_private_review',
+        'approved_private_review',
+        'rejected_private_review'
+      )),
+      candidate_submission JSONB NOT NULL CHECK (jsonb_typeof(candidate_submission) = 'object'),
+      private_decision JSONB NULL CHECK (
+        private_decision IS NULL OR jsonb_typeof(private_decision) = 'object'
+      ),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS safety_serious_threat_private_pending_idx
+      ON safety_serious_credible_threat_private_reviews (received_at ASC, report_id ASC)
+      WHERE review_state = 'pending_private_review';
+  `);
+  await pool.query(
+    "SELECT report_id, review_state, candidate_submission FROM safety_serious_credible_threat_private_reviews LIMIT 0",
+  );
+  logger?.info("Isolated serious-threat private-review schema ready before traffic acceptance");
+}
+
 const ISOLATED_GOVERNED_DISCOVERY_SCHEMA_MIGRATIONS = [
   "business_profile_evidence_receipts_v1",
   "business_discovery_eligibility_v1",
