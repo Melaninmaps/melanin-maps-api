@@ -275,13 +275,11 @@ router.get("/safety/checkins/received/:notificationId", async (req: Request, res
       notification_id: string;
       title: string;
       body: string;
-      created_at: Date;
       status: "overdue" | "resolved";
     }>(
       `SELECT n.id::text AS notification_id,
               n.title,
               n.body,
-              n.created_at,
               CASE
                 WHEN c.status = 'overdue' AND c.confirmed_at IS NULL THEN 'overdue'
                 ELSE 'resolved'
@@ -325,7 +323,6 @@ router.get("/safety/checkins/received/:notificationId", async (req: Request, res
         notificationId: alert.notification_id,
         title: alert.title,
         body: alert.body,
-        createdAt: alert.created_at,
         status: alert.status,
         privacy: "This alert does not include live or recent location, maps, visit history, or the member's private Check-In note.",
       },

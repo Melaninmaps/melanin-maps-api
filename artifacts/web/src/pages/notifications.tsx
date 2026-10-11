@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Bell, CheckCheck, Megaphone, Star, Shield, Users, ArrowLeft } from "lucide-react";
-import { Link, Redirect } from "wouter";
+import { Link, Redirect, useLocation } from "wouter";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 
@@ -8,12 +8,13 @@ const BASE = import.meta.env.BASE_URL;
 
 interface Notification {
   id: string;
-  type: "system" | "review" | "safety" | "community" | "promo";
+  type: string;
   title: string;
   body: string;
   read: boolean;
   createdAt: string;
-  data?: { officialUrl?: string; disclaimer?: string };
+  entityType?: string | null;
+  data?: { type?: string; officialUrl?: string; disclaimer?: string };
 }
 
 type OptionalOfficialAlertPreferences = {
@@ -41,6 +42,7 @@ function timeAgo(dateStr: string): string {
 
 export default function Notifications() {
   const { data: auth, isLoading: authLoading } = useGetCurrentAuthUser();
+  const [, navigate] = useLocation();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
@@ -108,6 +110,13 @@ export default function Notifications() {
       });
       setNotifications((prev) => prev.map((n) => n.id === id ? { ...n, read: true } : n));
     } catch {}
+  }
+
+  async function openNotification(notification: Notification) {
+    if (!notification.read) await markRead(notification.id);
+    if (notification.entityType === "safety_checkin" && notification.data?.type === "safety_checkin_overdue") {
+      navigate(`/safety/checkins/received/${encodeURIComponent(notification.id)}`);
+    }
   }
 
   if (authLoading) {
@@ -225,16 +234,17 @@ export default function Notifications() {
         ) : (
           <div className="space-y-2">
             {notifications.map((n) => {
-              const cfg = TYPE_CONFIG[n.type] ?? TYPE_CONFIG.system;
+              const cfg = TYPE_CONFIG[n.type as keyof typeof TYPE_CONFIG] ?? TYPE_CONFIG.system;
               const Icon = cfg.icon;
+              const isPrivateCheckinAlert = n.entityType === "safety_checkin" && n.data?.type === "safety_checkin_overdue";
               return (
                 <div
                   key={n.id}
-                  onClick={() => !n.read && markRead(n.id)}
+                  onClick={() => void openNotification(n)}
                   onKeyDown={(event) => {
-                    if (!n.read && (event.key === "Enter" || event.key === " ")) {
+                    if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault();
-                      void markRead(n.id);
+                      void openNotification(n);
                     }
                   }}
                   role="button"
@@ -273,7 +283,9 @@ export default function Notifications() {
                       {n.data?.disclaimer && (
                         <p className="text-[10px] text-[#3A1F0E]/45 mt-1">{n.data.disclaimer}</p>
                       )}
-                      <p className="text-[10px] text-[#3A1F0E]/40 mt-1.5">{timeAgo(n.createdAt)}</p>
+                      {!isPrivateCheckinAlert && (
+                        <p className="text-[10px] text-[#3A1F0E]/40 mt-1.5">{timeAgo(n.createdAt)}</p>
+                      )}
                     </div>
                   </div>
                 </div>

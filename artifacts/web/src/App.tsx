@@ -59,6 +59,7 @@ import VerifyBusiness from "@/pages/verify-business";
 import Welcome from "@/pages/welcome";
 import BusinessDashboard from "@/pages/business-dashboard";
 import Notifications from "@/pages/notifications";
+import SafetyCheckinAlert from "@/pages/safety-checkin-alert";
 import Affiliate from "@/pages/affiliate";
 import Mentorship from "@/pages/mentorship";
 import RateNeighborhood from "@/pages/rate-neighborhood";
@@ -417,6 +418,9 @@ function Router() {
       </Route>
       <Route path="/notifications">
         <Layout><ProtectedRoute><Notifications /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/safety/checkins/received/:notificationId">
+        <Layout><ProtectedRoute><SafetyCheckinAlert /></ProtectedRoute></Layout>
       </Route>
       <Route path="/library/topics/:slug">
         <Layout><LibraryTopicPage /></Layout>

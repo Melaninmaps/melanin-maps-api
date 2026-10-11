@@ -150,6 +150,8 @@ describe("profile-based Safety Check-In contract", () => {
     expect(receivedAlert).not.toContain("c.location");
     expect(receivedAlert).not.toContain("c.city");
     expect(receivedAlert).not.toContain("c.note");
+    expect(receivedAlert).not.toContain("n.created_at");
+    expect(receivedAlert).not.toContain("createdAt:");
     expect(receivedAlert).toContain("Safety Check-In alert not available");
   });
 });
