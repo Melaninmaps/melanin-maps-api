@@ -6374,6 +6374,43 @@ export async function ensureIsolatedSeriousThreatPrivateReviewSchema(
   logger?.info("Isolated serious-threat private-review schema ready before traffic acceptance");
 }
 
+/**
+ * A narrowly bounded, default-off staging test entitlement for the three
+ * ownership-claim decision routes. It never changes a user role, ADMIN_EMAILS,
+ * ownership data, or production authorization. Account deletion cascades the
+ * row, and every query ignores rows after their short expiry.
+ */
+export async function ensureIsolatedOwnerClaimReviewerFixtureSchema(
+  logger?: Logger,
+): Promise<void> {
+  if (
+    process.env.RAILWAY_ENVIRONMENT_NAME !== "staging"
+    || process.env.KINFOLK_MEMORY_STAGING_ISOLATION !== "true"
+    || process.env.KINFOLK_OWNER_CLAIM_REVIEWER_FIXTURE_ENABLED !== "true"
+  ) {
+    return;
+  }
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS owner_claim_reviewer_fixture_entitlements (
+      user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      bound_email TEXT NOT NULL CHECK (
+        bound_email ~* '^kinfolk-safety-contact-[a-z0-9-]+@example\\.test$'
+      ),
+      scope TEXT NOT NULL CHECK (scope = 'isolated_staging_validation'),
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CHECK (expires_at > created_at)
+    );
+    CREATE INDEX IF NOT EXISTS owner_claim_reviewer_fixture_expiry_idx
+      ON owner_claim_reviewer_fixture_entitlements (expires_at ASC);
+  `);
+  await pool.query(
+    "SELECT user_id, bound_email, scope, expires_at FROM owner_claim_reviewer_fixture_entitlements LIMIT 0",
+  );
+  logger?.info("Isolated owner-claim reviewer fixture schema checked before traffic acceptance");
+}
+
 const ISOLATED_GOVERNED_DISCOVERY_SCHEMA_MIGRATIONS = [
   "business_profile_evidence_receipts_v1",
   "business_discovery_eligibility_v1",

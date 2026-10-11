@@ -12,14 +12,115 @@
  *  - community_impact.ts had a competing POST /businesses/:id/claim which created
  *    owner links directly without evidence/validation — that route has been removed.
  *
- * All admin endpoints require isAdmin() — never just req.user?.id.
+ * All ordinary admin endpoints require isAdmin() — never just req.user?.id.
+ * The three canonical decision routes may additionally accept one short-lived,
+ * exact-email isolated-staging reviewer fixture; it never grants admin access.
  */
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
 import { isAdmin } from "../lib/adminAuth.js";
+import {
+  isBoundOwnerClaimReviewerFixtureRequest,
+  OWNER_CLAIM_REVIEWER_FIXTURE_SCOPE,
+  parseOwnerClaimReviewerFixtureTtl,
+  requireClaimDecisionReviewer as resolveClaimDecisionReviewer,
+} from "../claims/isolatedOwnerClaimReviewerFixture.js";
 import { sendClaimReceived, sendClaimApproved } from "../lib/email.js";
 
 const router: IRouter = Router();
+
+/**
+ * The isolated reviewer fixture is deliberately considered only by the three
+ * canonical decision routes below. It is not accepted by ordinary admin reads,
+ * legacy routes, profile management, or any role/entitlement administration.
+ */
+async function requireClaimDecisionReviewer(
+  req: Request,
+  res: Response,
+): Promise<string | null> {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return null;
+  }
+  const reviewerId = await resolveClaimDecisionReviewer(req);
+  if (!reviewerId) {
+    res.status(403).json({ error: "Forbidden" });
+    return null;
+  }
+  return reviewerId;
+}
+
+// ── Isolated staging fixture: expiring claim-decision reviewer ──────────────
+// This is a double-bound test capability, not an administrator bootstrap.
+// It is unreachable unless the runtime is exact staging, both explicit fixture
+// values are present, and the signed-in disposable email matches the binding.
+router.post("/internal/isolated-fixtures/owner-claim-reviewer/grant", async (req: Request, res: Response) => {
+  if (!isBoundOwnerClaimReviewerFixtureRequest(req)) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const body = req.body;
+  if (
+    typeof body !== "object"
+    || body === null
+    || Array.isArray(body)
+    || Object.keys(body).some((key) => key !== "expiresInSeconds")
+  ) {
+    res.status(400).json({ error: "Fixture request is invalid" });
+    return;
+  }
+  const ttlSeconds = parseOwnerClaimReviewerFixtureTtl(
+    (body as { expiresInSeconds?: unknown }).expiresInSeconds,
+  );
+  if (ttlSeconds === null) {
+    res.status(400).json({ error: "Fixture request is invalid" });
+    return;
+  }
+  try {
+    const { rows } = await pool.query<{ expires_at: Date }>(
+      `INSERT INTO owner_claim_reviewer_fixture_entitlements
+         (user_id, bound_email, scope, expires_at)
+       VALUES ($1, $2, $3, NOW() + make_interval(secs => $4::int))
+       ON CONFLICT (user_id) DO UPDATE
+         SET bound_email = EXCLUDED.bound_email,
+             scope = EXCLUDED.scope,
+             expires_at = EXCLUDED.expires_at,
+             created_at = NOW()
+       RETURNING expires_at`,
+      [req.user.id, req.user.email.trim().toLowerCase(), OWNER_CLAIM_REVIEWER_FIXTURE_SCOPE, ttlSeconds],
+    );
+    res.status(201).json({
+      ok: true,
+      scope: "isolated_staging_only",
+      expiresAt: rows[0]?.expires_at ?? null,
+    });
+  } catch (error) {
+    req.log.error({ error }, "Isolated owner-claim reviewer fixture grant failed");
+    res.status(503).json({ error: "Fixture entitlement unavailable" });
+  }
+});
+
+router.delete("/internal/isolated-fixtures/owner-claim-reviewer/grant", async (req: Request, res: Response) => {
+  if (!isBoundOwnerClaimReviewerFixtureRequest(req)) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  try {
+    const result = await pool.query(
+      `DELETE FROM owner_claim_reviewer_fixture_entitlements
+        WHERE user_id = $1 AND bound_email = $2 AND scope = $3`,
+      [req.user.id, req.user.email.trim().toLowerCase(), OWNER_CLAIM_REVIEWER_FIXTURE_SCOPE],
+    );
+    res.json({
+      ok: true,
+      scope: "isolated_staging_only",
+      entitlementRemoved: (result.rowCount ?? 0) > 0,
+    });
+  } catch (error) {
+    req.log.error({ error }, "Isolated owner-claim reviewer fixture cleanup failed");
+    res.status(503).json({ error: "Fixture entitlement unavailable" });
+  }
+});
 
 /**
  * A listing is marked claim_pending only while at least one reviewable claim
@@ -354,8 +455,9 @@ router.patch("/me/business-claims/:id", async (req: Request, res: Response) => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-// ADMINISTRATOR ENDPOINTS — all require isAdmin() (role === "admin")
-// Never gate admin routes on req.user?.id alone.
+// ADMINISTRATOR ENDPOINTS — ordinary routes require isAdmin() (role === "admin")
+// and canonical decision routes use requireClaimDecisionReviewer(). Never gate
+// an elevated route on req.user?.id alone.
 // ══════════════════════════════════════════════════════════════════════════════
 
 // ── GET /admin/business-claims ────────────────────────────────────────────────
@@ -382,7 +484,8 @@ router.get("/admin/business-claims", async (req: Request, res: Response) => {
 // ── PATCH /admin/business-claims/:id ─────────────────────────────────────────
 // Triage only — set needs_info or rejected. Approval is the dedicated endpoint below.
 router.patch("/admin/business-claims/:id", async (req: Request, res: Response) => {
-  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const reviewerId = await requireClaimDecisionReviewer(req, res);
+  if (!reviewerId) return;
   const claimId = String(req.params.id);
   const { status, decisionReason } = req.body as { status?: string; decisionReason?: string };
   if (status === "approved") {
@@ -400,7 +503,7 @@ router.patch("/admin/business-claims/:id", async (req: Request, res: Response) =
       `UPDATE business_claims
        SET status=$1, decision_reason=$2, reviewed_by=$3, reviewed_at=NOW(), updated_at=NOW()
        WHERE id=$4 RETURNING *`,
-      [status, decisionReason.trim(), req.user!.id, claimId]
+      [status, decisionReason.trim(), reviewerId, claimId]
     );
     if (!rows[0]) { res.status(404).json({ error: "Claim not found" }); return; }
     if (status === "rejected") {
@@ -423,10 +526,11 @@ router.patch("/admin/business-claims/:id", async (req: Request, res: Response) =
 // does NOT alter verified_designations, ratings, safety scores, or community tags.
 // Claiming grants profile control — verification is a separate MWM process.
 router.post("/admin/business-claims/:id/approve", async (req: Request, res: Response) => {
-  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const reviewerId = await requireClaimDecisionReviewer(req, res);
+  if (!reviewerId) return;
   const claimId = String(req.params.id);
   const { decisionReason } = req.body as { decisionReason?: string };
-  const adminId = req.user!.id;
+  const adminId = reviewerId;
 
   const client = await pool.connect();
   try {
@@ -537,13 +641,14 @@ router.post("/admin/business-claims/:id/approve", async (req: Request, res: Resp
 // Revokes an approved owner relationship. Audit history (business_claims row,
 // business_owner_links row) is NEVER deleted — revocation is a state change only.
 router.post("/admin/business-claims/:id/revoke", async (req: Request, res: Response) => {
-  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const reviewerId = await requireClaimDecisionReviewer(req, res);
+  if (!reviewerId) return;
   const claimId = String(req.params.id);
   const { revocationReason } = req.body as { revocationReason?: string };
   if (!revocationReason || revocationReason.trim().length < 3) {
     res.status(400).json({ error: "revocationReason is required (min 3 chars)" }); return;
   }
-  const adminId = req.user!.id;
+  const adminId = reviewerId;
 
   const client = await pool.connect();
   try {

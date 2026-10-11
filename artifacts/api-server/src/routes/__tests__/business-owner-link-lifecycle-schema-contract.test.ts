@@ -44,4 +44,15 @@ describe("business owner-link lifecycle schema gate", () => {
     expect(migrations).toContain("SELECT canonical_business_id, superseded_business_id, identity_evidence, policy_version, scoring FROM public.business_duplicate_resolutions LIMIT 0");
     expect(startup).toContain("await ensureBusinessPublicDetailSchema(logger);");
   });
+
+  it("keeps the disposable claim reviewer entitlement behind a staging-only pre-traffic gate", () => {
+    expect(migrations).toContain("export async function ensureIsolatedOwnerClaimReviewerFixtureSchema");
+    expect(migrations).toContain("process.env.RAILWAY_ENVIRONMENT_NAME !== \"staging\"");
+    expect(migrations).toContain("process.env.KINFOLK_MEMORY_STAGING_ISOLATION !== \"true\"");
+    expect(migrations).toContain("process.env.KINFOLK_OWNER_CLAIM_REVIEWER_FIXTURE_ENABLED !== \"true\"");
+    expect(migrations).toContain("CREATE TABLE IF NOT EXISTS owner_claim_reviewer_fixture_entitlements");
+    expect(migrations).toContain("REFERENCES users(id) ON DELETE CASCADE");
+    expect(migrations).toContain("scope = 'isolated_staging_validation'");
+    expect(startup).toContain("await ensureIsolatedOwnerClaimReviewerFixtureSchema(logger);");
+  });
 });

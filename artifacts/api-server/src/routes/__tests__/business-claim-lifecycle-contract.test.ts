@@ -65,4 +65,35 @@ describe("business ownership claim lifecycle contract", () => {
     expect(approval).not.toContain("SET verified=");
     expect(approval).not.toContain("SET verified_designations=");
   });
+
+  it("limits the expiring staging reviewer fixture to canonical decision routes", () => {
+    expect(claimsRoute).toContain('router.post("/internal/isolated-fixtures/owner-claim-reviewer/grant"');
+    expect(claimsRoute).toContain('router.delete("/internal/isolated-fixtures/owner-claim-reviewer/grant"');
+    expect(claimsRoute).toContain("async function requireClaimDecisionReviewer");
+
+    const triage = routeSection(
+      'router.patch("/admin/business-claims/:id"',
+      'router.post("/admin/business-claims/:id/approve"',
+    );
+    const approval = routeSection(
+      'router.post("/admin/business-claims/:id/approve"',
+      'router.post("/admin/business-claims/:id/revoke"',
+    );
+    const revocation = routeSection(
+      'router.post("/admin/business-claims/:id/revoke"',
+      "// ══════════════════════════════════════════════════════════════════════════════\n// LEGACY ENDPOINTS",
+    );
+    const legacy = routeSection(
+      'router.patch("/admin/claims/:id"',
+      "export default router",
+    );
+
+    for (const section of [triage, approval, revocation]) {
+      expect(section).toContain("await requireClaimDecisionReviewer(req, res)");
+    }
+    expect(legacy).toContain("isAdmin(req)");
+    expect(legacy).not.toContain("requireClaimDecisionReviewer(req, res)");
+    expect(claimsRoute).not.toContain("SET role='admin'");
+    expect(claimsRoute).not.toContain('SET role = \'admin\'');
+  });
 });

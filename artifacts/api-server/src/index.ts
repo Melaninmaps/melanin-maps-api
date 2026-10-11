@@ -22,6 +22,7 @@ import {
   ensureKinfolkPreferredNameSchema,
   ensureKinfolkTemporaryStaysSchema,
   ensureIsolatedGovernedDiscoverySchema,
+  ensureIsolatedOwnerClaimReviewerFixtureSchema,
   ensureIsolatedSeriousThreatPrivateReviewSchema,
   ensureMemberActivationInvitationSchema,
   ensureRequiredPublicationSchema,
@@ -212,6 +213,11 @@ try {
   // and does not create public notices or notification delivery work.
   await ensureIsolatedSeriousThreatPrivateReviewSchema(logger);
   logger.info("Isolated serious-threat private-review schema gate checked before traffic acceptance");
+  // Ownership-claim reviewer access is a separate default-off isolated test
+  // entitlement. It creates no role, allowlist entry, or business data and is
+  // considered only by three canonical claim-decision routes.
+  await ensureIsolatedOwnerClaimReviewerFixtureSchema(logger);
+  logger.info("Isolated owner-claim reviewer fixture schema gate checked before traffic acceptance");
   // The protected Community feed reads reactions and block/follow boundaries on
   // every authenticated request. These additive relations must exist even when
   // narrow release mode skips broad publication migrations and background work.
