@@ -94,7 +94,7 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("Location.requestForegroundPermissionsAsync()");
     expect(fullMapSource).toContain("Location.hasServicesEnabledAsync()");
     expect(fullMapSource).toContain("Location.getLastKnownPositionAsync({");
-    expect(fullMapSource).toContain("accuracy: Location.Accuracy.Balanced");
+    expect(fullMapSource).toContain("accuracy: Location.Accuracy.Highest");
     expect(fullMapSource).toContain("hasRequestedInitialLocationRef.current = true");
     expect(fullMapSource).toContain("void recenter()");
     expect(fullMapSource).toContain('if (Platform.OS === "web" || !isFocused || hasRequestedInitialLocationRef.current) return;');
@@ -168,6 +168,7 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("const deliberateMapNameSearch = isDeliberateMapBusinessNameSearch");
     expect(fullMapSource).toContain("directName: deliberateMapNameSearch");
     expect(fullMapSource).toContain('searchScope: businessSearchScope');
+    expect(fullMapSource).toContain("const directMatchHasCoordinates = Boolean(");
     expect(fullMapSource).toContain("const showDirectMatchOnMap = useCallback");
     expect(fullMapSource).toContain("Show pin");
   });
@@ -176,10 +177,13 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("const pendingBusinessFocusRef = useRef<Business | null>(null)");
     expect(fullMapSource).toContain("if (directMatchHasCoordinates && directMatch) return [directMatch]");
     expect(fullMapSource).toContain("const focusDirectBusinessOnMap = useCallback");
+    expect(fullMapSource).toContain("const showDirectMatchOnMap = useCallback");
+    expect(fullMapSource).toContain("if (!directMatch || !directMatchHasCoordinates) return;");
+    expect(fullMapSource).toContain("showDirectMatchOnMap();");
     expect(fullMapSource).toContain("pendingBusinessFocusRef.current = business");
     expect(fullMapSource).toContain("const pendingBusiness = pendingBusinessFocusRef.current");
     expect(fullMapSource).toContain("latitudeDelta: 0.025");
-    expect(fullMapSource).toContain("if (directMatchHasCoordinates) return;");
+    expect(fullMapSource).toContain("if (directMatch) return;");
   });
 
   it("offers 50 miles for business discovery without widening public-facility availability", () => {

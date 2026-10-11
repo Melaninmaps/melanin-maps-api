@@ -696,9 +696,20 @@ export function FullMapView({
   const directMatch = businessSearchScope === "explicit_public_listing"
     ? businesses[0] ?? null
     : null;
+  const directMatchHasCoordinates = Boolean(
+    directMatch
+    && Number.isFinite(directMatch.latitude)
+    && Number.isFinite(directMatch.longitude)
+    && Math.abs(directMatch.latitude) <= 90
+    && Math.abs(directMatch.longitude) <= 180
+    && (Math.abs(directMatch.latitude) > 0.001 || Math.abs(directMatch.longitude) > 0.001),
+  );
   const displayBusinessPins = useMemo(() => {
-    // An exact-name safety/context lookup may identify a retained profile, but
-    // it never creates a map marker. Only the source-qualified map feed can.
+    // Direct-name lookup is limited to the API's public-listing scope. When
+    // that exact listing has valid audited coordinates, it is an intentional
+    // member request and deserves one focused Map pin and its normal MWM card.
+    // A result without coordinates still never fabricates a pin.
+    if (directMatchHasCoordinates && directMatch) return [directMatch];
     if (directMatch) return [];
     // A submitted service or keyword search is also a deliberate map request.
     // Do not leave the ordinary nearby fallback pins layered over its results:
@@ -713,7 +724,7 @@ export function FullMapView({
       if (!localById.has(business.id)) localById.set(business.id, business);
     });
     return [...localById.values()];
-  }, [directMatch, focusedMappedBusinesses, nearbyCanonicalMapPins, submittedBusinessSearch]);
+  }, [directMatch, directMatchHasCoordinates, focusedMappedBusinesses, nearbyCanonicalMapPins, submittedBusinessSearch]);
   const visibleMapPinCount = displayBusinessPins.length;
   const activeMapDiscoveryLabel = mapDiscoveryFocus === "all"
     ? "All nearby places"
@@ -750,6 +761,16 @@ export function FullMapView({
       longitudeDelta: 0.025,
     }, 500);
   }, [safelyAnimateToRegion]);
+
+  const showDirectMatchOnMap = useCallback(() => {
+    if (!directMatch || !directMatchHasCoordinates) return;
+    focusDirectBusinessOnMap(directMatch);
+  }, [directMatch, directMatchHasCoordinates, focusDirectBusinessOnMap]);
+
+  useEffect(() => {
+    if (!directMatchHasCoordinates) return;
+    showDirectMatchOnMap();
+  }, [directMatch?.id, directMatchHasCoordinates, showDirectMatchOnMap]);
 
   const clearEssentialServices = useCallback(() => {
     setEssentialServiceCategory(null);
@@ -1988,13 +2009,47 @@ export function FullMapView({
                 : businessSearchError
                   ? "Couldn’t search local listings. Try again."
                   : directMatch
-                    ? `${directMatch.name} is available by direct name for safety or context. It is not included in map discovery.`
+                    ? directMatchHasCoordinates
+                      ? `${directMatch.name} is shown as your exact Map search.`
+                      : `${directMatch.name} is available by direct name, but does not have an audited Map pin.`
                     : mapped.length + culturalSearchMatchCount > 0
-                    ? `${mapped.length + culturalSearchMatchCount} mapped local result${mapped.length + culturalSearchMatchCount === 1 ? "" : "s"}`
-                    : "No mapped local results. Try another name, service, or location."}
+                      ? `${mapped.length + culturalSearchMatchCount} mapped local result${mapped.length + culturalSearchMatchCount === 1 ? "" : "s"}`
+                      : "No mapped local results. Try another name, service, or location."}
             </Text>
           </View>
         )}
+
+        {hasSubmittedBusinessSearch &&
+          !isBusinessSearchLoading &&
+          !businessSearchError &&
+          directMatch &&
+          directMatchHasCoordinates && (
+            <View
+              accessibilityLabel="Exact business map result"
+              style={[s.mapSearchResults, wideMapOverlayStyle]}
+            >
+              <TouchableOpacity
+                accessibilityLabel={`Show ${directMatch.name} on the map`}
+                accessibilityRole="button"
+                activeOpacity={0.86}
+                style={s.mapSearchResultCard}
+                onPress={showDirectMatchOnMap}
+              >
+                <Text numberOfLines={1} style={s.mapSearchResultName}>
+                  {directMatch.name}
+                </Text>
+                <Text numberOfLines={1} style={s.mapSearchResultMeta}>
+                  {[directMatch.subcategory, directMatch.city, directMatch.state]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </Text>
+                <View style={s.mapSearchResultAction}>
+                  <Feather name="map-pin" size={11} color="#FFFFFF" />
+                  <Text style={s.mapSearchResultActionText}>Show pin</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          )}
 
         {hasSubmittedBusinessSearch &&
           !isBusinessSearchLoading &&
