@@ -23,6 +23,7 @@ import {
   ensureMemberActivationInvitationSchema,
   ensureRequiredPublicationSchema,
   ensureSafetyOperationalSchema,
+  ensureTourCulturalSiteContributionSchema,
   publicationSchemaFailureLogLines,
   runStartupMigrations,
 } from "./lib/startup-migrations";
@@ -208,6 +209,11 @@ try {
   // narrow release mode skips broad publication migrations and background work.
   await ensureCommunityFeedReadSchema(logger);
   logger.info("Community feed read schema ready before traffic acceptance");
+  // Cultural-site detail and contribution views are authenticated request paths.
+  // The additive gate prevents a missing legacy seed table from turning a valid
+  // Explore deep link into a 500 while leaving site and contribution data untouched.
+  await ensureTourCulturalSiteContributionSchema(logger);
+  logger.info("Tour cultural-site contribution schema ready before traffic acceptance");
   await ensureIsolatedGovernedDiscoverySchema(logger);
   logger.info("Isolated governed discovery schema ready before traffic acceptance");
   if (explicitFeatureReleaseMode) {

@@ -7349,6 +7349,42 @@ export async function ensureMemberActivationInvitationSchema(logger?: Logger): P
   logger?.info("Member activation invitation schema is ready before traffic acceptance");
 }
 
+/**
+ * Tour cultural-site details and contribution routes read this relation on every
+ * request. Explicit feature-release mode intentionally skips broad legacy
+ * startup writers, including the historical mural seed that first created this
+ * table. Keep this request-path prerequisite narrowly additive: it creates no
+ * site, contribution, media asset, or public content.
+ */
+export async function ensureTourCulturalSiteContributionSchema(logger?: Logger): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS site_contributions (
+      id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      site_id       UUID        NOT NULL,
+      user_id       TEXT        NOT NULL,
+      author_name   TEXT,
+      comment_text  TEXT        NOT NULL,
+      image_url     TEXT,
+      video_url     TEXT,
+      status        TEXT        NOT NULL DEFAULT 'pending',
+      helpful_count INTEGER     NOT NULL DEFAULT 0,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_site_contrib_site
+      ON site_contributions(site_id) WHERE status = 'approved'
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_site_contrib_user
+      ON site_contributions(user_id)
+  `);
+  await pool.query(
+    "SELECT id, site_id, user_id, author_name, comment_text, image_url, video_url, status, helpful_count, created_at FROM site_contributions LIMIT 0",
+  );
+  logger?.info("Tour cultural-site contribution schema is ready before traffic acceptance");
+}
+
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
   const log = (msg: string) =>
     logger ? logger.info(msg) : console.log(`[startup-migrations] ${msg}`);
