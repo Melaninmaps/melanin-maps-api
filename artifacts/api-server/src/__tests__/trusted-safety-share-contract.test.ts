@@ -101,19 +101,16 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
     expect(auditMigration).not.toMatch(/contact_phone|contact_email|invite_token|push_token|provider_receipt_id/);
   });
 
-  it("keeps trusted-contact alerts distinct from retired live location sharing", () => {
+  it("keeps trusted-contact alerts separate from a member-controlled live location session", () => {
     const locationRoute = readFileSync(
       fileURLToPath(new URL("../routes/location-shares.ts", import.meta.url)),
       "utf8",
     );
-    const retirement = readFileSync(
-      fileURLToPath(new URL("../safety/retireLiveLocationSharing.ts", import.meta.url)),
-      "utf8",
-    );
-    expect(locationRoute).toContain("LIVE_LOCATION_SHARING_RETIRED");
-    expect(retirement).toContain("currentLat: null");
-    expect(retirement).toContain("currentLng: null");
-    expect(locationRoute).not.toContain("publicLocationShare");
+    expect(locationRoute).toContain("recipientTrustedShareId");
+    expect(locationRoute).toContain("liveLocationConsent !== true");
+    expect(locationRoute).toContain("tss.contact_accepted = true");
+    expect(locationRoute).toContain("publicLocationShare");
+    expect(locationRoute).not.toContain("trustedSafetyShareAlerts");
   });
 
   it("cannot resume a pending or declined contact without acceptance", () => {
@@ -183,23 +180,28 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
     expect(route).not.toContain("FOR KEY SHARE");
   });
 
-  it("does not keep coordinate transformation helpers after retirement", () => {
+  it("minimizes and expires trusted live location coordinates", () => {
     const locationRoute = readFileSync(
       fileURLToPath(new URL("../routes/location-shares.ts", import.meta.url)),
       "utf8",
     );
-    expect(locationRoute).not.toContain("minimizeLocationCoordinate");
-    expect(locationRoute).not.toContain("isFreshLocationCoordinate");
+    expect(locationRoute).toContain("minimizeLocationCoordinate");
+    expect(locationRoute).toContain("isFreshLocationCoordinate");
+    expect(locationRoute).toContain("MAX_COORDINATE_AGE_MS");
+    expect(locationRoute).toContain("current_lat = NULL");
+    expect(locationRoute).toContain("current_lng = NULL");
   });
 
-  it("removes native live-location controls rather than exposing a bearer link", () => {
+  it("uses a native foreground-only consent flow without exposing a bearer link", () => {
     const mobile = readFileSync(
       fileURLToPath(new URL("../../../mobile/app/location-share.tsx", import.meta.url)),
       "utf8",
     );
-    expect(mobile).toContain("Live location sharing is not available");
-    expect(mobile).not.toContain("expo-location");
-    expect(mobile).not.toContain("location-shares");
+    expect(mobile).toContain("expo-location");
+    expect(mobile).toContain("Location.requestForegroundPermissionsAsync()");
+    expect(mobile).toContain("liveLocationConsent");
+    expect(mobile).toContain("location-shares");
+    expect(mobile).not.toContain("startLocationUpdatesAsync");
     expect(mobile).not.toContain("Copy Share Link");
     expect(mobile).not.toContain("Copy Pending Link");
     expect(mobile).not.toContain("expo-clipboard");

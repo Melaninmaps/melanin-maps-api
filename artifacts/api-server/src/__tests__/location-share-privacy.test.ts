@@ -6,46 +6,80 @@ function source(relativePath: string): string {
   return readFileSync(fileURLToPath(new URL(relativePath, import.meta.url)), "utf8");
 }
 
-describe("retired live location sharing", () => {
-  it("fails closed on every legacy endpoint without reading coordinates or tokens", () => {
+describe("consented trusted live location sharing", () => {
+  it("requires an authenticated, accepted, finite trusted-contact relationship before a share starts", () => {
     const route = source("../routes/location-shares.ts");
-    expect(route).toContain("LIVE_LOCATION_SHARING_RETIRED");
-    expect(route).toContain('router.post("/safety/location-shares"');
-    expect(route).toContain('router.patch("/safety/location-shares/:token/update"');
+
+    expect(route).toContain('router.post("/safety/location-shares", requireFamilySafety');
+    expect(route).toContain("liveLocationConsent !== true");
+    expect(route).toContain("recipientTrustedShareId");
+    expect(route).toContain("tss.contact_type = 'mwm_user'");
+    expect(route).toContain("tss.status = 'active'");
+    expect(route).toContain("tss.contact_accepted = true");
+    expect(route).toContain("tss.activated_at > NOW() - INTERVAL '30 days'");
+    expect(route).toContain("owner_blocks.id IS NULL");
+    expect(route).toContain("recipient_blocks.id IS NULL");
+  });
+
+  it("limits sharing to minimized, fresh foreground fixes and removes the fix at lifecycle boundaries", () => {
+    const route = source("../routes/location-shares.ts");
+    const lifecycle = source("../lib/trustedSafetyShareLifecycle.ts");
+
+    expect(route).toContain("Math.round(coordinate * 10_000) / 10_000");
+    expect(route).toContain("MAX_COORDINATE_AGE_MS = 2 * 60 * 1000");
+    expect(route).toContain("ls.expires_at > NOW()");
+    expect(route).toContain("current_lat = NULL");
+    expect(route).toContain("current_lng = NULL");
+    expect(route).toContain('updateMode: "foreground_while_screen_open"');
+    expect(lifecycle).toContain("UPDATE location_shares");
+    expect(lifecycle).toContain("current_lat = NULL");
+    expect(lifecycle).toContain("current_lng = NULL");
+    expect(lifecycle).toContain("owner_enabled = false");
+  });
+
+  it("rechecks recipient authorization on every read and avoids recipient-visible update timestamps", () => {
+    const route = source("../routes/location-shares.ts");
+    const publicProjection = route.slice(
+      route.indexOf("export function publicLocationShare"),
+      route.indexOf('router.get("/safety/location-shares"'),
+    );
+    const returnedRecipientPayload = publicProjection.slice(
+      publicProjection.indexOf("return {"),
+      publicProjection.indexOf("};", publicProjection.indexOf("return {")),
+    );
+
     expect(route).toContain('router.get("/safety/location-shares/:token/view"');
-    expect(route).toContain('router.delete("/safety/location-shares/:id"');
-    expect(route.match(/res\.status\(410\)/g)?.length).toBe(1);
-    expect(route).toContain("Deliberately do not query by token");
-    expect(route).not.toContain("recipientTrustedShareId");
-    expect(route).not.toContain("minimizeLocationCoordinate");
-    expect(route).not.toContain("publicLocationShare");
+    expect(route).toContain("ls.recipient_user_id = $2");
+    expect(route).toContain("tss.contact_accepted = true");
+    expect(route).toContain("setSensitiveResponseHeaders(res)");
+    expect(publicProjection).toContain('coordinateState: "current"');
+    expect(returnedRecipientPayload).not.toContain("lastUpdatedAt:");
   });
 
-  it("clears retained active coordinates for an authenticated former sharer", () => {
-    const retirement = source("../safety/retireLiveLocationSharing.ts");
+  it("removes startup and retired-route cleanup that could erase Safety data implicitly", () => {
     const index = source("../index.ts");
-    expect(retirement).toContain("retireLocationSharesForMember");
-    expect(retirement).toContain("retireAllLegacyLocationShares");
-    expect(retirement).toContain("isActive: false");
-    expect(retirement).toContain("currentLat: null");
-    expect(retirement).toContain("currentLng: null");
-    expect(retirement).toContain("lastUpdatedAt: null");
-    expect(retirement).toContain("eq(locationSharesTable.sharerId, memberId)");
-    expect(retirement).toContain("isNotNull(locationSharesTable.currentLat)");
-    expect(retirement).toContain("isNotNull(locationSharesTable.currentLng)");
-    expect(index).toContain("await retireAllLegacyLocationShares()");
-    expect(index).toContain("Legacy live-location records retired before traffic acceptance");
+    const route = source("../routes/location-shares.ts");
+
+    expect(index).not.toContain("retireAllLegacyLocationShares");
+    expect(index).not.toContain("DELETE FROM user_locations");
+    expect(index).toContain("No startup Safety data cleanup runs here");
+    expect(route).not.toContain("retireLocationSharesForMember");
+    expect(route).not.toContain("LIVE_LOCATION_SHARING_RETIRED");
   });
 
-  it("removes native coordinate collection and public map rendering", () => {
+  it("keeps native collection foreground-only, explicit, and without public share links", () => {
     const mobile = source("../../../mobile/app/location-share.tsx");
-    const web = source("../../../web/src/pages/location-share-view.tsx");
-    expect(mobile).toContain("Live location sharing is not available");
-    expect(mobile).not.toContain("expo-location");
-    expect(mobile).not.toContain("location-shares");
-    expect(web).toContain("Live location sharing is not available");
-    expect(web).not.toContain("fetch(");
-    expect(web).not.toContain("google.com/maps");
-    expect(web).not.toContain("currentLat");
+
+    expect(mobile).toContain('import * as Location from "expo-location"');
+    expect(mobile).toContain("Location.requestForegroundPermissionsAsync()");
+    expect(mobile).toContain("liveLocationConsent");
+    expect(mobile).toContain("accessibilityRole=\"checkbox\"");
+    expect(mobile).toContain("foreground");
+    expect(mobile).toContain("setInterval");
+    expect(mobile).toContain("clearInterval");
+    expect(mobile).not.toContain("startLocationUpdatesAsync");
+    expect(mobile).not.toContain("Past Shares");
+    expect(mobile).not.toContain("Copy Share Link");
+    expect(mobile).not.toContain("expo-clipboard");
   });
 });

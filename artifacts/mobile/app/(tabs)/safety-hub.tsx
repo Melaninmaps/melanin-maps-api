@@ -96,6 +96,7 @@ const INTEL_TYPE_META: Record<string, { icon: string; label: string; color: stri
 
 const ALL_FEATURES: { id: string; icon: React.ComponentProps<typeof Feather>["name"]; title: string; desc: string; color: string; route: string | null; externalUrl?: string }[] = [
   { id: "intel",       icon: "radio",         title: "Community Intelligence",       desc: "Review moderated safety context without collecting or sharing member location.",          color: "#CA922B", route: "/report-intelligence" },
+  { id: "live-location", icon: "navigation-2", title: "Trusted Live Location",        desc: "Voluntarily share a minimized current location with one accepted Kinfolk contact for a chosen time. Stop anytime.", color: "#2563EB", route: "/location-share" },
   { id: "tip",         icon: "alert-triangle", title: "Submit Safety Tip",           desc: "Pin a location where violence or hate occurred. Nearby verified members are alerted to confirm.",      color: "#DC2626", route: "/safety-tip" },
   { id: "checkin",     icon: "check-circle",   title: "Safety Check-In",             desc: "Schedule a check-in. Your contact is alerted if you don't confirm.",                                   color: "#16A34A", route: "/checkin" },
   { id: "meetup",      icon: "users",          title: "Meetup Verification",         desc: "Mutually verify in-person meetups with connections you trust.",                                         color: "#7C3AED", route: "/member-connections" },
@@ -441,7 +442,7 @@ export default function SafetyHubTab() {
                 </TouchableOpacity>
               </View>
 
-              <Text style={[styles.intelConsentText, { color: colors.mutedForeground }]}>Safety Hub does not request, retain, display, or use a member&apos;s current or recent location.</Text>
+              <Text style={[styles.intelConsentText, { color: colors.mutedForeground }]}>Community Intelligence never requests or uses your location. Trusted Live Location is separate and only starts after you choose an accepted contact, a time limit, and explicit confirmation.</Text>
 
               <View style={[styles.threeStarRuleRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={[styles.statusBadge, { backgroundColor: "#F59E0B18", borderColor: "#F59E0B40" }]}>

@@ -1,19 +1,281 @@
 import { Feather } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import * as Location from "expo-location";
+import * as SecureStore from "expo-secure-store";
 import { useRouter } from "expo-router";
-import React from "react";
-import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  AppState,
+  type AppStateStatus,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 
-/**
- * Legacy route retained only so old deep links resolve safely. The app no
- * longer requests device location or offers live member-location sharing.
- */
+function getApiBase() {
+  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  return "";
+}
+
+type LocationShare = {
+  id: number;
+  label: string;
+  shareToken: string;
+  isActive: boolean;
+  expiresAt: string;
+  lastUpdatedAt: string | null;
+  coordinateState?: "published" | "waiting_for_first_update";
+  updateMode?: "foreground_while_screen_open";
+  linkDeliveryState?: "not_sent_by_service";
+};
+
+type TrustedRecipient = {
+  id: string;
+  contact_type: "mwm_user" | string;
+  contact_user_id: string | null;
+  contact_name: string;
+  status: string;
+  contact_accepted: boolean;
+  owner_enabled: boolean;
+};
+
+const DURATION_OPTIONS = [
+  { label: "30 min", minutes: 30 },
+  { label: "1 hour", minutes: 60 },
+  { label: "2 hours", minutes: 120 },
+  { label: "4 hours", minutes: 240 },
+  { label: "8 hours", minutes: 480 },
+  { label: "24 hours", minutes: 1440 },
+];
+
+function hasPublishedCoordinate(share: LocationShare): boolean {
+  return share.coordinateState === "published" && Boolean(share.lastUpdatedAt);
+}
+
 export default function LocationShareScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
+
+  const [shares, setShares] = useState<LocationShare[]>([]);
+  const [renderedAt] = useState(() => Date.now());
+  const [loading, setLoading] = useState(true);
+  const [showNew, setShowNew] = useState(false);
+  const [label, setLabel] = useState("");
+  const [recipients, setRecipients] = useState<TrustedRecipient[]>([]);
+  const [selectedRecipientId, setSelectedRecipientId] = useState<string | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState(60);
+  const [liveLocationConsent, setLiveLocationConsent] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [activeShareId, setActiveShareId] = useState<number | null>(null);
+  const activeShareRef = useRef<LocationShare | null>(null);
+  const locationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+
+  const fetchShares = useCallback(async () => {
+    setLoading(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const [res, trustedRes] = await Promise.all([
+        fetch(`${getApiBase()}/api/safety/location-shares`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${getApiBase()}/api/safety/trusted-shares`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      if (trustedRes.ok) {
+        const trusted = await trustedRes.json() as { shares?: TrustedRecipient[] };
+        const eligible = (trusted.shares ?? []).filter((share) =>
+          share.contact_type === "mwm_user" && share.status === "active" &&
+          share.contact_accepted === true && share.owner_enabled === true && Boolean(share.contact_user_id),
+        );
+        setRecipients(eligible);
+        setSelectedRecipientId((current) => eligible.some((share) => share.id === current) ? current : eligible[0]?.id ?? null);
+      } else {
+        // Never leave a prior recipient selectable when current authorization
+        // could not be revalidated.
+        setRecipients([]);
+        setSelectedRecipientId(null);
+      }
+      if (res.ok) {
+        const d = await res.json() as { shares: LocationShare[] };
+        const fetchedShares = d.shares ?? [];
+        setShares(fetchedShares);
+        const unexpired = fetchedShares.filter((share) => share.isActive && new Date(share.expiresAt) > new Date());
+        // This screen resumes one server-ordered share at a time. Prioritize a
+        // link that still needs its first fix; otherwise resume the newest link.
+        const resumableShare = unexpired.find((share) => !hasPublishedCoordinate(share)) ?? unexpired[0] ?? null;
+        activeShareRef.current = resumableShare;
+        setActiveShareId(resumableShare?.id ?? null);
+      }
+    } finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { queueMicrotask(() => { void fetchShares(); }); }, [fetchShares]);
+
+  const publishCurrentLocation = useCallback(async (
+    share: LocationShare,
+    token: string,
+  ): Promise<string | null> => {
+    try {
+      if (appStateRef.current !== "active") return null;
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const response = await fetch(`${getApiBase()}/api/safety/location-shares/${share.shareToken}/update`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ lat: loc.coords.latitude, lng: loc.coords.longitude }),
+      });
+      if (!response.ok) return null;
+      const data = await response.json() as { lastUpdatedAt?: string };
+      return typeof data.lastUpdatedAt === "string" ? data.lastUpdatedAt : new Date().toISOString();
+    } catch {
+      return null;
+    }
+  }, []);
+
+  const startLocationUpdates = useCallback((share: LocationShare, token: string) => {
+    if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
+    locationIntervalRef.current = setInterval(() => {
+      void publishCurrentLocation(share, token).then((lastUpdatedAt) => {
+        if (!lastUpdatedAt) return;
+        setShares((current) => current.map((candidate) => candidate.id === share.id
+          ? {
+              ...candidate,
+              coordinateState: "published",
+              lastUpdatedAt,
+            }
+          : candidate));
+      });
+    }, 30000);
+  }, [publishCurrentLocation]);
+
+  useEffect(() => {
+    const activeShare = activeShareRef.current?.id === activeShareId ? activeShareRef.current : null;
+    if (activeShare && appStateRef.current === "active") {
+      SecureStore.getItemAsync("auth_session_token")
+        .then((token) => { if (token) startLocationUpdates(activeShare, token); })
+        .catch(() => {});
+    }
+    return () => { if (locationIntervalRef.current) clearInterval(locationIntervalRef.current); };
+  }, [activeShareId, startLocationUpdates]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (nextState) => {
+      appStateRef.current = nextState;
+      if (nextState !== "active") {
+        if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
+        return;
+      }
+      const activeShare = activeShareRef.current;
+      if (!activeShare) return;
+      SecureStore.getItemAsync("auth_session_token")
+        .then((token) => { if (token) startLocationUpdates(activeShare, token); })
+        .catch(() => {});
+    });
+    return () => subscription.remove();
+  }, [startLocationUpdates]);
+
+  const handleCreate = async () => {
+    setCreating(true);
+    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission Required", "Location access is needed to share your position.");
+        return;
+      }
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      if (!token) {
+        Alert.alert("Sign In Required", "Please sign in again before sharing your location.");
+        return;
+      }
+      const res = await fetch(`${getApiBase()}/api/safety/location-shares`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label: label.trim() || "My Live Location",
+          recipientTrustedShareId: selectedRecipientId,
+          durationMinutes: selectedDuration,
+          liveLocationConsent,
+        }),
+      });
+      const d = await res.json() as { share?: LocationShare; error?: string };
+      if (res.ok && d.share) {
+        const createdShare = d.share;
+        const firstLocationUpdatedAt = await publishCurrentLocation(createdShare, token);
+        const readyShare = firstLocationUpdatedAt
+          ? {
+              ...createdShare,
+              coordinateState: "published" as const,
+              lastUpdatedAt: firstLocationUpdatedAt,
+            }
+          : createdShare;
+        setShares((prev) => [readyShare, ...prev]);
+        activeShareRef.current = readyShare;
+        setActiveShareId(readyShare.id);
+        setShowNew(false);
+        setLabel("");
+        setLiveLocationConsent(false);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        Alert.alert(
+          firstLocationUpdatedAt ? "Location Sharing Active" : "Location Share Ready",
+          firstLocationUpdatedAt
+            ? "Your minimized current location is available only to the accepted Kinfolk contact you selected. Updates continue only while this screen remains open and the app is in the foreground."
+            : "The authorized contact will not see a location until the first update succeeds. Keep this screen open and we will retry.",
+          [{ text: "Done" }],
+        );
+      } else {
+        Alert.alert("Error", d.error ?? "Failed to start location share.");
+      }
+    } catch {
+      Alert.alert("Error", "Failed to start location sharing. Please try again.");
+    } finally { setCreating(false); }
+  };
+
+  const handleStop = (id: number) => {
+    Alert.alert("Stop Sharing", "Stop sharing your location?", [
+      { text: "Keep Sharing", style: "cancel" },
+      {
+        text: "Stop", style: "destructive", onPress: async () => {
+          const token = await SecureStore.getItemAsync("auth_session_token");
+          const response = await fetch(`${getApiBase()}/api/safety/location-shares/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+          if (!response.ok) {
+            Alert.alert("Unable to Stop Sharing", "The server did not confirm that location sharing stopped. Please try again.");
+            return;
+          }
+          setShares((prev) => prev.map((s) => s.id === id ? { ...s, isActive: false } : s));
+          if (activeShareId === id) {
+            activeShareRef.current = null;
+            setActiveShareId(null);
+            if (locationIntervalRef.current) clearInterval(locationIntervalRef.current);
+          }
+        },
+      },
+    ]);
+  };
+
+
+  const formatExpiry = (iso: string) => {
+    const d = new Date(iso);
+    const diffMs = d.getTime() - renderedAt;
+    const diffMin = Math.round(diffMs / 60000);
+    if (diffMin < 0) return "Expired";
+    if (diffMin < 60) return `${diffMin}m remaining`;
+    const h = Math.floor(diffMin / 60);
+    const m = diffMin % 60;
+    return m > 0 ? `${h}h ${m}m remaining` : `${h}h remaining`;
+  };
+
+  const unexpiredShares = shares.filter((s) => s.isActive && new Date(s.expiresAt) > new Date());
+  const activeShares = unexpiredShares.filter(hasPublishedCoordinate);
+  const waitingShares = unexpiredShares.filter((share) => !hasPublishedCoordinate(share));
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -23,39 +285,179 @@ export default function LocationShareScreen() {
           style={styles.backBtn}
           activeOpacity={0.7}
           accessibilityRole="button"
-          accessibilityLabel="Back to Safety Hub"
+          accessibilityLabel="Back"
         >
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Safety & Privacy</Text>
-        <View style={styles.backBtn} />
+        <Text style={[styles.headerTitle, { color: colors.foreground }]}>Location Sharing</Text>
+        <View style={{ width: 34 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <View style={styles.iconWrap}>
-            <Feather name="shield" size={28} color="#2563EB" />
-          </View>
-          <Text style={[styles.title, { color: colors.foreground }]}>Live location sharing is not available</Text>
-          <Text style={[styles.body, { color: colors.mutedForeground }]}>
-            Mapping With Melanin does not share current or recent member locations, show maps of member activity, retain visit history for others, or offer a “who is here now” feature.
-          </Text>
-          <View style={[styles.notice, { backgroundColor: "#2563EB0F", borderColor: "#2563EB30" }]}>
-            <Feather name="check-circle" size={18} color="#2563EB" />
-            <Text style={[styles.noticeText, { color: colors.foreground }]}>
-              Safety Check-Ins remain private to the member by default. Trusted contacts can receive only the safety notifications a member separately authorizes; these do not include a live location.
+      {loading ? (
+        <View style={styles.center}><ActivityIndicator size="large" color="#2563EB" /></View>
+      ) : (
+        <ScrollView
+        keyboardDismissMode="on-drag" contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <View style={[styles.infoBanner, { backgroundColor: "#2563EB0F", borderColor: "#2563EB30" }]}>
+            <Feather name="map-pin" size={18} color="#2563EB" />
+            <Text style={[styles.infoText, { color: colors.foreground }]}>
+              This is temporary location sharing, not an emergency alert. Select an accepted Kinfolk trusted contact; only that currently authorized contact can access fresh minimized coordinates. Updates refresh about every 30 seconds only while this screen is open and the app is in the foreground; background updates are not enabled.
             </Text>
           </View>
+
           <TouchableOpacity
-            style={styles.button}
-            onPress={() => router.replace("/(tabs)/safety-hub" as never)}
-            activeOpacity={0.8}
-            accessibilityRole="button"
+            style={[styles.newBtn, { backgroundColor: "#2563EB18", borderColor: "#2563EB40" }]}
+            onPress={() => setShowNew((v) => !v)}
+            activeOpacity={0.75}
           >
-            <Text style={styles.buttonText}>Return to Safety Hub</Text>
+            <Feather name={showNew ? "chevron-up" : "map-pin"} size={18} color="#2563EB" />
+            <Text style={[styles.newBtnText, { color: "#2563EB" }]}>{showNew ? "Cancel" : "Start Location Share"}</Text>
           </TouchableOpacity>
-        </View>
-      </ScrollView>
+
+          {showNew && (
+            <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Text style={[styles.formLabel, { color: colors.foreground }]}>Label (optional)</Text>
+              <TextInput
+                style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+                placeholder="e.g. Trip to Downtown, Date Night"
+                placeholderTextColor={colors.mutedForeground}
+                value={label}
+                onChangeText={setLabel}
+              />
+              <Text style={[styles.formLabel, { color: colors.foreground }]}>Accepted Kinfolk Contact</Text>
+              {recipients.length === 0 ? (
+                <Text style={[styles.lastUpdated, { color: colors.mutedForeground }]}>Add and obtain acceptance from a trusted Kinfolk contact before sharing location.</Text>
+              ) : (
+                <View style={styles.durationRow}>
+                  {recipients.map((recipient) => {
+                    const selected = selectedRecipientId === recipient.id;
+                    return <TouchableOpacity key={recipient.id} style={[styles.durationChip, { borderColor: selected ? "#2563EB" : colors.border, backgroundColor: selected ? "#2563EB" : colors.background }]} onPress={() => setSelectedRecipientId(recipient.id)} activeOpacity={0.7} accessibilityRole="button" accessibilityState={{ selected }}>
+                      <Text style={[styles.durationText, { color: selected ? "#fff" : colors.foreground }]}>{recipient.contact_name}</Text>
+                    </TouchableOpacity>;
+                  })}
+                </View>
+              )}
+              <Text style={[styles.formLabel, { color: colors.foreground }]}>Duration</Text>
+              <ScrollView
+        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false}>
+                <View style={styles.durationRow}>
+                  {DURATION_OPTIONS.map((o) => {
+                    const sel = selectedDuration === o.minutes;
+                    return (
+                      <TouchableOpacity
+                        key={o.minutes}
+                        style={[styles.durationChip, { borderColor: sel ? "#2563EB" : colors.border, backgroundColor: sel ? "#2563EB" : colors.background }]}
+                        onPress={() => setSelectedDuration(o.minutes)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[styles.durationText, { color: sel ? "#fff" : colors.foreground }]}>{o.label}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </ScrollView>
+              <TouchableOpacity
+                style={styles.consentRow}
+                onPress={() => setLiveLocationConsent((current) => !current)}
+                activeOpacity={0.75}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: liveLocationConsent }}
+                accessibilityLabel="Confirm temporary live location sharing"
+              >
+                <Feather
+                  name={liveLocationConsent ? "check-square" : "square"}
+                  size={20}
+                  color={liveLocationConsent ? "#2563EB" : colors.mutedForeground}
+                />
+                <Text style={[styles.consentText, { color: colors.mutedForeground }]}>
+                  I understand that my minimized current location will be visible only to the accepted Kinfolk contact selected above until I stop sharing or the selected time ends.
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveBtn, { opacity: creating || !selectedRecipientId || !liveLocationConsent ? 0.6 : 1 }]}
+                onPress={() => void handleCreate()}
+                disabled={creating || !selectedRecipientId || !liveLocationConsent}
+                activeOpacity={0.85}
+              >
+                {creating ? <ActivityIndicator size="small" color="#fff" /> : <Feather name="map-pin" size={16} color="#fff" />}
+                <Text style={styles.saveBtnText}>{creating ? "Starting…" : "Start Sharing"}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {waitingShares.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Waiting for Location</Text>
+              {waitingShares.map((share) => (
+                <View key={share.id} style={[styles.shareCard, { backgroundColor: colors.card, borderColor: "#D9770640" }]}>
+                  <View style={styles.shareHeader}>
+                    <View style={[styles.shareIconWrap, { backgroundColor: "#D9770618" }]}>
+                      <Feather name="clock" size={16} color="#D97706" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.shareLabel, { color: colors.foreground }]}>{share.label}</Text>
+                      <Text style={[styles.shareExpiry, { color: "#D97706" }]}>Waiting for first location — retrying</Text>
+                      <Text style={[styles.lastUpdated, { color: colors.mutedForeground }]}>{formatExpiry(share.expiresAt)}</Text>
+                      <Text style={[styles.lastUpdated, { color: colors.mutedForeground }]}>Only the selected accepted contact can access a fresh location · updates require this screen to stay open</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.stopBtn, { borderColor: "#DC2626" }]}
+                      onPress={() => handleStop(share.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Feather name="x" size={14} color="#DC2626" />
+                      <Text style={styles.stopBtnText}>Stop</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {activeShares.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Active Shares</Text>
+              {activeShares.map((s) => (
+                <View key={s.id} style={[styles.shareCard, { backgroundColor: colors.card, borderColor: "#2563EB40" }]}>
+                  <View style={styles.shareHeader}>
+                    <View style={[styles.shareIconWrap, { backgroundColor: "#2563EB18" }]}>
+                      <Feather name="radio" size={16} color="#2563EB" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.shareLabel, { color: colors.foreground }]}>{s.label}</Text>
+                      <Text style={[styles.shareExpiry, { color: "#2563EB" }]}>Latest coordinate available · {formatExpiry(s.expiresAt)}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.stopBtn, { borderColor: "#DC2626" }]}
+                      onPress={() => handleStop(s.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Feather name="x" size={14} color="#DC2626" />
+                      <Text style={styles.stopBtnText}>Stop</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {s.lastUpdatedAt && (
+                    <Text style={[styles.lastUpdated, { color: colors.mutedForeground }]}>
+                      Last update received: {new Date(s.lastUpdatedAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })} · foreground only
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
+          )}
+
+          {activeShares.length === 0 && waitingShares.length === 0 && (
+            <View style={[styles.emptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <Feather name="map-pin" size={28} color={colors.mutedForeground} />
+              <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No location shares yet</Text>
+              <Text style={[styles.emptyDesc, { color: colors.mutedForeground }]}>
+                Start a temporary share for an accepted Kinfolk trusted contact. It updates only while this screen is open and access ends on stop, expiry, block, or revoked contact consent.
+              </Text>
+            </View>
+          )}
+
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -63,15 +465,37 @@ export default function LocationShareScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1 },
-  backBtn: { width: 34, padding: 4 },
+  backBtn: { padding: 4 },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 18 },
-  scroll: { flexGrow: 1, justifyContent: "center", padding: 20, paddingBottom: 60 },
-  card: { borderRadius: 22, borderWidth: 1, padding: 22, alignItems: "center", gap: 16 },
-  iconWrap: { width: 58, height: 58, borderRadius: 29, alignItems: "center", justifyContent: "center", backgroundColor: "#2563EB12" },
-  title: { fontFamily: "Inter_700Bold", fontSize: 20, textAlign: "center" },
-  body: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 21, textAlign: "center" },
-  notice: { width: "100%", flexDirection: "row", alignItems: "flex-start", gap: 10, borderRadius: 14, borderWidth: 1, padding: 14 },
-  noticeText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
-  button: { width: "100%", alignItems: "center", borderRadius: 14, backgroundColor: "#2563EB", paddingVertical: 14 },
-  buttonText: { color: "#fff", fontFamily: "Inter_700Bold", fontSize: 15 },
+  center: { flex: 1, alignItems: "center", justifyContent: "center" },
+  scroll: { padding: 20, gap: 16, paddingBottom: 60 },
+  infoBanner: { flexDirection: "row", gap: 10, padding: 14, borderRadius: 14, borderWidth: 1, alignItems: "flex-start" },
+  infoText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, flex: 1 },
+  newBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, padding: 14, borderRadius: 14, borderWidth: 1.5 },
+  newBtnText: { fontFamily: "Inter_700Bold", fontSize: 15 },
+  formCard: { borderRadius: 18, borderWidth: 1, padding: 16, gap: 4 },
+  formLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginTop: 8, marginBottom: 4 },
+  input: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 11, fontFamily: "Inter_400Regular", fontSize: 14 },
+  durationRow: { flexDirection: "row", gap: 8, paddingVertical: 4 },
+  durationChip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 10, borderWidth: 1.5 },
+  durationText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  consentRow: { flexDirection: "row", alignItems: "flex-start", gap: 9, marginTop: 14, paddingHorizontal: 2 },
+  consentText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18 },
+  saveBtn: { backgroundColor: "#2563EB", borderRadius: 14, height: 50, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 8 },
+  saveBtnText: { color: "#fff", fontFamily: "Inter_700Bold", fontSize: 15 },
+  section: { gap: 10 },
+  sectionTitle: { fontFamily: "Inter_700Bold", fontSize: 16 },
+  shareCard: { borderRadius: 18, borderWidth: 1.5, padding: 14, gap: 8 },
+  shareHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
+  shareIconWrap: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  shareLabel: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  shareExpiry: { fontFamily: "Inter_500Medium", fontSize: 12, marginTop: 2 },
+  stopBtn: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 7, borderRadius: 8, borderWidth: 1 },
+  stopBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#DC2626" },
+  lastUpdated: { fontFamily: "Inter_400Regular", fontSize: 12 },
+  copyBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, padding: 10, borderRadius: 10, borderWidth: 1 },
+  copyBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
+  emptyCard: { borderRadius: 18, borderWidth: 1, padding: 28, alignItems: "center", gap: 10 },
+  emptyTitle: { fontFamily: "Inter_700Bold", fontSize: 16 },
+  emptyDesc: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center", lineHeight: 19 },
 });

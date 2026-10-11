@@ -51,6 +51,7 @@ type MeetupVerification = {
 };
 
 const ALL_FEATURES: { id: string; icon: React.ComponentProps<typeof Feather>["name"]; title: string; desc: string; color: string; route: string | null; externalUrl?: string }[] = [
+  { id: "live-location", icon: "navigation-2", title: "Trusted Live Location", desc: "Voluntarily share a minimized current location with one accepted Kinfolk contact for a chosen time. Stop anytime.", color: "#2563EB", route: "/location-share" },
   { id: "tip", icon: "alert-triangle", title: "Submit Safety Tip", desc: "Pin a location where violence or hate occurred. Nearby verified members are alerted to confirm.", color: "#DC2626", route: "/safety-tip" },
   { id: "checkin", icon: "check-circle", title: "Safety Check-In", desc: "Schedule a check-in. Your contact is alerted if you don't confirm.", color: "#16A34A", route: "/checkin" },
   { id: "meetup", icon: "users", title: "Meetup Verification", desc: "Mutually verify in-person meetups with connections you trust.", color: "#7C3AED", route: "/member-connections" },

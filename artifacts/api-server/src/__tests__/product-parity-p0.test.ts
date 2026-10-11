@@ -29,18 +29,20 @@ describe("private social-space authorization", () => {
     expect(circles).toMatch(/router\.get\("\/circles\/:id\/plans",[\s\S]*?Not a member/);
   });
 
-  it("retires live location sharing without removing private Safety Check-Ins", () => {
+  it("keeps trusted live location separate from private Safety Check-Ins", () => {
     const shares = source("../routes/location-shares.ts");
-    expect(shares).toContain("LIVE_LOCATION_SHARING_RETIRED");
+    const checkins = source("../routes/safety-checkins.ts");
     expect(shares).toContain('router.patch("/safety/location-shares/:token/update"');
     expect(shares).toContain('router.get("/safety/location-shares/:token/view"');
-    expect(shares).toContain("retireLocationSharesForMember");
-    expect(shares).not.toContain("minimizeLocationCoordinate");
+    expect(shares).toContain("liveLocationConsent !== true");
+    expect(shares).toContain("minimizeLocationCoordinate");
+    expect(shares).toContain("tss.contact_accepted = true");
+    expect(shares).toContain("owner_blocks.id IS NULL");
+    expect(shares).not.toContain("retireLocationSharesForMember");
     const alerts = source("../routes/community-alerts.ts");
-    const retirement = source("../safety/retireLiveLocationSharing.ts");
     expect(alerts).toContain("Member location storage has been retired");
-    expect(retirement).toContain("DELETE FROM user_locations");
-    expect(retirement).toContain("UPDATE safety_checkins SET location = NULL, city = NULL");
+    expect(checkins).toContain("Safety Check-Ins do not collect, store, or share location");
+    expect(checkins).not.toContain("minimizeLocationCoordinate");
   });
 
   it("keeps Safety-tip submitter identifiers out of client responses", () => {

@@ -24,8 +24,10 @@ describe("explicit safety location consent", () => {
     expect(mapTab).toContain("useSafetyProximity({ enabled: false })");
   });
 
-  it("retires device-location collection from all Safety-specific surfaces", () => {
-    expect(hub).toContain("does not request, retain, display, or use a member&apos;s current or recent location");
+  it("limits device-location collection to the separate explicit trusted-share flow", () => {
+    expect(hub).toContain('id: "live-location"');
+    expect(hub).toContain('route: "/location-share"');
+    expect(hub).toContain("Trusted Live Location is separate");
     expect(hub).not.toContain("expo-location");
     expect(hub).not.toContain("Location.Accuracy.Highest");
     expect(tip).toContain("never collects or shares a member");

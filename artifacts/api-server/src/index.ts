@@ -62,7 +62,6 @@ import {
 import { privatePlacesRuntimeState } from "./kinfolk/private-places-policy";
 import { shouldRunPrivatePlacesSyntheticQaAcceptance } from "./kinfolk/private-places-fictional-qa";
 import { runPrivatePlacesProductionSyntheticAcceptance } from "./kinfolk/private-places-production-acceptance";
-import { retireAllLegacyLocationShares } from "./safety/retireLiveLocationSharing";
 
 const rawPort = process.env["PORT"] ?? "8080";
 const port = Number(rawPort);
@@ -214,11 +213,9 @@ try {
   // notifications, so explicit release mode can safely enforce them here.
   await ensureSafetyOperationalSchema(logger);
   logger.info("Safety Hub operational schema ready before traffic acceptance");
-  // Live member-location sharing is retired. Clear any legacy active share or
-  // retained coordinate before accepting traffic; this does not alter private
-  // Check-Ins, trusted contacts, safety reports, or their policy boundaries.
-  const retiredLocationShareCount = await retireAllLegacyLocationShares();
-  logger.info({ retiredLocationShareCount }, "Legacy live-location records retired before traffic acceptance");
+  // No startup Safety data cleanup runs here. Live-location retention is enforced
+  // only at a member-controlled share's expiry, revocation, block, or consent
+  // withdrawal boundary; startup must never erase Safety records implicitly.
   // The serious-threat review store is a two-flag, isolated-staging-only
   // validation control. It is deliberately absent in every other environment
   // and does not create public notices or notification delivery work.
