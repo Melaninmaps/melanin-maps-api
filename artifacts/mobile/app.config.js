@@ -28,6 +28,11 @@ if (environment === "staging") {
 if (releaseChannel === "testflight-staging" && environment !== "staging") {
   throw new Error("The testflight-staging channel requires APP_ENV=staging");
 }
+if (buildPlatform === "android" && !mapsKey) {
+  throw new Error(
+    "Android build configuration requires GOOGLE_MAPS_API_KEY for native map rendering",
+  );
+}
 
 /** @type {import('expo/config').ExpoConfig} */
 module.exports = ({ config }) => ({
