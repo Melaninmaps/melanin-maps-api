@@ -250,7 +250,7 @@ export default function CommunityScreen() {
   // A private, explicit view choice. The server receives no display value on
   // Community feed reads, so it cannot change which posts are eligible or how
   // they rank the same permitted posts.
-  const [communityFeedDisplay, setCommunityFeedDisplay] = useState<CommunityFeedDisplay>("mixed");
+  const [communityFeedDisplay, setCommunityFeedDisplay] = useState<CommunityFeedDisplay>("text_first");
   const [showFeedControls, setShowFeedControls] = useState(false);
   const [mediaAttachments, setMediaAttachments] = useState<{ uri: string; type: "image" | "video"; uploaded?: string; isGraphic?: boolean; warningType?: string }[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
@@ -386,7 +386,7 @@ export default function CommunityScreen() {
           setCommunityFeedDisplay(body.communityFeedDisplay as CommunityFeedDisplay);
         }
       } catch {
-        // The local balanced view remains available if the private preference
+        // The local conversation-first view remains available if the private preference
         // cannot be fetched; existing Community posts are unaffected.
       }
     })();
@@ -396,7 +396,7 @@ export default function CommunityScreen() {
   const selectCommunityFeedDisplay = useCallback(async (next: CommunityFeedDisplay) => {
     const previous = communityFeedDisplay;
     setCommunityFeedDisplay(next);
-    setActiveTab("Feed");
+    setActiveTab("Community Feed");
     setShowFeedControls(false);
     requestAnimationFrame(() => {
       feedListRef.current?.scrollToOffset({ offset: 0, animated: false });

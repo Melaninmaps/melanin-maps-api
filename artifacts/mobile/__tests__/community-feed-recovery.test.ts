@@ -32,7 +32,8 @@ describe("mobile Community feed recovery", () => {
     expect(source).toContain('accessibilityLabel="Hide Community keyboard"');
     expect(source).toContain("onRequestClose={closeCompose}");
     expect(source).toContain("const feedListRef = useRef<FlatList<CommunityPost> | null>(null)");
-    expect(source).toContain("setActiveTab(\"Feed\")");
+    expect(source).toContain("setActiveTab(\"Community Feed\")");
+    expect(source).not.toContain("setActiveTab(\"Feed\")");
     expect(source).toContain("feedListRef.current?.scrollToOffset({ offset: 0, animated: false })");
   });
 

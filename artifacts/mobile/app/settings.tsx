@@ -67,6 +67,7 @@ export default function SettingsScreen() {
         { id: "kinfolk", icon: "message-circle", label: "KinfolkAI™", sub: "Conversation mode, voice, memories, and explicit preferences", route: "/kinfolk-settings" },
         { id: "notifications", icon: "bell", label: "Notifications", sub: "Alerts and reminders", route: "/notifications-settings" },
         { id: "video-sources", icon: "play-circle", label: "Video Sources", sub: "Choose YouTube, TikTok, Twitch, Snapchat & more", route: "/social-video-preferences" },
+        { id: "my-circles", icon: "users", label: "My Circles", sub: "Private group spaces and conversations", route: "/circles" },
         { id: "privacy", icon: "shield", label: "Privacy & Safety", sub: "Visibility and data", route: "/privacy" },
         { id: "safetyhub", icon: "shield", label: "Safety Hub", sub: "Check-ins, location sharing & meetup verification", route: "/safety-hub" },
         { id: "trusted-safety", icon: "users", label: "Trusted Safety Share", sub: "Share safety alerts with family — nothing else", route: "/trusted-safety-share" },

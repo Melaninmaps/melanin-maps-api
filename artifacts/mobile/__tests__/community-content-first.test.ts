@@ -90,6 +90,9 @@ describe("native Community content-first surface", () => {
     expect(source).toContain('router.push("/connections")');
     expect(source).toContain("const feedListRef = useRef<FlatList<CommunityPost> | null>(null)");
     expect(source).toContain("feedListRef.current?.scrollToOffset({ offset: 0, animated: false })");
+    expect(source).toContain('useState<CommunityFeedDisplay>("text_first")');
+    expect(source).toContain('setActiveTab("Community Feed")');
+    expect(source).not.toContain('setActiveTab("Feed")');
     expect(source).toContain("setShowFeedControls(false)");
   });
 
