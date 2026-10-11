@@ -7561,6 +7561,62 @@ export async function ensureHbcuExplorePublicationSchema(logger?: Logger): Promi
   logger?.info("Explore HBCU publication schema is ready before traffic acceptance");
 }
 
+/**
+ * Kinfolk's ordinary conversational route may check the published Living Library
+ * before asking the configured model. Explicit feature-release mode correctly
+ * skips the broad migration runner, but a missing legacy Library relation must
+ * not turn a safe model answer into a generic fallback. This gate is additive
+ * schema only: it creates no topics, entries, sources, facets, links, or
+ * publication state, and therefore cannot manufacture a Library answer.
+ */
+export async function ensureKinfolkLivingLibraryReadSchema(logger?: Logger): Promise<void> {
+  const requiredMigrationNames = [
+    "living_library_topics_table_v1",
+    "living_library_entries_table_v1",
+    "living_library_entries_idx_topic_refreshed_v1",
+    "living_library_entries_idx_norm_question_v1",
+    "living_library_entry_sources_table_v1",
+    "living_library_topic_follows_table_v1",
+    "living_library_research_candidates_v2",
+    "living_library_coverage_aggregates_v1",
+    "living_library_foundation_columns_v1",
+    "library_entry_topic_links_v1",
+    "library_entry_topic_links_topic_idx_v1",
+    "library_entry_source_relevance_notes_v1",
+    "library_entry_facets_v1",
+  ] as const;
+
+  const migrations = requiredMigrationNames.map((name) => {
+    const migration = MIGRATIONS.find((entry) => entry.name === name);
+    if (!migration) {
+      throw new Error(`Living Library read schema migration is unavailable: ${name}`);
+    }
+    return migration;
+  });
+
+  for (const migration of migrations) {
+    await pool.query(migration.sql);
+  }
+
+  // The historical publication-status migration also backfills rows. Do not run
+  // that writer in the narrow pre-traffic path: a fresh default makes any
+  // existing legacy entry non-public until a governed publication workflow has
+  // explicitly approved it.
+  await pool.query(`
+    ALTER TABLE library_entries
+      ADD COLUMN IF NOT EXISTS publication_status TEXT NOT NULL DEFAULT 'pending'
+  `);
+
+  await Promise.all([
+    pool.query("SELECT id, slug, title, domain, summary, icon_key, active, is_foundational FROM library_topics LIMIT 0"),
+    pool.query("SELECT id, topic_id, normalized_question, publication_status, refreshed_at FROM library_entries LIMIT 0"),
+    pool.query("SELECT id, entry_id, why_it_matters FROM library_entry_sources LIMIT 0"),
+    pool.query("SELECT entry_id, facet_key FROM library_entry_facets LIMIT 0"),
+    pool.query("SELECT entry_id, topic_id, relevance FROM library_entry_topic_links LIMIT 0"),
+  ]);
+  logger?.info("Kinfolk Living Library read schema is ready before traffic acceptance");
+}
+
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
   const log = (msg: string) =>
     logger ? logger.info(msg) : console.log(`[startup-migrations] ${msg}`);

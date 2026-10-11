@@ -18,6 +18,7 @@ import {
   ensureCommunityFeedReadSchema,
   ensureHbcuExplorePublicationSchema,
   ensureKinfolkQuestionImageSchemaOnly,
+  ensureKinfolkLivingLibraryReadSchema,
   ensureKinfolkPrivatePlacesSchema,
   ensureKinfolkPreferredNameSchema,
   ensureKinfolkTemporaryStaysSchema,
@@ -243,6 +244,12 @@ try {
   // mode cannot convert a valid empty result into a generic server failure.
   await ensureHbcuExplorePublicationSchema(logger);
   logger.info("Explore HBCU publication schema ready before traffic acceptance");
+  // Ordinary Kinfolk questions consult only published, cited Living Library
+  // content before the model. Establish its empty additive read structure here
+  // so explicit feature-release mode cannot convert an absent legacy table into
+  // a generic model fallback or an invented Library answer.
+  await ensureKinfolkLivingLibraryReadSchema(logger);
+  logger.info("Kinfolk Living Library read schema ready before traffic acceptance");
   await ensureIsolatedGovernedDiscoverySchema(logger);
   logger.info("Isolated governed discovery schema ready before traffic acceptance");
   if (explicitFeatureReleaseMode) {
