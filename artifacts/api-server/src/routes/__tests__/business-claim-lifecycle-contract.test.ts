@@ -25,6 +25,18 @@ describe("business ownership claim lifecycle contract", () => {
     expect(createClaim).toContain("Another ownership claim is already being reviewed");
   });
 
+  it("acknowledges a submitted claim without promising an unsupported review timeline", () => {
+    const createClaim = routeSection(
+      'router.post("/businesses/:id/claims"',
+      'router.get("/me/business-claims"',
+    );
+
+    expect(createClaim).toContain("Claim submitted for private review.");
+    expect(createClaim).toContain("may grant listing-management access");
+    expect(createClaim).toContain("does not verify the business or its ownership designations");
+    expect(createClaim).not.toContain("within one business day");
+  });
+
   it("returns a rejected or withdrawn listing to claimable state only when no active review remains", () => {
     expect(claimsRoute).toContain("async function releaseBusinessFromClaimPendingIfNoOpenClaims");
     expect(claimsRoute).toContain("WHERE business_id = $1 AND status IN ('pending', 'needs_info')");

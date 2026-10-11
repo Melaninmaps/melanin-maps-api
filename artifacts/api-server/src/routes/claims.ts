@@ -267,7 +267,7 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
 
     res.status(201).json({
       ok: true, claimId,
-      message: "Claim submitted. We review clear requests within one business day.",
+      message: "Claim submitted for private review. An approved claim may grant listing-management access; it does not verify the business or its ownership designations.",
     });
   } catch (err) {
     req.log.error({ err }, "POST /businesses/:id/claims failed");
