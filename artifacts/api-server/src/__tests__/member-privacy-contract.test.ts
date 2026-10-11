@@ -26,7 +26,17 @@ describe("member privacy contract", () => {
     expect(users).toContain("const canSeeContent = callerId === targetId || (!user.isPrivate || isFollowing);");
     expect(users).toContain("reviews: canSeeContent ? reviews : []");
     expect(users).toContain("tags: canSeeContent ? tags : []");
+    expect(users).toContain("const visibleProfile = canSeeContent ? contentProfile : identityProfile;");
+    expect(users).toContain("bio: user.bio,");
+    expect(users).toContain("industry: user.industry,");
+    expect(users).toContain("jobTitle: user.jobTitle,");
+    expect(users).toContain("profile: visibleProfile,");
     expect(users).toContain("canSeeContent,");
+  });
+
+  it("does not surface private accounts through member search or suggestions", () => {
+    expect(users).toContain("eq(usersTable.isPrivate, false)");
+    expect(users).toContain("AND u.is_private = false");
   });
 
   it("does not let direct profile-tag routes bypass profile privacy or blocks", () => {

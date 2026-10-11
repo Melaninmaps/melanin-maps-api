@@ -37,7 +37,8 @@ describe("website member social experience", () => {
 
   it("returns only a message availability hint while retaining API enforcement", () => {
     expect(users).toContain("canReceiveDirectMessages: Boolean(callerId && callerId !== targetId && allowDm)");
-    expect(users).toContain("const { isPrivate, allowDm, ...profile } = user;");
+    expect(users).toContain("const { followersCount, followingCount, allowDm } = user;");
+    expect(users).toContain("const visibleProfile = canSeeContent ? contentProfile : identityProfile;");
     expect(conversations).toContain("if (!recipient.allowDm)");
   });
 

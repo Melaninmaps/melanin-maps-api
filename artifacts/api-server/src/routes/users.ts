@@ -209,6 +209,7 @@ router.get("/users/search", async (req: Request, res: Response) => {
       .where(
         and(
           ne(usersTable.id, req.user.id),
+          eq(usersTable.isPrivate, false),
           or(
             ilike(usersTable.firstName, pattern),
             ilike(usersTable.lastName, pattern),
@@ -259,6 +260,7 @@ router.get("/users/suggestions", async (req: Request, res: Response) => {
        FROM users u
        LEFT JOIN friend_of_friend fof ON fof.suggested_id = u.id
        WHERE u.id != $1
+         AND u.is_private = false
          AND u.id NOT IN (SELECT friend_id FROM my_connections)
        ORDER BY fof.mutual_count DESC NULLS LAST, u.created_at DESC
        LIMIT 12`,
@@ -514,11 +516,31 @@ router.get("/users/:userId/profile", async (req: Request, res: Response) => {
       }
     }
 
-    const { isPrivate, allowDm, ...profile } = user;
-    const { followersCount, followingCount, ...publicProfile } = profile;
+    const { followersCount, followingCount, allowDm } = user;
+
+    // A private profile may still expose a minimal identity card so a pending
+    // follower knows which request they sent. Bio, work details, member type,
+    // and all activity-derived information remain server-hidden until the
+    // relationship is accepted. This projection—not the client—is the privacy
+    // boundary for every member-profile entry point.
+    const identityProfile = {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+      profileImageUrl: user.profileImageUrl,
+      createdAt: user.createdAt,
+    };
+    const contentProfile = {
+      ...identityProfile,
+      bio: user.bio,
+      industry: user.industry,
+      jobTitle: user.jobTitle,
+    };
+    const visibleProfile = canSeeContent ? contentProfile : identityProfile;
     res.json({
-      user: publicProfile,
-      profile: publicProfile,
+      user: visibleProfile,
+      profile: visibleProfile,
       // Follow totals are returned only to the account owner. Other member
       // profile reads retain their current privacy-shaped response.
       ...(callerId === targetId ? { followersCount, followingCount } : {}),
