@@ -248,6 +248,19 @@ function emptySafetyCheckinNotificationResult(): SafetyCheckinNotificationResult
   return { inAppCreated: 0, inAppFailed: 0, pushSubmitted: 0, pushFailed: 0, skipped: 0 };
 }
 
+function schedulerFailureDiagnostic(error: unknown, stage: string) {
+  const candidate = error && typeof error === "object" ? error as Record<string, unknown> : {};
+  const code = typeof candidate.code === "string" ? candidate.code : undefined;
+  const position = typeof candidate.position === "string" ? candidate.position : undefined;
+  const routine = typeof candidate.routine === "string" ? candidate.routine : undefined;
+  // PostgreSQL's operator error is schema metadata, not member-provided text.
+  // Do not log arbitrary driver messages because they can contain SQL values.
+  const message = code === "42883" && typeof candidate.message === "string"
+    ? candidate.message.slice(0, 180)
+    : undefined;
+  return { stage, code, position, routine, message };
+}
+
 /**
  * Persist the recipient's in-app record transactionally. A retry must pass the
  * same accepted-share, block, approval, and safety-preference checks again.
@@ -642,6 +655,7 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
     let overdueMarked = 0;
     const attempts = emptySafetyCheckinNotificationResult();
     for (const row of overdue) {
+      let schedulerStage = "claim_overdue";
       try {
         const memberName = [row.firstName, row.lastName].filter(Boolean).join(" ") || "Your contact";
         // Claim the lifecycle transition before any recipient work. If the
@@ -669,6 +683,7 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
         if (row.trustedContactEmail) {
           logger.warn({ checkinId: row.id }, "Suppressed legacy email check-in delivery without accepted recipient authorization");
         }
+        schedulerStage = "recipient_notification_delivery";
         const notificationResult = await notifySelectedCheckinProfiles(row.id, row.userId, memberName);
         attempts.inAppCreated += notificationResult.inAppCreated;
         attempts.inAppFailed += notificationResult.inAppFailed;
@@ -680,6 +695,7 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
         // evidence. Set it only after at least one durable in-app record is
         // created; recipient delivery_status remains the source of truth.
         if (notificationResult.inAppCreated > 0) {
+          schedulerStage = "mark_parent_notified";
           await db.update(safetyCheckinsTable)
           .set({ notifiedAt: now })
           .where(and(
@@ -689,6 +705,7 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
           ));
         }
         if (newlyOverdue) {
+          schedulerStage = "owner_reminder_submission";
           // This creator-only reminder is intentionally generic as well:
           // stored location text can be an address or raw coordinates.
           void sendPushToUser(row.userId, {
@@ -698,7 +715,10 @@ router.post("/cron/safety-checkins", async (req, res): Promise<void> => {
           });
         }
       } catch (error) {
-        logger.error({ error, id: row.id }, "Failed to process overdue safety checkin");
+        logger.error(
+          { checkinId: row.id, schedulerFailure: schedulerFailureDiagnostic(error, schedulerStage) },
+          "Failed to process overdue safety checkin",
+        );
       }
     }
     logger.info({ overdueMarked, ...attempts }, "Safety checkin cron completed");

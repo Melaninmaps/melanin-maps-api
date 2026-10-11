@@ -54,6 +54,10 @@ describe("profile-based Safety Check-In contract", () => {
     expect(cron).not.toContain("np.topics @> ARRAY['safety']::text[]");
     expect(cron.match(/lower\(recipient\.approved::text\) IN \('true', 't', '1'\)/g)).toHaveLength(2);
     expect(cron).not.toContain("recipient.approved = true");
+    expect(cron).toContain("function schedulerFailureDiagnostic");
+    expect(cron).toContain('schedulerStage = "recipient_notification_delivery"');
+    expect(cron).toContain("schedulerFailureDiagnostic(error, schedulerStage)");
+    expect(cron).not.toContain("logger.error({ error, id: row.id }");
     expect(cron).toContain("UPDATE safety_checkin_recipients");
     expect(cron).toContain("delivery_status = 'in_app_created'");
     expect(cron).toContain("delivery_status = 'push_pending'");
