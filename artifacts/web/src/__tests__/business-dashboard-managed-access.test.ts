@@ -13,4 +13,11 @@ describe("Business Dashboard multi-business access", () => {
     expect(dashboard).toContain("The dashboard is explicitly multi-business.");
     expect(dashboard).not.toContain('fetch(`${BASE}api/businesses/mine`, { credentials: "include" })');
   });
+
+  it("does not mistake a revalidated auth response for a signed-out owner", () => {
+    expect(dashboard).toContain('cache: "no-store"');
+    expect(dashboard).toContain("const [authLoading, setAuthLoading] = useState(true);");
+    expect(dashboard).toContain("if (authLoading) {");
+    expect(dashboard).toContain(".then((r) => (r.ok ? r.json() : null))");
+  });
 });

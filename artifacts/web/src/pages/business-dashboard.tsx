@@ -92,6 +92,7 @@ export default function BusinessDashboard() {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<{ id?: string; email?: string } | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "promote" | "global">(justActivated ? "promote" : "overview");
   const [growthData, setGrowthData] = useState<GrowthData | null>(null);
   const [growthLoading, setGrowthLoading] = useState(false);
@@ -112,7 +113,14 @@ export default function BusinessDashboard() {
   const [gSuccess, setGSuccess] = useState(false);
 
   useEffect(() => {
-    fetch(`${BASE}api/auth/user`, { credentials: "include" }).then((r) => r.json()).then((d) => setUser(d.user ?? null)).catch(() => {});
+    // `/auth/user` must not be served from a 304 cache response: fetch() has
+    // no JSON body to parse for a revalidated 304, which falsely rendered a
+    // signed-in owner as signed out in this dashboard.
+    fetch(`${BASE}api/auth/user`, { credentials: "include", cache: "no-store" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setUser(d?.user ?? null))
+      .catch(() => setUser(null))
+      .finally(() => setAuthLoading(false));
     // The dashboard is explicitly multi-business. Do not call the legacy
     // single-business endpoint: it correctly fails closed when a member has
     // more than one approved owner relationship.
@@ -194,6 +202,14 @@ export default function BusinessDashboard() {
     } finally {
       setCheckoutLoading(null);
     }
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-[#FAF6EF] flex items-center justify-center p-4" role="status" aria-live="polite">
+        <Loader2 className="h-7 w-7 animate-spin text-[#CA922B]" aria-label="Loading account" />
+      </div>
+    );
   }
 
   if (!user) {
