@@ -106,9 +106,13 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
       fileURLToPath(new URL("../routes/location-shares.ts", import.meta.url)),
       "utf8",
     );
+    const retirement = readFileSync(
+      fileURLToPath(new URL("../safety/retireLiveLocationSharing.ts", import.meta.url)),
+      "utf8",
+    );
     expect(locationRoute).toContain("LIVE_LOCATION_SHARING_RETIRED");
-    expect(locationRoute).toContain("currentLat: null");
-    expect(locationRoute).toContain("currentLng: null");
+    expect(retirement).toContain("currentLat: null");
+    expect(retirement).toContain("currentLng: null");
     expect(locationRoute).not.toContain("publicLocationShare");
   });
 

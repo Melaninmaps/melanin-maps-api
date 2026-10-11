@@ -1,6 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, locationSharesTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { retireLocationSharesForMember } from "../safety/retireLiveLocationSharing";
 
 /**
  * Live member location sharing is retired.
@@ -19,24 +18,6 @@ function requireAuth(req: Request, res: Response): string | null {
     return null;
   }
   return req.user.id;
-}
-
-/**
- * A former sharer can never resume an old link. On any authenticated legacy
- * endpoint, remove access and retained coordinates for that member before
- * returning the same retirement response. This does not change Safety
- * Check-Ins or trusted-contact relationships.
- */
-export async function retireLocationSharesForMember(memberId: string): Promise<void> {
-  await db
-    .update(locationSharesTable)
-    .set({
-      isActive: false,
-      currentLat: null,
-      currentLng: null,
-      lastUpdatedAt: null,
-    })
-    .where(eq(locationSharesTable.sharerId, memberId));
 }
 
 function retired(res: Response): void {

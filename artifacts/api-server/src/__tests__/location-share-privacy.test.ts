@@ -22,13 +22,19 @@ describe("retired live location sharing", () => {
   });
 
   it("clears retained active coordinates for an authenticated former sharer", () => {
-    const route = source("../routes/location-shares.ts");
-    expect(route).toContain("retireLocationSharesForMember");
-    expect(route).toContain("isActive: false");
-    expect(route).toContain("currentLat: null");
-    expect(route).toContain("currentLng: null");
-    expect(route).toContain("lastUpdatedAt: null");
-    expect(route).toContain("eq(locationSharesTable.sharerId, memberId)");
+    const retirement = source("../safety/retireLiveLocationSharing.ts");
+    const index = source("../index.ts");
+    expect(retirement).toContain("retireLocationSharesForMember");
+    expect(retirement).toContain("retireAllLegacyLocationShares");
+    expect(retirement).toContain("isActive: false");
+    expect(retirement).toContain("currentLat: null");
+    expect(retirement).toContain("currentLng: null");
+    expect(retirement).toContain("lastUpdatedAt: null");
+    expect(retirement).toContain("eq(locationSharesTable.sharerId, memberId)");
+    expect(retirement).toContain("isNotNull(locationSharesTable.currentLat)");
+    expect(retirement).toContain("isNotNull(locationSharesTable.currentLng)");
+    expect(index).toContain("await retireAllLegacyLocationShares()");
+    expect(index).toContain("Legacy live-location records retired before traffic acceptance");
   });
 
   it("removes native coordinate collection and public map rendering", () => {
