@@ -196,8 +196,14 @@ describe("community-fed business publication governance", () => {
     const businessDetail = source("../app/business/[id].tsx");
 
     expect(claimModal).toContain('from "@/lib/api"');
+    expect(claimModal).toContain('/api/businesses/${businessId}/claim-eligibility');
     expect(claimModal).toContain('/api/businesses/${businessId}/claims');
     expect(claimModal).toContain('getMemberApiHeaders()');
+    expect(claimModal).toContain('eligibility?.eligibility !== "claimable"');
+    expect(claimModal).toContain('"pending_for_you"');
+    expect(claimModal).toContain('"pending_for_other_user"');
+    expect(claimModal).toContain('"already_claimed"');
+    expect(claimModal).toContain('claim-eligibility-unavailable');
     expect(claimModal).toContain('businessEmail: email.trim()');
     expect(claimModal).toContain('verificationMethod');
     expect(claimModal).toContain('attestation: true');
