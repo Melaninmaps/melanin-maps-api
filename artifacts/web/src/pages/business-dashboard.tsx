@@ -113,8 +113,11 @@ export default function BusinessDashboard() {
 
   useEffect(() => {
     fetch(`${BASE}api/auth/user`, { credentials: "include" }).then((r) => r.json()).then((d) => setUser(d.user ?? null)).catch(() => {});
-    fetch(`${BASE}api/businesses/mine`, { credentials: "include" }).then((r) => r.json()).then((d) => {
-      const list = d.businesses ?? (d.business ? [d.business] : []);
+    // The dashboard is explicitly multi-business. Do not call the legacy
+    // single-business endpoint: it correctly fails closed when a member has
+    // more than one approved owner relationship.
+    fetch(`${BASE}api/businesses/mine/managed`, { credentials: "include" }).then((r) => r.json()).then((d) => {
+      const list = Array.isArray(d.businesses) ? d.businesses : [];
       setBusinesses(list);
       if (list.length) setSelectedId(list[0].id);
       setLoading(false);
