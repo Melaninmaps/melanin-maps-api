@@ -174,6 +174,17 @@ describe("community-fed business publication governance", () => {
     expect(ownerConsole).toContain("if (data.businesses.length === 1)");
   });
 
+  it("keeps approved owner access discoverable and never reports an address failure as a completed save", () => {
+    const settings = source("../app/settings.tsx");
+    const editProfile = source("../app/business-owner/edit-profile.tsx");
+
+    expect(settings).toContain('label: "My Businesses"');
+    expect(settings).toContain('route: "/business-owner"');
+    expect(editProfile).toContain("const addressResponse = await fetch");
+    expect(editProfile).toContain("if (!addressResponse.ok)");
+    expect(editProfile).toContain('"Profile saved; address not changed"');
+  });
+
   it("uses the canonical protected claim endpoint and never equates a claim with verification", () => {
     const claimModal = source("../components/ClaimBusinessModal.tsx");
     const businessDetail = source("../app/business/[id].tsx");

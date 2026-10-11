@@ -34,7 +34,21 @@ describe("owner-scoped managed business read contract", () => {
       businessRoutes.indexOf('router.patch("/businesses/mine/profile"'),
     );
 
-    expect(legacyRead).toContain(".limit(1)");
-    expect(legacyRead).toContain("res.json({ business: business ?? null });");
+    expect(legacyRead).toContain("resolveLegacySingleManagedBusiness(String(userId))");
+    expect(legacyRead).toContain('code: "BUSINESS_SELECTION_REQUIRED"');
+    expect(legacyRead).toContain('selection.kind === "selected" ? selection.business : null');
+  });
+
+  it("never lets a legacy profile mutation choose one business from multiple approved links", () => {
+    const profilePatch = businessRoutes.slice(
+      businessRoutes.indexOf('router.patch("/businesses/mine/profile"'),
+      businessRoutes.indexOf('router.post(\n  "/businesses/mine/photos"'),
+    );
+
+    expect(businessRoutes).toContain("async function resolveLegacySingleManagedBusiness");
+    expect(businessRoutes).toContain(".limit(2)");
+    expect(profilePatch).toContain('code: "BUSINESS_SELECTION_REQUIRED"');
+    expect(profilePatch).toContain("eq(businessesTable.id, selection.business.id)");
+    expect(profilePatch).toContain("approvedOwnerPredicate(String(userId))");
   });
 });

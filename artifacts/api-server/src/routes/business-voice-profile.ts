@@ -47,6 +47,7 @@ async function requireApprovedBusinessOwner(
              AND bol.user_id = $2
              AND bol.role = 'owner'
              AND bol.status = 'approved'
+             AND bol.revoked_at IS NULL
         )
       LIMIT 1`,
     [businessId, req.user.id],

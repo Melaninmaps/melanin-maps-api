@@ -56,6 +56,7 @@ export default function SettingsScreen() {
         { id: "add-my-business", icon: "briefcase", label: "Add My Business", sub: "Submit a private owner request; listing and ownership are reviewed separately", route: "/list-business?intent=owner" },
         { id: "share-another-business", icon: "share-2", label: "Share Another Business", sub: "Recommend a business without claiming ownership", route: "/list-business" },
         { id: "my-business-submissions", icon: "clock", label: "My Business Submissions", sub: "Private review status, duplicate matches, and information requests", route: "/my-business-submissions" },
+        { id: "my-businesses", icon: "briefcase", label: "My Businesses", sub: "Open approved business access and management tools", route: "/business-owner" },
       ],
     },
     {
