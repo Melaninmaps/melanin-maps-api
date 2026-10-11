@@ -47,6 +47,15 @@ describe("explicit member memory", () => {
     });
   });
 
+  it("keeps an explicit hard need distinct from a soft preference", () => {
+    expect(parseExplicitMemberMemory("Remember I must have a wheelchair-accessible restaurant.")).toMatchObject({
+      purpose: "requirement_context",
+    });
+    expect(parseExplicitMemberMemory("Remember I prefer quiet restaurants.")).toMatchObject({
+      purpose: "profile_context",
+    });
+  });
+
   it("marks approved sensitive categories as requiring a separate save choice", () => {
     expect(parseExplicitMemberMemory("Remember I live at 123 Main Street.")).toMatchObject({ isSensitive: true });
     expect(parseExplicitMemberMemory("Remember I am Muslim.")).toMatchObject({ isSensitive: true });

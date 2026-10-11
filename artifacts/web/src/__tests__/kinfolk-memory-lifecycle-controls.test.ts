@@ -23,6 +23,11 @@ describe("Web generic private-memory lifecycle controls", () => {
     expect(memoryManager).not.toContain("Delete this memory permanently");
   });
 
+  it("labels saved hard requirements so a member can distinguish them from preferences", () => {
+    expect(memoryManager).toContain('memory.purpose === "requirement_context"');
+    expect(memoryManager).toContain("saved requirement · not silently relaxed");
+  });
+
   it("keeps sensitive content behind the member-controlled vault", () => {
     expect(memoryManager).toContain("Sensitive Memory Vault");
     expect(memoryManager).toContain("api/kinfolk/sensitive-memory-vault/reauth");

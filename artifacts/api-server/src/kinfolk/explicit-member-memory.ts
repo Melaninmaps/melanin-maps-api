@@ -3,7 +3,7 @@ import { sensitiveMemoryTopic } from "./sensitive-memory";
 
 export type ExplicitMemberMemory = Readonly<{
   content: string;
-  purpose: "planning_context" | "profile_context";
+  purpose: "planning_context" | "profile_context" | "requirement_context";
   isSensitive: boolean;
 }>;
 
@@ -24,6 +24,7 @@ const PERSONAL_CONTEXT_REQUEST = /\b(?:remember|know about me|my profile|call me
 const HEALTH_OR_PERSONAL_SERVICE_REQUEST = /\b(?:doctor|physician|medical|health(?:\s+care)?|therap(?:y|ist)|counsel(?:or|ling)|dentist|specialist|clinic|hospital|midwi(?:fe|fery)|ob[- ]?gyn|pediatric(?:ian|s)?)\b/i;
 const CURRENT_AFFAIRS_INTEREST = /\b(?:military|deployment|war|conflict|foreign policy|geopolitic(?:s|al)|oil|energy)\b/i;
 const CURRENT_AFFAIRS_REQUEST = /\b(?:war|conflict|military|deployment|foreign policy|geopolitic(?:s|al)|iran|oil|energy)\b/i;
+const HARD_REQUIREMENT_CONTEXT = /\b(?:must(?:\s+not)?|need(?:\s+to)?|require(?:d|ment)?|cannot|can't|do\s+not|don't|never|only|avoid|without)\b/i;
 
 const DISCOVERY_CONTEXT_TERMS: ReadonlyArray<{
   pattern: RegExp;
@@ -61,7 +62,9 @@ export function parseExplicitMemberMemory(
   return {
     content,
     purpose:
-      NAME_OR_NICKNAME_CONTEXT.test(content) ||
+      isExplicitMemberMemoryRequirement(content)
+        ? "requirement_context"
+        : NAME_OR_NICKNAME_CONTEXT.test(content) ||
       LIFESTYLE_PROFILE_CONTEXT.test(content)
         ? "profile_context"
         : PLANNING_CONTEXT.test(content)
@@ -69,6 +72,16 @@ export function parseExplicitMemberMemory(
           : "profile_context",
     isSensitive: sensitiveMemoryTopic(content) !== null,
   };
+}
+
+/**
+ * A member's direct "must", "need", or "avoid" instruction is distinct from
+ * a preference. Requirement context is never converted into soft discovery
+ * ranking terms: a later answer must meet it, ask a clarifying question, or say
+ * that it cannot verify a match rather than quietly relaxing it.
+ */
+export function isExplicitMemberMemoryRequirement(value: unknown): boolean {
+  return typeof value === "string" && HARD_REQUIREMENT_CONTEXT.test(value);
 }
 
 /**

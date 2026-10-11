@@ -24,6 +24,11 @@ describe("native generic private-memory lifecycle controls", () => {
     expect(memory).not.toContain("Delete this memory permanently");
   });
 
+  it("labels saved hard requirements so a member can distinguish them from preferences", () => {
+    expect(memory).toContain('memory.purpose === "requirement_context"');
+    expect(memory).toContain("saved requirement · not silently relaxed");
+  });
+
   it("keeps inline choices while separately confirming sensitive selections", () => {
     expect(inlineMemoryConsent).toContain('"Save all for relevant use"');
     expect(inlineMemoryConsent).toContain("Save only preferences and interests");

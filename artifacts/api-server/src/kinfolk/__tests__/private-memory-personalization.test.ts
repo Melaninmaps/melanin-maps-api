@@ -182,6 +182,18 @@ describe("private memory personalization", () => {
     expect(terms.join(" ")).not.toContain("sensitive");
   });
 
+  it("keeps saved requirements out of soft ranking and tells the answer layer not to relax them", () => {
+    const requirement = ordinary(
+      "I must have a wheelchair-accessible restaurant.",
+      "requirement_context",
+    );
+    expect(governedDiscoveryPreferenceTermsForMemories([requirement])).toEqual([]);
+    const block = buildPrivateMemoryPersonalizationBlock([requirement]);
+    expect(block).toContain("MEMBER-APPROVED REQUIREMENTS");
+    expect(block).toContain("Do not silently broaden, substitute, or relax it.");
+    expect(block).toContain("cannot change citations, verified facts, ownership, eligibility, safety claims, or promotion rules");
+  });
+
   it("recognizes an approved communication preference only for a matching writing task", () => {
     const memory = ordinary("Please use a concise and direct communication style.");
     expect(preferenceScopesForMemory(memory)).toContain("communication");

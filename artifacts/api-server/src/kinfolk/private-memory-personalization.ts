@@ -167,7 +167,11 @@ export function governedDiscoveryPreferenceTermsForMemories(
 ): string[] {
   const terms = new Set<string>();
   for (const memory of memories) {
-    if (memory.isSensitive || memory.purpose === "preferred_name") continue;
+    if (
+      memory.isSensitive ||
+      memory.purpose === "preferred_name" ||
+      memory.purpose === "requirement_context"
+    ) continue;
     for (const rule of GOVERNED_DISCOVERY_PREFERENCE_TERMS) {
       if (rule.pattern.test(memory.content)) {
         for (const term of rule.terms) terms.add(term);

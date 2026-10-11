@@ -223,7 +223,7 @@ export function KinfolkMemoryManager({ onClose, onReset }: KinfolkMemoryManagerP
                       ) : (
                         <>
                           <p className="text-sm text-[#3A1F0E]">{isLockedSensitive ? "Sensitive private memory" : (companion ? `Private note for ${companion}` : memory.content)}</p>
-                          {companion ? <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">{companionNotes(memory)}</p> : <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/35">{memory.purpose.replace("_", " ")}{memory.isSensitive ? " · sensitive" : ""}{memory.isSensitive && !memory.sensitiveConsentGrantedAt ? " · confirmation required before use" : ""}</p>}
+                          {companion ? <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">{companionNotes(memory)}</p> : <p className="mt-2 text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/35">{memory.purpose === "requirement_context" ? "saved requirement · not silently relaxed" : memory.purpose.replace("_", " ")}{memory.isSensitive ? " · sensitive" : ""}{memory.isSensitive && !memory.sensitiveConsentGrantedAt ? " · confirmation required before use" : ""}</p>}
                           {memory.state === "paused" ? <p className="mt-2 text-xs font-medium text-[#8D5C17]">Paused — Kinfolk will not use this memory until you resume it.</p> : null}{isLockedSensitive ? <p className="mt-2 text-xs font-medium text-[#8D5C17]">Locked — open the Sensitive Memory Vault to review or change this detail.</p> : null}
                         </>
                       )}

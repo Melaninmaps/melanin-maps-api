@@ -375,6 +375,7 @@ import {
 import { resolveConsentedHealthPopulationContext } from "../kinfolk/consented-health-context";
 import { buildExplicitMemoryConsentPlan } from "../kinfolk/explicit-memory-consent";
 import {
+  isExplicitMemberMemoryRequirement,
   isExplicitMemberMemoryCapabilityQuestion,
   isExplicitProfileMemoryRelevant,
   profileDiscoveryContextTerms,
@@ -6878,10 +6879,11 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
       "ongoing_context",
       "planning_context",
       "profile_context",
+      "requirement_context",
       "companion_context",
     ];
     const requestedPurpose = String(body.purpose ?? "personalization");
-    const purpose = allowedPurposes.includes(requestedPurpose)
+    let purpose = allowedPurposes.includes(requestedPurpose)
       ? requestedPurpose
       : "personalization";
     let content = String(body.content ?? "").trim();
@@ -6901,6 +6903,11 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
         .status(400)
         .json({ error: "Memory must be between 1 and 1,000 characters." });
       return;
+    }
+    // Categorize member boundaries on the server rather than trusting a client
+    // purpose. Hard requirements cannot enter discovery as soft ranking cues.
+    if (isExplicitMemberMemoryRequirement(content)) {
+      purpose = "requirement_context";
     }
     const requestedDays = Number(body.expiresInDays);
     const expiresInDays = Number.isFinite(requestedDays)
@@ -7073,8 +7080,12 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
       .update(kinfolkPrivateMemoriesTable)
       .set({
         content: sensitiveCiphertext ? sensitiveMemoryStoragePlaceholder() : content,
-        // Preserve original source session and purpose. An edit cannot silently
-        // change provenance or reduce a prior sensitive classification.
+        // Preserve provenance and an existing hard boundary. A direct edit may
+        // promote newly explicit requirement language, but it cannot silently
+        // relax an earlier member requirement into a soft preference.
+        purpose: isExplicitMemberMemoryRequirement(content)
+          ? "requirement_context"
+          : existing.purpose,
         isSensitive: willBeSensitive,
         sensitiveConsentGrantedAt: willBeSensitive ? new Date() : null,
         sensitiveRestricted: willBeSensitive
