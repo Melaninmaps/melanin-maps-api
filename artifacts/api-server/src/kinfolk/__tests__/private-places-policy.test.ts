@@ -2,6 +2,11 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  fictionalPrivatePlacesStagingGeocode,
+  mayUsePrivatePlacesStagingFixture,
+  PRIVATE_PLACES_FICTIONAL_QA_ADDRESS,
+} from "../private-places-fictional-qa";
+import {
   PRIVATE_PLACES_DISCLOSURE_VERSION,
   normalizePrivatePlaceLabel,
   openPrivatePlace,
@@ -67,5 +72,22 @@ describe("Kinfolk Private Places privacy policy", () => {
     expect(schema).not.toContain('doublePrecision("latitude"');
     expect(schema).not.toContain('doublePrecision("longitude"');
     expect(PRIVATE_PLACES_DISCLOSURE_VERSION).toBe("private-places-google-geocoding-v1");
+  });
+
+  it("allows only the non-address fixture in an explicitly isolated staging runtime", () => {
+    const stagingFixtureEnvironment = {
+      RAILWAY_ENVIRONMENT_NAME: "staging",
+      KINFOLK_MEMORY_STAGING_ISOLATION: "true",
+      KINFOLK_PRIVATE_PLACES_STAGING_FIXTURE_ENABLED: "true",
+    } as NodeJS.ProcessEnv;
+    expect(mayUsePrivatePlacesStagingFixture(stagingFixtureEnvironment)).toBe(true);
+    expect(fictionalPrivatePlacesStagingGeocode(PRIVATE_PLACES_FICTIONAL_QA_ADDRESS, stagingFixtureEnvironment)?.provider)
+      .toBe("synthetic_private_places_qa");
+    expect(fictionalPrivatePlacesStagingGeocode("1234 Private Lane, Philadelphia, PA", stagingFixtureEnvironment)).toBeNull();
+    expect(mayUsePrivatePlacesStagingFixture({
+      RAILWAY_ENVIRONMENT_NAME: "production",
+      KINFOLK_MEMORY_STAGING_ISOLATION: "true",
+      KINFOLK_PRIVATE_PLACES_STAGING_FIXTURE_ENABLED: "true",
+    })).toBe(false);
   });
 });

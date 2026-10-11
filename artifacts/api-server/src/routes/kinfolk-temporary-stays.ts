@@ -19,6 +19,7 @@ import {
 } from "../kinfolk/temporary-stays-policy";
 import { purgeExpiredTemporaryStays } from "../kinfolk/temporary-stay-retention";
 import {
+  fictionalPrivatePlacesStagingGeocode,
   isPrivatePlacesFictionalQaProvider,
   type PrivatePlacesGeocode,
 } from "../kinfolk/private-places-fictional-qa";
@@ -69,6 +70,8 @@ function safe(row: TemporaryStayRow): SafeTemporaryStay {
 }
 
 async function geocodeWithApprovedGoogleDisclosure(address: string): Promise<PrivatePlacesGeocode | null> {
+  const stagingFixture = fictionalPrivatePlacesStagingGeocode(address);
+  if (stagingFixture) return stagingFixture;
   const key = process.env.GOOGLE_MAPS_API_KEY;
   if (!key) throw new Error("PRIVATE_PLACES_GEOCODING_UNAVAILABLE");
   const response = await fetch(

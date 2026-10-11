@@ -11,6 +11,7 @@ import {
   sealPrivatePlace,
 } from "../kinfolk/private-places-policy";
 import {
+  fictionalPrivatePlacesStagingGeocode,
   isPrivatePlacesFictionalQaProvider,
   type PrivatePlacesGeocode,
 } from "../kinfolk/private-places-fictional-qa";
@@ -83,6 +84,8 @@ function disclosureAccepted(body: Record<string, unknown>): boolean {
 }
 
 async function geocodeWithApprovedGoogleDisclosure(address: string): Promise<PrivatePlacesGeocode | null> {
+  const stagingFixture = fictionalPrivatePlacesStagingGeocode(address);
+  if (stagingFixture) return stagingFixture;
   const key = process.env.GOOGLE_MAPS_API_KEY;
   if (!key) throw new Error("PRIVATE_PLACES_GEOCODING_UNAVAILABLE");
   const response = await fetch(
