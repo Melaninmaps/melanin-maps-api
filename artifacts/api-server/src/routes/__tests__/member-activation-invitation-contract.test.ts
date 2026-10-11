@@ -44,7 +44,7 @@ describe("member activation invitation contract", () => {
   });
 
   it("records delivery status without conflicting enum/text parameter inference", () => {
-    expect(invitation).toContain("delivery_accepted_at = CASE WHEN $3::text = 'sent'");
+    expect(invitation).toContain("delivery_accepted_at = CASE WHEN $6::boolean THEN NOW()");
     expect(invitation).toContain("provider_receipt_fingerprint = $4");
   });
 
