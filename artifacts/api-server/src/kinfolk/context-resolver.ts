@@ -290,13 +290,22 @@ export async function resolveKinfolkContext(input: {
     }
   }
 
+  // No verified entity context is available. Preserve the normal research/LLM
+  // path, but never attach a local-business result to a named person/work query
+  // merely because the curated registry has not yet resolved it. That would
+  // turn an honest "I cannot verify this entity" state into an unrelated
+  // promotion. City and explicitly classified discovery requests do not enter
+  // this branch.
+  const suppressUnconfirmedNamedEntityRecommendations =
+    queryClass === "named_entity" && entityResult.state === "unconfirmed";
+
   // No entity found for this query — normal LLM flow (with optional vector context)
   return {
     responseMode: "no_entity",
     queryClass,
     entityResolution: null,
     entityContextBlock: vectorContextBlock,
-    suppressBusinessRecommendations: false,
+    suppressBusinessRecommendations: suppressUnconfirmedNamedEntityRecommendations,
     shortCircuitReply: null,
     clarificationQuestion: null,
     preferencesUsed: [],
