@@ -49,6 +49,8 @@ describe("profile-based Safety Check-In contract", () => {
     expect(cron).toContain("function allowsSafetyCheckinNotification");
     expect(cron).not.toContain("to_jsonb(np.topics)");
     expect(cron).not.toContain("np.topics @> ARRAY['safety']::text[]");
+    expect(cron.match(/lower\(recipient\.approved::text\) IN \('true', 't', '1'\)/g)).toHaveLength(2);
+    expect(cron).not.toContain("recipient.approved = true");
     expect(cron).toContain("UPDATE safety_checkin_recipients");
     expect(cron).toContain("delivery_status = 'in_app_created'");
     expect(cron).toContain("delivery_status = 'push_pending'");

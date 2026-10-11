@@ -295,7 +295,7 @@ async function createSafetyCheckinInAppNotifications(
               np.topics::text AS topics_text,
               (
                 tss.id IS NOT NULL
-                AND recipient.approved = true
+                AND COALESCE(lower(recipient.approved::text) IN ('true', 't', '1'), false)
                 AND owner_blocks.id IS NULL
                 AND recipient_blocks.id IS NULL
               ) AS is_eligible
@@ -438,7 +438,7 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
               np.topics::text AS topics_text,
               (
                 tss.id IS NOT NULL
-                AND recipient.approved = true
+                AND COALESCE(lower(recipient.approved::text) IN ('true', 't', '1'), false)
                 AND owner_blocks.id IS NULL
                 AND recipient_blocks.id IS NULL
               ) AS is_eligible
