@@ -43,22 +43,17 @@ type SafetyCheckin = {
 
 type MeetupVerification = {
   id: number;
-  initiatorId: string;
-  partnerId: string;
-  status: string;
-  location: string | null;
+  role: "organizer" | "partner";
+  counterpartName: string;
+  status: "awaiting_partner" | "approved" | "cancelled" | "expired";
+  venue: null;
+  scheduledAt: string | null;
+  expiresAt: string | null;
   initiatedAt: string;
-  confirmedAt: string | null;
-  partnerFirstName: string | null;
-  partnerLastName: string | null;
-  arrivalCheckAt: string | null;
-  arrivalCheckedAt: string | null;
-  arrivalCheckStatus: string | null;
-  homeCheckAt: string | null;
-  homeCheckedAt: string | null;
-  homeCheckStatus: string | null;
-  safetyFriendName: string | null;
-  safetyFriendEmail: string | null;
+  organizerApprovedAt: string | null;
+  partnerApprovedAt: string | null;
+  correctedAt: string | null;
+  cancelledAt: string | null;
 };
 
 type IntelAlert = {
@@ -266,38 +261,9 @@ export default function SafetyHubTab() {
     }
   };
 
-  const handleArrivalCheckin = async (id: number) => {
-    if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const token = await getRequiredSafetyToken();
-    if (!token) return;
-    const res = await fetch(`${getApiBase()}/api/meetups/${id}/arrival-checkin`, {
-      method: "PATCH", headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      setMeetups((prev) => prev.map((m) => m.id === id ? { ...m, arrivalCheckStatus: "confirmed", arrivalCheckedAt: new Date().toISOString() } : m));
-    } else {
-      Alert.alert("Error", "Failed to confirm arrival.");
-    }
-  };
 
-  const handleHomeCheckin = async (id: number) => {
-    if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    const token = await getRequiredSafetyToken();
-    if (!token) return;
-    const res = await fetch(`${getApiBase()}/api/meetups/${id}/home-checkin`, {
-      method: "PATCH", headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      setMeetups((prev) => prev.map((m) => m.id === id ? { ...m, homeCheckStatus: "confirmed", homeCheckedAt: new Date().toISOString() } : m));
-    } else {
-      Alert.alert("Error", "Failed to confirm home check-in.");
-    }
-  };
-
-  const pendingCheckins = checkins.filter((c) => c.status === "pending");
-  const pendingMeetups = meetups.filter((m) => m.status === "pending" && m.partnerId === user?.id);
-  const arrivalCheckinsDue = meetups.filter((m) => m.initiatorId === user?.id && m.arrivalCheckAt && m.arrivalCheckStatus === "pending");
-  const homeCheckinsDue = meetups.filter((m) => m.initiatorId === user?.id && m.homeCheckAt && m.homeCheckStatus === "pending");
+  const pendingCheckins = checkins.filter((checkin) => checkin.status === "pending");
+  const pendingMeetups = meetups.filter((meetup) => meetup.role === "partner" && meetup.status === "awaiting_partner");
 
   const formatRelativeTime = (iso: string) => {
     const d = new Date(iso);
@@ -360,60 +326,30 @@ export default function SafetyHubTab() {
             </View>
           )}
 
-          {/* Active safety alerts */}
-          {!editMode && (pendingCheckins.length > 0 || pendingMeetups.length > 0 || arrivalCheckinsDue.length > 0 || homeCheckinsDue.length > 0) && (
+          {/* Active protected actions */}
+          {!editMode && (pendingCheckins.length > 0 || pendingMeetups.length > 0) && (
             <View style={styles.alertsSection}>
-              {pendingCheckins.map((c) => (
-                <View key={c.id} style={[styles.alertCard, { backgroundColor: "#FEF2F2", borderColor: "#FECACA" }]}>
+              {pendingCheckins.map((checkin) => (
+                <View key={checkin.id} style={[styles.alertCard, { backgroundColor: "#FEF2F2", borderColor: "#FECACA" }]}>
                   <Feather name="clock" size={18} color="#DC2626" />
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.alertTitle, { color: "#991B1B" }]}>Check-in due {formatRelativeTime(c.scheduledAt)}</Text>
-                    <Text style={[styles.alertSub, { color: "#7F1D1D" }]}>Contact: {c.trustedContactName}</Text>
+                    <Text style={[styles.alertTitle, { color: "#991B1B" }]}>Check-in due {formatRelativeTime(checkin.scheduledAt)}</Text>
+                    <Text style={[styles.alertSub, { color: "#7F1D1D" }]}>Confirm only when you are safe. Your selected trusted contact is notified only after an overdue check-in.</Text>
                   </View>
-                  <TouchableOpacity style={[styles.imSafeBtn, { backgroundColor: "#16A34A" }]} onPress={() => void handleConfirmCheckin(c.id)} activeOpacity={0.85}>
+                  <TouchableOpacity style={[styles.imSafeBtn, { backgroundColor: "#16A34A" }]} onPress={() => void handleConfirmCheckin(checkin.id)} activeOpacity={0.85}>
                     <Text style={styles.imSafeBtnText}>I&apos;m Safe ✓</Text>
                   </TouchableOpacity>
                 </View>
               ))}
-              {pendingMeetups.map((m) => {
-                const name = [m.partnerFirstName, m.partnerLastName].filter(Boolean).join(" ") || "your connection";
-                return (
-                  <View key={m.id} style={[styles.alertCard, { backgroundColor: "#EFF6FF", borderColor: "#BFDBFE" }]}>
-                    <Feather name="user-check" size={18} color="#2563EB" />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.alertTitle, { color: "#1D4ED8" }]}>Meetup request from {name}</Text>
-                      <Text style={[styles.alertSub, { color: "#1E40AF" }]}>{m.location ?? "No location specified"}</Text>
-                    </View>
-                    <TouchableOpacity style={[styles.imSafeBtn, { backgroundColor: "#2563EB" }]} onPress={() => router.push("/member-connections" as Parameters<typeof router.push>[0])} activeOpacity={0.85}>
-                      <Text style={styles.imSafeBtnText}>Confirm</Text>
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-              {arrivalCheckinsDue.map((m) => {
-                const loc = m.location ?? "your meetup location";
-                return (
-                  <View key={`arr-${m.id}`} style={[styles.alertCard, { backgroundColor: "#FFF7ED", borderColor: "#FED7AA" }]}>
-                    <Text style={{ fontSize: 18 }}>📍</Text>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.alertTitle, { color: "#92400E" }]}>Arrived at {loc}?</Text>
-                      <Text style={[styles.alertSub, { color: "#78350F" }]}>Tap to confirm arrival — or your safety friend will be alerted.</Text>
-                    </View>
-                    <TouchableOpacity style={[styles.imSafeBtn, { backgroundColor: "#CA922B" }]} onPress={() => void handleArrivalCheckin(m.id)} activeOpacity={0.85}>
-                      <Text style={styles.imSafeBtnText}>I Arrived ✓</Text>
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-              {homeCheckinsDue.map((m) => (
-                <View key={`home-${m.id}`} style={[styles.alertCard, { backgroundColor: "#F0FDF4", borderColor: "#BBF7D0" }]}>
-                  <Text style={{ fontSize: 18 }}>🏠</Text>
+              {pendingMeetups.map((meetup) => (
+                <View key={meetup.id} style={[styles.alertCard, { backgroundColor: "#EFF6FF", borderColor: "#BFDBFE" }]}>
+                  <Feather name="user-check" size={18} color="#2563EB" />
                   <View style={{ flex: 1 }}>
-                    <Text style={[styles.alertTitle, { color: "#14532D" }]}>Home safe yet?</Text>
-                    <Text style={[styles.alertSub, { color: "#166534" }]}>Confirm you&apos;re home — or your safety friend will be alerted.</Text>
+                    <Text style={[styles.alertTitle, { color: "#1D4ED8" }]}>{meetup.counterpartName} requested meetup verification</Text>
+                    <Text style={[styles.alertSub, { color: "#1E40AF" }]}>Review and independently approve this time-bounded request. No venue or member location is shared.</Text>
                   </View>
-                  <TouchableOpacity style={[styles.imSafeBtn, { backgroundColor: "#16A34A" }]} onPress={() => void handleHomeCheckin(m.id)} activeOpacity={0.85}>
-                    <Text style={styles.imSafeBtnText}>I&apos;m Home ✓</Text>
+                  <TouchableOpacity style={[styles.imSafeBtn, { backgroundColor: "#2563EB" }]} onPress={() => router.push("/member-connections" as Parameters<typeof router.push>[0])} activeOpacity={0.85}>
+                    <Text style={styles.imSafeBtnText}>Review</Text>
                   </TouchableOpacity>
                 </View>
               ))}

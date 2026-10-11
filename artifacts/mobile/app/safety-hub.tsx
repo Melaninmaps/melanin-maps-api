@@ -17,14 +17,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-import { useAuth } from "@/lib/auth";
+import { getApiBase } from "@/lib/api";
 
 const WIDGET_ORDER_KEY = "@melanin_maps_safety_widget_order";
 
-function getApiBase() {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
-  return "";
-}
 
 type SafetyCheckin = {
   id: number;
@@ -40,14 +36,17 @@ type SafetyCheckin = {
 
 type MeetupVerification = {
   id: number;
-  initiatorId: string;
-  partnerId: string;
-  status: string;
-  location: string | null;
+  role: "organizer" | "partner";
+  counterpartName: string;
+  status: "awaiting_partner" | "approved" | "cancelled" | "expired";
+  venue: null;
+  scheduledAt: string | null;
+  expiresAt: string | null;
   initiatedAt: string;
-  confirmedAt: string | null;
-  partnerFirstName: string | null;
-  partnerLastName: string | null;
+  organizerApprovedAt: string | null;
+  partnerApprovedAt: string | null;
+  correctedAt: string | null;
+  cancelledAt: string | null;
 };
 
 const ALL_FEATURES: { id: string; icon: React.ComponentProps<typeof Feather>["name"]; title: string; desc: string; color: string; route: string | null; externalUrl?: string }[] = [
@@ -80,7 +79,6 @@ export default function SafetyHubScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user } = useAuth();
 
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
@@ -145,8 +143,8 @@ export default function SafetyHubScreen() {
     else Alert.alert("Error", "Failed to confirm check-in.");
   };
 
-  const pendingCheckins = checkins.filter((c) => c.status === "pending");
-  const pendingMeetups = meetups.filter((m) => m.status === "pending" && m.partnerId === user?.id);
+  const pendingCheckins = checkins.filter((checkin) => checkin.status === "pending");
+  const pendingMeetups = meetups.filter((meetup) => meetup.role === "partner" && meetup.status === "awaiting_partner");
 
   const formatRelativeTime = (iso: string) => {
     const d = new Date(iso);
@@ -221,25 +219,22 @@ export default function SafetyHubScreen() {
                   </TouchableOpacity>
                 </View>
               ))}
-              {pendingMeetups.map((m) => {
-                const name = [m.partnerFirstName, m.partnerLastName].filter(Boolean).join(" ") || "your connection";
-                return (
-                  <View key={m.id} style={[styles.alertCard, { backgroundColor: "#EFF6FF", borderColor: "#BFDBFE" }]}>
-                    <Feather name="user-check" size={18} color="#2563EB" />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.alertTitle, { color: "#1D4ED8" }]}>Meetup request from {name}</Text>
-                      <Text style={[styles.alertSub, { color: "#1E40AF" }]}>{m.location ?? "No location specified"}</Text>
-                    </View>
-                    <TouchableOpacity
-                      style={[styles.imSafeBtn, { backgroundColor: "#2563EB" }]}
-                      onPress={() => router.push("/member-connections" as Parameters<typeof router.push>[0])}
-                      activeOpacity={0.85}
-                    >
-                      <Text style={styles.imSafeBtnText}>Confirm</Text>
-                    </TouchableOpacity>
+              {pendingMeetups.map((meetup) => (
+                <View key={meetup.id} style={[styles.alertCard, { backgroundColor: "#EFF6FF", borderColor: "#BFDBFE" }]}>
+                  <Feather name="user-check" size={18} color="#2563EB" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.alertTitle, { color: "#1D4ED8" }]}>{meetup.counterpartName} requested meetup verification</Text>
+                    <Text style={[styles.alertSub, { color: "#1E40AF" }]}>Review and independently approve this time-bounded request. No venue or member location is shared.</Text>
                   </View>
-                );
-              })}
+                  <TouchableOpacity
+                    style={[styles.imSafeBtn, { backgroundColor: "#2563EB" }]}
+                    onPress={() => router.push("/member-connections" as Parameters<typeof router.push>[0])}
+                    activeOpacity={0.85}
+                  >
+                    <Text style={styles.imSafeBtnText}>Review</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
             </View>
           )}
 
