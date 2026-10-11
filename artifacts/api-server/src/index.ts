@@ -11,6 +11,7 @@ import {
   ensureBusinessOwnerLinkLifecycleSchema,
   ensureBusinessPublicDetailSchema,
   ensureBusinessWebsiteCleanupAuditSchema,
+  ensureCommunityMediaSchemaOnly,
   ensureDirectoryReconciliationLedgerSchema,
   ensureFounderMapRestorationSchema,
   ensureLegacyMapLocationAttestationSchema,
@@ -210,6 +211,11 @@ try {
   // narrow release mode skips broad publication migrations and background work.
   await ensureCommunityFeedReadSchema(logger);
   logger.info("Community feed read schema ready before traffic acceptance");
+  // Community media validation always checks whether a supplied URL belongs to
+  // the current member's completed upload. Keep that minimal relation ready in
+  // explicit release mode so a valid post gets a policy response, never a DB 500.
+  await ensureCommunityMediaSchemaOnly();
+  logger.info("Community media schema ready before traffic acceptance");
   // Cultural-site detail and contribution views are authenticated request paths.
   // The additive gate prevents a missing legacy seed table from turning a valid
   // Explore deep link into a 500 while leaving site and contribution data untouched.

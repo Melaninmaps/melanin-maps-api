@@ -68,5 +68,8 @@ describe("Community workbook tabs", () => {
     expect(groupDetail).toContain("groupId,");
     expect(groupDetail).toContain("Only current group members can open this group feed.");
     expect(groupDetail).toContain("Posts and media shared here remain available only to current group members.");
+    expect(groupDetail).toContain('parsed.protocol !== "https:"');
+    expect(groupDetail).toContain("Paste a supported social video link");
+    expect(groupDetail).toContain("Add a supported media link");
   });
 });

@@ -18900,6 +18900,51 @@ async function ensureMediaAndClaimsSchema(
 }
 
 /**
+ * Community posts may reference a member-owned completed upload. In explicit
+ * feature-release mode the broad migration runner is deliberately skipped, so
+ * this narrow additive gate keeps the ownership lookup from becoming a 500.
+ * It never inserts media rows, changes business claims, or starts a worker.
+ */
+export async function ensureCommunityMediaSchemaOnly(): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS media_assets (
+      id           UUID PRIMARY KEY,
+      uploader_id  TEXT NOT NULL,
+      purpose      TEXT NOT NULL DEFAULT 'general',
+      mime_type    TEXT NOT NULL,
+      byte_size    BIGINT,
+      object_key   TEXT NOT NULL,
+      public_url   TEXT,
+      status       TEXT NOT NULL DEFAULT 'ready'
+                   CHECK (status IN ('ready','processing','deleted')),
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`ALTER TABLE media_assets ALTER COLUMN public_url DROP NOT NULL`);
+  const requiredColumns = [
+    "id", "uploader_id", "purpose", "mime_type", "byte_size",
+    "object_key", "public_url", "status", "created_at",
+  ];
+  const result = await pool.query<{ column_name: string }>(`
+    SELECT column_name
+      FROM information_schema.columns
+     WHERE table_schema = 'public'
+       AND table_name = 'media_assets'
+       AND column_name = ANY($1::text[])
+  `, [requiredColumns]);
+  const present = new Set(result.rows.map((row) => row.column_name));
+  const missing = requiredColumns.filter((column) => !present.has(column));
+  if (missing.length > 0) {
+    throw new Error(`media_assets missing required Community media columns: ${missing.join(", ")}`);
+  }
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS media_assets_owned_ready_lookup_idx
+      ON media_assets (uploader_id, public_url)
+     WHERE status = 'ready' AND public_url IS NOT NULL
+  `);
+}
+
+/**
  * Kinfolk question images are not public media or chat history. They are held
  * privately only long enough to complete a member-consented visual question,
  * then deleted by the request lifecycle or the bounded expiry worker.

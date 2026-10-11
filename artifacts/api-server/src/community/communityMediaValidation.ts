@@ -32,15 +32,22 @@ export function normalizeCommunityMediaUrls(value: unknown): string[] {
 
 const lookupOwnedReadyMedia: OwnedMediaLookup = async (userId, urls) => {
   if (urls.length === 0) return new Set();
-  const result = await pool.query<{ public_url: string }>(
-    `SELECT public_url
-       FROM media_assets
-      WHERE uploader_id = $1
-        AND status = 'ready'
-        AND public_url = ANY($2::text[])`,
-    [userId, urls],
-  );
-  return new Set(result.rows.map((row) => row.public_url));
+  try {
+    const result = await pool.query<{ public_url: string }>(
+      `SELECT public_url
+         FROM media_assets
+        WHERE uploader_id = $1
+          AND status = 'ready'
+          AND public_url = ANY($2::text[])`,
+      [userId, urls],
+    );
+    return new Set(result.rows.map((row) => row.public_url));
+  } catch {
+    // A failed ownership lookup must never make an arbitrary media URL valid
+    // or turn a member post into a raw database error. The route will return
+    // its ordinary INVALID_MEDIA_URL policy response instead.
+    return new Set();
+  }
 };
 
 function isLegacyOwnedCommunityUpload(rawUrl: string, userId: string): boolean {
