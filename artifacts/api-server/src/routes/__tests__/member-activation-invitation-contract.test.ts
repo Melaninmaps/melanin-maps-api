@@ -43,6 +43,11 @@ describe("member activation invitation contract", () => {
     expect(waitlist).not.toContain("res.json({ invitation: invitation.token");
   });
 
+  it("records delivery status without conflicting enum/text parameter inference", () => {
+    expect(invitation).toContain("delivery_accepted_at = CASE WHEN $3::text = 'sent'");
+    expect(invitation).toContain("provider_receipt_fingerprint = $4");
+  });
+
   it("requires issued invitation history at registration and consumes it only after account creation", () => {
     expect(invitation).toContain("export async function hasMemberActivationInvitationHistory");
     expect(invitation).toContain("return (result.rowCount ?? 0) === 1");

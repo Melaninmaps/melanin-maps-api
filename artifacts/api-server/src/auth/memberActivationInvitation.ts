@@ -81,7 +81,11 @@ export async function recordMemberActivationInvitationDelivery(
             provider_receipt_fingerprint = $4,
             delivery_failure_code = $5,
             delivery_attempted_at = NOW(),
-            delivery_accepted_at = CASE WHEN $3 = 'sent' THEN NOW() ELSE NULL END,
+            -- $3 is assigned to the lifecycle enum above. Cast only the
+            -- comparison so PostgreSQL does not try to infer one parameter as
+            -- both the enum and text, which previously made real approval
+            -- delivery fail closed with a 500 before Resend was called.
+            delivery_accepted_at = CASE WHEN $3::text = 'sent' THEN NOW() ELSE NULL END,
             updated_at = NOW()
       WHERE email = $1
         AND token_hash = $2
