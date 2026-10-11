@@ -42,7 +42,6 @@
       "package": "com.melaninmaps.app",
       "version": "1.1.10",
       "runtimeVersion": "1.1.7-native.1",
-      "edgeToEdgeEnabled": true,
       "intentFilters": [
         {
           "action": "VIEW",
@@ -87,9 +86,6 @@
         "android.permission.WRITE_CONTACTS"
       ]
     },
-    "androidNavigationBar": {
-      "enforceContrast": false
-    },
     "web": {
       "favicon": "./assets/images/icon.png"
     },
@@ -121,6 +117,12 @@
           "icon": "./assets/images/icon.png",
           "color": "#CA922B",
           "sounds": []
+        }
+      ],
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false
         }
       ],
       [

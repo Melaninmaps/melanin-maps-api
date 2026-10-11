@@ -16,8 +16,8 @@
         "gradleCommand": ":app:assembleDebug"
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "mwm-staging.35.196.78.19.nip.io",
-        "EXPO_PUBLIC_API_ORIGIN": "https://mwm-staging.35.196.78.19.nip.io",
+        "EXPO_PUBLIC_DOMAIN": "kinfolk-memory-api-staging-staging.up.railway.app",
+        "EXPO_PUBLIC_API_ORIGIN": "https://kinfolk-memory-api-staging-staging.up.railway.app",
         "EXPO_PUBLIC_REPL_ID": "ac64a230-72f5-4194-b8b4-3ca827a772f9",
         "EXPO_PUBLIC_REVENUECAT_ENABLED": "false",
         "EXPO_PUBLIC_APP_ENV": "staging",
@@ -36,8 +36,8 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "mwm-staging.35.196.78.19.nip.io",
-        "EXPO_PUBLIC_API_ORIGIN": "https://mwm-staging.35.196.78.19.nip.io",
+        "EXPO_PUBLIC_DOMAIN": "kinfolk-memory-api-staging-staging.up.railway.app",
+        "EXPO_PUBLIC_API_ORIGIN": "https://kinfolk-memory-api-staging-staging.up.railway.app",
         "EXPO_PUBLIC_REPL_ID": "ac64a230-72f5-4194-b8b4-3ca827a772f9",
         "PNPM_VERSION": "10.26.1",
         "EXPO_PUBLIC_REVENUECAT_ENABLED": "false",
@@ -60,8 +60,8 @@
         "image": "sdk-57"
       },
       "env": {
-        "EXPO_PUBLIC_DOMAIN": "mwm-staging.35.196.78.19.nip.io",
-        "EXPO_PUBLIC_API_ORIGIN": "https://mwm-staging.35.196.78.19.nip.io",
+        "EXPO_PUBLIC_DOMAIN": "kinfolk-memory-api-staging-staging.up.railway.app",
+        "EXPO_PUBLIC_API_ORIGIN": "https://kinfolk-memory-api-staging-staging.up.railway.app",
         "EXPO_PUBLIC_REPL_ID": "ac64a230-72f5-4194-b8b4-3ca827a772f9",
         "PNPM_VERSION": "10.26.1",
         "EXPO_PUBLIC_REVENUECAT_ENABLED": "false",
@@ -122,6 +122,21 @@
         "APP_ENV": "production",
         "APP_RELEASE_CHANNEL": "production",
         "EAS_BUILD_PLATFORM": "android"
+      }
+    },
+    "acceptance-staging": {
+      "extends": "production",
+      "channel": "acceptance-staging",
+      "environment": "testflight-staging",
+      "distribution": "store",
+      "env": {
+        "EXPO_PUBLIC_DOMAIN": "kinfolk-memory-api-staging-staging.up.railway.app",
+        "EXPO_PUBLIC_API_ORIGIN": "https://kinfolk-memory-api-staging-staging.up.railway.app",
+        "PNPM_VERSION": "10.26.1",
+        "EXPO_PUBLIC_REVENUECAT_ENABLED": "false",
+        "EXPO_PUBLIC_APP_ENV": "staging",
+        "APP_ENV": "staging",
+        "APP_RELEASE_CHANNEL": "acceptance-staging"
       }
     }
   },

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { getApiBase, STAGING_ORIGIN } from "../lib/api";
+import { getApiBase, STAGING_ORIGIN } from "../lib/api-origin";
 
 const originalOrigin = process.env.EXPO_PUBLIC_API_ORIGIN;
 const originalEnvironment = process.env.EXPO_PUBLIC_APP_ENV;
@@ -24,10 +24,10 @@ describe("mobile API origin", () => {
   });
 
   it.each([
-    "http://mwm-staging.35.196.78.19.nip.io",
-    "https://user:secret@mwm-staging.35.196.78.19.nip.io",
-    "https://mwm-staging.35.196.78.19.nip.io/api",
-    "https://mwm-staging.35.196.78.19.nip.io?target=other",
+    "http://kinfolk-memory-api-staging-staging.up.railway.app",
+    "https://user:secret@kinfolk-memory-api-staging-staging.up.railway.app",
+    "https://kinfolk-memory-api-staging-staging.up.railway.app/api",
+    "https://kinfolk-memory-api-staging-staging.up.railway.app?target=other",
     "not-an-origin",
   ])("rejects malformed or unsafe origin %s", (origin) => {
     process.env.EXPO_PUBLIC_APP_ENV = "staging";
