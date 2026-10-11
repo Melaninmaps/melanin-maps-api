@@ -272,7 +272,7 @@ async function createSafetyCheckinInAppNotifications(
       `SELECT scr.id::text,
               scr.recipient_user_id,
               scr.in_app_attempt_count,
-              COALESCE(np.push_enabled, true) AS push_enabled,
+              COALESCE(lower(np.push_enabled::text) IN ('true', 't', '1'), true) AS push_enabled,
               np.topics::text AS topics_text,
               (
                 tss.id IS NOT NULL
@@ -282,24 +282,24 @@ async function createSafetyCheckinInAppNotifications(
               ) AS is_eligible
          FROM safety_checkin_recipients scr
          JOIN safety_checkins checkin
-           ON checkin.id = scr.checkin_id
-          AND checkin.user_id = $2
+           ON checkin.id::text = scr.checkin_id::text
+          AND checkin.user_id::text = $2::text
           AND checkin.status = 'overdue'
           AND checkin.confirmed_at IS NULL
          LEFT JOIN trusted_safety_shares tss
            ON tss.id::text = scr.trusted_share_id::text
-          AND tss.owner_id = $2
-          AND tss.contact_user_id = scr.recipient_user_id
+          AND tss.owner_id::text = $2::text
+          AND tss.contact_user_id::text = scr.recipient_user_id::text
           AND tss.contact_type = 'mwm_user'
           AND tss.status = 'active'
-          AND tss.owner_enabled = true
-          AND tss.contact_accepted = true
-         LEFT JOIN users recipient ON recipient.id = scr.recipient_user_id
-         LEFT JOIN notification_preferences np ON np.user_id = scr.recipient_user_id
+          AND COALESCE(lower(tss.owner_enabled::text) IN ('true', 't', '1'), false)
+          AND COALESCE(lower(tss.contact_accepted::text) IN ('true', 't', '1'), false)
+         LEFT JOIN users recipient ON recipient.id::text = scr.recipient_user_id::text
+         LEFT JOIN notification_preferences np ON np.user_id::text = scr.recipient_user_id::text
          LEFT JOIN user_blocks owner_blocks
-           ON owner_blocks.blocker_id = $2 AND owner_blocks.blocked_id = scr.recipient_user_id
+           ON owner_blocks.blocker_id::text = $2::text AND owner_blocks.blocked_id::text = scr.recipient_user_id::text
          LEFT JOIN user_blocks recipient_blocks
-           ON recipient_blocks.blocker_id = scr.recipient_user_id AND recipient_blocks.blocked_id = $2
+           ON recipient_blocks.blocker_id::text = scr.recipient_user_id::text AND recipient_blocks.blocked_id::text = $2::text
         WHERE scr.checkin_id = $1
           AND scr.in_app_attempt_count < $3
           AND (
@@ -415,7 +415,7 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
       `SELECT scr.id::text,
               scr.recipient_user_id,
               scr.push_attempt_count,
-              COALESCE(np.push_enabled, true) AS push_enabled,
+              COALESCE(lower(np.push_enabled::text) IN ('true', 't', '1'), true) AS push_enabled,
               np.topics::text AS topics_text,
               (
                 tss.id IS NOT NULL
@@ -425,24 +425,24 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
               ) AS is_eligible
          FROM safety_checkin_recipients scr
          JOIN safety_checkins checkin
-           ON checkin.id = scr.checkin_id
-          AND checkin.user_id = $2
+           ON checkin.id::text = scr.checkin_id::text
+          AND checkin.user_id::text = $2::text
           AND checkin.status = 'overdue'
           AND checkin.confirmed_at IS NULL
          LEFT JOIN trusted_safety_shares tss
            ON tss.id::text = scr.trusted_share_id::text
-          AND tss.owner_id = $2
-          AND tss.contact_user_id = scr.recipient_user_id
+          AND tss.owner_id::text = $2::text
+          AND tss.contact_user_id::text = scr.recipient_user_id::text
           AND tss.contact_type = 'mwm_user'
           AND tss.status = 'active'
-          AND tss.owner_enabled = true
-          AND tss.contact_accepted = true
-         LEFT JOIN users recipient ON recipient.id = scr.recipient_user_id
-         LEFT JOIN notification_preferences np ON np.user_id = scr.recipient_user_id
+          AND COALESCE(lower(tss.owner_enabled::text) IN ('true', 't', '1'), false)
+          AND COALESCE(lower(tss.contact_accepted::text) IN ('true', 't', '1'), false)
+         LEFT JOIN users recipient ON recipient.id::text = scr.recipient_user_id::text
+         LEFT JOIN notification_preferences np ON np.user_id::text = scr.recipient_user_id::text
          LEFT JOIN user_blocks owner_blocks
-           ON owner_blocks.blocker_id = $2 AND owner_blocks.blocked_id = scr.recipient_user_id
+           ON owner_blocks.blocker_id::text = $2::text AND owner_blocks.blocked_id::text = scr.recipient_user_id::text
          LEFT JOIN user_blocks recipient_blocks
-           ON recipient_blocks.blocker_id = scr.recipient_user_id AND recipient_blocks.blocked_id = $2
+           ON recipient_blocks.blocker_id::text = scr.recipient_user_id::text AND recipient_blocks.blocked_id::text = $2::text
         WHERE scr.checkin_id = $1
           AND (
             scr.delivery_status = 'push_pending'
