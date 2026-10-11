@@ -276,7 +276,7 @@ async function createSafetyCheckinInAppNotifications(
                 AND recipient.approved = true
                 AND owner_blocks.id IS NULL
                 AND recipient_blocks.id IS NULL
-                AND COALESCE(np.topics @> ARRAY['safety']::text[], true)
+                AND COALESCE((to_jsonb(np.topics) @> '["safety"]'::jsonb OR to_jsonb(np.topics) = '"safety"'::jsonb), true)
               ) AS is_eligible
          FROM safety_checkin_recipients scr
          JOIN safety_checkins checkin
@@ -418,7 +418,7 @@ async function claimSafetyCheckinPushAttempts(checkinId: number, ownerId: string
                 AND recipient.approved = true
                 AND owner_blocks.id IS NULL
                 AND recipient_blocks.id IS NULL
-                AND COALESCE(np.topics @> ARRAY['safety']::text[], true)
+                AND COALESCE((to_jsonb(np.topics) @> '["safety"]'::jsonb OR to_jsonb(np.topics) = '"safety"'::jsonb), true)
               ) AS is_eligible
          FROM safety_checkin_recipients scr
          JOIN safety_checkins checkin
