@@ -1,4 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
+import { pool } from "@workspace/db";
 import { isNamedAdmin } from "../lib/adminAuth";
 import type { ThreatEvidenceReference } from "../safety/seriousCredibleThreat";
 import {
@@ -7,7 +8,10 @@ import {
   type PrivateSeriousThreatReviewRecord,
   type SeriousCredibleThreatPrivateModerator,
 } from "../safety/seriousCredibleThreatReviewQueue";
-import { configuredIsolatedSeriousThreatReviewerAdapter } from "../safety/postgresSeriousCredibleThreatReviewStore";
+import {
+  configuredIsolatedSeriousThreatReviewerAdapter,
+  isIsolatedSeriousThreatPrivateReviewEnabled,
+} from "../safety/postgresSeriousCredibleThreatReviewStore";
 
 const APPROVAL_KEYS = new Set([
   "decision",
@@ -124,16 +128,37 @@ function parsePrivateReviewDecision(
   };
 }
 
-function requireNamedModerator(req: Request, res: Response): string | null {
+async function requirePrivateModerator(req: Request, res: Response): Promise<string | null> {
   if (!req.user?.id) {
     res.status(401).json({ error: "Authentication required" });
     return null;
   }
-  if (!isNamedAdmin(req)) {
+  if (isNamedAdmin(req)) return req.user.id;
+
+  // A short-lived synthetic reviewer can be granted only by the isolated
+  // fixture service while both storage gates are true. It is not an admin role,
+  // cannot access any other admin surface, expires automatically, and cannot
+  // exist in an environment where this private-review store is disabled.
+  if (!isIsolatedSeriousThreatPrivateReviewEnabled()) {
     res.status(403).json({ error: "Private moderator access required" });
     return null;
   }
-  return req.user.id;
+  try {
+    const result = await pool.query<{ user_id: string }>(
+      `SELECT user_id
+         FROM safety_serious_credible_threat_fixture_reviewers
+        WHERE user_id = $1
+          AND scope = 'isolated_staging_validation'
+          AND expires_at > NOW()
+        LIMIT 1`,
+      [req.user.id],
+    );
+    if (result.rows[0]?.user_id === req.user.id) return req.user.id;
+  } catch {
+    // A missing/malformed isolated-only relation must fail closed.
+  }
+  res.status(403).json({ error: "Private moderator access required" });
+  return null;
 }
 
 /**
@@ -159,7 +184,8 @@ function privateModeratorItem(record: PrivateSeriousThreatReviewRecord) {
 }
 
 /**
- * Named-admin-only reviewer surface. It is intentionally isolated from the
+ * Named-admin reviewer surface, plus a narrow expiring fixture entitlement in
+ * the double-gated isolated environment. It is intentionally isolated from the
  * ordinary moderation router and exposes no publishing, notification, deletion,
  * reporter-identity, or retention-management operation.
  */
@@ -174,7 +200,7 @@ export function createSeriousCredibleThreatPrivateModeratorRouter(
   router.get(
     "/moderation/serious-credible-threats/reviews",
     async (req: Request, res: Response): Promise<void> => {
-      if (!requireNamedModerator(req, res)) return;
+      if (!await requirePrivateModerator(req, res)) return;
       try {
         const reviews = await moderator.listPendingPrivateReviews(25);
         if (!reviews.available) {
@@ -195,7 +221,7 @@ export function createSeriousCredibleThreatPrivateModeratorRouter(
   router.patch(
     "/moderation/serious-credible-threats/reviews/:reportId",
     async (req: Request, res: Response): Promise<void> => {
-      const moderatorId = requireNamedModerator(req, res);
+      const moderatorId = await requirePrivateModerator(req, res);
       if (!moderatorId) return;
       const reportId = typeof req.params.reportId === "string"
         ? req.params.reportId.trim()

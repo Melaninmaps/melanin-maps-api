@@ -6359,6 +6359,14 @@ export async function ensureIsolatedSeriousThreatPrivateReviewSchema(
     CREATE INDEX IF NOT EXISTS safety_serious_threat_private_pending_idx
       ON safety_serious_credible_threat_private_reviews (received_at ASC, report_id ASC)
       WHERE review_state = 'pending_private_review';
+    CREATE TABLE IF NOT EXISTS safety_serious_credible_threat_fixture_reviewers (
+      user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      scope TEXT NOT NULL CHECK (scope = 'isolated_staging_validation'),
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS safety_serious_threat_fixture_reviewer_expiry_idx
+      ON safety_serious_credible_threat_fixture_reviewers (expires_at ASC);
   `);
   await pool.query(
     "SELECT report_id, review_state, candidate_submission FROM safety_serious_credible_threat_private_reviews LIMIT 0",
