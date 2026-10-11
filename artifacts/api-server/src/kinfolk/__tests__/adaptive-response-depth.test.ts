@@ -36,12 +36,24 @@ describe("adaptive Kinfolk answer depth", () => {
   });
 
   it("uses a larger bounded token budget only when a detailed answer is warranted", () => {
-    const standard = { mode: "standard" as const, maxOutputTokens: 600 };
-    const staff = { mode: "staff_demo" as const, maxOutputTokens: 900 };
+    const standard = { mode: "standard" as const, maxOutputTokens: 600, primaryModel: "gpt-4o-mini" };
+    const staff = { mode: "staff_demo" as const, maxOutputTokens: 900, primaryModel: "gpt-4o-mini" };
     expect(resolveKinfolkOutputTokenBudget(standard, "concise")).toBe(600);
     expect(resolveKinfolkOutputTokenBudget(standard, "standard")).toBe(750);
     expect(resolveKinfolkOutputTokenBudget(standard, "detailed")).toBe(1200);
     expect(resolveKinfolkOutputTokenBudget(staff, "detailed")).toBe(1800);
+  });
+
+  it("keeps GPT-5 ordinary replies above the validated visible-response floor", () => {
+    const gpt5Standard = {
+      mode: "standard" as const,
+      maxOutputTokens: 600,
+      primaryModel: "gpt-5-mini",
+    };
+
+    expect(resolveKinfolkOutputTokenBudget(gpt5Standard, "concise")).toBe(1800);
+    expect(resolveKinfolkOutputTokenBudget(gpt5Standard, "standard")).toBe(1800);
+    expect(resolveKinfolkOutputTokenBudget(gpt5Standard, "detailed")).toBe(1800);
   });
 
   it("requires the model to return the complete answer without narrating hidden work", () => {

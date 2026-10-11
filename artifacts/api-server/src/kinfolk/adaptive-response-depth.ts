@@ -1,4 +1,4 @@
-import type { KinfolkModelPolicy } from "./staff-demo-policy";
+import { isGpt5Family, type KinfolkModelPolicy } from "./staff-demo-policy";
 
 export type KinfolkResponseDepth = "concise" | "standard" | "detailed";
 
@@ -25,6 +25,10 @@ const DETAIL_INTENTS = new Set([
 const DETAILED_REQUEST_PATTERN = /\b(?:explain|comparison|compare|versus|vs\.?|difference|plan|itinerary|step[ -]?by[ -]?step|pros?\s+and\s+cons?|options?|recommend|best|should\s+i|how\s+(?:do|does|can|would)|why|impact|affect|walk\s+me\s+through|details?|analysis|break\s+(?:it|this)\s+down|tell\s+me\s+about|what\s+(?:are|should)\s+(?:my|the)\s+next)\b/i;
 
 const DIRECT_FACT_PATTERN = /^(?:who|what|when|where|which|is|are|can|does|do)\b/i;
+// GPT-5 reasoning consumes the same completion allotment as visible output.
+// Below this floor, ordinary structured replies can finish with no member-facing
+// content even when the provider returns HTTP 200.
+const GPT5_MIN_CHAT_COMPLETION_TOKENS = 1_800;
 
 /**
  * Selects answer depth before the model call. This is intentionally based only on
@@ -63,12 +67,18 @@ export function resolveKinfolkResponseDepth(input: KinfolkResponseDepthInput): K
  * simple questions stay fast and readable.
  */
 export function resolveKinfolkOutputTokenBudget(
-  policy: Pick<KinfolkModelPolicy, "mode" | "maxOutputTokens">,
+  policy: Pick<KinfolkModelPolicy, "mode" | "maxOutputTokens" | "primaryModel">,
   depth: KinfolkResponseDepth,
 ): number {
-  if (depth === "detailed") return policy.mode === "staff_demo" ? 1_800 : 1_200;
-  if (depth === "standard") return policy.mode === "staff_demo" ? 1_050 : 750;
-  return policy.maxOutputTokens;
+  const requested = depth === "detailed"
+    ? policy.mode === "staff_demo" ? 1_800 : 1_200
+    : depth === "standard"
+      ? policy.mode === "staff_demo" ? 1_050 : 750
+      : policy.maxOutputTokens;
+
+  return isGpt5Family(policy.primaryModel)
+    ? Math.max(requested, GPT5_MIN_CHAT_COMPLETION_TOKENS)
+    : requested;
 }
 
 export function buildAdaptiveAnswerDepthPrompt(depth: KinfolkResponseDepth): string {
