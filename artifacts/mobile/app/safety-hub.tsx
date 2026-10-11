@@ -38,18 +38,6 @@ type SafetyCheckin = {
   location: string | null;
 };
 
-type LocationShare = {
-  id: number;
-  label: string;
-  shareToken: string;
-  recipientEmail: string | null;
-  isActive: boolean;
-  expiresAt: string;
-  currentLat: number | null;
-  currentLng: number | null;
-  lastUpdatedAt: string | null;
-};
-
 type MeetupVerification = {
   id: number;
   initiatorId: string;
@@ -65,7 +53,6 @@ type MeetupVerification = {
 const ALL_FEATURES: { id: string; icon: React.ComponentProps<typeof Feather>["name"]; title: string; desc: string; color: string; route: string | null; externalUrl?: string }[] = [
   { id: "tip", icon: "alert-triangle", title: "Submit Safety Tip", desc: "Pin a location where violence or hate occurred. Nearby verified members are alerted to confirm.", color: "#DC2626", route: "/safety-tip" },
   { id: "checkin", icon: "check-circle", title: "Safety Check-In", desc: "Schedule a check-in. Your contact is alerted if you don't confirm.", color: "#16A34A", route: "/checkin" },
-  { id: "location", icon: "map-pin", title: "Location Sharing", desc: "Share your live location with a trusted contact temporarily.", color: "#2563EB", route: "/location-share" },
   { id: "meetup", icon: "users", title: "Meetup Verification", desc: "Mutually verify in-person meetups with connections you trust.", color: "#7C3AED", route: "/member-connections" },
   { id: "police", icon: "shield-off", title: "Report Police or ICE", desc: "Report a police encounter, ICE activity, racial profiling, or checkpoint in your area.", color: "#991B1B", route: "/report-police" },
   { id: "report", icon: "flag", title: "Anonymous Report", desc: "Report unsafe content or behavior without revealing your identity.", color: "#DC2626", route: "/report-safety" },
@@ -96,7 +83,6 @@ export default function SafetyHubScreen() {
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
   const [checkins, setCheckins] = useState<SafetyCheckin[]>([]);
-  const [shares, setShares] = useState<LocationShare[]>([]);
   const [meetups, setMeetups] = useState<MeetupVerification[]>([]);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
@@ -119,13 +105,11 @@ export default function SafetyHubScreen() {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
       const base = getApiBase();
-      const [ciRes, lsRes, mvRes] = await Promise.all([
+      const [ciRes, mvRes] = await Promise.all([
         fetch(`${base}/api/safety/checkins`, { headers }),
-        fetch(`${base}/api/safety/location-shares`, { headers }),
         fetch(`${base}/api/meetups`, { headers }),
       ]);
       if (ciRes.ok) { const d = await ciRes.json() as { checkins: SafetyCheckin[] }; setCheckins(d.checkins ?? []); }
-      if (lsRes.ok) { const d = await lsRes.json() as { shares: LocationShare[] }; setShares(d.shares ?? []); }
       if (mvRes.ok) { const d = await mvRes.json() as { verifications: MeetupVerification[] }; setMeetups(d.verifications ?? []); }
     } finally { setLoading(false); }
   }, []);
@@ -159,14 +143,7 @@ export default function SafetyHubScreen() {
     else Alert.alert("Error", "Failed to confirm check-in.");
   };
 
-  const handleStopShare = async (id: number) => {
-    const token = await SecureStore.getItemAsync("auth_session_token");
-    await fetch(`${getApiBase()}/api/safety/location-shares/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
-    setShares((prev) => prev.filter((s) => s.id !== id));
-  };
-
   const pendingCheckins = checkins.filter((c) => c.status === "pending");
-  const activeShares = shares.filter((s) => s.isActive && new Date(s.expiresAt) > new Date());
   const pendingMeetups = meetups.filter((m) => m.status === "pending" && m.partnerId === user?.id);
 
   const formatRelativeTime = (iso: string) => {
@@ -261,30 +238,6 @@ export default function SafetyHubScreen() {
                   </View>
                 );
               })}
-            </View>
-          )}
-
-          {/* Active location shares */}
-          {!editMode && activeShares.length > 0 && (
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Active Location Shares</Text>
-              {activeShares.map((s) => (
-                <View key={s.id} style={[styles.shareCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <View style={[styles.shareIcon, { backgroundColor: "#2563EB18" }]}>
-                    <Feather name="map-pin" size={16} color="#2563EB" />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.shareName, { color: colors.foreground }]}>{s.label}</Text>
-                    <Text style={[styles.shareExpiry, { color: colors.mutedForeground }]}>
-                      Expires {formatRelativeTime(s.expiresAt)}
-                      {s.recipientEmail ? ` · ${s.recipientEmail}` : ""}
-                    </Text>
-                  </View>
-                  <TouchableOpacity onPress={() => void handleStopShare(s.id)} activeOpacity={0.7} style={{ padding: 8 }}>
-                    <Feather name="x-circle" size={18} color="#DC2626" />
-                  </TouchableOpacity>
-                </View>
-              ))}
             </View>
           )}
 

@@ -29,12 +29,13 @@ describe("private social-space authorization", () => {
     expect(circles).toMatch(/router\.get\("\/circles\/:id\/plans",[\s\S]*?Not a member/);
   });
 
-  it("accepts location updates only from the sharer while the share is active", () => {
+  it("retires live location sharing without removing private Safety Check-Ins", () => {
     const shares = source("../routes/location-shares.ts");
-    expect(shares).toMatch(/router\.patch\("\/safety\/location-shares\/:token\/update",[\s\S]*?requireAuth/);
-    expect(shares).toContain("eq(locationSharesTable.sharerId, userId)");
-    expect(shares).toContain("gt(locationSharesTable.expiresAt, new Date())");
-    expect(shares).toContain("lat < -90 || lat > 90 || lng < -180 || lng > 180");
+    expect(shares).toContain("LIVE_LOCATION_SHARING_RETIRED");
+    expect(shares).toContain('router.patch("/safety/location-shares/:token/update"');
+    expect(shares).toContain('router.get("/safety/location-shares/:token/view"');
+    expect(shares).toContain("retireLocationSharesForMember");
+    expect(shares).not.toContain("minimizeLocationCoordinate");
   });
 
   it("keeps Safety-tip submitter identifiers out of client responses", () => {

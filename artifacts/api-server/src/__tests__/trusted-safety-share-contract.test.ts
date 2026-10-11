@@ -14,11 +14,6 @@ import {
   isTrustedSafetyAlertPayload,
   trustedSafetyInAppNotification,
 } from "../lib/trustedSafetyShareAlerts";
-import {
-  isFreshLocationCoordinate,
-  minimizeLocationCoordinate,
-  publicLocationShare,
-} from "../routes/location-shares";
 
 describe("Trusted Safety Share contact and delivery privacy", () => {
   it("normalizes cosmetic email and phone differences before deduplication", () => {
@@ -106,17 +101,15 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
     expect(auditMigration).not.toMatch(/contact_phone|contact_email|invite_token|push_token|provider_receipt_id/);
   });
 
-  it("keeps the recipient-authorized location payload free of account identity", () => {
-    const view = publicLocationShare({
-      label: "Safe arrival",
-      currentLat: 33.749,
-      currentLng: -84.388,
-      lastUpdatedAt: new Date("2026-01-02T03:04:05.000Z"),
-      expiresAt: new Date("2026-01-02T04:04:05.000Z"),
-    });
-    expect(view).not.toHaveProperty("sharerId");
-    expect(view).not.toHaveProperty("recipientEmail");
-    expect(view).not.toHaveProperty("shareToken");
+  it("keeps trusted-contact alerts distinct from retired live location sharing", () => {
+    const locationRoute = readFileSync(
+      fileURLToPath(new URL("../routes/location-shares.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(locationRoute).toContain("LIVE_LOCATION_SHARING_RETIRED");
+    expect(locationRoute).toContain("currentLat: null");
+    expect(locationRoute).toContain("currentLng: null");
+    expect(locationRoute).not.toContain("publicLocationShare");
   });
 
   it("cannot resume a pending or declined contact without acceptance", () => {
@@ -186,22 +179,23 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
     expect(route).not.toContain("FOR KEY SHARE");
   });
 
-  it("minimizes retained coordinates and refuses future or stale coordinate timestamps", () => {
-    const now = Date.parse("2026-10-10T12:00:00.000Z");
-    expect(minimizeLocationCoordinate(33.749123)).toBe(33.7491);
-    expect(minimizeLocationCoordinate(-84.388987)).toBe(-84.389);
-    expect(isFreshLocationCoordinate(new Date(now - 119_999), now)).toBe(true);
-    expect(isFreshLocationCoordinate(new Date(now - 120_001), now)).toBe(false);
-    expect(isFreshLocationCoordinate(new Date(now + 1), now)).toBe(false);
+  it("does not keep coordinate transformation helpers after retirement", () => {
+    const locationRoute = readFileSync(
+      fileURLToPath(new URL("../routes/location-shares.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(locationRoute).not.toContain("minimizeLocationCoordinate");
+    expect(locationRoute).not.toContain("isFreshLocationCoordinate");
   });
 
-  it("does not expose a copyable bearer link for precise location access", () => {
+  it("removes native live-location controls rather than exposing a bearer link", () => {
     const mobile = readFileSync(
       fileURLToPath(new URL("../../../mobile/app/location-share.tsx", import.meta.url)),
       "utf8",
     );
-    expect(mobile).toContain("Accepted Kinfolk Contact");
-    expect(mobile).toContain("recipientTrustedShareId: selectedRecipientId");
+    expect(mobile).toContain("Live location sharing is not available");
+    expect(mobile).not.toContain("expo-location");
+    expect(mobile).not.toContain("location-shares");
     expect(mobile).not.toContain("Copy Share Link");
     expect(mobile).not.toContain("Copy Pending Link");
     expect(mobile).not.toContain("expo-clipboard");

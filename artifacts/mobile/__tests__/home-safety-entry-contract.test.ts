@@ -27,7 +27,8 @@ describe("mobile Home safety entry boundaries", () => {
     expect(settings).toContain('route: "/safety-hub"');
     expect(settings).toContain('route: "/privacy"');
     expect(safetyHub).toContain("Safety Hub");
-    expect(safetyHub).toContain("Location Sharing");
+    expect(safetyHub).not.toContain("Location Sharing");
+    expect(safetyHub).not.toContain("api/safety/location-shares");
     expect(safetyHub).toContain("Submit Safety Tip");
   });
 });
