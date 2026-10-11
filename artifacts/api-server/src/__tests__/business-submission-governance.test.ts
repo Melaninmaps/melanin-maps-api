@@ -1230,7 +1230,9 @@ describe("source contracts", () => {
     expect(repository).toContain("markPossibleDuplicate");
     expect(repository).toContain("request_payload_hash");
     expect(route.indexOf("findByClientRequest")).toBeLessThan(route.indexOf("findPublishedDuplicate"));
-    expect(media).toContain('purpose === "kinfolk_question" || purpose === "business_submission"');
+    expect(media).toContain("const ALLOWED_PURPOSES = new Set([");
+    expect(media).toContain('"business_submission"');
+    expect(media).toContain('const isPrivate = isKinfolkQuestion || purpose === "business_submission"');
     expect(media).toContain('purpose === "business_submission" ? null : url');
     expect(migrations).toContain("public_url   TEXT,");
     expect(migrations).toContain("ALTER TABLE media_assets ALTER COLUMN public_url DROP NOT NULL");
