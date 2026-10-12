@@ -1203,6 +1203,10 @@ function TravelPage() {
   // ── Voice input state ──────────────────────────────────────────────────────
   type VoiceState = "idle" | "notice" | "requesting" | "denied" | "unsupported" | "recording" | "processing";
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
+  // A voice failure must never overwrite a member's typed draft. Keep the
+  // guidance separate from the composer so the member can retry or continue
+  // with what they had already written.
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const [voiceTranscriptReview, setVoiceTranscriptReview] = useState<{
     originalText: string;
     suggestedText: string;
@@ -1355,6 +1359,7 @@ function TravelPage() {
 
   const finishRecording = useCallback(async (captured: Blob | Blob[], mimeType: SupportedRecordingMimeType) => {
     setVoiceState("processing");
+    setVoiceError(null);
     // Wall-clock duration from the ref set when recording started
     const durationMs = recordingStartedAtRef.current !== null
       ? Math.max(0, Math.round(performance.now() - recordingStartedAtRef.current))
@@ -1403,8 +1408,9 @@ function TravelPage() {
 
       if (!r.ok) {
         const body = await r.json().catch(() => ({})) as { error?: string; message?: string };
-        setInput(classifyVoiceError(r.status, body));
+        setVoiceError(classifyVoiceError(r.status, body));
         setVoiceState("idle");
+        setTimeout(() => inputRef.current?.focus(), 50);
         return;
       }
 
@@ -1443,9 +1449,10 @@ function TravelPage() {
       const timedOut = error instanceof Error
         && error.name === "AbortError"
         && controller?.signal.reason === "transcription_timeout";
-      if (timedOut) setInput("Voice transcription took too long. Please type your question.");
-      else if (!controller?.signal.aborted) setInput("Transcription failed — please type your question.");
+      if (timedOut) setVoiceError("Voice transcription took too long. Please type your question.");
+      else if (!controller?.signal.aborted) setVoiceError("Transcription failed — please type your question.");
       setVoiceState("idle");
+      if (!controller?.signal.aborted || timedOut) setTimeout(() => inputRef.current?.focus(), 50);
     } finally {
       if (transcriptionTimeoutRef.current) {
         clearTimeout(transcriptionTimeoutRef.current);
@@ -1478,6 +1485,7 @@ function TravelPage() {
   // This function intentionally does not contain the first-use notice gate so
   // accepting the notice can proceed directly to the browser permission prompt.
   const beginVoiceRecording = useCallback(async () => {
+    setVoiceError(null);
     setVoiceState("requesting");
     let stream: MediaStream | null = null;
     try {
@@ -3174,6 +3182,15 @@ function TravelPage() {
                         ? "Voice recording is not supported in this browser. Please type your question below."
                         : "Microphone access was denied. You can still type your question below."}
                     </p>
+                  </div>
+                )}
+
+                {voiceError && (
+                  <div data-testid="kinfolk-voice-input-error" role="alert" className="mb-3 max-w-3xl mx-auto flex items-start justify-between gap-3 rounded-2xl border border-[#CA922B]/30 bg-[#FFF8EC] px-4 py-3">
+                    <p className="text-xs leading-relaxed text-[#3A1F0E]/75">{voiceError}</p>
+                    <button type="button" onClick={() => setVoiceError(null)} className="shrink-0 text-[11px] font-semibold text-[#8D5C17] underline">
+                      Dismiss
+                    </button>
                   </div>
                 )}
 
