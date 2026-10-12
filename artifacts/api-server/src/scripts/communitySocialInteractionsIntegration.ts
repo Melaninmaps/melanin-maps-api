@@ -124,26 +124,35 @@ async function main(): Promise<void> {
     assert(await notificationCount(client, "author") === 1, "Opted-in public follow must create one in-app notification");
     const duplicateFollow = await request(app).post("/users/author/follow").set(as("member"));
     assert(duplicateFollow.status === 200 && await notificationCount(client, "author") === 1, "Duplicate follow must not duplicate a notification");
+    const unfollow = await request(app).delete("/users/author/follow").set(as("member"));
+    assert(unfollow.status === 200, "Member must be able to unfollow a permitted account");
+    const afterUnfollow = await client.query<{ followers_count: number; following_count: number }>("SELECT (SELECT followers_count FROM users WHERE id = 'author') AS followers_count, (SELECT following_count FROM users WHERE id = 'member') AS following_count");
+    assert(afterUnfollow.rows[0]?.followers_count === 0 && afterUnfollow.rows[0]?.following_count === 0 && await notificationCount(client, "author") === 1, "Unfollow must restore counts without creating activity");
+    const refollow = await request(app).post("/users/author/follow").set(as("member"));
+    assert(refollow.status === 200 && await notificationCount(client, "author") === 2, "A later new follow must create exactly one new activity item");
 
     const pendingFollow = await request(app).post("/users/private-author/follow").set(as("member"));
     assert(pendingFollow.status === 200 && pendingFollow.body.status === "pending", "Private account must create a pending request");
     assert(await notificationCount(client, "private-author") === 1, "Opted-in pending request must create one in-app notification");
+    const [{ id: pendingRequestId }] = (await client.query<{ id: number }>("SELECT id FROM user_follows WHERE follower_id = 'member' AND following_id = 'private-author' AND status = 'pending' LIMIT 1")).rows;
+    const acceptFollow = await request(app).post(`/users/follow-requests/${pendingRequestId}/accept`).set(as("private-author"));
+    assert(acceptFollow.status === 200 && await notificationCount(client, "member") === 1, "Accepting a private follow request must notify the opted-in requester");
 
     const like = await request(app).post("/community/posts/post/vote").set(as("member")).send({ direction: "up" });
     assert(like.status === 200 && like.body.liked === true, "Member must be able to like a permitted post");
-    assert(await notificationCount(client, "author") === 2, "First like must create one recipient activity item");
+    assert(await notificationCount(client, "author") === 3, "First like must create one recipient activity item");
     const duplicateLike = await request(app).post("/community/posts/post/vote").set(as("member")).send({ direction: "up" });
-    assert(duplicateLike.status === 200 && await notificationCount(client, "author") === 2, "Repeat like must be idempotent");
+    assert(duplicateLike.status === 200 && await notificationCount(client, "author") === 3, "Repeat like must be idempotent");
 
     const comment = await request(app).post("/community/posts/post/comments").set(as("member")).send({ content: "Thoughtful public comment" });
     assert(comment.status === 201 && typeof comment.body.comment?.id === "string", "Permitted member comment must persist");
     const commentId = String(comment.body.comment.id);
-    assert(await notificationCount(client, "author") === 3, "Top-level comment must notify only its opted-in post author");
+    assert(await notificationCount(client, "author") === 4, "Top-level comment must notify only its opted-in post author");
 
     const reply = await request(app).post("/community/posts/post/comments").set(as("other")).send({ content: "Helpful reply", parentCommentId: commentId });
     assert(reply.status === 201 && reply.body.comment?.parentCommentId === commentId, "Reply must retain its same-post parent identifier");
-    assert(await notificationCount(client, "member") === 1, "Reply must notify its opted-in parent-comment author");
-    assert(await notificationCount(client, "author") === 3, "Reply must not duplicate a post-author notification");
+    assert(await notificationCount(client, "member") === 2, "Reply must notify its opted-in parent-comment author");
+    assert(await notificationCount(client, "author") === 4, "Reply must not duplicate a post-author notification");
 
     const crossPostReply = await request(app).post("/community/posts/private-post/comments").set(as("member")).send({ content: "Cross-post attempt", parentCommentId: commentId });
     assert(crossPostReply.status === 404, "A parent comment from another post must not be reused");
@@ -168,7 +177,7 @@ async function main(): Promise<void> {
 
     await client.query("UPDATE users SET notif_community = false WHERE id = 'author'");
     const quietComment = await request(app).post("/community/posts/post/comments").set(as("quiet")).send({ content: "No notification should be created" });
-    assert(quietComment.status === 201 && await notificationCount(client, "author") === 3, "Disabled Community notifications must suppress both in-app and push activity");
+    assert(quietComment.status === 201 && await notificationCount(client, "author") === 4, "Disabled Community notifications must suppress both in-app and push activity");
 
     const blockedPost = await request(app).post("/community/posts/post/vote").set(as("outsider")).send({ direction: "up" });
     assert(blockedPost.status === 200, "Unblocked permitted member may react before a block");
