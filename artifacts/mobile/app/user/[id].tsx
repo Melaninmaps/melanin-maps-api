@@ -50,8 +50,14 @@ interface UserProfile {
   memberType?: string | null;
   industry?: string | null;
   jobTitle?: string | null;
+  coverUrl?: string | null;
+  location?: string | null;
+  age?: number | null;
+  birthday?: string | null;
   createdAt?: string;
 }
+
+type EarnedBadge = { achievementType: string; earnedAt?: string | null };
 
 type FollowStatus = "not_following" | "following" | "pending";
 
@@ -77,6 +83,8 @@ export default function VisitorProfileScreen() {
   const [myId, setMyId] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
   const [profileLoadError, setProfileLoadError] = useState<"unavailable" | "retry" | null>(null);
+  const [memberAuthHeaders, setMemberAuthHeaders] = useState<Record<string, string>>({});
+  const [earnedBadges, setEarnedBadges] = useState<EarnedBadge[]>([]);
 
   const loadProfile = useCallback(async () => {
     if (!id) return;
@@ -84,6 +92,7 @@ export default function VisitorProfileScreen() {
     setProfileLoadError(null);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
+      setMemberAuthHeaders(token ? { Authorization: `Bearer ${token}` } : {});
       const res = await fetch(`${getApiBase()}/api/users/${id}/profile`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
@@ -92,7 +101,7 @@ export default function VisitorProfileScreen() {
         setProfileLoadError(res.status >= 500 ? "retry" : "unavailable");
         return;
       }
-      const data = await res.json() as { profile: UserProfile; isFollowing: boolean; followStatus: string | null; isFollowedBy: boolean; canSeeContent: boolean };
+      const data = await res.json() as { profile: UserProfile; isFollowing: boolean; followStatus: string | null; isFollowedBy: boolean; canSeeContent: boolean; badges?: EarnedBadge[] };
       const nextProfile = data.profile;
       if (!nextProfile) {
         setProfile(null);
@@ -101,6 +110,7 @@ export default function VisitorProfileScreen() {
       }
       setProfile(nextProfile);
       setCanSeeContent(data.canSeeContent);
+      setEarnedBadges(Array.isArray(data.badges) ? data.badges.filter((badge): badge is EarnedBadge => Boolean(badge) && typeof badge.achievementType === "string") : []);
       if (data.isFollowing) setFollowStatus("following");
       else if (data.followStatus === "pending") setFollowStatus("pending");
       else setFollowStatus("not_following");
@@ -306,7 +316,7 @@ export default function VisitorProfileScreen() {
     }
   };
 
-  const displayName = profile?.username ? `@${profile.username}` : "Community Member";
+  const displayName = [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || (profile?.username ? `@${profile.username}` : "Community Member");
   const initials = (profile?.username ?? "CM").slice(0, 2).toUpperCase();
   const memberBadge = MEMBER_BADGE[(profile?.memberType ?? "free").toLowerCase()];
   const isOwnProfile = myId && id && myId === id;
@@ -371,6 +381,7 @@ export default function VisitorProfileScreen() {
           <>
             {/* Profile card */}
             <View style={[s.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              {profile.coverUrl && canSeeContent ? <Image source={{ uri: `${getApiBase()}${profile.coverUrl}`, headers: memberAuthHeaders }} style={s.coverImage} accessibilityLabel={`${displayName} profile cover`} /> : null}
               {/* Avatar */}
               <View style={[s.avatar, { backgroundColor: "#CA922B" }]}>
                 {profile.profileImageUrl ? <Image source={{ uri: profile.profileImageUrl }} style={s.avatarImage} accessibilityLabel={`${displayName} profile image`} /> : <Text style={s.avatarInitials}>{initials}</Text>}
@@ -397,10 +408,24 @@ export default function VisitorProfileScreen() {
                 </Text>
               )}
 
+              {(profile.location || profile.age || profile.birthday) && canSeeContent && (
+                <View style={s.profileFacts}>
+                  {profile.location ? <Text style={[s.profileFact, { color: colors.mutedForeground }]}><Feather name="map-pin" size={12} color={colors.primary} /> {profile.location}</Text> : null}
+                  {profile.age ? <Text style={[s.profileFact, { color: colors.mutedForeground }]}><Feather name="user" size={12} color={colors.primary} /> {profile.age}</Text> : null}
+                  {profile.birthday ? <Text style={[s.profileFact, { color: colors.mutedForeground }]}><Feather name="gift" size={12} color={colors.primary} /> {profile.birthday}</Text> : null}
+                </View>
+              )}
+
               {/* Bio */}
               {profile.bio && canSeeContent && (
                 <Text style={[s.bio, { color: colors.foreground }]}>{profile.bio}</Text>
               )}
+
+              {earnedBadges.length > 0 && canSeeContent ? (
+                <View style={s.badgeRow} accessibilityLabel="Earned profile badges">
+                  {earnedBadges.slice(0, 4).map((badge) => <View key={`${badge.achievementType}-${badge.earnedAt ?? "earned"}`} style={[s.earnedBadge, { backgroundColor: colors.primary + "14", borderColor: colors.primary + "30" }]}><Feather name="award" size={12} color={colors.primary} /><Text style={[s.earnedBadgeText, { color: colors.primary }]}>{badge.achievementType.replace(/[_-]+/g, " ")}</Text></View>)}
+                </View>
+              ) : null}
 
               {/* Private account notice */}
               {!canSeeContent && (
@@ -538,7 +563,9 @@ const s = StyleSheet.create({
     padding: 20,
     alignItems: "center",
     gap: 6,
+    overflow: "hidden",
   },
+  coverImage: { alignSelf: "stretch", height: 112, marginTop: -20, marginBottom: 8, marginHorizontal: -20 },
   avatar: {
     width: 72,
     height: 72,
@@ -565,6 +592,8 @@ const s = StyleSheet.create({
   memberDot: { width: 6, height: 6, borderRadius: 3 },
   memberBadgeText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   jobLine: { fontFamily: "Inter_400Regular", fontSize: 13 },
+  profileFacts: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8, marginTop: 2 },
+  profileFact: { fontFamily: "Inter_400Regular", fontSize: 12 },
   bio: {
     fontFamily: "Inter_400Regular",
     fontSize: 13,
@@ -572,6 +601,9 @@ const s = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: 8,
   },
+  badgeRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 6, marginTop: 4 },
+  earnedBadge: { flexDirection: "row", alignItems: "center", gap: 4, borderWidth: 1, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4 },
+  earnedBadgeText: { fontFamily: "Inter_600SemiBold", fontSize: 10, textTransform: "capitalize" },
   privateNotice: {
     flexDirection: "row",
     alignItems: "center",

@@ -8,6 +8,7 @@ function source(relativePath: string): string {
 
 describe("web member profile presentation controls", () => {
   const profile = source("../pages/profile.tsx");
+  const memberProfile = source("../pages/member-profile.tsx");
   const controls = source("../components/profile/ProfilePresentationControls.tsx");
 
   it("places member-controlled optional presentation settings behind the profile settings panel", () => {
@@ -19,5 +20,8 @@ describe("web member profile presentation controls", () => {
     expect(controls).toContain('credentials: "include"');
     expect(controls).toContain("Progress stays private");
     expect(controls).toContain("age-safety requirements");
+    expect(memberProfile).toContain("profile?.coverUrl");
+    expect(memberProfile).toContain("data?.badges");
+    expect(memberProfile).toContain("profile.location");
   });
 });

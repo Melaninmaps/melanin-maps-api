@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
-import { CalendarDays, Loader2, MapPin, MessageCircle, ShieldAlert, Star, UserCheck, UserPlus, Users } from "lucide-react";
+import { Award, CalendarDays, Gift, Loader2, MapPin, MessageCircle, ShieldAlert, Star, UserCheck, UserPlus, Users } from "lucide-react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
@@ -16,6 +16,10 @@ type MemberProfile = {
   bio: string | null;
   industry: string | null;
   jobTitle: string | null;
+  coverUrl?: string | null;
+  location?: string | null;
+  age?: number | null;
+  birthday?: string | null;
   createdAt: string | null;
   memberType: string | null;
 };
@@ -66,6 +70,7 @@ type ProfileResponse = {
   followStatus?: "pending" | "accepted" | null;
   followersCount?: number;
   followingCount?: number;
+  badges?: Array<{ achievementType: string; earnedAt: string | null }>;
 };
 
 type ProfileTab = "activity" | "reviews" | "tags";
@@ -181,6 +186,7 @@ export default function MemberProfilePage() {
   const isSelf = !!profile && auth?.user?.id === profile.id;
   const joined = useMemo(() => dateLabel(profile?.createdAt ?? null), [profile?.createdAt]);
   const profileName = profile ? nameFor(profile) : "Community member";
+  const coverUrl = profile?.coverUrl ? `${BASE.replace(/\/$/, "")}${profile.coverUrl}` : null;
   const canManageProfileTag = (tag: ProfileTag): boolean => isSelf || tag.taggerId === auth?.user?.id;
 
   async function startMessage(): Promise<void> {
@@ -284,7 +290,10 @@ export default function MemberProfilePage() {
     <main className="mx-auto max-w-3xl px-4 py-8 sm:py-10">
       <Link href="/community" className="text-sm font-semibold text-[#8D5C17] hover:underline">← Community</Link>
       <section aria-label="Member profile" className="mt-5 overflow-hidden rounded-3xl border border-[#3A1F0E]/10 bg-white shadow-sm">
-        <div className="h-24 bg-gradient-to-r from-[#2B1507] to-[#6B3D17]" />
+        <div className="relative h-24 overflow-hidden bg-gradient-to-r from-[#2B1507] to-[#6B3D17]">
+          {coverUrl && data?.canSeeContent ? <img src={coverUrl} alt="" className="h-full w-full object-cover" /> : null}
+          <div className="absolute inset-0 bg-black/10" />
+        </div>
         <div className="px-5 pb-7 sm:px-6">
           <div className="-mt-11 flex flex-wrap items-end justify-between gap-4">
             <div className="flex min-w-0 items-end gap-4">
@@ -315,9 +324,13 @@ export default function MemberProfilePage() {
           {profile.bio ? <p className="mt-5 max-w-2xl leading-7 text-[#3A1F0E]/75">{profile.bio}</p> : null}
           <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[#3A1F0E]/60">
             {profile.jobTitle || profile.industry ? <span className="inline-flex items-center gap-1.5"><Users className="h-4 w-4 text-[#CA922B]" />{[profile.jobTitle, profile.industry].filter(Boolean).join(" · ")}</span> : null}
+            {profile.location ? <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4 text-[#CA922B]" />{profile.location}</span> : null}
+            {profile.age ? <span>{profile.age} years old</span> : null}
+            {profile.birthday ? <span className="inline-flex items-center gap-1.5"><Gift className="h-4 w-4 text-[#CA922B]" />{profile.birthday}</span> : null}
             {joined ? <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-4 w-4 text-[#CA922B]" />Member since {joined}</span> : null}
             {isSelf && typeof data?.followersCount === "number" && typeof data.followingCount === "number" ? <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4 text-[#CA922B]" />{data.followersCount} followers · {data.followingCount} following</span> : null}
           </div>
+          {(data?.badges ?? []).length ? <div className="mt-4 flex flex-wrap gap-2" aria-label="Earned profile badges">{data!.badges!.slice(0, 6).map((badge) => <span key={`${badge.achievementType}-${badge.earnedAt ?? "earned"}`} className="inline-flex items-center gap-1.5 rounded-full bg-[#CA922B]/10 px-3 py-1.5 text-xs font-semibold capitalize text-[#8D5C17]"><Award className="h-3.5 w-3.5" />{badge.achievementType.replace(/[_-]+/g, " ")}</span>)}</div> : null}
         </div>
       </section>
 
