@@ -149,6 +149,14 @@ interface KinfolkTaskAction {
   tasks: Array<{ title: string; notes?: string | null; dueAt?: string | null; dueTimeLabel?: string | null; category?: string }>;
 }
 interface KinfolkSource { title: string; url: string }
+interface KinfolkResourceCard {
+  id: string;
+  title: string;
+  url: string;
+  description: string;
+  type: "image_gallery" | "health_source" | "community_source" | "entity_source";
+  safetyNote?: string;
+}
 interface KinfolkLibraryEntry { url: string; readMoreLabel: string }
 interface CommunityPerspective {
   label: "Community perspective";
@@ -183,6 +191,7 @@ interface Message {
   mediaLinks?: KinfolkMediaLink[];
   relatedConnections?: KinfolkRelatedConnection[];
   researchStatus?: KinfolkResearchStatus | null;
+  resourceCards?: KinfolkResourceCard[];
   followUpSuggestions?: string[]; timestamp: string;
   cultureAction?: CultureAction | null;
   libraryAction?: LibraryAction | null;
@@ -2125,6 +2134,7 @@ function TravelPage() {
         degradedReason?: string | null;
         companionMemoryOffer?: CompanionMemoryOffer | null;
         memoryUse?: KinfolkMemoryUse | null;
+        resourceCards?: KinfolkResourceCard[] | null;
         responseMeta?: KinfolkResponseMeta | null;
         sensitiveMemoryConfirmation?: {
           confirmationRequired?: boolean;
@@ -2165,6 +2175,12 @@ function TravelPage() {
         mediaLinks: data.mediaLinks ?? [],
         relatedConnections: data.relatedConnections ?? [],
         researchStatus: data.researchStatus ?? null,
+        resourceCards: (data.resourceCards ?? []).flatMap((resource) => {
+          const href = safeExternalSourceHref(resource.url);
+          return href && resource.id && resource.title && resource.description
+            ? [{ ...resource, url: href }]
+            : [];
+        }).slice(0, 3),
         followUpSuggestions: data.followUpSuggestions ?? [], timestamp: new Date().toISOString(),
         cultureAction: data.cultureAction ?? null,
         libraryAction: data.libraryAction ?? null,
@@ -2943,6 +2959,20 @@ function TravelPage() {
                           researchStatus={msg.researchStatus}
                         />
                       )}
+                      {msg.role === "assistant" && msg.resourceCards?.length ? (
+                        <aside data-testid="kinfolk-reviewed-resource-cards" className="mt-3 rounded-2xl border border-[#CA922B]/25 bg-[#FFF8EC] p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#8D5C17]">Reviewed resources</p>
+                          <div className="mt-2 space-y-3">
+                            {msg.resourceCards.map((resource) => (
+                              <a key={resource.id} href={resource.url} target="_blank" rel="noreferrer" className="block rounded-xl bg-white p-3 transition-colors hover:bg-[#FFF4DF]">
+                                <p className="text-xs font-semibold text-[#2B1507]">{resource.type === "image_gallery" ? "Educational image library: " : ""}{resource.title}</p>
+                                <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/65">{resource.description}</p>
+                                {resource.safetyNote ? <p className="mt-1 text-xs font-medium leading-5 text-[#3A1F0E]/70">{resource.safetyNote}</p> : null}
+                              </a>
+                            ))}
+                          </div>
+                        </aside>
+                      ) : null}
                       {msg.role === "assistant" && msg.communityPerspective && (
                         <div data-testid="kinfolk-community-perspective" className="mt-3 rounded-2xl border border-[#CA922B]/20 bg-[#FFF8EC] px-4 py-3">
                           <p className="text-[10px] font-bold uppercase tracking-widest text-[#8D5C17]">{msg.communityPerspective.label}</p>

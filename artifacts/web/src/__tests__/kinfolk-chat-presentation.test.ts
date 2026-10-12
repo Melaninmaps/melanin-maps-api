@@ -225,6 +225,13 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).toContain("<KinfolkMemoryUseNotice memoryUse={msg.memoryUse} />");
   });
 
+  it("renders sanitized reviewed image and health resources returned by Kinfolk", () => {
+    expect(travelPageSource).toContain("resourceCards?: KinfolkResourceCard[] | null");
+    expect(travelPageSource).toContain("safeExternalSourceHref(resource.url)");
+    expect(travelPageSource).toContain('data-testid="kinfolk-reviewed-resource-cards"');
+    expect(travelPageSource).toContain('resource.type === "image_gallery" ? "Educational image library: " : ""');
+  });
+
   it("renders deterministic business recommendations with active detail and website links", () => {
     expect(travelPageSource).toContain("biz.detailUrl");
     expect(travelPageSource).toContain("View details");

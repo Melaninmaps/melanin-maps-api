@@ -58,6 +58,15 @@ import {
 } from "@/components/KinfolkContextualPresentation";
 import { canRenderKinfolkBusinessCards, type KinfolkResponseMeta } from "@workspace/constants";
 
+type KinfolkResourceCard = {
+  id: string;
+  title: string;
+  url: string;
+  description: string;
+  type: "image_gallery" | "health_source" | "community_source" | "entity_source";
+  safetyNote?: string;
+};
+
 interface Message {
   id: string;
   text: string;
@@ -85,6 +94,7 @@ interface Message {
   mediaLinks?: KinfolkMediaLink[];
   relatedConnections?: KinfolkRelatedConnection[];
   researchStatus?: KinfolkResearchStatus | null;
+  resourceCards?: KinfolkResourceCard[];
 }
 
 interface TaskActionPayload {
@@ -190,6 +200,7 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
   mediaLinks?: KinfolkMediaLink[];
   relatedConnections?: KinfolkRelatedConnection[];
   researchStatus?: KinfolkResearchStatus | null;
+  resourceCards?: KinfolkResourceCard[];
 }> {
   const base = getApiBase();
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -240,6 +251,7 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
     mediaLinks?: KinfolkMediaLink[] | null;
     relatedConnections?: KinfolkRelatedConnection[] | null;
     researchStatus?: KinfolkResearchStatus | null;
+    resourceCards?: KinfolkResourceCard[] | null;
   };
   if (data.sessionId) sessionId = data.sessionId;
   const responseMeta = data.responseMeta ?? null;
@@ -265,6 +277,12 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
     mediaLinks: Array.isArray(data.mediaLinks) ? data.mediaLinks.slice(0, 5) : [],
     relatedConnections: Array.isArray(data.relatedConnections) ? data.relatedConnections.slice(0, 5) : [],
     researchStatus: data.researchStatus ?? null,
+    resourceCards: (data.resourceCards ?? []).flatMap((card) => {
+      const safe = parseSafeSourceLink({ title: card.title, url: card.url });
+      return safe && card.id && card.description
+        ? [{ ...card, title: safe.title, url: safe.url }]
+        : [];
+    }).slice(0, 3),
     clarificationSteps: Array.isArray(data.clarificationSteps) ? data.clarificationSteps.slice(0, 3) : [],
     inlineMemoryConsent: data.memoryConsentPlan ? { message, plan: data.memoryConsentPlan, sessionId: data.sessionId ?? sessionId } : null,
     sensitiveMemoryDraft:
@@ -1554,6 +1572,24 @@ export function AIChatWidget() {
                       accentColor={colors.primary}
                       onOpenLibrary={(href) => router.push(href as never)}
                     />
+                  </View>
+                ) : null}
+                {!item.fromUser && item.resourceCards?.length ? (
+                  <View testID="kinfolk-reviewed-resource-cards" style={[styles.contextualDisclosure, { marginLeft: 42, backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Text style={[styles.contextualDisclosureTitle, { color: colors.foreground }]}>Reviewed resources</Text>
+                    {item.resourceCards.map((resource: KinfolkResourceCard) => (
+                      <TouchableOpacity
+                        key={resource.id}
+                        accessibilityRole="link"
+                        accessibilityLabel={`Open reviewed resource: ${resource.title}`}
+                        onPress={() => void Linking.openURL(resource.url).catch(() => undefined)}
+                        style={{ gap: 3, paddingTop: 5 }}
+                      >
+                        <Text style={[styles.contextualDisclosureTitle, { color: colors.primary }]}>{resource.type === "image_gallery" ? "Educational image library: " : ""}{resource.title}</Text>
+                        <Text style={[styles.contextualDisclosureText, { color: colors.mutedForeground }]}>{resource.description}</Text>
+                        {resource.safetyNote ? <Text style={[styles.contextualDisclosureText, { color: colors.mutedForeground }]}>{resource.safetyNote}</Text> : null}
+                      </TouchableOpacity>
+                    ))}
                   </View>
                 ) : null}
                 {!item.fromUser && item.companionMemoryOffer ? (
