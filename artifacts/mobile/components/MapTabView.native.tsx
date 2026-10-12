@@ -402,24 +402,12 @@ export function MapTabView() {
     latitude: number; longitude: number; distanceMiles: number;
   }[]>([]);
 
-  // Fetch active police/ICE/checkpoint pins near the user, refresh every 3 min
+  // Automatic map-local incident pins are retired. Police/ICE awareness is
+  // city/region opt-in only, and Community Intelligence requires a member's
+  // explicit manual city selection with aggregate suppression.
   useEffect(() => {
-    if (!userLocation) return;
-    const fetchAlerts = async () => {
-      try {
-        const res = await fetch(
-          `${apiBase}/api/community-alerts/nearby?lat=${userLocation.lat}&lng=${userLocation.lng}&radius=16`
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setCommunityAlertPins(data.alerts ?? []);
-        }
-      } catch { /**/ }
-    };
-    void fetchAlerts();
-    const interval = setInterval(fetchAlerts, 3 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [apiBase, userLocation]);
+    setCommunityAlertPins([]);
+  }, []);
 
   // When a non-minority business is selected, fetch nearby minority-owned alternatives
   useEffect(() => {

@@ -67,8 +67,9 @@ describe("mobile Safety Heat privacy and evidence presentation", () => {
 
   it("keeps native navigation free of destination safety claims and map-local safety queries", () => {
     expect(nativeMapTabSource).toContain("It never queries or presents a map-local safety assessment.");
+    expect(nativeMapTabSource).toContain("Automatic map-local incident pins are retired.");
     expect(nativeMapTabSource).toContain("Route details do not include a safety assessment.");
-    expect(nativeMapTabSource).not.toContain("community-alerts/nearby?lat=${biz.latitude}");
+    expect(nativeMapTabSource).not.toContain("community-alerts/nearby");
     expect(nativeMapTabSource).not.toContain("Safety alerts near destination");
     expect(nativeMapTabSource).not.toContain("Route looks clear");
   });
