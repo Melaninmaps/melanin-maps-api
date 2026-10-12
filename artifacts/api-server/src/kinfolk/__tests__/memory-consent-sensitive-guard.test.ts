@@ -48,4 +48,17 @@ describe("Kinfolk inline sensitive-memory consent guard", () => {
       "isSensitive: item.kind === \"sensitive\"",
     );
   });
+
+  it("honors the inline UI's explicit relevant-use consent for a sensitive item", () => {
+    const insert = memoryConsentRoute.indexOf(
+      "await tx.insert(kinfolkPrivateMemoriesTable).values({",
+    );
+    const relevantUseSetting = memoryConsentRoute.indexOf(
+      "sensitiveRestricted: false,",
+      insert,
+    );
+
+    expect(insert).toBeGreaterThan(-1);
+    expect(relevantUseSetting).toBeGreaterThan(insert);
+  });
 });

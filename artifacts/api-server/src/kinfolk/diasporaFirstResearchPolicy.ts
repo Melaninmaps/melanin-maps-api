@@ -1,10 +1,10 @@
 /**
  * Kinfolk retrieval-context policy.
  *
- * Historical export names are retained for compatibility, but there is no universal
- * demographic default. The only population qualifier permitted by this immediate
- * policy is wording explicitly present in the current user turn. Search terms never
- * create member identity or persistent memory.
+ * Historical export names are retained for compatibility. Relevance-gated
+ * diaspora-first representation is selected by the lens planner before provider
+ * retrieval for applicable topics; this low-level query builder preserves the
+ * member's core question and never creates member identity or persistent memory.
  */
 
 import { extractExplicitPopulationWording } from "./permitted-identity-context";
@@ -86,15 +86,15 @@ export function buildDiasporaFirstQuery(context: ResearchContext): string {
   return [question, context.place].filter(Boolean).join(" ");
 }
 
-/** Compatibility constant: neutral by design; no universal demographic values. */
+/** Compatibility constant for relevance-gated diaspora-first retrieval. */
 export const KINFOLK_PERMANENT_RESEARCH_LENS = {
-  version: "3.0.0",
-  primaryQueryContext: null,
-  broaderCommunityContext: "your community",
-  rule: "Use only population wording explicitly present in the current turn. Never infer or persist identity from a query, name, place, preference, or stored cultural profile.",
+  version: "4.0.0",
+  primaryQueryContext: "diaspora-first representation when relevant",
+  broaderCommunityContext: "Black and Brown representation without identity inference",
+  rule: "Use relevance-gated representation tracks for applicable retrieval, honor an explicit member override, and use saved identity only when separately consented. Never infer or persist identity from a query, name, place, preference, or stored cultural profile.",
 } as const;
 
-/** Final provider-boundary guard: normalize only; never inject a demographic. */
+/** Final provider-boundary guard: normalize the already policy-planned query only. */
 export function enforceDiasporaFirstProviderQuery(query: string): string {
   const cleanQuery = clean(query);
   if (!cleanQuery) throw new Error("QUESTION_REQUIRED");

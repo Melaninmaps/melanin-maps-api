@@ -367,7 +367,9 @@ import {
   isConsentedPlanningMemoryRelevant,
   planningDiscoveryPreferenceTerms,
 } from "../kinfolk/consented-planning-context";
-import { resolveConsentedHealthPopulationContext } from "../kinfolk/consented-health-context";
+import {
+  resolveConsentedHealthPopulationContextFromEncrypted,
+} from "../kinfolk/consented-health-context";
 import { buildExplicitMemoryConsentPlan } from "../kinfolk/explicit-memory-consent";
 import {
   isExplicitMemberMemoryRequirement,
@@ -6823,6 +6825,12 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
             isSensitive: item.kind === "sensitive",
             sensitiveConsentGrantedAt:
               item.kind === "sensitive" ? now : null,
+            // The inline consent control explicitly says “save ... for relevant
+            // use.”  Keep a separately confirmed sensitive item private and
+            // encrypted, but do not silently convert that affirmative choice
+            // into “only mention if I ask.”  Pause, revoke, expiry, and the
+            // Sensitive Memory Vault control remain authoritative.
+            sensitiveRestricted: false,
             sensitiveEncryptedContent: sensitiveCiphertext?.encryptedContent ?? null,
             sensitiveEncryptionKeyId: sensitiveCiphertext?.encryptionKeyId ?? null,
           });
@@ -11344,11 +11352,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const consentedHealthPopulationContext = intentClass === "medical_health" && memoryEnabled
       ? await db
           .select({
-            content: kinfolkPrivateMemoriesTable.content,
             purpose: kinfolkPrivateMemoriesTable.purpose,
             isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
             sensitiveConsentGrantedAt:
               kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt,
+            sensitiveEncryptedContent:
+              kinfolkPrivateMemoriesTable.sensitiveEncryptedContent,
+            sensitiveEncryptionKeyId:
+              kinfolkPrivateMemoriesTable.sensitiveEncryptionKeyId,
           })
           .from(kinfolkPrivateMemoriesTable)
           .where(
@@ -11371,7 +11382,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           .orderBy(desc(kinfolkPrivateMemoriesTable.createdAt))
           .limit(8)
           .then((memories) =>
-            resolveConsentedHealthPopulationContext(memories, message),
+            resolveConsentedHealthPopulationContextFromEncrypted(
+              memories,
+              message,
+              (memory) => decryptSensitiveMemoryContent(
+                memory.sensitiveEncryptedContent,
+                memory.sensitiveEncryptionKeyId,
+              ),
+            ),
           )
           .catch(() => null)
       : null;
@@ -11435,6 +11453,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             : message,
           memberProfile,
           ENTITY_INDEX,
+          {
+            consentedHealthPopulationLabel: consentedHealthPopulationContext?.label ?? null,
+          },
         );
         kinfolkLensDisclosure = activeLensDisclosure(memberProfile);
         kinfolkUrgentMessage = urgentHealthMessage(searchPlan.urgentHealthFlag);
@@ -11451,8 +11472,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           );
         }
 
-        // Reviewed resource cards (no API key required)
-        const lensLabels = memberProfile.lenses.flatMap((l) => [
+        // Reviewed resource cards use the same active, server-approved retrieval
+        // lenses as live search. This includes a separately consented identity
+        // context for a relevant health turn, never an inferred profile field.
+        const lensLabels = searchPlan.activeLenses.flatMap((l) => [
           l.label,
           ...l.searchTerms,
         ]);

@@ -34,12 +34,16 @@ describe("buildMemberProfile", () => {
 });
 
 describe("buildSearchPlan — blood pressure query", () => {
-  it("builds a condition-first authoritative track without stored demographic leakage", () => {
+  it("keeps condition-first authority while adding the diaspora-first representation track", () => {
     const plan = buildSearchPlan("blood pressure", blackWomanProfile, ENTITY_INDEX);
     expect(plan.intent).toBe("health");
     expect(plan.queries[0].role).toBe("evidence");
     expect(plan.queries[0].text).toBe("blood pressure official clinical guidance");
-    expect(plan.queries.map((query) => query.text).join(" ")).not.toMatch(/Black|African American/i);
+    expect(plan.representationMode).toBe("diaspora_first_default");
+    expect(plan.queries[1]).toMatchObject({
+      role: "community_primary",
+      text: expect.stringMatching(/Black and Brown health equity/i),
+    });
   });
 
   it("sets urgentHealthFlag=false for a plain blood pressure query", () => {
@@ -49,13 +53,57 @@ describe("buildSearchPlan — blood pressure query", () => {
 });
 
 describe("buildSearchPlan — eczema image query", () => {
-  it("keeps authoritative health evidence ahead of clinician-reviewed images", () => {
+  it("keeps authoritative health evidence ahead of diaspora-first clinician-reviewed images", () => {
     const plan = buildSearchPlan("eczema show me pictures", blackWomanProfile, ENTITY_INDEX);
     expect(plan.intent).toBe("health");
     expect(plan.imageRequested).toBe(true);
     expect(plan.queries[0].role).toBe("evidence");
-    expect(plan.queries[1].role).toBe("image");
-    expect(plan.queries[1].text).toMatch(/clinician reviewed images/i);
+    expect(plan.representationMode).toBe("diaspora_first_default");
+    expect(plan.queries[1]).toMatchObject({
+      role: "community_primary",
+      text: expect.stringMatching(/skin of color clinical guidance/i),
+    });
+    expect(plan.queries[2]).toMatchObject({
+      role: "image",
+      text: expect.stringMatching(/skin of color clinician reviewed images/i),
+    });
+  });
+
+  it("uses a separately consented Black-woman memory for a later eczema-image turn", () => {
+    const plan = buildSearchPlan(
+      "I think I have eczema, show me images",
+      blackWomanProfile,
+      ENTITY_INDEX,
+      { consentedHealthPopulationLabel: "Black woman" },
+    );
+
+    expect(plan.representationMode).toBe("consented_identity");
+    expect(plan.activeLenses).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "consented-health-representation", label: "Black woman" }),
+    ]));
+    expect(plan.queries[0]).toMatchObject({ role: "evidence" });
+    expect(plan.queries).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        role: "image",
+        text: expect.stringMatching(/Black woman clinician reviewed images/i),
+      }),
+    ]));
+  });
+
+  it("stops using revoked identity memory while retaining the non-identifying default", () => {
+    const plan = buildSearchPlan("I think I have eczema, show me images", blackWomanProfile, ENTITY_INDEX);
+
+    expect(plan.representationMode).toBe("diaspora_first_default");
+    expect(plan.queries.map((query) => query.text).join(" ")).not.toContain("Black woman");
+    expect(plan.queries.map((query) => query.text).join(" ")).toMatch(/skin of color/i);
+  });
+
+  it("honors an explicit different representation request over the default", () => {
+    const plan = buildSearchPlan("Show me eczema images on lighter skin", blackWomanProfile, ENTITY_INDEX);
+
+    expect(plan.representationMode).toBe("explicit_override");
+    expect(plan.queries.map((query) => query.text).join(" ")).toMatch(/lighter skin/i);
+    expect(plan.queries.map((query) => query.text).join(" ")).not.toMatch(/skin of color/i);
   });
 });
 

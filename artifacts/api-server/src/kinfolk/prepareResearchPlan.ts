@@ -8,9 +8,9 @@ import { permittedIdentityContext } from "./permitted-identity-context";
 /**
  * Single planning entry point for a Kinfolk research request.
  *
- * Immediate policy: use the current question as the search basis. Do not prepend a
- * universal population and do not append remembered, temporary, location-derived,
- * or preference-derived identity attributes until a purpose-consent ledger exists.
+ * The core query remains the member's actual question. The lens planner adds
+ * relevance-gated diaspora-first representation tracks separately, and only a
+ * separately consented identity memory may personalize a relevant retrieval.
  */
 export function prepareKinfolkResearchPlan(question: string, context: SearchContext) {
   const topic = identifyTopicDomain(question);
@@ -21,7 +21,7 @@ export function prepareKinfolkResearchPlan(question: string, context: SearchCont
     /** General information is always available. Clarification only improves relevance. */
     answerMode: "general-first" as const,
     clarification: clarificationPlan(question, context.subject),
-    permanentLensVersion: "3.0.0",
+    permanentLensVersion: "4.0.0",
     identityInferenceProhibited: true,
     demographicQualifier: identity.demographicQualifier,
     communityLabel: identity.communityLabel,

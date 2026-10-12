@@ -12,6 +12,14 @@ export type ConsentedPrivateMemoryForHealth = Readonly<{
   sensitiveConsentGrantedAt: Date | string | null;
 }>;
 
+export type EncryptedConsentedPrivateMemoryForHealth = Readonly<{
+  purpose: string;
+  isSensitive: boolean;
+  sensitiveConsentGrantedAt: Date | string | null;
+  sensitiveEncryptedContent: string | null;
+  sensitiveEncryptionKeyId: string | null;
+}>;
+
 export type ConsentedHealthPopulationContext = Readonly<{
   label: string;
   source: "consented_private_memory";
@@ -54,4 +62,31 @@ export function resolveConsentedHealthPopulationContext(
   }
 
   return null;
+}
+
+/**
+ * Resolves the same narrow health context from an encrypted vault record. The
+ * plaintext exists only inside this function while the caller's supplied
+ * decryption operation runs; a missing or unreadable record fails closed.
+ */
+export function resolveConsentedHealthPopulationContextFromEncrypted(
+  memories: readonly EncryptedConsentedPrivateMemoryForHealth[],
+  currentMessage: string,
+  decrypt: (memory: EncryptedConsentedPrivateMemoryForHealth) => string,
+): ConsentedHealthPopulationContext | null {
+  const decrypted: ConsentedPrivateMemoryForHealth[] = [];
+  for (const memory of memories) {
+    try {
+      decrypted.push({
+        content: decrypt(memory),
+        purpose: memory.purpose,
+        isSensitive: memory.isSensitive,
+        sensitiveConsentGrantedAt: memory.sensitiveConsentGrantedAt,
+      });
+    } catch {
+      // A vault/key problem must remove optional personalization, not expose a
+      // recovery detail or broaden the memory query.
+    }
+  }
+  return resolveConsentedHealthPopulationContext(decrypted, currentMessage);
 }
