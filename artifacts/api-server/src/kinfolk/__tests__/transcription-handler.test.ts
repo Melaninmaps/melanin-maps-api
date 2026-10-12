@@ -5,7 +5,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const transcribe = vi.hoisted(() => vi.fn());
 const chatCreate = vi.hoisted(() => vi.fn());
-const createAudioUploadFile = vi.hoisted(() => vi.fn());
 const resolveOpenAIConfiguration = vi.hoisted(() => vi.fn());
 const resolveAudioOpenAIConfiguration = vi.hoisted(() => vi.fn());
 vi.mock("@workspace/integrations-openai-ai-server", () => ({
@@ -17,9 +16,8 @@ vi.mock("@workspace/integrations-openai-ai-server", () => ({
   resolveOpenAIConfiguration,
 }));
 vi.mock("@workspace/integrations-openai-ai-server/audio", () => ({
-  audioOpenai: { audio: { transcriptions: { create: transcribe } } },
-  createAudioUploadFile,
   resolveAudioOpenAIConfiguration,
+  speechToText: transcribe,
   textToSpeechWithStyle: vi.fn(),
 }));
 
@@ -100,8 +98,7 @@ beforeEach(() => {
       ? { apiKey: "test-provider-key", baseURL: "https://api.openai.test/v1" }
       : null,
   );
-  createAudioUploadFile.mockResolvedValue({ name: "voice.wav", type: "audio/wav" });
-  transcribe.mockResolvedValue({ text: "hello Kinfolk" });
+  transcribe.mockResolvedValue("hello Kinfolk");
   chatCreate.mockResolvedValue({
     choices: [{ message: { content: JSON.stringify({ suggestedText: null, clarification: null }) } }],
   });
@@ -137,16 +134,12 @@ describe("actual Kinfolk transcription handler", () => {
       .attach("audio", load("voice.wav"), { filename: "voice.wav", contentType: "audio/wav" });
     expect(response.status).toBe(200);
     expect(resolveAudioOpenAIConfiguration).toHaveBeenCalled();
-    expect(createAudioUploadFile).toHaveBeenCalledWith(
+    expect(transcribe).toHaveBeenCalledWith(
       expect.any(Buffer),
-      "voice.wav",
-      "audio/wav",
+      "wav",
+      expect.objectContaining({ model: "whisper-1" }),
     );
     expect(transcribe).toHaveBeenCalledTimes(1);
-    expect(transcribe).toHaveBeenCalledWith(
-      expect.objectContaining({ model: "whisper-1" }),
-      expect.anything(),
-    );
   });
 
   it.each([
@@ -175,7 +168,7 @@ describe("actual Kinfolk transcription handler", () => {
   });
 
   it("keeps the exact transcript as the draft and returns an optional reviewed suggestion", async () => {
-    transcribe.mockResolvedValue({ text: "can you put coffee lunch and the museum in my saturday list" });
+    transcribe.mockResolvedValue("can you put coffee lunch and the museum in my saturday list");
     chatCreate.mockResolvedValue({
       choices: [{ message: { content: JSON.stringify({
         suggestedText: "Can you put coffee, lunch, and the museum in my Saturday list?",
