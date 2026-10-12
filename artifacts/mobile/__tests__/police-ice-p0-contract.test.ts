@@ -30,6 +30,7 @@ describe("Police/ICE P0 mobile safeguards", () => {
 
   it("defaults sensitive alerts off and persists opt-in, a chosen coarse area, and the selected radius", () => {
     const profile = source("../app/(tabs)/profile.tsx");
+    const notificationSettings = source("../app/notifications-settings.tsx");
     expect(profile).toContain("const [alertPolice, setAlertPolice] = useState(false)");
     expect(profile).toContain("const [alertIce, setAlertIce] = useState(false)");
     expect(profile).toContain("save({ safetyAlertPolice: next })");
@@ -46,6 +47,8 @@ describe("Police/ICE P0 mobile safeguards", () => {
     expect(profile).toContain("Alerts never disclose your coordinates, a reporter, a street, or a visit history.");
     expect(profile).toContain('throw new Error(body.error ?? "Safety alert preference was not saved")');
     expect(profile).toContain('accessibilityRole="alert"');
+    expect(notificationSettings).toContain("City/state Police and ICE awareness is optional and managed in Profile.");
+    expect(notificationSettings).toContain("city/state Police and ICE awareness remains separately optional");
   });
 
   it("does not use the immediate map-alert path for Police, ICE, or checkpoints", () => {

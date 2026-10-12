@@ -61,6 +61,8 @@ describe("mobile Home safety entry boundaries", () => {
     expect(safetyHubTab).toContain("Community Intelligence");
     expect(safetyHubTab).toContain("Small samples are suppressed");
     expect(safetyHubTab).toContain("Police / ICE Awareness");
+    expect(safetyHubTab).toContain("Police / ICE Alert Preferences");
+    expect(safetyHubTab).toContain('route: "/(tabs)/profile"');
     expect(safetyHubTab).toContain("Member and device locations are never used to select recipients.");
     expect(safetyHubTab).toContain('route: "/report-safety"');
     expect(safetyHubTab).not.toContain('route: "/safety-tip"');

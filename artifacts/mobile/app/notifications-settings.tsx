@@ -226,7 +226,7 @@ export default function NotificationsSettingsScreen() {
         <View style={[styles.infoBox, { backgroundColor: colors.secondary }]}>
           <Feather name="shield" size={18} color={colors.primary} />
           <Text style={[styles.infoTxt, { color: colors.mutedForeground }]}>
-            Community safety alerts are always on to keep you and the community protected.
+            Private Check-In and trusted-contact alerts follow their own consent. City/state Police and ICE awareness is optional and managed in Profile.
           </Text>
         </View>
 
@@ -260,7 +260,7 @@ export default function NotificationsSettingsScreen() {
             </View>
             <View style={styles.rowContent}>
               <Text style={[styles.rowLabel, { color: colors.foreground }]}>Community Safety Alerts</Text>
-              <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>Moderated Safety updates without member location tracking</Text>
+              <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>Private Check-In and trusted-contact updates; city/state Police and ICE awareness remains separately optional</Text>
             </View>
             <View style={[styles.toggle, { backgroundColor: colors.primary, opacity: 0.5 }]}>
               <View style={[styles.thumb, { transform: [{ translateX: 20 }] }]} />
