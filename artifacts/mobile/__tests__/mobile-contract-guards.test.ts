@@ -205,10 +205,12 @@ describe("community-fed business publication governance", () => {
     expect(claimModal).toContain('"already_claimed"');
     expect(claimModal).toContain('claim-eligibility-unavailable');
     expect(claimModal).toContain('businessEmail: email.trim()');
+    expect(claimModal).toContain('claimantPhone: phone.trim() || null');
     expect(claimModal).toContain('verificationMethod');
     expect(claimModal).toContain('attestation: true');
     expect(claimModal).not.toContain('/api/businesses/${businessId}/claim`');
     expect(claimModal).toContain('does not verify this business or its ownership designations');
+    expect(claimModal).toContain('Private to claim review; never added to the public listing.');
     expect(businessDetail).toContain('ownership and verification are reviewed separately');
   });
 });

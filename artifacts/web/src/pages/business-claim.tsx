@@ -33,6 +33,7 @@ export default function BusinessClaim() {
     ownerName: "",
     role: "owner",
     businessEmail: "",
+    claimantPhone: "",
     verificationMethod: "manual_review",
     officialUrl: "",
     socialHandle: "",
@@ -99,6 +100,7 @@ export default function BusinessClaim() {
           ownerName: form.ownerName.trim(),
           role: form.role,
           businessEmail: form.businessEmail.trim(),
+          claimantPhone: form.claimantPhone.trim() || undefined,
           verificationMethod: form.verificationMethod,
           officialUrl: form.officialUrl.trim() || undefined,
           socialHandle: form.socialHandle.trim().replace(/^@/, "") || undefined,
@@ -156,6 +158,7 @@ export default function BusinessClaim() {
             <Field label="Your name" required><input value={form.ownerName} onChange={(event) => set("ownerName", event.target.value)} placeholder="Your full name" className="claim-input" required /></Field>
             <Field label="Your role at this business"><input value={form.role} onChange={(event) => set("role", event.target.value)} placeholder="Owner, co-founder, or authorized representative" className="claim-input" /></Field>
             <Field label="Business contact email" required><input value={form.businessEmail} onChange={(event) => set("businessEmail", event.target.value)} placeholder="name@business.com" type="email" className="claim-input" required /></Field>
+            <Field label="Private review phone (optional)"><input value={form.claimantPhone} onChange={(event) => set("claimantPhone", event.target.value)} placeholder="(555) 000-0000" type="tel" className="claim-input" /><p className="mt-1 text-xs text-[#3A1F0E]/60">Used only for private claim review; it is never added to the public listing.</p></Field>
             <Field label="How should the claim be reviewed?" required><select value={form.verificationMethod} onChange={(event) => set("verificationMethod", event.target.value)} className="claim-input"><option value="manual_review">Manual review</option><option value="domain_email">Business-domain email</option><option value="social_account">Official social account</option><option value="booking_page">Official booking page</option><option value="business_document">Business document</option></select></Field>
             <Field label="Official website or public proof link"><input value={form.officialUrl} onChange={(event) => set("officialUrl", event.target.value)} placeholder="https://…" type="url" className="claim-input" /></Field>
             <Field label="Official social handle"><input value={form.socialHandle} onChange={(event) => set("socialHandle", event.target.value)} placeholder="@yourbusiness" className="claim-input" /></Field>

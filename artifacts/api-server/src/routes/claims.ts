@@ -270,7 +270,7 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
   const businessId = String(req.params.id);
   const userId = req.user.id;
   const {
-    ownerName, role = "owner", businessEmail, verificationMethod,
+    ownerName, role = "owner", businessEmail, claimantPhone, verificationMethod,
     officialUrl, socialHandle, attestation, notes,
   } = req.body as Record<string, unknown>;
 
@@ -280,6 +280,14 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
   if (!businessEmail || typeof businessEmail !== "string" || !businessEmail.includes("@")) {
     res.status(400).json({ error: "A valid businessEmail is required" }); return;
   }
+  if (claimantPhone !== undefined && typeof claimantPhone !== "string") {
+    res.status(400).json({ error: "claimantPhone must be a phone number when provided" }); return;
+  }
+  // A claimant phone is private review contact information. It is never copied
+  // into the business listing, where it could overwrite or disclose public data.
+  const safeClaimantPhone = typeof claimantPhone === "string"
+    ? claimantPhone.trim().replace(/[^0-9+().\-\s]/g, "").slice(0, 30) || null
+    : null;
   const validMethods = ["domain_email", "social_account", "booking_page", "manual_review", "business_document"];
   if (!verificationMethod || typeof verificationMethod !== "string" || !validMethods.includes(verificationMethod)) {
     res.status(400).json({ error: `verificationMethod must be one of: ${validMethods.join(", ")}` }); return;
@@ -336,15 +344,16 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
 
     await pool.query(
       `INSERT INTO business_claims
-         (id, business_id, user_id, business_name, owner_name, email, role,
+         (id, business_id, user_id, business_name, owner_name, email, phone, role,
           claim_type, verification_method, evidence_url, evidence_summary,
           attested_at, additional_info, status, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,'ownership_control',$8,$9,$10,NOW(),$11,'pending',NOW(),NOW())`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'ownership_control',$9,$10,$11,NOW(),$12,'pending',NOW(),NOW())`,
       [
         claimId, businessId, userId,
         biz.name ?? null,
         ownerName.trim().slice(0, 255),
         businessEmail.trim().slice(0, 255),
+        safeClaimantPhone,
         (typeof role === "string" ? role : "owner").slice(0, 50),
         verificationMethod.slice(0, 40),
         typeof officialUrl === "string" ? officialUrl.slice(0, 500) : null,
