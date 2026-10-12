@@ -8,6 +8,7 @@ import {
   createAudioUploadFile,
   createOpenAISpeechRequest,
   resolveAudioOpenAIConfiguration,
+  shouldTryOpenAIAudioModelFallback,
 } from "@workspace/integrations-openai-ai-server/audio";
 
 describe("Kinfolk voice provider configuration", () => {
@@ -111,5 +112,15 @@ describe("Kinfolk voice provider configuration", () => {
       voice: "alloy",
       format: "pcm16",
     }).response_format).toBe("pcm");
+  });
+
+  it("retries only explicit provider model/access compatibility failures", () => {
+    expect(shouldTryOpenAIAudioModelFallback({ status: 400 })).toBe(true);
+    expect(shouldTryOpenAIAudioModelFallback({ status: 403 })).toBe(true);
+    expect(shouldTryOpenAIAudioModelFallback({ status: 404 })).toBe(true);
+    expect(shouldTryOpenAIAudioModelFallback({ status: 401 })).toBe(false);
+    expect(shouldTryOpenAIAudioModelFallback({ status: 429 })).toBe(false);
+    expect(shouldTryOpenAIAudioModelFallback({ status: 500 })).toBe(false);
+    expect(shouldTryOpenAIAudioModelFallback(new Error("network down"))).toBe(false);
   });
 });

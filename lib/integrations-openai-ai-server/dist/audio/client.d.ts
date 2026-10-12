@@ -31,11 +31,20 @@ export declare function voiceChatStream(audioBuffer: Buffer, voice?: "alloy" | "
 }>>;
 type SpeechResponseFormat = "wav" | "mp3" | "flac" | "opus" | "pcm16";
 type OpenAiSpeechVoice = "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
+type PreferredSpeechModel = "gpt-4o-mini-tts" | "gpt-audio";
+/**
+ * The compact audio models are preferred for quality. Older or restricted
+ * OpenAI projects can expose the documented legacy audio models instead. Only
+ * retry definitive model/access compatibility responses; never mask rate
+ * limits, credentials, network failures, or provider outages with a second
+ * request.
+ */
+export declare function shouldTryOpenAIAudioModelFallback(error: unknown): boolean;
 export declare function createOpenAISpeechRequest(input: {
     text: string;
     voice: OpenAiSpeechVoice;
     format?: SpeechResponseFormat;
-    model?: "gpt-4o-mini-tts" | "gpt-audio";
+    model?: PreferredSpeechModel;
     styleInstruction?: string;
 }): SpeechCreateParams;
 export declare function textToSpeech(text: string, voice?: OpenAiSpeechVoice, format?: SpeechResponseFormat): Promise<Buffer>;

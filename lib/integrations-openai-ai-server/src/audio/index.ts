@@ -5,6 +5,7 @@ export {
   ensureAudioFileSupport,
   createAudioUploadFile,
   createOpenAISpeechRequest,
+  shouldTryOpenAIAudioModelFallback,
   detectAudioFormat,
   convertToWav,
   ensureCompatibleFormat,
