@@ -101,6 +101,29 @@ export function persistentSafetyLocationRuntimeState(
   };
 }
 
+/**
+ * Persistent collection is exercised in Railway staging only through named,
+ * disposable fixture accounts. This cannot broaden production access: it is
+ * active only when Railway identifies the staging environment, an explicit
+ * fixture switch is on, and the account appears in the exact fixture list.
+ */
+export function persistentSafetyLocationStagingFixtureAllowsEmail(
+  email: string | null | undefined,
+  environment: NodeJS.ProcessEnv = process.env,
+): boolean {
+  if (environment.RAILWAY_ENVIRONMENT_NAME !== "staging") return true;
+  if (environment.SAFETY_PERSISTENT_LOCATION_STAGING_FIXTURE_ENABLED !== "true") return false;
+  const normalized = typeof email === "string" ? email.trim().toLowerCase() : "";
+  if (!normalized.endsWith("@example.test")) return false;
+  const allowed = new Set(
+    (environment.SAFETY_PERSISTENT_LOCATION_STAGING_FIXTURE_ALLOWED_EMAILS ?? "")
+      .split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter((value) => value.endsWith("@example.test")),
+  );
+  return allowed.has(normalized);
+}
+
 function aad(ownerId: string): Buffer {
   return Buffer.from(`mwm-persistent-safety-location:${ownerId}`, "utf8");
 }

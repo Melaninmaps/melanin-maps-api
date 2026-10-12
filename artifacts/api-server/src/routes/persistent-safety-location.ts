@@ -1,4 +1,4 @@
-import { Router, type Request, type Response } from "express";
+import { Router, type NextFunction, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
 import {
   PERSISTENT_SAFETY_LOCATION_CONSENT_VERSION,
@@ -8,6 +8,7 @@ import {
   parsePersistentSafetyLocationFix,
   persistentSafetyLocationCanMatchEmergency,
   persistentSafetyLocationRuntimeState,
+  persistentSafetyLocationStagingFixtureAllowsEmail,
   sealPersistentSafetyLocation,
   type PersistentSafetyPermissionState,
 } from "../safety/persistentSafetyLocation";
@@ -69,6 +70,29 @@ function runtimeUnavailable(res: Response): boolean {
   res.status(503).json({ error: "Persistent Safety Location is not enabled in this environment" });
   return true;
 }
+
+async function requireStagingFixtureAccount(req: Request, res: Response, next: NextFunction): Promise<void> {
+  if (process.env.RAILWAY_ENVIRONMENT_NAME !== "staging") { next(); return; }
+  const ownerId = requireUser(req, res); if (!ownerId) return;
+  try {
+    const member = await pool.query<{ email: string | null }>(
+      "SELECT email FROM users WHERE id = $1 AND approved = true AND COALESCE(account_status, 'active') = 'active' LIMIT 1",
+      [ownerId],
+    );
+    if (!persistentSafetyLocationStagingFixtureAllowsEmail(member.rows[0]?.email)) {
+      res.status(404).json({ error: "Safety Location is unavailable for this account" });
+      return;
+    }
+    next();
+  } catch {
+    res.status(503).json({ error: "Safety Location is temporarily unavailable" });
+  }
+}
+
+// A staging deployment is never a general member rollout. Before the first
+// device/build authorization, every persistent-location route is restricted to
+// the explicitly configured, disposable fixture account list.
+router.use("/safety/persistent-location", requireStagingFixtureAccount);
 
 router.get("/safety/persistent-location", async (req, res) => {
   const ownerId = requireUser(req, res); if (!ownerId) return;

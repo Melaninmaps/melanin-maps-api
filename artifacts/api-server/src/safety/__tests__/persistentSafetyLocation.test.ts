@@ -6,6 +6,7 @@ import {
   persistentSafetyLocationFreshnessWindowMs,
   persistentSafetyLocationIsFresh,
   persistentSafetyLocationRuntimeState,
+  persistentSafetyLocationStagingFixtureAllowsEmail,
   sealPersistentSafetyLocation,
 } from "../persistentSafetyLocation";
 
@@ -65,6 +66,21 @@ describe("Persistent Safety Location policy", () => {
     delete process.env.SAFETY_PERSISTENT_LOCATION_MAX_ACCURACY_METERS;
     expect(persistentSafetyLocationRuntimeState().collectionEnabled).toBe(false);
     expect(persistentSafetyLocationCanMatchEmergency(new Date(), 10)).toBe(false);
+  });
+
+  it("limits a Railway staging activation to exact disposable fixture accounts", () => {
+    const staging = {
+      RAILWAY_ENVIRONMENT_NAME: "staging",
+      SAFETY_PERSISTENT_LOCATION_STAGING_FIXTURE_ENABLED: "true",
+      SAFETY_PERSISTENT_LOCATION_STAGING_FIXTURE_ALLOWED_EMAILS: "fixture-owner@example.test",
+    } as NodeJS.ProcessEnv;
+    expect(persistentSafetyLocationStagingFixtureAllowsEmail("fixture-owner@example.test", staging)).toBe(true);
+    expect(persistentSafetyLocationStagingFixtureAllowsEmail("other@example.test", staging)).toBe(false);
+    expect(persistentSafetyLocationStagingFixtureAllowsEmail("member@example.com", staging)).toBe(false);
+    expect(persistentSafetyLocationStagingFixtureAllowsEmail("fixture-owner@example.test", {
+      ...staging,
+      SAFETY_PERSISTENT_LOCATION_STAGING_FIXTURE_ENABLED: "false",
+    })).toBe(false);
   });
 
   it("rejects stale, future, and imprecise unbounded payloads before encryption", () => {

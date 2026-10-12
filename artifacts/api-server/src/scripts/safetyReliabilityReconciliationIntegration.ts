@@ -68,6 +68,8 @@ function setSafetyEnvironment(databaseUrl: string): void {
     SAFETY_PERSISTENT_LOCATION_MAX_AGE_SECONDS: "600",
     SAFETY_PERSISTENT_LOCATION_MAX_ACCURACY_METERS: "100",
     MWM_PERSISTENT_SAFETY_LOCATION_ENCRYPTION_KEYS: `v1:${Buffer.alloc(32, 29).toString("base64")}`,
+    SAFETY_PERSISTENT_LOCATION_STAGING_FIXTURE_ENABLED: "true",
+    SAFETY_PERSISTENT_LOCATION_STAGING_FIXTURE_ALLOWED_EMAILS: "kinfolk-safety-contact-family-impact-local-owner@example.test",
     KINFOLK_MEMORY_STAGING_ISOLATION: "true",
     KINFOLK_SERIOUS_THREAT_PRIVATE_REVIEW_STAGING_ENABLED: "true",
     RAILWAY_ENVIRONMENT_NAME: "staging",
@@ -197,6 +199,8 @@ async function initialPhase(databaseUrl: string): Promise<void> {
 
     const initialPersistent = await request(app).get("/safety/persistent-location").set(as(OWNER));
     assert(initialPersistent.status === 200 && initialPersistent.body.enabled === false && initialPersistent.body.available === true, `Persistent Safety Location must require a new, disabled-by-default member consent (status ${initialPersistent.status})`);
+    const nonFixturePersistent = await request(app).get("/safety/persistent-location").set(as(OUTSIDER));
+    assert(nonFixturePersistent.status === 404, "staging Persistent Safety Location must remain unavailable to unlisted accounts");
     const persistentConsent = await request(app)
       .put("/safety/persistent-location/consent")
       .set(as(OWNER))
@@ -232,7 +236,7 @@ async function initialPhase(databaseUrl: string): Promise<void> {
       .post("/safety/persistent-location/fix")
       .set(as(OUTSIDER))
       .send({ location: { latitude: 39.9526123, longitude: -75.1652123, capturedAt: new Date().toISOString(), accuracyMeters: 18, platform: "ios", background: true }, foregroundPermission: "granted", backgroundPermission: "granted" });
-    assert(outsiderPersistentWrite.status === 409, "another authenticated member cannot create or overwrite an owner’s persistent Safety Location");
+    assert(outsiderPersistentWrite.status === 404, "an unlisted staging account cannot create or overwrite Persistent Safety Location data");
     const pausePersistent = await request(app).patch("/safety/persistent-location/pause").set(as(OWNER)).send({ paused: true });
     assert(pausePersistent.status === 200 && pausePersistent.body.paused === true, "member pause must stop persistent protection without revoking the underlying consent");
     const pausedPersistentStatus = await request(app).get("/safety/persistent-location").set(as(OWNER));

@@ -24,6 +24,8 @@ describe("Persistent Safety Location API privacy contract", () => {
     expect(route).toContain('router.put("/safety/persistent-location/contacts/:shareId"');
     expect(route).toContain("requireUser(req, res)");
     expect(route).toContain("no-store, private");
+    expect(route).toContain("requireStagingFixtureAccount");
+    expect(route).toContain("persistentSafetyLocationStagingFixtureAllowsEmail");
     expect(route).not.toContain('router.get("/safety/persistent-location/:');
     expect(route).not.toContain("latitude:");
     expect(route).not.toContain("longitude:");
