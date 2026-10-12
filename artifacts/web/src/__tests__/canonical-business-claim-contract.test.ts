@@ -20,7 +20,7 @@ describe("canonical business ownership claim contract", () => {
   });
 
   it("submits the exact authorization fields accepted by the canonical route", () => {
-    for (const field of ["ownerName", "businessEmail", "verificationMethod", "attestation: true"]) {
+    for (const field of ["ownerName", "businessEmail", "claimantPhone", "verificationMethod", "attestation: true"]) {
       expect(claimPage).toContain(field);
     }
     expect(claimPage).toContain("officialUrl:");
@@ -30,6 +30,7 @@ describe("canonical business ownership claim contract", () => {
     expect(detailPage).toContain("socialHandle:");
     expect(detailPage).toContain("notes:");
     expect(claimPage).toContain("claim-eligibility");
+    expect(claimPage).toContain("never added to the public listing");
   });
 
   it("does not promise verification or public-record mutation from a claim request", () => {

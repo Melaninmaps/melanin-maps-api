@@ -37,6 +37,19 @@ describe("business ownership claim lifecycle contract", () => {
     expect(createClaim).not.toContain("within one business day");
   });
 
+  it("keeps an optional claimant phone private to the claim record", () => {
+    const createClaim = routeSection(
+      'router.post("/businesses/:id/claims"',
+      'router.get("/me/business-claims"',
+    );
+
+    expect(createClaim).toContain("claimantPhone");
+    expect(createClaim).toContain("safeClaimantPhone");
+    expect(createClaim).toContain("owner_name, email, phone, role");
+    expect(createClaim).toContain("never copied\n  // into the business listing");
+    expect(createClaim).not.toContain("UPDATE businesses SET phone");
+  });
+
   it("returns a rejected or withdrawn listing to claimable state only when no active review remains", () => {
     expect(claimsRoute).toContain("async function releaseBusinessFromClaimPendingIfNoOpenClaims");
     expect(claimsRoute).toContain("WHERE business_id = $1 AND status IN ('pending', 'needs_info')");
