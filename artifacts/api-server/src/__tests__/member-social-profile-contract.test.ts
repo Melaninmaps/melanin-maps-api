@@ -47,6 +47,8 @@ describe("member social profile presentation", () => {
     expect(feed).toContain("input.taggedUserId");
     expect(feed).toContain("community_post_member_tags_v1 profile_tags");
     expect(feed).toContain("postIsVisibleInCommunityFeed");
+    expect(feed).toContain("currentGroupMembership");
+    expect(feed).toContain("Group check is repeated for every read so removal revokes access");
     expect(feed).toContain("notBlocked");
     expect(feed).toContain("POST_REQUIRES_MODERATION");
   });

@@ -54,6 +54,7 @@ async function main(): Promise<void> {
         id varchar(255) PRIMARY KEY, author_id varchar(255) NOT NULL, author_name text NOT NULL DEFAULT 'Author',
         author_initials text NOT NULL DEFAULT 'AU', author_color text NOT NULL DEFAULT '#CA922B', content text NOT NULL,
         category text NOT NULL DEFAULT 'discussion', visibility varchar(32) NOT NULL DEFAULT 'public', requires_moderation boolean DEFAULT false,
+        group_id integer,
         media_urls jsonb, upvotes integer NOT NULL DEFAULT 0, downvotes integer NOT NULL DEFAULT 0,
         created_at timestamptz DEFAULT now(), status varchar(32) DEFAULT 'active'
       );
@@ -109,19 +110,28 @@ async function main(): Promise<void> {
     assert(afterUnfollowCover.status === 404, "Unfollowing must revoke future profile-cover access");
     await client.query("INSERT INTO user_follows (follower_id,following_id,status) VALUES ('follower','author','accepted')");
 
-    await client.query("INSERT INTO community_posts (id,author_id,content,visibility,media_urls) VALUES ('public-tagged','author','A public community post with media','public',$1), ('private-tagged','author','A private community post','private',NULL)", [JSON.stringify(["community-private-media:synthetic-asset"])]);
-    await client.query("INSERT INTO community_post_member_tags_v1 (post_id,tagged_user_id,tagged_by_user_id) VALUES ('public-tagged','follower','author'), ('private-tagged','follower','author')");
+    await client.query("INSERT INTO community_posts (id,author_id,content,visibility,group_id,media_urls) VALUES ('public-tagged','author','A public community post with media','public',NULL,$1), ('follower-tagged','author','A followers-only Community post','followers_only',NULL,NULL), ('group-tagged','author','A Group Community post','public',7001,NULL), ('private-tagged','author','A private community post','private',NULL,NULL)", [JSON.stringify(["community-private-media:synthetic-asset"])]);
+    await client.query("INSERT INTO group_members (group_id,user_id,role) VALUES (7001,'follower','member')");
+    await client.query("INSERT INTO community_post_member_tags_v1 (post_id,tagged_user_id,tagged_by_user_id) VALUES ('public-tagged','follower','author'), ('follower-tagged','follower','author'), ('group-tagged','follower','author'), ('private-tagged','follower','author')");
     const visibleTagged = await fetchCommunityFeedRows(client, { viewerId: "follower", feedMode: "everyone", taggedUserId: "follower", limit: 20, offset: 0 });
-    assert(visibleTagged.length === 1 && visibleTagged[0]?.id === "public-tagged", `Profile tagged-content retrieval must return only viewer-authorized public content (count=${visibleTagged.length}; ids=${visibleTagged.map((row) => row.id).join(",")})`);
+    const visibleIds = visibleTagged.map((row) => row.id).sort();
+    assert(visibleIds.join(",") === "follower-tagged,group-tagged,public-tagged", `Profile tagged-content retrieval must include only authorized public, followers-only, and Group content (ids=${visibleIds.join(",")})`);
+    await client.query("DELETE FROM user_follows WHERE follower_id='follower' AND following_id='author'");
+    const groupOnly = await fetchCommunityFeedRows(client, { viewerId: "follower", feedMode: "everyone", taggedUserId: "follower", limit: 20, offset: 0 });
+    assert(groupOnly.length === 1 && groupOnly[0]?.id === "group-tagged", "Current Group membership must authorize the tagged Group post without a follow relationship");
+    await client.query("DELETE FROM group_members WHERE group_id=7001 AND user_id='follower'");
+    const afterGroupRemoval = await fetchCommunityFeedRows(client, { viewerId: "follower", feedMode: "everyone", taggedUserId: "follower", limit: 20, offset: 0 });
+    assert(afterGroupRemoval.length === 0, "Group removal must revoke tagged Group-content access");
+    await client.query("INSERT INTO user_follows (follower_id,following_id,status) VALUES ('follower','author','accepted')");
     await client.query("INSERT INTO user_blocks (blocker_id,blocked_id) VALUES ('author','follower')");
     const blockedTagged = await fetchCommunityFeedRows(client, { viewerId: "follower", feedMode: "everyone", taggedUserId: "follower", limit: 20, offset: 0 });
     assert(blockedTagged.length === 0, "Blocking must revoke tagged Community content");
     await client.query("DELETE FROM user_blocks");
-    await client.query("DELETE FROM community_post_member_tags_v1 WHERE post_id='public-tagged' AND tagged_user_id='follower'");
+    await client.query("DELETE FROM community_post_member_tags_v1 WHERE tagged_user_id='follower'");
     const withdrawnTagged = await fetchCommunityFeedRows(client, { viewerId: "follower", feedMode: "everyone", taggedUserId: "follower", limit: 20, offset: 0 });
     assert(withdrawnTagged.length === 0, "Removing a tag must remove it from the member profile retrieval path");
 
-    console.log(JSON.stringify({ status: "passed", localPostgres: true, profilePresentationOptIn: true, privateCoverUploadAndDelivery: true, privateCoverRevocation: true, taggedCommunityRetrieval: true, privateTaggedContentExcluded: true, blockRevocation: true, tagRemovalRevocation: true }));
+    console.log(JSON.stringify({ status: "passed", localPostgres: true, profilePresentationOptIn: true, privateCoverUploadAndDelivery: true, privateCoverRevocation: true, taggedCommunityRetrieval: true, privateTaggedContentExcluded: true, followersOnlyVisibility: true, unfollowRevocation: true, groupVisibility: true, groupRemovalRevocation: true, blockRevocation: true, tagRemovalRevocation: true }));
     setObjectStorageClientForTest(null);
   } finally { await client.end(); }
 }
