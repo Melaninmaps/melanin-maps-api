@@ -1,6 +1,5 @@
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import * as Location from "expo-location";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -114,12 +113,6 @@ export function MapTabView() {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportingType, setReportingType] = useState<AlertType | null>(null);
   const [scannerAlertIdx, setScannerAlertIdx] = useState(0);
-  const [showFlaggedModal, setShowFlaggedModal] = useState(false);
-  const [flaggedBizLoading, setFlaggedBizLoading] = useState(false);
-  const [flaggedBizList, setFlaggedBizList] = useState<{
-    id: string; name: string; address: string; city: string; state: string;
-    category: string; alertCount: number; distanceMiles: number;
-  }[]>([]);
 
   // A report can still request location after the member explicitly submits it;
   // simply opening the map must not begin location monitoring.
@@ -135,31 +128,6 @@ export function MapTabView() {
     if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
     return "";
   }
-
-  const loadFlaggedBusinesses = async () => {
-    if (Platform.OS === "web") {
-      setShowFlaggedModal(true);
-      return;
-    }
-    setFlaggedBizLoading(true);
-    setShowFlaggedModal(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        setFlaggedBizLoading(false);
-        return;
-      }
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
-      const res = await fetch(
-        `${getApiBase()}/api/community-alerts/flagged-businesses?lat=${loc.coords.latitude}&lng=${loc.coords.longitude}`,
-      );
-      if (res.ok) {
-        const data = await res.json() as { businesses: typeof flaggedBizList };
-        setFlaggedBizList(data.businesses ?? []);
-      }
-    } catch { }
-    finally { setFlaggedBizLoading(false); }
-  };
 
   const { businesses } = useBusinesses();
   const filtered = businesses.filter((b) => {
@@ -349,7 +317,7 @@ export function MapTabView() {
         }}
       />
 
-      {/* Report Activity FAB */}
+      {/* Police / ICE awareness uses the explicit city-region flow, not a map-local report. */}
       <TouchableOpacity
         style={[styles.reportBtn, { backgroundColor: "#1E3A8A" }]}
         activeOpacity={0.85}
@@ -358,17 +326,12 @@ export function MapTabView() {
             setShowUpgrade(true);
           } else {
             if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            setShowReportModal(true);
+            router.push("/report-police");
           }
         }}
       >
         <Text style={{ fontSize: 14 }}>🚔</Text>
-        <Text style={styles.reportBtnText}>Report Activity</Text>
-        {activityAlerts.length > 0 && (
-          <View style={styles.reportBadge}>
-            <Text style={styles.reportBadgeText}>{activityAlerts.length}</Text>
-          </View>
-        )}
+        <Text style={styles.reportBtnText}>Police / ICE</Text>
       </TouchableOpacity>
 
       <TouchableOpacity
@@ -388,21 +351,19 @@ export function MapTabView() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        style={[styles.flaggedBtn, { backgroundColor: "#7F1D1D" }]}
+        style={[styles.flaggedBtn, { backgroundColor: "#0F766E" }]}
         activeOpacity={0.85}
         onPress={() => {
           if (!isAuthenticated) {
             setShowUpgrade(true);
           } else {
-            if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            void loadFlaggedBusinesses();
+            router.push("/report-intelligence");
           }
         }}
       >
-        <Text style={{ fontSize: 13 }}>🚩</Text>
-        <Text style={[styles.safetyBtnText, { color: "#FCA5A5" }]}>Flagged Nearby</Text>
+        <Feather name="bar-chart-2" size={13} color="#CCFBF1" />
+        <Text style={[styles.safetyBtnText, { color: "#CCFBF1" }]}>Community Intelligence</Text>
       </TouchableOpacity>
-
       <TouchableOpacity
         style={styles.sosBtn}
         activeOpacity={0.85}
@@ -421,79 +382,6 @@ export function MapTabView() {
         onClose={() => setShowUpgrade(false)}
         feature="Safety Insights"
       />
-
-      {/* Flagged Businesses Modal */}
-      <Modal
-        visible={showFlaggedModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowFlaggedModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.flaggedSheet, { backgroundColor: colors.background }]}>
-            <View style={[styles.flaggedHeader, { borderBottomColor: colors.border }]}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.flaggedTitle, { color: colors.foreground }]}>🚩 Flagged Businesses</Text>
-                <Text style={[styles.flaggedSub, { color: colors.mutedForeground }]}>
-                  Non-minority-owned · 3+ community alerts · within 10 miles · last 6 months
-                </Text>
-              </View>
-              <TouchableOpacity onPress={() => setShowFlaggedModal(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                <Feather name="x" size={20} color={colors.mutedForeground} />
-              </TouchableOpacity>
-            </View>
-
-            {flaggedBizLoading ? (
-              <View style={styles.flaggedCenter}>
-                <Text style={{ fontSize: 28 }}>🔍</Text>
-                <Text style={[styles.flaggedEmptyText, { color: colors.mutedForeground }]}>Scanning your area…</Text>
-              </View>
-            ) : flaggedBizList.length === 0 ? (
-              <View style={styles.flaggedCenter}>
-                <Text style={{ fontSize: 40 }}>✅</Text>
-                <Text style={[styles.flaggedEmptyText, { color: colors.foreground }]}>No flagged businesses found</Text>
-                <Text style={[styles.flaggedEmptySubtext, { color: colors.mutedForeground }]}>
-                  No non-minority-owned businesses within 10 miles have received 3+ community safety alerts in the last 6 months.
-                </Text>
-              </View>
-            ) : (
-              <FlatList
-        keyboardDismissMode="on-drag"
-                data={flaggedBizList}
-                keyExtractor={(item) => item.id}
-                contentContainerStyle={{ padding: 16, gap: 10 }}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[styles.flaggedCard, { backgroundColor: colors.card, borderColor: "#DC262640" }]}
-                    activeOpacity={0.85}
-                    onPress={() => {
-                      setShowFlaggedModal(false);
-                      router.push({ pathname: "/business/[id]", params: { id: item.id } });
-                    }}
-                  >
-                    <View style={styles.flaggedCardLeft}>
-                      <View style={[styles.flaggedAlertBadge, { backgroundColor: "#7F1D1D" }]}>
-                        <Text style={styles.flaggedAlertCount}>{item.alertCount}</Text>
-                        <Text style={styles.flaggedAlertLabel}>alerts</Text>
-                      </View>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.flaggedCardName, { color: colors.foreground }]} numberOfLines={1}>{item.name}</Text>
-                      <Text style={[styles.flaggedCardMeta, { color: colors.mutedForeground }]} numberOfLines={1}>
-                        {item.category} · {item.city}, {item.state}
-                      </Text>
-                      <Text style={[styles.flaggedCardDist, { color: colors.mutedForeground }]}>
-                        {item.distanceMiles} mi away
-                      </Text>
-                    </View>
-                    <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
-                  </TouchableOpacity>
-                )}
-              />
-            )}
-          </View>
-        </View>
-      </Modal>
 
       {/* Report Activity Modal */}
       <Modal

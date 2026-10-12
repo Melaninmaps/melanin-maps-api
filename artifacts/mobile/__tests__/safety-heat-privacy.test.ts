@@ -7,7 +7,9 @@ const source = (relativePath: string) =>
 const businessMapSource = source("../components/BusinessMapView.tsx");
 const fullMapSource = source("../components/FullMapView.tsx");
 const mapTabSource = source("../components/MapTabView.tsx");
+const nativeMapTabSource = source("../components/MapTabView.native.tsx");
 const geoAlertSource = source("../hooks/useGeoSafeAlert.ts");
+const proximitySource = source("../hooks/useSafetyProximity.ts");
 const communityIntelligenceSource = source("../app/report-intelligence.tsx");
 const safetyPulseSource = source("../components/SafetyPulseWidget.tsx");
 const neighborhoodSurveySource = source("../app/neighborhood-survey.tsx");
@@ -36,13 +38,39 @@ describe("mobile Safety Heat privacy and evidence presentation", () => {
     expect(mapTabSource).toContain("approvedSurveyCount");
   });
 
-  it("uses the protected aggregate endpoint instead of fetching raw survey records or sending coordinates to it", () => {
-    expect(geoAlertSource).toContain("/api/safety/heatmap?city=");
-    expect(geoAlertSource).not.toContain("/api/surveys?city=");
-    expect(geoAlertSource).toContain("The Safety Heat API receives only a city");
-    expect(geoAlertSource).toContain("reporter identity, reporter location, or device coordinates.");
-    expect(geoAlertSource).not.toContain("neighborhood:");
-    expect(geoAlertSource).not.toContain("surveyCount:");
+  it("retires automatic device-location safety signals in favor of member-selected city aggregates", () => {
+    expect(geoAlertSource).toContain("member-selected,\n * city-level, consented, and aggregate-only");
+    expect(geoAlertSource).toContain("alert: null as GeoAlert | null");
+    expect(geoAlertSource).not.toContain("expo-location");
+    expect(geoAlertSource).not.toContain("getCurrentPositionAsync");
+    expect(geoAlertSource).not.toContain("latlng=");
+    expect(geoAlertSource).not.toContain("/api/safety/heatmap?city=");
+  });
+
+  it("retires proximity tracking and does not watch, send, or display member coordinates", () => {
+    expect(proximitySource).toContain("Legacy proximity warnings are retained as types only");
+    expect(proximitySource).toContain("warnings: [] as ProximityWarning[]");
+    expect(proximitySource).not.toContain("expo-location");
+    expect(proximitySource).not.toContain("watchPositionAsync");
+    expect(proximitySource).not.toContain("navigator.geolocation");
+    expect(proximitySource).not.toContain("/api/reports/proximity-warnings");
+  });
+
+  it("routes MapTab safety actions to manual Community Intelligence instead of nearby-business scanning", () => {
+    expect(mapTabSource).toContain('router.push("/report-intelligence")');
+    expect(mapTabSource).toContain('router.push("/report-police")');
+    expect(mapTabSource).not.toContain("community-alerts/flagged-businesses");
+    expect(mapTabSource).not.toContain("getCurrentPositionAsync");
+    expect(mapTabSource).not.toContain("Flagged Nearby");
+    expect(mapTabSource).not.toContain("Scanning your area");
+  });
+
+  it("keeps native navigation free of destination safety claims and map-local safety queries", () => {
+    expect(nativeMapTabSource).toContain("It never queries or presents a map-local safety assessment.");
+    expect(nativeMapTabSource).toContain("Route details do not include a safety assessment.");
+    expect(nativeMapTabSource).not.toContain("community-alerts/nearby?lat=${biz.latitude}");
+    expect(nativeMapTabSource).not.toContain("Safety alerts near destination");
+    expect(nativeMapTabSource).not.toContain("Route looks clear");
   });
 
   it("lets a member choose a city for a reduced Community Intelligence aggregate without requesting device location", () => {
