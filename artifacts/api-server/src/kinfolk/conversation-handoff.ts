@@ -65,6 +65,28 @@ export function isDirectConversationFollowUp(message: string): boolean {
 const CURRENT_THREAD_REFERENCE_RE = /\b(?:which|what|how|why|when|where|who|can|could|should|would|is|are|do|does|did|will)\b[\s\S]{0,72}\b(?:one|option|choice|approach|plan|draft|version|idea|recommendation|alternative|them|those|it|that|this)\b/i;
 const COMPARISON_THREAD_RE = /\b(?:compare|comparison|evaluate|evaluat(?:e|ing|ion)|weigh|trade[ -]?off|pros?\s*(?:and|&)\s*cons?|offer|options?|choices?|alternatives?)\b/i;
 const COMPARATIVE_FOLLOW_UP_RE = /\b(?:which|better|best|worse|less|more|safer|risk(?:y|ier)?|stronger|weaker|prefer|recommend)\b/i;
+const DRAFT_REQUEST_RE = /\b(?:draft|write|compose|revise|rewrite|edit)\b[\s\S]{0,100}\b(?:email|letter|message|note|proposal)\b/i;
+const PRIOR_DRAFT_REFERENCE_RE = /\b(?:go\s+back|return|back\s+to|earlier)\b[\s\S]{0,80}\b(?:email|letter|message|draft|paragraph|tone|version)\b/i;
+const SENSITIVE_DRAFT_CONTENT = /\b(?:address|home\s+address|medical|medication|diagnos(?:is|ed)|doctor|therap(?:y|ist)|suicid|self[- ]?harm|abuse|assault|trauma|pregnan|credit|debt|income|salary|bank|race|religion|muslim|christian|jewish|sexual(?:ity)?|gender|phone)\b|\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b/i;
+
+/**
+ * An explicit return-to-writing request may recover only the most recent earlier
+ * drafting pair in this same session. It excludes intervening topics entirely,
+ * especially health or other sensitive turns, and never becomes cross-session
+ * memory or generic conversation context.
+ */
+function resolvePriorDraftScope(messages: readonly SessionMessage[], currentMessage: string): SessionMessage[] {
+  if (!PRIOR_DRAFT_REFERENCE_RE.test(currentMessage) || SENSITIVE_DRAFT_CONTENT.test(currentMessage)) return [];
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const candidate = messages[index];
+    if (candidate?.role !== "user" || !DRAFT_REQUEST_RE.test(candidate.content) || SENSITIVE_DRAFT_CONTENT.test(candidate.content)) continue;
+    const reply = messages[index + 1];
+    return reply?.role === "assistant" && !SENSITIVE_DRAFT_CONTENT.test(reply.content)
+      ? [candidate, reply]
+      : [candidate];
+  }
+  return [];
+}
 
 /**
  * Resolves a clear reference to the immediately preceding private session
@@ -159,7 +181,8 @@ export function resolveConversationContextScope(input: {
   const savedResume = buildConversationResumePreview(input.messages);
   const resumeRequested = savedResume !== null
     && isExplicitConversationResumeRequest(input.currentMessage);
-  const directFollowUp = !resumeRequested && (
+  const priorDraftScope = !resumeRequested ? resolvePriorDraftScope(input.messages, input.currentMessage) : [];
+  const directFollowUp = !resumeRequested && priorDraftScope.length === 0 && (
     isDirectConversationFollowUp(input.currentMessage)
     || isBoundedSameSessionContinuation(input)
   );
@@ -167,6 +190,8 @@ export function resolveConversationContextScope(input: {
   return {
     messages: resumeRequested
       ? input.messages.slice(-6)
+      : priorDraftScope.length > 0
+        ? priorDraftScope
       : directFollowUp
         ? input.messages.slice(-4)
         : [],

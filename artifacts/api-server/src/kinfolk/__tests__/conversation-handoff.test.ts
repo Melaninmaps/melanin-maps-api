@@ -147,6 +147,22 @@ describe("Kinfolk conversation handoffs", () => {
     expect(scoped.messages).toEqual([]);
   });
 
+  it("returns only the original writing pair when a later turn explicitly goes back to a draft", () => {
+    const draft = message("user", "Draft an email to my boss about a schedule change.");
+    const draftReply = message("assistant", "Subject: Schedule change\n\nFirst paragraph.\n\nSecond paragraph.\n\nThird paragraph.");
+    const lunch = message("user", "Where should I get lunch?");
+    const lunchReply = message("assistant", "Try a nearby lunch spot.");
+    const health = message("user", "What is a general health question I should ask my doctor?");
+    const healthReply = message("assistant", "A general health answer.");
+    const scoped = resolveConversationContextScope({
+      messages: [draft, draftReply, lunch, lunchReply, health, healthReply] as never,
+      currentMessage: "Go back to that email and make the third paragraph shorter.",
+    });
+    expect(scoped.messages).toEqual([draft, draftReply]);
+    expect(scoped.messages.map((item) => item.content).join(" ")).not.toContain("lunch");
+    expect(scoped.messages.map((item) => item.content).join(" ")).not.toContain("health");
+  });
+
   it("does not echo sensitive address or health content in a handoff preview", () => {
     const messages = [
       message("user", "My home address is 10 Example Street and I need help after my diagnosis."),
