@@ -61,14 +61,13 @@ const ALL_FEATURES: { id: string; icon: React.ComponentProps<typeof Feather>["na
   { id: "tip",         icon: "alert-triangle", title: "Submit Safety Tip",           desc: "Submit a moderated safety concern without sharing member location.",      color: "#DC2626", route: "/report-safety" },
   { id: "checkin",     icon: "check-circle",   title: "Safety Check-In",             desc: "Schedule a check-in. Your contact is alerted if you don't confirm.",                                   color: "#16A34A", route: "/checkin" },
   { id: "meetup",      icon: "users",          title: "Meetup Verification",         desc: "Mutually verify in-person meetups with connections you trust.",                                         color: "#7C3AED", route: "/member-connections" },
-  { id: "police",      icon: "shield-off",     title: "Report Police or ICE",        desc: "Report a police encounter, ICE activity, racial profiling, or checkpoint for a city or region you choose.",               color: "#991B1B", route: "/report-police" },
+  { id: "police",      icon: "shield-off",     title: "Police / ICE Awareness",      desc: "Share a city or region observation for moderation. Member and device locations are never used to select recipients.",       color: "#991B1B", route: "/report-police" },
   { id: "serious-threat", icon: "shield",      title: "Serious Threat Report",       desc: "Submit a city-level report for restricted private review. It does not create an immediate public alert.", color: "#B42318", route: "/serious-credible-threat" },
   { id: "report",      icon: "flag",           title: "Report a Safety Concern",     desc: "Report unsafe content or behavior without revealing your identity.",                                    color: "#DC2626", route: "/report-safety" },
   { id: "space",       icon: "alert-octagon",  title: "Report an Unsafe Space",      desc: "Flag any business or venue where you experienced unsafe, discriminatory, or unwelcoming treatment.",    color: "#7C2D12", route: "/report-space" },
   { id: "family",      icon: "eye",            title: "Community Guidance",           desc: "Content is rated 🟢 Everyone, 🔵 Teen (13+), 🟠 Young Adult (16+), or 🔴 Adult (18+). Parents choose which tiers to show. Ratings include a reason so families always understand the context.", color: "#CA922B", route: "/family-settings" },
   { id: "survey",      icon: "star",           title: "Neighborhood Experience",     desc: "Share what helps people feel safe and able to thrive in a neighborhood.",                              color: "#0891B2", route: "/neighborhood-survey" },
   { id: "registry",    icon: "search",         title: "Sex Offender Registry",       desc: "Search the national registry to see registered offenders in any neighborhood or zip code.",             color: "#4338CA", route: null, externalUrl: "https://www.nsopw.gov" },
-  { id: "officer-watch",   icon: "eye",    title: "Officer Watch",              desc: "Track law enforcement officers flagged for violence against minorities and their department transfers.", color: "#DC2626", route: "/officer-watch" },
   { id: "mental-health",   icon: "heart",  title: "Mental Health Resources",    desc: "Crisis hotlines, 988 Lifeline, NAMI, Trevor Project, and Black mental health support — one tap away.", color: "#DC2626", route: "/mental-health" },
   { id: "na-aa-meetings",  icon: "map-pin", title: "NA/AA Meetings Near You",   desc: "Find Narcotics Anonymous, Alcoholics Anonymous, Al-Anon, and SMART Recovery meetings in your area.", color: "#059669", route: "/na-aa-meetings" },
   { id: "wellness-tracker", icon: "activity", title: "Wellness Tracker",         desc: "Daily mood, energy, sleep, and wellness check-ins. Build streaks and set personal wellness goals.", color: "#7C3AED", route: "/wellness-tracker" },
@@ -88,6 +87,7 @@ export default function SafetyHubTab() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const canNavigateBack = router.canGoBack();
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
   const [checkins, setCheckins] = useState<SafetyCheckin[]>([]);
@@ -190,6 +190,17 @@ export default function SafetyHubTab() {
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
       <View style={[styles.header, { paddingTop: topPad + 12, borderBottomColor: colors.border }]}>
+        {canNavigateBack ? (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Back"
+            onPress={() => router.back()}
+            style={styles.backBtn}
+            activeOpacity={0.7}
+          >
+            <Feather name="arrow-left" size={22} color={colors.foreground} />
+          </TouchableOpacity>
+        ) : <View style={styles.backBtn} />}
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>Safety Hub</Text>
         {editMode ? (
           <TouchableOpacity onPress={saveOrder} style={[styles.editBtn, { backgroundColor: colors.primary ?? "#CA922B" }]} activeOpacity={0.8}>
@@ -415,6 +426,7 @@ export default function SafetyHubTab() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1 },
+  backBtn: { width: 32, padding: 4 },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 20 },
   editBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
   editBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },

@@ -14,6 +14,18 @@ const safetyHub = readFileSync(
   fileURLToPath(new URL("../app/safety-hub.tsx", import.meta.url)),
   "utf8",
 );
+const safetyHubTab = readFileSync(
+  fileURLToPath(new URL("../app/(tabs)/safety-hub.tsx", import.meta.url)),
+  "utf8",
+);
+const officerWatch = readFileSync(
+  fileURLToPath(new URL("../app/officer-watch.tsx", import.meta.url)),
+  "utf8",
+);
+const mentalHealth = readFileSync(
+  fileURLToPath(new URL("../app/mental-health.tsx", import.meta.url)),
+  "utf8",
+);
 const notificationCenter = readFileSync(
   fileURLToPath(new URL("../app/notification-center.tsx", import.meta.url)),
   "utf8",
@@ -38,22 +50,40 @@ describe("mobile Home safety entry boundaries", () => {
   it("keeps the existing Safety Hub and safety settings reachable", () => {
     expect(settings).toContain('route: "/safety-hub"');
     expect(settings).toContain('route: "/privacy"');
-    expect(safetyHub).toContain("Safety Hub");
-    expect(safetyHub).toContain("Trusted Live Location");
-    expect(safetyHub).toContain('route: "/location-share"');
-    expect(safetyHub).not.toContain("api/safety/location-shares");
-    expect(safetyHub).toContain("Submit Safety Tip");
-    expect(safetyHub).toContain("Serious Threat Report");
-    expect(safetyHub).toContain('route: "/serious-credible-threat"');
-    expect(safetyHub).toContain("Community Intelligence");
-    expect(safetyHub).toContain("Small counts are suppressed");
-    expect(safetyHub).toContain("Member and device locations are never used to select recipients.");
-    expect(safetyHub).toContain('route: "/report-safety"');
-    expect(safetyHub).not.toContain('route: "/safety-tip"');
-    expect(safetyHub).not.toContain("Nearby verified members are alerted to confirm.");
-    expect(safetyHub).not.toContain("Share and read community safety reports for any neighborhood.");
-    expect(safetyHub).not.toContain("Track law enforcement officers flagged");
-    expect(safetyHub).not.toContain('route: "/officer-watch"');
+    expect(safetyHub).toContain('export { default } from "./(tabs)/safety-hub"');
+    expect(safetyHubTab).toContain("Safety Hub");
+    expect(safetyHubTab).toContain("Trusted Live Location");
+    expect(safetyHubTab).toContain('route: "/location-share"');
+    expect(safetyHubTab).not.toContain("api/safety/location-shares");
+    expect(safetyHubTab).toContain("Submit Safety Tip");
+    expect(safetyHubTab).toContain("Serious Threat Report");
+    expect(safetyHubTab).toContain('route: "/serious-credible-threat"');
+    expect(safetyHubTab).toContain("Community Intelligence");
+    expect(safetyHubTab).toContain("Small samples are suppressed");
+    expect(safetyHubTab).toContain("Police / ICE Awareness");
+    expect(safetyHubTab).toContain("Member and device locations are never used to select recipients.");
+    expect(safetyHubTab).toContain('route: "/report-safety"');
+    expect(safetyHubTab).not.toContain('route: "/safety-tip"');
+    expect(safetyHubTab).not.toContain("Nearby verified members are alerted to confirm.");
+    expect(safetyHubTab).not.toContain("Share and read community safety reports for any neighborhood.");
+    expect(safetyHubTab).not.toContain("Track law enforcement officers flagged");
+    expect(safetyHubTab).not.toContain('route: "/officer-watch"');
+  });
+
+  it("retires individual officer tracking while preserving the city-level Police and ICE route", () => {
+    expect(officerWatch).toContain("Officer tracking is not available");
+    expect(officerWatch).toContain("does not identify, track, list, or send alerts about individual officers");
+    expect(officerWatch).toContain('router.replace("/report-police"');
+    expect(officerWatch).not.toContain("api/safety/officer-watch");
+    expect(officerWatch).not.toContain("Officer Name");
+    expect(officerWatch).not.toContain("transfers:");
+  });
+
+  it("uses the verified NAMI HelpLine text contact instead of the Crisis Text Line number", () => {
+    expect(mentalHealth).toContain("Text NAMI to 62640");
+    expect(mentalHealth).toContain('value: "sms:62640&body=NAMI"');
+    expect(mentalHealth).not.toContain("Text NAMI to 741741");
+    expect(mentalHealth).not.toContain('value: "sms:741741&body=NAMI"');
   });
 
   it("routes a private Check-In recipient alert to a recipient-authorized view", () => {

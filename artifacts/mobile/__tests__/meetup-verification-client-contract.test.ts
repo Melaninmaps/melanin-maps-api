@@ -53,7 +53,11 @@ describe("native private meetup verification client", () => {
   });
 
   it("keeps both Safety Hub entries on the private venue wire contract", () => {
-    for (const source of [tabSafetyHub, standaloneSafetyHub]) {
+    expect(standaloneSafetyHub).toContain('export { default } from "./(tabs)/safety-hub"');
+
+    // The settings route deliberately re-exports the tab implementation so
+    // privacy copy and the venue contract cannot drift between entry points.
+    for (const source of [tabSafetyHub]) {
       expect(source).toContain('role: "organizer" | "partner"');
       expect(source).toContain('venue: string | null');
       expect(source).toContain('meetup.role === "partner" && meetup.status === "awaiting_partner"');
