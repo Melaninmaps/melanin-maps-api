@@ -107,6 +107,51 @@ describe("buildSearchPlan — eczema image query", () => {
   });
 });
 
+describe("buildSearchPlan — diaspora-first educational topics", () => {
+  it("adds a non-identifying source track for relevant hair-care education", () => {
+    const plan = buildSearchPlan(
+      "How should I care for locs between appointments?",
+      blackWomanProfile,
+      ENTITY_INDEX,
+    );
+
+    expect(plan.representationMode).toBe("diaspora_first_default");
+    expect(plan.activeLenses).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "diaspora-first-education-default" }),
+    ]));
+    expect(plan.queries).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        role: "community_primary",
+        text: expect.stringMatching(/Black and Brown hair care educational guidance/i),
+      }),
+    ]));
+    expect(plan.queries.map((query) => query.text).join(" ")).not.toContain("Black woman");
+  });
+
+  it("adds a bounded cultural-history source track without forcing it into unrelated conversation", () => {
+    const relevant = buildSearchPlan(
+      "What sources explain African diaspora history in the Caribbean?",
+      blackWomanProfile,
+      ENTITY_INDEX,
+    );
+    const unrelated = buildSearchPlan(
+      "Draft a concise email asking to reschedule a meeting.",
+      blackWomanProfile,
+      ENTITY_INDEX,
+    );
+
+    expect(relevant.representationMode).toBe("diaspora_first_default");
+    expect(relevant.queries).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        role: "community_primary",
+        text: expect.stringMatching(/diaspora history and cultural context authoritative sources/i),
+      }),
+    ]));
+    expect(unrelated.representationMode).toBe("none");
+    expect(unrelated.queries).toHaveLength(1);
+  });
+});
+
 describe("buildSearchPlan — Michelle Williams", () => {
   it("defaults to Destiny's Child candidate and preserves Dawson's Creek", () => {
     const plan = buildSearchPlan("Michelle Williams", blackWomanProfile, ENTITY_INDEX);

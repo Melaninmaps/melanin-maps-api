@@ -77,6 +77,11 @@ const SKIN_REPRESENTATION_RE = /\b(?:eczema|dermatitis|rash|skin|psoriasis|acne|
 const REPRESENTATION_RELEVANT_HEALTH_RE = /\b(?:eczema|dermatitis|rash|skin|psoriasis|acne|hyperpigment(?:ation)?|melasma|hair(?:\s+care)?|scalp|hypertension|blood\s+pressure|heart\s+(?:attack|disease|failure)|stroke|maternal|pregnan(?:cy|t)|postpartum|preeclampsia|fibroids?|lupus|sickle\s+cell|diabetes|asthma)\b/i;
 const LIGHTER_SKIN_OVERRIDE_RE = /\b(?:lighter|light)[-\s]+skin(?:\s+(?:examples|images|pictures|photos))?\b/i;
 const BROAD_SKIN_TONE_OVERRIDE_RE = /\b(?:all|different|multiple|varied)\s+skin\s+tones?\b|\bskin[-\s]+tone\s+comparison\b/i;
+// These are subject-matter signals, never identity proxies. They permit a
+// non-identifying diaspora-first educational source track only when the topic
+// itself makes that perspective useful.
+const HAIR_CARE_EDUCATION_RE = /\b(?:natural\s+hair|coily|curly|textured\s+hair|protective\s+style|locs?|loctician|braid(?:s|er|ing)?|twists?|wigs?|weaves?|extensions?|silk\s+press|wash(?:\s*(?:and|&)\s*)?detangle)\b/i;
+const CULTURAL_EDUCATION_RE = /\b(?:african\s+diaspora|diaspora|black\s+history|african\s+american\s+history|caribbean\s+history|hbcu|civil\s+rights|heritage|cultural\s+history|african\s+presence)\b/i;
 
 // ── Build MemberProfile from MWM user preferences ────────────────────────────
 
@@ -176,35 +181,56 @@ function defaultDiasporaFirstHealthLens(query: string): Lens | null {
   };
 }
 
+function defaultDiasporaFirstEducationLens(query: string): Lens | null {
+  if (!HAIR_CARE_EDUCATION_RE.test(query) && !CULTURAL_EDUCATION_RE.test(query)) {
+    return null;
+  }
+  return {
+    id: "diaspora-first-education-default",
+    label: "Black and Brown diaspora perspectives",
+    searchTerms: ["Black", "Brown", "African diaspora", "Caribbean"],
+    priority: 1,
+  };
+}
+
 function resolveRepresentationLens(
   query: string,
   intent: LensIntent,
   context: RepresentationPlanningContext,
 ): { lens: Lens | null; mode: SearchPlan["representationMode"] } {
-  if (intent !== "health") return { lens: null, mode: "none" };
+  if (intent === "health") {
+    const explicitPopulation = currentTurnLens(query);
+    if (explicitPopulation) return { lens: explicitPopulation, mode: "explicit_current_turn" };
 
-  const explicitPopulation = currentTurnLens(query);
-  if (explicitPopulation) return { lens: explicitPopulation, mode: "explicit_current_turn" };
+    const explicitOverride = explicitRepresentationOverrideLens(query);
+    if (explicitOverride) return { lens: explicitOverride, mode: "explicit_override" };
 
-  const explicitOverride = explicitRepresentationOverrideLens(query);
-  if (explicitOverride) return { lens: explicitOverride, mode: "explicit_override" };
+    const consentedLabel = context.consentedHealthPopulationLabel?.trim();
+    if (consentedLabel) {
+      return {
+        lens: {
+          id: "consented-health-representation",
+          label: consentedLabel,
+          searchTerms: [consentedLabel],
+          priority: 0,
+        },
+        mode: "consented_identity",
+      };
+    }
 
-  const consentedLabel = context.consentedHealthPopulationLabel?.trim();
-  if (consentedLabel) {
-    return {
-      lens: {
-        id: "consented-health-representation",
-        label: consentedLabel,
-        searchTerms: [consentedLabel],
-        priority: 0,
-      },
-      mode: "consented_identity",
-    };
+    const defaultLens = defaultDiasporaFirstHealthLens(query);
+    return defaultLens
+      ? { lens: defaultLens, mode: "diaspora_first_default" }
+      : { lens: null, mode: "none" };
   }
 
-  const defaultLens = defaultDiasporaFirstHealthLens(query);
-  return defaultLens
-    ? { lens: defaultLens, mode: "diaspora_first_default" }
+  // Hair-care and cultural-history queries can benefit from a non-identifying
+  // diaspora source track. This is determined only from the topic in the
+  // current turn; a name, location, membership, or saved identity never turns
+  // it on, and it cannot change a directory or promotion rule.
+  const educationLens = defaultDiasporaFirstEducationLens(query);
+  return educationLens
+    ? { lens: educationLens, mode: "diaspora_first_default" }
     : { lens: null, mode: "none" };
 }
 
@@ -253,6 +279,20 @@ function representationHealthQueries(
     });
   }
   return queries;
+}
+
+function diasporaFirstEducationQueries(query: string, lens: Lens): SearchQuery[] {
+  const hairCareTopic = HAIR_CARE_EDUCATION_RE.test(query);
+  return [{
+    text: hairCareTopic
+      ? `${query} Black and Brown hair care educational guidance`
+      : `${query} Black and Brown diaspora history and cultural context authoritative sources`,
+    role: "community_primary" as const,
+    lensId: lens.id,
+    reason: hairCareTopic
+      ? "Diaspora-first hair-care education may improve relevance for this topic without identifying the member or altering any service requirement."
+      : "Diaspora-first cultural education may improve source coverage for this topic without identifying the member or asserting a single community view.",
+  }];
 }
 
 function dedupeQueries(queries: SearchQuery[]): SearchQuery[] {
@@ -333,6 +373,9 @@ export function buildSearchPlan(
       role: "general",
       reason: "General evidence query retained for accuracy and source verification.",
     });
+    if (representation.lens) {
+      queries.push(...diasporaFirstEducationQueries(query, representation.lens));
+    }
     if (imageRequested) {
       queries.push({
         text: `${query} images`,

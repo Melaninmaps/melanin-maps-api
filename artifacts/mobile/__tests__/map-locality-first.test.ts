@@ -192,10 +192,12 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("radius: String(Math.min(mapDiscoveryRadius, 25))");
   });
 
-  it("uses the saved strict Support Lens for map business requests", () => {
-    expect(fullMapSource).toContain('import { useUserPreferences } from "@/hooks/useUserPreferences"');
-    expect(fullMapSource).toContain('memberPreferences?.supportLensMode === "strict_documented_designations"');
+  it("uses only Map-controlled ownership filters for map business requests", () => {
+    expect(fullMapSource).toContain("const [selectedMapDesignations, setSelectedMapDesignations] = useState<string[]>([]);");
+    expect(fullMapSource).toContain("const designationIds = selectedMapDesignations;");
     expect(fullMapSource).toContain("designations: designationIds");
-    expect(fullMapSource).toContain("supportScope: memberPreferences?.supportLensMode");
+    expect(fullMapSource).toContain("supportScope: undefined,");
+    expect(fullMapSource).toContain("Kinfolk memory and preferences stay");
+    expect(fullMapSource).not.toContain("memberPreferences?.supportLensMode");
   });
 });

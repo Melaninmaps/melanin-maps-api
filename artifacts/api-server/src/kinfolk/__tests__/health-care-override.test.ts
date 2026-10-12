@@ -65,8 +65,8 @@ describe("qualified care override", () => {
     expect(override.promptBlock).toContain("summarize only the retrieved authoritative material");
   });
 
-  it("uses condition-first authoritative searches for common Black-women's health questions", () => {
-    expect(extractHealthTopic("I am a Black woman. What should I ask my doctor about anemia?")).toBe("anemia iron deficiency Black woman");
+  it("keeps the authoritative primary query condition-first while group context remains supplemental", () => {
+    expect(extractHealthTopic("I am a Black woman. What should I ask my doctor about anemia?")).toBe("anemia iron deficiency");
     expect(extractHealthTopic("What should I know about menopause?")).toBe("menopause");
     expect(extractHealthTopic("Could I have uterine fibroids?")).toBe("uterine fibroids");
     expect(extractHealthTopic("I think I have eczema; show me educational images.")).toBe("eczema atopic dermatitis");

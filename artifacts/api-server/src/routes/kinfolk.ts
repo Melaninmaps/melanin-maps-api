@@ -11470,7 +11470,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const lensEligible =
       LENS_ELIGIBLE_INTENTS.has(intentClass) ||
       evidenceRoute.retrievalRequirement !== "none" ||
-      /\b(image|picture|photo|show me|what does|eczema|dermatitis|rash|blood pressure|hypertension|preeclampsia|fibroids|lupus|sickle cell|mental health|depression|anxiety)\b/i.test(
+      /\b(image|picture|photo|show me|what does|eczema|dermatitis|rash|blood pressure|hypertension|preeclampsia|fibroids|lupus|sickle cell|mental health|depression|anxiety|natural hair|textured hair|protective style|locs?|loctician|braid(?:s|er|ing)?|twists?|wigs?|weaves?|extensions?|silk press|wash(?:\s*(?:and|&)\s*)?detangle|diaspora|black history|african american history|caribbean history|hbcu|civil rights|heritage|cultural history|african presence)\b/i.test(
         message,
       );
     const isEntityQuery =
