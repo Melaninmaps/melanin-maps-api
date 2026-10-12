@@ -6480,6 +6480,38 @@ export async function ensureSafetyOperationalSchema(logger?: Logger): Promise<vo
   logger?.info("Safety Hub trusted-contact and Check-In schemas ready before traffic acceptance");
 }
 
+/**
+ * Safety Reliability reconciliation needs the same additive migration entries
+ * that application startup uses for durable trusted-contact alert auditing and
+ * Family Impact intelligence, without invoking unrelated directory, seed, or
+ * member-mutation work. This remains schema-only: it creates no relationship,
+ * location session, event, notification, provider request, or background worker.
+ */
+const SAFETY_RELIABILITY_SCHEMA_MIGRATIONS = [
+  ...SAFETY_OPERATIONAL_SCHEMA_MIGRATIONS,
+  "trusted_safety_durable_delivery_v2",
+  "family_impact_intelligence_v1",
+] as const;
+
+export async function ensureSafetyReliabilitySchema(logger?: Logger): Promise<void> {
+  for (const name of SAFETY_RELIABILITY_SCHEMA_MIGRATIONS) {
+    const migration = MIGRATIONS.find((candidate) => candidate.name === name);
+    if (!migration) {
+      throw new Error(`Safety reliability schema migration is unavailable: ${name}`);
+    }
+    await pool.query(migration.sql);
+  }
+
+  await Promise.all([
+    pool.query("SELECT id, status, contact_accepted FROM trusted_safety_shares LIMIT 0"),
+    pool.query("SELECT id, event_fingerprint, attempt_count FROM trusted_safety_alert_log LIMIT 0"),
+    pool.query("SELECT id, owner_id, trusted_share_id FROM family_impact_consents LIMIT 0"),
+    pool.query("SELECT id, source_event_id, status FROM family_impact_events LIMIT 0"),
+    pool.query("SELECT id, delivery_state, next_retry_at FROM family_impact_delivery_attempts LIMIT 0"),
+  ]);
+  logger?.info("Safety reliability trusted-contact and Family Impact schemas ready before traffic acceptance");
+}
+
 // The authenticated Kinfolk staging proof must read the exact same catalog
 // schema as the isolated API. Keep this gate scoped to the disposable staging
 // environment; it is additive, creates no business data, and starts no worker.
