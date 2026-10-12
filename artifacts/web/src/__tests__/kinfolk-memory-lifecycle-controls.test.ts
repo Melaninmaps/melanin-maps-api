@@ -5,6 +5,14 @@ const memoryManager = readFileSync(
   new URL("../components/kinfolk/KinfolkMemoryManager.tsx", import.meta.url),
   "utf8",
 );
+const inlineMemoryConsent = readFileSync(
+  new URL("../components/kinfolk/KinfolkInlineMemoryConsent.tsx", import.meta.url),
+  "utf8",
+);
+const sensitiveMemoryConfirmation = readFileSync(
+  new URL("../components/kinfolk/KinfolkSensitiveMemoryConfirmation.tsx", import.meta.url),
+  "utf8",
+);
 
 describe("Web generic private-memory lifecycle controls", () => {
   it("lists reviewable paused notes and uses the owner-scoped pause route", () => {
@@ -34,5 +42,13 @@ describe("Web generic private-memory lifecycle controls", () => {
     expect(memoryManager).toContain("api/kinfolk/sensitive-memories/${encodeURIComponent(memory.id)}");
     expect(memoryManager).toContain("Sensitive private memory");
     expect(memoryManager).toContain("Only mention if I ask");
+  });
+
+  it("obtains fresh authentication before either sensitive save path", () => {
+    for (const surface of [inlineMemoryConsent, sensitiveMemoryConfirmation]) {
+      expect(surface).toContain("api/kinfolk/sensitive-memory-vault/reauth");
+      expect(surface).toContain('type="password"');
+      expect(surface).toContain("Confirm your password");
+    }
   });
 });

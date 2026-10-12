@@ -18,10 +18,18 @@ export function KinfolkSensitiveMemoryConfirmation({
 }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [password, setPassword] = useState("");
 
   const confirm = async () => {
     setSaving(true); setError(null);
     try {
+      if (!password) throw new Error("Confirm your password before saving a sensitive detail.");
+      const reauth = await fetch(`${BASE}api/kinfolk/sensitive-memory-vault/reauth`, {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ password }),
+      });
+      const reauthBody = await reauth.json().catch(() => ({})) as { error?: string };
+      if (!reauth.ok) throw new Error(reauthBody.error ?? "Password confirmation failed.");
+      setPassword("");
       const response = await fetch(`${BASE}api/kinfolk/memories`, {
         method: "POST",
         credentials: "include",
@@ -38,6 +46,7 @@ export function KinfolkSensitiveMemoryConfirmation({
 
   return <aside data-testid="kinfolk-sensitive-memory-confirmation" className="mx-auto mt-3 max-w-3xl rounded-2xl border border-[#CA922B]/35 bg-[#FFF8EC] p-4">
     <div className="flex items-start gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#8D5C17]" /><div><p className="text-sm font-semibold text-[#2B1507]">Save this sensitive detail for relevant use?</p><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/65">Kinfolk has not saved it. This choice keeps the detail private and lets Kinfolk use it only when it is relevant. You can pause, delete, or turn off use anytime.</p></div></div>
+    <input aria-label="Confirm password before saving sensitive memory" type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Confirm your password" className="mt-3 w-full rounded-xl border border-[#CA922B]/35 bg-white px-3 py-2 text-sm text-[#2B1507]" />
     {error && <p role="alert" className="mt-3 text-xs text-red-700">{error}</p>}
     <div className="mt-3 flex flex-wrap gap-3"><button type="button" onClick={() => void confirm()} disabled={saving} className="flex items-center gap-2 rounded-full bg-[#2B1507] px-3 py-2 text-xs font-semibold text-white disabled:opacity-60">{saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}{saving ? "Saving…" : "Save for relevant use"}</button><button type="button" onClick={onDismiss} disabled={saving} className="text-xs font-semibold text-[#3A1F0E]/55 hover:text-[#8D5C17]">Do not save</button></div>
   </aside>;

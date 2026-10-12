@@ -62,4 +62,12 @@ describe("native generic private-memory lifecycle controls", () => {
     expect(sensitiveMemoryConfirmation).toContain("Save this sensitive detail for relevant use?");
     expect(sensitiveMemoryConfirmation).toContain("Save for relevant use");
   });
+
+  it("requires fresh password confirmation before either sensitive save path", () => {
+    for (const surface of [inlineMemoryConsent, sensitiveMemoryConfirmation]) {
+      expect(surface).toContain("/api/kinfolk/sensitive-memory-vault/reauth");
+      expect(surface).toContain("Confirm your password");
+      expect(surface).toContain("secureTextEntry");
+    }
+  });
 });
