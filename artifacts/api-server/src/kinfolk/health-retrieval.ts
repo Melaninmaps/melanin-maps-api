@@ -75,6 +75,7 @@ const CONDITION_PATTERNS: Array<[RegExp, string]> = [
   [/covid|coronavirus/i, "COVID-19"],
   [/mental\s+health|depression|anxiety/i, "mental health"],
   [/lupus/i, "lupus"],
+  [/\b(?:eczema|atopic dermatitis)\b/i, "eczema atopic dermatitis"],
   [/obesity|overweight/i, "obesity"],
   [/asthma/i, "asthma"],
   [/hiv|aids/i, "HIV AIDS"],

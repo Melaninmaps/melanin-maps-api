@@ -236,6 +236,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain('answerMode: "linked_page_extractive_summary"');
     expect(chatRoute).toContain('provider: "kinfolk_link_reader"');
     expect(chatRoute).toContain("Kinfolk has not independently verified those claims.");
+    expect(chatRoute).toContain("persistDeterministicDiscoveryTurn({");
+    expect(chatRoute).toContain("This is a public social-media page.");
   });
 
   it("ranks the governed travel catalog with canonical age assurance and explicit preferences before prompting", () => {

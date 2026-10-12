@@ -45,6 +45,9 @@ describe("Kinfolk link understanding", () => {
       expect(isPrivateOrReservedNetworkAddress(address)).toBe(true);
     }
     expect(isPrivateOrReservedNetworkAddress("93.184.216.34")).toBe(false);
+    // 192.0.66.108 is a public NASA address. Only the documented special-use
+    // /24 ranges under 192.0.0.0/16 are blocked by the SSRF guard.
+    expect(isPrivateOrReservedNetworkAddress("192.0.66.108")).toBe(false);
     expect(isPrivateOrReservedNetworkAddress("2606:2800:220:1:248:1893:25c8:1946")).toBe(false);
   });
 

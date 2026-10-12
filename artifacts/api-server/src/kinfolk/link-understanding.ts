@@ -178,7 +178,12 @@ function isPrivateIpv4(address: string): boolean {
     || (a === 100 && b >= 64 && b <= 127)
     || (a === 169 && b === 254)
     || (a === 172 && b >= 16 && b <= 31)
-    || (a === 192 && (b === 0 || b === 2 || b === 88 || b === 168))
+    // These are bounded IANA special-purpose subnets, not every address whose
+    // second octet happens to be 0 or 88. Treating all of 192.0.0.0/16 or
+    // 192.88.0.0/16 as private incorrectly blocks public hosts such as NASA.
+    || (a === 192 && b === 0 && (c === 0 || c === 2))
+    || (a === 192 && b === 88 && c === 99)
+    || (a === 192 && b === 168)
     || (a === 198 && (b === 18 || b === 19 || b === 51))
     || (a === 203 && b === 0 && c === 113);
 }

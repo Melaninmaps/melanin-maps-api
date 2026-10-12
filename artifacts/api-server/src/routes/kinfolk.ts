@@ -8813,6 +8813,30 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   // generation. The page reader has SSRF/redirect/content guards and returns
   // only extractive text from this exact URL; it never turns page claims into
   // independently verified facts.
+  // Resolve the server flag and the authenticated member's own setting before
+  // any session/history lookup. A settings-read failure disables memory for this
+  // request rather than risking reinjection or persistence after an opt-out.
+  const staffAuditPolicy = resolveKinfolkStaffAuditPolicy({
+    requested: requestedStaffAudit,
+    administrator: isAdmin(req),
+  });
+  if (requestedStaffAudit === true && !staffAuditPolicy) {
+    res.status(403).json({ error: "Staff audit access is required." });
+    return;
+  }
+  let resolvedMemoryEnabled = false;
+  if (!staffAuditPolicy) {
+    // Staff audits must not read member memory settings; ordinary member chat
+    // remains explicitly gated before every history or memory operation.
+    const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
+    resolvedMemoryEnabled = memoryEnabled;
+  }
+  const memoryEnabled = resolvedMemoryEnabled;
+
+  // A member-selected public page is part of their current conversation, not
+  // long-term profile memory. Persist its bounded server-extracted source turn
+  // through the same owner-scoped session mechanism as other deterministic
+  // answers, so a same-session follow-up can resolve the exact prior page.
   if (articleSummaryRequest.state === "ready") {
     const requestedLinkUrl = requestedArticleSummaryFetchUrl(message);
     const linkedPage = requestedLinkUrl
@@ -8829,13 +8853,30 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         label: "web_search",
         fetchedAt: new Date().toISOString(),
       };
-      return void res.status(200).json({
+      const sourceBoundary = linkedPage.linkType === "social"
+        ? "This is a public social-media page. This summary uses only fetched public page text or metadata; Kinfolk cannot verify unexposed video, image, or private content."
+        : "This reflects claims on the linked page. Kinfolk has not independently verified those claims.";
+      const reply = [
+        `Here is an extractive summary of ${sourceTitle}:`,
+        linkedPage.summary.text,
+        sourceBoundary,
+      ].join("\n\n");
+      const linkedPageSessionId = await persistDeterministicDiscoveryTurn({
+        userId: req.user.id,
+        memoryEnabled,
         sessionId,
-        reply: [
-          `Here is an extractive summary of ${sourceTitle}:`,
-          linkedPage.summary.text,
-          "This reflects claims on the linked page. Kinfolk has not independently verified those claims.",
-        ].join("\n\n"),
+        message,
+        reply,
+        recommendations: null,
+        resultView: null,
+        followUpSuggestions: ["Ask about a specific part of the linked page"],
+        sources: [{ title: linkedPageSource.title, url: linkedPageSource.url }],
+        destination: "",
+        vibes: vibes as string[],
+      });
+      return void res.status(200).json({
+        sessionId: linkedPageSessionId,
+        reply,
         recommendations: null,
         itinerary: null,
         followUpSuggestions: ["Ask about a specific part of the linked page"],
@@ -8865,11 +8906,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         },
       });
     }
-    const articleFailureReply = articleSummaryFailureReply("inaccessible")
+    const reply = articleSummaryFailureReply("inaccessible")
       ?? TRUTHFUL_ARTICLE_SUMMARY_UNAVAILABLE_REPLY;
-    return void res.status(200).json({
+    const linkedPageSessionId = await persistDeterministicDiscoveryTurn({
+      userId: req.user.id,
+      memoryEnabled,
       sessionId,
-      reply: articleFailureReply,
+      message,
+      reply,
+      recommendations: null,
+      resultView: null,
+      followUpSuggestions: ["Open the original public source or try again later"],
+      sources: [],
+      destination: "",
+      vibes: vibes as string[],
+    });
+    return void res.status(200).json({
+      sessionId: linkedPageSessionId,
+      reply,
       recommendations: null,
       itinerary: null,
       followUpSuggestions: ["Open the original public source or try again later"],
@@ -8899,25 +8953,6 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       },
     });
   }
-  // Resolve the server flag and the authenticated member's own setting before
-  // any session/history lookup. A settings-read failure disables memory for this
-  // request rather than risking reinjection or persistence after an opt-out.
-  const staffAuditPolicy = resolveKinfolkStaffAuditPolicy({
-    requested: requestedStaffAudit,
-    administrator: isAdmin(req),
-  });
-  if (requestedStaffAudit === true && !staffAuditPolicy) {
-    res.status(403).json({ error: "Staff audit access is required." });
-    return;
-  }
-  let resolvedMemoryEnabled = false;
-  if (!staffAuditPolicy) {
-    // Staff audits must not read member memory settings; ordinary member chat
-    // remains explicitly gated before every history or memory operation.
-    const memoryEnabled = await resolveOwnerKinfolkMemoryAccess(req.user.id);
-    resolvedMemoryEnabled = memoryEnabled;
-  }
-  const memoryEnabled = resolvedMemoryEnabled;
 
   // A clear "remember …" statement is a first-party consent command, not an
   // ordinary chat turn. Save exactly the member's own words, acknowledge it,
