@@ -26,7 +26,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useColors } from "@/hooks/useColors";
-import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion, type TaskAction, type LibraryAction, type HeritageSitePin, type NearbyNudge, type ConversationalBusinessResultView } from "@/hooks/useKinfolk";
+import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion, type TaskAction, type LibraryAction, type HeritageSitePin, type NearbyNudge, type ConversationalBusinessResultView, type KinfolkResourceCard } from "@/hooks/useKinfolk";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useWishlist } from "@/hooks/useWishlist";
 import { KinfolkOnboarding, shouldShowKinfolkOnboarding, resetKinfolkOnboarding } from "@/components/KinfolkOnboarding";
@@ -44,6 +44,7 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { getApiBase } from "@/lib/api";
 import { openExternalUrl } from "@/lib/safeLinking";
+import { parseSafeSourceLink } from "@/lib/sourceLinks";
 import { businessClarificationContinuation } from "@/lib/businessClarificationContinuation";
 import { kinfolkWorkingElapsedSeconds, kinfolkWorkingElapsedLabel } from "@/lib/kinfolkWorkingIndicator";
 import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
@@ -675,6 +676,12 @@ function AiMessageBubble({
   const [dismissedPromo, setDismissedPromo] = useState(false);
   const [clarificationAnswered, setClarificationAnswered] = useState(false);
   const visibleSpokenText = spokenVoiceText?.messageId === msg.id ? spokenVoiceText : null;
+  const reviewedResources = (msg.resourceCards ?? []).flatMap((resource) => {
+    const safe = parseSafeSourceLink({ title: resource.title, url: resource.url });
+    return safe && resource.id && resource.description
+      ? [{ ...resource, title: safe.title, url: safe.url }]
+      : [];
+  });
 
   const toggleSection = (s: string) => setExpandedSection((p) => (p === s ? null : s));
 
@@ -970,6 +977,28 @@ function AiMessageBubble({
           </ScrollView>
         )}
 
+        {reviewedResources.length > 0 ? (
+          <View testID="kinfolk-primary-reviewed-resource-cards" style={[aiStyles.reviewedResourcesBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[aiStyles.reviewedResourcesTitle, { color: colors.text }]}>Reviewed resources</Text>
+            {reviewedResources.map((resource: KinfolkResourceCard) => (
+              <TouchableOpacity
+                key={resource.id}
+                accessibilityRole="link"
+                accessibilityLabel={`Open reviewed resource: ${resource.title}`}
+                accessibilityHint="Opens this reviewed educational source in your browser"
+                onPress={() => void openExternalUrl(resource.url, { kind: "web" })}
+                style={aiStyles.reviewedResourceCard}
+              >
+                <Text style={[aiStyles.reviewedResourceLink, { color: GOLD }]}>
+                  {resource.type === "image_gallery" ? "Educational image library: " : ""}{resource.title}
+                </Text>
+                <Text style={[aiStyles.reviewedResourceDescription, { color: colors.mutedForeground }]}>{resource.description}</Text>
+                {resource.safetyNote ? <Text style={[aiStyles.reviewedResourceSafety, { color: colors.mutedForeground }]}>{resource.safetyNote}</Text> : null}
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
+
         {/* Provenance disclaimer — shown for medical, legal, financial, and emergency intents */}
         <KinfolkContextualPresentation
           structuredContent={msg.structuredContent}
@@ -1094,11 +1123,17 @@ const aiStyles = StyleSheet.create({
   communityPerspectiveText: { fontFamily: "Inter_400Regular", fontSize: 10, lineHeight: 14, marginTop: 2 },
   sourcesBox: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 8, paddingTop: 8, gap: 6 },
   sourcesTitle: { fontFamily: "Inter_700Bold", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8 },
-  sourceActionRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  sourceRow: { flexDirection: "row", alignItems: "flex-start", gap: 6 },
-  sourceLink: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 11, lineHeight: 15 },
+  sourceActionRow: { flexDirection: "row", alignItems: "center", gap: 8, minWidth: 0 },
+  sourceRow: { flexDirection: "row", alignItems: "flex-start", gap: 6, minWidth: 0 },
+  sourceLink: { flex: 1, flexShrink: 1, fontFamily: "Inter_600SemiBold", fontSize: 11, lineHeight: 15 },
   sourceSummaryButton: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 5 },
   sourceSummaryText: { fontFamily: "Inter_600SemiBold", fontSize: 10 },
+  reviewedResourcesBox: { borderRadius: 12, borderWidth: 1, padding: 10, marginTop: 8, gap: 8, minWidth: 0 },
+  reviewedResourcesTitle: { fontFamily: "Inter_700Bold", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5 },
+  reviewedResourceCard: { gap: 3, paddingVertical: 2, minWidth: 0 },
+  reviewedResourceLink: { fontFamily: "Inter_600SemiBold", fontSize: 12, lineHeight: 17, textDecorationLine: "underline", flexShrink: 1 },
+  reviewedResourceDescription: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, flexShrink: 1 },
+  reviewedResourceSafety: { fontFamily: "Inter_500Medium", fontSize: 10, lineHeight: 15, flexShrink: 1 },
   timestamp: { fontFamily: "Inter_400Regular", fontSize: 10 },
 });
 

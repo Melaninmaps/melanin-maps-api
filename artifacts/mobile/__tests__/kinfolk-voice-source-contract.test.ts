@@ -15,6 +15,7 @@ const source = (relativePath: string) => readFileSync(resolve(root, relativePath
 
 describe("Kinfolk native voice source contract", () => {
   it("accepts only transcription-route containers and rejects duration or size before upload", () => {
+    expect(KINFOLK_VOICE_MAX_BYTES).toBe(4 * 1024 * 1024);
     expect(inferKinfolkVoiceMimeType("file:///cache/question.m4a")).toBe("audio/mp4");
     expect(inferKinfolkVoiceMimeType("file:///cache/question.webm?attempt=1")).toBe("audio/webm");
     expect(inferKinfolkVoiceMimeType("file:///cache/question.mp3")).toBeNull();
@@ -47,6 +48,8 @@ describe("Kinfolk native voice source contract", () => {
     expect(classifyKinfolkVoiceUploadFailure({ status: 429 })).toBe("upload_rate_limited");
     expect(classifyKinfolkVoiceUploadFailure({ code: "AUDIO_MIME_MISMATCH" })).toBe("transcription_failed");
     expect(classifyKinfolkVoiceUploadFailure({ code: "TRANSCRIPTION_PROVIDER_FAILED" })).toBe("transcription_failed");
+    expect(classifyKinfolkVoiceUploadFailure({ status: 503, code: "TRANSCRIPTION_UNAVAILABLE" })).toBe("transcription_unavailable");
+    expect(classifyKinfolkVoiceUploadFailure({ code: "UNSUPPORTED_AUDIO_FORMAT" })).toBe("recording_unsupported");
 
     const message = kinfolkVoiceSourceFailureMessage("transcription_failed");
     expect(message).toContain("could not transcribe");
@@ -64,6 +67,8 @@ describe("Kinfolk native voice source contract", () => {
     expect(hook).toContain("clearTemporaryFile(uri)");
     expect(hook).toContain("finally");
     expect(hook).toContain("/api/kinfolk/transcribe");
+    expect(hook).toContain("kinfolkVoiceMultipartFilename(inspection.mimeType)");
+    expect(hook).toContain("payload?.code ?? payload?.error");
     expect(hook).not.toContain("/api/kinfolk/chat");
     expect(hook).not.toContain("console.");
   });

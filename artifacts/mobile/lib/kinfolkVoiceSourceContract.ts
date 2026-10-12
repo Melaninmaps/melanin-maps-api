@@ -6,7 +6,10 @@
  * transcript is held for member review and is never auto-sent as a chat turn.
  */
 export const KINFOLK_VOICE_MAX_DURATION_MS = 60_000;
-export const KINFOLK_VOICE_MAX_BYTES = 25 * 1024 * 1024;
+// Keep the on-device preflight aligned with the authenticated Kinfolk
+// transcription endpoint. Rejecting locally avoids spending a member's voice
+// request on a multipart payload the server must refuse.
+export const KINFOLK_VOICE_MAX_BYTES = 4 * 1024 * 1024;
 export const KINFOLK_VOICE_MIN_BYTES = 100;
 
 export type KinfolkVoiceSourceFailure =
@@ -23,6 +26,7 @@ export type KinfolkVoiceSourceFailure =
   | "upload_failed"
   | "upload_too_large"
   | "upload_rate_limited"
+  | "transcription_unavailable"
   | "transcription_failed"
   | "transcription_empty"
   | "transcript_render_failed";
@@ -99,6 +103,7 @@ export function kinfolkVoiceSourceFailureMessage(failure: KinfolkVoiceSourceFail
     upload_failed: "Your recording could not be uploaded. Please try again or type your question.",
     upload_too_large: "That recording is too large to send. Please record a shorter question or type it.",
     upload_rate_limited: "Voice input is taking a short break. You can type your message and try recording again later.",
+    transcription_unavailable: "Voice transcription is temporarily unavailable. You can type your question or try again later.",
     transcription_failed: "Kinfolk could not transcribe that recording. Please try again or type your question.",
     transcription_empty: "Kinfolk could not hear that clearly. Please try again or type your question.",
     transcript_render_failed: "Your transcript is still available, but it could not be added to the draft. You can edit it or type your question.",
@@ -114,6 +119,10 @@ export function classifyKinfolkVoiceUploadFailure(input: {
   if (input.status === 401 || input.code === "AUTH_REQUIRED") return "authentication_required";
   if (input.status === 413) return "upload_too_large";
   if (input.status === 429 || input.code === "VOICE_INPUT_RATE_LIMITED") return "upload_rate_limited";
+  if (input.code === "TRANSCRIPTION_UNAVAILABLE") return "transcription_unavailable";
+  if (input.code === "AUDIO_DURATION_EXCEEDED") return "recording_too_long";
+  if (input.code === "AUDIO_REQUIRED") return "recording_missing";
+  if (input.code === "UNSUPPORTED_AUDIO_FORMAT") return "recording_unsupported";
   if (
     input.code === "AUDIO_UNREADABLE"
     || input.code === "AUDIO_MIME_MISMATCH"

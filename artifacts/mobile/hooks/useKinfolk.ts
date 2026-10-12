@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getApiBase } from "@/lib/api";
+import { parseSafeSourceLink } from "@/lib/sourceLinks";
 import {
   canRenderKinfolkBusinessCards,
   type KinfolkResponseMeta,
@@ -147,6 +148,23 @@ export type KinfolkCompanionMemoryOffer = {
   prompt: string;
 };
 
+/** Server-reviewed external education only; unreviewed links fail closed. */
+export type KinfolkResourceCard = {
+  id: string;
+  title: string;
+  url: string;
+  description: string;
+  type: "image_gallery" | "health_source" | "community_source" | "entity_source";
+  safetyNote?: string;
+};
+
+function isKinfolkResourceCardType(value: unknown): value is KinfolkResourceCard["type"] {
+  return value === "image_gallery"
+    || value === "health_source"
+    || value === "community_source"
+    || value === "entity_source";
+}
+
 export type InlineMemoryConsentPlan = {
   purpose: string;
   ordinary: Array<{ id: string; label: string; content: string }>;
@@ -203,6 +221,8 @@ export type ChatMessage = {
   mediaLinks?: KinfolkMediaLink[];
   relatedConnections?: KinfolkRelatedConnection[];
   researchStatus?: KinfolkResearchStatus | null;
+  /** Reviewed educational resources, sanitized before primary-chat rendering. */
+  resourceCards?: KinfolkResourceCard[];
 };
 type ConversationHandoffStatus = {
   state: "saved" | "resumed";
@@ -357,6 +377,7 @@ export function useKinfolk() {
           mediaLinks?: KinfolkMediaLink[] | null;
           relatedConnections?: KinfolkRelatedConnection[] | null;
           researchStatus?: KinfolkResearchStatus | null;
+          resourceCards?: KinfolkResourceCard[] | null;
           conversationHandoff?: ConversationHandoffStatus | null;
           sensitiveMemoryConfirmation?: {
             confirmationRequired?: boolean;
@@ -417,6 +438,24 @@ export function useKinfolk() {
           mediaLinks: Array.isArray(data.mediaLinks) ? data.mediaLinks.slice(0, 5) : [],
           relatedConnections: Array.isArray(data.relatedConnections) ? data.relatedConnections.slice(0, 5) : [],
           researchStatus: data.researchStatus ?? null,
+          resourceCards: (data.resourceCards ?? []).flatMap((card) => {
+            const safe = parseSafeSourceLink({ title: card.title, url: card.url });
+            return safe
+              && typeof card.id === "string"
+              && card.id
+              && typeof card.description === "string"
+              && card.description
+              && isKinfolkResourceCardType(card.type)
+              ? [{
+                  id: card.id,
+                  title: safe.title,
+                  url: safe.url,
+                  description: card.description,
+                  type: card.type,
+                  ...(typeof card.safetyNote === "string" && card.safetyNote ? { safetyNote: card.safetyNote } : {}),
+                }]
+              : [];
+          }).slice(0, 3),
         };
         setPendingRetryText(null); // clear retry on success
         setMessages((prev) => [...prev, aiMsg]);

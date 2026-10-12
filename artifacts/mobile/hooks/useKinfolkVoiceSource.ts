@@ -73,6 +73,15 @@ function isCancellation(error: unknown): boolean {
   return error instanceof Error && error.name === "AbortError";
 }
 
+function kinfolkVoiceMultipartFilename(mimeType: string): string {
+  const extension = mimeType === "audio/webm"
+    ? "webm"
+    : mimeType === "audio/wav"
+      ? "wav"
+      : "m4a";
+  return `kinfolk-question.${extension}`;
+}
+
 /**
  * Owns only the microphone-to-transcript lifecycle. It deliberately does not
  * send a chat turn: callers must present and explicitly submit the transcript.
@@ -170,7 +179,10 @@ export function useKinfolkVoiceSource(options: UseKinfolkVoiceSourceOptions): Ki
         durationMs,
       });
       const form = new FormData();
-      form.append("audio", file);
+      // Expo File implements Blob. Supplying the canonical filename also keeps
+      // native multipart bridges that fall back to application/octet-stream
+      // compatible with the server's container inspection.
+      form.append("audio", file, kinfolkVoiceMultipartFilename(inspection.mimeType));
       form.append("durationMs", String(durationMs));
       form.append("mimeType", inspection.mimeType);
       form.append("regionalFlavor", options.regionalFlavor ?? "off");
@@ -185,10 +197,14 @@ export function useKinfolkVoiceSource(options: UseKinfolkVoiceSourceOptions): Ki
         text?: string;
         transcript?: string;
         code?: string;
+        error?: string;
       } | null;
       if (operation !== operationRef.current) return;
       if (!response.ok) {
-        fail(classifyKinfolkVoiceUploadFailure({ status: response.status, code: payload?.code }), durationMs);
+        fail(classifyKinfolkVoiceUploadFailure({
+          status: response.status,
+          code: payload?.code ?? payload?.error,
+        }), durationMs);
         return;
       }
       const transcript = payload?.text?.trim() || payload?.transcript?.trim() || "";
