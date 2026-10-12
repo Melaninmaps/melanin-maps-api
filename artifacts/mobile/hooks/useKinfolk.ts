@@ -1,6 +1,11 @@
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getApiBase } from "@/lib/api";
+import {
+  createKinfolkClientTrace,
+  KINFOLK_CLIENT_TRACE_HEADER,
+  kinfolkTraceReference,
+} from "@/lib/kinfolkRequestTrace";
 import { parseSafeSourceLink } from "@/lib/sourceLinks";
 import {
   canRenderKinfolkBusinessCards,
@@ -327,10 +332,14 @@ export function useKinfolk() {
     setMessages((prev) => [...prev, userMsg]);
     setRequestStartedAt(Date.now());
     setIsLoading(true);
+    const clientTrace = createKinfolkClientTrace();
     let timedOut = false;
 
     try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        [KINFOLK_CLIENT_TRACE_HEADER]: clientTrace,
+      };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
       const chatTimeout = setTimeout(() => {
@@ -518,7 +527,7 @@ export function useKinfolk() {
         const aiMsg: ChatMessage = {
           id: makeId(),
           role: "assistant",
-          content: "My signal dropped for a sec — try again in a moment.",
+          content: `My signal dropped for a sec — try again in a moment. ${kinfolkTraceReference(clientTrace)}`,
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, aiMsg]);
@@ -532,8 +541,8 @@ export function useKinfolk() {
         id: makeId(),
         role: "assistant",
         content: isTimeout
-          ? "KinfolkAI didn't respond in time. Make sure you're connected, then tap Send to try your message again."
-          : "Something went sideways on my end. Tap Send to try again.",
+          ? `KinfolkAI didn't respond in time. Make sure you're connected, then tap Send to try your message again. ${kinfolkTraceReference(clientTrace)}`
+          : `Something went sideways on my end. Tap Send to try again. ${kinfolkTraceReference(clientTrace)}`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiMsg]);

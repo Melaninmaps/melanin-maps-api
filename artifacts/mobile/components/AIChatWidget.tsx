@@ -34,6 +34,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { getApiBase } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import {
+  createKinfolkClientTrace,
+  KINFOLK_CLIENT_TRACE_HEADER,
+  kinfolkTraceReference,
+} from "@/lib/kinfolkRequestTrace";
 import { parseSafeSourceLink } from "@/lib/sourceLinks";
 import { KinfolkAnswerText } from "@/components/KinfolkAnswerText";
 import { KinfolkVoiceSourceControls } from "@/components/KinfolkVoiceSourceControls";
@@ -209,29 +214,40 @@ async function sendToKinfolk(
   resourceCards?: KinfolkResourceCard[];
 }> {
   const base = getApiBase();
-  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const clientTrace = createKinfolkClientTrace();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    [KINFOLK_CLIENT_TRACE_HEADER]: clientTrace,
+  };
   if (token) headers["Authorization"] = `Bearer ${token}`;
-
-  const res = await fetch(`${base}/api/kinfolk/chat`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      message,
-      sessionId,
-      voiceMode,
-      cityHint,
-      clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    }),
-    signal,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${base}/api/kinfolk/chat`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        message,
+        sessionId,
+        voiceMode,
+        cityHint,
+        clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      }),
+      signal,
+    });
+  } catch (cause) {
+    const error = cause instanceof Error ? cause : new Error("Kinfolk request failed");
+    Object.assign(error, { clientTrace });
+    throw error;
+  }
   if (!res.ok) {
     // Extract server error message so the catch block can surface it to the user
     // rather than showing a generic "trouble connecting" for actionable errors
     // (e.g. 429 rate limit, 503 AI key missing, 401 session expired).
     let serverMsg: string | undefined;
     try { serverMsg = ((await res.json()) as { error?: string }).error; } catch { /* ignore */ }
-    const err = new Error(serverMsg ?? `API error ${res.status}`) as Error & { status: number };
+    const err = new Error(serverMsg ?? `API error ${res.status}`) as Error & { status: number; clientTrace: string };
     err.status = res.status;
+    err.clientTrace = clientTrace;
     throw err;
   }
   const data = await res.json() as {
@@ -962,6 +978,7 @@ export function AIChatWidget() {
       // Prefer the server's error message (rate limit, session expired, etc.)
       // over a generic "trouble connecting" — helps the user take the right action.
       const status = (err as { status?: number }).status;
+      const trace = (err as { clientTrace?: string }).clientTrace;
       const serverText = err instanceof Error ? err.message : null;
       const errorText =
         status === 429 && serverText
@@ -970,13 +987,14 @@ export function AIChatWidget() {
             ? "Your Kinfolk session expired. Please sign in again, then resend your question."
             : status === 503
               ? "KinfolkAI is temporarily unavailable. Please try again in a moment."
-              : "Kinfolk couldn't reach the service. Your question is back in the composer — check your connection, then tap Send to retry.";
+              : `Kinfolk couldn't reach the service. Your question is back in the composer — check your connection, then tap Send to retry.${trace ? ` ${kinfolkTraceReference(trace)}` : ""}`;
       if (status === 401) {
         setInput(text);
         void refreshUser();
-      } else if (!status || status === 503) {
-        // Keep a recoverable network or temporary-service question available;
-        // never make a member retype it after a failed transport attempt.
+      } else if (status !== 429) {
+        // Keep every unsuccessful non-rate-limited question available; a
+        // response can fail after the provider route has been reached just as
+        // a device transport can fail before it. Never make a member retype it.
         setInput(text);
       }
       const errMsg: Message = {

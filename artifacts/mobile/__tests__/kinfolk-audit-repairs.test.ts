@@ -40,8 +40,15 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(widget).toContain("setInput(text)");
     expect(widget).toContain("const errorText =");
     expect(widget).toContain("Kinfolk couldn't reach the service. Your question is back in the composer");
-    expect(widget).toContain("} else if (!status || status === 503) {");
+    expect(widget).toContain("} else if (status !== 429) {");
+    expect(widget).toContain("Keep every unsuccessful non-rate-limited question available");
+    expect(widget).toContain("KINFOLK_CLIENT_TRACE_HEADER");
+    expect(widget).toContain("createKinfolkClientTrace");
+    expect(widget).toContain("kinfolkTraceReference(trace)");
     expect(widget.indexOf("if (!token) {")).toBeLessThan(widget.indexOf("const userMsg: Message"));
+    expect(hook).toContain("KINFOLK_CLIENT_TRACE_HEADER");
+    expect(hook).toContain("createKinfolkClientTrace");
+    expect(hook).toContain("kinfolkTraceReference(clientTrace)");
     expect(hook).toContain('content: "Your Kinfolk session needs to be refreshed. Please sign in again before sending your question."');
     expect(hook).toContain("} else if (res.status === 401) {");
     expect(hook).toContain('content: "Your Kinfolk session expired. Please sign in again, then resend your question."');
