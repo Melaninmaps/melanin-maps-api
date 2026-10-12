@@ -4,6 +4,7 @@ import {
   TextInput, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useColors } from "@/hooks/useColors";
 import { getApiBase, getMemberApiHeaders } from "@/lib/api";
 
@@ -28,6 +29,7 @@ type ClaimEligibility = {
 
 export function ClaimBusinessModal({ visible, businessId, businessName, onClose }: Props) {
   const colors = useColors();
+  const router = useRouter();
   const [ownerName, setOwnerName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -160,9 +162,14 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
               <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
                 Your claim is private while our team reviews it. Approval may grant listing-management access; it does not verify the business or its ownership designations.
               </Text>
-              <TouchableOpacity style={[styles.doneBtn, { backgroundColor: colors.primary }]} onPress={handleClose}>
-                <Text style={styles.doneBtnText}>Done</Text>
-              </TouchableOpacity>
+              <View style={styles.successActions}>
+                <TouchableOpacity style={[styles.statusBtn, { borderColor: colors.primary }]} onPress={() => { handleClose(); router.push("/my-business-claims" as never); }}>
+                  <Text style={[styles.statusBtnText, { color: colors.primary }]}>View private status</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.doneBtn, { backgroundColor: colors.primary }]} onPress={handleClose}>
+                  <Text style={styles.doneBtnText}>Done</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
             <ScrollView
@@ -361,6 +368,9 @@ const styles = StyleSheet.create({
   successIcon: { width: 96, height: 96, borderRadius: 48, alignItems: "center", justifyContent: "center", marginBottom: 20 },
   successTitle: { fontFamily: "Inter_700Bold", fontSize: 24, marginBottom: 12, textAlign: "center" },
   successSub: { fontFamily: "Inter_400Regular", fontSize: 15, lineHeight: 23, textAlign: "center", marginBottom: 32 },
-  doneBtn: { borderRadius: 14, paddingHorizontal: 40, paddingVertical: 14 },
+  successActions: { flexDirection: "row", alignItems: "center", gap: 10 },
+  statusBtn: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 18, paddingVertical: 14 },
+  statusBtnText: { fontFamily: "Inter_700Bold", fontSize: 14 },
+  doneBtn: { borderRadius: 14, paddingHorizontal: 22, paddingVertical: 14 },
   doneBtnText: { fontFamily: "Inter_700Bold", fontSize: 16, color: "#fff" },
 });

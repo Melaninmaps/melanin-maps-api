@@ -648,6 +648,13 @@ function RootLayoutNav() {
         }}
       />
       <Stack.Screen
+        name="my-business-claims"
+        options={{
+          headerShown: false,
+          presentation: "card",
+        }}
+      />
+      <Stack.Screen
         name="settings"
         options={{
           headerShown: false,
