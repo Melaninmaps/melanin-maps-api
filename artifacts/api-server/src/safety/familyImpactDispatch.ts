@@ -7,8 +7,8 @@ import {
 } from "./familyImpactIntelligence";
 import {
   openPersistentSafetyLocation,
+  persistentSafetyLocationCanMatchEmergency,
   persistentSafetyLocationFreshnessWindowMs,
-  persistentSafetyLocationIsFresh,
 } from "./persistentSafetyLocation";
 
 export type FamilyImpactProviderOutcome = "provider_accepted" | "provider_rejected" | "retryable_failure";
@@ -287,7 +287,7 @@ export async function dispatchFamilyImpactEvent(
         }));
       }
       if (relationship.persistent_consent && relationship.persistent_encrypted_payload && relationship.persistent_key_version
-        && persistentSafetyLocationIsFresh(relationship.persistent_captured_at)) {
+        && persistentSafetyLocationCanMatchEmergency(relationship.persistent_captured_at, relationship.persistent_accuracy_meters)) {
         try {
           const location = openPersistentSafetyLocation(
             relationship.owner_id,

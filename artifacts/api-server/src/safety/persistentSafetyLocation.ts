@@ -30,6 +30,7 @@ export type PersistentSafetyLocationRuntimeState = Readonly<{
   collectionEnabled: boolean;
   encryptionReady: boolean;
   freshnessWindowMs: number | null;
+  accuracyThresholdMeters: number | null;
   disclosureVersion: typeof PERSISTENT_SAFETY_LOCATION_CONSENT_VERSION;
   disclosure: typeof PERSISTENT_SAFETY_LOCATION_DISCLOSURE;
 }>;
@@ -66,16 +67,35 @@ export function persistentSafetyLocationFreshnessWindowMs(
   return seconds * 1000;
 }
 
+/**
+ * Accuracy is a separate operating-policy decision. It must be set before
+ * persistent fixes can support an emergency classification; the broad input
+ * validation ceiling is intentionally not a delivery threshold.
+ */
+export function persistentSafetyLocationAccuracyThresholdMeters(
+  environment: NodeJS.ProcessEnv = process.env,
+): number | null {
+  const meters = Number(environment.SAFETY_PERSISTENT_LOCATION_MAX_ACCURACY_METERS);
+  if (!Number.isInteger(meters) || meters < 5 || meters > 5_000) return null;
+  return meters;
+}
+
 export function persistentSafetyLocationRuntimeState(
   environment: NodeJS.ProcessEnv = process.env,
 ): PersistentSafetyLocationRuntimeState {
   const encryptionReady = parsePersistentSafetyLocationKeyring(
     environment.MWM_PERSISTENT_SAFETY_LOCATION_ENCRYPTION_KEYS,
   ).length > 0;
+  const freshnessWindowMs = persistentSafetyLocationFreshnessWindowMs(environment);
+  const accuracyThresholdMeters = persistentSafetyLocationAccuracyThresholdMeters(environment);
   return {
-    collectionEnabled: environment.SAFETY_PERSISTENT_LOCATION_COLLECTION_ENABLED === "true" && encryptionReady,
+    collectionEnabled: environment.SAFETY_PERSISTENT_LOCATION_COLLECTION_ENABLED === "true"
+      && encryptionReady
+      && freshnessWindowMs !== null
+      && accuracyThresholdMeters !== null,
     encryptionReady,
-    freshnessWindowMs: persistentSafetyLocationFreshnessWindowMs(environment),
+    freshnessWindowMs,
+    accuracyThresholdMeters,
     disclosureVersion: PERSISTENT_SAFETY_LOCATION_CONSENT_VERSION,
     disclosure: PERSISTENT_SAFETY_LOCATION_DISCLOSURE,
   };
@@ -195,4 +215,19 @@ export function persistentSafetyLocationIsFresh(
   if (!freshnessWindowMs || !capturedAt || !Number.isFinite(capturedAt.getTime())) return false;
   const time = capturedAt.getTime();
   return time <= now && now - time <= freshnessWindowMs;
+}
+
+export function persistentSafetyLocationCanMatchEmergency(
+  capturedAt: Date | null | undefined,
+  accuracyMeters: number | null | undefined,
+  now = Date.now(),
+  environment: NodeJS.ProcessEnv = process.env,
+): boolean {
+  const threshold = persistentSafetyLocationAccuracyThresholdMeters(environment);
+  return persistentSafetyLocationIsFresh(capturedAt, now, environment)
+    && threshold !== null
+    && typeof accuracyMeters === "number"
+    && Number.isFinite(accuracyMeters)
+    && accuracyMeters >= 0
+    && accuracyMeters <= threshold;
 }

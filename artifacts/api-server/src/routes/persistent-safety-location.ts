@@ -6,7 +6,7 @@ import {
   PERSISTENT_SAFETY_LOCATION_DISCLOSURE,
   PERSISTENT_SAFETY_LOCATION_SCOPE,
   parsePersistentSafetyLocationFix,
-  persistentSafetyLocationIsFresh,
+  persistentSafetyLocationCanMatchEmergency,
   persistentSafetyLocationRuntimeState,
   sealPersistentSafetyLocation,
   type PersistentSafetyPermissionState,
@@ -105,7 +105,7 @@ router.get("/safety/persistent-location", async (req, res) => {
     if (!row) { res.status(404).json({ error: "Safety Location account is unavailable" }); return; }
     const active = Boolean(row.consented_at && !row.revoked_at);
     const paused = Boolean(row.paused_at);
-    const current = active && !paused && persistentSafetyLocationIsFresh(row.captured_at);
+    const current = active && !paused && persistentSafetyLocationCanMatchEmergency(row.captured_at, row.accuracy_meters);
     res.json({
       available: runtime.collectionEnabled,
       encryptionReady: runtime.encryptionReady,
@@ -122,6 +122,7 @@ router.get("/safety/persistent-location", async (req, res) => {
       // The configured freshness window is deliberately not returned as a
       // protection promise. It is an operational policy and can be unavailable.
       freshnessPolicyConfigured: runtime.freshnessWindowMs !== null,
+      accuracyPolicyConfigured: runtime.accuracyThresholdMeters !== null,
     });
   } catch (error) {
     req.log?.error({

@@ -66,6 +66,7 @@ function setSafetyEnvironment(databaseUrl: string): void {
     SAFETY_FAMILY_IMPACT_DELIVERY_ENABLED: "false",
     SAFETY_PERSISTENT_LOCATION_COLLECTION_ENABLED: "true",
     SAFETY_PERSISTENT_LOCATION_MAX_AGE_SECONDS: "600",
+    SAFETY_PERSISTENT_LOCATION_MAX_ACCURACY_METERS: "100",
     MWM_PERSISTENT_SAFETY_LOCATION_ENCRYPTION_KEYS: `v1:${Buffer.alloc(32, 29).toString("base64")}`,
     KINFOLK_MEMORY_STAGING_ISOLATION: "true",
     KINFOLK_SERIOUS_THREAT_PRIVATE_REVIEW_STAGING_ENABLED: "true",
@@ -293,9 +294,11 @@ async function initialPhase(databaseUrl: string): Promise<void> {
     const currentImpact = await request(app).get(`/safety/family-impact/events/${CURRENT_EVENT}/impact`).set(as(CONTACT));
     assert(currentImpact.status === 200 && currentImpact.body.impact === "potentially_affected", "active temporary sharing may produce only a coarse impact classification");
     assert(!/latitude|longitude|updated/i.test(JSON.stringify(currentImpact.body)), "Family Impact responses must not disclose coordinates or timestamps");
+    const stoppedTemporary = await request(app).delete(`/safety/location-shares/${String(live.body.share.id)}`).set(as(OWNER));
+    assert(stoppedTemporary.status === 200 && stoppedTemporary.body.ok === true, "the temporary foreground session can be stopped without revoking Persistent Safety Location");
     await ingest(app, PERSISTENT_EVENT);
     const persistentImpact = await request(app).get(`/safety/family-impact/events/${PERSISTENT_EVENT}/impact`).set(as(CONTACT));
-    assert(persistentImpact.status === 200 && persistentImpact.body.impact === "potentially_affected" && !/latitude|longitude|updated/i.test(JSON.stringify(persistentImpact.body)), "persistent MWM-only location may produce only a coarse, separately consented emergency classification");
+    assert(persistentImpact.status === 200 && persistentImpact.body.impact === "potentially_affected" && !/latitude|longitude|updated/i.test(JSON.stringify(persistentImpact.body)), "persistent MWM-only location may produce only a coarse, separately consented emergency classification after temporary sharing stops");
 
     const bridgeBody = { ...eventBody(STAGING_BRIDGE_EVENT), sourceEventId: STAGING_BRIDGE_EVENT };
     const bridgeDenied = await request(app).post("/internal/safety/family-impact/staging-validation/events").send(bridgeBody);

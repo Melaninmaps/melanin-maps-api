@@ -33,7 +33,7 @@ describe("Persistent Safety Location API privacy contract", () => {
     expect(dispatch).toContain("mwm_persistent_safety_location_contact_consents");
     expect(dispatch).toContain("mwm_persistent_safety_location_authorizations");
     expect(dispatch).toContain("openPersistentSafetyLocation");
-    expect(dispatch).toContain("persistentSafetyLocationIsFresh");
+    expect(dispatch).toContain("persistentSafetyLocationCanMatchEmergency");
     expect(dispatch).toContain("emergency_location_evaluated");
     expect(dispatch).toContain("deliveryRequired(impact.status)");
   });

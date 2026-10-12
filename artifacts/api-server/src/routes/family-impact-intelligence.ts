@@ -5,8 +5,8 @@ import { classifyFamilyImpact, familyImpactDisclosure, FAMILY_IMPACT_LOCATION_SC
 import { cancelFamilyImpactEvent, dispatchFamilyImpactEvent } from "../safety/familyImpactDispatch";
 import {
   openPersistentSafetyLocation,
+  persistentSafetyLocationCanMatchEmergency,
   persistentSafetyLocationFreshnessWindowMs,
-  persistentSafetyLocationIsFresh,
 } from "../safety/persistentSafetyLocation";
 
 const router = Router();
@@ -613,7 +613,7 @@ router.get("/safety/family-impact/events/:eventId/impact", async (req, res) => {
         }));
       }
       if (current.persistent_consent && current.persistent_encrypted_payload && current.persistent_key_version
-        && persistentSafetyLocationIsFresh(current.persistent_captured_at)) {
+        && persistentSafetyLocationCanMatchEmergency(current.persistent_captured_at, current.persistent_accuracy_meters)) {
         try {
           const location = openPersistentSafetyLocation(current.owner_id, current.persistent_encrypted_payload, current.persistent_key_version);
           classifications.push(classifyFamilyImpact(boundary, {
