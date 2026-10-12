@@ -37,6 +37,20 @@ describe("consented trusted live location sharing", () => {
     expect(lifecycle).toContain("owner_enabled = false");
   });
 
+  it("scrubs retained coordinates when a recipient encounters an expired session", () => {
+    const route = source("../routes/location-shares.ts");
+    const expiryReadBoundary = route.slice(
+      route.indexOf('router.get("/safety/location-shares/:token/view"'),
+      route.indexOf('router.delete("/safety/location-shares/:id"'),
+    );
+
+    expect(expiryReadBoundary).toContain("expires_at <= NOW()");
+    expect(expiryReadBoundary).toContain("SET is_active = false");
+    expect(expiryReadBoundary).toContain("current_lat = NULL");
+    expect(expiryReadBoundary).toContain("current_lng = NULL");
+    expect(expiryReadBoundary).toContain("last_updated_at = NULL");
+  });
+
   it("rechecks recipient authorization on every read and avoids recipient-visible update timestamps", () => {
     const route = source("../routes/location-shares.ts");
     const publicProjection = route.slice(

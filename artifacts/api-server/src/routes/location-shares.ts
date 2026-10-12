@@ -353,6 +353,22 @@ router.get("/safety/location-shares/:token/view", async (req: Request, res: Resp
     const share = result.rows[0];
     if (!share) { res.status(403).json({ error: "Recipient authorization required" }); return; }
     if (!share.is_active || new Date() > share.expires_at) {
+      // Expiration is a hard retention boundary, not just a read denial. Clear
+      // the last coordinate while the recipient authorization is still scoped
+      // to this exact session; no background sweep or broader location cleanup
+      // is required for the recipient-facing boundary to fail closed.
+      await pool.query(
+        `UPDATE location_shares
+            SET is_active = false,
+                current_lat = NULL,
+                current_lng = NULL,
+                last_updated_at = NULL
+          WHERE share_token = $1
+            AND recipient_user_id = $2
+            AND is_active = true
+            AND expires_at <= NOW()`,
+        [req.params["token"], userId],
+      );
       res.status(410).json({ error: "This location share has expired" }); return;
     }
     if (
