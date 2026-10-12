@@ -129,6 +129,17 @@ async function stagingFixtureTrustedShareIds(sourceEventId: string): Promise<str
           )
           OR EXISTS (
             SELECT 1
+              FROM mwm_persistent_safety_location_contact_consents persistent_consent
+              JOIN mwm_persistent_safety_location_authorizations authorization_record
+                ON authorization_record.owner_id = persistent_consent.owner_id
+             WHERE persistent_consent.trusted_share_id = tss.id
+               AND persistent_consent.owner_id = tss.owner_id
+               AND persistent_consent.revoked_at IS NULL
+               AND authorization_record.revoked_at IS NULL
+               AND authorization_record.paused_at IS NULL
+          )
+          OR EXISTS (
+            SELECT 1
               FROM family_impact_delivery_attempts attempt
               JOIN family_impact_events event ON event.id = attempt.event_id
              WHERE attempt.trusted_share_id = tss.id AND event.source_event_id = $1

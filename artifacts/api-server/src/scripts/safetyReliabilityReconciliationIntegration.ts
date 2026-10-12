@@ -304,6 +304,11 @@ async function initialPhase(databaseUrl: string): Promise<void> {
     const persistentImpact = await request(app).get(`/safety/family-impact/events/${PERSISTENT_EVENT}/impact`).set(as(CONTACT));
     assert(persistentImpact.status === 200 && persistentImpact.body.impact === "potentially_affected" && !/latitude|longitude|updated/i.test(JSON.stringify(persistentImpact.body)), "persistent MWM-only location may produce only a coarse, separately consented emergency classification after temporary sharing stops");
 
+    const temporaryConsentDisabled = await request(app)
+      .put(`/safety/family-impact/consents/${shareId}`)
+      .set(as(OWNER))
+      .send({ enabled: false });
+    assert(temporaryConsentDisabled.status === 200 && temporaryConsentDisabled.body.enabled === false, "the temporary Family Impact consent must be independently revocable before persistent-only fixture dispatch");
     const bridgeBody = { ...eventBody(STAGING_BRIDGE_EVENT), sourceEventId: STAGING_BRIDGE_EVENT };
     const bridgeDenied = await request(app).post("/internal/safety/family-impact/staging-validation/events").send(bridgeBody);
     assert(bridgeDenied.status === 404, "synthetic dispatch bridge must be unavailable without the isolated staging fixture gate");
@@ -325,6 +330,11 @@ async function initialPhase(databaseUrl: string): Promise<void> {
       .delete(`/internal/safety/family-impact/staging-validation/events/${STAGING_BRIDGE_EVENT}`)
       .set("x-kinfolk-staging-fixture", "enable");
     assert(bridgeCleanup.status === 200 && bridgeCleanup.body.removed === 1, "synthetic bridge cleanup must delete only its own fixture event and dependent audit rows");
+    const temporaryConsentRestored = await request(app)
+      .put(`/safety/family-impact/consents/${shareId}`)
+      .set(as(OWNER))
+      .send({ enabled: true, locationScope: "active_temporary_location_only", consentVersion: "family-impact-v1" });
+    assert(temporaryConsentRestored.status === 200 && temporaryConsentRestored.body.enabled === true, "temporary Family Impact consent restoration must remain separate from persistent consent");
     const reviewedViolence = await request(app)
       .post("/internal/safety/family-impact/staging-validation/reviewed-violence-events")
       .set("x-kinfolk-staging-fixture", "enable")
