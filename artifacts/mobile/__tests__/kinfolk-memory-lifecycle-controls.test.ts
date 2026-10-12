@@ -6,6 +6,10 @@ const inlineMemoryConsent = readFileSync(
   new URL("../components/KinfolkInlineMemoryConsent.tsx", import.meta.url),
   "utf8",
 );
+const sensitiveMemoryConfirmation = readFileSync(
+  new URL("../components/KinfolkSensitiveMemoryConfirmation.tsx", import.meta.url),
+  "utf8",
+);
 
 describe("native generic private-memory lifecycle controls", () => {
   it("lists reviewable paused notes and sends only the owner-scoped pause mutation", () => {
@@ -51,5 +55,11 @@ describe("native generic private-memory lifecycle controls", () => {
     expect(memory).toContain("/api/kinfolk/sensitive-memories/${encodeURIComponent(memory.id)}");
     expect(memory).toContain("Sensitive private memory");
     expect(memory).toContain("Only mention if I ask");
+  });
+
+  it("makes the separate sensitive-memory confirmation match its relevant-use promise", () => {
+    expect(sensitiveMemoryConfirmation).toContain("sensitiveRestricted: false");
+    expect(sensitiveMemoryConfirmation).toContain("Save this sensitive detail for relevant use?");
+    expect(sensitiveMemoryConfirmation).toContain("Save for relevant use");
   });
 });

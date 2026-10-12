@@ -13715,7 +13715,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         !protectedReply.blocked &&
         !isPrivateImageTurn &&
         !(travelPlanning && destination && !hasGovernedItineraryCoverage),
-    });
+    }) ?? (
+      consentedHealthPopulationContext &&
+      healthEvidenceBlock &&
+      modelPayload.valid &&
+      !protectedReply.blocked
+        ? {
+            applied: true as const,
+            // This confirms use without disclosing the sensitive saved identity.
+            message: "Your saved preference helped tailor this answer.",
+          }
+        : null
+    );
     res.json({
       sessionId: finalSessionId,
       reply: memberFacingReply,
