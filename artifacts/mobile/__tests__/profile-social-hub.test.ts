@@ -13,6 +13,8 @@ describe("mobile social profile hub", () => {
   const legacyMemberProfile = source("../app/user-profile/[userId].tsx");
   const connections = source("../app/connections.tsx");
   const layout = source("../app/_layout.tsx");
+  const socialRecap = source("../components/MemberSocialProfileRecap.tsx");
+  const displaySettings = source("../app/profile-presentation-settings.tsx");
 
   it("keeps social sections as quick links to existing mobile capabilities", () => {
     expect(profile).toContain("Your social hub");
@@ -49,5 +51,23 @@ describe("mobile social profile hub", () => {
     expect(layout).toContain('name="circles"');
     expect(layout).toContain('name="settings"');
     expect(layout).toContain('name="privacy"');
+  });
+
+  it("makes a real Community recap the primary profile while moving optional display details to settings", () => {
+    expect(profile).toContain("MemberSocialProfileRecap");
+    expect(layout).toContain('name="profile-presentation-settings"');
+    expect(profile).toContain("{false && <>");
+    expect(settings).toContain('label: "Profile Display & Badges"');
+    expect(settings).toContain('route: "/profile-presentation-settings"');
+    expect(layout).toContain('name="profile-presentation-settings"');
+    expect(socialRecap).toContain("taggedUserId");
+    expect(socialRecap).toContain("Photos & videos");
+    expect(socialRecap).toContain("CommunityPostCard");
+    expect(socialRecap).toContain("getMemberApiHeaders");
+    expect(socialRecap).toContain('post.visibility !== "public" && post.visibility !== "followers_only"');
+    expect(displaySettings).toContain("showProfessionalDetails");
+    expect(displaySettings).toContain("showBadges");
+    expect(displaySettings).toContain("The profile will never show unearned badges or achievement progress.");
+    expect(displaySettings).toContain("profile-cover");
   });
 });

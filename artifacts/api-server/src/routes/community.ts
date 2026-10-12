@@ -367,6 +367,11 @@ router.get("/community/posts", async (req: Request, res: Response) => {
     const category = typeof req.query.category === "string" ? req.query.category : undefined;
     const postType = typeof req.query.postType === "string" ? req.query.postType : undefined;
     const authorId = typeof req.query.authorId === "string" ? req.query.authorId : undefined;
+    const taggedUserId = typeof req.query.taggedUserId === "string" ? req.query.taggedUserId : undefined;
+    if (authorId && taggedUserId) {
+      res.status(400).json({ error: "Choose either authored posts or tagged posts" });
+      return;
+    }
     const requestedFeed = typeof req.query.feed === "string" ? req.query.feed : "everyone";
     const feedMode: CommunityFeedMode = ["everyone", "following", "foryou"].includes(requestedFeed)
       ? requestedFeed as CommunityFeedMode
@@ -404,6 +409,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
           viewerId: req.user.id,
           feedMode,
           authorId,
+          taggedUserId,
           limit,
           offset,
         });
@@ -897,6 +903,40 @@ router.post("/community/posts", async (req: Request, res: Response) => {
     ].slice(0, 10);
 
     if (mentionedUserIds.length > 0 && post) {
+      // Keep a real member-tag record for social profiles. The association is
+      // created only for members the author can legitimately tag: blocks and
+      // private-profile follower boundaries are checked before persistence.
+      // Feed reads repeat visibility, group, moderation, and block checks.
+      try {
+        await pool.query(
+          `INSERT INTO community_post_member_tags_v1 (post_id, tagged_user_id, tagged_by_user_id)
+           SELECT $1, target.id, $2
+             FROM users target
+            WHERE target.id = ANY($3::varchar[])
+              AND target.id <> $2
+              AND NOT EXISTS (
+                SELECT 1 FROM user_blocks ub
+                 WHERE (ub.blocker_id = $2 AND ub.blocked_id = target.id)
+                    OR (ub.blocker_id = target.id AND ub.blocked_id = $2)
+              )
+              AND (
+                COALESCE(target.is_private, false) = false
+                OR EXISTS (
+                  SELECT 1 FROM user_follows uf
+                   WHERE uf.follower_id = $2
+                     AND uf.following_id = target.id
+                     AND uf.status = 'accepted'
+                )
+              )
+           ON CONFLICT (post_id, tagged_user_id) DO NOTHING`,
+          [post.id, req.user.id, mentionedUserIds],
+        );
+      } catch (error) {
+        // The optional, additive tag table must not block an otherwise valid
+        // Community post during a rolling deployment. It is never substituted
+        // with client-only tag data.
+        req.log.warn({ err: error }, "Community post member-tag persistence unavailable");
+      }
       for (const uid of mentionedUserIds) {
         sendPushToUser(uid, {
           title: `${post.authorName} mentioned you`,

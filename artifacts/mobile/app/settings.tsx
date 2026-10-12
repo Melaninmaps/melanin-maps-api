@@ -50,6 +50,7 @@ export default function SettingsScreen() {
       summary: "Profile, identity, accounts, and business submission tools",
       rows: [
         { id: "profile", icon: "user", label: "Edit Profile", sub: "Name, photo, bio", route: "/(tabs)/profile" },
+        { id: "profile-display", icon: "layout", label: "Profile Display & Badges", sub: "Cover, social profile privacy, and earned badges", route: "/profile-presentation-settings" },
         { id: "identity", icon: "heart", label: "Gender & Pronouns", sub: "Private — used only by Kinfolk", route: "/identity-context" },
         { id: "password", icon: "lock", label: "Change Password", sub: "Managed through your account provider", route: null },
         { id: "connected", icon: "link", label: "Connected Accounts", sub: "Managed through your account provider", route: null },

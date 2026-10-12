@@ -1153,6 +1153,10 @@ function RootLayoutNav() {
         name="user-profile"
         options={{ headerShown: false, presentation: "card" }}
       />
+      <Stack.Screen
+        name="profile-presentation-settings"
+        options={{ headerShown: false, presentation: "card" }}
+      />
     </Stack>
   );
 }

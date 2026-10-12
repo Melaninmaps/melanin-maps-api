@@ -82,6 +82,8 @@ type CommunityFeedQueryInput = {
   viewerId: string;
   feedMode: CommunityFeedMode;
   authorId?: string;
+  /** Posts in which this member was explicitly tagged by the post author. */
+  taggedUserId?: string;
   limit: number;
   offset: number;
 };
@@ -281,6 +283,32 @@ export function buildCommunityFeedQuery(
   options: CommunityFeedQueryOptions = {},
 ): CommunitySqlQuery {
   const projection = communityPostProjection(capabilities);
+  if (input.taggedUserId) {
+    const relation = acceptedRelationship("$2");
+    const feedVisibility = postIsVisibleInCommunityFeed("$2");
+    return {
+      text: `SELECT ${projection}
+        FROM community_posts cp
+        LEFT JOIN users u ON u.id = cp.author_id
+        WHERE EXISTS (
+          SELECT 1 FROM community_post_member_tags_v1 profile_tags
+           WHERE profile_tags.post_id = cp.id
+             AND profile_tags.tagged_user_id = $1
+        )
+          AND ${feedVisibility}
+          AND (${POST_REQUIRES_MODERATION} = false OR cp.author_id = $2)
+          AND ${INTERNAL_CONTENT_EXCLUSION}
+          AND ${notBlocked("$2")}
+          AND (
+            cp.author_id = $2
+            OR (${relation} AND ${POST_VISIBILITY} IN ('public', 'followers_only'))
+            OR (${POST_VISIBILITY} = 'public' AND (${AUTHOR_IS_PRIVATE} = false OR u.id IS NULL))
+          )
+        ORDER BY cp.created_at DESC
+        LIMIT $3 OFFSET $4`,
+      values: [input.taggedUserId, input.viewerId, input.limit, input.offset],
+    };
+  }
   if (input.authorId) {
     const relation = acceptedRelationship("$2");
     const feedVisibility = postIsVisibleInCommunityFeed("$2");
@@ -453,7 +481,7 @@ export async function fetchCommunityFeedRows(
   // older public posts only when the recent, privacy-filtered for-you result is
   // empty. Visibility, moderation, block, and internal-test exclusions remain
   // unchanged; this changes ranking reach, not access control.
-  if (!input.authorId && input.feedMode === "foryou" && rows.length === 0) {
+  if (!input.authorId && !input.taggedUserId && input.feedMode === "foryou" && rows.length === 0) {
     query = buildCommunityFeedQuery(input, ALL_COMMUNITY_FEED_CAPABILITIES, {
       recentOnly: false,
     });
@@ -467,7 +495,7 @@ export async function fetchCommunityFeedRows(
       ({ rows } = await queryable.query<CommunityPostRow>(query.text, query.values));
     }
   }
-  if (input.authorId || input.feedMode !== "foryou") return rows;
+  if (input.authorId || input.taggedUserId || input.feedMode !== "foryou") return rows;
 
   const [preferences, relatedIds] = await Promise.all([
     loadForYouPreferences(queryable, input.viewerId),

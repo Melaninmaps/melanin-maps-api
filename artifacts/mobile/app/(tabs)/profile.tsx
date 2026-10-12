@@ -44,6 +44,7 @@ import { SavedSpotsShare } from "@/components/SavedSpotsShare";
 import { CommunityImpactCard } from "@/components/CommunityImpactCard";
 import { useShowLoveReceived } from "@/hooks/useShowLove";
 import { ShowLoveCard } from "@/components/ShowLoveCard";
+import { MemberSocialProfileRecap } from "@/components/MemberSocialProfileRecap";
 
 const SOCIAL_PROFILE_ACTIONS = [
   { icon: "users" as const, label: "Connections", detail: "Followers, following & requests", route: "/connections" as const },
@@ -953,7 +954,13 @@ export default function ProfileScreen() {
         </View>
       ) : (
         <>
-          <View style={[styles.profileCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
+          {user ? <MemberSocialProfileRecap
+            userId={user.id}
+            fallbackName={{ firstName: user.firstName, lastName: user.lastName, username: (user as any)?.username ?? null }}
+            onEditProfile={openEditModal}
+            onEditAvatar={pickProfileImage}
+          /> : null}
+          {false && <View style={[styles.profileCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
             <TouchableOpacity onPress={pickProfileImage} activeOpacity={0.8} style={styles.avatarWrap} disabled={uploadingAvatar}>
               {localAvatarUri || user?.profileImageUrl ? (
                 <Image
@@ -978,7 +985,7 @@ export default function ProfileScreen() {
               ) : null}
               {user?.jobTitle || user?.industry ? (
                 <Text style={[styles.industryLine, { color: colors.mutedForeground }]}>
-                  {[user.jobTitle, user.industry].filter(Boolean).join(" · ")}
+                  {[user?.jobTitle, user?.industry].filter(Boolean).join(" · ")}
                 </Text>
               ) : null}
               {(user as any)?.bio ? (
@@ -996,7 +1003,7 @@ export default function ProfileScreen() {
             <TouchableOpacity activeOpacity={0.85} style={[styles.editBtn, { borderColor: colors.border }]} onPress={openEditModal}>
               <Feather name="edit-2" size={15} color={colors.primary} />
             </TouchableOpacity>
-          </View>
+          </View>}
 
           {isAuthenticated && (
             <StatusComposer
@@ -1006,6 +1013,7 @@ export default function ProfileScreen() {
             />
           )}
 
+          {false && <>
           {/* Business management remains reachable from Settings, not the social Profile. */}
           {false && <TouchableOpacity
             style={[styles.listBizBanner, { backgroundColor: colors.primary }]}
@@ -1032,7 +1040,7 @@ export default function ProfileScreen() {
             <View style={[styles.profActionsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={[styles.profActionsHeader]}>
                 <Feather name="briefcase" size={16} color="#1D4ED8" />
-                <Text style={[styles.profActionsTitle, { color: colors.foreground }]}>{user.industry}</Text>
+                <Text style={[styles.profActionsTitle, { color: colors.foreground }]}>{user?.industry}</Text>
               </View>
               <View style={styles.profActionsRow}>
                 <TouchableOpacity
@@ -1121,9 +1129,11 @@ export default function ProfileScreen() {
               <BrandQuoteBanner category="community" variant="strip" style={{ marginTop: 4 }} />
             </View>
           )}
+          </>}
         </>
       )}
 
+{false && <>
       {isAuthenticated && (
         <BadgeSection savedCount={savedIds.length} isEarlyTester={false} />
       )}
@@ -1131,7 +1141,7 @@ export default function ProfileScreen() {
       {isAuthenticated && user?.id && (
         <View style={{ paddingHorizontal: 16, marginBottom: 4 }}>
           <CommunityImpactCard
-            userId={user.id}
+            userId={user?.id ?? ""}
             displayName={[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Community Member"}
             showOwnedBusinesses
           />
@@ -1157,10 +1167,10 @@ export default function ProfileScreen() {
       {isAuthenticated && trustData && (
         <View style={{ paddingHorizontal: 16, marginBottom: 4 }}>
           <TrustLevelCard
-            trustLevel={trustData.trustLevel}
-            reputationScore={trustData.reputationScore}
-            helpfulReviewsCount={trustData.helpfulReviewsCount}
-            progress={trustData.progress}
+            trustLevel={trustData?.trustLevel ?? 1}
+            reputationScore={trustData?.reputationScore ?? 0}
+            helpfulReviewsCount={trustData?.helpfulReviewsCount ?? 0}
+            progress={trustData?.progress ?? { current: { label: "Member", description: "", badge: "" }, next: null, requirements: [] }}
             onVerifyPress={() => router.push("/trust-verification" as any)}
           />
         </View>
@@ -1270,6 +1280,7 @@ export default function ProfileScreen() {
           <Feather name="chevron-right" size={18} color="rgba(255,255,255,0.4)" />
         </TouchableOpacity>
       )}
+      </>}
 
       <Modal visible={showEditModal} animationType="slide" transparent presentationStyle="overFullScreen" onRequestClose={closeEditModal}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.modalOverlay}>
@@ -1397,6 +1408,7 @@ export default function ProfileScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
+{false && <>
       {isAuthenticated && reviewCount === 0 && savedIds.length === 0 && pointsTotal === 0 && (
         <View style={[styles.gettingStartedCard, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.foreground }]}>
           <Text style={[styles.gettingStartedTitle, { color: colors.foreground }]}>Get Connected</Text>
@@ -1437,6 +1449,7 @@ export default function ProfileScreen() {
           authorColor="#CA922B"
         />
       )}
+      </>}
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>

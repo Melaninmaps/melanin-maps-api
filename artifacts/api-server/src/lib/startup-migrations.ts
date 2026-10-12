@@ -129,6 +129,32 @@ export function getProtectedAdminAccessRecoveryStatus():
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
+    // Separate member-controlled presentation from account records. All optional
+    // personal fields default to hidden; this migration never copies profile,
+    // location, birthday, badge, or account data into public storage.
+    name: "member_profile_social_presentation_v1",
+    sql: `CREATE TABLE IF NOT EXISTS member_profile_presentations_v1 (
+      user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      cover_object_key TEXT,
+      show_age BOOLEAN NOT NULL DEFAULT false,
+      show_birthday BOOLEAN NOT NULL DEFAULT false,
+      show_location BOOLEAN NOT NULL DEFAULT false,
+      show_professional_details BOOLEAN NOT NULL DEFAULT false,
+      show_badges BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS community_post_member_tags_v1 (
+      post_id VARCHAR(255) NOT NULL REFERENCES community_posts(id) ON DELETE CASCADE,
+      tagged_user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      tagged_by_user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (post_id, tagged_user_id)
+    );
+    CREATE INDEX IF NOT EXISTS community_post_member_tags_profile_idx
+      ON community_post_member_tags_v1 (tagged_user_id, created_at DESC);`,
+  },
+  {
     // Approval is distinct from activation. This table stores only an
     // email-bound token hash and minimized lifecycle state; it never backfills
     // an account, alters an existing password, or stores a plaintext token.
