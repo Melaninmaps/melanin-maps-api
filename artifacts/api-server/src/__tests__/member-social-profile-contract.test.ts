@@ -23,7 +23,8 @@ describe("member social profile presentation", () => {
     expect(presentation).toContain("canPresentOptionalPersonalDetails");
     expect(users).toContain('router.put("/users/me/profile-presentation"');
     expect(users).toContain("canShowOptionalDetails && presentation.showProfessionalDetails");
-    expect(users).toContain("callerId === targetId ?");
+    expect(users).toContain("...(canSeeContent ? { followersCount, followingCount } : {})");
+    expect(users).toContain("public profiles and accepted followers may see them");
   });
 
   it("uses authenticated no-store cover delivery instead of a public object URL", () => {

@@ -60,6 +60,53 @@ interface UserProfile {
 type EarnedBadge = { achievementType: string; earnedAt?: string | null };
 
 type FollowStatus = "not_following" | "following" | "pending";
+type ProfileTab = "posts" | "media" | "tagged" | "notes";
+type ProfileNote = {
+  id: string;
+  content: string;
+  createdAt?: string | null;
+  taggerFirstName?: string | null;
+  taggerLastName?: string | null;
+  taggerUsername?: string | null;
+};
+
+function toCommunityPost(post: any): CommunityPost {
+  return {
+    id: post.id,
+    author: post.authorName ?? "Community Member",
+    authorInitials: post.authorInitials ?? "CM",
+    authorColor: post.authorColor ?? "#CA922B",
+    authorId: post.authorId,
+    content: post.content,
+    likes: post.upvotes ?? 0,
+    comments: post.commentsCount ?? 0,
+    timeAgo: timeAgo(post.createdAt),
+    category: post.category ?? "general",
+    postType: post.postType ?? "community",
+    liked: false,
+    businessId: post.businessId,
+    businessName: post.businessName,
+    businessLink: post.businessLink,
+    mediaUrls: parseMediaUrls(post.mediaUrls),
+    savedPlaceId: post.savedPlaceId,
+    locationTag: post.locationTag,
+    locationType: post.locationType,
+    topicTag: post.topicTag,
+    isPrivateTopic: post.isPrivateTopic,
+    hasContentWarning: post.hasContentWarning,
+    contentWarningType: post.contentWarningType,
+    linkUrl: post.linkUrl,
+    linkTitle: post.linkTitle,
+    linkDescription: post.linkDescription,
+    linkDomain: post.linkDomain,
+    linkFavicon: post.linkFavicon,
+    repostId: post.repostId,
+    repostAuthorName: post.repostAuthorName,
+    repostAuthorInitials: post.repostAuthorInitials,
+    repostContent: post.repostContent,
+    visibility: post.visibility,
+  };
+}
 
 const MEMBER_BADGE: Record<string, { label: string; color: string }> = {
   navigator:   { label: "Navigator",   color: "#2D7A4F" },
@@ -77,6 +124,10 @@ export default function VisitorProfileScreen() {
   const [followStatus, setFollowStatus] = useState<FollowStatus>("not_following");
   const [canSeeContent, setCanSeeContent] = useState(true);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [taggedPosts, setTaggedPosts] = useState<CommunityPost[]>([]);
+  const [profileNotes, setProfileNotes] = useState<ProfileNote[]>([]);
+  const [activeTab, setActiveTab] = useState<ProfileTab>("posts");
+  const [canReceiveDirectMessages, setCanReceiveDirectMessages] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
@@ -101,7 +152,7 @@ export default function VisitorProfileScreen() {
         setProfileLoadError(res.status >= 500 ? "retry" : "unavailable");
         return;
       }
-      const data = await res.json() as { profile: UserProfile; isFollowing: boolean; followStatus: string | null; isFollowedBy: boolean; canSeeContent: boolean; badges?: EarnedBadge[] };
+      const data = await res.json() as { profile: UserProfile; isFollowing: boolean; followStatus: string | null; isFollowedBy: boolean; canSeeContent: boolean; canReceiveDirectMessages?: boolean; badges?: EarnedBadge[]; tags?: ProfileNote[] };
       const nextProfile = data.profile;
       if (!nextProfile) {
         setProfile(null);
@@ -110,6 +161,8 @@ export default function VisitorProfileScreen() {
       }
       setProfile(nextProfile);
       setCanSeeContent(data.canSeeContent);
+      setCanReceiveDirectMessages(Boolean(data.canReceiveDirectMessages));
+      setProfileNotes(Array.isArray(data.tags) ? data.tags.filter((tag): tag is ProfileNote => Boolean(tag) && typeof tag.id === "string" && typeof tag.content === "string") : []);
       setEarnedBadges(Array.isArray(data.badges) ? data.badges.filter((badge): badge is EarnedBadge => Boolean(badge) && typeof badge.achievementType === "string") : []);
       if (data.isFollowing) setFollowStatus("following");
       else if (data.followStatus === "pending") setFollowStatus("pending");
@@ -127,56 +180,28 @@ export default function VisitorProfileScreen() {
     setLoadingPosts(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const res = await fetch(`${getApiBase()}/api/community/posts?authorId=${id}&limit=20`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!res.ok) { setLoadingPosts(false); return; }
-      const data = await res.json() as { posts: any[] };
-      const mapped: CommunityPost[] = (data.posts ?? []).map((p) => ({
-        id: p.id,
-        author: p.authorName ?? "Community Member",
-        authorInitials: p.authorInitials ?? "CM",
-        authorColor: p.authorColor ?? "#CA922B",
-        authorId: p.authorId,
-        content: p.content,
-        likes: p.upvotes ?? 0,
-        comments: p.commentsCount ?? 0,
-        timeAgo: timeAgo(p.createdAt),
-        category: p.category ?? "general",
-        postType: p.postType ?? "community",
-        liked: false,
-        businessId: p.businessId,
-        businessName: p.businessName,
-        businessLink: p.businessLink,
-        mediaUrls: parseMediaUrls(p.mediaUrls),
-        savedPlaceId: p.savedPlaceId,
-        locationTag: p.locationTag,
-        locationType: p.locationType,
-        topicTag: p.topicTag,
-        isPrivateTopic: p.isPrivateTopic,
-        hasContentWarning: p.hasContentWarning,
-        contentWarningType: p.contentWarningType,
-        linkUrl: p.linkUrl,
-        linkTitle: p.linkTitle,
-        linkDescription: p.linkDescription,
-        linkDomain: p.linkDomain,
-        linkFavicon: p.linkFavicon,
-        repostId: p.repostId,
-        repostAuthorName: p.repostAuthorName,
-        repostAuthorInitials: p.repostAuthorInitials,
-        repostContent: p.repostContent,
-        visibility: p.visibility,
-      }));
-      setPosts(mapped);
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const [authoredResponse, taggedResponse] = await Promise.all([
+        fetch(`${getApiBase()}/api/community/posts?authorId=${encodeURIComponent(id)}&limit=20`, { headers }),
+        fetch(`${getApiBase()}/api/community/posts?taggedUserId=${encodeURIComponent(id)}&limit=20`, { headers }),
+      ]);
+      const [authoredPayload, taggedPayload] = await Promise.all([
+        authoredResponse.ok ? authoredResponse.json() as Promise<{ posts?: any[] }> : Promise.resolve({ posts: [] }),
+        taggedResponse.ok ? taggedResponse.json() as Promise<{ posts?: any[] }> : Promise.resolve({ posts: [] }),
+      ]);
+      setPosts((authoredPayload.posts ?? []).map(toCommunityPost));
+      setTaggedPosts((taggedPayload.posts ?? []).map(toCommunityPost));
     } catch { /* ignore */ } finally {
       setLoadingPosts(false);
     }
   }, [id]);
 
   useEffect(() => { queueMicrotask(() => { void loadProfile(); }); }, [loadProfile]);
+  useEffect(() => { setActiveTab("posts"); }, [id]);
   useEffect(() => {
     if (!profile?.id || !canSeeContent) {
       setPosts([]);
+      setTaggedPosts([]);
       setLoadingPosts(false);
       return;
     }
@@ -271,7 +296,9 @@ export default function VisitorProfileScreen() {
         if (res.ok) {
           setFollowStatus("not_following");
           setProfile((p) => p ? { ...p, followersCount: Math.max((p.followersCount ?? 1) - 1, 0) } : p);
-          if (!profile.isPrivate) setCanSeeContent(false);
+          // Public profiles remain readable after an unfollow. Private profiles
+          // immediately return to their server-shaped private state.
+          setCanSeeContent(!profile.isPrivate);
         }
       } else {
         const res = await fetch(`${getApiBase()}/api/users/${id}/follow`, {
@@ -333,6 +360,9 @@ export default function VisitorProfileScreen() {
   const visiblePosts = canSeeContent
     ? posts
     : posts.filter((p) => (p as any).visibility === "public");
+  const mediaPosts = visiblePosts.filter((post) => (post.mediaUrls?.length ?? 0) > 0);
+  const activePosts = activeTab === "media" ? mediaPosts : activeTab === "tagged" ? taggedPosts : visiblePosts;
+  const activeSectionTitle = activeTab === "media" ? "Photos & videos" : activeTab === "tagged" ? "Tagged" : activeTab === "notes" ? "Profile notes" : canSeeContent ? "Posts" : "Public posts";
 
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
@@ -486,7 +516,7 @@ export default function VisitorProfileScreen() {
                       </>
                     )}
                   </TouchableOpacity>
-                  <TouchableOpacity
+                  {canReceiveDirectMessages ? <TouchableOpacity
                     style={[s.messageBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
                     onPress={() => void handleStartMessage()}
                     activeOpacity={0.8}
@@ -495,16 +525,29 @@ export default function VisitorProfileScreen() {
                   >
                     <Feather name="message-circle" size={15} color={colors.foreground} />
                     <Text style={[s.messageBtnText, { color: colors.foreground }]}>Message</Text>
-                  </TouchableOpacity>
+                  </TouchableOpacity> : null}
                 </View>
               )}
             </View>
 
-            {/* Posts section */}
+            {/* Server-authorized profile activity. The tagged feed repeats all
+                Community visibility, block, moderation, and group checks. */}
             <View style={s.postsSection}>
-              <Text style={[s.postsSectionTitle, { color: colors.foreground }]}>
-                {canSeeContent ? "Posts" : "Public Posts"}
-              </Text>
+              {canSeeContent ? <View style={s.profileTabs} accessibilityRole="tablist">
+                {([
+                  ["posts", "Posts"],
+                  ["media", "Media"],
+                  ["tagged", "Tagged"],
+                  ["notes", "Notes"],
+                ] as Array<[ProfileTab, string]>).map(([tab, label]) => <TouchableOpacity
+                  key={tab}
+                  style={[s.profileTab, { backgroundColor: activeTab === tab ? colors.primary : colors.secondary, borderColor: activeTab === tab ? colors.primary : colors.border }]}
+                  onPress={() => setActiveTab(tab)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: activeTab === tab }}
+                ><Text style={[s.profileTabText, { color: activeTab === tab ? "#FFFFFF" : colors.mutedForeground }]}>{label}</Text></TouchableOpacity>)}
+              </View> : null}
+              <Text style={[s.postsSectionTitle, { color: colors.foreground }]}>{activeSectionTitle}</Text>
               {!canSeeContent && (
                 <View style={[s.followersOnlyTeaser, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <Feather name="lock" size={18} color={colors.muted} />
@@ -514,15 +557,25 @@ export default function VisitorProfileScreen() {
                   </Text>
                 </View>
               )}
-              {loadingPosts ? (
+              {loadingPosts && activeTab !== "notes" ? (
                 <ActivityIndicator color={colors.primary} style={{ marginTop: 20 }} />
-              ) : visiblePosts.length === 0 ? (
+              ) : activeTab === "notes" ? profileNotes.length === 0 ? (
+                <View style={s.emptyPosts}>
+                  <Feather name="message-square" size={28} color={colors.muted} />
+                  <Text style={[s.emptyPostsText, { color: colors.mutedForeground }]}>No visible profile notes yet</Text>
+                </View>
+              ) : profileNotes.map((note) => (
+                <View key={note.id} style={[s.profileNote, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Text style={[s.profileNoteText, { color: colors.foreground }]}>{note.content}</Text>
+                  <Text style={[s.profileNoteByline, { color: colors.mutedForeground }]}>{[note.taggerFirstName, note.taggerLastName].filter(Boolean).join(" ") || note.taggerUsername || "Community member"}</Text>
+                </View>
+              )) : activePosts.length === 0 ? (
                 <View style={s.emptyPosts}>
                   <Feather name="edit-3" size={28} color={colors.muted} />
-                  <Text style={[s.emptyPostsText, { color: colors.mutedForeground }]}>No posts yet</Text>
+                  <Text style={[s.emptyPostsText, { color: colors.mutedForeground }]}>{activeTab === "tagged" ? "No visible tagged activity yet" : activeTab === "media" ? "No visible photos or videos yet" : "No posts yet"}</Text>
                 </View>
               ) : (
-                visiblePosts.map((post) => (
+                activePosts.map((post) => (
                   <CommunityPostCard
                     key={post.id}
                     post={post}
@@ -658,6 +711,9 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 20,
   },
+  profileTabs: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 },
+  profileTab: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
+  profileTabText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   postsSectionTitle: {
     fontFamily: "Inter_700Bold",
     fontSize: 17,
@@ -675,6 +731,9 @@ const s = StyleSheet.create({
   teaserSub: { fontFamily: "Inter_400Regular", fontSize: 12, textAlign: "center", lineHeight: 17 },
   emptyPosts: { alignItems: "center", paddingVertical: 40, gap: 10 },
   emptyPostsText: { fontFamily: "Inter_400Regular", fontSize: 14 },
+  profileNote: { borderWidth: 1, borderRadius: 12, padding: 14, marginBottom: 10, gap: 8 },
+  profileNoteText: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 20 },
+  profileNoteByline: { fontFamily: "Inter_400Regular", fontSize: 12 },
   emptyState: { alignItems: "center", paddingVertical: 60, gap: 12, paddingHorizontal: 32 },
   emptyTitle: { fontFamily: "Inter_700Bold", fontSize: 18 },
   emptySub: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 20 },

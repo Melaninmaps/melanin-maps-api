@@ -723,9 +723,11 @@ router.get("/users/:userId/profile", async (req: Request, res: Response) => {
     res.json({
       user: visibleProfile,
       profile: visibleProfile,
-      // Follow totals are returned only to the account owner. Other member
-      // profile reads retain their current privacy-shaped response.
-      ...(callerId === targetId ? { followersCount, followingCount } : {}),
+      // Counts are social proof, not relationship directories. They are visible
+      // only on the same privacy-shaped surface that can show profile activity:
+      // public profiles and accepted followers may see them; a pending/private
+      // viewer still receives only the minimal identity card.
+      ...(canSeeContent ? { followersCount, followingCount } : {}),
       reviews: canSeeContent ? reviews : [],
       tags: canSeeContent ? tags : [],
       badges,

@@ -91,7 +91,7 @@ async function main(): Promise<void> {
     const as = (id: string) => ({ "x-qa-user": id });
 
     const beforeOptIn = await request(app).get("/users/author/profile").set(as("follower"));
-    assert(beforeOptIn.status === 200 && beforeOptIn.body.profile.industry === undefined && beforeOptIn.body.profile.location === undefined && beforeOptIn.body.badges.length === 0, "Optional profile details must be hidden by default");
+    assert(beforeOptIn.status === 200 && beforeOptIn.body.profile.industry === undefined && beforeOptIn.body.profile.location === undefined && beforeOptIn.body.badges.length === 0 && beforeOptIn.body.followersCount === 3 && beforeOptIn.body.followingCount === 4, "An accepted follower may see social counts without receiving unapproved optional personal details");
 
     const updated = await request(app).put("/users/me/profile-presentation").set(as("author")).send({ showLocation: true, showProfessionalDetails: true, showBadges: true, showAge: true, showBirthday: true });
     assert(updated.status === 200, "Owner must be able to opt in to selected profile details");
@@ -106,6 +106,8 @@ async function main(): Promise<void> {
     const outsiderCover = await request(app).get(coverPath).set(as("outsider"));
     assert(outsiderCover.status === 404, "Non-follower must not receive a private account cover");
     await client.query("DELETE FROM user_follows WHERE follower_id='follower' AND following_id='author'");
+    const afterUnfollowProfile = await request(app).get("/users/author/profile").set(as("follower"));
+    assert(afterUnfollowProfile.status === 200 && afterUnfollowProfile.body.canSeeContent === false && afterUnfollowProfile.body.followersCount === undefined && afterUnfollowProfile.body.followingCount === undefined, "An unaccepted private-profile reader must lose both activity access and social counts");
     const afterUnfollowCover = await request(app).get(coverPath).set(as("follower"));
     assert(afterUnfollowCover.status === 404, "Unfollowing must revoke future profile-cover access");
     await client.query("INSERT INTO user_follows (follower_id,following_id,status) VALUES ('follower','author','accepted')");
@@ -131,7 +133,7 @@ async function main(): Promise<void> {
     const withdrawnTagged = await fetchCommunityFeedRows(client, { viewerId: "follower", feedMode: "everyone", taggedUserId: "follower", limit: 20, offset: 0 });
     assert(withdrawnTagged.length === 0, "Removing a tag must remove it from the member profile retrieval path");
 
-    console.log(JSON.stringify({ status: "passed", localPostgres: true, profilePresentationOptIn: true, privateCoverUploadAndDelivery: true, privateCoverRevocation: true, taggedCommunityRetrieval: true, privateTaggedContentExcluded: true, followersOnlyVisibility: true, unfollowRevocation: true, groupVisibility: true, groupRemovalRevocation: true, blockRevocation: true, tagRemovalRevocation: true }));
+    console.log(JSON.stringify({ status: "passed", localPostgres: true, profilePresentationOptIn: true, authorizedSocialCounts: true, privateCoverUploadAndDelivery: true, privateCoverRevocation: true, taggedCommunityRetrieval: true, privateTaggedContentExcluded: true, followersOnlyVisibility: true, unfollowRevocation: true, groupVisibility: true, groupRemovalRevocation: true, blockRevocation: true, tagRemovalRevocation: true }));
     setObjectStorageClientForTest(null);
   } finally { await client.end(); }
 }

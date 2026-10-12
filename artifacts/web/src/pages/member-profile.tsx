@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useParams } from "wouter";
-import { Award, CalendarDays, Gift, Loader2, MapPin, MessageCircle, ShieldAlert, Star, UserCheck, UserPlus, Users } from "lucide-react";
+import { Award, CalendarDays, Flag, Gift, Loader2, MapPin, MessageCircle, ShieldAlert, Star, UserCheck, UserPlus, Users } from "lucide-react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
+import { CommunityMedia } from "@/components/community/CommunityMedia";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -57,6 +58,7 @@ type CommunityPost = {
   businessName?: string | null;
   locationCity?: string | null;
   mediaUrls?: string[] | null;
+  privateMedia?: Array<{ assetId: string; type: "image" | "video"; url: string }> | null;
 };
 
 type ProfileResponse = {
@@ -73,7 +75,7 @@ type ProfileResponse = {
   badges?: Array<{ achievementType: string; earnedAt: string | null }>;
 };
 
-type ProfileTab = "activity" | "reviews" | "tags";
+type ProfileTab = "posts" | "media" | "tagged" | "reviews" | "notes";
 
 function nameFor(profile: MemberProfile): string {
   return [profile.firstName, profile.lastName].filter(Boolean).join(" ") || profile.username || "Community member";
@@ -115,6 +117,29 @@ function postTypeLabel(postType: string): string {
   return labels[postType] ?? "Community post";
 }
 
+function ProfileCommunityPost({ post }: { post: CommunityPost }) {
+  const media = [
+    ...(post.mediaUrls ?? []).map((url) => ({ url, privateMedia: false, type: undefined })),
+    ...(post.privateMedia ?? []).map((item) => ({ url: item.url, privateMedia: true, type: item.type })),
+  ];
+  return (
+    <article className="rounded-2xl border border-[#3A1F0E]/10 bg-[#FFFDF9] p-4">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#3A1F0E]/50">
+        <span className="font-semibold text-[#8D5C17]">{postTypeLabel(post.postType)}</span>
+        {relativeTime(post.createdAt) ? <span>{relativeTime(post.createdAt)}</span> : null}
+        {post.locationCity ? <span>{post.locationCity}</span> : null}
+      </div>
+      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#3A1F0E]/80">{post.content}</p>
+      {media.length ? <div className="mt-3 grid gap-2 sm:grid-cols-2">{media.slice(0, 4).map((item, index) => <CommunityMedia key={`${item.privateMedia ? "private" : "public"}-${item.url}`} url={item.url} index={index} privateMedia={item.privateMedia} mediaType={item.type} />)}</div> : null}
+      <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[#3A1F0E]/55">
+        {post.businessId && post.businessName ? <Link href={`/businesses/${encodeURIComponent(post.businessId)}`} className="font-semibold text-[#8D5C17] hover:underline">{post.businessName}</Link> : null}
+        <span>{Math.max(0, post.upvotes ?? 0)} {post.upvotes === 1 ? "like" : "likes"}</span>
+        <span>{Math.max(0, post.commentsCount ?? 0)} {post.commentsCount === 1 ? "comment" : "comments"}</span>
+      </div>
+    </article>
+  );
+}
+
 export default function MemberProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const { data: auth } = useGetCurrentAuthUser();
@@ -122,12 +147,13 @@ export default function MemberProfilePage() {
   const { toast } = useToast();
   const [data, setData] = useState<ProfileResponse | null>(null);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [taggedPosts, setTaggedPosts] = useState<CommunityPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [messageLoading, setMessageLoading] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
   const [tagLoading, setTagLoading] = useState(false);
   const [tagText, setTagText] = useState("");
-  const [activeTab, setActiveTab] = useState<ProfileTab>("activity");
+  const [activeTab, setActiveTab] = useState<ProfileTab>("posts");
 
   const loadProfile = useCallback(async (signal?: AbortSignal): Promise<void> => {
     if (!userId) return;
@@ -138,6 +164,7 @@ export default function MemberProfilePage() {
         if (!signal?.aborted) {
           setData(null);
           setPosts([]);
+          setTaggedPosts([]);
         }
         return;
       }
@@ -149,22 +176,26 @@ export default function MemberProfilePage() {
       // moderation checks. Do not infer profile activity from client state.
       if (!profileResponse.canSeeContent) {
         setPosts([]);
+        setTaggedPosts([]);
         return;
       }
-      const postsResponse = await authenticatedFetch(
-        `${BASE}api/community/posts?authorId=${encodeURIComponent(userId)}&limit=20`,
-        { signal },
-      );
-      if (!postsResponse.ok || signal?.aborted) {
-        setPosts([]);
-        return;
+      const [postsResponse, taggedResponse] = await Promise.all([
+        authenticatedFetch(`${BASE}api/community/posts?authorId=${encodeURIComponent(userId)}&limit=20`, { signal }),
+        authenticatedFetch(`${BASE}api/community/posts?taggedUserId=${encodeURIComponent(userId)}&limit=20`, { signal }),
+      ]);
+      const [postsPayload, taggedPayload] = await Promise.all([
+        postsResponse.ok ? postsResponse.json() as Promise<{ posts?: CommunityPost[] }> : Promise.resolve({ posts: [] }),
+        taggedResponse.ok ? taggedResponse.json() as Promise<{ posts?: CommunityPost[] }> : Promise.resolve({ posts: [] }),
+      ]);
+      if (!signal?.aborted) {
+        setPosts(Array.isArray(postsPayload.posts) ? postsPayload.posts : []);
+        setTaggedPosts(Array.isArray(taggedPayload.posts) ? taggedPayload.posts : []);
       }
-      const payload = await postsResponse.json() as { posts?: CommunityPost[] };
-      if (!signal?.aborted) setPosts(Array.isArray(payload.posts) ? payload.posts : []);
     } catch (error) {
       if ((error as { name?: string } | null)?.name !== "AbortError" && !signal?.aborted) {
         setData(null);
         setPosts([]);
+        setTaggedPosts([]);
       }
     } finally {
       if (!signal?.aborted) setLoading(false);
@@ -178,7 +209,7 @@ export default function MemberProfilePage() {
   }, [loadProfile]);
 
   useEffect(() => {
-    setActiveTab("activity");
+    setActiveTab("posts");
     setTagText("");
   }, [userId]);
 
@@ -232,6 +263,35 @@ export default function MemberProfilePage() {
     }
   }
 
+  async function reportMember(): Promise<void> {
+    if (!profile || isSelf) return;
+    const description = window.prompt("Tell us what needs review (optional):");
+    if (description === null) return;
+    try {
+      const response = await authenticatedFetch(`${BASE}api/content-reports`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ targetType: "user", targetId: profile.id, reason: "other", description: description.trim() || undefined }),
+      });
+      if (!response.ok) throw new Error("report failed");
+      toast({ title: "Report submitted", description: "Thank you. Our moderation team will review it." });
+    } catch {
+      toast({ title: "Could not submit report", description: "Please try again.", variant: "destructive" });
+    }
+  }
+
+  async function blockMember(): Promise<void> {
+    if (!profile || isSelf || !window.confirm(`Block ${profileName}? Their Community content and profile will no longer be available to you.`)) return;
+    try {
+      const response = await authenticatedFetch(`${BASE}api/users/${encodeURIComponent(profile.id)}/block`, { method: "POST" });
+      if (!response.ok) throw new Error("block failed");
+      toast({ title: "Member blocked", description: "Their profile and Community content are now hidden." });
+      navigate("/community");
+    } catch {
+      toast({ title: "Could not block member", description: "Please try again.", variant: "destructive" });
+    }
+  }
+
   async function addProfileTag(): Promise<void> {
     if (!profile || isSelf || !tagText.trim()) return;
     setTagLoading(true);
@@ -247,7 +307,7 @@ export default function MemberProfilePage() {
         return;
       }
       setTagText("");
-      setActiveTab("tags");
+      setActiveTab("notes");
       await loadProfile();
     } catch {
       toast({ title: "Could not add profile note", description: "Please try again.", variant: "destructive" });
@@ -285,6 +345,8 @@ export default function MemberProfilePage() {
 
   const followLabel = data?.followStatus === "accepted" ? "Following" : data?.followStatus === "pending" ? "Requested" : "Follow";
   const tabClass = (tab: ProfileTab): string => `rounded-full px-3 py-2 text-sm font-semibold transition-colors ${activeTab === tab ? "bg-[#2B1507] text-white" : "text-[#3A1F0E]/60 hover:bg-[#FAF6EF] hover:text-[#2B1507]"}`;
+  const mediaPosts = posts.filter((post) => (post.mediaUrls?.length ?? 0) > 0 || (post.privateMedia?.length ?? 0) > 0);
+  const visiblePosts = activeTab === "media" ? mediaPosts : activeTab === "tagged" ? taggedPosts : posts;
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:py-10">
@@ -328,11 +390,16 @@ export default function MemberProfilePage() {
             {profile.age ? <span>{profile.age} years old</span> : null}
             {profile.birthday ? <span className="inline-flex items-center gap-1.5"><Gift className="h-4 w-4 text-[#CA922B]" />{profile.birthday}</span> : null}
             {joined ? <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-4 w-4 text-[#CA922B]" />Member since {joined}</span> : null}
-            {isSelf && typeof data?.followersCount === "number" && typeof data.followingCount === "number" ? <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4 text-[#CA922B]" />{data.followersCount} followers · {data.followingCount} following</span> : null}
+            {data?.canSeeContent && typeof data?.followersCount === "number" && typeof data.followingCount === "number" ? <span className="inline-flex items-center gap-1.5"><Users className="h-4 w-4 text-[#CA922B]" />{data.followersCount} followers · {data.followingCount} following</span> : null}
           </div>
           {(data?.badges ?? []).length ? <div className="mt-4 flex flex-wrap gap-2" aria-label="Earned profile badges">{data!.badges!.slice(0, 6).map((badge) => <span key={`${badge.achievementType}-${badge.earnedAt ?? "earned"}`} className="inline-flex items-center gap-1.5 rounded-full bg-[#CA922B]/10 px-3 py-1.5 text-xs font-semibold capitalize text-[#8D5C17]"><Award className="h-3.5 w-3.5" />{badge.achievementType.replace(/[_-]+/g, " ")}</span>)}</div> : null}
         </div>
       </section>
+
+      {!isSelf ? <div className="mt-3 flex flex-wrap gap-3 px-1 text-xs font-semibold">
+        <button type="button" onClick={() => void reportMember()} className="inline-flex items-center gap-1.5 text-[#8D5C17] hover:underline"><Flag className="h-3.5 w-3.5" />Report profile</button>
+        <button type="button" onClick={() => void blockMember()} className="inline-flex items-center gap-1.5 text-[#9F1D1D] hover:underline"><ShieldAlert className="h-3.5 w-3.5" />Block member</button>
+      </div> : null}
 
       {!data?.canSeeContent ? (
         <section className="mt-6 rounded-2xl border border-dashed border-[#3A1F0E]/20 bg-[#FFFDF9] p-6 text-center">
@@ -355,29 +422,16 @@ export default function MemberProfilePage() {
 
           <section aria-label="Profile activity" className="mt-6 rounded-2xl border border-[#3A1F0E]/10 bg-white p-3 sm:p-4">
             <div role="tablist" aria-label="Member profile sections" className="flex flex-wrap gap-1">
-              <button type="button" role="tab" aria-selected={activeTab === "activity"} onClick={() => setActiveTab("activity")} className={tabClass("activity")}>Activity</button>
+              <button type="button" role="tab" aria-selected={activeTab === "posts"} onClick={() => setActiveTab("posts")} className={tabClass("posts")}>Posts</button>
+              <button type="button" role="tab" aria-selected={activeTab === "media"} onClick={() => setActiveTab("media")} className={tabClass("media")}>Media</button>
+              <button type="button" role="tab" aria-selected={activeTab === "tagged"} onClick={() => setActiveTab("tagged")} className={tabClass("tagged")}>Tagged</button>
               <button type="button" role="tab" aria-selected={activeTab === "reviews"} onClick={() => setActiveTab("reviews")} className={tabClass("reviews")}>Reviews</button>
-              <button type="button" role="tab" aria-selected={activeTab === "tags"} onClick={() => setActiveTab("tags")} className={tabClass("tags")}>Profile notes</button>
+              <button type="button" role="tab" aria-selected={activeTab === "notes"} onClick={() => setActiveTab("notes")} className={tabClass("notes")}>Profile notes</button>
             </div>
 
-            {activeTab === "activity" ? (
+            {["posts", "media", "tagged"].includes(activeTab) ? (
               <div role="tabpanel" className="mt-4 space-y-3">
-                {posts.length ? posts.map((post) => (
-                  <article key={post.id} className="rounded-2xl border border-[#3A1F0E]/10 bg-[#FFFDF9] p-4">
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#3A1F0E]/50">
-                      <span className="font-semibold text-[#8D5C17]">{postTypeLabel(post.postType)}</span>
-                      {relativeTime(post.createdAt) ? <span>{relativeTime(post.createdAt)}</span> : null}
-                      {post.locationCity ? <span>{post.locationCity}</span> : null}
-                    </div>
-                    <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#3A1F0E]/80">{post.content}</p>
-                    <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-[#3A1F0E]/55">
-                      {post.businessId && post.businessName ? <Link href={`/businesses/${encodeURIComponent(post.businessId)}`} className="font-semibold text-[#8D5C17] hover:underline">{post.businessName}</Link> : null}
-                      {Array.isArray(post.mediaUrls) && post.mediaUrls.length ? <span>Shared media</span> : null}
-                      <span>{Math.max(0, post.upvotes ?? 0)} {post.upvotes === 1 ? "like" : "likes"}</span>
-                      <span>{Math.max(0, post.commentsCount ?? 0)} {post.commentsCount === 1 ? "comment" : "comments"}</span>
-                    </div>
-                  </article>
-                )) : <p className="rounded-xl bg-[#FFFDF9] p-5 text-sm text-[#3A1F0E]/55">No visible Community activity yet.</p>}
+                {visiblePosts.length ? visiblePosts.map((post) => <ProfileCommunityPost key={post.id} post={post} />) : <p className="rounded-xl bg-[#FFFDF9] p-5 text-sm text-[#3A1F0E]/55">{activeTab === "tagged" ? "No visible tagged Community activity yet." : activeTab === "media" ? "No visible photos or videos yet." : "No visible Community activity yet."}</p>}
               </div>
             ) : null}
 
@@ -396,7 +450,7 @@ export default function MemberProfilePage() {
               </div>
             ) : null}
 
-            {activeTab === "tags" ? (
+            {activeTab === "notes" ? (
               <div role="tabpanel" className="mt-4 space-y-3">
                 {(data.tags ?? []).length ? data.tags!.map((tag) => (
                   <article key={tag.id} className="rounded-2xl border border-[#3A1F0E]/10 bg-[#FFFDF9] p-4">

@@ -70,4 +70,13 @@ describe("mobile social profile hub", () => {
     expect(displaySettings).toContain("The profile will never show unearned badges or achievement progress.");
     expect(displaySettings).toContain("profile-cover");
   });
+
+  it("shows only server-authorized visitor activity with separate media and tagged sections", () => {
+    expect(memberProfile).toContain("taggedUserId=${encodeURIComponent(id)}");
+    expect(memberProfile).toContain('type ProfileTab = "posts" | "media" | "tagged" | "notes"');
+    expect(memberProfile).toContain("canReceiveDirectMessages");
+    expect(memberProfile).toContain("setCanSeeContent(!profile.isPrivate)");
+    expect(memberProfile).toContain("Community visibility, block, moderation, and group checks");
+    expect(memberProfile).toContain("No visible tagged activity yet");
+  });
 });
