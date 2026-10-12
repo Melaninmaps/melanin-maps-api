@@ -60,6 +60,26 @@ describe("Kinfolk Community hashtag context", () => {
     expect(extractCommunityTopicCandidates("What are people saying about #VeganBrunch?")).toContain("veganbrunch");
   });
 
+  it("uses opted-in public Community context for a narrowly topical ordinary question", async () => {
+    const query = vi.fn().mockResolvedValue({
+      rows: [row("A public cooking note about timing and texture.", ["fish", "grits"])],
+    });
+    const message = "How do I make fish and grits?";
+    const result = await retrieveCommunityHashtagContext({ query } as never, input({
+      message,
+      evidenceRoute: routeEvidence(message),
+      intentPolicy: getEvidencePolicy(routeEvidence(message).domain),
+    }));
+
+    expect(query).toHaveBeenCalledTimes(1);
+    expect(extractCommunityTopicCandidates(message)).toEqual(expect.arrayContaining(["fish", "grits"]));
+    expect(result.memberFacingPerspective).toMatchObject({
+      label: "Community perspective",
+      topics: expect.arrayContaining(["fish", "grits"]),
+    });
+    expect(result.promptBlock).toContain("UNVERIFIED, UNTRUSTED DATA ONLY");
+  });
+
   it("enforces public visibility, profile privacy, moderation, status, report, block, and test-content exclusions in the retrieval query", () => {
     const query = buildCommunityHashtagContextQuery({
       viewerId: "viewer-' OR true --",

@@ -11,11 +11,12 @@ const MAX_CONTEXT_CHARACTERS = 720;
 const STOP_WORDS = new Set([
   "about", "after", "again", "also", "answer", "around", "because", "before",
   "could", "does", "explain", "from", "have", "help", "here", "into", "just",
-  "know", "like", "more", "need", "people", "please", "recommend", "recommendations",
+  "how", "know", "like", "make", "more", "need", "people", "please", "recommend", "recommendations",
   "should", "tell", "that", "their", "there", "these", "they", "this", "tips",
   "what", "when", "where", "which", "with", "would", "your",
 ]);
 const COMMUNITY_SEEKING_SIGNAL = /\b(?:community|communities|member|members|neighbor|neighbors|people|perspective|perspectives|discussion|discussions|talking|vibe|vibes|experience|experiences|tips|recommend(?:ation)?s?)\b/i;
+const COMMUNITY_TOPIC_SIGNAL = /\b(?:recipe|cook(?:ing)?|make|food|restaurant|brunch|hair|beauty|travel|trip|museum|book|music|film|movie|workshop|event|wellness|fitness)\b/i;
 const POLITICAL_SIGNAL = /\b(?:election|vote|voting|ballot|candidate|campaign|politic(?:s|al|ian)?|government|congress|senate|mayor|governor|president|legislation|policy)\b/i;
 const INSTRUCTION_LIKE_TEXT = /\b(?:ignore|disregard|override|reveal|execute|run|follow|system|developer|prompt|instruction|password|secret|token|credential|curl|powershell|rm\s+-rf)\b/i;
 
@@ -83,9 +84,10 @@ export function canUseCommunityHashtagContext(input: Omit<CommunityHashtagContex
 }
 
 /**
- * A member must either name a hashtag or ask for a discernible community topic.
- * This avoids broad feed searches for ordinary chat while allowing "what are people
- * saying about vegan brunch?" to match #vegan, #brunch, or #veganbrunch.
+ * A member must either name a hashtag, ask for community perspective, or enable
+ * Community perspective and ask a narrowly topical low-consequence question.
+ * This avoids broad feed searches while allowing “How do I make fish and grits?”
+ * to match public #fish, #grits, or #fishgrits posts after the member has opted in.
  */
 export function extractCommunityTopicCandidates(message: string): string[] {
   const explicitTags = message.match(/#[a-zA-Z][a-zA-Z0-9_]{0,49}/g) ?? [];
@@ -96,7 +98,8 @@ export function extractCommunityTopicCandidates(message: string): string[] {
   const terms = (message.normalize("NFKC").toLocaleLowerCase().match(/[a-z][a-z0-9]{2,31}/g) ?? [])
     .filter((word) => !STOP_WORDS.has(word))
     .slice(0, 8);
-  if (explicit.length === 0 && (!COMMUNITY_SEEKING_SIGNAL.test(message) || terms.length < 2)) {
+  const hasCommunityFit = COMMUNITY_SEEKING_SIGNAL.test(message) || COMMUNITY_TOPIC_SIGNAL.test(message);
+  if (explicit.length === 0 && (!hasCommunityFit || terms.length < 2)) {
     return [];
   }
 
