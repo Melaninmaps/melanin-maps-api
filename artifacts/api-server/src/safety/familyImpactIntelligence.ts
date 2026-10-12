@@ -96,12 +96,15 @@ function distanceToPolygonEdge(latitude: number, longitude: number, coordinates:
 export function classifyFamilyImpact(
   boundary: EmergencyBoundary,
   location: AuthorizedFamilyImpactLocation | null,
-  options: { now?: Date; memberConfirmedSafe?: boolean } = {},
+  options: { now?: Date; memberConfirmedSafe?: boolean; maxLocationAgeMs?: number } = {},
 ): FamilyImpactClassification {
   if (options.memberConfirmedSafe) return { status: "member_confirmed_safety", reason: "member_confirmed" };
   const now = options.now ?? new Date();
   const capturedAt = location ? capturedAtMs(location.capturedAt) : null;
-  if (!location || !capturedAt || now.getTime() - capturedAt > MAX_FAMILY_IMPACT_LOCATION_AGE_MS || capturedAt > now.getTime()) {
+  const maxLocationAgeMs = Number.isFinite(options.maxLocationAgeMs) && (options.maxLocationAgeMs ?? 0) >= 0
+    ? options.maxLocationAgeMs!
+    : MAX_FAMILY_IMPACT_LOCATION_AGE_MS;
+  if (!location || !capturedAt || now.getTime() - capturedAt > maxLocationAgeMs || capturedAt > now.getTime()) {
     return { status: "location_unknown", reason: "stale_or_missing_location" };
   }
   if (boundary.kind === "county") {

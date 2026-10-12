@@ -26,6 +26,7 @@ const REPORTER_THREE = "safety-reconcile-reporter-three";
 const REVIEWER = "safety-reconcile-reviewer";
 
 const CURRENT_EVENT = "reconcile-current";
+const PERSISTENT_EVENT = "reconcile-persistent";
 const RETRY_EVENT = "reconcile-retry";
 const REJECTED_EVENT = "reconcile-rejected";
 const CANCELLED_EVENT = "reconcile-cancelled";
@@ -63,6 +64,9 @@ function setSafetyEnvironment(databaseUrl: string): void {
     DATABASE_URL: databaseUrl,
     FAMILY_IMPACT_INGEST_SECRET: "local-safety-reconciliation-ingest-secret",
     SAFETY_FAMILY_IMPACT_DELIVERY_ENABLED: "false",
+    SAFETY_PERSISTENT_LOCATION_COLLECTION_ENABLED: "true",
+    SAFETY_PERSISTENT_LOCATION_MAX_AGE_SECONDS: "600",
+    MWM_PERSISTENT_SAFETY_LOCATION_ENCRYPTION_KEYS: `v1:${Buffer.alloc(32, 29).toString("base64")}`,
     KINFOLK_MEMORY_STAGING_ISOLATION: "true",
     KINFOLK_SERIOUS_THREAT_PRIVATE_REVIEW_STAGING_ENABLED: "true",
     RAILWAY_ENVIRONMENT_NAME: "staging",
@@ -83,6 +87,7 @@ async function buildCurrentSafetyApp() {
     { default: locationSharesRouter },
     { default: trustedSafetyShareRouter },
     { default: familyImpactRouter },
+    { default: persistentSafetyLocationRouter },
     { default: communityAlertsRouter },
     { default: seriousThreatRouter },
     { default: seriousThreatReviewerRouter },
@@ -90,6 +95,7 @@ async function buildCurrentSafetyApp() {
     import("../routes/location-shares"),
     import("../routes/trusted-safety-share"),
     import("../routes/family-impact-intelligence"),
+    import("../routes/persistent-safety-location"),
     import("../routes/community-alerts"),
     import("../routes/serious-credible-threats"),
     import("../routes/serious-credible-threat-reviewer"),
@@ -106,6 +112,7 @@ async function buildCurrentSafetyApp() {
   // These mounts use the same current routers and relative order as routes/index.ts.
   app.use(locationSharesRouter);
   app.use(trustedSafetyShareRouter);
+  app.use(persistentSafetyLocationRouter);
   app.use(familyImpactRouter);
   app.use(seriousThreatRouter);
   app.use(seriousThreatReviewerRouter);
@@ -185,7 +192,60 @@ async function initialPhase(databaseUrl: string): Promise<void> {
     await insertFixtureUsers(client);
     const app = await buildCurrentSafetyApp();
     const shareId = await createAcceptedShare(app, CONTACT, "Trusted contact");
-    await createAcceptedShare(app, UNCONSENTED_CONTACT, "Non-consented contact");
+    const unconsentedShareId = await createAcceptedShare(app, UNCONSENTED_CONTACT, "Non-consented contact");
+
+    const initialPersistent = await request(app).get("/safety/persistent-location").set(as(OWNER));
+    assert(initialPersistent.status === 200 && initialPersistent.body.enabled === false && initialPersistent.body.available === true, `Persistent Safety Location must require a new, disabled-by-default member consent (status ${initialPersistent.status})`);
+    const persistentConsent = await request(app)
+      .put("/safety/persistent-location/consent")
+      .set(as(OWNER))
+      .send({
+        enabled: true,
+        consentVersion: "mwm-persistent-safety-location-v1",
+        disclosureAcknowledged: true,
+        backgroundOptIn: true,
+        foregroundPermission: "granted",
+        backgroundPermission: "granted",
+      });
+    assert(persistentConsent.status === 200 && persistentConsent.body.enabled === true && persistentConsent.body.backgroundOptIn === true, "Persistent Safety Location requires its own explicit primary and background consent");
+    const contactsBeforeConsent = await request(app).get("/safety/persistent-location/contacts").set(as(OWNER));
+    assert(contactsBeforeConsent.status === 200 && contactsBeforeConsent.body.contacts?.some((contact: { trustedShareId?: string; allowedForEmergencyImpact?: boolean }) => contact.trustedShareId === shareId && contact.allowedForEmergencyImpact === false), "trusted-contact emergency disclosure must begin disabled even when a contact is accepted");
+    const persistentContactConsent = await request(app)
+      .put(`/safety/persistent-location/contacts/${shareId}`)
+      .set(as(OWNER))
+      .send({ enabled: true, consentVersion: "mwm-persistent-safety-location-family-impact-v1" });
+    assert(persistentContactConsent.status === 200 && persistentContactConsent.body.enabled === true, "Persistent Safety Location requires separate per-contact emergency disclosure consent");
+    const unconsentedPersistentContact = await request(app).get("/safety/persistent-location/contacts").set(as(OWNER));
+    assert(unconsentedPersistentContact.status === 200 && unconsentedPersistentContact.body.contacts?.some((contact: { trustedShareId?: string; allowedForEmergencyImpact?: boolean }) => contact.trustedShareId === unconsentedShareId && contact.allowedForEmergencyImpact === false), "unselected trusted contacts must not inherit persistent emergency disclosure consent");
+    const firstPersistentFix = await request(app)
+      .post("/safety/persistent-location/fix")
+      .set(as(OWNER))
+      .send({
+        location: { latitude: 39.9526123, longitude: -75.1652123, capturedAt: new Date().toISOString(), accuracyMeters: 18, platform: "ios", background: true },
+        foregroundPermission: "granted", backgroundPermission: "granted",
+      });
+    assert(firstPersistentFix.status === 202 && firstPersistentFix.body.accepted === true, "an explicitly authorized encrypted current location must be accepted without a contact map grant");
+    const persistentStatus = await request(app).get("/safety/persistent-location").set(as(OWNER));
+    assert(persistentStatus.status === 200 && persistentStatus.body.locationState === "current" && !/latitude|longitude|encrypted|payload/i.test(JSON.stringify(persistentStatus.body)), "member settings may show only private freshness metadata, never raw coordinates or ciphertext");
+    const outsiderPersistentWrite = await request(app)
+      .post("/safety/persistent-location/fix")
+      .set(as(OUTSIDER))
+      .send({ location: { latitude: 39.9526123, longitude: -75.1652123, capturedAt: new Date().toISOString(), accuracyMeters: 18, platform: "ios", background: true }, foregroundPermission: "granted", backgroundPermission: "granted" });
+    assert(outsiderPersistentWrite.status === 409, "another authenticated member cannot create or overwrite an owner’s persistent Safety Location");
+    const pausePersistent = await request(app).patch("/safety/persistent-location/pause").set(as(OWNER)).send({ paused: true });
+    assert(pausePersistent.status === 200 && pausePersistent.body.paused === true, "member pause must stop persistent protection without revoking the underlying consent");
+    const pausedPersistentStatus = await request(app).get("/safety/persistent-location").set(as(OWNER));
+    assert(pausedPersistentStatus.status === 200 && pausedPersistentStatus.body.locationState === "unavailable", "pause must immediately delete the current precise location");
+    const resumePersistent = await request(app).patch("/safety/persistent-location/pause").set(as(OWNER)).send({ paused: false });
+    assert(resumePersistent.status === 200 && resumePersistent.body.paused === false, "member resume must remain explicit and never invent a prior location");
+    const resumedPersistentFix = await request(app)
+      .post("/safety/persistent-location/fix")
+      .set(as(OWNER))
+      .send({
+        location: { latitude: 39.9526123, longitude: -75.1652123, capturedAt: new Date().toISOString(), accuracyMeters: 18, platform: "ios", background: true },
+        foregroundPermission: "granted", backgroundPermission: "granted",
+      });
+    assert(resumedPersistentFix.status === 202, "resume must require a new device update rather than revive deleted location data");
 
     const consent = await request(app)
       .put(`/safety/family-impact/consents/${shareId}`)
@@ -221,10 +281,21 @@ async function initialPhase(databaseUrl: string): Promise<void> {
       "UPDATE family_impact_consents SET consented_at = NOW() - INTERVAL '6 months', expires_at = NOW() + INTERVAL '6 months' WHERE trusted_share_id = $1",
       [shareId],
     );
+    await client.query(
+      "UPDATE mwm_persistent_safety_location_authorizations SET consented_at = NOW() - INTERVAL '6 months' WHERE owner_id = $1",
+      [OWNER],
+    );
+    await client.query(
+      "UPDATE mwm_persistent_safety_location_contact_consents SET consented_at = NOW() - INTERVAL '6 months' WHERE owner_id = $1 AND trusted_share_id = $2",
+      [OWNER, shareId],
+    );
     await ingest(app, CURRENT_EVENT);
     const currentImpact = await request(app).get(`/safety/family-impact/events/${CURRENT_EVENT}/impact`).set(as(CONTACT));
     assert(currentImpact.status === 200 && currentImpact.body.impact === "potentially_affected", "active temporary sharing may produce only a coarse impact classification");
     assert(!/latitude|longitude|updated/i.test(JSON.stringify(currentImpact.body)), "Family Impact responses must not disclose coordinates or timestamps");
+    await ingest(app, PERSISTENT_EVENT);
+    const persistentImpact = await request(app).get(`/safety/family-impact/events/${PERSISTENT_EVENT}/impact`).set(as(CONTACT));
+    assert(persistentImpact.status === 200 && persistentImpact.body.impact === "potentially_affected" && !/latitude|longitude|updated/i.test(JSON.stringify(persistentImpact.body)), "persistent MWM-only location may produce only a coarse, separately consented emergency classification");
 
     const bridgeBody = { ...eventBody(STAGING_BRIDGE_EVENT), sourceEventId: STAGING_BRIDGE_EVENT };
     const bridgeDenied = await request(app).post("/internal/safety/family-impact/staging-validation/events").send(bridgeBody);
@@ -321,6 +392,21 @@ async function restartPhase(databaseUrl: string): Promise<void> {
     assert(shares.status === 200 && shares.body.shares?.some((share: { status?: string }) => share.status === "active"), "six-month trusted-contact authorization must survive restart");
     const consents = await request(app).get("/safety/family-impact/consents").set(as(OWNER));
     assert(consents.status === 200 && consents.body.consents?.some((consent: { enabled?: boolean }) => consent.enabled === true), "six-month Family Impact consent must survive restart");
+    const persistentAfterRestart = await request(app).get("/safety/persistent-location").set(as(OWNER));
+    assert(persistentAfterRestart.status === 200 && persistentAfterRestart.body.enabled === true && persistentAfterRestart.body.locationState === "current", "six-month Persistent Safety Location authorization and its current encrypted fix must survive application restart");
+    const persistentContactsAfterRestart = await request(app).get("/safety/persistent-location/contacts").set(as(OWNER));
+    assert(persistentContactsAfterRestart.status === 200 && persistentContactsAfterRestart.body.contacts?.some((contact: { trustedShareId?: string; allowedForEmergencyImpact?: boolean }) => contact.trustedShareId && contact.allowedForEmergencyImpact === true), "separate six-month per-contact persistent emergency consent must survive restart");
+    const persistedShareId = String(persistentContactsAfterRestart.body.contacts?.find((contact: { allowedForEmergencyImpact?: boolean }) => contact.allowedForEmergencyImpact)?.trustedShareId ?? "");
+    assert(persistedShareId, "persistent emergency consent must remain bound to the accepted contact after restart");
+    const revokePersistentContact = await request(app)
+      .put(`/safety/persistent-location/contacts/${persistedShareId}`)
+      .set(as(OWNER))
+      .send({ enabled: false });
+    assert(revokePersistentContact.status === 200 && revokePersistentContact.body.enabled === false, "persistent emergency disclosure must be independently revocable after restart");
+    const persistentContactsRevoked = await request(app).get("/safety/persistent-location/contacts").set(as(OWNER));
+    assert(persistentContactsRevoked.status === 200 && persistentContactsRevoked.body.contacts?.some((contact: { trustedShareId?: string; allowedForEmergencyImpact?: boolean }) => contact.trustedShareId === persistedShareId && contact.allowedForEmergencyImpact === false), "per-contact revocation must not auto-reactivate after restart");
+    const deletePersistentLocation = await request(app).delete("/safety/persistent-location/location").set(as(OWNER));
+    assert(deletePersistentLocation.status === 200 && deletePersistentLocation.body.deleted === true, "member location deletion must be available without revoking all Safety settings");
     const expiredImpact = await request(app).get(`/safety/family-impact/events/${CURRENT_EVENT}/impact`).set(as(CONTACT));
     assert(expiredImpact.status === 200 && expiredImpact.body.impact === "location_unknown", "expired or absent location must return LOCATION UNKNOWN");
     const scrubbed = await client.query("SELECT is_active, current_lat, current_lng FROM location_shares WHERE sharer_id = $1", [OWNER]);
@@ -419,6 +505,16 @@ async function restartPhase(databaseUrl: string): Promise<void> {
        WHERE event.source_event_id = 'reconcile-revoked-before-retry'`,
     );
     assert(cancelledForRevocation.rows[0]?.delivery_state === "cancelled", "a retry invalidated by relationship revocation must record a terminal cancellation");
+
+    const revokePersistentConsent = await request(app).delete("/safety/persistent-location/consent").set(as(OWNER));
+    assert(revokePersistentConsent.status === 200 && revokePersistentConsent.body.revoked === true && revokePersistentConsent.body.locationDeleted === true, "member revocation must immediately stop persistent collection and delete current data");
+    const revokedPersistentStatus = await request(app).get("/safety/persistent-location").set(as(OWNER));
+    assert(revokedPersistentStatus.status === 200 && revokedPersistentStatus.body.enabled === false && revokedPersistentStatus.body.locationState === "unavailable", "revoked persistent consent must never auto-reactivate or retain a current fix");
+    const rejectedAfterPersistentRevoke = await request(app)
+      .post("/safety/persistent-location/fix")
+      .set(as(OWNER))
+      .send({ location: { latitude: 39.9526123, longitude: -75.1652123, capturedAt: new Date().toISOString(), accuracyMeters: 18, platform: "ios", background: true }, foregroundPermission: "granted", backgroundPermission: "granted" });
+    assert(rejectedAfterPersistentRevoke.status === 409, "revoked Persistent Safety Location consent must block new collection immediately");
 
     await client.query(
       `INSERT INTO safety_serious_credible_threat_fixture_reviewers (user_id, scope, expires_at)

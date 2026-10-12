@@ -6420,6 +6420,63 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       );
     `,
   },
+  {
+    // Persistent Safety Location is a separate member-to-MWM authorization.
+    // It stores one encrypted current fix only; it never creates contact map
+    // access, location history, a retention worker, or an automatic enrollment.
+    name: "mwm_persistent_safety_location_v1",
+    sql: `
+      CREATE TABLE IF NOT EXISTS mwm_persistent_safety_location_authorizations (
+        owner_id VARCHAR PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        consent_version VARCHAR(64) NOT NULL,
+        consented_at TIMESTAMPTZ NOT NULL,
+        background_opt_in BOOLEAN NOT NULL DEFAULT FALSE,
+        foreground_permission VARCHAR(20) NOT NULL DEFAULT 'unknown'
+          CHECK (foreground_permission IN ('granted','denied','restricted','not_requested','unknown')),
+        background_permission VARCHAR(20) NOT NULL DEFAULT 'unknown'
+          CHECK (background_permission IN ('granted','denied','restricted','not_requested','unknown')),
+        paused_at TIMESTAMPTZ,
+        revoked_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS mwm_persistent_safety_locations (
+        owner_id VARCHAR PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        encrypted_payload TEXT NOT NULL,
+        encryption_key_version VARCHAR(64) NOT NULL,
+        captured_at TIMESTAMPTZ NOT NULL,
+        accuracy_meters DOUBLE PRECISION NOT NULL CHECK (accuracy_meters >= 0 AND accuracy_meters <= 50000),
+        source_platform VARCHAR(16) NOT NULL CHECK (source_platform IN ('ios','android')),
+        received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS mwm_persistent_safety_locations_current_idx
+        ON mwm_persistent_safety_locations (captured_at DESC);
+      CREATE TABLE IF NOT EXISTS mwm_persistent_safety_location_contact_consents (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        owner_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        trusted_share_id UUID NOT NULL REFERENCES trusted_safety_shares(id) ON DELETE CASCADE,
+        consent_version VARCHAR(64) NOT NULL,
+        consented_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        revoked_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (owner_id, trusted_share_id)
+      );
+      CREATE INDEX IF NOT EXISTS mwm_persistent_safety_location_contact_consents_active_idx
+        ON mwm_persistent_safety_location_contact_consents (owner_id, trusted_share_id)
+        WHERE revoked_at IS NULL;
+      CREATE TABLE IF NOT EXISTS mwm_persistent_safety_location_audit (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        owner_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        trusted_share_id UUID REFERENCES trusted_safety_shares(id) ON DELETE SET NULL,
+        event_id UUID REFERENCES family_impact_events(id) ON DELETE SET NULL,
+        action VARCHAR(80) NOT NULL,
+        metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS mwm_persistent_safety_location_audit_owner_idx
+        ON mwm_persistent_safety_location_audit (owner_id, created_at DESC);
+    `,
+  },
 ];
 
 /**
@@ -6491,6 +6548,7 @@ const SAFETY_RELIABILITY_SCHEMA_MIGRATIONS = [
   ...SAFETY_OPERATIONAL_SCHEMA_MIGRATIONS,
   "trusted_safety_durable_delivery_v2",
   "family_impact_intelligence_v1",
+  "mwm_persistent_safety_location_v1",
 ] as const;
 
 export async function ensureSafetyReliabilitySchema(logger?: Logger): Promise<void> {
@@ -6508,6 +6566,9 @@ export async function ensureSafetyReliabilitySchema(logger?: Logger): Promise<vo
     pool.query("SELECT id, owner_id, trusted_share_id FROM family_impact_consents LIMIT 0"),
     pool.query("SELECT id, source_event_id, status FROM family_impact_events LIMIT 0"),
     pool.query("SELECT id, delivery_state, next_retry_at FROM family_impact_delivery_attempts LIMIT 0"),
+    pool.query("SELECT owner_id, consent_version, paused_at, revoked_at FROM mwm_persistent_safety_location_authorizations LIMIT 0"),
+    pool.query("SELECT owner_id, encrypted_payload, captured_at FROM mwm_persistent_safety_locations LIMIT 0"),
+    pool.query("SELECT id, owner_id, trusted_share_id FROM mwm_persistent_safety_location_contact_consents LIMIT 0"),
   ]);
   logger?.info("Safety reliability trusted-contact and Family Impact schemas ready before traffic acceptance");
 }

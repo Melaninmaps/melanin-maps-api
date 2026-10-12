@@ -23,6 +23,7 @@
         "ITSAppUsesNonExemptEncryption": false,
         "UIRequiresFullScreen": false,
         "NSLocationWhenInUseUsageDescription": "Mapping With Melanin uses your location to show nearby minority-owned businesses and community safety information.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "If you turn on Safety Location, Mapping With Melanin can use your location in the background to privately check whether a qualifying emergency may affect you. Your trusted contacts cannot see your live location, and you can pause or turn it off anytime.",
         "NSCameraUsageDescription": "Mapping With Melanin uses your camera when you choose to take a profile or community photo or video.",
         "NSMicrophoneUsageDescription": "Mapping With Melanin uses your microphone only when you choose to send a voice question to Kinfolk AI.",
         "NSPhotoLibraryUsageDescription": "Mapping With Melanin accesses only the photos and videos you select for your profile or community posts.",
@@ -66,6 +67,7 @@
       "permissions": [
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
         "android.permission.CAMERA",
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.INTERNET",
@@ -76,6 +78,7 @@
         "android.permission.RECORD_AUDIO",
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
         "android.permission.READ_MEDIA_VIDEO"
       ],
@@ -144,7 +147,10 @@
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Mapping With Melanin uses your location to show nearby minority-owned businesses and community safety information."
+          "locationWhenInUsePermission": "Mapping With Melanin uses your location to show nearby minority-owned businesses and community safety information.",
+          "locationAlwaysAndWhenInUsePermission": "If you turn on Safety Location, Mapping With Melanin can use your location in the background to privately check whether a qualifying emergency may affect you. Your trusted contacts cannot see your live location, and you can pause or turn it off anytime.",
+          "isIosBackgroundLocationEnabled": true,
+          "isAndroidBackgroundLocationEnabled": true
         }
       ],
       [

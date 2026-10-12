@@ -179,6 +179,7 @@ import officialPublicAlertsRouter from "./official-public-alerts";
 import seriousCredibleThreatRouter from "./serious-credible-threats";
 import seriousCredibleThreatPrivateModeratorRouter from "./serious-credible-threat-reviewer";
 import familyImpactIntelligenceRouter from "./family-impact-intelligence";
+import persistentSafetyLocationRouter from "./persistent-safety-location";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
@@ -212,6 +213,7 @@ router.use(communityFeedbackRouter); // GET public (counts); PUT self-authentica
 // bearer-link views stay public without opening any platform intelligence.
 router.use(locationSharesRouter);
 router.use(trustedSafetyShareRouter);
+router.use(persistentSafetyLocationRouter);
 // Family-impact consent, check-in, and source-ingestion boundaries authenticate
 // each operation internally so their narrowly protected internal route remains
 // default-off without opening the member-facing operations.

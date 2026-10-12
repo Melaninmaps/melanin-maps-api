@@ -5,6 +5,11 @@ import {
   classifyFamilyImpact,
   familyImpactDisclosure,
 } from "./familyImpactIntelligence";
+import {
+  openPersistentSafetyLocation,
+  persistentSafetyLocationFreshnessWindowMs,
+  persistentSafetyLocationIsFresh,
+} from "./persistentSafetyLocation";
 
 export type FamilyImpactProviderOutcome = "provider_accepted" | "provider_rejected" | "retryable_failure";
 export interface FamilyImpactProvider {
@@ -100,25 +105,39 @@ async function cancelIneligibleDeliveryAttempts(
         AND attempt.delivery_state IN ('queued', 'retry_scheduled')
         AND NOT EXISTS (
           SELECT 1
-            FROM family_impact_consents fic
-            JOIN trusted_safety_shares tss
-              ON tss.id = fic.trusted_share_id AND tss.owner_id = fic.owner_id
+            FROM trusted_safety_shares tss
             JOIN users owner
-              ON owner.id = fic.owner_id
+              ON owner.id = tss.owner_id
             JOIN users contact
               ON contact.id = tss.contact_user_id
-            LEFT JOIN user_blocks owner_blocks
-              ON owner_blocks.blocker_id = fic.owner_id AND owner_blocks.blocked_id = contact.id
+            LEFT JOIN user_blocks owner_blocks ON owner_blocks.blocker_id = tss.owner_id AND owner_blocks.blocked_id = contact.id
             LEFT JOIN user_blocks contact_blocks
-              ON contact_blocks.blocker_id = contact.id AND contact_blocks.blocked_id = fic.owner_id
-           WHERE fic.trusted_share_id = attempt.trusted_share_id
-             AND fic.revoked_at IS NULL AND fic.expires_at > NOW()
-             AND fic.location_scope = 'active_temporary_location_only'
+              ON contact_blocks.blocker_id = contact.id AND contact_blocks.blocked_id = tss.owner_id
+           WHERE tss.id = attempt.trusted_share_id
              AND tss.contact_type = 'mwm_user' AND tss.status = 'active'
              AND tss.owner_enabled = true AND tss.contact_accepted = true
              AND owner.approved = true AND COALESCE(owner.account_status, 'active') = 'active'
              AND contact.approved = true AND COALESCE(contact.account_status, 'active') = 'active'
              AND owner_blocks.id IS NULL AND contact_blocks.id IS NULL
+             AND (
+               EXISTS (
+                 SELECT 1 FROM family_impact_consents fic
+                  WHERE fic.owner_id = tss.owner_id AND fic.trusted_share_id = tss.id
+                    AND fic.revoked_at IS NULL AND fic.expires_at > NOW()
+                    AND fic.location_scope = 'active_temporary_location_only'
+               )
+               OR EXISTS (
+                 SELECT 1
+                   FROM mwm_persistent_safety_location_contact_consents persistent_consent
+                   JOIN mwm_persistent_safety_location_authorizations authorization_record
+                     ON authorization_record.owner_id = persistent_consent.owner_id
+                  WHERE persistent_consent.owner_id = tss.owner_id
+                    AND persistent_consent.trusted_share_id = tss.id
+                    AND persistent_consent.revoked_at IS NULL
+                    AND authorization_record.revoked_at IS NULL
+                    AND authorization_record.paused_at IS NULL
+               )
+             )
         )`,
     parameters,
   );
@@ -194,55 +213,113 @@ export async function dispatchFamilyImpactEvent(
   await cancelIneligibleDeliveryAttempts(event.id, allowedTrustedShareIds);
   if (allowedTrustedShareIds?.length === 0) return result;
   const scope = allowedTrustedShareIds
-    ? "AND fic.trusted_share_id = ANY($2::uuid[])"
+    ? "AND tss.id = ANY($2::uuid[])"
     : "";
   const relationshipParameters = allowedTrustedShareIds
     ? [event.id, allowedTrustedShareIds]
     : [event.id];
   const relationships = await pool.query<{
-    trusted_share_id: string; owner_id: string; contact_user_id: string; location_scope: string;
+    trusted_share_id: string; owner_id: string; contact_user_id: string;
+    temporary_consent: boolean; persistent_consent: boolean;
     latitude: number | null; longitude: number | null; last_updated_at: Date | null;
+    persistent_encrypted_payload: string | null; persistent_key_version: string | null;
+    persistent_captured_at: Date | null; persistent_accuracy_meters: number | null;
     county_code: string | null; warning_zone: string | null; confirmed_safe: boolean;
   }>(
-    `SELECT fic.trusted_share_id, fic.owner_id, tss.contact_user_id, fic.location_scope,
+    `SELECT tss.id AS trusted_share_id, tss.owner_id, tss.contact_user_id,
+            (fic.id IS NOT NULL) AS temporary_consent,
+            (persistent_consent.id IS NOT NULL AND authorization_record.owner_id IS NOT NULL) AS persistent_consent,
             ls.current_lat AS latitude, ls.current_lng AS longitude, ls.last_updated_at,
+            persistent_location.encrypted_payload AS persistent_encrypted_payload,
+            persistent_location.encryption_key_version AS persistent_key_version,
+            persistent_location.captured_at AS persistent_captured_at,
+            persistent_location.accuracy_meters AS persistent_accuracy_meters,
             NULL::varchar AS county_code, NULL::varchar AS warning_zone,
             EXISTS (
               SELECT 1 FROM family_impact_checkin_requests request
-               WHERE request.event_id = $1 AND request.trusted_share_id = fic.trusted_share_id
+               WHERE request.event_id = $1 AND request.trusted_share_id = tss.id
                  AND request.state = 'safe'
             ) AS confirmed_safe
-       FROM family_impact_consents fic
-       JOIN trusted_safety_shares tss ON tss.id = fic.trusted_share_id AND tss.owner_id = fic.owner_id
-       JOIN users owner ON owner.id = fic.owner_id AND owner.approved = true AND COALESCE(owner.account_status, 'active') = 'active'
+       FROM trusted_safety_shares tss
+       JOIN users owner ON owner.id = tss.owner_id AND owner.approved = true AND COALESCE(owner.account_status, 'active') = 'active'
        JOIN users contact ON contact.id = tss.contact_user_id AND contact.approved = true AND COALESCE(contact.account_status, 'active') = 'active'
-       LEFT JOIN user_blocks owner_blocks ON owner_blocks.blocker_id = fic.owner_id AND owner_blocks.blocked_id = contact.id
-       LEFT JOIN user_blocks contact_blocks ON contact_blocks.blocker_id = contact.id AND contact_blocks.blocked_id = fic.owner_id
+       LEFT JOIN family_impact_consents fic
+         ON fic.owner_id = tss.owner_id AND fic.trusted_share_id = tss.id
+           AND fic.revoked_at IS NULL AND fic.expires_at > NOW()
+           AND fic.location_scope = 'active_temporary_location_only'
+       LEFT JOIN mwm_persistent_safety_location_contact_consents persistent_consent
+         ON persistent_consent.owner_id = tss.owner_id AND persistent_consent.trusted_share_id = tss.id
+           AND persistent_consent.revoked_at IS NULL
+       LEFT JOIN mwm_persistent_safety_location_authorizations authorization_record
+         ON authorization_record.owner_id = tss.owner_id AND authorization_record.revoked_at IS NULL AND authorization_record.paused_at IS NULL
+       LEFT JOIN mwm_persistent_safety_locations persistent_location
+         ON persistent_location.owner_id = tss.owner_id
+       LEFT JOIN user_blocks owner_blocks ON owner_blocks.blocker_id = tss.owner_id AND owner_blocks.blocked_id = contact.id
+       LEFT JOIN user_blocks contact_blocks ON contact_blocks.blocker_id = contact.id AND contact_blocks.blocked_id = tss.owner_id
        LEFT JOIN LATERAL (
          SELECT current_lat, current_lng, last_updated_at
            FROM location_shares
-          WHERE sharer_id = fic.owner_id AND recipient_user_id = tss.contact_user_id
+          WHERE sharer_id = tss.owner_id AND recipient_user_id = tss.contact_user_id
             AND is_active = true AND expires_at > NOW()
           ORDER BY last_updated_at DESC NULLS LAST LIMIT 1
        ) ls ON true
-      WHERE fic.revoked_at IS NULL AND fic.expires_at > NOW()
-        AND fic.location_scope = 'active_temporary_location_only'
-        AND tss.contact_type = 'mwm_user' AND tss.status = 'active'
+      WHERE tss.contact_type = 'mwm_user' AND tss.status = 'active'
         AND tss.owner_enabled = true AND tss.contact_accepted = true
+        AND (fic.id IS NOT NULL OR (persistent_consent.id IS NOT NULL AND authorization_record.owner_id IS NOT NULL))
         ${scope}
         AND owner_blocks.id IS NULL AND contact_blocks.id IS NULL`,
     relationshipParameters,
   );
   result.eligibleRelationships = relationships.rows.length;
   for (const relationship of relationships.rows) {
-    const impact = classifyFamilyImpact(boundary, {
-      latitude: relationship.latitude,
-      longitude: relationship.longitude,
-      capturedAt: relationship.last_updated_at,
-      accuracyMeters: null,
-      countyCode: relationship.county_code,
-      warningZone: relationship.warning_zone,
-    }, { memberConfirmedSafe: relationship.confirmed_safe });
+    const classifications = [];
+    if (relationship.confirmed_safe) {
+      classifications.push(classifyFamilyImpact(boundary, null, { memberConfirmedSafe: true }));
+    } else {
+      if (relationship.temporary_consent) {
+        classifications.push(classifyFamilyImpact(boundary, {
+          latitude: relationship.latitude,
+          longitude: relationship.longitude,
+          capturedAt: relationship.last_updated_at,
+          accuracyMeters: null,
+          countyCode: relationship.county_code,
+          warningZone: relationship.warning_zone,
+        }));
+      }
+      if (relationship.persistent_consent && relationship.persistent_encrypted_payload && relationship.persistent_key_version
+        && persistentSafetyLocationIsFresh(relationship.persistent_captured_at)) {
+        try {
+          const location = openPersistentSafetyLocation(
+            relationship.owner_id,
+            relationship.persistent_encrypted_payload,
+            relationship.persistent_key_version,
+          );
+          classifications.push(classifyFamilyImpact(boundary, {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            capturedAt: location.capturedAt,
+            accuracyMeters: location.accuracyMeters,
+          }, { maxLocationAgeMs: persistentSafetyLocationFreshnessWindowMs() ?? 0 }));
+        } catch {
+          classifications.push(classifyFamilyImpact(boundary, null));
+        }
+      } else if (relationship.persistent_consent) {
+        classifications.push(classifyFamilyImpact(boundary, null));
+      }
+    }
+    const impact = classifications.find((item) => item.status === "member_confirmed_safety")
+      ?? classifications.find((item) => item.status === "potentially_affected")
+      ?? classifications.find((item) => item.status === "outside_reported_area")
+      ?? classifications[0]
+      ?? classifyFamilyImpact(boundary, null);
+    if (relationship.persistent_consent) {
+      await pool.query(
+        `INSERT INTO mwm_persistent_safety_location_audit
+           (id, owner_id, trusted_share_id, event_id, action, metadata, created_at)
+         VALUES (gen_random_uuid(),$1,$2,$3,'emergency_location_evaluated',$4::jsonb,NOW())`,
+        [relationship.owner_id, relationship.trusted_share_id, event.id, JSON.stringify({ impact: impact.status })],
+      );
+    }
     increment(result, impact.status);
     const requiresDelivery = deliveryRequired(impact.status);
     if (!requiresDelivery) {

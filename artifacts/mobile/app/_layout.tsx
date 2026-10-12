@@ -31,6 +31,10 @@ import { KeyboardProviderWrapper } from "@/components/KeyboardProviderWrapper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import * as SecureStore from "expo-secure-store"; // reserved — not active
+// Must load at module scope so Expo can register the task after an OS
+// background relaunch. The task itself performs no collection until a member
+// has explicitly enabled Persistent Safety Location and granted OS permission.
+import "@/lib/persistentSafetyLocation";
 // Sentry.init() removed — native SDK not active in this build.
 
 // ── JS crash logger (Layer 1 — OTA-deployed, always active) ──────────────────

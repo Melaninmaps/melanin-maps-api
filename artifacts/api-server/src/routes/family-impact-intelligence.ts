@@ -3,6 +3,11 @@ import { pool } from "@workspace/db";
 import { randomUUID } from "node:crypto";
 import { classifyFamilyImpact, familyImpactDisclosure, FAMILY_IMPACT_LOCATION_SCOPE, type EmergencyBoundary } from "../safety/familyImpactIntelligence";
 import { cancelFamilyImpactEvent, dispatchFamilyImpactEvent } from "../safety/familyImpactDispatch";
+import {
+  openPersistentSafetyLocation,
+  persistentSafetyLocationFreshnessWindowMs,
+  persistentSafetyLocationIsFresh,
+} from "../safety/persistentSafetyLocation";
 
 const router = Router();
 const CONSENT_VERSION = "family-impact-v1";
@@ -225,10 +230,20 @@ router.post("/safety/family-impact/check-in-requests", async (req, res) => {
       `INSERT INTO family_impact_checkin_requests (id, event_id, trusted_share_id, owner_id, contact_user_id, state, requested_at, expires_at)
        SELECT gen_random_uuid(), event.id, tss.id, tss.owner_id, tss.contact_user_id, 'requested', NOW(), LEAST(event.expires_at, NOW() + INTERVAL '2 hours')
          FROM family_impact_events event JOIN trusted_safety_shares tss ON tss.id = $2
-         JOIN family_impact_consents fic ON fic.owner_id = tss.owner_id AND fic.trusted_share_id = tss.id
+         LEFT JOIN family_impact_consents fic ON fic.owner_id = tss.owner_id AND fic.trusted_share_id = tss.id
         WHERE event.source_event_id = $1 AND event.status = 'active' AND event.expires_at > NOW()
           AND tss.contact_user_id = $3 AND tss.status = 'active' AND tss.owner_enabled = true AND tss.contact_accepted = true
-          AND fic.revoked_at IS NULL AND fic.expires_at > NOW()
+          AND (
+            (fic.revoked_at IS NULL AND fic.expires_at > NOW())
+            OR EXISTS (
+              SELECT 1
+                FROM mwm_persistent_safety_location_contact_consents persistent_consent
+                JOIN mwm_persistent_safety_location_authorizations authorization_record ON authorization_record.owner_id = persistent_consent.owner_id
+               WHERE persistent_consent.owner_id = tss.owner_id AND persistent_consent.trusted_share_id = tss.id
+                 AND persistent_consent.revoked_at IS NULL
+                 AND authorization_record.revoked_at IS NULL AND authorization_record.paused_at IS NULL
+            )
+          )
        ON CONFLICT (event_id, trusted_share_id) DO NOTHING RETURNING id, owner_id`, [eventId, shareId, contactId]);
     const request = created.rows[0];
     if (!request) { res.status(409).json({ error: "A safety check-in cannot be requested for this relationship or event" }); return; }
@@ -548,28 +563,84 @@ router.get("/safety/family-impact/events/:eventId/impact", async (req, res) => {
   const contactId = requireUser(req, res); if (!contactId) return;
   try {
     const row = await pool.query<{
-      boundary: unknown; general_area: string; owner_id: string; last_updated_at: Date | null; latitude: number | null; longitude: number | null; confirmed_safe: boolean;
+      boundary: unknown; general_area: string; owner_id: string;
+      temporary_consent: boolean; persistent_consent: boolean;
+      last_updated_at: Date | null; latitude: number | null; longitude: number | null;
+      persistent_encrypted_payload: string | null; persistent_key_version: string | null;
+      persistent_captured_at: Date | null; persistent_accuracy_meters: number | null;
+      confirmed_safe: boolean;
     }>(
-      `SELECT event.boundary, event.general_area, tss.owner_id, ls.last_updated_at, ls.current_lat AS latitude, ls.current_lng AS longitude,
+      `SELECT event.boundary, event.general_area, tss.owner_id,
+              (fic.id IS NOT NULL) AS temporary_consent,
+              (persistent_consent.id IS NOT NULL AND authorization_record.owner_id IS NOT NULL) AS persistent_consent,
+              ls.last_updated_at, ls.current_lat AS latitude, ls.current_lng AS longitude,
+              persistent_location.encrypted_payload AS persistent_encrypted_payload,
+              persistent_location.encryption_key_version AS persistent_key_version,
+              persistent_location.captured_at AS persistent_captured_at,
+              persistent_location.accuracy_meters AS persistent_accuracy_meters,
               EXISTS(SELECT 1 FROM family_impact_checkin_requests request WHERE request.event_id = event.id AND request.trusted_share_id = tss.id AND request.state = 'safe') AS confirmed_safe
          FROM family_impact_events event
-         JOIN family_impact_consents fic ON fic.revoked_at IS NULL AND fic.expires_at > NOW()
-         JOIN trusted_safety_shares tss ON tss.id = fic.trusted_share_id AND tss.owner_id = fic.owner_id
+         JOIN trusted_safety_shares tss ON tss.contact_user_id = $2
          JOIN users owner ON owner.id = tss.owner_id
          JOIN users contact ON contact.id = tss.contact_user_id
+         LEFT JOIN family_impact_consents fic ON fic.owner_id = tss.owner_id AND fic.trusted_share_id = tss.id
+           AND fic.revoked_at IS NULL AND fic.expires_at > NOW() AND fic.location_scope = 'active_temporary_location_only'
+         LEFT JOIN mwm_persistent_safety_location_contact_consents persistent_consent
+           ON persistent_consent.owner_id = tss.owner_id AND persistent_consent.trusted_share_id = tss.id AND persistent_consent.revoked_at IS NULL
+         LEFT JOIN mwm_persistent_safety_location_authorizations authorization_record
+           ON authorization_record.owner_id = tss.owner_id AND authorization_record.revoked_at IS NULL AND authorization_record.paused_at IS NULL
+         LEFT JOIN mwm_persistent_safety_locations persistent_location ON persistent_location.owner_id = tss.owner_id
          LEFT JOIN user_blocks owner_blocks ON owner_blocks.blocker_id = tss.owner_id AND owner_blocks.blocked_id = tss.contact_user_id
          LEFT JOIN user_blocks contact_blocks ON contact_blocks.blocker_id = tss.contact_user_id AND contact_blocks.blocked_id = tss.owner_id
          LEFT JOIN LATERAL (SELECT last_updated_at, current_lat, current_lng FROM location_shares WHERE sharer_id = tss.owner_id AND recipient_user_id = tss.contact_user_id AND is_active = true AND expires_at > NOW() ORDER BY last_updated_at DESC NULLS LAST LIMIT 1) ls ON true
         WHERE event.source_event_id = $1 AND event.status = 'active' AND event.expires_at > NOW()
-          AND tss.contact_user_id = $2 AND tss.status = 'active' AND tss.owner_enabled = true AND tss.contact_accepted = true
+          AND tss.status = 'active' AND tss.owner_enabled = true AND tss.contact_accepted = true
           AND owner.approved = true AND COALESCE(owner.account_status, 'active') = 'active'
           AND contact.approved = true AND COALESCE(contact.account_status, 'active') = 'active'
           AND owner_blocks.id IS NULL AND contact_blocks.id IS NULL
+          AND (fic.id IS NOT NULL OR (persistent_consent.id IS NOT NULL AND authorization_record.owner_id IS NOT NULL))
         LIMIT 1`, [req.params.eventId, contactId]);
     const current = row.rows[0];
     const boundary = current ? parseBoundary(current.boundary) : null;
     if (!current || !boundary) { res.status(404).json({ error: "No authorized family-impact view is available" }); return; }
-    const impact = classifyFamilyImpact(boundary, { latitude: current.latitude, longitude: current.longitude, capturedAt: current.last_updated_at, accuracyMeters: null }, { memberConfirmedSafe: current.confirmed_safe });
+    const classifications = [];
+    if (current.confirmed_safe) {
+      classifications.push(classifyFamilyImpact(boundary, null, { memberConfirmedSafe: true }));
+    } else {
+      if (current.temporary_consent) {
+        classifications.push(classifyFamilyImpact(boundary, {
+          latitude: current.latitude, longitude: current.longitude, capturedAt: current.last_updated_at, accuracyMeters: null,
+        }));
+      }
+      if (current.persistent_consent && current.persistent_encrypted_payload && current.persistent_key_version
+        && persistentSafetyLocationIsFresh(current.persistent_captured_at)) {
+        try {
+          const location = openPersistentSafetyLocation(current.owner_id, current.persistent_encrypted_payload, current.persistent_key_version);
+          classifications.push(classifyFamilyImpact(boundary, {
+            latitude: location.latitude, longitude: location.longitude, capturedAt: location.capturedAt, accuracyMeters: location.accuracyMeters,
+          }, { maxLocationAgeMs: persistentSafetyLocationFreshnessWindowMs() ?? 0 }));
+        } catch {
+          classifications.push(classifyFamilyImpact(boundary, null));
+        }
+      } else if (current.persistent_consent) {
+        classifications.push(classifyFamilyImpact(boundary, null));
+      }
+    }
+    const impact = classifications.find((item) => item.status === "member_confirmed_safety")
+      ?? classifications.find((item) => item.status === "potentially_affected")
+      ?? classifications.find((item) => item.status === "outside_reported_area")
+      ?? classifications[0]
+      ?? classifyFamilyImpact(boundary, null);
+    if (current.persistent_consent) {
+      await pool.query(
+        `INSERT INTO mwm_persistent_safety_location_audit
+           (id, owner_id, trusted_share_id, event_id, action, metadata, created_at)
+         SELECT gen_random_uuid(), $1, tss.id, event.id, 'contact_impact_viewed', $3::jsonb, NOW()
+           FROM family_impact_events event JOIN trusted_safety_shares tss ON tss.owner_id = $1 AND tss.contact_user_id = $2
+          WHERE event.source_event_id = $4 AND tss.status = 'active' LIMIT 1`,
+        [current.owner_id, contactId, JSON.stringify({ impact: impact.status }), req.params.eventId],
+      );
+    }
     res.set("Cache-Control", "no-store, private, max-age=0");
     res.json({ generalArea: current.general_area, impact: impact.status, message: familyImpactDisclosure(impact.status) });
   } catch { res.status(500).json({ error: "Unable to evaluate family impact" }); }
