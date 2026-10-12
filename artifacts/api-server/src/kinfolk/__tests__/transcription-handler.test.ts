@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { request as httpRequest } from "node:http";
 import express from "express";
 import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -68,6 +69,18 @@ function safariStyleFragmentedM4a(): Buffer {
   const trun = isoBox("trun", fullBox(0, u32(96)));
   const moof = isoBox("moof", isoBox("traf", tfhd, trun));
   return Buffer.concat([isoBox("ftyp", Buffer.from("isom\x00\x00\x00\x01isom", "binary")), moov, moof, isoBox("mdat", Buffer.from([0]))]);
+}
+
+function multipartVoiceBody(audio: Buffer): { boundary: string; body: Buffer } {
+  const boundary = "----kinfolk-disconnect-test";
+  return {
+    boundary,
+    body: Buffer.concat([
+      Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="audio"; filename="voice.wav"\r\nContent-Type: audio/wav\r\n\r\n`),
+      audio,
+      Buffer.from(`\r\n--${boundary}\r\nContent-Disposition: form-data; name="mimeType"\r\n\r\naudio/wav\r\n--${boundary}--\r\n`),
+    ]),
+  };
 }
 
 function app(authenticated = true) {
@@ -165,6 +178,63 @@ describe("actual Kinfolk transcription handler", () => {
     expect(response.status).toBe(200);
     expect(response.body).toMatchObject({ transcript: "hello Kinfolk", audioRetained: false });
     expect(transcribe).toHaveBeenCalledTimes(1);
+  });
+
+  it("accepts canonical M4A multipart metadata only when it agrees with the inspected container", async () => {
+    const response = await request(app())
+      .post("/api/kinfolk/transcribe")
+      .field("mimeType", "audio/mp4")
+      .field("durationMs", "1000")
+      .attach("audio", load("voice.m4a"), { filename: "kinfolk-question.m4a", contentType: "audio/mp4" });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({ transcript: "hello Kinfolk", audioRetained: false });
+    expect(transcribe).toHaveBeenCalledWith(expect.any(Buffer), "m4a", expect.anything());
+  });
+
+  it("aborts provider work and skips optional review when the multipart client disconnects", async () => {
+    let providerSignal: AbortSignal | undefined;
+    transcribe.mockImplementationOnce((_audio: Buffer, _format: string, options: { signal?: AbortSignal }) => new Promise<string>((_resolve, reject) => {
+      providerSignal = options.signal;
+      options.signal?.addEventListener("abort", () => {
+        reject(Object.assign(new Error("request aborted"), { name: "AbortError" }));
+      }, { once: true });
+    }));
+
+    const server = app().listen(0, "127.0.0.1");
+    await new Promise<void>((resolve, reject) => {
+      server.once("listening", resolve);
+      server.once("error", reject);
+    });
+    try {
+      const address = server.address();
+      if (!address || typeof address === "string") throw new Error("test server did not bind a TCP port");
+      const { boundary, body } = multipartVoiceBody(load("voice.wav"));
+      const client = httpRequest({
+        hostname: "127.0.0.1",
+        port: address.port,
+        path: "/api/kinfolk/transcribe",
+        method: "POST",
+        headers: {
+          "Content-Type": `multipart/form-data; boundary=${boundary}`,
+          "Content-Length": String(body.length),
+        },
+      }, (response) => response.resume());
+      // A closed client socket is expected in this test and must not turn into
+      // process output that could expose request details.
+      client.on("error", () => undefined);
+      client.end(body);
+
+      await vi.waitFor(() => expect(transcribe).toHaveBeenCalledTimes(1));
+      client.destroy();
+
+      await vi.waitFor(() => expect(providerSignal?.aborted).toBe(true));
+      expect(chatCreate).not.toHaveBeenCalled();
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => error ? reject(error) : resolve());
+      });
+    }
   });
 
   it("keeps the exact transcript as the draft and returns an optional reviewed suggestion", async () => {

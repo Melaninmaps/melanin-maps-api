@@ -78,12 +78,21 @@ const NUMBER_WORDS: Readonly<Record<string, number>> = {
   fourteen: 14,
 };
 
-const ITINERARY_SIGNAL = /\b(itinerary|day[- ]by[- ]day|trip plan|travel plan|plan (?:me |my |our |a )?(?:trip|visit|getaway|weekend|vacation)|what (?:should|can) (?:i|we) do each day)\b/i;
+const EXPLICIT_CURRENT_ITINERARY_REQUEST = /^\s*(?:(?:can|could|would)\s+you\s+|please\s+|help\s+(?:me|us)\s+)?(?:plan|build|make|create)\b[\s\S]{0,160}\b(?:itinerary|day[- ]by[- ]day|trip|visit|getaway|weekend|vacation)\b/i;
 const FENCED_CONTENT = /^\s*```(?:json)?\s*[\s\S]*```\s*$/i;
 const MAX_PLAIN_TEXT_REPLY_LENGTH = 12_000;
 
+/**
+ * Catalog itineraries are an explicit current-turn action, never an inference
+ * from a hypothetical travel question or a destination retained in context.
+ */
+export function isExplicitCurrentItineraryRequest(message: string): boolean {
+  return EXPLICIT_CURRENT_ITINERARY_REQUEST.test(message.trim());
+}
+
+/** @deprecated Prefer isExplicitCurrentItineraryRequest for new callers. */
 export function isTravelPlanningPrompt(message: string): boolean {
-  return ITINERARY_SIGNAL.test(message);
+  return isExplicitCurrentItineraryRequest(message);
 }
 
 /** Deterministically returns an itinerary length from 1 through 14. */

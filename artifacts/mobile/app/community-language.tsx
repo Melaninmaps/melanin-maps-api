@@ -83,6 +83,10 @@ export default function CommunityLanguageScreen() {
           <Feather name="shield" size={16} color={colors.primary} />
           <Text style={[styles.infoText, { color: colors.mutedForeground }]}>Kinfolk will not copy a dialect, guess anyone’s identity, or treat a suggestion as proof of a health, legal, safety, news, ownership, or business claim.</Text>
         </View>
+        <View testID="community-language-memory-boundary" style={[styles.info, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+          <Feather name="eye" size={16} color={colors.primary} />
+          <Text style={[styles.infoText, { color: colors.mutedForeground }]}>Review only: this suggestion is not saved as your Kinfolk memory or profile. It will not personalize Kinfolk or change Kinfolk automatically.</Text>
+        </View>
         <Text style={[styles.label, { color: colors.foreground }]}>Word or phrase</Text>
         <TextInput value={term} onChangeText={setTerm} maxLength={60} placeholder="For example: bodega" placeholderTextColor={colors.mutedForeground} style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} />
         <Text style={[styles.label, { color: colors.foreground }]}>What does it mean?</Text>
@@ -91,7 +95,7 @@ export default function CommunityLanguageScreen() {
         <TextInput value={city} onChangeText={setCity} maxLength={100} placeholder="For example: Philadelphia" placeholderTextColor={colors.mutedForeground} style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} />
         <Text style={[styles.label, { color: colors.foreground }]}>How would someone use it? <Text style={{ color: colors.mutedForeground }}>(optional)</Text></Text>
         <TextInput value={usageExample} onChangeText={setUsageExample} maxLength={240} multiline textAlignVertical="top" placeholder="A short, non-personal example" placeholderTextColor={colors.mutedForeground} style={[styles.input, styles.multiline, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]} />
-        {submitted && <View accessibilityRole="alert" style={[styles.success, { backgroundColor: "#ECFDF5", borderColor: "#86EFAC" }]}><Feather name="check-circle" size={16} color="#15803D" /><Text style={styles.successText}>Sent for review. Thank you for helping Kinfolk understand local context.</Text></View>}
+        {submitted && <View accessibilityRole="alert" testID="community-language-review-success" style={[styles.success, { backgroundColor: "#ECFDF5", borderColor: "#86EFAC" }]}><Feather name="check-circle" size={16} color="#15803D" /><Text style={styles.successText}>Sent for review. Review only: this suggestion is not saved as your Kinfolk memory or profile, will not personalize Kinfolk, and will not change Kinfolk automatically.</Text></View>}
         <TouchableOpacity disabled={submitting || !term.trim() || !meaning.trim()} activeOpacity={0.85} style={[styles.button, { backgroundColor: colors.primary }, (submitting || !term.trim() || !meaning.trim()) && styles.disabled]} onPress={() => { void submit(); }}>
           {submitting ? <ActivityIndicator color="#fff" /> : <><Feather name="send" size={16} color="#fff" /><Text style={styles.buttonText}>Send for review</Text></>}
         </TouchableOpacity>

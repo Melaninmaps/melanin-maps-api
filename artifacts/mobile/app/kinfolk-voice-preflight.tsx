@@ -103,6 +103,10 @@ export default function KinfolkVoicePreflightScreen() {
   const [playbackUri, setPlaybackUri] = useState<string | undefined>();
   const playbackFileRef = useRef<FileSystem.File | null>(null);
   const recordingStartedAtRef = useRef<number | null>(null);
+  const temporaryRecordingUriRef = useRef<string | null>(null);
+  const transcriptionOperationRef = useRef(0);
+  const transcriptionAbortControllerRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(true);
   const activeAttemptRef = useRef<string | null>(null);
   const player = useAudioPlayer(playbackUri);
   const playerStatus = useAudioPlayerStatus(player);
@@ -139,8 +143,50 @@ export default function KinfolkVoicePreflightScreen() {
     } catch { /* local raw recording cleanup is best effort */ }
   }, []);
 
+  const discardTemporaryRecording = useCallback(async () => {
+    const uri = temporaryRecordingUriRef.current ?? recorder.uri;
+    temporaryRecordingUriRef.current = null;
+    recordingStartedAtRef.current = null;
+    try {
+      if (recorder.isRecording) await recorder.stop();
+    } catch {
+      // An interrupted recorder still must not proceed to a network request.
+    } finally {
+      cleanRecordedFile(uri);
+      cleanRecordedFile(recorder.uri);
+      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
+    }
+  }, [cleanRecordedFile, recorder]);
+
+  const interruptPreflightTranscription = useCallback(async (reason?: string) => {
+    const hadTranscription = Boolean(
+      temporaryRecordingUriRef.current || transcriptionAbortControllerRef.current,
+    );
+    const hadVoiceWork = hadTranscription || recorder.isRecording;
+    // Invalidate token and response continuations before deleting the local
+    // source so backgrounding or unmounting fails closed rather than uploading.
+    transcriptionOperationRef.current += 1;
+    transcriptionAbortControllerRef.current?.abort();
+    transcriptionAbortControllerRef.current = null;
+    await discardTemporaryRecording();
+
+    if (!mountedRef.current || !hadVoiceWork) return;
+    setRecordedUri(null);
+    setRecordedDurationMs(0);
+    setTranscript("");
+    setIsStarting(false);
+    setIsStopping(false);
+    updateStage(
+      hadTranscription ? "transcription_upload" : "recording_started",
+      "failed",
+      reason ?? "Voice Preflight was canceled. Temporary audio was deleted and nothing was uploaded.",
+    );
+  }, [discardTemporaryRecording, recorder, updateStage]);
+
   const resetForNewAttempt = useCallback(() => {
     cleanRecordedFile(recordedUri);
+    cleanRecordedFile(temporaryRecordingUriRef.current);
+    temporaryRecordingUriRef.current = null;
     cleanPlaybackFile();
     setRecordedUri(null);
     setRecordedDurationMs(0);
@@ -216,15 +262,19 @@ export default function KinfolkVoicePreflightScreen() {
 
   const stopAndTranscribe = async () => {
     if (!recorderState.isRecording || isStopping) return;
+    const operation = transcriptionOperationRef.current + 1;
+    transcriptionOperationRef.current = operation;
     setIsStopping(true);
     updateStage("recording_captured", "running", "Stopping recorder and reading technical metadata.");
     let temporaryRecordingUri: string | null = null;
+    let controller: AbortController | null = null;
     try {
       const durationMs = recordingStartedAtRef.current === null
         ? recorderState.durationMillis
         : Math.max(0, Date.now() - recordingStartedAtRef.current);
       recordingStartedAtRef.current = null;
       await recorder.stop();
+      if (operation !== transcriptionOperationRef.current) return;
       const uri = recorder.uri;
       if (!uri) {
         updateStage("recording_captured", "failed", voicePreflightFailure("recording_captured"));
@@ -245,11 +295,13 @@ export default function KinfolkVoicePreflightScreen() {
       }
       setRecordedUri(uri);
       temporaryRecordingUri = uri;
+      temporaryRecordingUriRef.current = uri;
       setRecordedDurationMs(durationMs);
       updateStage("recording_captured", "passed", `${durationMs} ms · ${fileSize} bytes · declared ${mimeType}. Raw audio remains only in temporary device cache.`);
       updateStage("transcription_upload", "running", "Uploading temporary recording to Kinfolk transcription.");
 
       const token = await getToken();
+      if (operation !== transcriptionOperationRef.current) return;
       if (!token) {
         updateStage("transcription_upload", "failed", "Upload could not start because the signed-in session expired. Sign in again and retry.");
         return;
@@ -258,19 +310,25 @@ export default function KinfolkVoicePreflightScreen() {
       form.append("audio", file);
       form.append("durationMs", String(durationMs));
       form.append("mimeType", mimeType);
+      controller = new AbortController();
+      transcriptionAbortControllerRef.current = controller;
       const response = await fetch(`${getApiBase()}/api/kinfolk/transcribe`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: form,
+        signal: controller.signal,
       });
+      if (operation !== transcriptionOperationRef.current) return;
       if (!response.ok) {
         const payload = await response.json().catch(() => ({})) as { message?: string; error?: string };
+        if (operation !== transcriptionOperationRef.current) return;
         const message = payload.message?.trim() || `Upload failed with HTTP ${response.status}. Try again.`;
         updateStage("transcription_upload", "failed", voicePreflightFailure("transcription_upload", message));
         return;
       }
       updateStage("transcription_upload", "passed", "Upload reached /kinfolk/transcribe and returned successfully.");
       const payload = await response.json() as { text?: string };
+      if (operation !== transcriptionOperationRef.current) return;
       if (!payload.text?.trim()) {
         updateStage("transcript_inserted", "failed", voicePreflightFailure("transcript_inserted"));
         return;
@@ -278,13 +336,23 @@ export default function KinfolkVoicePreflightScreen() {
       setTranscript(payload.text.trim());
       updateStage("transcript_inserted", "passed", "Transcript returned and inserted for review. The text is not copied into the technical log.");
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown recording error.";
-      updateStage("transcription_upload", "failed", voicePreflightFailure("transcription_upload", `Upload failed—try again. ${message}`));
+      if (operation === transcriptionOperationRef.current) {
+        const message = error instanceof Error ? error.message : "Unknown recording error.";
+        updateStage("transcription_upload", "failed", voicePreflightFailure("transcription_upload", `Upload failed—try again. ${message}`));
+      }
     } finally {
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
       cleanRecordedFile(temporaryRecordingUri);
-      setRecordedUri(null);
-      setIsStopping(false);
+      if (temporaryRecordingUriRef.current === temporaryRecordingUri) {
+        temporaryRecordingUriRef.current = null;
+      }
+      if (transcriptionAbortControllerRef.current === controller) {
+        transcriptionAbortControllerRef.current = null;
+      }
+      if (operation === transcriptionOperationRef.current && mountedRef.current) {
+        setRecordedUri(null);
+        setIsStopping(false);
+      }
     }
   };
 
@@ -404,17 +472,16 @@ export default function KinfolkVoicePreflightScreen() {
     const subscription = AppState.addEventListener("change", (state) => {
       if (state === "active") return;
       if (player.playing) player.pause();
-      if (recorderState.isRecording) {
-        updateStage("recording_started", "failed", "Recording was interrupted because the app left the foreground. Retry the attempt.");
-      }
+      void interruptPreflightTranscription("Voice Preflight was canceled because the app left the foreground. Temporary audio was deleted and nothing was uploaded.");
     });
     return () => subscription.remove();
-  }, [player, recorderState.isRecording, updateStage]);
+  }, [interruptPreflightTranscription, player]);
 
   useEffect(() => () => {
-    cleanRecordedFile(recordedUri);
+    mountedRef.current = false;
+    void interruptPreflightTranscription();
     cleanPlaybackFile();
-  }, [cleanPlaybackFile, cleanRecordedFile, recordedUri]);
+  }, [cleanPlaybackFile, interruptPreflightTranscription]);
 
   const copyLog = async () => {
     await Clipboard.setStringAsync(formatVoicePreflightLog(attempts));

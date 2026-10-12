@@ -127,6 +127,14 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("const coordinates = pinsToFit.map");
   });
 
+  it("filters cached canonical fallback pins to a complete explicit city/state without changing around-me fallback", () => {
+    expect(fullMapSource).toContain("const explicitMapLocality = searchedLocality ?? routeSearchLocality");
+    expect(fullMapSource).toContain("const localityPins = hasExplicitMapLocality");
+    expect(fullMapSource).toContain("matchesExplicitMapLocality(business, explicitMapLocality)");
+    expect(fullMapSource).toContain(": canonicalMapPins;");
+    expect(fullMapSource).toContain("distanceMiles(proximityMapLocation, business) <= mapDiscoveryRadius");
+  });
+
   it("keeps the business hook backward-compatible while allowing map views to stop unscoped fetches", () => {
     expect(businessHookSource).toContain("enabled?: boolean;");
     expect(businessHookSource).toContain("if (!enabled)");
@@ -171,6 +179,17 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("const directMatchHasCoordinates = Boolean(");
     expect(fullMapSource).toContain("const showDirectMatchOnMap = useCallback");
     expect(fullMapSource).toContain("Show pin");
+  });
+
+  it("preserves direct-name safety context from the API but excludes it from Map pins, cards, and fitting", () => {
+    expect(businessHookSource).toContain('"direct_named_safety_context"');
+    expect(businessHookSource).toContain('data.searchScope === "direct_named_safety_context"');
+    expect(fullMapSource).toContain("const suppressSafetyContextBusinessResults = isDirectNamedSafetyContext(");
+    expect(fullMapSource).toContain("if (suppressSafetyContextBusinessResults) return [];");
+    expect(fullMapSource).toContain("hasSubmittedBusinessSearch && !suppressSafetyContextBusinessResults");
+    expect(fullMapSource).toContain("if (suppressSafetyContextBusinessResults) return;");
+    expect(fullMapSource).toContain('businessSearchScope === "explicit_public_listing"');
+    expect(fullMapSource).toContain("if (directMatchHasCoordinates && directMatch) return [directMatch]");
   });
 
   it("centers a deliberate exact-name search on the matched pin and opens its MWM card", () => {

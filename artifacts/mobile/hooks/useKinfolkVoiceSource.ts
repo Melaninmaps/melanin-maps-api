@@ -82,6 +82,14 @@ function kinfolkVoiceMultipartFilename(mimeType: string): string {
   return `kinfolk-question.${extension}`;
 }
 
+function canonicalizeKinfolkVoiceUpload(file: Blob, mimeType: string): Blob {
+  // iOS can report an M4A cache file with an empty or legacy Blob type. The
+  // filename remains .m4a, while this makes the native multipart part agree
+  // with the already-validated canonical declaration sent below.
+  if (mimeType !== "audio/mp4" || file.type === "audio/mp4") return file;
+  return new Blob([file], { type: "audio/mp4" });
+}
+
 /**
  * Owns only the microphone-to-transcript lifecycle. It deliberately does not
  * send a chat turn: callers must present and explicitly submit the transcript.
@@ -180,9 +188,9 @@ export function useKinfolkVoiceSource(options: UseKinfolkVoiceSourceOptions): Ki
       });
       const form = new FormData();
       // Expo File implements Blob. Supplying the canonical filename also keeps
-      // native multipart bridges that fall back to application/octet-stream
-      // compatible with the server's container inspection.
-      form.append("audio", file, kinfolkVoiceMultipartFilename(inspection.mimeType));
+      // the extension aligned with strict server-side container inspection.
+      const upload = canonicalizeKinfolkVoiceUpload(file, inspection.mimeType);
+      form.append("audio", upload, kinfolkVoiceMultipartFilename(inspection.mimeType));
       form.append("durationMs", String(durationMs));
       form.append("mimeType", inspection.mimeType);
       form.append("regionalFlavor", options.regionalFlavor ?? "off");
@@ -324,10 +332,12 @@ export function useKinfolkVoiceSource(options: UseKinfolkVoiceSourceOptions): Ki
   useEffect(() => {
     if (state.phase !== "recording" || recorderState.isRecording) return;
     const timer = setTimeout(() => {
-      if (!recorder.getStatus().isRecording) void stop();
+      // A stop not initiated by this controller is an interruption, not member
+      // consent to upload. Invalidate continuations and delete any cache audio.
+      if (!recorder.getStatus().isRecording) void cancel();
     }, INTERRUPTION_GRACE_MS);
     return () => clearTimeout(timer);
-  }, [recorder, recorderState.isRecording, state.phase, stop]);
+  }, [cancel, recorder, recorderState.isRecording, state.phase]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (nextState) => {

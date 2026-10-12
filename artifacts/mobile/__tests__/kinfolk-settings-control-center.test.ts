@@ -42,6 +42,15 @@ describe("Build 135 native Kinfolk Settings", () => {
     expect(controlCenter).toContain("Private Places");
   });
 
+  it("uses the canonical API resolver for every private-origin surface", () => {
+    for (const source of [controlCenter, privatePlaces, temporaryStays]) {
+      expect(source).toContain('import { getApiBase } from "@/lib/api";');
+      expect(source).toContain("getApiBase()");
+      expect(source).not.toContain("EXPO_PUBLIC_DOMAIN");
+      expect(source).not.toMatch(/function apiBase|const apiBase|function getApiBase|const getApiBase/);
+    }
+  });
+
   it("persists settings only through one explicit save transaction and retains a failed draft", () => {
     expect(controlCenter).toContain("savingPromise");
     expect(controlCenter).not.toContain("setTimeout(");

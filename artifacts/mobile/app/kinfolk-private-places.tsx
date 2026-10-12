@@ -6,6 +6,7 @@ import { ActivityIndicator, Alert, Platform, ScrollView, StyleSheet, Switch, Tex
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useUnsavedKinfolkExitGuard } from "@/hooks/useUnsavedKinfolkExitGuard";
+import { getApiBase } from "@/lib/api";
 
 type Status = { enabled: boolean; disclosureVersion: string; disclosure: string };
 type Place = { id: string; label: string; isActive: boolean };
@@ -32,7 +33,6 @@ function readPublicDirectoryBusinesses(payload: unknown): NearbyDirectoryBusines
   });
 }
 
-function apiBase(): string { return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : ""; }
 async function memberToken(): Promise<string | null> { try { return await SecureStore.getItemAsync("auth_session_token"); } catch { return null; } }
 async function message(response: Response, fallback: string): Promise<string> { const payload = await response.json().catch(() => ({})) as { error?: string }; return payload.error ?? fallback; }
 
@@ -57,7 +57,7 @@ export default function KinfolkPrivatePlacesScreen() {
 
   const headers = useCallback(async () => {
     const auth = await memberToken();
-    const base = apiBase();
+    const base = getApiBase();
     if (!auth || !base) throw new Error("Please sign in again to use Private Places.");
     return { base, headers: { "Content-Type": "application/json", Authorization: `Bearer ${auth}` } };
   }, []);

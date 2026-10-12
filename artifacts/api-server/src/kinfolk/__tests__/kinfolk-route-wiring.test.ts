@@ -609,10 +609,13 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("!contextualEvidence.degraded");
   });
 
-  it("does not replace a current city briefing or any generic current-evidence turn with a catalog itinerary", () => {
+  it("allows a catalog itinerary only for an explicit current-turn request", () => {
     expect(chatRoute).toContain('const isCurrentCityBriefing = contextualPlan?.taskMode === "city_briefing"');
     expect(chatRoute).toMatch(
-      /const travelPlanning\s*=\s*!isCurrentCityBriefing\s*&&\s*!generalAnswerRoute\.requiresCurrentEvidence\s*&&\s*\(isTravelPlanningPrompt\(message\)\s*\|\|\s*earlyDecision\.route === "travel_planning"\);/,
+      /const explicitCurrentItineraryRequest\s*=\s*isTravelPlanningPrompt\(message\);/,
+    );
+    expect(chatRoute).toMatch(
+      /const travelPlanning\s*=\s*!isCurrentCityBriefing\s*&&\s*!generalAnswerRoute\.requiresCurrentEvidence\s*&&\s*explicitCurrentItineraryRequest;/,
     );
   });
 

@@ -11944,10 +11944,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // A local catalog is a response tool, never background conversation context.
     // Ordinary emotional, planning, and general turns must not query or receive
     // prior-city listings merely because an earlier session had a destination.
+    const explicitCurrentItineraryRequest = isTravelPlanningPrompt(message);
     const catalogRequestedForTurn =
       decisionPlan.allowBusinessCards ||
-      earlyDecision.route === "travel_planning" ||
-      isTravelPlanningPrompt(message);
+      explicitCurrentItineraryRequest;
     if (broadCatalogAllowed && catalogRequestedForTurn && destination && destinationScope) {
       try {
         businessCatalog =
@@ -12404,8 +12404,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const travelPlanning =
       !isCurrentCityBriefing &&
       !generalAnswerRoute.requiresCurrentEvidence &&
-      (isTravelPlanningPrompt(message) ||
-        earlyDecision.route === "travel_planning");
+      explicitCurrentItineraryRequest;
     if (
       travelPlanning &&
       broadCatalogAllowed &&
@@ -15478,6 +15477,20 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   // 7. Transcribe with 15-second timeout — never persist audio blob
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15_000);
+  let abortOptionalReview: (() => void) | null = null;
+  const isClientDisconnected = () => req.aborted || res.destroyed || res.writableEnded;
+  const abortForClientDisconnect = () => {
+    controller.abort();
+    abortOptionalReview?.();
+  };
+  // `close` is also emitted after a normal completed response. Do not cancel
+  // provider work in that case; only a response that did not finish is a client
+  // disconnect. The request `aborted` event covers a terminated upload/body.
+  const abortOnResponseClose = () => {
+    if (!res.writableEnded) abortForClientDisconnect();
+  };
+  req.once("aborted", abortForClientDisconnect);
+  res.once("close", abortOnResponseClose);
   const startMs = Date.now();
   const transcriptionModel = kinfolkModel("transcription");
 
@@ -15490,6 +15503,7 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
         signal: controller.signal,
       },
     );
+    if (isClientDisconnected()) return;
 
     // Log outcome + latency only — never log audio content, transcript text, or user context
     req.log.info(
@@ -15527,7 +15541,9 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     if (resolveOpenAIConfiguration()) {
       const reviewController = new AbortController();
       const reviewTimeout = setTimeout(() => reviewController.abort(), 4_000);
+      abortOptionalReview = () => reviewController.abort();
       try {
+        if (isClientDisconnected()) return;
         const review = await openai.chat.completions.create(
           buildKinfolkChatCompletionRequest({
             model: kinfolkModel("transcriptReview"),
@@ -15546,8 +15562,12 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
         // otherwise usable transcript or force the member to record again.
       } finally {
         clearTimeout(reviewTimeout);
+        abortOptionalReview = null;
       }
     }
+    // A client may leave while the optional review provider is running. Do not
+    // parse, launch more work, or attempt a response for that disconnected turn.
+    if (isClientDisconnected()) return;
     const meaningReview = parseVoiceTranscriptMeaningReview({
       transcript: transcriptText,
       regionalFlavor,
@@ -15557,6 +15577,7 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     // `text` is the mobile contract and `transcript` is the web contract.
     // Both retain the unmodified transcript. Any optional interpretation is a
     // separately labeled, review-only proposal that cannot send itself.
+    if (isClientDisconnected()) return;
     return void res.json({
       text: transcriptText,
       transcript: transcriptText,
@@ -15578,6 +15599,7 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
       "kinfolk provider",
     );
 
+    if (isClientDisconnected()) return;
     if (isAbort) {
       return void res.status(503).json({
         error: "TRANSCRIPTION_UNAVAILABLE",
@@ -15593,6 +15615,9 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     });
   } finally {
     clearTimeout(timeout);
+    abortOptionalReview = null;
+    req.removeListener("aborted", abortForClientDisconnect);
+    res.removeListener("close", abortOnResponseClose);
   }
 });
 

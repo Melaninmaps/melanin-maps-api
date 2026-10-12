@@ -45,6 +45,13 @@ describe("proactive Kinfolk travel suggestions", () => {
     });
   });
 
+  it("keeps hypothetical itinerary questions out of governed itinerary routing", () => {
+    expect(classifyKinfolkRequest(
+      "Would a three-day itinerary be useful for a possible future trip to Philadelphia?",
+      "Philadelphia",
+    )).toMatchObject({ route: "general_knowledge" });
+  });
+
   it("does not bypass the current-evidence path for a current event request", () => {
     expect(inspectProactiveTravelSuggestion({
       message: "What events are happening in Houston this weekend?",

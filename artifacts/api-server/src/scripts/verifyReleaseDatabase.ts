@@ -1,12 +1,12 @@
-import { pool } from "@workspace/db";
-import {
-  ensureRequiredPublicationSchema,
-  runStartupMigrations,
-} from "../lib/startup-migrations";
+import { applyReleaseGateDatabaseUrl } from "../lib/releaseDbGate";
 
-if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL is required for release database verification");
-}
+// This must run before either dynamic import can initialize a database pool.
+applyReleaseGateDatabaseUrl(process.env);
+
+const { pool } = await import("@workspace/db");
+const { ensureRequiredPublicationSchema, runStartupMigrations } = await import(
+  "../lib/startup-migrations"
+);
 
 try {
   await runStartupMigrations();

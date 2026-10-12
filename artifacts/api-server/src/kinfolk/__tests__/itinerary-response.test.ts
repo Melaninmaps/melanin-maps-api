@@ -6,6 +6,7 @@ import {
   buildValidatedOrRankedItinerary,
   buildValidatedItineraryReply,
   extractItineraryDayCount,
+  isExplicitCurrentItineraryRequest,
   itineraryPromptInstruction,
   normalizeKinfolkItinerary,
   parseKinfolkModelPayload,
@@ -93,6 +94,11 @@ const ADULT_NIGHTCLUB: GovernedKinfolkBusiness = {
 const PHILADELPHIA_CATALOG = [AMINA, LOOMEN, UNCLE_BOBBIES, QUEEN_AND_ROOK, ADULT_NIGHTCLUB];
 
 describe("Kinfolk itinerary normalization", () => {
+  it("requires an explicit current-turn itinerary request", () => {
+    expect(isExplicitCurrentItineraryRequest("Plan a three-day itinerary in Philadelphia")).toBe(true);
+    expect(isExplicitCurrentItineraryRequest("Would a three-day itinerary be useful for a possible future trip to Philadelphia?")).toBe(false);
+  });
+
   it("extracts and normalizes exactly three day-by-day entries", () => {
     const message = "Plan a three-day itinerary in Philadelphia";
     const itinerary = normalizeKinfolkItinerary({

@@ -73,6 +73,24 @@ describe("Kinfolk native voice source contract", () => {
     expect(hook).not.toContain("console.");
   });
 
+  it("treats an unexpected recorder stop as cancellation, never permission to upload", () => {
+    const hook = source("hooks/useKinfolkVoiceSource.ts");
+    expect(hook).toContain("A stop not initiated by this controller is an interruption");
+    expect(hook).toContain("if (!recorder.getStatus().isRecording) void cancel();");
+    expect(hook).toContain("abortControllerRef.current?.abort()");
+    expect(hook).toContain("clearTemporaryFile(recorder.uri)");
+  });
+
+  it("canonicalizes validated M4A multipart Blob type while preserving filename and declared metadata", () => {
+    const hook = source("hooks/useKinfolkVoiceSource.ts");
+    expect(hook).toContain("function canonicalizeKinfolkVoiceUpload(file: Blob, mimeType: string): Blob");
+    expect(hook).toContain('if (mimeType !== "audio/mp4" || file.type === "audio/mp4") return file;');
+    expect(hook).toContain('new Blob([file], { type: "audio/mp4" })');
+    expect(hook).toContain("const upload = canonicalizeKinfolkVoiceUpload(file, inspection.mimeType);");
+    expect(hook).toContain('form.append("audio", upload, kinfolkVoiceMultipartFilename(inspection.mimeType));');
+    expect(hook).toContain('form.append("mimeType", inspection.mimeType);');
+  });
+
   it("requires an editable review and explicit draft placement rather than auto-sending a transcript", () => {
     const controls = source("components/KinfolkVoiceSourceControls.tsx");
     expect(controls).toContain("Nothing is uploaded until you stop");

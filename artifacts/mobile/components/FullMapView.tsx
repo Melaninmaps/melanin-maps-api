@@ -40,7 +40,11 @@ import {
   mapLocationServicesOffNotice,
   type MapLocationNotice,
 } from "@/lib/mapLocationStatus";
-import { resolveMapBusinessProximity } from "@/lib/mapBusinessScope";
+import {
+  isDirectNamedSafetyContext,
+  matchesExplicitMapLocality,
+  resolveMapBusinessProximity,
+} from "@/lib/mapBusinessScope";
 import { useAuth } from "@/lib/auth";
 import {
   canLoadLocalCollections,
@@ -562,7 +566,8 @@ export function FullMapView({
   const routeSearchLocality = parseMapSearchLocality(searchCity, searchState);
   // A submitted search (including a map deep link) is an explicit geography
   // choice, so it overrides automatic device/profile locality until cleared.
-  const hasExplicitMapLocality = Boolean(searchedLocality || routeSearchLocality);
+  const explicitMapLocality = searchedLocality ?? routeSearchLocality;
+  const hasExplicitMapLocality = Boolean(explicitMapLocality);
   const mapLocality =
     searchedLocality ??
     routeSearchLocality ??
@@ -660,11 +665,16 @@ export function FullMapView({
     // Canonical pins remain available during an empty local refresh, but they
     // must still respect the member-selected radius so the map count and camera
     // never claim that distant pins are nearby.
-    const scopePins = proximityMapLocation
+    const localityPins = hasExplicitMapLocality
       ? canonicalMapPins.filter((business) =>
-          distanceMiles(proximityMapLocation, business) <= mapDiscoveryRadius,
+          matchesExplicitMapLocality(business, explicitMapLocality),
         )
       : canonicalMapPins;
+    const scopePins = proximityMapLocation
+      ? localityPins.filter((business) =>
+          distanceMiles(proximityMapLocation, business) <= mapDiscoveryRadius,
+        )
+      : localityPins;
     return scopePins.filter((business) =>
       matchesMapDiscoveryFocus(business, mapDiscoveryFocus) && (
         designationIds.length === 0 || designationIds.every((designation) =>
@@ -673,7 +683,10 @@ export function FullMapView({
         )
       ),
     );
-  }, [canonicalMapPins, designationIds, mapDiscoveryFocus, mapDiscoveryRadius, proximityMapLocation]);
+  }, [canonicalMapPins, designationIds, explicitMapLocality, hasExplicitMapLocality, mapDiscoveryFocus, mapDiscoveryRadius, proximityMapLocation]);
+  const suppressSafetyContextBusinessResults = isDirectNamedSafetyContext(
+    businessSearchScope,
+  );
   const directMatch = businessSearchScope === "explicit_public_listing"
     ? businesses[0] ?? null
     : null;
@@ -686,6 +699,9 @@ export function FullMapView({
     && (Math.abs(directMatch.latitude) > 0.001 || Math.abs(directMatch.longitude) > 0.001),
   );
   const displayBusinessPins = useMemo(() => {
+    // A direct-name safety-context response can inform a different surface, but
+    // it is not a public MWM listing and must never become a Map pin/card/fit.
+    if (suppressSafetyContextBusinessResults) return [];
     // Direct-name lookup is limited to the API's public-listing scope. When
     // that exact listing has valid audited coordinates, it is an intentional
     // member request and deserves one focused Map pin and its normal MWM card.
@@ -705,7 +721,7 @@ export function FullMapView({
       if (!localById.has(business.id)) localById.set(business.id, business);
     });
     return [...localById.values()];
-  }, [directMatch, directMatchHasCoordinates, focusedMappedBusinesses, nearbyCanonicalMapPins, submittedBusinessSearch]);
+  }, [directMatch, directMatchHasCoordinates, focusedMappedBusinesses, nearbyCanonicalMapPins, submittedBusinessSearch, suppressSafetyContextBusinessResults]);
   const visibleMapPinCount = displayBusinessPins.length;
   const activeMapDiscoveryLabel = mapDiscoveryFocus === "all"
     ? "All nearby places"
@@ -717,8 +733,10 @@ export function FullMapView({
       : "in your map area";
   const hasSubmittedBusinessSearch = submittedBusinessSearch.length > 0;
   const submittedMappedBusinessResults = useMemo(
-    () => hasSubmittedBusinessSearch ? focusedMappedBusinesses.slice(0, 5) : [],
-    [focusedMappedBusinesses, hasSubmittedBusinessSearch],
+    () => hasSubmittedBusinessSearch && !suppressSafetyContextBusinessResults
+      ? focusedMappedBusinesses.slice(0, 5)
+      : [],
+    [focusedMappedBusinesses, hasSubmittedBusinessSearch, suppressSafetyContextBusinessResults],
   );
   const focusDirectBusinessOnMap = useCallback((business: Business) => {
     setSelectedBusiness(business);
@@ -945,6 +963,7 @@ export function FullMapView({
 
   useEffect(() => {
     if (directMatch) return;
+    if (suppressSafetyContextBusinessResults) return;
     // Local search results stay first. When a location/radius refresh returns
     // no local rows, fit the stable website-equivalent pins instead of leaving
     // a 50-mile choice on a blank map.
@@ -962,7 +981,7 @@ export function FullMapView({
     if (!exploringAllAreas && !isSafeLocalFit(coordinates)) return;
     hasFitToBusinessesRef.current = true;
     scheduleMapAction(() => safelyFitToCoordinates(coordinates), 600);
-  }, [directMatch, mapReady, focusedMappedBusinesses, nearbyCanonicalMapPins, exploringAllAreas, localityScopeKey, mapDiscoveryRadius, safelyFitToCoordinates, scheduleMapAction, submittedBusinessSearch]);
+  }, [directMatch, mapReady, focusedMappedBusinesses, nearbyCanonicalMapPins, exploringAllAreas, localityScopeKey, mapDiscoveryRadius, safelyFitToCoordinates, scheduleMapAction, submittedBusinessSearch, suppressSafetyContextBusinessResults]);
 
   const normalizedMapSearch = submittedBusinessSearch.trim().toLowerCase();
   const filteredCulturalSites = culturalSites.filter((site) => {

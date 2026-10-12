@@ -21,6 +21,7 @@ import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDiscl
 import { SupportLensDropdowns } from "@/components/SupportLensDropdowns";
 import { useColors } from "@/hooks/useColors";
 import { useUnsavedKinfolkExitGuard } from "@/hooks/useUnsavedKinfolkExitGuard";
+import { getApiBase } from "@/lib/api";
 
 type Mode = "community" | "best_friend" | "business_manager" | "professor";
 type Voice = "onyx" | "nova" | "shimmer";
@@ -85,10 +86,6 @@ const EMPTY_DRAFT: Draft = {
     favoriteCategories: [], lifestyleServices: [], culturalInterests: [],
   },
 };
-
-function apiBase(): string {
-  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-}
 
 async function token(): Promise<string | null> {
   try { return await SecureStore.getItemAsync("auth_session_token"); }
@@ -189,7 +186,7 @@ export default function KinfolkSettingsControlCenter() {
     setLoading(true);
     try {
       const auth = await token();
-      const base = apiBase();
+      const base = getApiBase();
       if (!auth || !base) throw new Error("Please sign in again to view Kinfolk Settings.");
       const headers = { Authorization: `Bearer ${auth}` };
       const [settingsRes, prefsRes, continuityRes, nameRes] = await Promise.all([
@@ -263,7 +260,7 @@ export default function KinfolkSettingsControlCenter() {
       setError(null);
       try {
         const auth = await token();
-        const base = apiBase();
+        const base = getApiBase();
         if (!auth || !base) throw new Error("Please sign in again before saving Kinfolk Settings.");
         const headers = { "Content-Type": "application/json", Authorization: `Bearer ${auth}` };
         const requests: Promise<Response>[] = [];

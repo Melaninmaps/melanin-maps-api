@@ -188,7 +188,7 @@ function BusinessCard({
     >
       {compareMode && (
         <View style={[bizStyles.compareCheck, { borderColor: isSelected ? colors.primary : colors.border, backgroundColor: isSelected ? colors.primary : colors.background }]}>
-          {isSelected && <Ionicons name="checkmark" size={11} color="#fff" />}
+          {isSelected && <Ionicons name="checkmark" size={11} color={colors.primaryForeground} />}
         </View>
       )}
       <View style={bizStyles.cardTop}>
@@ -231,8 +231,8 @@ function BusinessCard({
               style={[bizStyles.actionBtn, { backgroundColor: colors.primary }]}
               onPress={() => router.push({ pathname: "/business/[id]", params: { id: biz.id! } })}
             >
-              <Text style={bizStyles.actionPrimaryText}>View details</Text>
-              <Ionicons name="chevron-forward" size={13} color="#fff" />
+              <Text style={[bizStyles.actionPrimaryText, { color: colors.primaryForeground }]}>View details</Text>
+              <Ionicons name="chevron-forward" size={13} color={colors.primaryForeground} />
             </TouchableOpacity>
           )}
           {biz.website && (
@@ -284,7 +284,7 @@ const bizStyles = StyleSheet.create({
   mustTryText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
   actionRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 8 },
   actionBtn: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 18, paddingHorizontal: 11, paddingVertical: 7 },
-  actionPrimaryText: { color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  actionPrimaryText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   actionSecondaryText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   feedbackRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 },
   feedbackLabel: { fontFamily: "Inter_400Regular", fontSize: 11, flex: 1 },
@@ -392,8 +392,8 @@ function TaskActionCard({
       </View>
       <View style={taStyles.actions}>
         <TouchableOpacity style={[taStyles.addBtn, { backgroundColor: colors.primary }]} onPress={onConfirm} activeOpacity={0.85}>
-          <Ionicons name="checkmark" size={14} color="#fff" />
-          <Text style={taStyles.addBtnText}>Add to My Lists</Text>
+          <Ionicons name="checkmark" size={14} color={colors.primaryForeground} />
+          <Text style={[taStyles.addBtnText, { color: colors.primaryForeground }]}>Add to My Lists</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[taStyles.skipBtn, { borderColor: colors.border }]} onPress={onDismiss} activeOpacity={0.7}>
           <Text style={[taStyles.skipBtnText, { color: colors.mutedForeground }]}>Skip</Text>
@@ -416,7 +416,7 @@ const taStyles = StyleSheet.create({
   more: { fontFamily: "Inter_400Regular", fontSize: 12, paddingHorizontal: 10, paddingVertical: 8 },
   actions: { flexDirection: "row", gap: 8 },
   addBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: 10, paddingVertical: 10 },
-  addBtnText: { fontFamily: "Inter_700Bold", fontSize: 13, color: "#fff" },
+  addBtnText: { fontFamily: "Inter_700Bold", fontSize: 13 },
   skipBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   skipBtnText: { fontFamily: "Inter_400Regular", fontSize: 13 },
 });
@@ -474,8 +474,8 @@ function HeritageSiteStrip({
                   })
                 }
               >
-                <Ionicons name="map-outline" size={11} color="#fff" />
-                <Text style={[hsStyles.btnTxt, { color: "#fff" }]}>Show on Map</Text>
+                <Ionicons name="map-outline" size={11} color={colors.primaryForeground} />
+                <Text style={[hsStyles.btnTxt, { color: colors.primaryForeground }]}>Show on Map</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[hsStyles.btn, { backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.border }]}
@@ -620,7 +620,7 @@ function ConversationalResultCards({ view, colors }: { view: ConversationalBusin
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 9 }}>
               {hasDetails && (
                 <TouchableOpacity onPress={() => router.push({ pathname: "/business/[id]", params: { id: card.id } })} style={{ backgroundColor: colors.primary, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 7 }}>
-                  <Text style={{ color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 11 }}>View details</Text>
+                  <Text style={{ color: colors.primaryForeground, fontFamily: "Inter_600SemiBold", fontSize: 11 }}>View details</Text>
                 </TouchableOpacity>
               )}
               {website && (
@@ -1470,7 +1470,7 @@ function TasteProfileSheet({
               const sel = favCats.includes(c);
               return (
                 <TouchableOpacity activeOpacity={0.85} key={c} style={[tpStyles.chip, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(favCats, c, setFavCats)}>
-                  <Text style={[tpStyles.chipText, { color: sel ? "#fff" : colors.text }]}>{c}</Text>
+                  <Text style={[tpStyles.chipText, { color: sel ? colors.primaryForeground : colors.text }]}>{c}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -1492,7 +1492,7 @@ function TasteProfileSheet({
                 accessibilityLabel={`Remove ${category}`}
                 style={[tpStyles.chip, { backgroundColor: colors.primary, borderColor: colors.primary }]}
                 onPress={() => setFavCats(current => current.filter(value => value !== category))}>
-                <Text style={[tpStyles.chipText, { color: "#fff" }]}>{category} ×</Text>
+                <Text style={[tpStyles.chipText, { color: colors.primaryForeground }]}>{category} ×</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -1506,7 +1506,7 @@ function TasteProfileSheet({
                 accessibilityState={{ selected: recommendationLifeStage === option.id }}
                 style={[tpStyles.optionBtn, { backgroundColor: recommendationLifeStage === option.id ? colors.primary : colors.card, borderColor: recommendationLifeStage === option.id ? colors.primary : colors.border }]}
                 onPress={() => setRecommendationLifeStage(option.id)}>
-                <Text style={[tpStyles.optionText, { color: recommendationLifeStage === option.id ? "#fff" : colors.text }]}>{option.label}</Text>
+                <Text style={[tpStyles.optionText, { color: recommendationLifeStage === option.id ? colors.primaryForeground : colors.text }]}>{option.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -1529,7 +1529,7 @@ function TasteProfileSheet({
           <View style={tpStyles.optionRow}>
             {BUDGET_OPTIONS.map((b) => (
               <TouchableOpacity activeOpacity={0.85} key={b.id} style={[tpStyles.optionBtn, { backgroundColor: budget === b.id ? colors.primary : colors.card, borderColor: budget === b.id ? colors.primary : colors.border }]} onPress={() => setBudget(b.id)}>
-                <Text style={[tpStyles.optionText, { color: budget === b.id ? "#fff" : colors.text }]}>{b.label}</Text>
+                <Text style={[tpStyles.optionText, { color: budget === b.id ? colors.primaryForeground : colors.text }]}>{b.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -1541,7 +1541,7 @@ function TasteProfileSheet({
               const sel = tripStyles.includes(s.id);
               return (
                 <TouchableOpacity accessibilityRole="checkbox" accessibilityState={{ checked: sel }} activeOpacity={0.85} key={s.id} style={[tpStyles.optionBtn, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(tripStyles, s.id, setTripStyles)}>
-                  <Text style={[tpStyles.optionText, { color: sel ? "#fff" : colors.text }]}>{s.label}</Text>
+                  <Text style={[tpStyles.optionText, { color: sel ? colors.primaryForeground : colors.text }]}>{s.label}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -1551,7 +1551,7 @@ function TasteProfileSheet({
           <View style={tpStyles.optionRow}>
             {COMPANION_OPTIONS.map((c) => (
               <TouchableOpacity activeOpacity={0.85} key={c.id} style={[tpStyles.optionBtn, { backgroundColor: companion === c.id ? colors.primary : colors.card, borderColor: companion === c.id ? colors.primary : colors.border }]} onPress={() => setCompanion(c.id)}>
-                <Text style={[tpStyles.optionText, { color: companion === c.id ? "#fff" : colors.text }]}>{c.label}</Text>
+                <Text style={[tpStyles.optionText, { color: companion === c.id ? colors.primaryForeground : colors.text }]}>{c.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -1597,7 +1597,7 @@ function TasteProfileSheet({
               <View style={tpStyles.optionRow}>
                 {EMOJI_LEVELS.map((e) => (
                   <TouchableOpacity activeOpacity={0.85} key={e.id} style={[tpStyles.optionBtn, { backgroundColor: emojiLvl === e.id ? colors.primary : colors.card, borderColor: emojiLvl === e.id ? colors.primary : colors.border }]} onPress={() => setEmojiLvl(e.id)}>
-                    <Text style={[tpStyles.optionText, { color: emojiLvl === e.id ? "#fff" : colors.text }]}>{e.label}</Text>
+                    <Text style={[tpStyles.optionText, { color: emojiLvl === e.id ? colors.primaryForeground : colors.text }]}>{e.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -1606,7 +1606,7 @@ function TasteProfileSheet({
               <View style={tpStyles.optionRow}>
                 {HUMOR_LEVELS.map((h) => (
                   <TouchableOpacity activeOpacity={0.85} key={h.id} style={[tpStyles.optionBtn, { backgroundColor: humor === h.id ? colors.primary : colors.card, borderColor: humor === h.id ? colors.primary : colors.border }]} onPress={() => setHumor(h.id)}>
-                    <Text style={[tpStyles.optionText, { color: humor === h.id ? "#fff" : colors.text }]}>{h.label}</Text>
+                    <Text style={[tpStyles.optionText, { color: humor === h.id ? colors.primaryForeground : colors.text }]}>{h.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -1661,8 +1661,8 @@ function TasteProfileSheet({
         )}
         <View style={[tpStyles.footer, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
           <TouchableOpacity activeOpacity={0.85} style={[tpStyles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving}>
-            <Ionicons name="checkmark-circle" size={18} color="#fff" />
-            <Text style={tpStyles.saveBtnText}>{saving ? "Saving…" : "Save My Profile"}</Text>
+            <Ionicons name="checkmark-circle" size={18} color={colors.primaryForeground} />
+            <Text style={[tpStyles.saveBtnText, { color: colors.primaryForeground }]}>{saving ? "Saving…" : "Save My Profile"}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -1703,7 +1703,7 @@ const tpStyles = StyleSheet.create({
   retakeBtnText: { fontFamily: "Inter_400Regular", fontSize: 13 },
   footer: { padding: 16, borderTopWidth: 1 },
   saveBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, padding: 16 },
-  saveBtnText: { fontFamily: "Inter_700Bold", fontSize: 16, color: "#fff" },
+  saveBtnText: { fontFamily: "Inter_700Bold", fontSize: 16 },
 });
 
 // ─── Sub-component: Session History Drawer ───────────────────────────────────
@@ -1749,7 +1749,7 @@ function SessionHistoryDrawer({
           <Text style={[shStyles.continuityTitle, { color: colors.text }]}>{continuityEnabled ? "Kinfolk continuity is on" : "Kinfolk continuity is paused"}</Text>
           <Text style={[shStyles.continuityText, { color: colors.mutedForeground }]}>{continuityEnabled ? "Your saved conversations and approved memories may be used only for your future Kinfolk chats." : "Past chats are stored but not shown to or used by Kinfolk until you turn continuity on."}</Text>
           <TouchableOpacity activeOpacity={0.82} style={[shStyles.continuityButton, { backgroundColor: continuityEnabled ? colors.card : colors.primary, borderColor: colors.primary }]} onPress={() => onToggleContinuity(!continuityEnabled)}>
-            <Text style={[shStyles.continuityButtonText, { color: continuityEnabled ? colors.primary : "#fff" }]}>{continuityEnabled ? "Pause continuity" : "Turn on continuity"}</Text>
+            <Text style={[shStyles.continuityButtonText, { color: continuityEnabled ? colors.primary : colors.primaryForeground }]}>{continuityEnabled ? "Pause continuity" : "Turn on continuity"}</Text>
           </TouchableOpacity>
         </View>
         {continuityEnabled && <View style={[shStyles.viewToggle, { backgroundColor: colors.secondary }]}>
@@ -1990,7 +1990,7 @@ function FlightTrackerModal({
                     <Text style={[ftStyles.cancelBtnText, { color: colors.mutedForeground }]}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity activeOpacity={0.85} style={[ftStyles.saveFlightBtn, { backgroundColor: colors.primary }]} onPress={() => void handleAdd()} disabled={adding}>
-                    <Text style={ftStyles.saveFlightBtnText}>{adding ? "Saving…" : "Save Flight"}</Text>
+                    <Text style={[ftStyles.saveFlightBtnText, { color: colors.primaryForeground }]}>{adding ? "Saving…" : "Save Flight"}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -2061,7 +2061,7 @@ const ftStyles = StyleSheet.create({
   cancelBtn: { flex: 1, borderRadius: 10, borderWidth: 1, paddingVertical: 11, alignItems: "center" },
   cancelBtnText: { fontFamily: "Inter_500Medium", fontSize: 14 },
   saveFlightBtn: { flex: 2, borderRadius: 10, paddingVertical: 11, alignItems: "center" },
-  saveFlightBtnText: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#fff" },
+  saveFlightBtnText: { fontFamily: "Inter_700Bold", fontSize: 14 },
   emptyWrap: { alignItems: "center", gap: 10, paddingVertical: 32 },
   emptyText: { fontFamily: "Inter_500Medium", fontSize: 15 },
   emptySub: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center", paddingHorizontal: 20 },
@@ -2703,7 +2703,7 @@ export default function TravelScreen() {
       {/* Header */}
         <View style={[styles.header, { paddingTop: topPad + 10, backgroundColor: colors.primary }]}>
           <TouchableOpacity activeOpacity={0.85} style={styles.headerBtn} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
+            <Ionicons name="arrow-back" size={22} color={colors.primaryForeground} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
           <Text style={styles.headerTitle} numberOfLines={1}>KinfolkAI™</Text>
@@ -2718,7 +2718,7 @@ export default function TravelScreen() {
             accessibilityLabel="Open Kinfolk conversation actions"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name={showHeaderActions ? "close" : "ellipsis-horizontal"} size={22} color="#fff" />
+            <Ionicons name={showHeaderActions ? "close" : "ellipsis-horizontal"} size={22} color={colors.primaryForeground} />
           </TouchableOpacity>
         </View>
       </View>
@@ -2726,29 +2726,29 @@ export default function TravelScreen() {
       {showHeaderActions && (
         <View style={[styles.headerActionRail, { backgroundColor: colors.primary, borderTopColor: "#ffffff22" }]}>
           <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); setShowProfile(true); }} accessibilityLabel="Open Kinfolk profile">
-            <Ionicons name="person-circle-outline" size={15} color="#fff" />
-            <Text style={styles.headerActionText}>Profile</Text>
+            <Ionicons name="person-circle-outline" size={15} color={colors.primaryForeground} />
+            <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>Profile</Text>
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); router.push("/wishlist" as any); }} accessibilityLabel="Open saved places">
-            <Ionicons name={wishlistItems.length > 0 ? "bookmark" : "bookmark-outline"} size={15} color="#fff" />
-            <Text style={styles.headerActionText}>Saved</Text>
+            <Ionicons name={wishlistItems.length > 0 ? "bookmark" : "bookmark-outline"} size={15} color={colors.primaryForeground} />
+            <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>Saved</Text>
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); setCompareMode((value) => !value); setCompareSelected([]); }} accessibilityLabel="Toggle comparison mode">
-            <Ionicons name="scale-outline" size={15} color="#fff" />
-            <Text style={styles.headerActionText}>{compareMode ? "Stop compare" : "Compare"}</Text>
+            <Ionicons name="scale-outline" size={15} color={colors.primaryForeground} />
+            <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>{compareMode ? "Stop compare" : "Compare"}</Text>
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); setShowFlights(true); }} accessibilityLabel="Open flight tracker">
-            <Ionicons name="airplane-outline" size={15} color="#fff" />
-            <Text style={styles.headerActionText}>Flights</Text>
+            <Ionicons name="airplane-outline" size={15} color={colors.primaryForeground} />
+            <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>Flights</Text>
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); void loadSessions(); setShowHistory(true); }} accessibilityLabel="Open conversation history">
-            <Ionicons name="time-outline" size={15} color="#fff" />
-            <Text style={styles.headerActionText}>History</Text>
+            <Ionicons name="time-outline" size={15} color={colors.primaryForeground} />
+            <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>History</Text>
           </TouchableOpacity>
           {messages.length > 0 && (
             <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); handleNewSession(); }} accessibilityLabel="Start a new Kinfolk conversation">
-              <Ionicons name="add" size={15} color="#fff" />
-              <Text style={styles.headerActionText}>New</Text>
+              <Ionicons name="add" size={15} color={colors.primaryForeground} />
+              <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>New</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -2875,8 +2875,8 @@ export default function TravelScreen() {
             onPress={() => scrollToBottom(true)}
             activeOpacity={0.85}
           >
-            <Ionicons name="chevron-down" size={14} color="#fff" />
-            <Text style={jumpStyles.label}>Jump to latest</Text>
+            <Ionicons name="chevron-down" size={14} color={colors.primaryForeground} />
+            <Text style={[jumpStyles.label, { color: colors.primaryForeground }]}>Jump to latest</Text>
           </TouchableOpacity>
         )}
 
@@ -2896,7 +2896,7 @@ export default function TravelScreen() {
               onPress={() => void handleCompare()}
               disabled={compareSelected.length < 2}
             >
-              <Text style={[styles.compareGoBtnText, { color: compareSelected.length >= 2 ? "#fff" : colors.mutedForeground }]}>
+              <Text style={[styles.compareGoBtnText, { color: compareSelected.length >= 2 ? colors.primaryForeground : colors.mutedForeground }]}>
                 Compare →
               </Text>
             </TouchableOpacity>
@@ -2940,7 +2940,7 @@ export default function TravelScreen() {
               <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, color: colors.mutedForeground, marginTop: 1 }}>This does not share your chat. Community content is perspective, never evidence or a recommendation.</Text>
             </View>
           </TouchableOpacity>
-          {kinfolkImages.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>{kinfolkImages.map((attachment) => <View key={attachment.assetId} style={{ marginRight: 8 }}><Image source={{ uri: attachment.previewUri }} style={{ width: 74, height: 74, borderRadius: 12 }} accessibilityLabel="Ready to ask Kinfolk about" /><TouchableOpacity onPress={() => void removeKinfolkImage(attachment)} accessibilityLabel="Remove private image" style={{ position: "absolute", top: -4, right: -4, backgroundColor: colors.primary, borderRadius: 12, padding: 3 }}><Ionicons name="close" size={12} color="#FFF" /></TouchableOpacity></View>)}</ScrollView>}
+          {kinfolkImages.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>{kinfolkImages.map((attachment) => <View key={attachment.assetId} style={{ marginRight: 8 }}><Image source={{ uri: attachment.previewUri }} style={{ width: 74, height: 74, borderRadius: 12 }} accessibilityLabel="Ready to ask Kinfolk about" /><TouchableOpacity onPress={() => void removeKinfolkImage(attachment)} accessibilityLabel="Remove private image" style={{ position: "absolute", top: -4, right: -4, backgroundColor: colors.primary, borderRadius: 12, padding: 3 }}><Ionicons name="close" size={12} color={colors.primaryForeground} /></TouchableOpacity></View>)}</ScrollView>}
         </View>
         </>}
 
@@ -3026,7 +3026,7 @@ export default function TravelScreen() {
               accessibilityLabel={voiceOutput ? "Turn off automatic Kinfolk spoken replies" : "Turn on automatic Kinfolk spoken replies"}
               activeOpacity={0.75}
             >
-              <Ionicons name={voiceOutput ? "volume-high" : "volume-mute-outline"} size={18} color={voiceOutput ? "#fff" : colors.mutedForeground} />
+              <Ionicons name={voiceOutput ? "volume-high" : "volume-mute-outline"} size={18} color={voiceOutput ? colors.primaryForeground : colors.mutedForeground} />
             </TouchableOpacity>
           ) : null}
           {Platform.OS !== "web" ? (
@@ -3072,7 +3072,7 @@ export default function TravelScreen() {
             disabled={!inputText.trim() || uploadingKinfolkImage}
             accessibilityLabel="Send message to Kinfolk"
           >
-            <Ionicons name="arrow-up" size={20} color="#fff" />
+            <Ionicons name="arrow-up" size={20} color={inputText.trim() && !uploadingKinfolkImage ? colors.primaryForeground : "#fff"} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -3157,7 +3157,7 @@ export default function TravelScreen() {
             <View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}>
               <TouchableOpacity onPress={() => { setShowImageCreation(false); setImageCreationError(null); }} style={{ flex: 1, minHeight: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: "center", justifyContent: "center" }}><Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 13 }}>Cancel</Text></TouchableOpacity>
               <TouchableOpacity onPress={() => void createKinfolkImage()} disabled={generatingImage || imageCreationBrief.trim().length < 12 || !providerDisclosureAccepted || !noRealPersonOrPrivateInfoConfirmed} style={{ flex: 1, minHeight: 44, borderRadius: 12, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", opacity: generatingImage || imageCreationBrief.trim().length < 12 || !providerDisclosureAccepted || !noRealPersonOrPrivateInfoConfirmed ? 0.45 : 1 }}>
-                {generatingImage ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ color: "#fff", fontFamily: "Inter_700Bold", fontSize: 13 }}>Create visual</Text>}
+                {generatingImage ? <ActivityIndicator size="small" color={colors.primaryForeground} /> : <Text style={{ color: colors.primaryForeground, fontFamily: "Inter_700Bold", fontSize: 13 }}>Create visual</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -3187,7 +3187,7 @@ const styles = StyleSheet.create({
   headerIconBtn: { padding: 6, borderRadius: 20 },
   headerActionRail: { flexDirection: "row", flexWrap: "wrap", gap: 7, paddingHorizontal: 16, paddingBottom: 11, paddingTop: 1, borderTopWidth: StyleSheet.hairlineWidth },
   headerAction: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 16, backgroundColor: "#ffffff18", paddingHorizontal: 9, paddingVertical: 6 },
-  headerActionText: { color: "#FFFFFF", fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  headerActionText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   premiumBanner: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: "#C9922B18", borderBottomWidth: 1, borderBottomColor: "#C9922B40" },
   premiumBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, color: "#C9922B", flex: 1 },
   personalBanner: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
@@ -3231,5 +3231,5 @@ const styles = StyleSheet.create({
 
 const jumpStyles = StyleSheet.create({
   btn: { flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "center", borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7, marginBottom: 6, marginTop: 2 },
-  label: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#fff" },
+  label: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
 });

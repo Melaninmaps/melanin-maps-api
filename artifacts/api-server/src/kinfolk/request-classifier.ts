@@ -15,6 +15,7 @@
 
 import { deriveBusinessSubject } from "./business-subject";
 import { resolveEmotionalSupportGuidance } from "./emotional-support";
+import { isExplicitCurrentItineraryRequest } from "./itinerary-response";
 
 export type DiscoveryKind =
   | "food"
@@ -146,14 +147,7 @@ export function classifyKinfolkRequest(
   // A direct travel declaration is actionable only when it names a destination
   // in this turn. This admits “I am going to Atlanta” without allowing a stale
   // resolved city to turn ordinary “going to see a movie” language into travel.
-  const explicitCurrentTurnTravelDeclaration =
-    Boolean(currentTurnLocation) &&
-    /\b(?:heading|going|traveling|travelling)\s+to\s+/i.test(text);
-  const explicitTravelPlanningIntent =
-    (TRAVEL_RE.test(text) &&
-      (TRAVEL_PLANNING_RE.test(text) ||
-        explicitCurrentTurnTravelDeclaration)) ||
-    DAY_PLAN_RE.test(text);
+  const explicitTravelPlanningIntent = isExplicitCurrentItineraryRequest(text);
   const postalCode = text.match(POSTAL_CODE_RE)?.[1] ?? null;
   // Use server-resolved city (alias-aware) when available; fall back to regex.
   const location = resolvedDestination

@@ -34,7 +34,7 @@ interface UseBusinessesResult {
   businesses: Business[];
   isLoading: boolean;
   error: string | null;
-  searchScope: "diaspora_promotion_catalog" | "all_public_places" | "explicit_public_listing" | null;
+  searchScope: "diaspora_promotion_catalog" | "all_public_places" | "explicit_public_listing" | "direct_named_safety_context" | null;
   refetch: () => void;
 }
 
@@ -209,7 +209,8 @@ export function useBusinesses(
           setSearchScope(
             data.searchScope === "explicit_public_listing" ||
             data.searchScope === "all_public_places" ||
-            data.searchScope === "diaspora_promotion_catalog"
+            data.searchScope === "diaspora_promotion_catalog" ||
+            data.searchScope === "direct_named_safety_context"
               ? data.searchScope
               : null,
           );

@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { resolveMapBusinessProximity } from "../lib/mapBusinessScope";
+import {
+  isDirectNamedSafetyContext,
+  matchesExplicitMapLocality,
+  resolveMapBusinessProximity,
+} from "../lib/mapBusinessScope";
 
 describe("native map business scope", () => {
   const deviceLocation = { latitude: 39.9526, longitude: -75.1652 };
@@ -23,5 +27,33 @@ describe("native map business scope", () => {
       hasExplicitLocality: false,
       memberLocation: null,
     })).toBeNull();
+  });
+
+  it("keeps only normalized city/state-matching canonical pins for an explicit locality", () => {
+    expect(matchesExplicitMapLocality(
+      { city: "St. Louis", state: "MO" },
+      { city: " st louis ", state: "mo." },
+    )).toBe(true);
+    expect(matchesExplicitMapLocality(
+      { city: "Philadelphia", state: "PA" },
+      { city: "St. Louis", state: "MO" },
+    )).toBe(false);
+  });
+
+  it("leaves canonical pins eligible for around-me and incomplete-locality scopes", () => {
+    const previousCityPin = { city: "Philadelphia", state: "PA" };
+
+    expect(matchesExplicitMapLocality(previousCityPin, null)).toBe(true);
+    expect(matchesExplicitMapLocality(
+      previousCityPin,
+      { city: "Philadelphia" },
+    )).toBe(true);
+  });
+
+  it("identifies only direct-name safety context as non-Map search results", () => {
+    expect(isDirectNamedSafetyContext("direct_named_safety_context")).toBe(true);
+    expect(isDirectNamedSafetyContext("explicit_public_listing")).toBe(false);
+    expect(isDirectNamedSafetyContext("diaspora_promotion_catalog")).toBe(false);
+    expect(isDirectNamedSafetyContext(null)).toBe(false);
   });
 });
