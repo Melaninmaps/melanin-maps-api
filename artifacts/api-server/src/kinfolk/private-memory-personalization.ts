@@ -68,9 +68,9 @@ const SCOPE_RULES: ReadonlyArray<{
   {
     scope: "service_specialty",
     memory:
-      /\b(?:barber|barbershop|braid(?:s|er|ing)?|locs?|loctician|natural hair|salon|nails?|tattoo|piercing|doula|therap(?:y|ist)|massage|trainer|photograph(?:y|er)|accountant|attorney|childcare)\b/i,
+      /\b(?:barber|barbershop|braid(?:s|er|ing)?|locs?|loctician|natural hair|wigs?|bundles?|extensions?|salon|nails?|tattoo|piercing|doula|therap(?:y|ist)|massage|trainer|photograph(?:y|er)|accountant|attorney|childcare)\b/i,
     request:
-      /\b(?:barber|barbershop|braid(?:s|er|ing)?|locs?|loctician|natural hair|salon|nails?|tattoo|piercing|doula|therap(?:y|ist)|massage|trainer|photograph(?:y|er)|accountant|attorney|childcare)\b/i,
+      /\b(?:barber|barbershop|braid(?:s|er|ing)?|locs?|loctician|natural hair|wigs?|bundles?|extensions?|hair(?:\s+stylist|\s+salon)?|salon|nails?|tattoo|piercing|doula|therap(?:y|ist)|massage|trainer|photograph(?:y|er)|accountant|attorney|childcare)\b/i,
   },
   {
     scope: "family",
@@ -117,6 +117,7 @@ const GOVERNED_DISCOVERY_PREFERENCE_TERMS: ReadonlyArray<{
   { pattern: /\bluxury\b/i, terms: ["luxury"] },
   { pattern: /\b(?:barber|barbershop)\b/i, terms: ["barber"] },
   { pattern: /\b(?:braid(?:s|er|ing)?|locs?|loctician|natural hair)\b/i, terms: ["natural hair", "loctician"] },
+  { pattern: /\b(?:wigs?|bundles?|extensions?)\b/i, terms: ["wig", "hair extension"] },
   { pattern: /\bnails?\b/i, terms: ["nails"] },
   { pattern: /\btattoo\b/i, terms: ["tattoo"] },
   { pattern: /\bpiercing\b/i, terms: ["piercing"] },

@@ -108,6 +108,9 @@ async function installDisposableSchema(db: Client) {
       is_sensitive boolean NOT NULL DEFAULT false,
       consent_granted_at timestamptz NOT NULL DEFAULT now(),
       sensitive_consent_granted_at timestamptz,
+      sensitive_encrypted_content text,
+      sensitive_encryption_key_id varchar(64),
+      sensitive_restricted boolean NOT NULL DEFAULT true,
       expires_at timestamptz,
       paused_at timestamptz,
       revoked_at timestamptz,
@@ -410,6 +413,56 @@ async function main() {
     assert.equal(activeCount.rows.find((row) => row.user_id === capacityMember.id)?.count, 50, "capacity member retains exactly 50 active notes");
     assert.equal(activeCount.rows.find((row) => row.user_id === independentMember.id)?.count, 50, "independent member retains exactly 50 active notes");
 
+    // A real, owner-scoped consent route must persist only the individually
+    // selected ordinary preferences, then make them available for a different
+    // conversation without granting access to the family/location clause.
+    const { buildExplicitMemoryConsentPlan } = await import("../kinfolk/explicit-memory-consent");
+    const { buildPrivateMemoryPersonalizationBlock, isApprovedPrivateMemoryRelevant } = await import("../kinfolk/private-memory-personalization");
+    const scenarioMember = initial[9]!.member;
+    const scenarioMessage = "Kinfolk, this is what I want you to remember about me: I have locs, I prefer Caribbean food, and my mother lives in Philadelphia.";
+    const scenarioPlan = buildExplicitMemoryConsentPlan(scenarioMessage);
+    assert.ok(scenarioPlan, "explicit scenario creates a reviewable plan");
+    const locChoice = scenarioPlan!.ordinary.find((item) => /locs/i.test(item.content));
+    const foodChoice = scenarioPlan!.ordinary.find((item) => /caribbean/i.test(item.content));
+    assert.ok(locChoice && foodChoice, "loc and Caribbean preferences are individually selectable");
+    const savedScenario = await authed(scenarioMember.id).post("/kinfolk/memory-consent").send({
+      message: scenarioMessage, selectedIds: [locChoice!.id, foodChoice!.id], consent: true,
+    });
+    assert.equal(savedScenario.status, 201, "selected details persist through the actual consent route");
+    const reviewedScenario = await authed(scenarioMember.id).get("/kinfolk/memories");
+    assert.equal(reviewedScenario.status, 200, "member can review selected memories");
+    assert.equal(reviewedScenario.body.memories.some((item: { content: string }) => /mother lives/i.test(item.content)), false, "unselected family/location clause is not stored");
+    const locMemory = reviewedScenario.body.memories.find((item: { content: string }) => /locs/i.test(item.content));
+    const foodMemory = reviewedScenario.body.memories.find((item: { content: string }) => /caribbean/i.test(item.content));
+    assert.ok(locMemory && foodMemory, "only selected preferences are reviewable by the owner");
+    const scenarioRows = await client.query<{ id: string; content: string; purpose: string; is_sensitive: boolean }>(
+      "SELECT id, content, purpose, is_sensitive FROM kinfolk_private_memories WHERE user_id = $1 AND revoked_at IS NULL", [scenarioMember.id],
+    );
+    const relevant = (rows: readonly { content: string; purpose: string; is_sensitive: boolean }[], currentMessage: string) => rows.filter((memory) => isApprovedPrivateMemoryRelevant({ memory: { content: memory.content, purpose: memory.purpose, isSensitive: memory.is_sensitive }, currentMessage, legacyRelevant: false }));
+    const hairPrompt = buildPrivateMemoryPersonalizationBlock(relevant(scenarioRows.rows, "Find me a loctician in Philadelphia."));
+    const foodPrompt = buildPrivateMemoryPersonalizationBlock(relevant(scenarioRows.rows, "Where should I get dinner?"));
+    assert.match(hairPrompt, /locs/i, "new hair conversation receives only the relevant loc preference");
+    assert.doesNotMatch(hairPrompt, /caribbean/i, "hair conversation excludes unrelated food preference");
+    assert.match(foodPrompt, /caribbean/i, "new dinner conversation receives the relevant food preference");
+    assert.equal((await authed(scenarioMember.id).patch(`/kinfolk/memories/${locMemory.id}`).send({ content: "I wear wigs now." })).status, 200, "member can replace outdated hair preference");
+    const afterUpdateRows = await client.query<{ content: string; purpose: string; is_sensitive: boolean }>(
+      "SELECT content, purpose, is_sensitive FROM kinfolk_private_memories WHERE user_id = $1 AND revoked_at IS NULL", [scenarioMember.id],
+    );
+    const wigPrompt = buildPrivateMemoryPersonalizationBlock(relevant(afterUpdateRows.rows, "Find me a hair stylist."));
+    assert.match(wigPrompt, /wigs/i, "replacement hair preference is available in a later conversation");
+    assert.doesNotMatch(wigPrompt, /I have locs/i, "outdated loc preference is no longer applied");
+    assert.equal((await authed(scenarioMember.id).delete(`/kinfolk/memories/${foodMemory.id}`)).status, 200, "member can revoke an individual food preference");
+    const afterRevokeRows = await client.query<{ content: string; purpose: string; is_sensitive: boolean }>(
+      "SELECT content, purpose, is_sensitive FROM kinfolk_private_memories WHERE user_id = $1 AND revoked_at IS NULL", [scenarioMember.id],
+    );
+    assert.doesNotMatch(buildPrivateMemoryPersonalizationBlock(relevant(afterRevokeRows.rows, "Where should I get dinner?")), /caribbean/i, "revoked food preference is not reused");
+    const doNotRemember = await authed(scenarioMember.id).post("/kinfolk/memory-consent").send({ message: "Kinfolk, remember: I prefer vegan food.", selectedIds: ["o-1"], consent: false });
+    assert.equal(doNotRemember.status, 400, "do-not-remember selection writes nothing");
+    const sensitivePlan = buildExplicitMemoryConsentPlan("Kinfolk, remember: I have eczema.");
+    assert.ok(sensitivePlan?.sensitive[0], "health detail receives an additional sensitive consent path");
+    const sensitiveWithoutConfirmation = await authed(scenarioMember.id).post("/kinfolk/memory-consent").send({ message: "Kinfolk, remember: I have eczema.", selectedIds: [sensitivePlan!.sensitive[0]!.id], consent: true });
+    assert.equal(sensitiveWithoutConfirmation.status, 409, "sensitive detail cannot save without additional confirmation");
+
     console.log(JSON.stringify({
       status: "passed",
       environment: "disposable-local-postgresql",
@@ -424,6 +477,7 @@ async function main() {
         "50-member concurrent save stability and edit/delete race handling",
         "per-member capacity and duplicate-write idempotency",
         "ordinary chat has no implicit memory write",
+        "individual consent selection, cross-conversation relevant use, replacement, revocation, do-not-remember, and sensitive-consent gate",
       ],
     }));
   } finally {
