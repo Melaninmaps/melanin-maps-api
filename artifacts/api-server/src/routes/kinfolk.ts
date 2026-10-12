@@ -8768,6 +8768,70 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     return;
   }
 
+  // A direct care-navigation request has a fully determined, authoritative
+  // response path. It must not depend on an optional conversation session,
+  // member-profile lookup, Library row, or model call before we can return a
+  // qualified finder. This path deliberately returns no MWM business card and
+  // never turns a clinician search into an ownership or popularity query.
+  const earlyHealthCareEvidence = classifyEvidenceRoute(message);
+  const earlyHealthCareOverride = buildHealthCareOverride({
+    message,
+    intentClass: earlyHealthCareEvidence.domain,
+  });
+  if (
+    earlyHealthCareOverride.applies &&
+    earlyHealthCareOverride.suppressesGeneralBusinessCatalog
+  ) {
+    const careSources = earlyHealthCareOverride.sources.map((source) => ({
+      id: source.url,
+      title: source.title,
+      url: source.url,
+      label: "official_health" as const,
+    }));
+    res.status(200).json({
+      sessionId,
+      reply:
+        "I can help you use qualified official care finders. I won’t substitute a general directory listing for clinical qualification. Please confirm credentials, availability, age range, insurance, and fit directly with the practice.",
+      recommendations: null,
+      itinerary: null,
+      resultView: null,
+      followUpSuggestions: [
+        "Share a city or ZIP if you want help choosing the right official finder.",
+      ],
+      smartPromotion: null,
+      taskAction: null,
+      libraryAction: null,
+      intentClass: "medical_health",
+      sources: careSources,
+      needsClarification: false,
+      originalQuery: message,
+      answerMode: "qualified_care_navigation",
+      responseMeta: {
+        schemaVersion: 1,
+        planKind: "qualified_care_navigation",
+        answerMode: "qualified_care_navigation",
+        retrieval: "official_care_finders",
+        allowBusinessCards: false,
+        evidenceRequired: true,
+        requiresClarification: false,
+      },
+      researchStatus: {
+        usedInternal: false,
+        usedLiveWeb: false,
+        degraded: false,
+        web: {
+          attempted: false,
+          state: "not_needed",
+          provider: null,
+          fallbackUsed: false,
+          partial: false,
+        },
+        asOf: new Date().toISOString(),
+      },
+    });
+    return;
+  }
+
   // A linked-article request must name a public HTTPS source before it can
   // enter memory, model, or retrieval work. This is intentionally after both
   // emergency gates so immediate safety language always takes precedence.

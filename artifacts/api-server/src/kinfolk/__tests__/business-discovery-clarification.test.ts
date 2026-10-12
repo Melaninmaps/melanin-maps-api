@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { resolveBusinessLocationClarificationFollowUp } from "../business-discovery-clarification";
+import { routeEvidence } from "../evidence-route";
 import { resolveTurnGeography } from "../heritage-city-registry";
+import { extractExplicitOwnershipDesignationFilterIds } from "@workspace/constants";
+import { classifyIntent } from "../intent-router";
 import { classifyKinfolkRequest } from "../request-classifier";
 
 describe("governed business discovery location clarifications", () => {
@@ -64,6 +67,25 @@ describe("governed business discovery location clarifications", () => {
         },
       ]),
     ).toBeNull();
+  });
+
+  it("classifies pediatric dentistry as medical care before the ordinary business fast path", () => {
+    const request = "Find me a pediatric dentist in Philadelphia for my child.";
+    expect(classifyIntent(request, false)).toBe("medical_health");
+    expect(routeEvidence(request).domain).toBe("medical_health");
+  });
+
+  it("distinguishes explicit Caribbean ownership from Caribbean cuisine", () => {
+    expect(
+      extractExplicitOwnershipDesignationFilterIds(
+        "Find Caribbean-owned restaurants in Philadelphia",
+      ),
+    ).toEqual(["caribbean-west-indian"]);
+    expect(
+      extractExplicitOwnershipDesignationFilterIds(
+        "Find Caribbean restaurants in Philadelphia",
+      ),
+    ).toEqual([]);
   });
 
   it("does not use a saved location when the clarification reply omits a city", () => {

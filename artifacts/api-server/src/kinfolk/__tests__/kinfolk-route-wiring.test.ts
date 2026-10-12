@@ -184,6 +184,21 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("namedBusiness && !healthCareOverride.suppressesGeneralBusinessCatalog");
   });
 
+  it("returns direct qualified-care navigation before optional sessions, profile reads, or a model call", () => {
+    const earlyCare = chatRoute.indexOf("const earlyHealthCareOverride = buildHealthCareOverride");
+    const ownerMemory = chatRoute.indexOf("resolveOwnerKinfolkMemoryAccess(req.user.id)");
+    const userRead = chatRoute.indexOf("const user = await storage.getUser(req.user.id)");
+    const providerCall = chatRoute.indexOf("openai.chat.completions.create(");
+
+    expect(earlyCare).toBeGreaterThan(-1);
+    expect(earlyCare).toBeLessThan(ownerMemory);
+    expect(earlyCare).toBeLessThan(userRead);
+    expect(earlyCare).toBeLessThan(providerCall);
+    expect(chatRoute).toContain('answerMode: "qualified_care_navigation"');
+    expect(chatRoute).toContain('retrieval: "official_care_finders"');
+    expect(chatRoute).toContain("allowBusinessCards: false");
+  });
+
   it("runs medical questions through authoritative retrieval before the Living Library shortcut", () => {
     expect(chatRoute).toContain('intentClass !== "medical_health"');
     expect(chatRoute).toContain("buildHealthRetrievalContext(");

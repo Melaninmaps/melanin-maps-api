@@ -600,6 +600,110 @@ describe("governed Kinfolk business repository", () => {
     expect(params[7]).toEqual(expect.arrayContaining(["\\mwig[[:space:]-]+installation\\M"]));
   });
 
+  it("does not substitute an installation-only salon for a documented custom wig maker", async () => {
+    const subject = deriveBusinessSubject("Find a custom wig maker in Philadelphia")!;
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [
+      {
+        ...AMINA_ROW,
+        id: "custom-wig-maker",
+        name: "Custom Crown Studio",
+        category: "Beauty & Wellness",
+        subcategory: "Hair Salon",
+        description: "Custom wigs are made and fitted by appointment.",
+        tags: ["custom wig maker"],
+        specialties: [],
+      },
+      {
+        ...AMINA_ROW,
+        id: "installation-only",
+        name: "Install Only Hair Studio",
+        category: "Beauty & Wellness",
+        subcategory: "Hair Salon",
+        description: "Wig installation appointments.",
+        tags: ["wig installation"],
+        specialties: [],
+      },
+    ] }) };
+
+    const results = await createGovernedKinfolkBusinessRepository(pool).findBySubject(
+      { city: "Philadelphia", stateCode: "PA" },
+      subject,
+    );
+
+    expect(subject.documentedServiceRequirement?.label).toBe("custom wig making");
+    expect(results.map(({ id }) => id)).toEqual(["custom-wig-maker"]);
+    expect(results[0]?.matchReasons).toContain("service detail: custom wig making");
+  });
+
+  it("requires documented loc maintenance instead of substituting a generic natural-hair listing", async () => {
+    const subject = deriveBusinessSubject("Find loc maintenance in Philadelphia")!;
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [
+      {
+        ...AMINA_ROW,
+        id: "loc-maintenance",
+        name: "Retwist Care Studio",
+        category: "Beauty & Wellness",
+        subcategory: "Natural Hair",
+        description: "Loc maintenance and retwist appointments.",
+        tags: ["loc maintenance"],
+        specialties: ["loc maintenance"],
+      },
+      {
+        ...AMINA_ROW,
+        id: "natural-only",
+        name: "Natural Style Studio",
+        category: "Beauty & Wellness",
+        subcategory: "Natural Hair",
+        description: "Natural-hair styling appointments.",
+        tags: ["natural hair"],
+        specialties: ["natural hair"],
+      },
+    ] }) };
+
+    const results = await createGovernedKinfolkBusinessRepository(pool).findBySubject(
+      { city: "Philadelphia", stateCode: "PA" },
+      subject,
+    );
+
+    expect(subject.key).toBe("locs");
+    expect(subject.documentedServiceRequirement?.label).toBe("loc maintenance");
+    expect(results.map(({ id }) => id)).toEqual(["loc-maintenance"]);
+  });
+
+  it("requires documented dine-in service instead of returning delivery-only food listings", async () => {
+    const subject = deriveBusinessSubject("Find a dine-in restaurant in Philadelphia")!;
+    const pool = { query: vi.fn().mockResolvedValue({ rows: [
+      {
+        ...AMINA_ROW,
+        id: "dine-in",
+        name: "Neighborhood Dining Room",
+        category: "Food & Drink",
+        subcategory: "Restaurant",
+        description: "Dine-in table service nightly.",
+        tags: ["dine-in"],
+        specialties: [],
+      },
+      {
+        ...AMINA_ROW,
+        id: "delivery-only",
+        name: "Delivery Kitchen",
+        category: "Food & Drink",
+        subcategory: "Restaurant",
+        description: "Delivery and pickup only.",
+        tags: ["delivery"],
+        specialties: [],
+      },
+    ] }) };
+
+    const results = await createGovernedKinfolkBusinessRepository(pool).findBySubject(
+      { city: "Philadelphia", stateCode: "PA" },
+      subject,
+    );
+
+    expect(subject.documentedServiceRequirement?.label).toBe("dine-in service");
+    expect(results.map(({ id }) => id)).toEqual(["dine-in"]);
+  });
+
   it("requires documented bundle-installation evidence after matching the salon category", async () => {
     const subject = deriveBusinessSubject(
       "Find bundle installs in Philadelphia",

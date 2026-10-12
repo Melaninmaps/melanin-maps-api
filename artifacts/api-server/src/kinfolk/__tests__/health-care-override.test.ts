@@ -45,6 +45,23 @@ describe("qualified care override", () => {
     expect(override.promptBlock).toContain("Do not infer a race");
   });
 
+  it("routes pediatric-dentist requests to the qualified pediatric dental finder and never the ordinary catalog", () => {
+    const override = buildHealthCareOverride({
+      message: "Find me a pediatric dentist in Philadelphia for my child.",
+      intentClass: "medical_health",
+    });
+
+    expect(override).toMatchObject({
+      applies: true,
+      suppressesGeneralBusinessCatalog: true,
+    });
+    expect(override.sources).toEqual(expect.arrayContaining([
+      expect.objectContaining({ source: "AAPD" }),
+    ]));
+    expect(override.promptBlock).toContain("pediatric dentist request");
+    expect(override.promptBlock).toContain("generic clinic, medical spa, or ordinary directory listing");
+  });
+
   it("offers medication questions without turning every medication question into a directory search", () => {
     const override = buildHealthCareOverride({
       message: "What should I ask my pharmacist about a new prescription and side effects?",

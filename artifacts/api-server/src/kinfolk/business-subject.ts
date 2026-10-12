@@ -414,6 +414,20 @@ const WIG_INSTALLATION_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
   ],
 };
 
+// “Custom wig maker” is a distinct current-turn service request. A business
+// that installs a pre-purchased wig is not automatically documented as making
+// one, so the catalog must not substitute it for this request.
+const CUSTOM_WIG_MAKING_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "custom wig making",
+  searchTerms: [
+    "custom wig",
+    "custom wigs",
+    "wig maker",
+    "wig makers",
+    "wig making",
+  ],
+};
+
 const BUNDLE_INSTALLATION_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
   label: "bundle or extension installation",
   searchTerms: [
@@ -423,6 +437,35 @@ const BUNDLE_INSTALLATION_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
     "extension installation",
     "extension install",
     "extension installs",
+  ],
+};
+
+// Loc maintenance is narrower than an initial loc style or generic natural-hair
+// appointment. It must be published by the listing before Kinfolk presents a
+// result for an explicit maintenance or retwist request.
+const LOC_MAINTENANCE_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "loc maintenance",
+  searchTerms: [
+    "loc maintenance",
+    "loc retwist",
+    "loc retwists",
+    "dreadlock maintenance",
+    "retwist",
+    "retwists",
+  ],
+};
+
+// “Dine-in” is a service capability, not an assumption from a restaurant
+// category. A delivery-only kitchen, caterer, or takeout counter is excluded
+// unless its published listing documents a sit-down/dine-in offering.
+const DINE_IN_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "dine-in service",
+  searchTerms: [
+    "dine in",
+    "dine-in",
+    "dining room",
+    "table service",
+    "sit down dining",
   ],
 };
 
@@ -517,11 +560,20 @@ export function deriveDocumentedServiceRequirement(
   const quoted = quotedServiceRequirement(message);
   if (quoted) return quoted;
   if (/\bethiopian\b/i.test(message)) return ETHIOPIAN_CUISINE_REQUIREMENT;
+  if (/\b(?:custom\s+wigs?|wig\s+(?:maker|makers|making))\b/i.test(message)) {
+    return CUSTOM_WIG_MAKING_SERVICE_REQUIREMENT;
+  }
   if (/\b(?:wig(?:s)?|wig[ -]?install(?:ation|s)?)\b/i.test(message)) {
     return WIG_INSTALLATION_SERVICE_REQUIREMENT;
   }
   if (/\b(?:bundles?|hair[ -]?extensions?|extension[ -]?install(?:ation|s)?)\b/i.test(message)) {
     return BUNDLE_INSTALLATION_SERVICE_REQUIREMENT;
+  }
+  if (/\b(?:loc\s+maintenance|dreadlock\s+maintenance|loc\s+retwists?|retwists?)\b/i.test(message)) {
+    return LOC_MAINTENANCE_SERVICE_REQUIREMENT;
+  }
+  if (/\bdine[ -]?in\b|\bsit[ -]?down\s+(?:dining|restaurant)\b/i.test(message)) {
+    return DINE_IN_SERVICE_REQUIREMENT;
   }
   return /\b(?:full\s+wash\s+and\s+detangle|wash\s+and\s+detangle|washing\s+and\s+detangling|wash\s+and\s+braid(?:ing)?|wash\s+and\s+style)\b/i.test(
     message,
