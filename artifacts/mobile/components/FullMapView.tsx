@@ -3,6 +3,7 @@ import {
   countMapDiscoveryFocuses,
   MAP_ESSENTIAL_SERVICE_CATEGORIES,
   matchesMapDiscoveryFocus,
+  OWNERSHIP_FILTER_OPTIONS,
   type MapEssentialServiceCategory,
   type MapDiscoveryFocus,
 } from "@workspace/constants";
@@ -488,10 +489,11 @@ export function FullMapView({
   const [selectedEssentialService, setSelectedEssentialService] = useState<EssentialServicePlace | null>(null);
   const [essentialServicesLoading, setEssentialServicesLoading] = useState(false);
   const [essentialServicesError, setEssentialServicesError] = useState<string | null>(null);
-  // Map browsing is deliberately preference-neutral. Only an explicit Map
-  // filter may be sent to Map APIs; Kinfolk memory and preferences stay inside
-  // Kinfolk conversations and never shape standalone pins.
-  const designationIds: string[] = [];
+  // Map browsing is deliberately preference-neutral. Only an explicit local
+  // Map filter may be sent to Map APIs; Kinfolk memory and preferences stay
+  // inside Kinfolk conversations and never shape standalone pins.
+  const [selectedMapDesignations, setSelectedMapDesignations] = useState<string[]>([]);
+  const designationIds = selectedMapDesignations;
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(
     null,
   );
@@ -687,9 +689,14 @@ export function FullMapView({
         )
       : canonicalMapPins;
     return scopePins.filter((business) =>
-      matchesMapDiscoveryFocus(business, mapDiscoveryFocus),
+      matchesMapDiscoveryFocus(business, mapDiscoveryFocus) && (
+        designationIds.length === 0 || designationIds.every((designation) =>
+          (designation === "black-african-american" && business.blackOwned)
+          || business.ownershipFilterIds?.includes(designation),
+        )
+      ),
     );
-  }, [canonicalMapPins, mapDiscoveryFocus, mapDiscoveryRadius, proximityMapLocation]);
+  }, [canonicalMapPins, designationIds, mapDiscoveryFocus, mapDiscoveryRadius, proximityMapLocation]);
   const directMatch = businessSearchScope === "explicit_public_listing"
     ? businesses[0] ?? null
     : null;
@@ -2168,6 +2175,37 @@ export function FullMapView({
                 </TouchableOpacity>
               ))}
             </ScrollView>
+            <View testID="map-ownership-filters" style={{ marginTop: 10, gap: 6 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <Text style={s.mapDiscoverySubtitle}>Ownership designations</Text>
+                {selectedMapDesignations.length > 0 ? (
+                  <TouchableOpacity
+                    onPress={() => setSelectedMapDesignations([])}
+                    accessibilityLabel="Clear Map ownership filters"
+                  >
+                    <Text style={s.mapDiscoveryReset}>Clear</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.mapDiscoveryFocusRow}>
+                {OWNERSHIP_FILTER_OPTIONS.map((option) => {
+                  const selected = selectedMapDesignations.includes(option.id);
+                  return (
+                    <TouchableOpacity
+                      key={option.id}
+                      onPress={() => setSelectedMapDesignations((current) => selected
+                        ? current.filter((id) => id !== option.id)
+                        : [...current, option.id])}
+                      accessibilityLabel={`Filter Map by ${option.label}`}
+                      accessibilityState={{ selected }}
+                      style={[s.mapDiscoveryFocus, selected && s.mapDiscoveryFocusActive]}
+                    >
+                      <Text style={[s.mapDiscoveryFocusText, selected && s.mapDiscoveryFocusTextActive]}>{option.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
             {mapDiscoveryFocus !== "all" && (
               <Text style={s.mapDiscoveryExplanation}>
                 Showing {activeMapDiscoveryLabel.toLowerCase()} because you chose it. This uses existing listing categories and tags; direct search stays in charge.

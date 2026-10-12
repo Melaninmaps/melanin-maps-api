@@ -12,10 +12,18 @@ describe("Map and Discovery stay separate from Kinfolk memory", () => {
   });
 
   it("does not inject saved Kinfolk ownership preferences into standalone Map requests", () => {
-    expect(map).toContain("const designationIds: string[] = [];");
+    expect(map).toContain("const [selectedMapDesignations, setSelectedMapDesignations] = useState<string[]>([]);");
+    expect(map).toContain("const designationIds = selectedMapDesignations;");
     expect(map).toContain("supportScope: undefined,");
-    expect(map).toContain("Kinfolk memory and preferences stay inside");
+    expect(map).toContain("Kinfolk memory and preferences stay");
     expect(map).not.toContain("memberPreferences.preferredOwnershipTypes");
+  });
+
+  it("supports independently selectable and clearable ownership filters on Map", () => {
+    expect(map).toContain('testID="map-ownership-filters"');
+    expect(map).toContain("OWNERSHIP_FILTER_OPTIONS.map");
+    expect(map).toContain("setSelectedMapDesignations([])");
+    expect(map).toContain("designationIds.every");
   });
 
   it("does not inject or rank standalone Discovery results by saved Kinfolk preferences", () => {
