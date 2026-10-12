@@ -22,6 +22,18 @@ export interface FamilyImpactDispatchResult {
   skipped: number;
 }
 
+export interface FamilyImpactDispatchOptions {
+  provider?: FamilyImpactProvider;
+  enableDelivery?: boolean;
+  /**
+   * Internal-only scope for a controlled synthetic run. A normal dispatch has
+   * no scope and evaluates all eligible relationships. The isolated staging
+   * validator supplies only disposable relationship IDs so a test event can
+   * never reach a real member.
+   */
+  allowedTrustedShareIds?: readonly string[];
+}
+
 function empty(eventState: FamilyImpactDispatchResult["eventState"]): FamilyImpactDispatchResult {
   return { eventState, eligibleRelationships: 0, potential: 0, outside: 0, unknown: 0, providerAccepted: 0, retryScheduled: 0, skipped: 0 };
 }
@@ -56,6 +68,70 @@ function increment(result: FamilyImpactDispatchResult, status: FamilyImpactStatu
   if (status === "potentially_affected") result.potential += 1;
   else if (status === "outside_reported_area") result.outside += 1;
   else result.unknown += 1;
+}
+
+function deliveryRequired(status: FamilyImpactStatus): boolean {
+  // Geographic separation and a missing/stale temporary session are not an
+  // emergency delivery condition. They remain durable audit classifications,
+  // but only a potentially affected, separately consented contact may receive
+  // the in-app alert or a provider handoff.
+  return status === "potentially_affected";
+}
+
+function uniqueTrustedShareIds(value: readonly string[] | undefined): string[] | undefined {
+  if (!value) return undefined;
+  return [...new Set(value.filter((id): id is string => typeof id === "string" && id.length > 0))];
+}
+
+async function cancelIneligibleDeliveryAttempts(
+  eventId: string,
+  allowedTrustedShareIds: readonly string[] | undefined,
+): Promise<void> {
+  if (allowedTrustedShareIds?.length === 0) return;
+  const scope = allowedTrustedShareIds
+    ? "AND attempt.trusted_share_id = ANY($2::uuid[])"
+    : "";
+  const parameters = allowedTrustedShareIds ? [eventId, allowedTrustedShareIds] : [eventId];
+  await pool.query(
+    `UPDATE family_impact_delivery_attempts attempt
+        SET delivery_state = 'cancelled', next_retry_at = NULL, updated_at = NOW()
+      WHERE attempt.event_id = $1
+        ${scope}
+        AND attempt.delivery_state IN ('queued', 'retry_scheduled')
+        AND NOT EXISTS (
+          SELECT 1
+            FROM family_impact_consents fic
+            JOIN trusted_safety_shares tss
+              ON tss.id = fic.trusted_share_id AND tss.owner_id = fic.owner_id
+            JOIN users owner
+              ON owner.id = fic.owner_id
+            JOIN users contact
+              ON contact.id = tss.contact_user_id
+            LEFT JOIN user_blocks owner_blocks
+              ON owner_blocks.blocker_id = fic.owner_id AND owner_blocks.blocked_id = contact.id
+            LEFT JOIN user_blocks contact_blocks
+              ON contact_blocks.blocker_id = contact.id AND contact_blocks.blocked_id = fic.owner_id
+           WHERE fic.trusted_share_id = attempt.trusted_share_id
+             AND fic.revoked_at IS NULL AND fic.expires_at > NOW()
+             AND fic.location_scope = 'active_temporary_location_only'
+             AND tss.contact_type = 'mwm_user' AND tss.status = 'active'
+             AND tss.owner_enabled = true AND tss.contact_accepted = true
+             AND owner.approved = true AND COALESCE(owner.account_status, 'active') = 'active'
+             AND contact.approved = true AND COALESCE(contact.account_status, 'active') = 'active'
+             AND owner_blocks.id IS NULL AND contact_blocks.id IS NULL
+        )`,
+    parameters,
+  );
+}
+
+async function disableNonPotentialDeliveryAttempt(eventId: string, trustedShareId: string): Promise<void> {
+  await pool.query(
+    `UPDATE family_impact_delivery_attempts
+        SET delivery_state = 'disabled', next_retry_at = NULL, updated_at = NOW()
+      WHERE event_id = $1 AND trusted_share_id = $2
+        AND delivery_state IN ('queued', 'retry_scheduled')`,
+    [eventId, trustedShareId],
+  );
 }
 
 /**
@@ -97,7 +173,7 @@ async function ensureFamilyImpactInAppNotification(input: {
 
 export async function dispatchFamilyImpactEvent(
   sourceEventId: string,
-  options: { provider?: FamilyImpactProvider; enableDelivery?: boolean } = {},
+  options: FamilyImpactDispatchOptions = {},
 ): Promise<FamilyImpactDispatchResult> {
   const eventResult = await pool.query<{
     id: string; source: string; status: string; event_type: string; boundary: unknown; general_area: string; expires_at: Date; reviewer_approved_at: Date | null;
@@ -114,6 +190,15 @@ export async function dispatchFamilyImpactEvent(
   if (!boundary) return empty("not_current");
   const deliveryEnabled = options.enableDelivery === true ? true : options.enableDelivery === false ? false : activeDeliveryEnabled();
   const result = empty(deliveryEnabled ? "dispatched" : "disabled");
+  const allowedTrustedShareIds = uniqueTrustedShareIds(options.allowedTrustedShareIds);
+  await cancelIneligibleDeliveryAttempts(event.id, allowedTrustedShareIds);
+  if (allowedTrustedShareIds?.length === 0) return result;
+  const scope = allowedTrustedShareIds
+    ? "AND fic.trusted_share_id = ANY($2::uuid[])"
+    : "";
+  const relationshipParameters = allowedTrustedShareIds
+    ? [event.id, allowedTrustedShareIds]
+    : [event.id];
   const relationships = await pool.query<{
     trusted_share_id: string; owner_id: string; contact_user_id: string; location_scope: string;
     latitude: number | null; longitude: number | null; last_updated_at: Date | null;
@@ -144,8 +229,9 @@ export async function dispatchFamilyImpactEvent(
         AND fic.location_scope = 'active_temporary_location_only'
         AND tss.contact_type = 'mwm_user' AND tss.status = 'active'
         AND tss.owner_enabled = true AND tss.contact_accepted = true
+        ${scope}
         AND owner_blocks.id IS NULL AND contact_blocks.id IS NULL`,
-    [event.id],
+    relationshipParameters,
   );
   result.eligibleRelationships = relationships.rows.length;
   for (const relationship of relationships.rows) {
@@ -158,6 +244,10 @@ export async function dispatchFamilyImpactEvent(
       warningZone: relationship.warning_zone,
     }, { memberConfirmedSafe: relationship.confirmed_safe });
     increment(result, impact.status);
+    const requiresDelivery = deliveryRequired(impact.status);
+    if (!requiresDelivery) {
+      await disableNonPotentialDeliveryAttempt(event.id, relationship.trusted_share_id);
+    }
     const audit = await pool.query<{ id: string; delivery_state: string; attempt_count: number; next_retry_at: Date | null; in_app_notification_id: string | null }>(
       `INSERT INTO family_impact_delivery_attempts
          (event_id, trusted_share_id, owner_id, contact_user_id, impact_status, delivery_state, attempt_count, created_at, updated_at)
@@ -174,9 +264,13 @@ export async function dispatchFamilyImpactEvent(
                      END,
                      updated_at = NOW()
        RETURNING id, delivery_state, attempt_count, next_retry_at, in_app_notification_id`,
-      [event.id, relationship.trusted_share_id, relationship.owner_id, relationship.contact_user_id, impact.status, deliveryEnabled ? "queued" : "disabled"],
+      [event.id, relationship.trusted_share_id, relationship.owner_id, relationship.contact_user_id, impact.status, deliveryEnabled && requiresDelivery ? "queued" : "disabled"],
     );
     const attempt = audit.rows[0];
+    if (!requiresDelivery) {
+      result.skipped += 1;
+      continue;
+    }
     const retryIsDue = attempt?.delivery_state === "retry_scheduled"
       && (!attempt.next_retry_at || new Date(attempt.next_retry_at).getTime() <= Date.now());
     if (attempt?.delivery_state === "retry_scheduled" && attempt.attempt_count >= 3) {

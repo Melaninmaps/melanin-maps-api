@@ -128,9 +128,17 @@ async function main(): Promise<void> {
 
     const providerRecipients: string[] = [];
     const dispatched = await dispatchFamilyImpactEvent("nws-local-1", { enableDelivery: true, provider: { send: async ({ recipientUserId }) => { providerRecipients.push(recipientUserId); return "provider_accepted"; } } });
-    assert(dispatched.potential === 1 && dispatched.outside === 1 && dispatched.providerAccepted === 2 && providerRecipients.length === 2, "synthetic provider must process each authorized durable contact with its own impact state");
+    assert(dispatched.potential === 1 && dispatched.outside === 1 && dispatched.providerAccepted === 1 && providerRecipients.length === 1, "only a potentially affected consented contact may receive a synthetic provider handoff");
+    const outsideAudit = await client.query<{ delivery_state: string; in_app_notification_id: string | null }>(
+      `SELECT attempt.delivery_state, attempt.in_app_notification_id
+         FROM family_impact_delivery_attempts attempt
+         JOIN family_impact_events event ON event.id = attempt.event_id
+        WHERE event.source_event_id = 'nws-local-1' AND attempt.contact_user_id = $1`,
+      [CONTACT_TWO],
+    );
+    assert(outsideAudit.rows[0]?.delivery_state === "disabled" && outsideAudit.rows[0]?.in_app_notification_id === null, "outside-area classification must retain an audit without an unnecessary alert");
     const duplicate = await dispatchFamilyImpactEvent("nws-local-1", { enableDelivery: true, provider: { send: async ({ recipientUserId }) => { providerRecipients.push(recipientUserId); return "provider_accepted"; } } });
-    assert(duplicate.skipped === 2 && providerRecipients.length === 2, "reprocessing the same event must not duplicate a provider handoff");
+    assert(duplicate.skipped === 2 && providerRecipients.length === 1, "reprocessing the same event must not duplicate a provider handoff");
     const contactImpact = await request(app).get("/safety/family-impact/events/nws-local-1/impact").set(as(CONTACT));
     assert(contactImpact.status === 200 && contactImpact.body.impact === "potentially_affected", "authorized contact must receive a coarse potential-impact result");
     assert(!JSON.stringify(contactImpact.body).match(/39\.95|75\.16|lastUpdated|latitude|longitude/i), "impact API must never expose coordinates or location timestamps");
@@ -149,7 +157,7 @@ async function main(): Promise<void> {
       .send({ source: "nws", sourceEventId: "nws-retry-1", eventType: "severe_weather", generalArea: "Philadelphia, PA", expiresAt: new Date(Date.now() + 60 * 60_000).toISOString(), boundary: { kind: "polygon", coordinates: [[-75.18,39.94],[-75.14,39.94],[-75.14,39.97],[-75.18,39.97]] } });
     assert(retryEvent.status === 202, "retry fixture event must enter the default-disabled source boundary");
     const retryScheduled = await dispatchFamilyImpactEvent("nws-retry-1", { enableDelivery: true, provider: { send: async () => "retryable_failure" } });
-    assert(retryScheduled.retryScheduled === 2, "temporary provider failure must persist a bounded retry for each authorized contact");
+    assert(retryScheduled.retryScheduled === 1, "temporary provider failure must persist a bounded retry only for the potentially affected contact");
     const fallbackAfterFailure = await client.query<{ count: string }>(
       `SELECT COUNT(*)::text AS count
          FROM family_impact_delivery_attempts attempt
@@ -157,13 +165,13 @@ async function main(): Promise<void> {
          JOIN notifications notice ON notice.id = attempt.in_app_notification_id
         WHERE event.source_event_id = 'nws-retry-1' AND attempt.delivery_state = 'retry_scheduled'`,
     );
-    assert(Number(fallbackAfterFailure.rows[0]?.count) === 2, "a retryable provider failure must retain one durable in-app notice per authorized contact");
+    assert(Number(fallbackAfterFailure.rows[0]?.count) === 1, "a retryable provider failure must retain one durable in-app notice for the potentially affected contact");
     let prematureRetryCalls = 0;
     const retryNotDue = await dispatchFamilyImpactEvent("nws-retry-1", { enableDelivery: true, provider: { send: async () => { prematureRetryCalls += 1; return "provider_accepted"; } } });
     assert(retryNotDue.skipped === 2 && prematureRetryCalls === 0, "a persisted retry must not be re-sent before its bounded retry time");
     await client.query("UPDATE family_impact_delivery_attempts SET next_retry_at = NOW() - interval '1 second' WHERE event_id = (SELECT id FROM family_impact_events WHERE source_event_id = 'nws-retry-1')");
     const retryRecovered = await dispatchFamilyImpactEvent("nws-retry-1", { enableDelivery: true, provider: { send: async () => "provider_accepted" } });
-    assert(retryRecovered.providerAccepted === 2, "a due persisted retry must be re-attempted after a recoverable provider failure");
+    assert(retryRecovered.providerAccepted === 1, "a due persisted retry must be re-attempted after a recoverable provider failure");
 
     const rejectedEvent = await request(app).post("/internal/safety/family-impact/events")
       .set("x-family-impact-ingest-secret", process.env.FAMILY_IMPACT_INGEST_SECRET!)
@@ -177,7 +185,7 @@ async function main(): Promise<void> {
          JOIN notifications notice ON notice.id = attempt.in_app_notification_id
         WHERE event.source_event_id = 'nws-rejected-1' AND attempt.delivery_state = 'provider_rejected'`,
     );
-    assert(Number(fallbackAfterRejection.rows[0]?.count) === 2, "a provider rejection such as an expired token must not erase the durable in-app alert");
+    assert(Number(fallbackAfterRejection.rows[0]?.count) === 1, "a provider rejection such as an expired token must not erase the durable in-app alert");
 
     await client.query("UPDATE location_shares SET last_updated_at = NOW() - interval '15 minutes' WHERE sharer_id = $1", [OWNER]);
     const staleEvent = await request(app).post("/internal/safety/family-impact/events")
@@ -205,8 +213,14 @@ async function main(): Promise<void> {
     assert(cancelled.status === 200, `authoritative cancellation must update the event lifecycle (status=${cancelled.status})`);
     const cancelledImpact = await request(app).get("/safety/family-impact/events/nws-local-1/impact").set(as(CONTACT));
     assert(cancelledImpact.status === 404, "cancelled event must no longer expose an impact result");
-    const delivery = await client.query<{ delivery_state: string }>("SELECT delivery_state FROM family_impact_delivery_attempts ORDER BY created_at LIMIT 1");
-    assert(delivery.rows[0]?.delivery_state === "provider_accepted" || delivery.rows[0]?.delivery_state === "cancelled", "delivery audit must preserve a truthful provider state or cancellation");
+    const delivery = await client.query<{ delivery_state: string }>(
+      `SELECT attempt.delivery_state
+         FROM family_impact_delivery_attempts attempt
+         JOIN family_impact_events event ON event.id = attempt.event_id
+        WHERE event.source_event_id = 'nws-local-1' AND attempt.contact_user_id = $1`,
+      [CONTACT],
+    );
+    assert(delivery.rows[0]?.delivery_state === "provider_accepted" || delivery.rows[0]?.delivery_state === "cancelled", "potential-impact delivery audit must preserve a truthful provider state or cancellation");
 
     await client.query("INSERT INTO user_blocks (blocker_id, blocked_id) VALUES ($1,$2)", [OWNER, CONTACT]);
     const blockedImpact = await request(app).get("/safety/family-impact/events/violence-local-1/impact").set(as(CONTACT));

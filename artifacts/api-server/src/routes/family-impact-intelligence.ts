@@ -7,6 +7,9 @@ import { cancelFamilyImpactEvent, dispatchFamilyImpactEvent } from "../safety/fa
 const router = Router();
 const CONSENT_VERSION = "family-impact-v1";
 const CONSENT_DURATION_DAYS = 365;
+const STAGING_FIXTURE_HEADER = "x-kinfolk-staging-fixture";
+const STAGING_FAMILY_IMPACT_EVENT_PREFIX = "fixture-family-impact-";
+const STAGING_FIXTURE_EMAIL_PATTERN = "kinfolk-safety-contact-family-impact-%@example.test";
 
 function requireUser(req: Request, res: Response): string | null {
   if (!req.user?.id || !req.isAuthenticated?.()) {
@@ -48,6 +51,109 @@ function eventExpiry(value: unknown): Date | null {
   if (typeof value !== "string") return null;
   const date = new Date(value);
   return Number.isFinite(date.getTime()) && date.getTime() > Date.now() && date.getTime() <= Date.now() + 7 * 24 * 60 * 60 * 1000 ? date : null;
+}
+
+function isStagingFamilyImpactFixture(req: Request): boolean {
+  return process.env.RAILWAY_ENVIRONMENT_NAME === "staging"
+    && process.env.KINFOLK_MEMORY_STAGING_ISOLATION === "true"
+    && req.header(STAGING_FIXTURE_HEADER) === "enable";
+}
+
+function requireStagingFamilyImpactFixture(req: Request, res: Response): boolean {
+  if (!isStagingFamilyImpactFixture(req)) {
+    res.status(404).json({ error: "Not found" });
+    return false;
+  }
+  return true;
+}
+
+function isStagingFamilyImpactEventId(value: unknown): value is string {
+  return typeof value === "string"
+    && value.startsWith(STAGING_FAMILY_IMPACT_EVENT_PREFIX)
+    && /^[a-z0-9][a-z0-9-]{20,159}$/i.test(value);
+}
+
+type StagingFamilyImpactEvent = {
+  source: "nws" | "fema_ipaws" | "local_emergency";
+  sourceEventId: string;
+  eventType: "severe_weather" | "natural_disaster";
+  boundary: EmergencyBoundary;
+  generalArea: string;
+  expiresAt: Date;
+};
+
+function stagingFamilyImpactEvent(body: unknown): StagingFamilyImpactEvent | null {
+  const input = body as Record<string, unknown> | null;
+  const source = input?.source;
+  const sourceEventId = input ? text(input.sourceEventId, 160) : null;
+  const eventType = input?.eventType;
+  const boundary = input ? parseBoundary(input.boundary) : null;
+  const generalArea = input ? text(input.generalArea, 160) : null;
+  const expiresAt = input ? eventExpiry(input.expiresAt) : null;
+  if (!(source === "nws" || source === "fema_ipaws" || source === "local_emergency")
+    || !sourceEventId || !isStagingFamilyImpactEventId(sourceEventId)
+    || !(eventType === "severe_weather" || eventType === "natural_disaster")
+    || !boundary || !generalArea || !expiresAt) {
+    return null;
+  }
+  return { source, sourceEventId, eventType, boundary, generalArea, expiresAt };
+}
+
+async function upsertStagingFamilyImpactEvent(event: StagingFamilyImpactEvent): Promise<void> {
+  await pool.query(
+    `INSERT INTO family_impact_events (id, source, source_event_id, event_type, status, boundary, general_area, expires_at, created_at, updated_at)
+     VALUES (gen_random_uuid(),$1,$2,$3,'active',$4::jsonb,$5,$6,NOW(),NOW())
+     ON CONFLICT (source, source_event_id) DO UPDATE SET event_type = EXCLUDED.event_type, status = 'active', boundary = EXCLUDED.boundary,
+       general_area = EXCLUDED.general_area, expires_at = EXCLUDED.expires_at, updated_at = NOW()`,
+    [event.source, event.sourceEventId, event.eventType, JSON.stringify(event.boundary), event.generalArea, event.expiresAt],
+  );
+}
+
+async function stagingFixtureTrustedShareIds(sourceEventId: string): Promise<string[]> {
+  const result = await pool.query<{ id: string }>(
+    `SELECT DISTINCT tss.id::text AS id
+       FROM trusted_safety_shares tss
+       JOIN users owner ON owner.id = tss.owner_id
+       JOIN users contact ON contact.id = tss.contact_user_id
+      WHERE LOWER(owner.email) LIKE $2
+        AND LOWER(contact.email) LIKE $2
+        AND (
+          EXISTS (
+            SELECT 1 FROM family_impact_consents fic
+             WHERE fic.trusted_share_id = tss.id AND fic.owner_id = tss.owner_id
+          )
+          OR EXISTS (
+            SELECT 1
+              FROM family_impact_delivery_attempts attempt
+              JOIN family_impact_events event ON event.id = attempt.event_id
+             WHERE attempt.trusted_share_id = tss.id AND event.source_event_id = $1
+          )
+        )`,
+    [sourceEventId, STAGING_FIXTURE_EMAIL_PATTERN],
+  );
+  return result.rows.map((row) => row.id);
+}
+
+async function hasStagingFixtureReviewer(reviewerId: string): Promise<boolean> {
+  const result = await pool.query<{ id: string }>(
+    `SELECT id FROM users
+      WHERE id = $1
+        AND LOWER(email) LIKE 'kinfolk-safety-contact-family-impact-%-reviewer@example.test'
+      LIMIT 1`,
+    [reviewerId],
+  );
+  return Boolean(result.rows[0]);
+}
+
+async function approveReviewedViolenceEvent(sourceEventId: string, reviewerId: string): Promise<boolean> {
+  const approved = await pool.query<{ id: string }>(
+    `UPDATE family_impact_events event SET reviewer_id = $2, reviewer_approved_at = NOW(), updated_at = NOW()
+      WHERE event.source_event_id = $1 AND event.source = 'reviewed_violence' AND event.status = 'active'
+        AND (SELECT COUNT(*) FROM family_impact_violence_reports report WHERE report.incident_id = event.id AND report.abuse_state = 'accepted') >= 3
+      RETURNING event.id`,
+    [sourceEventId, reviewerId],
+  );
+  return Boolean(approved.rows[0]);
 }
 
 // Owner-visible, relationship-specific consent management. No location is sent
@@ -236,6 +342,206 @@ router.post("/internal/safety/family-impact/events/:eventId/review", async (req,
     if (!approved.rows[0]) { res.status(409).json({ error: "This incident lacks the required independent reports or is no longer current" }); return; }
     res.json({ reviewed: true, delivery: "disabled" });
   } catch { res.status(500).json({ error: "Unable to record qualified review" }); }
+});
+
+// This narrow bridge exists only to run the founder-authorized isolated staging
+// lifecycle test with an in-process fake provider. It is unavailable unless the
+// Railway environment and the existing memory-isolation control both identify
+// the isolated staging environment. It accepts only synthetic event IDs and
+// dispatches only explicitly scoped disposable @example.test relationships.
+// It cannot invoke an external notification provider or target real accounts.
+router.post("/internal/safety/family-impact/staging-validation/events", async (req, res) => {
+  if (!requireStagingFamilyImpactFixture(req, res)) return;
+  const event = stagingFamilyImpactEvent(req.body);
+  if (!event) { res.status(400).json({ error: "A synthetic Family Impact event is required" }); return; }
+  try {
+    await upsertStagingFamilyImpactEvent(event);
+    const allowedTrustedShareIds = await stagingFixtureTrustedShareIds(event.sourceEventId);
+    await dispatchFamilyImpactEvent(event.sourceEventId, { enableDelivery: false, allowedTrustedShareIds });
+    res.status(202).json({ accepted: true, delivery: "disabled", synthetic: true });
+  } catch { res.status(500).json({ error: "Unable to ingest synthetic Family Impact event" }); }
+});
+
+router.post("/internal/safety/family-impact/staging-validation/events/:eventId/dispatch", async (req, res) => {
+  if (!requireStagingFamilyImpactFixture(req, res)) return;
+  const sourceEventId = req.params.eventId;
+  const outcome = req.body?.outcome;
+  if (!isStagingFamilyImpactEventId(sourceEventId) || !["provider_accepted", "provider_rejected", "retryable_failure"].includes(outcome)) {
+    res.status(400).json({ error: "A synthetic event and fake provider outcome are required" }); return;
+  }
+  try {
+    const source = await pool.query<{ source: string }>(
+      "SELECT source FROM family_impact_events WHERE source_event_id = $1 LIMIT 1", [sourceEventId],
+    );
+    if (!source.rows[0]) { res.status(404).json({ error: "Synthetic event not found" }); return; }
+    if (source.rows[0].source === "reviewed_violence") {
+      res.status(409).json({ error: "Serious-threat delivery remains disabled" }); return;
+    }
+    const allowedTrustedShareIds = await stagingFixtureTrustedShareIds(sourceEventId);
+    const result = await dispatchFamilyImpactEvent(sourceEventId, {
+      enableDelivery: true,
+      allowedTrustedShareIds,
+      provider: { send: async () => outcome },
+    });
+    res.json({
+      synthetic: true,
+      provider: "fake_no_device_delivery",
+      providerOutcome: outcome,
+      result: {
+        eventState: result.eventState,
+        eligibleRelationships: result.eligibleRelationships,
+        potentiallyAffected: result.potential,
+        outsideReportedArea: result.outside,
+        locationUnknown: result.unknown,
+        providerAccepted: result.providerAccepted,
+        retryScheduled: result.retryScheduled,
+        skipped: result.skipped,
+      },
+    });
+  } catch { res.status(500).json({ error: "Unable to dispatch synthetic Family Impact event" }); }
+});
+
+router.get("/internal/safety/family-impact/staging-validation/events/:eventId/status", async (req, res) => {
+  if (!requireStagingFamilyImpactFixture(req, res)) return;
+  const sourceEventId = req.params.eventId;
+  if (!isStagingFamilyImpactEventId(sourceEventId)) { res.status(404).json({ error: "Synthetic event not found" }); return; }
+  try {
+    const event = await pool.query<{ status: string }>(
+      "SELECT status FROM family_impact_events WHERE source_event_id = $1 LIMIT 1", [sourceEventId],
+    );
+    if (!event.rows[0]) { res.status(404).json({ error: "Synthetic event not found" }); return; }
+    const allowedTrustedShareIds = await stagingFixtureTrustedShareIds(sourceEventId);
+    const attempts = allowedTrustedShareIds.length === 0 ? [] : (await pool.query<{
+      impact_status: string; delivery_state: string; attempt_count: number; in_app_notification_id: string | null;
+    }>(
+      `SELECT attempt.impact_status, attempt.delivery_state, attempt.attempt_count, attempt.in_app_notification_id
+         FROM family_impact_delivery_attempts attempt
+         JOIN family_impact_events event ON event.id = attempt.event_id
+        WHERE event.source_event_id = $1 AND attempt.trusted_share_id = ANY($2::uuid[])
+        ORDER BY attempt.created_at`,
+      [sourceEventId, allowedTrustedShareIds],
+    )).rows;
+    res.json({
+      synthetic: true,
+      eventState: event.rows[0].status,
+      attempts: attempts.map((attempt) => ({
+        impact: attempt.impact_status,
+        deliveryState: attempt.delivery_state,
+        attemptCount: attempt.attempt_count,
+        hasInAppAlert: Boolean(attempt.in_app_notification_id),
+      })),
+    });
+  } catch { res.status(500).json({ error: "Unable to inspect synthetic Family Impact event" }); }
+});
+
+router.post("/internal/safety/family-impact/staging-validation/events/:eventId/make-retry-due", async (req, res) => {
+  if (!requireStagingFamilyImpactFixture(req, res)) return;
+  const sourceEventId = req.params.eventId;
+  if (!isStagingFamilyImpactEventId(sourceEventId)) { res.status(404).json({ error: "Synthetic event not found" }); return; }
+  try {
+    const allowedTrustedShareIds = await stagingFixtureTrustedShareIds(sourceEventId);
+    if (allowedTrustedShareIds.length === 0) { res.json({ synthetic: true, updated: 0 }); return; }
+    const updated = await pool.query<{ id: string }>(
+      `UPDATE family_impact_delivery_attempts attempt
+          SET next_retry_at = NOW() - INTERVAL '1 second', updated_at = NOW()
+         FROM family_impact_events event
+        WHERE event.id = attempt.event_id AND event.source_event_id = $1
+          AND attempt.trusted_share_id = ANY($2::uuid[])
+          AND attempt.delivery_state = 'retry_scheduled'
+        RETURNING attempt.id`,
+      [sourceEventId, allowedTrustedShareIds],
+    );
+    res.json({ synthetic: true, updated: updated.rows.length });
+  } catch { res.status(500).json({ error: "Unable to advance synthetic retry" }); }
+});
+
+router.post("/internal/safety/family-impact/staging-validation/events/:eventId/cancel", async (req, res) => {
+  if (!requireStagingFamilyImpactFixture(req, res)) return;
+  const sourceEventId = req.params.eventId;
+  if (!isStagingFamilyImpactEventId(sourceEventId)) { res.status(404).json({ error: "Synthetic event not found" }); return; }
+  try {
+    const cancelled = await cancelFamilyImpactEvent(sourceEventId, "cancelled");
+    if (!cancelled) { res.status(404).json({ error: "Synthetic event not found" }); return; }
+    res.json({ cancelled: true, delivery: "disabled", synthetic: true });
+  } catch { res.status(500).json({ error: "Unable to cancel synthetic Family Impact event" }); }
+});
+
+router.delete("/internal/safety/family-impact/staging-validation/events/:eventId", async (req, res) => {
+  if (!requireStagingFamilyImpactFixture(req, res)) return;
+  const sourceEventId = req.params.eventId;
+  if (!isStagingFamilyImpactEventId(sourceEventId)) { res.status(404).json({ error: "Synthetic event not found" }); return; }
+  try {
+    const deleted = await pool.query<{ id: string }>(
+      `DELETE FROM family_impact_events
+        WHERE source_event_id = $1 AND source_event_id LIKE 'fixture-family-impact-%'
+        RETURNING id`,
+      [sourceEventId],
+    );
+    res.json({ synthetic: true, removed: deleted.rows.length });
+  } catch { res.status(500).json({ error: "Unable to remove synthetic Family Impact event" }); }
+});
+
+router.post("/internal/safety/family-impact/staging-validation/events/:eventId/location-state", async (req, res) => {
+  if (!requireStagingFamilyImpactFixture(req, res)) return;
+  const sourceEventId = req.params.eventId;
+  const state = req.body?.state;
+  if (!isStagingFamilyImpactEventId(sourceEventId) || !["stale", "expired", "absent"].includes(state)) {
+    res.status(400).json({ error: "A synthetic event and supported location state are required" }); return;
+  }
+  try {
+    const allowedTrustedShareIds = await stagingFixtureTrustedShareIds(sourceEventId);
+    if (allowedTrustedShareIds.length === 0) { res.json({ synthetic: true, updated: 0 }); return; }
+    const assignment = state === "stale"
+      ? "last_updated_at = NOW() - INTERVAL '11 minutes'"
+      : state === "expired"
+        ? "expires_at = NOW() - INTERVAL '1 second'"
+        : "current_lat = NULL, current_lng = NULL, last_updated_at = NULL";
+    const updated = await pool.query<{ id: string }>(
+      `UPDATE location_shares location SET ${assignment}
+         FROM trusted_safety_shares share
+        WHERE share.id = ANY($1::uuid[])
+          AND location.sharer_id = share.owner_id
+          AND location.recipient_user_id = share.contact_user_id
+        RETURNING location.id`,
+      [allowedTrustedShareIds],
+    );
+    res.json({ synthetic: true, updated: updated.rows.length });
+  } catch { res.status(500).json({ error: "Unable to change synthetic location state" }); }
+});
+
+router.post("/internal/safety/family-impact/staging-validation/reviewed-violence-events", async (req, res) => {
+  if (!requireStagingFamilyImpactFixture(req, res)) return;
+  const sourceEventId = text(req.body?.sourceEventId, 160);
+  const boundary = parseBoundary(req.body?.boundary);
+  const generalArea = text(req.body?.generalArea, 160);
+  const expiresAt = eventExpiry(req.body?.expiresAt);
+  if (!sourceEventId || !isStagingFamilyImpactEventId(sourceEventId) || !boundary || !generalArea || !expiresAt) {
+    res.status(400).json({ error: "A synthetic reviewed-violence event is required" }); return;
+  }
+  try {
+    await pool.query(
+      `INSERT INTO family_impact_events (id, source, source_event_id, event_type, status, boundary, general_area, expires_at, created_at, updated_at)
+       VALUES (gen_random_uuid(),'reviewed_violence',$1,'serious_violent_threat','active',$2::jsonb,$3,$4,NOW(),NOW())
+       ON CONFLICT (source, source_event_id) DO UPDATE SET status = 'active', boundary = EXCLUDED.boundary,
+         general_area = EXCLUDED.general_area, expires_at = EXCLUDED.expires_at, updated_at = NOW()`,
+      [sourceEventId, JSON.stringify(boundary), generalArea, expiresAt],
+    );
+    res.status(202).json({ accepted: true, delivery: "disabled", synthetic: true });
+  } catch { res.status(500).json({ error: "Unable to create synthetic review event" }); }
+});
+
+router.post("/internal/safety/family-impact/staging-validation/events/:eventId/review", async (req, res) => {
+  if (!requireStagingFamilyImpactFixture(req, res)) return;
+  const sourceEventId = req.params.eventId;
+  const reviewerId = text(req.body?.reviewerId, 160);
+  if (!isStagingFamilyImpactEventId(sourceEventId) || !reviewerId || !await hasStagingFixtureReviewer(reviewerId)) {
+    res.status(403).json({ error: "Qualified synthetic reviewer authorization is required" }); return;
+  }
+  try {
+    const approved = await approveReviewedViolenceEvent(sourceEventId, reviewerId);
+    if (!approved) { res.status(409).json({ error: "Synthetic event lacks the required independent reports" }); return; }
+    res.json({ reviewed: true, delivery: "disabled", synthetic: true });
+  } catch { res.status(500).json({ error: "Unable to record synthetic qualified review" }); }
 });
 
 router.get("/safety/family-impact/events/:eventId/impact", async (req, res) => {

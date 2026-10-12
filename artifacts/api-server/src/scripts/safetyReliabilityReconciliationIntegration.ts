@@ -21,12 +21,16 @@ const CONTACT = "safety-reconcile-contact";
 const UNCONSENTED_CONTACT = "safety-reconcile-unconsented-contact";
 const OUTSIDER = "safety-reconcile-outsider";
 const REPORTER = "safety-reconcile-reporter";
+const REPORTER_TWO = "safety-reconcile-reporter-two";
+const REPORTER_THREE = "safety-reconcile-reporter-three";
 const REVIEWER = "safety-reconcile-reviewer";
 
 const CURRENT_EVENT = "reconcile-current";
 const RETRY_EVENT = "reconcile-retry";
 const REJECTED_EVENT = "reconcile-rejected";
 const CANCELLED_EVENT = "reconcile-cancelled";
+const STAGING_BRIDGE_EVENT = "fixture-family-impact-local-validation-0001";
+const STAGING_VIOLENCE_EVENT = "fixture-family-impact-local-violence-0001";
 
 function shell(command: string, args: string[], options: Record<string, unknown> = {}): string {
   return String(execFileSync(command, args, { stdio: "pipe", ...options }));
@@ -61,6 +65,7 @@ function setSafetyEnvironment(databaseUrl: string): void {
     SAFETY_FAMILY_IMPACT_DELIVERY_ENABLED: "false",
     KINFOLK_MEMORY_STAGING_ISOLATION: "true",
     KINFOLK_SERIOUS_THREAT_PRIVATE_REVIEW_STAGING_ENABLED: "true",
+    RAILWAY_ENVIRONMENT_NAME: "staging",
   });
 }
 
@@ -158,11 +163,14 @@ async function insertFixtureUsers(client: import("pg").Client): Promise<void> {
             ($5,$6,'Contact',true,'active','beta'),
             ($7,$8,'Outside',true,'active','beta'),
             ($9,$10,'Reporter',true,'active','beta'),
-            ($11,$12,'Reviewer',true,'active','beta')`,
+            ($11,$12,'Reporter',true,'active','beta'),
+            ($13,$14,'Reporter',true,'active','beta'),
+            ($15,$16,'Reviewer',true,'active','beta')`,
     [
-      OWNER, "owner@example.test", CONTACT, "contact@example.test",
-      UNCONSENTED_CONTACT, "unconsented@example.test", OUTSIDER, "outsider@example.test",
-      REPORTER, "reporter@example.test", REVIEWER, "reviewer@example.test",
+      OWNER, "kinfolk-safety-contact-family-impact-local-owner@example.test", CONTACT, "kinfolk-safety-contact-family-impact-local-contact@example.test",
+      UNCONSENTED_CONTACT, "kinfolk-safety-contact-family-impact-local-unconsented@example.test", OUTSIDER, "kinfolk-safety-contact-family-impact-local-outsider@example.test",
+      REPORTER, "kinfolk-safety-contact-family-impact-local-reporter-one@example.test", REPORTER_TWO, "kinfolk-safety-contact-family-impact-local-reporter-two@example.test",
+      REPORTER_THREE, "kinfolk-safety-contact-family-impact-local-reporter-three@example.test", REVIEWER, "kinfolk-safety-contact-family-impact-local-reviewer@example.test",
     ],
   );
 }
@@ -218,6 +226,56 @@ async function initialPhase(databaseUrl: string): Promise<void> {
     assert(currentImpact.status === 200 && currentImpact.body.impact === "potentially_affected", "active temporary sharing may produce only a coarse impact classification");
     assert(!/latitude|longitude|updated/i.test(JSON.stringify(currentImpact.body)), "Family Impact responses must not disclose coordinates or timestamps");
 
+    const bridgeBody = { ...eventBody(STAGING_BRIDGE_EVENT), sourceEventId: STAGING_BRIDGE_EVENT };
+    const bridgeDenied = await request(app).post("/internal/safety/family-impact/staging-validation/events").send(bridgeBody);
+    assert(bridgeDenied.status === 404, "synthetic dispatch bridge must be unavailable without the isolated staging fixture gate");
+    const bridgeEvent = await request(app)
+      .post("/internal/safety/family-impact/staging-validation/events")
+      .set("x-kinfolk-staging-fixture", "enable")
+      .send(bridgeBody);
+    assert(bridgeEvent.status === 202 && bridgeEvent.body.delivery === "disabled", "synthetic staging intake must retain default-off delivery");
+    const bridgeDispatch = await request(app)
+      .post(`/internal/safety/family-impact/staging-validation/events/${STAGING_BRIDGE_EVENT}/dispatch`)
+      .set("x-kinfolk-staging-fixture", "enable")
+      .send({ outcome: "provider_rejected" });
+    assert(bridgeDispatch.status === 200 && bridgeDispatch.body.provider === "fake_no_device_delivery" && bridgeDispatch.body.result?.providerAccepted === 0, "staging bridge must use only the in-process fake provider");
+    const bridgeStatus = await request(app)
+      .get(`/internal/safety/family-impact/staging-validation/events/${STAGING_BRIDGE_EVENT}/status`)
+      .set("x-kinfolk-staging-fixture", "enable");
+    assert(bridgeStatus.status === 200 && bridgeStatus.body.attempts?.length === 1 && bridgeStatus.body.attempts[0]?.hasInAppAlert === true && bridgeStatus.body.attempts[0]?.deliveryState === "provider_rejected", "fake provider rejection must preserve one durable in-app fallback without a device-delivery claim");
+    const bridgeCleanup = await request(app)
+      .delete(`/internal/safety/family-impact/staging-validation/events/${STAGING_BRIDGE_EVENT}`)
+      .set("x-kinfolk-staging-fixture", "enable");
+    assert(bridgeCleanup.status === 200 && bridgeCleanup.body.removed === 1, "synthetic bridge cleanup must delete only its own fixture event and dependent audit rows");
+    const reviewedViolence = await request(app)
+      .post("/internal/safety/family-impact/staging-validation/reviewed-violence-events")
+      .set("x-kinfolk-staging-fixture", "enable")
+      .send({ ...eventBody(STAGING_VIOLENCE_EVENT), sourceEventId: STAGING_VIOLENCE_EVENT });
+    assert(reviewedViolence.status === 202 && reviewedViolence.body.delivery === "disabled", "synthetic violence event creation must remain delivery-disabled");
+    for (const reporter of [REPORTER, REPORTER_TWO, REPORTER_THREE]) {
+      const report = await request(app).post(`/safety/family-impact/violence-reports/${STAGING_VIOLENCE_EVENT}`).set(as(reporter)).send({});
+      assert(report.status === 201 && report.body.notificationQueued === false, "independent synthetic violence reports must remain review-only");
+    }
+    const bridgeReviewerDenied = await request(app)
+      .post(`/internal/safety/family-impact/staging-validation/events/${STAGING_VIOLENCE_EVENT}/review`)
+      .set("x-kinfolk-staging-fixture", "enable")
+      .send({ reviewerId: OUTSIDER });
+    assert(bridgeReviewerDenied.status === 403, "only the designated synthetic reviewer may approve the review-only incident");
+    const bridgeReviewed = await request(app)
+      .post(`/internal/safety/family-impact/staging-validation/events/${STAGING_VIOLENCE_EVENT}/review`)
+      .set("x-kinfolk-staging-fixture", "enable")
+      .send({ reviewerId: REVIEWER });
+    assert(bridgeReviewed.status === 200 && bridgeReviewed.body.delivery === "disabled", "qualified synthetic review must not enable a serious-threat delivery path");
+    const bridgeThreatDispatch = await request(app)
+      .post(`/internal/safety/family-impact/staging-validation/events/${STAGING_VIOLENCE_EVENT}/dispatch`)
+      .set("x-kinfolk-staging-fixture", "enable")
+      .send({ outcome: "provider_accepted" });
+    assert(bridgeThreatDispatch.status === 409, "reviewed violence must not bypass the disabled delivery gate");
+    const bridgeViolenceCleanup = await request(app)
+      .delete(`/internal/safety/family-impact/staging-validation/events/${STAGING_VIOLENCE_EVENT}`)
+      .set("x-kinfolk-staging-fixture", "enable");
+    assert(bridgeViolenceCleanup.status === 200 && bridgeViolenceCleanup.body.removed === 1, "review-only synthetic incident must be removable with all dependent reports");
+
     const { dispatchFamilyImpactEvent } = await import("../safety/familyImpactDispatch");
     await ingest(app, RETRY_EVENT);
     const retry = await dispatchFamilyImpactEvent(RETRY_EVENT, { enableDelivery: true, provider: { send: async () => "retryable_failure" } });
@@ -268,6 +326,19 @@ async function restartPhase(databaseUrl: string): Promise<void> {
     const scrubbed = await client.query("SELECT is_active, current_lat, current_lng FROM location_shares WHERE sharer_id = $1", [OWNER]);
     assert(scrubbed.rows.every((row) => row.is_active === false && row.current_lat === null && row.current_lng === null), "restart cleanup must expire and scrub only temporary coordinates");
 
+    const shareId = String(shares.body.shares.find((share: { contact_user_id?: string }) => share.contact_user_id === CONTACT)?.id ?? "");
+    assert(shareId, "primary trusted relationship must remain addressable after restart");
+    const restartedLive = await request(app)
+      .post("/safety/location-shares")
+      .set(as(OWNER))
+      .send({ recipientTrustedShareId: shareId, label: "Fresh explicit reconciliation session", durationMinutes: 30, liveLocationConsent: true });
+    assert(restartedLive.status === 201 && restartedLive.body.share?.shareToken, "an expired session must require a new explicit location authorization");
+    const restartedUpdate = await request(app)
+      .patch(`/safety/location-shares/${String(restartedLive.body.share.shareToken)}/update`)
+      .set(as(OWNER))
+      .send({ lat: 39.9526123, lng: -75.1652123 });
+    assert(restartedUpdate.status === 200, "a new explicit session must accept only a foreground coordinate update");
+
     const { dispatchFamilyImpactEvent } = await import("../safety/familyImpactDispatch");
     let prematureCalls = 0;
     const notDue = await dispatchFamilyImpactEvent(RETRY_EVENT, { enableDelivery: true, provider: { send: async () => { prematureCalls += 1; return "provider_accepted"; } } });
@@ -296,8 +367,6 @@ async function restartPhase(databaseUrl: string): Promise<void> {
     assert(cancelledAudit.rows[0]?.delivery_state === "cancelled", "cancellation must persist a truthful audit state");
     assert((await request(app).get(`/safety/family-impact/events/${CANCELLED_EVENT}/impact`).set(as(CONTACT))).status === 404, "cancelled event must not expose impact");
 
-    const shareId = String(shares.body.shares.find((share: { contact_user_id?: string }) => share.contact_user_id === CONTACT)?.id ?? "");
-    assert(shareId, "primary trusted relationship must remain addressable after restart");
     const paused = await request(app).patch(`/safety/trusted-shares/${shareId}/pause`).set(as(OWNER)).send({ pause: true });
     assert(paused.status === 200 && paused.body.share?.status === "paused_manual", "owner pause must immediately remove alert eligibility");
     await ingest(app, "reconcile-paused");
@@ -324,6 +393,32 @@ async function restartPhase(databaseUrl: string): Promise<void> {
       ["reconcile-revoked-consent"],
     );
     assert(count(unconsentedOrRevoked.rows[0]?.count) === 0, "no alert audit may be created after consent revocation");
+    const restoreConsent = await request(app).put(`/safety/family-impact/consents/${shareId}`).set(as(OWNER)).send({ enabled: true, locationScope: "active_temporary_location_only", consentVersion: "family-impact-v1" });
+    assert(restoreConsent.status === 200 && restoreConsent.body.enabled === true, "the owner may explicitly restore individual Family Impact consent before testing revocation");
+    const revocationLive = await request(app)
+      .post("/safety/location-shares")
+      .set(as(OWNER))
+      .send({ recipientTrustedShareId: shareId, label: "Revocation retry session", durationMinutes: 30, liveLocationConsent: true });
+    assert(revocationLive.status === 201 && revocationLive.body.share?.shareToken, "a fresh foreground session is required before a later potential-impact retry");
+    const revocationUpdate = await request(app)
+      .patch(`/safety/location-shares/${String(revocationLive.body.share.shareToken)}/update`)
+      .set(as(OWNER))
+      .send({ lat: 39.9526123, lng: -75.1652123 });
+    assert(revocationUpdate.status === 200, "the explicit revocation test session must have a current foreground coordinate");
+    await ingest(app, "reconcile-revoked-before-retry");
+    const scheduledBeforeRevocation = await dispatchFamilyImpactEvent("reconcile-revoked-before-retry", { enableDelivery: true, provider: { send: async () => "retryable_failure" } });
+    assert(scheduledBeforeRevocation.retryScheduled === 1, "a potential-impact provider outage must persist one bounded retry before relationship revocation");
+    const revokeRelationship = await request(app).delete(`/safety/trusted-shares/${shareId}`).set(as(OWNER));
+    assert(revokeRelationship.status === 200, "trusted relationship revocation must remain available after restart");
+    let callsAfterRevocation = 0;
+    const afterRevocation = await dispatchFamilyImpactEvent("reconcile-revoked-before-retry", { enableDelivery: true, provider: { send: async () => { callsAfterRevocation += 1; return "provider_accepted"; } } });
+    assert(afterRevocation.eligibleRelationships === 0 && callsAfterRevocation === 0, "relationship revocation must be rechecked before every persisted retry");
+    const cancelledForRevocation = await client.query<{ delivery_state: string }>(
+      `SELECT attempt.delivery_state FROM family_impact_delivery_attempts attempt
+       JOIN family_impact_events event ON event.id = attempt.event_id
+       WHERE event.source_event_id = 'reconcile-revoked-before-retry'`,
+    );
+    assert(cancelledForRevocation.rows[0]?.delivery_state === "cancelled", "a retry invalidated by relationship revocation must record a terminal cancellation");
 
     await client.query(
       `INSERT INTO safety_serious_credible_threat_fixture_reviewers (user_id, scope, expires_at)
@@ -356,8 +451,6 @@ async function restartPhase(databaseUrl: string): Promise<void> {
     const threatDeliveryRows = await client.query("SELECT COUNT(*)::int AS count FROM trusted_safety_alert_log");
     assert(count(notificationsAfter.rows[0]?.count) === count(notificationsBefore.rows[0]?.count) && count(threatDeliveryRows.rows[0]?.count) === 0, "serious-threat review must not reach a Family Impact or trusted-contact delivery path");
 
-    const revokeRelationship = await request(app).delete(`/safety/trusted-shares/${shareId}`).set(as(OWNER));
-    assert(revokeRelationship.status === 200, "trusted relationship revocation must remain available after restart");
     assert((await request(app).get(`/safety/family-impact/events/${CURRENT_EVENT}/impact`).set(as(CONTACT))).status === 404, "revoked trusted relationship must lose future Family Impact access");
     console.log(JSON.stringify({ result: "PASS", checks: ["current approved sharing", "retired route denial", "additive migration restart", "durable six-month authorization", "location unknown", "retry and fallback", "pause block and revocation", "review-only serious threat", "individual consent"] }));
   } finally {
