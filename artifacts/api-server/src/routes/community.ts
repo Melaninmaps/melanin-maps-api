@@ -11,6 +11,7 @@ import { scanForFamily } from "../lib/familyFilter";
 import { objectStorageClient } from "../lib/objectStorage";
 import { screenImageUrl } from "../lib/contentScreen";
 import { sendPushToUser } from "../lib/pushNotifications";
+import { deliverCommunitySocialNotification } from "../community/communitySocialNotifications";
 import {
   fetchActiveCommunityComments,
   fetchCommentAccessPost,
@@ -105,7 +106,15 @@ const videoUpload = multer({
 const AUTHOR_COLORS = ["#3B1F0E", "#2D7A4F", "#C9922B", "#7B4F2E", "#1D4ED8", "#7B2D8B"];
 
 async function resolveAuthorInfo(userId: string): Promise<{ name: string; initials: string; color: string; imageUrl: string | null }> {
-  const user = await storage.getUser(userId);
+  const [user] = await db
+    .select({
+      firstName: usersTable.firstName,
+      lastName: usersTable.lastName,
+      profileImageUrl: usersTable.profileImageUrl,
+    })
+    .from(usersTable)
+    .where(eq(usersTable.id, userId))
+    .limit(1);
   const name = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Community Member";
   const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase() || "CM";
   const color = AUTHOR_COLORS[Math.floor(Math.random() * AUTHOR_COLORS.length)];
@@ -1206,6 +1215,28 @@ router.post("/community/media/upload/video", videoUpload.single("video"), async 
   }
 });
 
+// GET /community/posts/:id — authenticated direct navigation for an existing
+// Community notification. It uses the same access check as feeds, comments,
+// media, and reactions so a stale notification cannot reveal a revoked post.
+router.get("/community/posts/:id", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const postId = String(req.params.id);
+    const access = await resolveCommentAccess(postId, req.user.id);
+    if (!access.post || !access.canView) { res.status(404).json({ error: "Post not found" }); return; }
+    const [post] = await db.select().from(communityPostsTable).where(eq(communityPostsTable.id, postId)).limit(1);
+    if (!post) { res.status(404).json({ error: "Post not found" }); return; }
+    const serialized = await serializeCommunityPost(post);
+    if (serialized.privateMedia.length > 0 || hasPrivateCommunityAudience(post)) {
+      res.setHeader("Cache-Control", "private, no-store");
+    }
+    res.json({ post: serialized });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch Community post");
+    res.status(500).json({ error: "Failed to fetch post" });
+  }
+});
+
 // POST /community/posts/:id/vote
 router.post("/community/posts/:id/vote", async (req: Request, res: Response) => {
   try {
@@ -1245,6 +1276,14 @@ router.post("/community/posts/:id/vote", async (req: Request, res: Response) => 
           [id, voterId],
         );
 
+    // The reaction route only needs a minimal post projection. Returning every
+    // optional Community field couples a simple action to unrelated schema
+    // additions and risks exposing post metadata the action does not use.
+    const postProjection = {
+      id: communityPostsTable.id,
+      authorId: communityPostsTable.authorId,
+      upvotes: communityPostsTable.upvotes,
+    };
     const [post] = changed.rows.length > 0
       ? await db
           .update(communityPostsTable)
@@ -1254,21 +1293,25 @@ router.post("/community/posts/:id/vote", async (req: Request, res: Response) => 
               : sql`GREATEST(${communityPostsTable.upvotes} - 1, 0)`,
           })
           .where(eq(communityPostsTable.id, id))
-          .returning()
+          .returning(postProjection)
       : await db
-          .select()
+          .select(postProjection)
           .from(communityPostsTable)
           .where(eq(communityPostsTable.id, id))
           .limit(1);
     if (!post) { res.status(404).json({ error: "Post not found" }); return; }
 
-    // Send a push only for a newly recorded like, never for a repeat request.
-    if (direction === "up" && changed.rows.length > 0 && post.authorId && post.authorId !== voterId) {
-      const preview = post.content.length > 60 ? post.content.slice(0, 60) + "…" : post.content;
-      sendPushToUser(post.authorId, {
-        title: "Someone liked your post 👍🏾",
-        body: preview,
-        data: { screen: "community", postId: id },
+    // Record one generic, recipient-opted-in activity item for a newly recorded
+    // reaction. Do not put private post text into a lock-screen or inbox preview.
+    if (direction === "up" && changed.rows.length > 0 && post.authorId) {
+      await deliverCommunitySocialNotification({
+        recipientId: post.authorId,
+        actorId: voterId,
+        title: "Someone liked your Community post",
+        body: "Open Community to view this activity.",
+        entityType: "community_post",
+        entityId: id,
+        data: { screen: "community", postId: id, action: "like" },
       }).catch(() => {});
     }
 
@@ -1362,6 +1405,10 @@ router.post("/community/posts/:id/comments", async (req: Request, res: Response)
   try {
     const postId = req.params["id"] as string;
     const content = String((req.body as { content?: unknown }).content ?? "").trim();
+    const requestedParentCommentId = typeof (req.body as { parentCommentId?: unknown }).parentCommentId === "string"
+      ? (req.body as { parentCommentId: string }).parentCommentId.trim()
+      : "";
+    const parentCommentId = requestedParentCommentId || null;
     if (!content) { res.status(400).json({ error: "content is required" }); return; }
     if (content.length > 500) { res.status(400).json({ error: "Comments must be 500 characters or fewer." }); return; }
 
@@ -1373,6 +1420,24 @@ router.post("/community/posts/:id/comments", async (req: Request, res: Response)
         code: "COMMENTS_RESTRICTED",
         commentPolicy: access.post.commentPolicy,
       });
+      return;
+    }
+
+    // Replies must point to an active comment on this same post. One reply level
+    // keeps the conversation readable and prevents cross-post identifier reuse.
+    const parentComment = parentCommentId
+      ? (await db
+          .select({ id: communityPostCommentsTable.id, authorId: communityPostCommentsTable.authorId, parentCommentId: communityPostCommentsTable.parentCommentId, status: communityPostCommentsTable.status })
+          .from(communityPostCommentsTable)
+          .where(and(eq(communityPostCommentsTable.id, parentCommentId), eq(communityPostCommentsTable.postId, postId)))
+          .limit(1))[0]
+      : null;
+    if (parentCommentId && (!parentComment || parentComment.status !== "active")) {
+      res.status(404).json({ error: "Comment not found" });
+      return;
+    }
+    if (parentComment?.parentCommentId) {
+      res.status(400).json({ error: "Replies can only be added to a top-level comment." });
       return;
     }
 
@@ -1408,7 +1473,7 @@ router.post("/community/posts/:id/comments", async (req: Request, res: Response)
     const result = await db.transaction(async (tx) => {
       const [comment] = await tx
         .insert(communityPostCommentsTable)
-        .values({ postId, authorId: req.user!.id, authorName: name, authorInitials: initials, authorColor: color, content })
+        .values({ postId, parentCommentId, authorId: req.user!.id, authorName: name, authorInitials: initials, authorColor: color, content })
         .returning();
       const [updatedPost] = await tx
         .update(communityPostsTable)
@@ -1428,12 +1493,16 @@ router.post("/community/posts/:id/comments", async (req: Request, res: Response)
       return { comment, updatedPost };
     });
 
-    if (result.updatedPost?.authorId && result.updatedPost.authorId !== req.user.id) {
-      const preview = content.length > 60 ? content.slice(0, 60) + "…" : content;
-      sendPushToUser(result.updatedPost.authorId, {
-        title: `${name} replied to your post`,
-        body: preview,
-        data: { screen: "community", postId },
+    const notificationRecipientId = parentComment?.authorId ?? result.updatedPost?.authorId;
+    if (notificationRecipientId) {
+      await deliverCommunitySocialNotification({
+        recipientId: notificationRecipientId,
+        actorId: req.user.id,
+        title: parentComment ? `${name} replied to your comment` : `${name} commented on your post`,
+        body: "Open Community to view this activity.",
+        entityType: "community_post",
+        entityId: postId,
+        data: { screen: "community", postId, commentId: result.comment.id, action: parentComment ? "reply" : "comment" },
       }).catch(() => {});
     }
 
@@ -1449,6 +1518,41 @@ router.post("/community/posts/:id/comments", async (req: Request, res: Response)
   } catch (err) {
     req.log.error({ err }, "Failed to add comment");
     res.status(500).json({ error: "Failed to add comment" });
+  }
+});
+
+// PATCH /community/posts/:postId/comments/:commentId — only the comment author
+// can correct their own active comment. The same content and audience gates
+// apply as creation; edit history remains visible via editedAt, not a rewrite.
+router.patch("/community/posts/:postId/comments/:commentId", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const postId = String(req.params.postId);
+    const commentId = String(req.params.commentId);
+    const content = String((req.body as { content?: unknown }).content ?? "").trim();
+    if (!content) { res.status(400).json({ error: "content is required" }); return; }
+    if (content.length > 500) { res.status(400).json({ error: "Comments must be 500 characters or fewer." }); return; }
+    const access = await resolveCommentAccess(postId, req.user.id);
+    if (!access.post || !access.canView) { res.status(404).json({ error: "Comment not found" }); return; }
+    const filter = checkContent(content);
+    if (!filter.ok) { res.status(422).json({ error: filter.reason, code: "CONTENT_POLICY_VIOLATION" }); return; }
+    const familyScan = await scanForFamily(content, req.user.id, "community_comment");
+    if (familyScan.blocked) { res.status(422).json({ error: "This comment contains content that is not permitted.", code: "MINOR_CONTENT_BLOCKED" }); return; }
+    const [updated] = await db
+      .update(communityPostCommentsTable)
+      .set({ content, editedAt: new Date() })
+      .where(and(
+        eq(communityPostCommentsTable.id, commentId),
+        eq(communityPostCommentsTable.postId, postId),
+        eq(communityPostCommentsTable.authorId, req.user.id),
+        eq(communityPostCommentsTable.status, "active"),
+      ))
+      .returning();
+    if (!updated) { res.status(403).json({ error: "You can only edit your own active comment." }); return; }
+    res.json({ comment: updated });
+  } catch (err) {
+    req.log.error({ err }, "Failed to edit comment");
+    res.status(500).json({ error: "Failed to edit comment" });
   }
 });
 
@@ -1477,7 +1581,12 @@ router.delete("/community/posts/:postId/comments/:commentId", async (req: Reques
         .update(communityPostCommentsTable)
         .set({ status: "deleted", deletedAt: new Date() })
         .where(and(
-          eq(communityPostCommentsTable.id, commentId),
+          // A deleted parent cannot leave a visible orphan reply. There is only
+          // one reply level, so this remains a bounded, reversible soft delete.
+          or(
+            eq(communityPostCommentsTable.id, commentId),
+            eq(communityPostCommentsTable.parentCommentId, commentId),
+          ),
           eq(communityPostCommentsTable.postId, postId),
           eq(communityPostCommentsTable.status, "active"),
         ))

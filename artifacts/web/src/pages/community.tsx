@@ -1494,7 +1494,7 @@ export default function Community() {
         postLabel={commentTarget.label}
         currentUserId={(auth?.user as any)?.id}
         onClose={() => setCommentTarget(null)}
-        onCommentAdded={(postId) => setPosts((items) => items.map((post) => post.id === postId ? { ...post, commentsCount: post.commentsCount + 1 } : post))}
+        onCommentCountChanged={(postId, commentsCount) => setPosts((items) => items.map((post) => post.id === postId ? { ...post, commentsCount } : post))}
       />}
     </div>
   );

@@ -31,7 +31,7 @@ interface Notif {
   read: boolean;
   group: "Today" | "This Week" | "Earlier" | "Private alerts";
   entityType?: string | null;
-  data?: { type?: string; screen?: string; checkinId?: string | number };
+  data?: { type?: string; screen?: string; checkinId?: string | number; postId?: string; commentId?: string; userId?: string; action?: string };
 }
 
 const TABS: { id: NotifType; label: string }[] = [
@@ -172,6 +172,14 @@ export default function NotificationCenterScreen() {
         pathname: "/safety-checkin-alert",
         params: { notificationId: notif.id },
       } as never);
+      return;
+    }
+    if (notif.entityType === "community_post" && notif.data?.screen === "community" && notif.data.postId) {
+      router.push({ pathname: "/(tabs)/community", params: { postId: notif.data.postId } } as never);
+      return;
+    }
+    if (notif.entityType === "member_profile" && notif.data?.screen === "profile" && notif.data.userId) {
+      router.push(`/user/${notif.data.userId}` as never);
     }
   };
 

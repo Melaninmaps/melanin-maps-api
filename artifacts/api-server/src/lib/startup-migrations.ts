@@ -4973,9 +4973,13 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
           ALTER TABLE community_post_comments
             ADD COLUMN IF NOT EXISTS status varchar(20) NOT NULL DEFAULT 'active',
             ADD COLUMN IF NOT EXISTS edited_at timestamptz,
-            ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
+            ADD COLUMN IF NOT EXISTS deleted_at timestamptz,
+            ADD COLUMN IF NOT EXISTS parent_comment_id varchar;
           CREATE INDEX IF NOT EXISTS community_post_comments_active_idx
             ON community_post_comments (post_id, created_at DESC)
+            WHERE status = 'active';
+          CREATE INDEX IF NOT EXISTS community_post_comments_parent_active_idx
+            ON community_post_comments (post_id, parent_comment_id, created_at ASC)
             WHERE status = 'active';
         END IF;
 
@@ -6885,6 +6889,7 @@ export async function ensureCommunityFeedReadSchema(logger?: Logger): Promise<vo
     CREATE TABLE IF NOT EXISTS community_post_comments (
       id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
       post_id VARCHAR NOT NULL,
+      parent_comment_id VARCHAR,
       author_id VARCHAR,
       author_name VARCHAR(100) NOT NULL DEFAULT 'Community member',
       author_initials VARCHAR(4) NOT NULL DEFAULT 'MWM',
@@ -6924,6 +6929,10 @@ export async function ensureCommunityFeedReadSchema(logger?: Logger): Promise<vo
       ON community_posts (created_at DESC);
     CREATE INDEX IF NOT EXISTS community_post_comments_post_created_idx
       ON community_post_comments (post_id, created_at DESC);
+    ALTER TABLE community_post_comments
+      ADD COLUMN IF NOT EXISTS parent_comment_id VARCHAR;
+    CREATE INDEX IF NOT EXISTS community_post_comments_parent_created_idx
+      ON community_post_comments (post_id, parent_comment_id, created_at ASC);
     CREATE INDEX IF NOT EXISTS community_post_reactions_post_created_idx
       ON community_post_reactions (post_id, created_at DESC);
     CREATE UNIQUE INDEX IF NOT EXISTS user_blocks_unique_idx
@@ -6936,7 +6945,7 @@ export async function ensureCommunityFeedReadSchema(logger?: Logger): Promise<vo
 
   const required = [
     ["community_posts", ["id", "author_id", "author_name", "author_initials", "author_color", "content", "category", "upvotes", "downvotes", "created_at"]],
-    ["community_post_comments", ["post_id", "created_at"]],
+    ["community_post_comments", ["post_id", "parent_comment_id", "created_at"]],
     ["community_post_reactions", ["post_id", "user_id", "created_at"]],
     ["user_blocks", ["blocker_id", "blocked_id"]],
     ["user_follows", ["follower_id", "following_id", "status"]],

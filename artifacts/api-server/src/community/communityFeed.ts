@@ -58,6 +58,7 @@ export type CommunityPostRow = {
 export type ActiveCommunityComment = {
   id: string;
   postId: string;
+  parentCommentId: string | null;
   authorId: string | null;
   authorName: string;
   authorInitials: string;
@@ -635,6 +636,7 @@ export async function fetchActiveCommunityComments(
   const { rows } = await queryable.query<{
     id: string;
     post_id: string;
+    parent_comment_id: string | null;
     author_id: string | null;
     author_name: string;
     author_initials: string;
@@ -646,6 +648,7 @@ export async function fetchActiveCommunityComments(
     SELECT
       c.id,
       c.post_id,
+      c.parent_comment_id,
       c.author_id,
       c.author_name,
       c.author_initials,
@@ -663,6 +666,7 @@ export async function fetchActiveCommunityComments(
   return rows.map((row) => ({
     id: row.id,
     postId: row.post_id,
+    parentCommentId: row.parent_comment_id,
     authorId: row.author_id,
     authorName: row.author_name,
     authorInitials: row.author_initials,

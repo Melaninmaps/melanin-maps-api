@@ -75,7 +75,9 @@ describe("Community client contract", () => {
     expect(route).toContain('router.get("/community/thread/:threadId"');
     expect(route).toContain('res.status(401).json({ error: "Authentication required" })');
     expect(route).toContain("resolveCommentAccess(post.id, viewerId)");
-    expect(route).toContain("posts: posts.map((post) => serializeCommunityPost(post))");
+    expect(route).toContain("const serializedPosts = await Promise.all(posts.map((post) => serializeCommunityPost(post)))");
+    expect(route).toContain("posts: serializedPosts");
+    expect(route).toContain('res.setHeader("Cache-Control", "private, no-store")');
     expect(route).toContain("function serializeCommunityPost");
   });
 });

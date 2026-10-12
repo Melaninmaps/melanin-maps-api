@@ -1,8 +1,8 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, usersTable, userFollowsTable, notificationsTable } from "@workspace/db";
+import { db, usersTable, userFollowsTable } from "@workspace/db";
 import { and, eq, sql } from "drizzle-orm";
-import { sendPushToUser } from "../lib/pushNotifications";
 import { filterBlockedRelationships, usersAreBlocked } from "../social/profileRelationshipAccess";
+import { deliverCommunitySocialNotification } from "../community/communitySocialNotifications";
 
 const router: IRouter = Router();
 
@@ -55,30 +55,26 @@ router.post("/users/:id/follow", async (req: Request, res: Response) => {
       await db.update(usersTable).set({ followingCount: sql`${usersTable.followingCount} + 1` }).where(eq(usersTable.id, followerId));
 
       const followerName = follower?.username ?? follower?.firstName ?? "Someone";
-      sendPushToUser(followingId, {
+      await deliverCommunitySocialNotification({
+        recipientId: followingId,
+        actorId: followerId,
         title: "New follower",
         body: `${followerName} started following you.`,
-        data: { screen: "profile", userId: followerId, type: "new_follower" },
-      }).catch(() => {});
-      db.insert(notificationsTable).values({
-        userId: followingId,
-        type: "community",
-        title: "New follower",
-        body: `${followerName} started following you.`,
+        entityType: "member_profile",
+        entityId: followerId,
+        data: { screen: "profile", userId: followerId, action: "new_follower" },
       }).catch(() => {});
     } else {
       // Private account — notify of pending follow request
       const followerName = follower?.username ?? follower?.firstName ?? "Someone";
-      sendPushToUser(followingId, {
+      await deliverCommunitySocialNotification({
+        recipientId: followingId,
+        actorId: followerId,
         title: "Follow request",
         body: `${followerName} wants to follow you.`,
-        data: { screen: "profile", userId: followerId, type: "follow_request" },
-      }).catch(() => {});
-      db.insert(notificationsTable).values({
-        userId: followingId,
-        type: "community",
-        title: "Follow request",
-        body: `${followerName} wants to follow you.`,
+        entityType: "member_profile",
+        entityId: followerId,
+        data: { screen: "profile", userId: followerId, action: "follow_request" },
       }).catch(() => {});
     }
 
@@ -259,6 +255,16 @@ router.post("/users/follow-requests/:id/accept", async (req: Request, res: Respo
     await db.update(userFollowsTable).set({ status: "accepted", acceptedAt: new Date() }).where(eq(userFollowsTable.id, requestId));
     await db.update(usersTable).set({ followersCount: sql`${usersTable.followersCount} + 1` }).where(eq(usersTable.id, req.user.id));
     await db.update(usersTable).set({ followingCount: sql`${usersTable.followingCount} + 1` }).where(eq(usersTable.id, row.followerId));
+
+    await deliverCommunitySocialNotification({
+      recipientId: row.followerId,
+      actorId: req.user.id,
+      title: "Follow request accepted",
+      body: "You can now view this member's permitted Community posts.",
+      entityType: "member_profile",
+      entityId: req.user.id,
+      data: { screen: "profile", userId: req.user.id, action: "follow_accepted" },
+    }).catch(() => {});
 
     res.json({ message: "Follow request accepted" });
   } catch (err) {

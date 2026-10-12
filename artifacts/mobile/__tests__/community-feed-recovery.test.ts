@@ -44,7 +44,8 @@ describe("mobile Community feed recovery", () => {
     );
     expect(modal).toContain('method: "POST"');
     expect(modal).toContain("/api/community/posts/${post.id}/comments");
-    expect(modal).toContain("setComments((prev) => [data.comment, ...prev])");
+    expect(modal).toContain("setComments((previous) => orderedComments(");
+    expect(modal).toContain(": [...previous, data.comment]");
     expect(modal).toContain("data.commentsCount ?? commentCountRef.current + 1");
     expect(modal).toContain("body.commentsCount ?? Math.max(0, commentCountRef.current - 1)");
     expect(modal).toContain('accessibilityLabel="Retry loading comments"');

@@ -231,7 +231,7 @@ export default function CommunityScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const params = useLocalSearchParams<{ compose?: string; caption?: string; groupId?: string; groupName?: string }>();
+  const params = useLocalSearchParams<{ compose?: string; caption?: string; groupId?: string; groupName?: string; postId?: string }>();
   const parsedGroupId = typeof params.groupId === "string" ? Number.parseInt(params.groupId, 10) : NaN;
   const activeGroupId = Number.isInteger(parsedGroupId) && parsedGroupId > 0 ? parsedGroupId : null;
   const activeGroupName = typeof params.groupName === "string" ? params.groupName : "This Group";
@@ -529,6 +529,29 @@ export default function CommunityScreen() {
     };
     void load();
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    const postId = typeof params.postId === "string" ? params.postId.trim() : "";
+    if (!postId || !isAuthenticated) return;
+    let active = true;
+    void (async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const response = await fetch(`${getApiBase()}/api/community/posts/${encodeURIComponent(postId)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const body = await response.json().catch(() => ({})) as { post?: Record<string, unknown> };
+        if (active && response.ok && body.post) {
+          setActiveTab("Community Feed");
+          setSelectedPost(toPostCard(body.post));
+        }
+      } catch {
+        // A notification may refer to a deleted, private, or blocked post. Do not
+        // surface its existence or disrupt the member's current Community feed.
+      }
+    })();
+    return () => { active = false; };
+  }, [isAuthenticated, params.postId]);
 
   useEffect(() => {
     if (params.compose === "true") {
