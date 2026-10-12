@@ -8,26 +8,22 @@ import { tmpdir } from "os";
 import { join } from "path";
 import {
   resolveOpenAIConfiguration,
-  STANDARD_OPENAI_BASE_URL,
 } from "../client";
 
 export function resolveAudioOpenAIConfiguration(
   environment: NodeJS.ProcessEnv = process.env,
 ) {
-  const standardApiKey = environment.OPENAI_API_KEY?.trim();
-  // Voice requires audio endpoints that a chat-compatible integration proxy
-  // may not implement. When a standard OpenAI credential is available, use the
-  // documented endpoint for audio only; ordinary Kinfolk chat keeps its own
-  // existing provider selection.
-  if (standardApiKey) {
-    return { apiKey: standardApiKey, baseURL: STANDARD_OPENAI_BASE_URL };
-  }
   const configuration = resolveOpenAIConfiguration(environment);
   if (!configuration) {
     throw new Error(
       "OpenAI configuration is required. Set AI_INTEGRATIONS_OPENAI_API_KEY with AI_INTEGRATIONS_OPENAI_BASE_URL, or OPENAI_API_KEY.",
     );
   }
+  // The explicitly paired integration values are the service's authoritative
+  // provider boundary. In particular, do not let an inherited OPENAI_API_KEY
+  // bypass a configured integration endpoint: that sends voice traffic to a
+  // different host than Kinfolk chat and produces a false "voice unavailable"
+  // state even when the selected provider supports audio.
   return configuration;
 }
 

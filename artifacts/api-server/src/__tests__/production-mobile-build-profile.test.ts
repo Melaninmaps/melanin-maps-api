@@ -22,6 +22,6 @@ describe("production mobile build profile", () => {
       },
     });
     expect(easConfig.build?.["testflight-staging"]?.env?.EXPO_PUBLIC_APP_ENV).toBe("staging");
-    expect(easConfig.build?.preview?.env?.EXPO_PUBLIC_API_ORIGIN).toContain("mwm-staging");
+    expect(easConfig.build?.preview?.env?.EXPO_PUBLIC_API_ORIGIN).toContain("kinfolk-memory-api-staging");
   });
 });

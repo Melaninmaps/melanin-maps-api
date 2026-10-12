@@ -51,6 +51,8 @@ describe("administrator public-discovery removal governance", () => {
     expect(businessesRoute).not.toContain("usedExplicitPublicLookup");
     expect(businessesRoute).not.toContain("directConditions.push(");
     expect(businessesRoute).toContain("conditions.push(publicVisibilityCondition)");
-    expect(businessesRoute).toContain("conditions.push(defaultDiscoveryCondition)");
+    expect(businessesRoute).toContain("const publicVisibilityCondition = publicBusinessVisibilityCondition()");
+    expect(businessesRoute).toContain("mwmPublicDirectoryCondition()");
+    expect(businessesRoute).toContain("mwmDiasporaPromotionCondition()");
   });
 });

@@ -171,17 +171,18 @@ describe("immediate positive-feedback governance", () => {
     expect(route).not.toMatch(/UPDATE\s+businesses[\s\S]{0,300}(verified|verified_designations)/i);
   });
 
-  it("keeps community-published listings unclaimed until a real owner claim succeeds", () => {
+  it("keeps every reviewed submission unclaimed until a separate owner claim succeeds", () => {
     const publication = source("../businessIntake/registerSubmissionRoutes.ts");
-    expect(publication).toContain('ownerSelfCreated ? "live_claimed" : "live_unclaimed"');
-    expect(publication).toContain('ownerSelfCreated ? "claimed" : "community_listed"');
-    expect(publication).toContain('ownerSelfCreated ? "claimed" : "unclaimed"');
-    expect(publication).toContain('ownerSelfCreated ? actorId : null');
+    expect(publication).toContain('"live_unclaimed"');
+    expect(publication).toContain('"community_listed"');
+    expect(publication).toContain('"unclaimed"');
+    expect(publication).toContain('"unclaimed_community_submission"');
     expect(publication).toContain("added_by_member_id");
-    expect(publication).toContain('ownerSelfCreated ? "owner_self_created" : "unclaimed_community_submission"');
-    expect(publication).toContain("if (ownerSelfCreated)");
-    expect(publication).toContain("grantOwnerSelfCreatedManagement");
-    expect(publication).toContain("else {\n            await createPendingOwnerClaimFromSubmission");
+    expect(publication).toContain('ownerSelfCreated ? "owner_self_created" : "community_submission"');
+    expect(publication).toContain('if (!ownerSelfCreated && assessment.outcome === "eligible"');
+    expect(publication).toContain("createPendingOwnerClaimFromSubmission");
+    expect(publication).toContain("does not grant dashboard access until approval");
+    expect(publication).not.toContain("grantOwnerSelfCreatedManagement");
     expect(publication).toContain('ownerSelfCreated ? "owner_self_created" : "community_submission"');
     expect(publication).not.toContain("ownershipClaimValue(submission)");
     expect(publication).not.toContain("hasBlackOwnedDesignation(submission.ownership_designations");
