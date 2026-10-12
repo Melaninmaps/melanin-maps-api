@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pushTokensTable, notificationsTable } from "@workspace/db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, ne } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -60,17 +60,28 @@ router.post("/notifications/register", async (req: Request, res: Response): Prom
     res.status(400).json({ error: "token is required" }); return;
   }
   try {
-    await db
-      .insert(pushTokensTable)
-      .values({
-        userId: req.user.id,
-        token,
-        platform: platform ?? "unknown",
-        updatedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: pushTokensTable.userId,
-        set: { token, platform: platform ?? "unknown", updatedAt: new Date() },
+    await db.transaction(async (tx) => {
+      // A physical device may be shared. Remove any prior account association
+      // for this Expo token before registering the authenticated member so a
+      // former account cannot receive this device's private notifications.
+      await tx
+        .delete(pushTokensTable)
+        .where(and(
+          eq(pushTokensTable.token, token),
+          ne(pushTokensTable.userId, req.user!.id),
+        ));
+      await tx
+        .insert(pushTokensTable)
+        .values({
+          userId: req.user!.id,
+          token,
+          platform: platform ?? "unknown",
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: pushTokensTable.userId,
+          set: { token, platform: platform ?? "unknown", updatedAt: new Date() },
+        });
       });
     res.json({ ok: true });
   } catch (err) {

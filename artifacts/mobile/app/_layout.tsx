@@ -58,6 +58,7 @@ import { OfflineBanner } from "@/components/OfflineBanner";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SubscriptionProvider } from "@/lib/revenuecat";
+import { registerPushToken } from "@/hooks/usePushNotifications";
 
 // ── Sentry removed from native integration ────────────────────────────────────
 // @sentry/react-native native SDK caused a pre-JS native crash on Build 100.
@@ -82,39 +83,7 @@ console.info(
 
 function PushNotificationRegistrar() {
   useEffect(() => {
-    async function registerToken() {
-      try {
-        const token = await SecureStore.getItemAsync("auth_session_token");
-        if (!token) return;
-        const Notifications = await import("expo-notifications").catch(
-          () => null,
-        );
-        if (!Notifications) return;
-
-        const perms: any = await Notifications.requestPermissionsAsync();
-        if (!perms?.granted && perms?.status !== "granted") return;
-        const pushToken = await Notifications.getExpoPushTokenAsync({
-          projectId: "0f873107-7787-46ab-9a04-685c2a6756b1",
-        }).catch(() => null);
-        if (!pushToken?.data) return;
-        const apiBase = process.env.EXPO_PUBLIC_DOMAIN
-          ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
-          : "";
-        if (!apiBase) return;
-        await fetch(`${apiBase}/api/notifications/register`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            token: pushToken.data,
-            platform: Platform.OS,
-          }),
-        });
-      } catch {}
-    }
-    void registerToken();
+    void registerPushToken();
   }, []);
   return null;
 }
