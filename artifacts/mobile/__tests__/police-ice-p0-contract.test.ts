@@ -50,9 +50,10 @@ describe("Police/ICE P0 mobile safeguards", () => {
 
   it("does not use the immediate map-alert path for Police, ICE, or checkpoints", () => {
     const mapTab = source("../components/MapTabView.tsx");
-    expect(mapTab).toContain('["police", "ice", "checkpoint"].includes(reportingType)');
+    expect(mapTab).toContain("Police / ICE awareness uses the explicit city-region flow");
     expect(mapTab).toContain('router.push("/report-police")');
-    expect(mapTab).toContain("They never send an immediate alert.");
-    expect(mapTab).toContain("not verified threats at intake");
+    expect(mapTab).not.toContain("reportAlert(");
+    expect(mapTab).not.toContain("Report Nearby Activity");
+    expect(mapTab).not.toContain("community-alerts/");
   });
 });

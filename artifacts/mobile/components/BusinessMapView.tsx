@@ -15,11 +15,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryPill } from "@/components/CategoryPill";
 import { CATEGORIES } from "@/constants/data";
 import type { Business } from "@/constants/types";
-import { useActivityAlerts, ALERT_META, type AlertType } from "@/hooks/useActivityAlerts";
 import { useBusinesses } from "@/hooks/useBusinesses";
 import { useColors } from "@/hooks/useColors";
-import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
-import { useSafetyProximity } from "@/hooks/useSafetyProximity";
 import { getApiBase } from "@/lib/api";
 
 const GOLD = "#CA922B";
@@ -78,8 +75,6 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
   const [locating, setLocating] = useState(true);
   const [activeCategory, setActiveCategory] = useState("All");
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
-  const [scannerAlertIdx, setScannerAlertIdx] = useState(0);
-  const [warningIdx, setWarningIdx] = useState(0);
 
   const [showHeatmap, setShowHeatmap] = useState(false);
   const [showCulturalSites, setShowCulturalSites] = useState(false);
@@ -90,18 +85,12 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
   const [selectedCulturalSite, setSelectedCulturalSite] = useState<CulturalSite | null>(null);
 
   const { businesses } = useBusinesses();
-  const { alerts: activityAlerts, confirmAlert, clearAlert, dismissAlert } = useActivityAlerts({ enabled: false });
-  const { warnings, dismissWarning } = useSafetyProximity({ enabled: false });
-  const { alert: geoAlert, dismissAlert: dismissGeoAlert } = useGeoSafeAlert();
-
   const mapped = businesses.filter(
     (b) =>
       b.latitude != null &&
       b.longitude != null &&
       (activeCategory === "All" || b.category === activeCategory),
   );
-
-  const currentWarning = warnings[Math.min(warningIdx, Math.max(0, warnings.length - 1))] ?? null;
 
   useEffect(() => {
     void (async () => {
@@ -268,112 +257,6 @@ export function BusinessMapView(_props: { latitude?: number | null; longitude?: 
 
       {/* ── Top overlay: safety alerts + category filter ── */}
       <View style={[s.topOverlay, { paddingTop: insets.top + 6 }]}>
-
-        {/* Activity scanner banner (police / ICE / etc.) */}
-        {activityAlerts.length > 0 && (() => {
-          const a = activityAlerts[Math.min(scannerAlertIdx, activityAlerts.length - 1)];
-          if (!a) return null;
-          const meta = ALERT_META[a.type as AlertType] ?? ALERT_META.other;
-          return (
-            <View style={[s.banner, { backgroundColor: meta.bgColor }]}>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                  <Text style={{ fontSize: 13 }}>{meta.icon}</Text>
-                  <Text style={s.bannerTitle}>{meta.label}</Text>
-                  {activityAlerts.length > 1 && (
-                    <View style={s.badgePill}>
-                      <Text style={s.badgePillTxt}>{activityAlerts.length}</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={s.bannerSub}>
-                  {a.distanceMeters < 1000
-                    ? "< 0.1 mi away"
-                    : `${(a.distanceMeters / 1609.34).toFixed(1)} mi away`}
-                  {a.confirmedCount > 0 ? ` · ${a.confirmedCount} confirmed` : ""}
-                </Text>
-              </View>
-              <View style={{ flexDirection: "row", gap: 6, alignItems: "center" }}>
-                <TouchableOpacity style={s.bannerBtn} onPress={() => void confirmAlert(a.id)}>
-                  <Text style={s.bannerBtnTxt}>✓</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[s.bannerBtn, { backgroundColor: "rgba(255,255,255,0.15)" }]}
-                  onPress={() => void clearAlert(a.id)}
-                >
-                  <Text style={s.bannerBtnTxt}>✗</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => dismissAlert(a.id)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Feather name="x" size={14} color="rgba(255,255,255,0.7)" />
-                </TouchableOpacity>
-              </View>
-            </View>
-          );
-        })()}
-
-        {activityAlerts.length > 1 && (
-          <View style={[s.navRow, { backgroundColor: colors.card }]}>
-            <TouchableOpacity
-              onPress={() => setScannerAlertIdx((i) => Math.max(0, i - 1))}
-              disabled={scannerAlertIdx === 0}
-              style={{ opacity: scannerAlertIdx === 0 ? 0.3 : 1 }}
-            >
-              <Feather name="chevron-left" size={15} color={GOLD} />
-            </TouchableOpacity>
-            <Text style={[s.navTxt, { color: GOLD }]}>
-              Alert {scannerAlertIdx + 1} of {activityAlerts.length}
-            </Text>
-            <TouchableOpacity
-              onPress={() => setScannerAlertIdx((i) => Math.min(activityAlerts.length - 1, i + 1))}
-              disabled={scannerAlertIdx === activityAlerts.length - 1}
-              style={{ opacity: scannerAlertIdx === activityAlerts.length - 1 ? 0.3 : 1 }}
-            >
-              <Feather name="chevron-right" size={15} color={GOLD} />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Proximity safety warning */}
-        {currentWarning && (
-          <View style={[s.banner, { backgroundColor: "#7F1D1D" }]}>
-            <Feather name="alert-octagon" size={13} color="#fff" />
-            <View style={{ flex: 1, marginLeft: 6 }}>
-              <Text style={s.bannerTitle}>{currentWarning.name}</Text>
-              <Text style={s.bannerSub}>
-                {currentWarning.distanceMeters < 1000
-                  ? "< 0.1 mi away"
-                  : `${(currentWarning.distanceMeters / 1609.34).toFixed(1)} mi away`}
-                {" "}· {currentWarning.reportCount} community {currentWarning.reportCount === 1 ? "report" : "reports"}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => {
-                dismissWarning(currentWarning.targetId);
-                setWarningIdx((i) => Math.max(0, i - 1));
-              }}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Feather name="x" size={14} color="rgba(255,255,255,0.7)" />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Geo-safe area alert */}
-        {!currentWarning && geoAlert && (
-          <TouchableOpacity
-            style={[s.banner, { backgroundColor: "#92400E" }]}
-            onPress={dismissGeoAlert}
-            activeOpacity={0.85}
-          >
-            <Feather name="alert-triangle" size={13} color="#fff" />
-            <Text style={[s.bannerSub, { flex: 1, marginLeft: 6 }]}>
-              Community survey signal · {geoAlert.city} — score {geoAlert.avgSafetyScore}/100 from {geoAlert.approvedSurveyCount} approved surveys ({geoAlert.confidence === "minimum_sample" ? "minimum sample" : "larger sample"}). Not a safety guarantee.
-            </Text>
-          </TouchableOpacity>
-        )}
 
         {/* Category filter pills */}
         <ScrollView

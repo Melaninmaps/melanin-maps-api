@@ -1,7 +1,7 @@
 import { pool } from "@workspace/db";
 import type { PoolClient } from "pg";
 import { logger } from "../lib/logger";
-import { sendCorroboratedPoliceIceAlert, sendPushToBusinessOwnersByCity } from "../lib/pushNotifications";
+import { sendCorroboratedPoliceIceAlert } from "../lib/pushNotifications";
 import {
   policeIceAlertExpiresAt,
   policeIceAlertKind,
@@ -13,15 +13,6 @@ import { normalizePoliceEncounterType } from "./reportContract";
 const INCIDENT_THRESHOLD = POLICE_ICE_CORROBORATION_THRESHOLD;
 const INCIDENT_WINDOW_DAYS = 7;
 
-const CATEGORY_LABELS: Record<string, string> = {
-  safety: "Safety Concern",
-  sundown: "Sundown Town Warning",
-  discrimination: "Discrimination Incident",
-  business: "Business Safety Update",
-  resource: "Community Resource",
-  positive: "Positive Safety Tip",
-  police: "Police / ICE Encounter",
-};
 
 export interface ApprovedIncidentInput {
   city: string | null;
@@ -214,21 +205,14 @@ export async function notifyNewApprovedIncident(
     return;
   }
 
-  const categoryLabel = CATEGORY_LABELS[input.category] ?? input.category;
-  const cityRegion = `${input.city}, ${input.region}`;
-  const locationLabel = input.area ? `${input.area}, ${cityRegion}` : cityRegion;
-  const delivery = await sendPushToBusinessOwnersByCity(input.city, input.region, {
-    title: "⚠️ Safety Alert Near Your Business",
-    body: `A ${categoryLabel} has been approved in ${locationLabel} based on ${projection.reportCount} community reports. Review your safety status.`,
-    data: {
-      screen: "safety",
+  logger.info(
+    {
       incidentId: projection.incidentId,
+      category: input.category,
       city: input.city,
       region: input.region,
-      category: input.category,
+      reportCount: projection.reportCount,
     },
-  });
-  if (delivery.delivered && delivery.recipientCount > 0) {
-    await pool.query("UPDATE safety_incidents SET notifications_sent = true WHERE id = $1", [projection.incidentId]);
-  }
+    "[safety] non-Police/ICE incident retained for private review; no member, contact, or business notification is sent",
+  );
 }

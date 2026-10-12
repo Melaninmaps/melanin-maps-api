@@ -15,7 +15,7 @@ describe("Safety Hub fail-closed alert contracts", () => {
     expect(tips).toMatch(/router\.post\(\s*"\/safety-tips",\s*reportLimiter/);
     expect(tips).toContain('"[safety-tips] submitted pending review"');
     expect(tips).not.toContain("sendPushToAllMembers");
-    expect(tips).toContain('where(eq(safetyTipsTable.status, "confirmed"))');
+    expect(tips).toContain("Individual Safety Tip listings are unavailable");
     expect(tips).toContain("Street addresses and coordinates are not collected");
     expect(tips).toContain("lat: null");
     expect(tips).toContain("lng: null");
@@ -24,11 +24,11 @@ describe("Safety Hub fail-closed alert contracts", () => {
 
   it("retires proximity safety alerts and member-coordinate storage", () => {
     const alerts = source("../routes/community-alerts.ts");
-    expect(alerts).toContain("Member-location safety alerts have been retired");
-    expect(alerts).toContain("Coordinate-based community alerts have been retired");
-    expect(alerts).toContain("Member location storage has been retired");
+    expect(alerts).toContain("Legacy community safety alerts have been retired");
+    expect(alerts).toContain("router.use(\"/community-alerts\", retiredLegacyAlertRoute)");
     expect(alerts).not.toContain("sendAlertPushToNearbyUsers");
     expect(alerts).not.toContain("userLocationsTable");
+    expect(alerts).not.toContain("pool.query");
   });
 
   it("does not turn unreviewed unsafe-space reports into public warnings", () => {

@@ -22,8 +22,8 @@ export const safetyTipConfirmationsTable = pgTable("safety_tip_confirmations", {
   id: serial("id").primaryKey(),
   tipId: integer("tip_id").notNull().references(() => safetyTipsTable.id, { onDelete: "cascade" }),
   userId: varchar("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
-  userLat: real("user_lat"),
-  userLng: real("user_lng"),
+  // Legacy physical user_lat/user_lng columns remain retained in existing
+  // databases but are intentionally not mapped, selected, or written.
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

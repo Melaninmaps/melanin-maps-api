@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, safetyTipsTable, safetyTipConfirmationsTable } from "@workspace/db";
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { logger } from "../lib/logger";
 import { requireAuth } from "../middlewares/requireAuth";
 import { reportLimiter } from "../middleware/rateLimiter";
@@ -14,8 +14,8 @@ const MAX_RADIUS_MILES = 10;
 const CATEGORIES = ["violence", "harassment", "discrimination", "theft", "hate_crime", "other"] as const;
 type TipCategory = typeof CATEGORIES[number];
 
-function publicSafetyTip<T extends { id: number; businessName?: string | null; city?: string | null; state?: string | null; category?: string | null; confirmationCount?: number | null; status?: string | null; createdAt?: Date | null }>(tip: T) {
-  return { id: tip.id, businessName: tip.businessName ?? null, city: tip.city ?? null, state: tip.state ?? null, category: tip.category ?? null, confirmationCount: tip.confirmationCount ?? 0, status: tip.status ?? "pending", verificationStatus: "community_corroborated", createdAt: tip.createdAt ?? null };
+function publicSafetyTip<T extends { id: number; businessName?: string | null; city?: string | null; state?: string | null; category?: string | null; confirmationCount?: number | null; status?: string | null }>(tip: T) {
+  return { id: tip.id, businessName: tip.businessName ?? null, city: tip.city ?? null, state: tip.state ?? null, category: tip.category ?? null, confirmationCount: tip.confirmationCount ?? 0, status: tip.status ?? "pending", verificationStatus: "private_pending_review" };
 }
 
 function haversineMiles(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -124,19 +124,8 @@ router.get("/safety-tips/nearby", async (req: Request, res: Response) => {
   res.status(410).json({ error: "Nearby Safety Tips have been retired. Safety does not use member location or proximity." });
 });
 
-router.get("/safety-tips", async (req: Request, res: Response) => {
-  try {
-    const tips = await db
-      .select()
-      .from(safetyTipsTable)
-      .where(eq(safetyTipsTable.status, "confirmed"))
-      .orderBy(desc(safetyTipsTable.createdAt))
-      .limit(50);
-    res.json({ tips: tips.map(publicSafetyTip) });
-  } catch (err) {
-    req.log.error({ err }, "GET /safety-tips error");
-    res.status(500).json({ error: "Failed to fetch tips" });
-  }
+router.get("/safety-tips", async (_req: Request, res: Response) => {
+  res.status(410).json({ error: "Individual Safety Tip listings are unavailable. Safety does not show current community activity or report timestamps." });
 });
 
 router.post("/safety-tips/:id/confirm", async (req: Request, res: Response) => {
@@ -150,8 +139,8 @@ router.post("/safety-tips/:id/confirm", async (req: Request, res: Response) => {
       res.status(400).json({ error: "Invalid tip ID" });
       return;
     }
-    const { userLat, userLng } = req.body as { userLat?: number; userLng?: number };
-    if (userLat != null || userLng != null) {
+    const body = (req.body ?? {}) as Record<string, unknown>;
+    if (body.userLat != null || body.userLng != null || body.lat != null || body.lng != null) {
       res.status(400).json({ error: "Safety Tip confirmations do not accept or retain member coordinates." });
       return;
     }
@@ -190,8 +179,6 @@ router.post("/safety-tips/:id/confirm", async (req: Request, res: Response) => {
     await db.insert(safetyTipConfirmationsTable).values({
       tipId: id,
       userId: req.user.id,
-      userLat: null,
-      userLng: null,
     });
 
     const [updated] = await db

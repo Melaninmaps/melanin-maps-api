@@ -66,10 +66,10 @@ describe("Police/ICE P0 reporting and alert governance", () => {
     expect(reports).toContain("hasPoliceIceReportingConsent");
     expect(reports).toContain("Explicit consent is required before submitting a Police/ICE observation");
     expect(reports).toContain('resolvedCategory === "police"\n      ? incidentLocation');
-    expect(reports).toContain("'corroborated' ELSE 'active'");
-    expect(reports).toContain("POLICE_ICE_ALERT_TTL_MS");
-    expect(communityAlerts).toContain("Coordinate-based community alerts have been retired");
-    expect(communityAlerts).toContain("type NOT IN ('police', 'ice', 'checkpoint')");
+    expect(reports).toContain("Individual incident listings are unavailable");
+    expect(communityAlerts).toContain("Legacy community safety alerts have been retired");
+    expect(communityAlerts).toContain('router.use("/community-alerts", retiredLegacyAlertRoute)');
+    expect(communityAlerts).not.toContain("pool.query");
     expect(moderation).toContain("encounterType: report.encounterType");
     expect(push).toContain("FROM user_settings us");
     expect(push).toContain("JOIN LATERAL");

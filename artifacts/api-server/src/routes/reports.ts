@@ -5,12 +5,7 @@ import { reportLimiter } from "../middleware/rateLimiter";
 import { sendAdminSafetyReportAlert } from "../lib/email";
 import { isNamedAdmin } from "../lib/adminAuth";
 import { moderateSafetyReport } from "../safety/moderateSafetyReport";
-import {
-  getCachedProximityWarnings,
-  invalidateProximityWarningCache,
-  proximityCacheKey,
-  setCachedProximityWarnings,
-} from "../safety/proximityWarningCache";
+import { invalidateProximityWarningCache } from "../safety/proximityWarningCache";
 import {
   normalizeIncidentLocation,
   normalizePoliceEncounterType,
@@ -20,7 +15,6 @@ import {
 } from "../safety/reportContract";
 import {
   hasPoliceIceReportingConsent,
-  POLICE_ICE_ALERT_TTL_MS,
   POLICE_ICE_REPORTING_CONSENT_VERSION,
 } from "../safety/policeIceAlertPolicy";
 import {
@@ -80,7 +74,6 @@ const SPOKEN_SEVERITY_MAP: Record<string, typeof VALID_SEVERITIES[number]> = {
   "I felt targeted or unsafe here": "high",
   "There may be an immediate danger": "critical",
 };
-const INCIDENT_THRESHOLD = 3;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function canonicalSensitiveIncidentLocation(
@@ -144,7 +137,6 @@ function publicSafetyReport(report: typeof safetyReportsTable.$inferSelect) {
     businessResponseText: report.businessResponseText,
     displayExpiresAt: report.displayExpiresAt,
     correctedAt: report.correctedAt,
-    createdAt: report.createdAt,
   };
 }
 
@@ -305,71 +297,12 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
   }
 });
 
-router.get("/reports", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const reports = await db
-      .select()
-      .from(safetyReportsTable)
-      .where(and(
-        eq(safetyReportsTable.status, "approved"),
-        isNull(safetyReportsTable.withdrawnAt),
-        isNull(safetyReportsTable.correctedAt),
-        gt(safetyReportsTable.displayExpiresAt, new Date()),
-      ))
-      .orderBy(desc(safetyReportsTable.createdAt))
-      .limit(100);
-    res.json({ reports: reports.map(publicSafetyReport) });
-  } catch (err) {
-    req.log.error({ err }, "Failed to fetch safety reports");
-    res.status(500).json({ error: "Failed to fetch reports" });
-  }
+router.get("/reports", async (_req: Request, res: Response): Promise<void> => {
+  res.status(410).json({ error: "Individual Safety report listings are unavailable. Choose a city for consented aggregate Community Intelligence instead." });
 });
 
-router.get("/incidents", async (req: Request, res: Response): Promise<void> => {
-  if (!req.user?.id) {
-    res.status(401).json({ error: "Authentication required" });
-    return;
-  }
-  try {
-    const incidents = await pool.query(
-      `SELECT si.id, si.city, si.region,
-              CASE WHEN si.category LIKE 'police:%' THEN NULL ELSE si.neighborhood END AS neighborhood,
-              CASE WHEN si.category LIKE 'police:%' THEN 'police' ELSE si.category END AS category,
-              NULLIF(SUBSTRING(si.category FROM '^police:(.+)$'), '') AS "encounterType",
-              CASE WHEN si.category LIKE 'police:%' THEN 'corroborated' ELSE 'active' END AS "alertState",
-              CASE WHEN si.category LIKE 'police:%' THEN si.triggered_at + ($2::bigint * INTERVAL '1 millisecond') ELSE NULL END AS "expiresAt",
-              si.severity,
-              approved.report_count::int AS "reportCount",
-              si.status, si.notifications_sent AS "notificationsSent",
-              si.triggered_at AS "triggeredAt"
-       FROM safety_incidents si
-       JOIN LATERAL (
-         SELECT COUNT(*) AS report_count
-         FROM safety_reports sr
-         WHERE LOWER(sr.incident_city) = LOWER(si.city)
-           AND LOWER(sr.incident_region) = LOWER(si.region)
-           AND sr.category = CASE WHEN si.category LIKE 'police:%' THEN 'police' ELSE si.category END
-           AND (si.category NOT LIKE 'police:%' OR sr.encounter_type = SUBSTRING(si.category FROM '^police:(.+)$'))
-           AND sr.status = 'approved'
-           AND sr.withdrawn_at IS NULL
-           AND sr.corrected_at IS NULL
-           AND sr.display_expires_at > NOW()
-           AND sr.created_at > NOW() - INTERVAL '7 days'
-       ) approved ON approved.report_count >= $1
-       WHERE si.status = 'active'
-         AND si.region IS NOT NULL
-         AND si.triggered_at > NOW() - INTERVAL '7 days'
-         AND (si.category NOT LIKE 'police:%' OR si.triggered_at + ($2::bigint * INTERVAL '1 millisecond') > NOW())
-       ORDER BY si.triggered_at DESC
-       LIMIT 50`,
-      [INCIDENT_THRESHOLD, POLICE_ICE_ALERT_TTL_MS],
-    );
-
-    res.json({ incidents: incidents.rows });
-  } catch (err) {
-    req.log.error({ err }, "Failed to fetch safety incidents");
-    res.status(500).json({ error: "Failed to fetch incidents" });
-  }
+router.get("/incidents", async (_req: Request, res: Response): Promise<void> => {
+  res.status(410).json({ error: "Individual incident listings are unavailable. Safety does not publish current report activity or location overlays." });
 });
 
 router.get("/admin/safety-reports", async (req: any, res: Response): Promise<void> => {
@@ -539,162 +472,14 @@ router.get("/admin/safety-incidents", async (req: any, res: Response): Promise<v
 });
 
 /**
- * GET /reports/proximity-warnings
- * Returns community danger flags within radius of a lat/lng.
- * Triggers when 3+ reports exist for a business or area in the last 7 days.
+ * Coordinate-based Safety warnings are intentionally unavailable. Safety does
+ * not receive route or device coordinates to rank reports, assess proximity,
+ * or show member-facing activity overlays.
  */
-router.get("/reports/proximity-warnings", async (req: Request, res: Response): Promise<void> => {
-  const lat = parseFloat(req.query.lat as string);
-  const lng = parseFloat(req.query.lng as string);
-  const radius = Math.min(parseFloat((req.query.radius as string) || "500"), 5000);
-
-  if (isNaN(lat) || isNaN(lng)) {
-    res.status(400).json({ error: "lat and lng are required" });
-    return;
-  }
-
-  // Return cached response for identical (or very nearby) coordinates within TTL
-  const cacheKey = proximityCacheKey(lat, lng, radius);
-  const cached = getCachedProximityWarnings(cacheKey);
-  if (cached) {
-    res.json(cached);
-    return;
-  }
-
-  try {
-    // Business-linked danger reports: join safety_reports → businesses for real coordinates.
-    // Groups by business, only surfaces those with 3+ approved reports in the last 7 days.
-    const businessWarnings = await pool.query<{
-      target_id: string;
-      business_name: string;
-      category: string;
-      severity: string;
-      report_count: string;
-      latitude: string;
-      longitude: string;
-      distance_meters: string;
-    }>(
-      `SELECT
-        sr.target_id,
-        b.name AS business_name,
-        sr.category,
-        CASE MAX(CASE sr.severity
-          WHEN 'critical' THEN 4
-          WHEN 'high' THEN 3
-          WHEN 'medium' THEN 2
-          WHEN 'low' THEN 1
-          ELSE 0
-        END)
-          WHEN 4 THEN 'critical'
-          WHEN 3 THEN 'high'
-          WHEN 2 THEN 'medium'
-          WHEN 1 THEN 'low'
-          ELSE 'medium'
-        END AS severity,
-        COUNT(*) AS report_count,
-        b.latitude::text,
-        b.longitude::text,
-        (
-          6371000 * acos(
-            LEAST(1.0,
-              cos(radians($1)) * cos(radians(b.latitude::double precision))
-              * cos(radians(b.longitude::double precision) - radians($2))
-              + sin(radians($1)) * sin(radians(b.latitude::double precision))
-            )
-          )
-        )::numeric(10,1) AS distance_meters
-      FROM safety_reports sr
-      JOIN businesses b ON sr.target_id = b.id::text
-      WHERE
-        sr.target_type = 'business'
-        AND sr.status = 'approved'
-        AND sr.withdrawn_at IS NULL
-        AND sr.corrected_at IS NULL
-        AND sr.display_expires_at > NOW()
-        AND sr.created_at > NOW() - INTERVAL '7 days'
-      GROUP BY sr.target_id, b.name, sr.category, b.latitude, b.longitude
-      HAVING COUNT(*) >= $3
-        AND (
-          6371000 * acos(
-            LEAST(1.0,
-              cos(radians($1)) * cos(radians(b.latitude::double precision))
-              * cos(radians(b.longitude::double precision) - radians($2))
-              + sin(radians($1)) * sin(radians(b.latitude::double precision))
-            )
-          )
-        ) <= $4
-      ORDER BY distance_meters ASC
-      LIMIT 20`,
-      [lat, lng, INCIDENT_THRESHOLD, radius]
-    );
-
-    // Area-level active incidents (city/neighborhood level, no precise coordinates).
-    // Returned separately so the client can show a city-wide alert if needed.
-    const areaIncidents = await pool.query<{
-      id: string;
-      city: string;
-      region: string;
-      neighborhood: string | null;
-      category: string;
-      severity: string;
-      report_count: string;
-    }>(
-      `SELECT si.id, si.city, si.region, si.neighborhood, si.category, si.severity,
-              approved.report_count::text
-       FROM safety_incidents si
-       JOIN LATERAL (
-         SELECT COUNT(*) AS report_count
-         FROM safety_reports sr
-         WHERE LOWER(sr.incident_city) = LOWER(si.city)
-           AND LOWER(sr.incident_region) = LOWER(si.region)
-           AND sr.category = si.category
-           AND sr.status = 'approved'
-           AND sr.withdrawn_at IS NULL
-           AND sr.corrected_at IS NULL
-           AND sr.display_expires_at > NOW()
-           AND sr.created_at > NOW() - INTERVAL '7 days'
-       ) approved ON approved.report_count >= $1
-       WHERE si.status = 'active'
-         AND si.region IS NOT NULL
-         AND si.triggered_at > NOW() - INTERVAL '7 days'
-       ORDER BY approved.report_count DESC
-       LIMIT 10`,
-      [INCIDENT_THRESHOLD]
-    );
-
-    const warnings = businessWarnings.rows.map((r) => ({
-      type: "business" as const,
-      targetId: r.target_id,
-      name: r.business_name,
-      category: r.category,
-      severity: r.severity,
-      reportCount: parseInt(r.report_count, 10),
-      latitude: parseFloat(r.latitude),
-      longitude: parseFloat(r.longitude),
-      distanceMeters: parseFloat(r.distance_meters),
-    }));
-
-    const responseData = {
-      warnings,
-      areaIncidents: areaIncidents.rows.map((r) => ({
-        id: r.id,
-        city: r.city,
-        region: r.region,
-        neighborhood: r.neighborhood,
-        category: r.category,
-        severity: r.severity,
-        reportCount: parseInt(r.report_count, 10),
-      })),
-    };
-
-    // Cache the result — community data only, no user-specific fields
-    setCachedProximityWarnings(cacheKey, responseData);
-
-    res.json(responseData);
-  } catch (err) {
-    req.log.error({ err }, "Failed to fetch proximity warnings");
-    res.status(500).json({ error: "Failed to fetch proximity warnings" });
-  }
+router.get("/reports/proximity-warnings", async (_req: Request, res: Response): Promise<void> => {
+  res.status(410).json({
+    error: "Coordinate-based Safety warnings have been retired. Choose a city for consented aggregate Community Intelligence instead.",
+  });
 });
 
 router.patch("/admin/safety-incidents/:id/resolve", async (req: any, res: Response): Promise<void> => {

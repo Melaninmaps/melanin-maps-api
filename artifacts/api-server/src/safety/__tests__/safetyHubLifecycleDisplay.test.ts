@@ -64,17 +64,12 @@ describe("Safety Hub current-display lifecycle", () => {
     expect(reports).toContain("isNull(safetyReportsTable.correctedAt)");
     expect(reports).toContain("displayExpiresAt: now");
     expect(reports).toContain("isNull(safetyReportsTable.withdrawnAt)");
-    expect(reports).toContain("AND sr.corrected_at IS NULL");
+    expect(reports).toContain("Individual Safety report listings are unavailable");
 
-    expect(communityAlerts).toContain('action !== "withdraw" && action !== "correct" && action !== "set_expiration"');
-    expect(communityAlerts).toContain("withdrawal_reason = $3");
-    expect(communityAlerts).toContain("SET is_active = false,\n               corrected_at = NOW()");
-    expect(communityAlerts).toContain("AND corrected_at IS NULL");
-    expect(communityAlerts).toContain("AND withdrawn_at IS NULL");
-    expect(communityAlerts).toContain("AND ca.expires_at > NOW()");
-    expect(directions).toContain("AND ca.corrected_at IS NULL");
-    expect(directions).toContain("AND ca.withdrawn_at IS NULL");
-    expect(directions).toContain("AND ca.expires_at > NOW()");
+    expect(communityAlerts).toContain("Legacy community safety alerts have been retired");
+    expect(communityAlerts).not.toContain("pool.query");
+    expect(directions).toContain("Route-based Safety context has been retired");
+    expect(directions).not.toContain("pool.query");
 
     for (const currentDisplaySource of currentDisplaySources) {
       expect(currentDisplaySource).not.toMatch(/\bDELETE\s+FROM\b|\bTRUNCATE\b/i);

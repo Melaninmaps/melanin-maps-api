@@ -30,12 +30,10 @@ describe("mobile Safety Heat privacy and evidence presentation", () => {
     expect(businessMapSource).toContain("Community survey signal");
     expect(businessMapSource).toContain("City-centroid survey signal only");
     expect(businessMapSource).toContain("approved surveys from the last");
-    expect(businessMapSource).toContain("Not a safety guarantee.");
-    expect(fullMapSource).toContain("Not a safety guarantee.");
-    expect(mapTabSource).toContain("This is not a safety guarantee.");
+    expect(businessMapSource).toContain("not a safety guarantee.");
+    expect(fullMapSource).toContain("const showHeatmap = false");
     expect(businessMapSource).toContain("approvedSurveyCount");
     expect(fullMapSource).toContain("approvedSurveyCount");
-    expect(mapTabSource).toContain("approvedSurveyCount");
   });
 
   it("retires automatic device-location safety signals in favor of member-selected city aggregates", () => {
@@ -67,11 +65,27 @@ describe("mobile Safety Heat privacy and evidence presentation", () => {
 
   it("keeps native navigation free of destination safety claims and map-local safety queries", () => {
     expect(nativeMapTabSource).toContain("It never queries or presents a map-local safety assessment.");
-    expect(nativeMapTabSource).toContain("Automatic map-local incident pins are retired.");
     expect(nativeMapTabSource).toContain("Route details do not include a safety assessment.");
     expect(nativeMapTabSource).not.toContain("community-alerts/nearby");
+    expect(nativeMapTabSource).not.toContain("community-alerts/");
+    expect(nativeMapTabSource).not.toContain("useSafetyProximity");
+    expect(nativeMapTabSource).not.toContain("ActiveAlertCard");
+    expect(nativeMapTabSource).not.toContain("ProximityWarningCard");
+    expect(nativeMapTabSource).not.toContain("<Circle");
     expect(nativeMapTabSource).not.toContain("Safety alerts near destination");
     expect(nativeMapTabSource).not.toContain("Route looks clear");
+    expect(nativeMapTabSource).not.toContain("Safety Alert Nearby");
+  });
+
+  it("keeps every Map implementation free of retired activity, proximity, and automatic safety overlays", () => {
+    for (const mapSource of [businessMapSource, fullMapSource, mapTabSource, nativeMapTabSource]) {
+      expect(mapSource).not.toContain("useActivityAlerts");
+      expect(mapSource).not.toContain("useGeoSafeAlert");
+      expect(mapSource).not.toContain("useSafetyProximity");
+      expect(mapSource).not.toContain("community-alerts/");
+      expect(mapSource).not.toContain("reports/proximity-warnings");
+      expect(mapSource).not.toContain("Report Nearby Activity");
+    }
   });
 
   it("lets a member choose a city for a reduced Community Intelligence aggregate without requesting device location", () => {

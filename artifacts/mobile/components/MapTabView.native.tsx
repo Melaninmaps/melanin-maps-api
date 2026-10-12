@@ -5,7 +5,6 @@ import * as Speech from "expo-speech";
 import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Animated,
   Linking,
   Platform,
   ScrollView,
@@ -14,7 +13,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import MapView, { Callout, Circle, Marker, Polyline, PROVIDER_DEFAULT, type Region } from "react-native-maps";
+import MapView, { Callout, Marker, Polyline, PROVIDER_DEFAULT, type Region } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { IntentModal, type PinLocation } from "@/components/IntentModal";
 import { RatingStars } from "@/components/RatingStars";
@@ -25,7 +24,6 @@ import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
 import { useMembership } from "@/hooks/useMembership";
-import { useSafetyProximity, type ProximityWarning } from "@/hooks/useSafetyProximity";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 
 // Strip HTML tags from Google Directions html_instructions
@@ -98,211 +96,6 @@ const SEVERITY_COLORS: Record<string, string> = {
   critical: "#7F1D1D",
 };
 
-const SEVERITY_LABELS: Record<string, string> = {
-  low: "Low Risk",
-  medium: "Community Alert",
-  high: "High Alert",
-  critical: "Critical Alert",
-};
-
-const CATEGORY_ICONS: Record<string, string> = {
-  safety: "⚠️",
-  sundown: "🚫",
-  discrimination: "🛡️",
-  business: "🏪",
-  resource: "ℹ️",
-  positive: "✅",
-};
-
-type ActiveAlert = {
-  id: string;
-  type: string;
-  lat: number;
-  lng: number;
-  confirmedCount: number;
-  distanceKm: number;
-  status?: "possible" | "confirmed";
-  description?: string | null;
-};
-
-const ALERT_TYPE_COLORS: Record<string, string> = {
-  // Legacy
-  police: "#3B82F6",
-  ice: "#DC2626",
-  checkpoint: "#F59E0B",
-  traffic: "#F59E0B",
-  other: "#8B5CF6",
-  // Community Intelligence
-  road_closure: "#F59E0B",
-  construction: "#D97706",
-  road_reopened: "#16A34A",
-  transit_disruption: "#0EA5E9",
-  protest: "#8B5CF6",
-  celebration: "#10B981",
-  festival: "#EC4899",
-  severe_weather: "#6366F1",
-  emergency: "#DC2626",
-  avoid_area: "#DC2626",
-  situation_cleared: "#16A34A",
-};
-
-const ALERT_TYPE_ICONS: Record<string, string> = {
-  // Legacy
-  police: "🚔",
-  ice: "🚨",
-  checkpoint: "⛔",
-  traffic: "🚦",
-  other: "⚠️",
-  // Community Intelligence
-  road_closure: "🚧",
-  construction: "🏗️",
-  road_reopened: "✅",
-  transit_disruption: "🚌",
-  protest: "✊🏾",
-  celebration: "🎉",
-  festival: "🎊",
-  severe_weather: "⛈️",
-  emergency: "🚨",
-  avoid_area: "⛔",
-  situation_cleared: "🟢",
-};
-
-const ALERT_TYPE_LABELS: Record<string, string> = {
-  // Legacy
-  police: "Police Activity Reported",
-  ice: "ICE / Immigration Activity",
-  checkpoint: "Checkpoint Reported",
-  traffic: "Traffic Issue",
-  other: "Community Safety Alert",
-  // Community Intelligence
-  road_closure: "Road Closure",
-  construction: "Construction Zone",
-  road_reopened: "Road Reopened",
-  transit_disruption: "Transit Disruption",
-  protest: "Active Protest",
-  celebration: "Community Celebration",
-  festival: "Festival or Event",
-  severe_weather: "Severe Weather",
-  emergency: "Neighborhood Emergency",
-  avoid_area: "Area to Avoid",
-  situation_cleared: "Situation Cleared",
-};
-
-function ActiveAlertCard({
-  alert,
-  onDismiss,
-}: {
-  alert: ActiveAlert;
-  onDismiss: () => void;
-}) {
-  const [slideAnim] = useState(() => new Animated.Value(-120));
-  const color = ALERT_TYPE_COLORS[alert.type] ?? "#EF4444";
-  const isConfirmed = (alert.status === "confirmed") || alert.confirmedCount >= 3;
-  const statusColor = isConfirmed ? "#16A34A" : "#F59E0B";
-  const statusLabel = isConfirmed ? "✓ Confirmed" : "⚡ Possible";
-
-  useEffect(() => {
-    Animated.spring(slideAnim, { toValue: 0, tension: 60, friction: 10, useNativeDriver: true }).start();
-  }, [slideAnim]);
-
-  const distMi = alert.distanceKm < 0.5
-    ? "Less than 0.5 mi away"
-    : `${Math.round((alert.distanceKm / 1.609) * 10) / 10} mi away`;
-
-  return (
-    <Animated.View
-      style={[styles.warningCard, { borderLeftColor: statusColor, transform: [{ translateY: slideAnim }] }]}
-    >
-      <View style={styles.warningTop}>
-        <View style={styles.warningBadgeRow}>
-          <View style={[styles.warningBadge, { backgroundColor: color + "22" }]}>
-            <Text style={styles.warningIcon}>{ALERT_TYPE_ICONS[alert.type] ?? "⚠️"}</Text>
-            <Text style={[styles.warningBadgeText, { color }]}>
-              {ALERT_TYPE_LABELS[alert.type] ?? "Alert"}
-            </Text>
-          </View>
-          <View style={[styles.statusPill, { backgroundColor: statusColor + "18", borderColor: statusColor + "40" }]}>
-            <Text style={[styles.statusPillText, { color: statusColor }]}>{statusLabel}</Text>
-          </View>
-        </View>
-        <TouchableOpacity onPress={onDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Feather name="x" size={16} color="#9CA3AF" />
-        </TouchableOpacity>
-      </View>
-      <Text style={styles.warningName}>
-        {alert.confirmedCount} community confirmation{alert.confirmedCount !== 1 ? "s" : ""}
-      </Text>
-      <Text style={styles.warningMeta}>{distMi} · Reported by your community</Text>
-      <View style={styles.warningFooter}>
-        <Text style={[styles.warningCategory, { color: statusColor }]}>
-          {isConfirmed ? "Community-verified — stay aware" : "Unverified — use caution"}
-        </Text>
-        <Text style={styles.warningTip}>Be safe 🙏🏾</Text>
-      </View>
-    </Animated.View>
-  );
-}
-
-function ProximityWarningCard({
-  warning,
-  onDismiss,
-}: {
-  warning: ProximityWarning;
-  onDismiss: () => void;
-}) {
-  const [slideAnim] = useState(() => new Animated.Value(-120));
-  const colors = SEVERITY_COLORS[warning.severity] ?? "#EF4444";
-
-  useEffect(() => {
-    Animated.spring(slideAnim, {
-      toValue: 0,
-      tension: 60,
-      friction: 10,
-      useNativeDriver: true,
-    }).start();
-  }, [slideAnim]);
-
-  const distLabel =
-    warning.distanceMeters < 100
-      ? "You are very close"
-      : `${Math.round(warning.distanceMeters)}m away`;
-
-  const icon = CATEGORY_ICONS[warning.category] ?? "⚠️";
-
-  return (
-    <Animated.View
-      style={[
-        styles.warningCard,
-        { borderLeftColor: colors, transform: [{ translateY: slideAnim }] },
-      ]}
-    >
-      <View style={styles.warningTop}>
-        <View style={[styles.warningBadge, { backgroundColor: colors + "22" }]}>
-          <Text style={styles.warningIcon}>{icon}</Text>
-          <Text style={[styles.warningBadgeText, { color: colors }]}>
-            {SEVERITY_LABELS[warning.severity] ?? "Alert"}
-          </Text>
-        </View>
-        <TouchableOpacity onPress={onDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Feather name="x" size={16} color="#9CA3AF" />
-        </TouchableOpacity>
-      </View>
-      <Text style={styles.warningName} numberOfLines={1}>
-        {warning.name}
-      </Text>
-      <Text style={styles.warningMeta}>
-        {warning.reportCount} community {warning.reportCount === 1 ? "report" : "reports"} in the last 7 days · {distLabel}
-      </Text>
-      <View style={styles.warningFooter}>
-        <Text style={[styles.warningCategory, { color: colors }]}>
-          {warning.category.charAt(0).toUpperCase() + warning.category.slice(1)} concern
-        </Text>
-        <Text style={styles.warningTip}>Stay aware of your surroundings</Text>
-      </View>
-    </Animated.View>
-  );
-}
-
 export function MapTabView() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -319,23 +112,10 @@ export function MapTabView() {
   const [currentRegion, setCurrentRegion] = useState<Region>(INITIAL_REGION);
   const [showIntentModal, setShowIntentModal] = useState(false);
   const [pendingPinLocation, setPendingPinLocation] = useState<PinLocation | null>(null);
-  const [showAllWarnings, setShowAllWarnings] = useState(false);
-
-  const {
-    warnings,
-    locationGranted: proximityGranted,
-    userLocation,
-    dismissWarning,
-    dismissAll,
-  } = useSafetyProximity();
-
   const { subscription } = useMembership();
   const isPaidMember = subscription !== null && ["active", "trialing"].includes(subscription.status ?? "");
   const [routeCoords, setRouteCoords] = useState<{ latitude: number; longitude: number }[]>([]);
   const [isNavigating, setIsNavigating] = useState(false);
-
-  type NavAlt = { id: string; name: string; city: string; category: string; latitude: number; longitude: number; distanceMiles: number };
-  const [navAlternatives, setNavAlternatives] = useState<NavAlt[]>([]);
 
   // ── KinfolkAI Voice Navigation state ────────────────────────────────────
   type VoiceMode = "professional" | "community" | "local" | "home";
@@ -347,15 +127,6 @@ export function MapTabView() {
   const [isMuted, setIsMuted] = useState(false);
 
   const { preferences: userPrefs } = useUserPreferences();
-
-  const prevWarningCount = useRef(0);
-
-  useEffect(() => {
-    if (warnings.length > prevWarningCount.current) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    }
-    prevWarningCount.current = warnings.length;
-  }, [warnings.length]);
 
   // Speak the current navigation step whenever it changes (if not muted)
   useEffect(() => {
@@ -395,43 +166,6 @@ export function MapTabView() {
     setCurrentNavStep(0);
   }, [navRawSteps, navDestCity, selected, userPrefs, apiBase]);
 
-  const [communityAlertPins, setCommunityAlertPins] = useState<ActiveAlert[]>([]);
-  const [dismissedAlertIds, setDismissedAlertIds] = useState<Set<string>>(new Set());
-  const [alternatives, setAlternatives] = useState<{
-    id: string; name: string; city: string; category: string;
-    latitude: number; longitude: number; distanceMiles: number;
-  }[]>([]);
-
-  // Automatic map-local incident pins are retired. Police/ICE awareness is
-  // city/region opt-in only, and Community Intelligence requires a member's
-  // explicit manual city selection with aggregate suppression.
-  useEffect(() => {
-    setCommunityAlertPins([]);
-  }, []);
-
-  // When a non-minority business is selected, fetch nearby minority-owned alternatives
-  useEffect(() => {
-    if (!selected || selected.blackOwned) return;
-    const fetchAlts = async () => {
-      try {
-        const res = await fetch(
-          `${apiBase}/api/community-alerts/minority-alternatives?lat=${selected.latitude}&lng=${selected.longitude}&category=${encodeURIComponent(selected.category)}&radiusMiles=5`
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setAlternatives(data.businesses ?? []);
-        }
-      } catch { /**/ }
-    };
-    void fetchAlts();
-  }, [apiBase, selected]);
-
-  // Active alerts within 1.5 km that the user hasn't dismissed
-  const visibleActiveAlerts = communityAlertPins.filter(
-    (a) => !dismissedAlertIds.has(a.id) && a.distanceKm < 1.5
-  );
-  const visibleAlternatives = !selected || selected.blackOwned ? [] : alternatives;
-
   const { businesses } = useBusinesses();
   const filtered = businesses.filter((b) => {
     const matchesSearch =
@@ -442,7 +176,6 @@ export function MapTabView() {
     return matchesSearch && matchesCat;
   });
 
-  const flaggedBusinessIds = new Set(warnings.map((w) => w.targetId));
   const handleMarkerPress = (business: Business) => {
     setSelected(business);
     setRouteCoords([]);
@@ -474,15 +207,14 @@ export function MapTabView() {
     }
 
     setIsNavigating(true);
-    setNavAlternatives([]);
     setVoicedSteps([]);
     setNavRawSteps([]);
     setCurrentNavStep(0);
     setNavDestCity(biz.city ?? "");
     try {
-      const origin = userLocation
-        ? `${userLocation.lat},${userLocation.lng}`
-        : `${INITIAL_REGION.latitude},${INITIAL_REGION.longitude}`;
+      // Directions use the member's active map area, never a Safety-proximity
+      // location state. This value stays within ordinary map navigation only.
+      const origin = `${currentRegion.latitude},${currentRegion.longitude}`;
       const destination = `${biz.latitude},${biz.longitude}`;
 
       // Navigation uses the selected business and the member's own map choice.
@@ -537,17 +269,6 @@ export function MapTabView() {
         }
       }
 
-      // Fetch minority-owned alternatives whenever navigating to any business
-      // (not from a safety report — this is ordinary business discovery).
-      const altsRes = await fetch(
-        `${apiBase}/api/community-alerts/minority-alternatives?lat=${biz.latitude}&lng=${biz.longitude}&category=${encodeURIComponent(biz.category ?? "")}&radiusMiles=10`,
-      );
-      if (altsRes.ok) {
-        const altsData = await altsRes.json() as { businesses?: NavAlt[] };
-        // Exclude the destination itself.
-        const alts = (altsData.businesses ?? []).filter((a) => String(a.id) !== String(biz.id));
-        setNavAlternatives(alts.slice(0, 5));
-      }
     } catch { /**/ } finally {
       setIsNavigating(false);
     }
@@ -578,9 +299,6 @@ export function MapTabView() {
     router.push({ pathname: "/smart-pathway", params: { pinId } } as never);
   };
 
-  const topWarning = warnings[0] ?? null;
-  const extraCount = warnings.length - 1;
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <MapView
@@ -588,99 +306,35 @@ export function MapTabView() {
         style={StyleSheet.absoluteFill}
         provider={PROVIDER_DEFAULT}
         initialRegion={INITIAL_REGION}
-        showsUserLocation={locationGrantedLocal || proximityGranted}
+        showsUserLocation={locationGrantedLocal}
         showsMyLocationButton={false}
         onRegionChangeComplete={setCurrentRegion}
       >
-        {filtered.map((b) => {
-          const isDangerous = flaggedBusinessIds.has(String(b.id));
-          const warning = warnings.find((w) => w.targetId === String(b.id));
-          const pinColor = isDangerous
-            ? (SEVERITY_COLORS[warning?.severity ?? "medium"])
-            : (selected?.id === b.id ? colors.primary : colors.card);
-
-          return (
-            <React.Fragment key={b.id}>
-              {isDangerous && (
-                <Circle
-                  center={{ latitude: b.latitude, longitude: b.longitude }}
-                  radius={120}
-                  fillColor={`${SEVERITY_COLORS[warning?.severity ?? "medium"]}33`}
-                  strokeColor={`${SEVERITY_COLORS[warning?.severity ?? "medium"]}88`}
-                  strokeWidth={2}
-                />
-              )}
-              <Marker
-                coordinate={{ latitude: b.latitude, longitude: b.longitude }}
-                onPress={() => handleMarkerPress(b)}
-              >
-                <View
-                  style={[
-                    styles.pin,
-                    {
-                      backgroundColor: isDangerous ? (SEVERITY_COLORS[warning?.severity ?? "medium"] + "22") : (selected?.id === b.id ? colors.primary : colors.card),
-                      borderColor: pinColor,
-                      borderWidth: isDangerous ? 2.5 : 2,
-                    },
-                  ]}
-                >
-                  <Feather
-                    name={isDangerous ? "alert-triangle" : "map-pin"}
-                    size={14}
-                    color={isDangerous ? SEVERITY_COLORS[warning?.severity ?? "medium"] : (selected?.id === b.id ? colors.primaryForeground : colors.primary)}
-                  />
-                </View>
-                <Callout tooltip><View /></Callout>
-              </Marker>
-            </React.Fragment>
-          );
-        })}
-
-        {/* Community Intelligence alert pins with radius circles */}
-        {communityAlertPins.map((alert) => {
-          const typeColor = ALERT_TYPE_COLORS[alert.type] ?? "#EF4444";
-          const isConfirmed = (alert.status === "confirmed") || alert.confirmedCount >= 3;
-          const pinColor = isConfirmed ? typeColor : "#F59E0B";
-          const radius = alert.type === "ice" || alert.type === "emergency" ? 500 : 300;
-          return (
-            <React.Fragment key={alert.id}>
-              <Circle
-                center={{ latitude: alert.lat, longitude: alert.lng }}
-                radius={radius}
-                fillColor={pinColor + (isConfirmed ? "1A" : "11")}
-                strokeColor={pinColor + (isConfirmed ? "88" : "55")}
-                strokeWidth={isConfirmed ? 2 : 1}
+        {filtered.map((b) => (
+          <Marker
+            key={b.id}
+            coordinate={{ latitude: b.latitude, longitude: b.longitude }}
+            onPress={() => handleMarkerPress(b)}
+          >
+            <View
+              style={[
+                styles.pin,
+                {
+                  backgroundColor: selected?.id === b.id ? colors.primary : colors.card,
+                  borderColor: selected?.id === b.id ? colors.primary : colors.primary,
+                  borderWidth: 2,
+                },
+              ]}
+            >
+              <Feather
+                name="map-pin"
+                size={14}
+                color={selected?.id === b.id ? colors.primaryForeground : colors.primary}
               />
-              <Marker coordinate={{ latitude: alert.lat, longitude: alert.lng }}>
-                <View style={[
-                  styles.alertPin,
-                  {
-                    backgroundColor: pinColor + (isConfirmed ? "22" : "11"),
-                    borderColor: pinColor,
-                    borderWidth: isConfirmed ? 3 : 2,
-                  },
-                ]}>
-                  <Text style={styles.alertPinIcon}>
-                    {ALERT_TYPE_ICONS[alert.type] ?? "⚠️"}
-                  </Text>
-                  {isConfirmed && (
-                    <View style={styles.confirmedDot} />
-                  )}
-                </View>
-              </Marker>
-            </React.Fragment>
-          );
-        })}
-
-        {userLocation && (
-          <Circle
-            center={{ latitude: userLocation.lat, longitude: userLocation.lng }}
-            radius={500}
-            fillColor="rgba(59,130,246,0.05)"
-            strokeColor="rgba(59,130,246,0.25)"
-            strokeWidth={1}
-          />
-        )}
+            </View>
+            <Callout tooltip><View /></Callout>
+          </Marker>
+        ))}
 
         {routeCoords.length > 0 && (
           <Polyline
@@ -741,77 +395,6 @@ export function MapTabView() {
         </View>
       )}
 
-      {topWarning && !showAllWarnings && (
-        <View style={[styles.warningStack, { top: insets.top + 120 }]}>
-          <ProximityWarningCard
-            warning={topWarning}
-            onDismiss={() => dismissWarning(topWarning.targetId)}
-          />
-          {extraCount > 0 && (
-            <TouchableOpacity
-              style={styles.moreWarningsBtn}
-              onPress={() => setShowAllWarnings(true)}
-            >
-              <Feather name="alert-triangle" size={13} color="#EF4444" />
-              <Text style={styles.moreWarningsText}>
-                {extraCount} more alert{extraCount > 1 ? "s" : ""} in this area
-              </Text>
-              <Feather name="chevron-down" size={13} color="#EF4444" />
-            </TouchableOpacity>
-          )}
-        </View>
-      )}
-
-      {showAllWarnings && warnings.length > 0 && (
-        <View style={[styles.allWarningsPanel, { top: insets.top + 120, bottom: insets.bottom + 200 }]}>
-          <View style={styles.allWarningsHeader}>
-            <Text style={styles.allWarningsTitle}>
-              {warnings.length} Safety Alert{warnings.length > 1 ? "s" : ""} Nearby
-            </Text>
-            <TouchableOpacity onPress={() => { dismissAll(); setShowAllWarnings(false); }}>
-              <Text style={styles.dismissAllText}>Dismiss All</Text>
-            </TouchableOpacity>
-          </View>
-          <ScrollView
-        keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false}>
-            {warnings.map((w) => (
-              <ProximityWarningCard
-                key={w.targetId}
-                warning={w}
-                onDismiss={() => {
-                  dismissWarning(w.targetId);
-                  if (warnings.length <= 1) setShowAllWarnings(false);
-                }}
-              />
-            ))}
-          </ScrollView>
-          <TouchableOpacity style={styles.collapseBtn} onPress={() => setShowAllWarnings(false)}>
-            <Feather name="chevron-up" size={16} color="#6B7280" />
-            <Text style={styles.collapseText}>Collapse</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Active police/ICE proximity cards — shown when user is within 1.5 km */}
-      {visibleActiveAlerts.length > 0 && !showAllWarnings && (
-        <View style={[styles.warningStack, { top: insets.top + (topWarning ? 228 : 120) }]}>
-          <ActiveAlertCard
-            alert={visibleActiveAlerts[0]}
-            onDismiss={() =>
-              setDismissedAlertIds((prev) => new Set([...prev, visibleActiveAlerts[0].id]))
-            }
-          />
-          {visibleActiveAlerts.length > 1 && (
-            <View style={styles.moreWarningsBtn}>
-              <Feather name="alert-triangle" size={13} color="#EF4444" />
-              <Text style={styles.moreWarningsText}>
-                {visibleActiveAlerts.length - 1} more active alert{visibleActiveAlerts.length > 2 ? "s" : ""} nearby
-              </Text>
-            </View>
-          )}
-        </View>
-      )}
-
       <TouchableOpacity
         style={[styles.pinAreaBtn, {
           backgroundColor: colors.primary,
@@ -837,18 +420,6 @@ export function MapTabView() {
 
       {selected && (
         <View style={[styles.selectedCard, { backgroundColor: colors.card, shadowColor: colors.foreground, bottom: insets.bottom + 90 }]}>
-          {flaggedBusinessIds.has(String(selected.id)) && (() => {
-            const w = warnings.find((x) => x.targetId === String(selected.id));
-            const sc = SEVERITY_COLORS[w?.severity ?? "medium"];
-            return (
-              <View style={[styles.businessWarningBadge, { backgroundColor: sc + "18", borderColor: sc + "55" }]}>
-                <Feather name="alert-triangle" size={12} color={sc} />
-                <Text style={[styles.businessWarningText, { color: sc }]}>
-                  {w?.reportCount} community safety {w?.reportCount === 1 ? "report" : "reports"} in the last 7 days
-                </Text>
-              </View>
-            );
-          })()}
           <View style={styles.selectedTop}>
             <View style={styles.selectedInfo}>
               <Text style={[styles.selectedName, { color: colors.foreground }]} numberOfLines={1}>{selected.name}</Text>
@@ -903,41 +474,6 @@ export function MapTabView() {
             <Text style={[styles.exploreTxt, { color: colors.primary }]}>Explore this neighborhood →</Text>
           </TouchableOpacity>
 
-          {/* Minority-owned alternatives strip — shown when a non-minority business is selected */}
-          {visibleAlternatives.length > 0 && routeCoords.length === 0 && (
-            <View style={[styles.altSection, { borderTopColor: colors.border }]}>
-              <Text style={[styles.altTitle, { color: colors.foreground }]}>
-                ✨ Try a minority-owned alternative nearby
-              </Text>
-              <ScrollView
-        keyboardDismissMode="on-drag"
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={{ marginTop: 8 }}
-                contentContainerStyle={{ gap: 8 }}
-              >
-                {visibleAlternatives.map((alt) => (
-                  <TouchableOpacity
-                    key={alt.id}
-                    style={[styles.altChip, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "40" }]}
-                    onPress={() => {
-                      const b = businesses.find((x) => String(x.id) === alt.id);
-                      if (b) handleMarkerPress(b);
-                    }}
-                    activeOpacity={0.75}
-                  >
-                    <Text style={[styles.altChipName, { color: colors.foreground }]} numberOfLines={1}>
-                      {alt.name}
-                    </Text>
-                    <Text style={[styles.altChipMeta, { color: colors.primary }]}>
-                      {alt.distanceMiles} mi · {alt.category}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-
           {/* ── Route guidance — never a safety assessment ── */}
           {routeCoords.length > 0 && (
             <View style={[styles.navSafetySection, { borderTopColor: colors.border }]}>
@@ -982,52 +518,6 @@ export function MapTabView() {
                   })}
                 </View>
               </View>
-
-              {/* Minority-owned alternatives during navigation */}
-              {navAlternatives.length > 0 && (
-                <View style={{ marginTop: 10 }}>
-                  <Text style={[styles.navAltsTitle, { color: colors.foreground }]}>
-                    Support the community — alternatives nearby:
-                  </Text>
-                  <ScrollView
-        keyboardDismissMode="on-drag"
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={{ marginTop: 6 }}
-                    contentContainerStyle={{ gap: 8 }}
-                  >
-                    {navAlternatives.map((alt) => {
-                      const destBiz = businesses.find((x) => String(x.id) === alt.id);
-                      return (
-                        <TouchableOpacity
-                          key={alt.id}
-                          style={[styles.navAltChip, { backgroundColor: colors.primary + "15", borderColor: colors.primary + "50" }]}
-                          onPress={() => {
-                            if (destBiz) {
-                              handleMarkerPress(destBiz);
-                            } else {
-                              // navigate to this alternative directly
-                              const fakeBiz = { ...alt, blackOwned: true, rating: 0, reviewCount: 0, verified: false, imageUrl: null } as unknown as Business;
-                              handleNavigate(fakeBiz);
-                            }
-                          }}
-                          activeOpacity={0.75}
-                        >
-                          <Text style={[styles.navAltName, { color: colors.foreground }]} numberOfLines={1}>
-                            {alt.name}
-                          </Text>
-                          <Text style={[styles.navAltMeta, { color: colors.primary }]}>
-                            {alt.distanceMiles} mi · {alt.category}
-                          </Text>
-                          <View style={[styles.navAltBtn, { backgroundColor: colors.primary }]}>
-                            <Text style={styles.navAltBtnText}>Navigate →</Text>
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </ScrollView>
-                </View>
-              )}
 
             </View>
           )}

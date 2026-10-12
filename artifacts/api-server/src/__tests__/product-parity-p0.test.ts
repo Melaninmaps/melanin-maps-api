@@ -40,7 +40,8 @@ describe("private social-space authorization", () => {
     expect(shares).toContain("owner_blocks.id IS NULL");
     expect(shares).not.toContain("retireLocationSharesForMember");
     const alerts = source("../routes/community-alerts.ts");
-    expect(alerts).toContain("Member location storage has been retired");
+    expect(alerts).toContain("Legacy community safety alerts have been retired");
+    expect(alerts).not.toContain("pool.query");
     expect(checkins).toContain("Safety Check-Ins do not collect, store, or share location");
     expect(checkins).not.toContain("minimizeLocationCoordinate");
   });
@@ -49,7 +50,7 @@ describe("private social-space authorization", () => {
     const safetyTips = source("../routes/safety-tips.ts");
     expect(safetyTips).toContain("function publicSafetyTip");
     expect(safetyTips).toContain("tip: publicSafetyTip(tip)");
-    expect(safetyTips).toContain("tips: tips.map(publicSafetyTip)");
+    expect(safetyTips).toContain("Individual Safety Tip listings are unavailable");
     expect(safetyTips).toContain("Nearby Safety Tips have been retired");
   });
 
@@ -58,7 +59,7 @@ describe("private social-space authorization", () => {
     expect(reports).toContain("reporterId: isAnon ? null");
     expect(reports).toContain("function publicSafetyReport");
     expect(reports).toContain("report: publicSafetyReport(report)");
-    expect(reports).toContain("reports: reports.map(publicSafetyReport)");
+    expect(reports).toContain("Individual Safety report listings are unavailable");
     const publicProjection = reports.slice(reports.indexOf("function publicSafetyReport"), reports.indexOf('router.post("/reports"'));
     expect(publicProjection).not.toContain("reporterId");
     expect(publicProjection).not.toContain("moderatorNotes");
