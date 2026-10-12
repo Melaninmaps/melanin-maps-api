@@ -22,7 +22,7 @@ describe("isolated staging acceptance build profile", () => {
     expect(profile).toMatchObject({
       extends: "production",
       channel: "acceptance-staging",
-      environment: "testflight-staging",
+      environment: "preview",
       distribution: "store",
       env: {
         EXPO_PUBLIC_DOMAIN: "kinfolk-memory-api-staging-staging.up.railway.app",
@@ -31,6 +31,21 @@ describe("isolated staging acceptance build profile", () => {
         EXPO_PUBLIC_APP_ENV: "staging",
         APP_ENV: "staging",
         APP_RELEASE_CHANNEL: "acceptance-staging",
+        EXPO_PUBLIC_REVENUECAT_ENABLED: "false",
+      },
+    });
+  });
+
+  it("keeps the named TestFlight staging profile on the existing preview secret set", () => {
+    expect(eas.build["testflight-staging"]).toMatchObject({
+      channel: "testflight-staging",
+      environment: "preview",
+      distribution: "store",
+      env: {
+        EXPO_PUBLIC_API_ORIGIN:
+          "https://kinfolk-memory-api-staging-staging.up.railway.app",
+        APP_ENV: "staging",
+        APP_RELEASE_CHANNEL: "testflight-staging",
         EXPO_PUBLIC_REVENUECAT_ENABLED: "false",
       },
     });

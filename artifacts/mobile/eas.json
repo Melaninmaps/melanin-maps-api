@@ -48,7 +48,7 @@
     },
     "testflight-staging": {
       "channel": "testflight-staging",
-      "environment": "testflight-staging",
+      "environment": "preview",
       "distribution": "store",
       "autoIncrement": false,
       "node": "22.23.1",
@@ -127,7 +127,7 @@
     "acceptance-staging": {
       "extends": "production",
       "channel": "acceptance-staging",
-      "environment": "testflight-staging",
+      "environment": "preview",
       "distribution": "store",
       "env": {
         "EXPO_PUBLIC_DOMAIN": "kinfolk-memory-api-staging-staging.up.railway.app",
