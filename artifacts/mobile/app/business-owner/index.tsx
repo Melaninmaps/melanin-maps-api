@@ -5,6 +5,7 @@ import * as SecureStore from "expo-secure-store";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Platform,
   ScrollView,
   StyleSheet,
@@ -80,6 +81,7 @@ export default function BusinessOwnerHome() {
   const [skipInsights, setSkipInsights] = useState<string[]>([]);
   const [skipExpanded, setSkipExpanded] = useState(false);
   const [communityNeeds, setCommunityNeeds] = useState<CommunityNeedInsight[]>([]);
+  const [creatingOpportunityId, setCreatingOpportunityId] = useState<string | null>(null);
   const business = businesses[0] ?? null;
 
   const load = useCallback(async () => {
@@ -144,6 +146,22 @@ export default function BusinessOwnerHome() {
     if (isAuthenticated) queueMicrotask(() => { void load(); });
     else queueMicrotask(() => { setLoading(false); });
   }, [isAuthenticated, load]);
+
+  const createCommunityOpportunity = async (insight: CommunityNeedInsight) => {
+    if (!business) return;
+    setCreatingOpportunityId(insight.id);
+    try {
+      const token = await getToken();
+      const response = await fetch(`${getApiBase()}/api/businesses/${business.id}/kinfolk-community-needs/${insight.id}/opportunities`, {
+        method: "POST",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) throw new Error();
+      Alert.alert("Opportunity prepared", "Only opted-in participants with this broad topic may see it. No member identities, messages, or notifications were shared or sent.");
+    } catch {
+      Alert.alert("Could not create opportunity", "Your aggregate insight is unchanged. Please try again.");
+    } finally { setCreatingOpportunityId(null); }
+  };
 
   const sections: AdminSection[] = [
     {
@@ -499,6 +517,9 @@ export default function BusinessOwnerHome() {
                   <View key={insight.id} style={[styles.communityNeedsInsight, { backgroundColor: colors.card, borderColor: `${colors.primary}20` }]}>
                     <Text style={[styles.communityNeedsInsightText, { color: colors.foreground }]}>{insight.memberCount} community members asked for more help with {insight.topicLabel}.</Text>
                     <Text style={[styles.communityNeedsDate, { color: colors.mutedForeground }]}>Threshold reached {new Date(insight.firstReachedAt).toLocaleDateString()}</Text>
+                    <TouchableOpacity disabled={creatingOpportunityId === insight.id} onPress={() => void createCommunityOpportunity(insight)} style={[styles.communityOpportunityButton, { backgroundColor: colors.primary, opacity: creatingOpportunityId === insight.id ? 0.6 : 1 }]}>
+                      <Text style={styles.communityOpportunityButtonText}>{creatingOpportunityId === insight.id ? "Preparing…" : "Create private opportunity"}</Text>
+                    </TouchableOpacity>
                   </View>
                 ))}
               </View>
@@ -629,4 +650,6 @@ const styles = StyleSheet.create({
   communityNeedsInsight: { borderRadius: 11, borderWidth: 1, paddingHorizontal: 11, paddingVertical: 10 },
   communityNeedsInsightText: { fontFamily: "Inter_600SemiBold", fontSize: 12, lineHeight: 17 },
   communityNeedsDate: { fontFamily: "Inter_400Regular", fontSize: 10, marginTop: 4 },
+  communityOpportunityButton: { alignSelf: "flex-start", borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8, marginTop: 9 },
+  communityOpportunityButtonText: { color: "#FFF", fontSize: 11, fontFamily: "Inter_600SemiBold" },
 });

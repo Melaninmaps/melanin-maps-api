@@ -825,6 +825,15 @@ export default function CommunityScreen() {
             {activeGroupId ? <Text style={[styles.groupFeedLabel, { color: colors.mutedForeground }]}>Group posts</Text> : null}
           </View>
         </View>
+        {!activeGroupId && isAuthenticated && <TouchableOpacity
+          activeOpacity={0.85}
+          style={[styles.settingsBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+          onPress={() => router.push("/community-opportunities" as never)}
+          accessibilityLabel="Open Community opportunities"
+        >
+          <Feather name="briefcase" size={16} color={colors.foreground} />
+          <Text style={[styles.settingsBtnText, { color: colors.foreground }]}>Opportunities</Text>
+        </TouchableOpacity>}
         <TouchableOpacity
           activeOpacity={0.85}
           style={[styles.settingsBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
