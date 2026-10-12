@@ -29,7 +29,7 @@ import {
   ensureIsolatedSeriousThreatPrivateReviewSchema,
   ensureMemberActivationInvitationSchema,
   ensureRequiredPublicationSchema,
-  ensureSafetyOperationalSchema,
+  ensureSafetyReliabilitySchema,
   ensureTourCulturalSiteContributionSchema,
   publicationSchemaFailureLogLines,
   runStartupMigrations,
@@ -207,12 +207,13 @@ try {
   // feature-release mode correctly skips unrelated startup migration writers.
   await ensureAdminBusinessProfileReceiptsAndCatalogSchema(logger);
   logger.info("Admin profile receipt and Kinfolk Catalog schemas ready before traffic acceptance");
-  // Trusted contacts and profile-only Check-Ins have authenticated request paths
-  // even during a narrow feature release. Their canonical migrations are
-  // additive and do not start workers, seed data, publish content, or send
-  // notifications, so explicit release mode can safely enforce them here.
-  await ensureSafetyOperationalSchema(logger);
-  logger.info("Safety Hub operational schema ready before traffic acceptance");
+  // Trusted contacts, temporary live-location sessions, durable alert auditing,
+  // and Family Impact intelligence have authenticated request paths even during
+  // a narrow feature release. Their canonical migrations are additive and do
+  // not start workers, seed data, publish content, or send notifications, so
+  // explicit release mode can safely enforce them before traffic acceptance.
+  await ensureSafetyReliabilitySchema(logger);
+  logger.info("Safety reliability schemas ready before traffic acceptance");
   // No startup Safety data cleanup runs here. Live-location retention is enforced
   // only at a member-controlled share's expiry, revocation, block, or consent
   // withdrawal boundary; startup must never erase Safety records implicitly.
