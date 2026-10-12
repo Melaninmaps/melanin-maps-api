@@ -5,9 +5,8 @@ import {
 } from "@workspace/integrations-openai-ai-server";
 import { generateImageBuffer } from "@workspace/integrations-openai-ai-server/image";
 import {
-  audioOpenai,
-  createAudioUploadFile,
   resolveAudioOpenAIConfiguration,
+  speechToText,
   textToSpeechWithStyle,
 } from "@workspace/integrations-openai-ai-server/audio";
 import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/chat/completions";
@@ -15350,15 +15349,13 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
   const transcriptionModel = kinfolkModel("transcription");
 
   try {
-    const file = await createAudioUploadFile(
+    const transcription = await speechToText(
       buffer,
-      `voice.${safeFormat}`,
-      canonicalMimeType,
-    );
-
-    const transcription = await audioOpenai.audio.transcriptions.create(
-      { file, model: transcriptionModel },
-      { signal: controller.signal },
+      safeFormat,
+      {
+        model: transcriptionModel as "gpt-4o-mini-transcribe" | "whisper-1",
+        signal: controller.signal,
+      },
     );
 
     // Log outcome + latency only — never log audio content, transcript text, or user context
@@ -15374,7 +15371,7 @@ router.post("/kinfolk/transcribe", async (req: Request, res: Response) => {
     );
 
     // Empty transcript — provider returned no text (silence, background noise, etc.)
-    const transcriptText = normalizeTranscript(transcription.text);
+    const transcriptText = normalizeTranscript(transcription);
     if (!transcriptText) {
       return void res.status(422).json({
         error: "EMPTY_TRANSCRIPT",

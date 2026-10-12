@@ -154,6 +154,9 @@ type PreferredSpeechModel = "gpt-4o-mini-tts" | "gpt-audio";
 
 const OPENAI_TRANSCRIPTION_MODEL_FALLBACK = "whisper-1" as const;
 const OPENAI_SPEECH_MODEL_FALLBACK = "tts-1" as const;
+type OpenAITranscriptionModel =
+  | "gpt-4o-mini-transcribe"
+  | typeof OPENAI_TRANSCRIPTION_MODEL_FALLBACK;
 
 /**
  * The compact audio models are preferred for quality. Older or restricted
@@ -285,22 +288,35 @@ export async function textToSpeechStream(
   })();
 }
 
-export async function speechToText(audioBuffer: Buffer, format: "wav" | "mp3" | "webm" = "wav"): Promise<string> {
-  const file = await toFile(audioBuffer, `audio.${format}`);
-  try {
-    const response = await getOpenAI().audio.transcriptions.create({
-      file,
-      model: "gpt-4o-mini-transcribe",
-    });
-    return response.text;
-  } catch (error) {
-    if (!shouldTryOpenAIAudioModelFallback(error)) throw error;
-    const response = await getOpenAI().audio.transcriptions.create({
-      file,
-      model: OPENAI_TRANSCRIPTION_MODEL_FALLBACK,
-    });
-    return response.text;
+export async function speechToText(
+  audioBuffer: Buffer,
+  format: "wav" | "mp3" | "webm" | "m4a" = "wav",
+  options: { model?: OpenAITranscriptionModel; signal?: AbortSignal } = {},
+): Promise<string> {
+  const file = await createAudioUploadFile(
+    audioBuffer,
+    `audio.${format}`,
+    format === "m4a" ? "audio/mp4" : `audio/${format}`,
+  );
+  const preferredModel = options.model ?? "gpt-4o-mini-transcribe";
+  const models: OpenAITranscriptionModel[] = preferredModel === OPENAI_TRANSCRIPTION_MODEL_FALLBACK
+    ? [OPENAI_TRANSCRIPTION_MODEL_FALLBACK, "gpt-4o-mini-transcribe"]
+    : ["gpt-4o-mini-transcribe", OPENAI_TRANSCRIPTION_MODEL_FALLBACK];
+
+  for (const [index, model] of models.entries()) {
+    try {
+      const response = await getOpenAI().audio.transcriptions.create(
+        { file, model },
+        options.signal ? { signal: options.signal } : undefined,
+      );
+      return response.text;
+    } catch (error) {
+      const hasFallback = index < models.length - 1;
+      if (!hasFallback || !shouldTryOpenAIAudioModelFallback(error)) throw error;
+    }
   }
+
+  throw new Error("OpenAI transcription compatibility retry exhausted");
 }
 
 export async function speechToTextStream(audioBuffer: Buffer, format: "wav" | "mp3" | "webm" = "wav"): Promise<AsyncIterable<string>> {
