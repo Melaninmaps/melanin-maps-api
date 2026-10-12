@@ -12,6 +12,7 @@ import {
 } from "../serious-credible-threats";
 import type {
   PrivateSeriousThreatReviewItem,
+  SeriousCredibleThreatReporterStatusReader,
   SeriousCredibleThreatReviewQueue,
 } from "../../safety/seriousCredibleThreatReviewQueue";
 
@@ -60,6 +61,19 @@ function acceptingQueue(
     async enqueueForPrivateReview(item) {
       items.push(item);
       return { accepted: true };
+    },
+  };
+}
+
+function statusReader(
+  status: "pending_private_review" | "private_review_complete",
+): SeriousCredibleThreatReporterStatusReader {
+  return {
+    async getReporterPrivateReviewStatus({ reportId, reporterUserId }) {
+      if (reportId !== "private-report-1" || reporterUserId !== "member-42") {
+        return { available: true, found: false };
+      }
+      return { available: true, found: true, status };
     },
   };
 }
@@ -212,6 +226,52 @@ describe("POST /safety/serious-credible-threats/reports", () => {
     expect(dedicatedMount).toBeGreaterThan(memberWall);
     expect(routeIndex).toContain(
       'import seriousCredibleThreatRouter from "./serious-credible-threats"',
+    );
+  });
+});
+
+describe("GET /safety/serious-credible-threats/reports/:reportId/status", () => {
+  it("requires the authenticated reporter and fails closed without an explicitly wired private reader", async () => {
+    const readStatus = vi.fn();
+    const reader: SeriousCredibleThreatReporterStatusReader = {
+      getReporterPrivateReviewStatus: readStatus,
+    };
+
+    const anonymous = await supertest(createApp({ reporterStatusReader: reader }, false))
+      .get("/safety/serious-credible-threats/reports/private-report-1/status");
+    const unavailable = await supertest(createApp())
+      .get("/safety/serious-credible-threats/reports/private-report-1/status");
+
+    expect(anonymous).toMatchObject({ status: 401, body: { error: "Authentication required" } });
+    expect(readStatus).not.toHaveBeenCalled();
+    expect(unavailable).toMatchObject({ status: 503, body: { error: "PRIVATE_REVIEW_UNAVAILABLE" } });
+  });
+
+  it("returns only an opaque status to the submitting member and hides non-owned reports", async () => {
+    const pending = await supertest(createApp({
+      reporterStatusReader: statusReader("pending_private_review"),
+    }))
+      .get("/safety/serious-credible-threats/reports/private-report-1/status");
+    const completed = await supertest(createApp({
+      reporterStatusReader: statusReader("private_review_complete"),
+    }))
+      .get("/safety/serious-credible-threats/reports/private-report-1/status");
+    const other = await supertest(createApp({
+      reporterStatusReader: statusReader("pending_private_review"),
+    }))
+      .get("/safety/serious-credible-threats/reports/another-report/status");
+
+    expect(pending.body).toEqual({
+      reportId: "private-report-1",
+      reviewStatus: "pending_private_review",
+    });
+    expect(completed.body).toEqual({
+      reportId: "private-report-1",
+      reviewStatus: "private_review_complete",
+    });
+    expect(other).toMatchObject({ status: 404, body: { error: "REPORT_NOT_FOUND" } });
+    expect(JSON.stringify(completed.body)).not.toMatch(
+      /category|city|region|evidence|moderator|decision|notice|publication|delivery/i,
     );
   });
 });

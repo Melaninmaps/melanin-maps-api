@@ -102,17 +102,17 @@ function createApp(
 
 function approvalBody() {
   return {
-    decision: "approved",
+    decision: "approved" as const,
     evidence: [
       {
         referenceId: "official-1",
-        kind: "official_public_safety_source",
+        kind: "official_public_safety_source" as const,
         independentlyVerified: true,
         verifiedAt: "2026-10-10T14:30:00.000Z",
       },
       {
         referenceId: "organization-2",
-        kind: "trusted_organization",
+        kind: "trusted_organization" as const,
         independentlyVerified: true,
         verifiedAt: "2026-10-10T14:35:00.000Z",
       },
@@ -211,6 +211,53 @@ describe("private serious credible-threat moderator interface", () => {
         notificationState: "not_eligible",
       },
     });
+  });
+
+  it("gives only the owning reporter an opaque pending/completed state", async () => {
+    const store = new FixtureDurableStore();
+    const adapter = createDurableSeriousCredibleThreatReviewerAdapter(store);
+    await adapter.enqueueForPrivateReview(pendingItem());
+
+    const pending = await adapter.getReporterPrivateReviewStatus({
+      reportId: "private-report-1",
+      reporterUserId: "member-42",
+    });
+    const nonOwner = await adapter.getReporterPrivateReviewStatus({
+      reportId: "private-report-1",
+      reporterUserId: "member-99",
+    });
+    const approval = approvalBody();
+    await adapter.decidePrivateReview({
+      reportId: "private-report-1",
+      moderatorId: "named-admin-7",
+      reviewedAt: NOW,
+      decision: approval.decision,
+      evidence: approval.evidence.map((evidence) => ({
+        ...evidence,
+        verifiedAt: new Date(evidence.verifiedAt),
+      })),
+      publicSummary: approval.publicSummary,
+      requestedExpiresAt: new Date(approval.requestedExpiresAt),
+    });
+    const completed = await adapter.getReporterPrivateReviewStatus({
+      reportId: "private-report-1",
+      reporterUserId: "member-42",
+    });
+
+    expect(pending).toEqual({
+      available: true,
+      found: true,
+      status: "pending_private_review",
+    });
+    expect(nonOwner).toEqual({ available: true, found: false });
+    expect(completed).toEqual({
+      available: true,
+      found: true,
+      status: "private_review_complete",
+    });
+    expect(JSON.stringify(completed)).not.toMatch(
+      /decision|moderator|evidence|notice|publication|delivery|category|city|region/i,
+    );
   });
 
   it("is mounted behind the member wall and remains separate from ordinary moderation", () => {

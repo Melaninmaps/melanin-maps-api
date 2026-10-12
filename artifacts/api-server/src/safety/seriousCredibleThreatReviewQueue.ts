@@ -31,6 +31,31 @@ export type PrivateReviewQueueAdmission =
   | { accepted: false; reason: "unavailable" | "rejected" };
 
 /**
+ * A reporter may learn only whether their own private review is pending or has
+ * completed. Completion does not disclose the review outcome or claim that a
+ * notice, alert, or provider delivery happened.
+ */
+export type SeriousCredibleThreatReporterReviewStatus =
+  | "pending_private_review"
+  | "private_review_complete";
+
+export type SeriousCredibleThreatReporterReviewStatusResult =
+  | {
+      available: true;
+      found: true;
+      status: SeriousCredibleThreatReporterReviewStatus;
+    }
+  | { available: true; found: false }
+  | { available: false };
+
+export interface SeriousCredibleThreatReporterStatusReader {
+  getReporterPrivateReviewStatus(input: {
+    readonly reportId: string;
+    readonly reporterUserId: string;
+  }): Promise<SeriousCredibleThreatReporterReviewStatusResult>;
+}
+
+/**
  * A private-only boundary. There is intentionally no list/read method here:
  * reviewer access belongs to a separately authorized implementation, not this
  * member-facing reporting route.
@@ -141,7 +166,9 @@ export interface DurablePrivateSeriousThreatReviewStore {
 }
 
 export type DurableSeriousCredibleThreatReviewerAdapter =
-  SeriousCredibleThreatReviewQueue & SeriousCredibleThreatPrivateModerator;
+  SeriousCredibleThreatReviewQueue
+  & SeriousCredibleThreatPrivateModerator
+  & SeriousCredibleThreatReporterStatusReader;
 
 function isNonEmptyText(value: unknown, maximumLength: number): value is string {
   return typeof value === "string"
@@ -260,6 +287,28 @@ export function createDurableSeriousCredibleThreatReviewerAdapter(
       return stored === "stored"
         ? { accepted: true }
         : { accepted: false, reason: "rejected" };
+    },
+
+    async getReporterPrivateReviewStatus({
+      reportId,
+      reporterUserId,
+    }): Promise<SeriousCredibleThreatReporterReviewStatusResult> {
+      if (!isNonEmptyText(reportId, 160) || !isNonEmptyText(reporterUserId, 160)) {
+        return { available: true, found: false };
+      }
+      const record = await store.findByReportId(reportId.trim());
+      // A non-owner receives the same result as a missing record so an opaque
+      // report ID cannot be used as a cross-member lookup.
+      if (!record || record.reporterUserId !== reporterUserId.trim()) {
+        return { available: true, found: false };
+      }
+      return {
+        available: true,
+        found: true,
+        status: record.reviewState === "pending_private_review"
+          ? "pending_private_review"
+          : "private_review_complete",
+      };
     },
 
     async listPendingPrivateReviews(

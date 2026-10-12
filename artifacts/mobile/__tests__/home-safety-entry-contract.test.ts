@@ -74,7 +74,21 @@ describe("mobile Home safety entry boundaries", () => {
     expect(seriousThreat).toContain("No street, venue, neighborhood, landmark, or coordinates.");
     expect(seriousThreat).toContain("Private review is unavailable right now. Your report was not saved.");
     expect(seriousThreat).toContain("does not contact emergency services");
+    expect(seriousThreat).toContain("/api/safety/serious-credible-threats/reports/${encodeURIComponent(reportId)}/status");
+    expect(seriousThreat).toContain("private_review_complete");
+    expect(seriousThreat).toContain("This does not mean a public alert was created");
+    expect(seriousThreat).toContain("Check private review status");
     expect(reportPayload).not.toContain("latitude");
     expect(reportPayload).not.toContain("longitude");
+
+    const statusLookup = seriousThreat.slice(
+      seriousThreat.indexOf("const checkReviewStatus"),
+      seriousThreat.indexOf("const topPadding"),
+    );
+    expect(statusLookup).not.toContain("category");
+    expect(statusLookup).not.toContain("city");
+    expect(statusLookup).not.toContain("region");
+    expect(statusLookup).not.toContain("moderator");
+    expect(statusLookup).not.toContain("delivery");
   });
 });

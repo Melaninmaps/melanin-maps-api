@@ -54,6 +54,10 @@ export default function SeriousCredibleThreatScreen() {
   const [anonymousCityNotice, setAnonymousCityNotice] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [reportId, setReportId] = useState<string | null>(null);
+  const [reviewStatus, setReviewStatus] = useState<"pending_private_review" | "private_review_complete">("pending_private_review");
+  const [checkingReviewStatus, setCheckingReviewStatus] = useState(false);
+  const [reviewStatusError, setReviewStatusError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const areaIsSafe = useMemo(() => {
@@ -95,6 +99,13 @@ export default function SeriousCredibleThreatScreen() {
         }),
       });
       if (response.status === 202) {
+        const body = await response.json().catch(() => ({})) as { reportId?: unknown; reviewState?: unknown };
+        if (typeof body.reportId === "string" && body.reportId.trim().length > 0) {
+          setReportId(body.reportId.trim());
+        }
+        if (body.reviewState === "pending_private_review") {
+          setReviewStatus("pending_private_review");
+        }
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         setSubmitted(true);
         return;
@@ -119,6 +130,47 @@ export default function SeriousCredibleThreatScreen() {
     }
   };
 
+  const checkReviewStatus = async () => {
+    if (!reportId || checkingReviewStatus) return;
+    setCheckingReviewStatus(true);
+    setReviewStatusError(null);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      if (!token) throw new Error("SIGN_IN_REQUIRED");
+      const response = await fetch(
+        `${getApiBase()}/api/safety/serious-credible-threats/reports/${encodeURIComponent(reportId)}/status`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      );
+      const body = await response.json().catch(() => ({})) as {
+        error?: string;
+        reviewStatus?: unknown;
+      };
+      if (
+        response.ok
+        && (body.reviewStatus === "pending_private_review" || body.reviewStatus === "private_review_complete")
+      ) {
+        setReviewStatus(body.reviewStatus);
+        return;
+      }
+      if (body.error === "PRIVATE_REVIEW_UNAVAILABLE") {
+        setReviewStatusError("Private review status is unavailable right now. This does not create a public notice or notify anyone.");
+      } else if (response.status === 401) {
+        setReviewStatusError("Sign in again to view the private status for this report.");
+      } else if (response.status === 404) {
+        setReviewStatusError("This private status is unavailable right now. This does not create a public notice or notify anyone.");
+      } else {
+        setReviewStatusError("Private review status could not be verified right now. This does not create a public notice or notify anyone.");
+      }
+    } catch (cause) {
+      const message = cause instanceof Error && cause.message === "SIGN_IN_REQUIRED"
+        ? "Sign in again to view the private status for this report."
+        : "Private review status could not be verified right now. This does not create a public notice or notify anyone.";
+      setReviewStatusError(message);
+    } finally {
+      setCheckingReviewStatus(false);
+    }
+  };
+
   const topPadding = Math.max(insets.top, 24) + 12;
   if (submitted) {
     return (
@@ -133,11 +185,28 @@ export default function SeriousCredibleThreatScreen() {
         <View style={styles.successWrap}>
           <View style={styles.successIcon}><Feather name="check" size={28} color="#FFFFFF" /></View>
           <Text style={[styles.successTitle, { color: colors.foreground }]}>Submitted for private review</Text>
-          <Text style={[styles.body, { color: colors.mutedForeground }]}>Your report is pending restricted review. It has not created a public alert, notified other members, or contacted emergency services.</Text>
+          <Text style={[styles.body, { color: colors.mutedForeground }]}>
+            {reviewStatus === "private_review_complete"
+              ? "Private review is complete. This does not mean a public alert was created, anyone was notified, or emergency services were contacted."
+              : "Your report is pending restricted review. It has not created a public alert, notified other members, or contacted emergency services."}
+          </Text>
           <View style={[styles.noticeCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <Feather name="shield" size={18} color={colors.primary} />
             <Text style={[styles.noticeText, { color: colors.mutedForeground }]}>Any future city-level notice requires independent evidence, a private reviewer decision, and a separate publishing process.</Text>
           </View>
+          {reportId ? (
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Check private review status"
+              disabled={checkingReviewStatus}
+              style={[styles.statusButton, { borderColor: colors.border, opacity: checkingReviewStatus ? 0.65 : 1 }]}
+              onPress={() => { void checkReviewStatus(); }}
+            >
+              <Feather name="refresh-cw" size={16} color={colors.foreground} />
+              <Text style={[styles.statusButtonText, { color: colors.foreground }]}>{checkingReviewStatus ? "Checking private status…" : "Check private review status"}</Text>
+            </TouchableOpacity>
+          ) : null}
+          {reviewStatusError ? <Text accessibilityRole="alert" style={styles.submitError}>{reviewStatusError}</Text> : null}
           <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.primary }]} onPress={() => router.replace("/safety-hub")}>
             <Text style={styles.primaryButtonText}>Return to Safety Hub</Text>
           </TouchableOpacity>
@@ -250,6 +319,8 @@ const styles = StyleSheet.create({
   checkbox: { width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, alignItems: "center", justifyContent: "center", marginTop: 1 },
   primaryButton: { minHeight: 52, borderRadius: 14, alignItems: "center", justifyContent: "center", marginTop: 6 },
   primaryButtonText: { color: "#FFFFFF", fontFamily: "Inter_700Bold", fontSize: 15 },
+  statusButton: { minHeight: 46, width: "100%", borderWidth: 1, borderRadius: 14, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8 },
+  statusButtonText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   submitError: { color: "#B42318", fontFamily: "Inter_500Medium", fontSize: 13, lineHeight: 19, marginTop: 2 },
   footerNote: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, textAlign: "center", marginBottom: 8 },
   successWrap: { flex: 1, padding: 28, alignItems: "center", justifyContent: "center", gap: 18 },

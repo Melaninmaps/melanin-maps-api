@@ -9,6 +9,7 @@ import {
 } from "../safety/seriousCredibleThreat";
 import {
   unavailableSeriousCredibleThreatReviewQueue,
+  type SeriousCredibleThreatReporterStatusReader,
   type SeriousCredibleThreatReviewQueue,
 } from "../safety/seriousCredibleThreatReviewQueue";
 import { configuredIsolatedSeriousThreatReviewerAdapter } from "../safety/postgresSeriousCredibleThreatReviewStore";
@@ -27,6 +28,7 @@ interface ReporterThreatInput {
 
 export interface SeriousCredibleThreatRouterDependencies {
   reviewQueue?: SeriousCredibleThreatReviewQueue;
+  reporterStatusReader?: SeriousCredibleThreatReporterStatusReader;
   now?: () => Date;
   createReportId?: () => string;
 }
@@ -91,8 +93,56 @@ export function createSeriousCredibleThreatRouter(
   const router: IRouter = Router();
   const reviewQueue =
     dependencies.reviewQueue ?? unavailableSeriousCredibleThreatReviewQueue;
+  const reporterStatusReader = dependencies.reporterStatusReader;
   const now = dependencies.now ?? (() => new Date());
   const createReportId = dependencies.createReportId ?? randomUUID;
+
+  router.get(
+    "/safety/serious-credible-threats/reports/:reportId/status",
+    async (req: Request, res: Response): Promise<void> => {
+      if (!req.user?.id) {
+        res.status(401).json({ error: "Authentication required" });
+        return;
+      }
+
+      const reportId = typeof req.params.reportId === "string"
+        ? req.params.reportId.trim()
+        : "";
+      if (!reportId || reportId.length > 160) {
+        res.status(404).json({ error: "REPORT_NOT_FOUND" });
+        return;
+      }
+      if (!reporterStatusReader) {
+        res.status(503).json({ error: "PRIVATE_REVIEW_UNAVAILABLE" });
+        return;
+      }
+
+      try {
+        const status = await reporterStatusReader.getReporterPrivateReviewStatus({
+          reportId,
+          reporterUserId: req.user.id,
+        });
+        if (!status.available) {
+          res.status(503).json({ error: "PRIVATE_REVIEW_UNAVAILABLE" });
+          return;
+        }
+        if (!status.found) {
+          res.status(404).json({ error: "REPORT_NOT_FOUND" });
+          return;
+        }
+
+        // This is intentionally not the reviewer decision: it contains no
+        // evidence, reviewer identity, area, publication, or delivery state.
+        res.json({ reportId, reviewStatus: status.status });
+      } catch (error) {
+        req.log?.error(
+          { error },
+          "Failed to read member-owned serious-threat review status",
+        );
+        res.status(503).json({ error: "PRIVATE_REVIEW_UNAVAILABLE" });
+      }
+    },
+  );
 
   router.post(
     "/safety/serious-credible-threats/reports",
@@ -213,7 +263,10 @@ export function createSeriousCredibleThreatRouter(
 const configuredReviewAdapter = configuredIsolatedSeriousThreatReviewerAdapter();
 const seriousCredibleThreatRouter = createSeriousCredibleThreatRouter(
   configuredReviewAdapter
-    ? { reviewQueue: configuredReviewAdapter }
+    ? {
+        reviewQueue: configuredReviewAdapter,
+        reporterStatusReader: configuredReviewAdapter,
+      }
     : { reviewQueue: unavailableSeriousCredibleThreatReviewQueue },
 );
 
