@@ -76,6 +76,7 @@ describe("Safety Heat P0 privacy and evidence controls", () => {
 
   it("queries only recent approved survey aggregates and suppresses every insufficient city", () => {
     expect(heatmapRouteSource).toContain("status = 'approved'");
+    expect(heatmapRouteSource).toContain("community_intelligence_consent_at IS NOT NULL");
     expect(heatmapRouteSource).toContain("created_at >= NOW() - ($1::int * INTERVAL '1 day')");
     expect(heatmapRouteSource).toContain("HAVING COUNT(*) >= $2");
     expect(heatmapRouteSource).toContain("safetyHeatPolicy.minimumApprovedSurveyCount");
@@ -87,8 +88,21 @@ describe("Safety Heat P0 privacy and evidence controls", () => {
     expect(heatmapRouteSource).not.toMatch(/reporter_id|reporter_name|incident_area/i);
   });
 
+  it("offers a separate authenticated city aggregate without sending map coordinates or raw reports", () => {
+    expect(heatmapRouteSource).toContain('router.get("/safety/heatmap/city"');
+    expect(heatmapRouteSource).toContain('geography: "city_aggregate_only"');
+    expect(heatmapRouteSource).toContain('AND LOWER(city) = LOWER($3)');
+    expect(heatmapRouteSource).toContain('rawReportsIncluded: false');
+    expect(heatmapRouteSource).toContain('reporterLocationsIncluded: false');
+    expect(heatmapRouteSource).toContain('Unlike\n * the map-layer route, this intentionally does not put coordinates on a\n * device');
+    expect(heatmapRouteSource).not.toContain('location history');
+  });
+
   it("invalidates aggregate heat data after each source-survey insert without deleting source records", () => {
     expect(surveysRouteSource.match(/invalidateSafetyHeatmapCache\(\)/g)).toHaveLength(2);
+    expect(surveysRouteSource).toContain("communityIntelligenceConsent");
+    expect(surveysRouteSource).toContain("communityIntelligenceConsentAt");
+    expect(surveysRouteSource).not.toContain("sendSafetyReportPushForCity");
     expect(surveysRouteSource).not.toMatch(/DELETE FROM neighborhood_surveys|TRUNCATE neighborhood_surveys/i);
   });
 });

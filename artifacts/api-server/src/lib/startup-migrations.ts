@@ -6261,6 +6261,18 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       BEFORE UPDATE OR DELETE ON business_catalog_cohort_audit_events
       FOR EACH ROW EXECUTE FUNCTION public.prevent_business_profile_receipt_mutation();`,
   },
+  {
+    // This is additive and deliberately leaves every historical survey consent
+    // value null. Only a new explicit member choice can enable an aggregate.
+    name: "community_intelligence_explicit_consent_v1",
+    sql: `
+      ALTER TABLE IF EXISTS neighborhood_surveys
+        ADD COLUMN IF NOT EXISTS community_intelligence_consent_at TIMESTAMPTZ;
+      CREATE INDEX IF NOT EXISTS neighborhood_surveys_city_consented_approved_idx
+        ON neighborhood_surveys (city, created_at DESC)
+        WHERE status = 'approved' AND community_intelligence_consent_at IS NOT NULL;
+    `,
+  },
 ];
 
 /**

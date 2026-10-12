@@ -74,6 +74,7 @@ router.get("/safety/heatmap", async (req: Request, res: Response) => {
               COUNT(*)::int AS count
        FROM neighborhood_surveys
        WHERE status = 'approved' AND city IS NOT NULL AND city <> ''
+         AND community_intelligence_consent_at IS NOT NULL
          AND created_at >= NOW() - ($1::int * INTERVAL '1 day')
          ${city ? "AND LOWER(city) = LOWER($3)" : ""}
        GROUP BY city
@@ -134,6 +135,75 @@ router.get("/safety/heatmap", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to fetch safety heatmap");
     res.status(500).json({ error: "Failed to fetch safety heatmap" });
+  }
+});
+
+/**
+ * Returns a member-selected city aggregate for Community Intelligence. Unlike
+ * the map-layer route, this intentionally does not put coordinates on a
+ * device: the response is limited to the selected city and a thresholded,
+ * delayed aggregate.
+ */
+router.get("/safety/heatmap/city", async (req: Request, res: Response) => {
+  const city = typeof req.query.city === "string" ? req.query.city.trim() : "";
+  if (!city || city.length > 120) {
+    res.status(400).json({ error: "A valid city is required" });
+    return;
+  }
+
+  try {
+    const result = await pool.query<{ city: string; avg_score: number; count: number }>(
+      `SELECT city,
+              ROUND(AVG(safety_score)::numeric, 1)::float AS avg_score,
+              COUNT(*)::int AS count
+       FROM neighborhood_surveys
+       WHERE status = 'approved' AND city IS NOT NULL AND city <> ''
+         AND community_intelligence_consent_at IS NOT NULL
+         AND created_at >= NOW() - ($1::int * INTERVAL '1 day')
+         AND LOWER(city) = LOWER($3)
+       GROUP BY city
+       HAVING COUNT(*) >= $2
+       LIMIT 1`,
+      [
+        safetyHeatPolicy.recencyWindowDays,
+        safetyHeatPolicy.minimumApprovedSurveyCount,
+        city,
+      ],
+    );
+
+    const row = result.rows[0] ?? null;
+    const payload = {
+      city: row?.city ?? city,
+      dataStatus: row ? "sufficient_evidence" as const : "insufficient_evidence" as const,
+      point: row
+        ? {
+            city: row.city,
+            state: CITY_COORDS[row.city]?.state ?? null,
+            avgScore: row.avg_score,
+            approvedSurveyCount: row.count,
+            signal:
+              row.avg_score >= 70 ? "higher_reported_safety" as const
+              : row.avg_score >= 50 ? "mixed_reported_safety" as const
+              : "lower_reported_safety" as const,
+            evidence: {
+              confidence: safetyHeatConfidence(row.count),
+              observationCount: row.count,
+            },
+          }
+        : null,
+      evidence: {
+        source: "approved_neighborhood_survey_aggregate" as const,
+        geography: "city_aggregate_only" as const,
+        rawReportsIncluded: false as const,
+        reporterLocationsIncluded: false as const,
+        minimumApprovedSurveyCount: safetyHeatPolicy.minimumApprovedSurveyCount,
+        recencyWindowDays: safetyHeatPolicy.recencyWindowDays,
+      },
+    };
+    res.json(payload);
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch city Community Intelligence aggregate");
+    res.status(500).json({ error: "Failed to fetch city Community Intelligence aggregate" });
   }
 });
 

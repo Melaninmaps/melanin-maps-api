@@ -8,6 +8,9 @@ const businessMapSource = source("../components/BusinessMapView.tsx");
 const fullMapSource = source("../components/FullMapView.tsx");
 const mapTabSource = source("../components/MapTabView.tsx");
 const geoAlertSource = source("../hooks/useGeoSafeAlert.ts");
+const communityIntelligenceSource = source("../app/report-intelligence.tsx");
+const safetyPulseSource = source("../components/SafetyPulseWidget.tsx");
+const neighborhoodSurveySource = source("../app/neighborhood-survey.tsx");
 
 describe("mobile Safety Heat privacy and evidence presentation", () => {
   it("shows no city circle when the API marks evidence insufficient or unavailable", () => {
@@ -39,5 +42,30 @@ describe("mobile Safety Heat privacy and evidence presentation", () => {
     expect(geoAlertSource).toContain("reporter identity, reporter location, or device coordinates.");
     expect(geoAlertSource).not.toContain("neighborhood:");
     expect(geoAlertSource).not.toContain("surveyCount:");
+  });
+
+  it("lets a member choose a city for a reduced Community Intelligence aggregate without requesting device location", () => {
+    expect(communityIntelligenceSource).toContain("/api/safety/heatmap/city?city=");
+    expect(communityIntelligenceSource).toContain("City for Community Intelligence survey signal");
+    expect(communityIntelligenceSource).toContain("city-level community survey signal");
+    expect(communityIntelligenceSource).toContain("No individual reports or member locations are shown.");
+    expect(communityIntelligenceSource).toContain("No city signal is shown");
+    expect(communityIntelligenceSource).not.toContain("expo-location");
+    expect(communityIntelligenceSource).not.toContain("getCurrentPositionAsync");
+  });
+
+  it("does not fetch or reveal individual surveys in the Safety Pulse card", () => {
+    expect(safetyPulseSource).toContain("City-level, delayed aggregates only");
+    expect(safetyPulseSource).toContain("No individual reports, neighborhoods, member locations, or timestamps are shown.");
+    expect(safetyPulseSource).not.toContain("/api/surveys");
+    expect(safetyPulseSource).not.toContain("getCurrentPositionAsync");
+  });
+
+  it("requires an explicit city-level aggregate choice before a survey is submitted", () => {
+    expect(neighborhoodSurveySource).toContain("communityIntelligenceConsent: true");
+    expect(neighborhoodSurveySource).toContain("Consent to delayed city aggregate participation");
+    expect(neighborhoodSurveySource).toContain("Choose a city yourself.");
+    expect(neighborhoodSurveySource).not.toContain("useAutoContext");
+    expect(neighborhoodSurveySource).not.toContain("expo-location");
   });
 });

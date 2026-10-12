@@ -33,6 +33,10 @@ export const neighborhoodSurveysTable = pgTable("neighborhood_surveys", {
   moderatorNotes: text("moderator_notes"),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
   reviewedBy: varchar("reviewed_by"),
+  // Only a member who explicitly agrees may contribute to a delayed,
+  // city-level Community Intelligence aggregate. Historical rows remain
+  // excluded because this starts null and is never backfilled.
+  communityIntelligenceConsentAt: timestamp("community_intelligence_consent_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

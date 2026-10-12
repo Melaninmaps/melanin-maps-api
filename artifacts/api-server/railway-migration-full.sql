@@ -11006,6 +11006,13 @@ BEGIN
   END IF;
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'neighborhood_surveys' AND column_name = 'community_intelligence_consent_at'
+  ) THEN
+    -- Historical surveys remain excluded until a member makes a new explicit choice.
+    ALTER TABLE IF EXISTS public.neighborhood_surveys ADD COLUMN community_intelligence_consent_at timestamp with time zone;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'notification_preferences' AND column_name = 'user_id'
   ) THEN
     ALTER TABLE IF EXISTS public.notification_preferences ADD COLUMN user_id character varying NOT NULL;

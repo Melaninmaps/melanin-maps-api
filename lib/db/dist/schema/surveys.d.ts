@@ -532,6 +532,23 @@ export declare const neighborhoodSurveysTable: import("drizzle-orm/pg-core").PgT
         }, {}, {
             length: number | undefined;
         }>;
+        communityIntelligenceConsentAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "community_intelligence_consent_at";
+            tableName: "neighborhood_surveys";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         createdAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "created_at";
             tableName: "neighborhood_surveys";
@@ -1257,6 +1274,7 @@ export declare const insertSurveySchema: z.ZodObject<{
     safetyScore: z.ZodOptional<z.ZodInt>;
     communityScore: z.ZodOptional<z.ZodInt>;
     walkabilityScore: z.ZodOptional<z.ZodInt>;
+    communityIntelligenceConsentAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
 }, {
     out: {};
     in: {};
@@ -1791,6 +1809,23 @@ export declare const selectSurveySchema: import("drizzle-zod").BuildSchema<"sele
     }, {}, {
         length: number | undefined;
     }>;
+    communityIntelligenceConsentAt: import("drizzle-orm/pg-core").PgColumn<{
+        name: "community_intelligence_consent_at";
+        tableName: "neighborhood_surveys";
+        dataType: "date";
+        columnType: "PgTimestamp";
+        data: Date;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     createdAt: import("drizzle-orm/pg-core").PgColumn<{
         name: "created_at";
         tableName: "neighborhood_surveys";
@@ -1813,10 +1848,8 @@ export declare const SAFETY_REPORT_CATEGORIES: readonly ["safety", "sundown", "d
 export declare const SAFETY_REPORT_SEVERITIES: readonly ["low", "medium", "high", "critical"];
 export declare const ROUTING_TYPES: readonly ["private", "moderation", "priority"];
 export declare const insertSafetyReportSchema: z.ZodObject<{
-    description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    targetType: z.ZodOptional<z.ZodString>;
-    targetId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    targetName: z.ZodString;
+    reporterId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    reporterName: z.ZodOptional<z.ZodString>;
     category: z.ZodEnum<{
         business: "business";
         safety: "safety";
@@ -1826,14 +1859,16 @@ export declare const insertSafetyReportSchema: z.ZodObject<{
         positive: "positive";
         police: "police";
     }>;
-    reporterId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    reporterName: z.ZodOptional<z.ZodString>;
     encounterType: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    targetType: z.ZodOptional<z.ZodString>;
+    targetId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    targetName: z.ZodString;
     incidentCity: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     incidentRegion: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     incidentArea: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     incidentLocationSource: z.ZodOptional<z.ZodString>;
     incidentLocationPrecision: z.ZodOptional<z.ZodString>;
+    description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     severity: z.ZodDefault<z.ZodEnum<{
         medium: "medium";
         low: "low";
