@@ -9521,13 +9521,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   // a directory query or current-research task. Render a shared truthful plan
   // through the selected visible Kinfolk Voice before the model queue so mode
   // selection is reliable under temporary provider pressure.
+  const deterministicVoiceMode = typeof requestedVoiceMode === "string"
+    ? requestedVoiceMode
+    : await getCachedPrefs(req.user.id)
+      .then((prefs) => prefs?.personalityMode)
+      .catch(() => undefined);
   if (
     verifiedImageUrls.length === 0 &&
-    typeof requestedVoiceMode === "string" &&
+    typeof deterministicVoiceMode === "string" &&
     isKinfolkRaisePreparationRequest(message)
   ) {
     const careerResponse = renderKinfolkRaisePreparation(
-      normalizeKinfolkConversationMode(requestedVoiceMode),
+      normalizeKinfolkConversationMode(deterministicVoiceMode),
     );
     const careerSessionId = await persistDeterministicDiscoveryTurn({
       userId: req.user.id,

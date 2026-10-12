@@ -78,7 +78,7 @@ const NUMBER_WORDS: Readonly<Record<string, number>> = {
   fourteen: 14,
 };
 
-const EXPLICIT_CURRENT_ITINERARY_REQUEST = /^\s*(?:(?:can|could|would)\s+you\s+|please\s+|help\s+(?:me|us)\s+)?(?:plan|build|make|create)\b[\s\S]{0,160}\b(?:itinerary|day[- ]by[- ]day|trip|visit|getaway|weekend|vacation)\b/i;
+const EXPLICIT_CURRENT_ITINERARY_REQUEST = /^\s*(?:(?:can|could|would)\s+you\s+|please\s+|help\s+(?:me|us)\s+)?(?:plan|build|make|create)\b[\s\S]{0,160}\b(?:itinerary|day(?:[- ]by[- ]day)?|trip|visit|getaway|weekend|vacation)\b/i;
 const FENCED_CONTENT = /^\s*```(?:json)?\s*[\s\S]*```\s*$/i;
 const MAX_PLAIN_TEXT_REPLY_LENGTH = 12_000;
 
