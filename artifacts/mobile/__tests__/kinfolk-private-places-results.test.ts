@@ -13,13 +13,21 @@ const nearbySearchSource = privatePlacesSource.slice(
   privatePlacesSource.indexOf("const nearby = async"),
   privatePlacesSource.indexOf("const topPad"),
 );
+const nearbyResultStart = privatePlacesSource.indexOf(
+  '{nearbySearched ? <View testID="private-places-nearby-results"',
+);
+const privatePlaceFormStart = privatePlacesSource.indexOf(
+  '<Text style={[styles.section, { color: colors.mutedForeground }]}>{editingPlace ? "UPDATE A PRIVATE PLACE" : "SAVE A PRIVATE PLACE"}</Text>',
+);
 const resultSurfaceSource = privatePlacesSource.slice(
-  privatePlacesSource.indexOf('{nearbySearched ? <View testID="private-places-nearby-results"'),
-  privatePlacesSource.indexOf('<Text style={[styles.section, { color: colors.mutedForeground }]}>SAVE A PRIVATE PLACE</Text>'),
+  nearbyResultStart,
+  privatePlaceFormStart,
 );
 
 describe("mobile Private Places governed nearby results", () => {
   it("renders governed public-business cards and passes only the public destination ID to the business route", () => {
+    expect(nearbyResultStart).toBeGreaterThan(-1);
+    expect(privatePlaceFormStart).toBeGreaterThan(nearbyResultStart);
     expect(nearbySearchSource).toContain("/nearby");
     expect(nearbySearchSource).toContain("setNearbyBusinesses(readPublicDirectoryBusinesses(payload))");
     expect(resultSurfaceSource).toContain('testID="private-places-nearby-results"');
