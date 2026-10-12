@@ -573,6 +573,13 @@ export default function CommunityScreen() {
     groupCategory === "all" ? memberGroups : memberGroups.filter((g) => g.category === groupCategory);
 
   const pickAndUploadMedia = async (kind: "image" | "video") => {
+    if (newPostVisibility === "followers_only" || newPostIsPrivateTopic || activeGroupId !== null) {
+      Alert.alert(
+        "Private Community media isn't available yet",
+        "Photos and videos currently use public delivery. Your text post can stay private to followers or Group members, but remove that privacy setting before attaching media.",
+      );
+      return;
+    }
     if (Platform.OS === "web") { Alert.alert("Not supported", "Media uploads are available on the mobile app."); return; }
     const remainingSlots = Math.max(0, 5 - mediaAttachments.length);
     if (remainingSlots <= 0) {
@@ -644,6 +651,14 @@ export default function CommunityScreen() {
 
   const submitPost = async () => {
     if (!newPostText.trim()) return;
+    const privateAudience = newPostVisibility === "followers_only" || newPostIsPrivateTopic || activeGroupId !== null;
+    if (privateAudience && mediaAttachments.length > 0) {
+      Alert.alert(
+        "Private Community media isn't available yet",
+        "Remove the photo or video to share this post privately, or choose Public before attaching media.",
+      );
+      return;
+    }
     if (uploadingMedia) {
       Alert.alert("Upload in progress", "Wait for your attachments to finish uploading before posting.");
       return;
@@ -2046,6 +2061,13 @@ export default function CommunityScreen() {
                 <TouchableOpacity activeOpacity={0.85}
                   key={v}
                   onPress={() => {
+                    if (v === "followers_only" && mediaAttachments.length > 0) {
+                      Alert.alert(
+                        "Remove media before changing privacy",
+                        "Photos and videos currently use public delivery. Remove the attachment to make this a followers-only post.",
+                      );
+                      return;
+                    }
                     setNewPostVisibility(v);
                     if (v === "followers_only" && newPostCommentPolicy === "everyone") setNewPostCommentPolicy("followers");
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -2128,7 +2150,16 @@ export default function CommunityScreen() {
                   </View>
                   <TouchableOpacity
                     style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-                    onPress={() => setNewPostIsPrivateTopic((v) => !v)}
+                    onPress={() => {
+                      if (!newPostIsPrivateTopic && mediaAttachments.length > 0) {
+                        Alert.alert(
+                          "Remove media before making this topic private",
+                          "Photos and videos currently use public delivery. Remove the attachment to share this topic only with followers.",
+                        );
+                        return;
+                      }
+                      setNewPostIsPrivateTopic((v) => !v);
+                    }}
                     activeOpacity={0.8}
                   >
                     <View style={[{ width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, alignItems: "center", justifyContent: "center" }, newPostIsPrivateTopic ? { backgroundColor: "#7B2D8B", borderColor: "#7B2D8B" } : { borderColor: "#D1D5DB" }]}>

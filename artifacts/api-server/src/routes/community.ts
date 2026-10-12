@@ -126,6 +126,12 @@ function normalizeCommentPolicy(value: unknown, visibility: string): CommentPoli
   return visibility === "followers_only" ? "followers" : "everyone";
 }
 
+function hasPrivateCommunityAudience(row: Record<string, any>): boolean {
+  return Boolean(row.group_id ?? row.groupId)
+    || (row.visibility ?? "public") === "followers_only"
+    || Boolean(row.is_private_topic ?? row.isPrivateTopic);
+}
+
 function rememberTikTokPreview(url: string, preview: TikTokVideoPreview): void {
   if (tiktokPreviewCache.size >= TIKTOK_PREVIEW_CACHE_MAX_ENTRIES) {
     const oldestKey = tiktokPreviewCache.keys().next().value;
@@ -229,6 +235,7 @@ async function resolveCommentAccess(postId: string, viewerId: string): Promise<C
 
 /** Keeps feed and thread responses on the same camel-case public contract. */
 function serializeCommunityPost(row: Record<string, any>) {
+  const hasPrivateAudience = hasPrivateCommunityAudience(row);
   return {
     id: row.id,
     authorId: row.author_id ?? row.authorId,
@@ -243,7 +250,10 @@ function serializeCommunityPost(row: Record<string, any>) {
     businessId: row.business_id ?? row.businessId,
     businessName: row.business_name ?? row.businessName,
     businessLink: row.business_link ?? row.businessLink,
-    mediaUrls: normalizeCommunityMediaUrls(row.media_urls ?? row.mediaUrls),
+    // General Community uploads use public delivery. Until a private-object
+    // delivery path exists, never return those public URLs for a private
+    // audience post, including Group posts.
+    mediaUrls: hasPrivateAudience ? [] : normalizeCommunityMediaUrls(row.media_urls ?? row.mediaUrls),
     savedPlaceId: row.saved_place_id ?? row.savedPlaceId,
     locationTag: row.location_tag ?? row.locationTag,
     locationVenueName: row.location_venue_name ?? row.locationVenueName ?? null,
@@ -397,7 +407,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
       content: r.content, category: r.category, postType: r.post_type,
       groupId: r.group_id ?? null,
       businessId: r.business_id, businessName: r.business_name, businessLink: r.business_link,
-      mediaUrls: normalizeCommunityMediaUrls(r.media_urls), savedPlaceId: r.saved_place_id,
+      mediaUrls: hasPrivateCommunityAudience(r) ? [] : normalizeCommunityMediaUrls(r.media_urls), savedPlaceId: r.saved_place_id,
       locationTag: r.location_tag, locationVenueName: (r as any).location_venue_name ?? null,
       locationCity: (r as any).location_city ?? null, locationCountry: (r as any).location_country ?? null,
       locationPlaceId: (r as any).location_place_id ?? null, locationType: r.location_type,
@@ -577,11 +587,24 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       resolvedGroupId = groupId;
     }
 
+    const privateAudienceRequested = visibility === "followers_only" || isPrivateTopic || resolvedGroupId !== null;
+
     const mediaValidation = await validateCommunityMediaUrls(mediaUrls, req.user.id);
     if (mediaValidation.rejected.length > 0) {
       res.status(400).json({
         error: "Media must be your completed upload or a public link from a supported social video platform.",
         code: "INVALID_MEDIA_URL",
+      });
+      return;
+    }
+    if (privateAudienceRequested && mediaValidation.urls.length > 0) {
+      // Community uploads are delivered from a public bucket. Treating a URL as
+      // private merely because its post is follower- or Group-scoped would leak
+      // the media outside the Community visibility check. Do not create a post
+      // that makes that promise until private media delivery is implemented.
+      res.status(400).json({
+        error: "Photos and videos are not available for followers-only or Group posts yet. Remove the attachment or share the post publicly.",
+        code: "PRIVATE_MEDIA_UNAVAILABLE",
       });
       return;
     }
@@ -736,7 +759,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
     const threadId = segments.length > 1 ? randomUUID() : null;
     const postAuthorId = req.user.id; // capture before map callback (TS narrowing)
 
-    const visValue = (isPrivateTopic ? "followers_only" : visibility === "followers_only" ? "followers_only" : "public") as "public" | "followers_only";
+    const visValue = (privateAudienceRequested ? "followers_only" : "public") as "public" | "followers_only";
     const safeCommentPolicy = normalizeCommentPolicy(commentPolicy, visValue);
     const safeRating = (["everyone", "teen", "young_adult", "adult"].includes(audienceRating) ? audienceRating : "everyone") as "everyone" | "teen" | "young_adult" | "adult";
 
