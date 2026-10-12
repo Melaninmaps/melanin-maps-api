@@ -315,7 +315,7 @@ describe("Alias resolution contract — key alias/city pairs", () => {
 
 
 describe("Philadelphia stylist deterministic fast path", () => {
-  it("searches Philadelphia salon listings before offering optional hair refinements", () => {
+  it("searches Philadelphia salon listings and returns an optional hair refinement", () => {
     const message = "Can you find me a stylist in Philadelphia";
     const subject = deriveBusinessSubject(message);
     const decision = classifyKinfolkRequest(message, "Philadelphia");
@@ -327,7 +327,13 @@ describe("Philadelphia stylist deterministic fast path", () => {
     });
     expect(subject?.key).toBe("salon");
     expect(decision.route).toBe("business_discovery");
-    expect(steps).toHaveLength(0);
+    expect(steps).toEqual([
+      expect.objectContaining({
+        id: "business-hair-service",
+        skippable: true,
+        persistence: "temporary",
+      }),
+    ]);
   });
 
   it("invokes and returns from deterministic discovery before model policy or provider setup", () => {

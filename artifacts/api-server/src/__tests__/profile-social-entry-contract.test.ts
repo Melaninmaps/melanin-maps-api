@@ -7,14 +7,14 @@ function source(relativePath: string): string {
 }
 
 describe("profile social entry points", () => {
-  const memberProfile = source("../../../mobile/app/user-profile/[userId].tsx");
+  const memberProfile = source("../../../mobile/app/user/[id].tsx");
   const ownProfile = source("../../../mobile/app/(tabs)/profile.tsx");
   const conversations = source("../routes/conversations.ts");
 
   it("starts profile DMs through the server-authorized conversation endpoint", () => {
     expect(memberProfile).toContain('fetch(`${getApiBase()}/api/conversations`, {');
     expect(memberProfile).toContain('type: "dm"');
-    expect(memberProfile).toContain("participantId: userId");
+    expect(memberProfile).toContain("participantId: id");
     expect(memberProfile).toContain("Message unavailable");
     expect(memberProfile).toContain(">Message</Text>");
     expect(conversations).toContain("if (!recipient.allowDm)");
