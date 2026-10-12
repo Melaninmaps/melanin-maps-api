@@ -225,6 +225,10 @@ async function main(): Promise<void> {
     const contactRead = await request(app).get(`/safety/location-shares/${token}/view`).set("x-qa-user", CONTACT);
     assert(contactRead.status === 200 && contactRead.body.share?.coordinateState === "current", "accepted contact must read a fresh active coordinate");
     assert(!("lastUpdatedAt" in contactRead.body.share), "recipient location view must not disclose a timestamp");
+    await client.query("INSERT INTO user_blocks (blocker_id, blocked_id) VALUES ($1,$2)", [OWNER, CONTACT]);
+    const blockedRead = await request(app).get(`/safety/location-shares/${token}/view`).set("x-qa-user", CONTACT);
+    assert(blockedRead.status === 403, "a newly blocked trusted relationship must immediately deny future coordinate reads");
+    await client.query("DELETE FROM user_blocks WHERE blocker_id = $1 AND blocked_id = $2", [OWNER, CONTACT]);
     const revoke = await request(app).delete(`/safety/trusted-shares/${shareId}`).set("x-qa-user", OWNER);
     assert(revoke.status === 200, "owner must be able to immediately revoke trusted relationship");
     const revokedRead = await request(app).get(`/safety/location-shares/${token}/view`).set("x-qa-user", CONTACT);
