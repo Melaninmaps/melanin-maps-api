@@ -141,7 +141,7 @@ describe("Kinfolk chat static wiring", () => {
 
   it("keeps deterministic directory discovery out of every current-research turn", () => {
     expect(chatRoute).toMatch(
-      /verifiedImageUrls\.length === 0\s*&&\s*!requiresCurrentResearch\(message\)\s*&&\s*\(await tryAnswerDeterministicBusinessDiscovery\(/,
+      /verifiedImageUrls\.length === 0\s*&&\s*!requiresCurrentResearch\(message\)\s*&&\s*!isTravelPlanningPrompt\(message\)\s*&&\s*\(await tryAnswerDeterministicBusinessDiscovery\(/,
     );
   });
 
@@ -696,8 +696,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(handoffBlock).toContain(".orderBy(desc(kinfolkSessionsTable.updatedAt))");
     expect(chatRoute).toContain("crossSessionHandoff?.scope");
     expect(chatRoute).toContain("conversationHandoff: conversationContextScope?.handoff ?? null");
-    expect(chatRoute).toContain('conversationContextScope?.handoff?.state !== "resumed"');
-    expect(chatRoute).toContain(": historyMessages");
+    expect(chatRoute).toContain("buildLeanGeneralHistory(scopedConversationMessages)");
+    expect(chatRoute).toContain("reintroduce older drafts or unrelated topic switches");
     expect(chatRoute).toContain("This member explicitly resumed the bounded private thread above");
     expect(chatRoute).toContain("do not say that prior context is unavailable");
     expect(chatRoute).toContain("EXPLICIT RESUMED THREAD");

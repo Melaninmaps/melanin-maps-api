@@ -9500,6 +9500,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   if (
     verifiedImageUrls.length === 0 &&
     !requiresCurrentResearch(message) &&
+    !isTravelPlanningPrompt(message) &&
     (await tryAnswerDeterministicBusinessDiscovery({
       req,
       res,
@@ -12997,11 +12998,12 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       typeof openai.chat.completions.create
     >[0]["messages"] = [
       { role: "system", content: systemPromptWithResponseFormat },
-      // An explicit cross-session return-later resume has already passed the
-      // owner, active-session, and bounded-thread gates above. Lean chat must
-      // use that scoped thread rather than the fresh session's empty history.
-      ...(leanGeneralChat && conversationContextScope?.handoff?.state !== "resumed"
-        ? buildLeanGeneralHistory(existingMessages)
+      // Lean general chat must use the same bounded scope that was resolved
+      // above. In particular, an explicit return to an earlier draft cannot
+      // reintroduce older drafts or unrelated topic switches from the saved
+      // session just because the ordinary-answer path is lean.
+      ...(leanGeneralChat
+        ? buildLeanGeneralHistory(scopedConversationMessages)
         : historyMessages),
       { role: "user", content: currentUserContent },
     ];
