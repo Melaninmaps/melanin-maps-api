@@ -130,6 +130,14 @@ export function buildCommunityHashtagContextQuery(input: {
         SELECT lower(tag)
         FROM unnest(COALESCE(cp.hashtags, ARRAY[]::text[])) AS tag
         WHERE lower(tag) = ANY($2::text[])
+      ) || ARRAY(
+        SELECT opportunity.topic_key
+        FROM community_opportunity_fulfillments fulfillment
+        JOIN community_opportunities opportunity ON opportunity.id = fulfillment.opportunity_id
+        WHERE fulfillment.community_post_id::text = cp.id::text
+          AND fulfillment.status = 'published'
+          AND opportunity.status = 'fulfilled'
+          AND opportunity.topic_key = ANY($2::text[])
       ) AS matched_hashtags
     FROM community_posts cp
     LEFT JOIN users u ON u.id = cp.author_id
@@ -150,10 +158,21 @@ export function buildCommunityHashtagContextQuery(input: {
         FROM content_reports cr
         WHERE cr.target_type = 'post' AND cr.target_id = cp.id
       )
-      AND EXISTS (
-        SELECT 1
-        FROM unnest(COALESCE(cp.hashtags, ARRAY[]::text[])) AS tag
-        WHERE lower(tag) = ANY($2::text[])
+      AND (
+        EXISTS (
+          SELECT 1
+          FROM unnest(COALESCE(cp.hashtags, ARRAY[]::text[])) AS tag
+          WHERE lower(tag) = ANY($2::text[])
+        )
+        OR EXISTS (
+          SELECT 1
+          FROM community_opportunity_fulfillments fulfillment
+          JOIN community_opportunities opportunity ON opportunity.id = fulfillment.opportunity_id
+          WHERE fulfillment.community_post_id::text = cp.id::text
+            AND fulfillment.status = 'published'
+            AND opportunity.status = 'fulfilled'
+            AND opportunity.topic_key = ANY($2::text[])
+        )
       )
       AND COALESCE(to_jsonb(cp)->>'internal_test_content', 'false') <> 'true'
       AND COALESCE(to_jsonb(u)->>'is_load_test', 'false') <> 'true'
