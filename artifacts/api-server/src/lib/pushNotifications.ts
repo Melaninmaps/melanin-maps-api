@@ -254,15 +254,26 @@ export async function sendCorroboratedPoliceIceAlert(input: {
       return { recipientCount: 0, delivered: false };
     }
 
-    // This path intentionally does not read contacts, location shares, or saved
-    // places. Only a member who has persisted the matching opt-in and radius can
-    // receive a direct alert; their location remains a server-side filter only.
+    // This path intentionally does not read contacts, location shares, saved
+    // places, or member/device coordinates. A member chooses a canonical
+    // city/state awareness area; radius comparison happens only between public
+    // city centroids and is never disclosed to anyone else.
     const recipientResult = await pool.query<{ token: string; user_id: string }>(
       `SELECT pt.token, pt.user_id
-       FROM user_locations ul
-       JOIN push_tokens pt ON pt.user_id = ul.user_id
-       JOIN user_settings us ON us.user_id = ul.user_id
-       WHERE ul.updated_at > NOW() - INTERVAL '2 hours'
+       FROM user_settings us
+       JOIN push_tokens pt ON pt.user_id = us.user_id
+       JOIN LATERAL (
+         SELECT latitude::double precision AS latitude, longitude::double precision AS longitude
+         FROM community_locations
+         WHERE LOWER(city_name) = LOWER(us.safety_alert_area_city)
+           AND UPPER(state_code) = UPPER(us.safety_alert_area_state)
+           AND neighborhood_name IS NULL
+           AND latitude IS NOT NULL
+           AND longitude IS NOT NULL
+         LIMIT 1
+       ) awareness_area ON TRUE
+       WHERE us.safety_alert_area_city IS NOT NULL
+         AND us.safety_alert_area_state IS NOT NULL
          AND pt.token IS NOT NULL
          AND CASE
                WHEN $3 = 'ice' THEN us.safety_alert_ice
@@ -271,8 +282,8 @@ export async function sendCorroboratedPoliceIceAlert(input: {
          AND us.safety_alert_radius_miles BETWEEN 1 AND 10
          AND (6371 * acos(
            GREATEST(-1, LEAST(1,
-             cos(radians($1)) * cos(radians(ul.lat::float)) * cos(radians(ul.lng::float) - radians($2))
-             + sin(radians($1)) * sin(radians(ul.lat::float))
+             cos(radians($1)) * cos(radians(awareness_area.latitude)) * cos(radians(awareness_area.longitude) - radians($2))
+             + sin(radians($1)) * sin(radians(awareness_area.latitude))
            ))
          )) < (us.safety_alert_radius_miles * 1.60934)`,
       [Number.parseFloat(centroid.latitude), Number.parseFloat(centroid.longitude), input.kind],
@@ -311,103 +322,6 @@ export async function sendCorroboratedPoliceIceAlert(input: {
   } catch (err) {
     logger.warn({ err, alertId: input.alertId }, "[push] Failed to deliver corroborated Police/ICE alert");
     return { recipientCount: 0, delivered: false };
-  }
-}
-
-export async function sendAlertPushToNearbyUsers(
-  alertId: string,
-  lat: number,
-  lng: number,
-  alertType: string,
-  radiusKm: number,
-): Promise<void> {
-  const ALERT_LABELS: Record<string, string> = {
-    police: "🚔 Police Activity Nearby",
-    ice: "⚠️ ICE Activity Nearby",
-    checkpoint: "🛑 Checkpoint Reported",
-    traffic: "🚦 Traffic Stop Nearby",
-    other: "📢 Community Alert",
-  };
-  const title = ALERT_LABELS[alertType] ?? "📢 Community Alert";
-  const body = "A community member reported activity near you. Stay aware.";
-
-  try {
-    // Fan-out group 1: users with a recent known location — filtered by per-user alert prefs + radius
-    const locationResult = await pool.query<{ token: string; user_id: string }>(
-      `SELECT pt.token, pt.user_id
-       FROM user_locations ul
-       JOIN push_tokens pt ON pt.user_id = ul.user_id
-       LEFT JOIN user_settings us ON us.user_id = ul.user_id
-       WHERE ul.updated_at > NOW() - INTERVAL '2 hours'
-         AND pt.token IS NOT NULL
-         AND CASE
-               WHEN $4 = 'police' THEN COALESCE(us.safety_alert_police, false)
-               WHEN $4 = 'ice'    THEN COALESCE(us.safety_alert_ice, false)
-               ELSE true
-             END = true
-         AND (6371 * acos(
-           GREATEST(-1, LEAST(1,
-             cos(radians($1)) * cos(radians(ul.lat::float)) * cos(radians(ul.lng::float) - radians($2))
-             + sin(radians($1)) * sin(radians(ul.lat::float))
-           ))
-         )) < LEAST(COALESCE(us.safety_alert_radius_miles, 5) * 1.60934, $3)`,
-      [lat, lng, radiusKm, alertType],
-    );
-
-    // Fan-out group 2: users who have saved any business within the radius
-    const savedResult = await pool.query<{ token: string; user_id: string }>(
-      `SELECT DISTINCT pt.token, pt.user_id
-       FROM saved_places sp
-       JOIN businesses b ON b.id = sp.business_id
-       JOIN push_tokens pt ON pt.user_id = sp.user_id
-       LEFT JOIN user_settings us ON us.user_id = sp.user_id
-       WHERE pt.token IS NOT NULL
-         AND CASE
-               WHEN $4 = 'police' THEN COALESCE(us.safety_alert_police, false)
-               WHEN $4 = 'ice'    THEN COALESCE(us.safety_alert_ice, false)
-               ELSE true
-             END = true
-         AND (6371 * acos(
-           GREATEST(-1, LEAST(1,
-             cos(radians($1)) * cos(radians(b.latitude::float)) * cos(radians(b.longitude::float) - radians($2))
-             + sin(radians($1)) * sin(radians(b.latitude::float))
-           ))
-         )) < LEAST(COALESCE(us.safety_alert_radius_miles, 5) * 1.60934, $3)`,
-      [lat, lng, radiusKm, alertType],
-    );
-
-    // Deduplicate by user_id — union both groups
-    const seenUserIds = new Set<string>();
-    const tokens: Array<{ token: string; user_id: string }> = [];
-    for (const row of [...locationResult.rows, ...savedResult.rows]) {
-      if (row.token && !seenUserIds.has(row.user_id)) {
-        seenUserIds.add(row.user_id);
-        tokens.push(row);
-      }
-    }
-
-    if (tokens.length === 0) return;
-
-    const userIds = tokens.map((r) => r.user_id);
-
-    for (const row of tokens) {
-      if (row.token) await sendToToken(row.token, { title, body, data: { alertId, type: alertType, screen: "map" } });
-    }
-
-    logger.info({ alertId, alertType, notified: tokens.length }, "[push] Community alert sent to nearby users");
-
-    if (userIds.length > 0) {
-      await db.insert(notificationsTable).values(
-        userIds.map((userId) => ({
-          userId,
-          type: "safety" as const,
-          title,
-          body,
-        })),
-      );
-    }
-  } catch (err) {
-    logger.warn({ err }, "[push] Failed to send alert push to nearby users");
   }
 }
 

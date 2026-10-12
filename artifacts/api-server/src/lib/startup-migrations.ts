@@ -6273,6 +6273,20 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
         WHERE status = 'approved' AND community_intelligence_consent_at IS NOT NULL;
     `,
   },
+  {
+    // A member selects a city/state awareness area. No device coordinate is
+    // written or read, no location history is removed, and existing members
+    // remain opted out until they choose sensitive Safety alerts themselves.
+    name: "police_ice_coarse_awareness_area_v1",
+    sql: `
+      ALTER TABLE IF EXISTS user_settings
+        ADD COLUMN IF NOT EXISTS safety_alert_area_city VARCHAR(100),
+        ADD COLUMN IF NOT EXISTS safety_alert_area_state VARCHAR(2);
+      ALTER TABLE IF EXISTS user_settings
+        ALTER COLUMN safety_alert_police SET DEFAULT FALSE,
+        ALTER COLUMN safety_alert_ice SET DEFAULT FALSE;
+    `,
+  },
 ];
 
 /**
@@ -6313,6 +6327,7 @@ const SAFETY_OPERATIONAL_SCHEMA_MIGRATIONS = [
   "trusted_safety_invitation_delivery_audit_v1",
   "safety_checkin_profile_recipients_v1",
   "safety_checkin_recipient_delivery_attempts_v1",
+  "police_ice_coarse_awareness_area_v1",
 ] as const;
 
 export async function ensureSafetyOperationalSchema(logger?: Logger): Promise<void> {

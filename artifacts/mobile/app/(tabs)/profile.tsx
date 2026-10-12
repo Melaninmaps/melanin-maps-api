@@ -140,6 +140,8 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
   const [alertPolice, setAlertPolice] = useState(false);
   const [alertIce, setAlertIce] = useState(false);
   const [radiusMiles, setRadiusMiles] = useState(5);
+  const [awarenessCity, setAwarenessCity] = useState("");
+  const [awarenessState, setAwarenessState] = useState("");
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -157,13 +159,15 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
           if (d.safetyAlertPolice !== undefined) setAlertPolice(d.safetyAlertPolice);
           if (d.safetyAlertIce !== undefined) setAlertIce(d.safetyAlertIce);
           if (d.safetyAlertRadiusMiles !== undefined) setRadiusMiles(d.safetyAlertRadiusMiles);
+          if (typeof d.safetyAlertAreaCity === "string") setAwarenessCity(d.safetyAlertAreaCity);
+          if (typeof d.safetyAlertAreaState === "string") setAwarenessState(d.safetyAlertAreaState);
         }
       } catch { /* silent */ }
       setLoaded(true);
     })();
   }, []);
 
-  const save = async (patch: Record<string, boolean | number>): Promise<Record<string, unknown> | null> => {
+  const save = async (patch: Record<string, boolean | number | string | null>): Promise<Record<string, unknown> | null> => {
     setSaving(true);
     setSaveError(null);
     try {
@@ -174,10 +178,13 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify(patch),
       });
-      if (!response.ok) throw new Error("Safety alert preference was not saved");
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? "Safety alert preference was not saved");
+      }
       return await response.json() as Record<string, unknown>;
-    } catch {
-      setSaveError("Your Safety Alert setting did not change. Check your connection and try again.");
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Your Safety Alert setting did not change. Check your connection and try again.");
       return null;
     } finally { setSaving(false); }
   };
@@ -185,6 +192,10 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
   const togglePolice = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const next = !alertPolice;
+    if (next && (!awarenessCity.trim() || !/^[A-Z]{2}$/.test(awarenessState.trim().toUpperCase()))) {
+      setSaveError("Choose and save a Safety Alert city and state before turning on Police or ICE alerts.");
+      return;
+    }
     const saved = await save({ safetyAlertPolice: next });
     if (saved) setAlertPolice(saved.safetyAlertPolice === true);
   };
@@ -192,6 +203,10 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
   const toggleIce = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const next = !alertIce;
+    if (next && (!awarenessCity.trim() || !/^[A-Z]{2}$/.test(awarenessState.trim().toUpperCase()))) {
+      setSaveError("Choose and save a Safety Alert city and state before turning on Police or ICE alerts.");
+      return;
+    }
     const saved = await save({ safetyAlertIce: next });
     if (saved) setAlertIce(saved.safetyAlertIce === true);
   };
@@ -200,6 +215,23 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const saved = await save({ safetyAlertRadiusMiles: r });
     if (typeof saved?.safetyAlertRadiusMiles === "number") setRadiusMiles(saved.safetyAlertRadiusMiles);
+  };
+
+  const saveAwarenessArea = async () => {
+    const city = awarenessCity.trim().replace(/\s+/g, " ");
+    const state = awarenessState.trim().toUpperCase();
+    if ((!city && state) || (city && !/^[A-Z]{2}$/.test(state))) {
+      setSaveError("Enter a city and a two-letter state, or clear both fields.");
+      return;
+    }
+    const saved = await save({
+      safetyAlertAreaCity: city || null,
+      safetyAlertAreaState: state || null,
+    });
+    if (typeof saved?.safetyAlertAreaCity === "string") setAwarenessCity(saved.safetyAlertAreaCity);
+    else if (saved) setAwarenessCity("");
+    if (typeof saved?.safetyAlertAreaState === "string") setAwarenessState(saved.safetyAlertAreaState);
+    else if (saved) setAwarenessState("");
   };
 
   if (!loaded) return null;
@@ -212,7 +244,7 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[safetyStyles.title, { color: colors.foreground }]}>Safety Alerts</Text>
-          <Text style={[safetyStyles.sub, { color: colors.mutedForeground }]}>Opt in to moderated, corroborated general-area alerts near you</Text>
+          <Text style={[safetyStyles.sub, { color: colors.mutedForeground }]}>Opt in to moderated, corroborated alerts for an awareness area you choose</Text>
         </View>
         {saving && <ActivityIndicator size="small" color={colors.primary} />}
       </View>
@@ -237,9 +269,46 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
 
       <View style={[safetyStyles.divider, { backgroundColor: colors.border }]} />
 
+      <View style={safetyStyles.areaSection}>
+        <Text style={[safetyStyles.rowLabel, { color: colors.foreground }]}>Awareness area</Text>
+        <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Choose a supported city and state. This is not device location and can be changed or cleared anytime.</Text>
+        <View style={safetyStyles.areaInputs}>
+          <TextInput
+            value={awarenessCity}
+            onChangeText={setAwarenessCity}
+            editable={!saving}
+            maxLength={100}
+            placeholder="City"
+            placeholderTextColor={colors.mutedForeground}
+            autoCapitalize="words"
+            style={[safetyStyles.areaInput, safetyStyles.cityInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]}
+          />
+          <TextInput
+            value={awarenessState}
+            onChangeText={(value) => setAwarenessState(value.toUpperCase())}
+            editable={!saving}
+            maxLength={2}
+            placeholder="ST"
+            placeholderTextColor={colors.mutedForeground}
+            autoCapitalize="characters"
+            style={[safetyStyles.areaInput, safetyStyles.stateInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]}
+          />
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Save Safety Alert awareness area"
+            onPress={() => { void saveAwarenessArea(); }}
+            disabled={saving}
+            activeOpacity={0.85}
+            style={[safetyStyles.areaSave, { backgroundColor: saving ? colors.muted : colors.primary }]}
+          >
+            <Text style={safetyStyles.areaSaveText}>Save area</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <View style={safetyStyles.radiusSection}>
         <Text style={[safetyStyles.rowLabel, { color: colors.foreground }]}>Alert radius</Text>
-        <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Saved with your opt-in. Alerts name only a general city area and expire.</Text>
+        <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Applied around the selected city’s public center. Alerts name only a general city area and expire.</Text>
         <View style={safetyStyles.pillRow}>
           {RADIUS_OPTIONS.map((r) => (
             <TouchableOpacity activeOpacity={0.85}
@@ -259,7 +328,7 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
         </View>
       </View>
 
-      <Text style={[safetyStyles.privacyNote, { color: colors.mutedForeground }]}>If you separately permit a recent app location, it is used only on the server to compare this radius. Alerts never disclose your coordinates, a reporter, or a street.</Text>
+      <Text style={[safetyStyles.privacyNote, { color: colors.mutedForeground }]}>This Safety setting never reads or retains your device location. Alerts never disclose your coordinates, a reporter, a street, or a visit history.</Text>
       {saveError ? <Text accessibilityRole="alert" style={[safetyStyles.error, { color: "#B42318" }]}>{saveError}</Text> : null}
     </View>
   );
@@ -275,6 +344,13 @@ const safetyStyles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 },
   rowLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   rowSub: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 2 },
+  areaSection: { gap: 8 },
+  areaInputs: { flexDirection: "row", gap: 8, alignItems: "center" },
+  areaInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 9, fontFamily: "Inter_400Regular", fontSize: 13 },
+  cityInput: { flex: 1 },
+  stateInput: { width: 48, textAlign: "center" },
+  areaSave: { borderRadius: 10, paddingHorizontal: 11, paddingVertical: 10 },
+  areaSaveText: { color: "#FFF", fontFamily: "Inter_600SemiBold", fontSize: 12 },
   radiusSection: { gap: 8 },
   pillRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   pill: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, borderWidth: 1.5 },

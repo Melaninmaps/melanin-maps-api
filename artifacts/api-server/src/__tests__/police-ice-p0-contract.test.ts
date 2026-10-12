@@ -71,14 +71,22 @@ describe("Police/ICE P0 reporting and alert governance", () => {
     expect(communityAlerts).toContain("Coordinate-based community alerts have been retired");
     expect(communityAlerts).toContain("type NOT IN ('police', 'ice', 'checkpoint')");
     expect(moderation).toContain("encounterType: report.encounterType");
-    expect(push).toContain("JOIN user_settings us ON us.user_id = ul.user_id");
+    expect(push).toContain("FROM user_settings us");
+    expect(push).toContain("JOIN LATERAL");
+    expect(push).toContain("safety_alert_area_city");
+    expect(push).toContain("safety_alert_area_state");
     expect(push).toContain("us.safety_alert_radius_miles BETWEEN 1 AND 10");
     expect(push).toContain('status: "corroborated"');
     expect(push).toContain("never delivered to a member or contact");
-    const governedDelivery = push.slice(push.indexOf("export async function sendCorroboratedPoliceIceAlert"), push.indexOf("export async function sendAlertPushToNearbyUsers"));
+    const governedDelivery = push.slice(push.indexOf("export async function sendCorroboratedPoliceIceAlert"), push.indexOf("export async function sendPushToAllMembers"));
     expect(governedDelivery).not.toContain("saved_places");
     expect(governedDelivery).not.toContain("location_shares");
+    expect(governedDelivery).not.toContain("user_locations");
     expect(governedDelivery).not.toMatch(/data:\s*\{[\s\S]*?(latitude|longitude)/);
+    const settings = source("../routes/user-settings.ts");
+    expect(settings).toContain("Choose and save a Safety Alert city and state before turning on Police or ICE alerts.");
+    expect(settings).toContain("community_locations");
+    expect(settings).toContain("neighborhood_name IS NULL");
   });
 
   it("defaults sensitive alert delivery off across schema and independent settings creation paths", () => {
@@ -94,6 +102,8 @@ describe("Police/ICE P0 reporting and alert governance", () => {
     expect(schema).toContain('boolean("safety_alert_ice").notNull().default(false)');
     expect(fullSchema).toContain("safety_alert_police boolean DEFAULT false NOT NULL");
     expect(fullSchema).toContain("safety_alert_ice boolean DEFAULT false NOT NULL");
+    expect(schema).toContain('varchar("safety_alert_area_city", { length: 100 })');
+    expect(schema).toContain('varchar("safety_alert_area_state", { length: 2 })');
     expect(users).toContain("An unrelated official-alert preference must never create an");
     expect(kinfolk.match(/safetyAlertPolice: false/g)?.length).toBeGreaterThanOrEqual(3);
     expect(kinfolk.match(/safetyAlertIce: false/g)?.length).toBeGreaterThanOrEqual(3);

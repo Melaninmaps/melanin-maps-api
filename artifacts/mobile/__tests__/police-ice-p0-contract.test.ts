@@ -28,18 +28,23 @@ describe("Police/ICE P0 mobile safeguards", () => {
     expect(payload).not.toContain("area: form");
   });
 
-  it("defaults sensitive alerts off and persists both opt-in and the selected radius", () => {
+  it("defaults sensitive alerts off and persists opt-in, a chosen coarse area, and the selected radius", () => {
     const profile = source("../app/(tabs)/profile.tsx");
     expect(profile).toContain("const [alertPolice, setAlertPolice] = useState(false)");
     expect(profile).toContain("const [alertIce, setAlertIce] = useState(false)");
     expect(profile).toContain("save({ safetyAlertPolice: next })");
     expect(profile).toContain("save({ safetyAlertIce: next })");
     expect(profile).toContain("save({ safetyAlertRadiusMiles: r })");
+    expect(profile).toContain("safetyAlertAreaCity");
+    expect(profile).toContain("safetyAlertAreaState");
+    expect(profile).toContain("Save Safety Alert awareness area");
+    expect(profile).toContain("Choose and save a Safety Alert city and state before turning on Police or ICE alerts.");
     expect(profile).toContain("not official confirmation");
-    expect(profile).toContain("Alerts name only a general city area and expire.");
+    expect(profile).toContain("Applied around the selected city’s public center.");
     expect(profile).toContain("Safety Alert setting did not change");
-    expect(profile).toContain("Alerts never disclose your coordinates, a reporter, or a street.");
-    expect(profile).toContain("if (!response.ok) throw new Error");
+    expect(profile).toContain("never reads or retains your device location");
+    expect(profile).toContain("Alerts never disclose your coordinates, a reporter, a street, or a visit history.");
+    expect(profile).toContain('throw new Error(body.error ?? "Safety alert preference was not saved")');
     expect(profile).toContain('accessibilityRole="alert"');
   });
 

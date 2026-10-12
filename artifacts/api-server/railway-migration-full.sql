@@ -2987,7 +2987,9 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
     safety_alert_police boolean DEFAULT false NOT NULL,
     safety_alert_ice boolean DEFAULT false NOT NULL,
-    safety_alert_radius_miles integer DEFAULT 5 NOT NULL
+    safety_alert_radius_miles integer DEFAULT 5 NOT NULL,
+    safety_alert_area_city character varying(100),
+    safety_alert_area_state character varying(2)
 );
 
 CREATE TABLE IF NOT EXISTS public.user_topic_follows (
@@ -14137,6 +14139,21 @@ BEGIN
   ) THEN
     ALTER TABLE IF EXISTS public.user_settings ADD COLUMN safety_alert_radius_miles integer DEFAULT 5 NOT NULL;
   END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'user_settings' AND column_name = 'safety_alert_area_city'
+  ) THEN
+    ALTER TABLE IF EXISTS public.user_settings ADD COLUMN safety_alert_area_city character varying(100);
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'user_settings' AND column_name = 'safety_alert_area_state'
+  ) THEN
+    ALTER TABLE IF EXISTS public.user_settings ADD COLUMN safety_alert_area_state character varying(2);
+  END IF;
+  ALTER TABLE IF EXISTS public.user_settings
+    ALTER COLUMN safety_alert_police SET DEFAULT false,
+    ALTER COLUMN safety_alert_ice SET DEFAULT false;
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'user_topic_follows' AND column_name = 'user_id'

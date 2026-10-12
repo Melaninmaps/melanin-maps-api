@@ -75,6 +75,11 @@ export const userSettingsTable = pgTable("user_settings", {
   safetyAlertPolice: boolean("safety_alert_police").notNull().default(false),
   safetyAlertIce: boolean("safety_alert_ice").notNull().default(false),
   safetyAlertRadiusMiles: integer("safety_alert_radius_miles").notNull().default(5),
+  // A member selects a canonical city/state awareness area. This is distinct
+  // from device location and allows coarse-radius matching without retaining
+  // or reading a member's precise or recent coordinates.
+  safetyAlertAreaCity: varchar("safety_alert_area_city", { length: 100 }),
+  safetyAlertAreaState: varchar("safety_alert_area_state", { length: 2 }),
 
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
