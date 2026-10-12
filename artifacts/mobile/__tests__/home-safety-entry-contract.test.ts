@@ -45,6 +45,15 @@ describe("mobile Home safety entry boundaries", () => {
     expect(safetyHub).toContain("Submit Safety Tip");
     expect(safetyHub).toContain("Serious Threat Report");
     expect(safetyHub).toContain('route: "/serious-credible-threat"');
+    expect(safetyHub).toContain("Community Intelligence");
+    expect(safetyHub).toContain("Small counts are suppressed");
+    expect(safetyHub).toContain("Member and device locations are never used to select recipients.");
+    expect(safetyHub).toContain('route: "/report-safety"');
+    expect(safetyHub).not.toContain('route: "/safety-tip"');
+    expect(safetyHub).not.toContain("Nearby verified members are alerted to confirm.");
+    expect(safetyHub).not.toContain("Share and read community safety reports for any neighborhood.");
+    expect(safetyHub).not.toContain("Track law enforcement officers flagged");
+    expect(safetyHub).not.toContain('route: "/officer-watch"');
   });
 
   it("routes a private Check-In recipient alert to a recipient-authorized view", () => {

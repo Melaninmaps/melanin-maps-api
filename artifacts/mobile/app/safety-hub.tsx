@@ -51,17 +51,16 @@ type MeetupVerification = {
 
 const ALL_FEATURES: { id: string; icon: React.ComponentProps<typeof Feather>["name"]; title: string; desc: string; color: string; route: string | null; externalUrl?: string }[] = [
   { id: "live-location", icon: "navigation-2", title: "Trusted Live Location", desc: "Voluntarily share a minimized current location with one accepted Kinfolk contact for a chosen time. Stop anytime.", color: "#2563EB", route: "/location-share" },
-  { id: "tip", icon: "alert-triangle", title: "Submit Safety Tip", desc: "Pin a location where violence or hate occurred. Nearby verified members are alerted to confirm.", color: "#DC2626", route: "/safety-tip" },
+  { id: "tip", icon: "alert-triangle", title: "Submit Safety Tip", desc: "Share a non-emergency concern privately. It does not request or share member location, publish an alert, or notify other members.", color: "#DC2626", route: "/report-safety" },
   { id: "checkin", icon: "check-circle", title: "Safety Check-In", desc: "Schedule a check-in. Your contact is alerted if you don't confirm.", color: "#16A34A", route: "/checkin" },
   { id: "meetup", icon: "users", title: "Meetup Verification", desc: "Mutually verify in-person meetups with connections you trust.", color: "#7C3AED", route: "/member-connections" },
-  { id: "police", icon: "shield-off", title: "Report Police or ICE", desc: "Report a police encounter, ICE activity, racial profiling, or checkpoint in your area.", color: "#991B1B", route: "/report-police" },
+  { id: "police", icon: "shield-off", title: "Police / ICE Awareness", desc: "Opt in to city/region-only Police or ICE awareness. Member and device locations are never used to select recipients.", color: "#991B1B", route: "/report-police" },
   { id: "serious-threat", icon: "shield", title: "Serious Threat Report", desc: "Submit a city-level report for restricted private review. It does not create an immediate public alert.", color: "#B42318", route: "/serious-credible-threat" },
-  { id: "report", icon: "flag", title: "Anonymous Report", desc: "Report unsafe content or behavior without revealing your identity.", color: "#DC2626", route: "/report-safety" },
+  { id: "report", icon: "flag", title: "Anonymous Report", desc: "Report unsafe content or behavior without revealing your identity. It is not a location report or public alert.", color: "#DC2626", route: "/report-safety" },
   { id: "space", icon: "alert-octagon", title: "Report an Unsafe Space", desc: "Flag any business or venue where you experienced unsafe, discriminatory, or unwelcoming treatment.", color: "#7C2D12", route: "/report-space" },
   { id: "family", icon: "eye", title: "Under-18 Content Shield", desc: "All messages and posts from users under 18 are automatically scanned and filtered for harmful content.", color: "#CA922B", route: null },
-  { id: "survey", icon: "star", title: "Neighborhood Safety", desc: "Share and read community safety reports for any neighborhood.", color: "#0891B2", route: "/neighborhood-survey" },
+  { id: "survey", icon: "star", title: "Community Intelligence", desc: "Choose a city, provide explicit consent, and share aggregate community context. Small counts are suppressed; it never shows member activity or location.", color: "#0891B2", route: "/neighborhood-survey" },
   { id: "registry", icon: "search", title: "Sex Offender Registry", desc: "Search the national registry to see registered offenders in any neighborhood or zip code.", color: "#4338CA", route: null, externalUrl: "https://www.nsopw.gov" },
-  { id: "officer-watch", icon: "eye", title: "Officer Watch", desc: "Track law enforcement officers flagged for violence against minorities and their department transfers.", color: "#DC2626", route: "/officer-watch" },
 ];
 
 function applyOrder(ids: string[]) {
