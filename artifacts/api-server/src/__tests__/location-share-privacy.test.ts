@@ -7,7 +7,7 @@ function source(relativePath: string): string {
 }
 
 describe("consented trusted live location sharing", () => {
-  it("requires an authenticated, accepted, finite trusted-contact relationship before a share starts", () => {
+  it("requires an authenticated, accepted durable trusted contact before a temporary share starts", () => {
     const route = source("../routes/location-shares.ts");
 
     expect(route).toContain('router.post("/safety/location-shares", requireFamilySafety');
@@ -16,7 +16,7 @@ describe("consented trusted live location sharing", () => {
     expect(route).toContain("tss.contact_type = 'mwm_user'");
     expect(route).toContain("tss.status = 'active'");
     expect(route).toContain("tss.contact_accepted = true");
-    expect(route).toContain("tss.activated_at > NOW() - INTERVAL '30 days'");
+    expect(route).not.toContain("tss.activated_at > NOW() - INTERVAL '30 days'");
     expect(route).toContain("owner_blocks.id IS NULL");
     expect(route).toContain("recipient_blocks.id IS NULL");
   });
@@ -34,7 +34,8 @@ describe("consented trusted live location sharing", () => {
     expect(lifecycle).toContain("UPDATE location_shares");
     expect(lifecycle).toContain("current_lat = NULL");
     expect(lifecycle).toContain("current_lng = NULL");
-    expect(lifecycle).toContain("owner_enabled = false");
+    expect(lifecycle).toContain("expireTrustedLocationSessions");
+    expect(lifecycle).not.toContain("owner_enabled = false");
   });
 
   it("scrubs retained coordinates when a recipient encounters an expired session", () => {

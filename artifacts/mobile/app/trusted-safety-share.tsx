@@ -1,9 +1,8 @@
 /**
- * Trusted Safety Share — Settings Screen
+ * Trusted Safety Alerts — Settings Screen
  *
  * Allows the user to manage their trusted safety contacts.
- * Trusted contacts receive a mirror of any severe safety alert
- * the user receives while traveling — nothing else.
+ * Trusted contacts receive qualifying severe safety alerts the member receives — nothing else.
  *
  * What contacts never see:
  *   • GPS coordinates
@@ -269,7 +268,7 @@ export default function TrustedSafetyShareScreen() {
         <TouchableOpacity onPress={() => router.back()} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <Feather name="chevron-left" size={24} color={colors.text} />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Trusted Safety Share</Text>
+        <Text style={s.headerTitle}>Trusted Safety Alerts</Text>
         <View style={{ width: 24 }} />
       </View>
 
@@ -278,12 +277,12 @@ export default function TrustedSafetyShareScreen() {
         <View style={s.heroCard}>
           <Text style={s.heroTitle}>Your family&apos;s peace of mind. Your privacy. Both.</Text>
           <Text style={s.heroBody}>
-            When a real emergency alert fires at your location — hurricane, earthquake, civil emergency —
-            your trusted contacts receive the same alert automatically.{"\n\n"}
-            They see your first name, the city, and the alert. Nothing else, ever.
+            When a qualifying emergency alert is issued for the general area — hurricane, earthquake, or civil emergency —
+            your trusted contacts receive the same alert automatically while the relationship remains active.{"\n\n"}
+            They see your first name, the general city/region, and the alert. Nothing else, ever. Temporary live location remains a separate, time-limited choice.
           </Text>
           <View style={s.toggleRow}>
-            <Text style={s.toggleLabel}>Trusted Safety Share</Text>
+            <Text style={s.toggleLabel}>Trusted Safety Alerts</Text>
             <Switch
               value={masterEnabled}
               onValueChange={(enabled) => { void updateAllContactConsent(enabled); }}
@@ -343,13 +342,6 @@ export default function TrustedSafetyShareScreen() {
             <Text style={s.howText}>
               <Text style={{ fontWeight: "600" }}>Zero visibility into your activity.</Text>
               {" "}No GPS, no searches, no saves, no check-ins. Only the alert — nothing else.
-            </Text>
-          </View>
-          <View style={s.howItem}>
-            <Feather name="home" size={16} color={colors.tint} style={{ marginTop: 2 }} />
-            <Text style={s.howText}>
-              <Text style={{ fontWeight: "600" }}>Auto-pauses when you&apos;re home.</Text>
-              {" "}When your location matches your home city, the feature pauses automatically.
             </Text>
           </View>
           <View style={s.howItem}>

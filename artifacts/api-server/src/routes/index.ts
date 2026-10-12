@@ -178,6 +178,7 @@ import communityLanguageRouter from "./community-language";
 import officialPublicAlertsRouter from "./official-public-alerts";
 import seriousCredibleThreatRouter from "./serious-credible-threats";
 import seriousCredibleThreatPrivateModeratorRouter from "./serious-credible-threat-reviewer";
+import familyImpactIntelligenceRouter from "./family-impact-intelligence";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
@@ -211,6 +212,10 @@ router.use(communityFeedbackRouter); // GET public (counts); PUT self-authentica
 // bearer-link views stay public without opening any platform intelligence.
 router.use(locationSharesRouter);
 router.use(trustedSafetyShareRouter);
+// Family-impact consent, check-in, and source-ingestion boundaries authenticate
+// each operation internally so their narrowly protected internal route remains
+// default-off without opening the member-facing operations.
+router.use(familyImpactIntelligenceRouter);
 
 // Canonical business discovery is public so any visitor can search the founder-
 // and community-fed directory. The business router itself authenticates every

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   expoPushProviderReceipt,
   expoPushRequestState as invitePushRequestState,
-  isFiniteTrustedSafetySession,
+  isDurableTrustedSafetyRelationship,
   normalizeTrustedContactEmail,
   normalizeTrustedContactPhone,
   providerReceiptFingerprint,
@@ -30,18 +30,18 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
       type: "safety",
       title: "Safety Alert — Amina",
       body: "Amina is currently in Atlanta, Georgia.",
-      data: { alertType: "weather", locationCity: "Atlanta", locationRegion: "Georgia", shareId: "share-1" },
+      data: { type: "trusted_safety_alert", alertType: "weather", locationCity: "Atlanta", locationRegion: "Georgia", shareId: "share-1" },
     });
     expect(JSON.stringify(notification)).not.toMatch(/ownerId|latitude|longitude|token|search|checkin/i);
   });
 
-  it("requires a finite recent authorization session and rejects GPS or behavioral dispatch input", () => {
-    const now = Date.parse("2026-10-10T12:00:00.000Z");
-    expect(isFiniteTrustedSafetySession(new Date(now - 29 * 24 * 60 * 60 * 1000), now)).toBe(true);
-    expect(isFiniteTrustedSafetySession(new Date(now - 30 * 24 * 60 * 60 * 1000), now)).toBe(false);
-    expect(isFiniteTrustedSafetySession(null, now)).toBe(false);
+  it("keeps durable trusted-contact consent separate from temporary location sessions and rejects GPS or behavioral dispatch input", () => {
+    expect(isDurableTrustedSafetyRelationship(true, true, "active")).toBe(true);
+    expect(isDurableTrustedSafetyRelationship(false, true, "active")).toBe(false);
+    expect(isDurableTrustedSafetyRelationship(true, false, "paused_manual")).toBe(false);
 
     const alert = {
+      eventId: "event-1",
       ownerId: "owner-1",
       ownerFirstName: "Amina",
       locationCity: "Atlanta",
@@ -128,10 +128,10 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
       fileURLToPath(new URL("../lib/trustedSafetyShareAlerts.ts", import.meta.url)),
       "utf8",
     );
-    expect(delivery).toContain("AND contact_accepted = true");
+    expect(delivery).toContain("AND tss.contact_accepted = true");
   });
 
-  it("enforces mutual blocks, preferences, finite sessions, and private lifecycle responses", () => {
+  it("enforces mutual blocks, preferences, durable contact consent, and private lifecycle responses", () => {
     const route = readFileSync(
       fileURLToPath(new URL("../routes/trusted-safety-share.ts", import.meta.url)),
       "utf8",
@@ -146,13 +146,13 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
     );
     expect(route).toContain('router.patch("/safety/trusted-shares/:id/enabled"');
     expect(route).toContain('router.patch("/safety/trusted-shares/consent"');
-    expect(route).toContain("expireTrustedSafetySessions(ownerId)");
+    expect(route).toContain("expireTrustedLocationSessions(ownerId)");
     expect(route).toContain("deactivateTrustedLocationShares");
     expect(route).toContain("invite_token = NULL");
     expect(lifecycle).toContain("UPDATE location_shares");
     expect(lifecycle).toContain("current_lat = NULL");
     expect(lifecycle).toContain("current_lng = NULL");
-    expect(lifecycle).toContain("owner_enabled = false");
+    expect(lifecycle).not.toContain("owner_enabled = false");
     expect(route).toContain("owner_blocks.id IS NULL");
     expect(route).toContain("contact_blocks.id IS NULL");
     expect(route).toContain("ownerShareResponse");
@@ -162,9 +162,8 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
     expect(delivery).toContain("allowsSafetyCheckinNotification(share.topics_text)");
     expect(delivery).toContain("lower(contact.approved::text) IN ('true', 't', '1')");
     expect(delivery).not.toContain("np.topics @> ARRAY['safety']::text[]");
-    expect(delivery).toContain("TRUSTED_SAFETY_SESSION_INTERVAL");
-    expect(delivery).toContain("await expireTrustedSafetySessions(payload.ownerId)");
-    expect(delivery).toContain("await deactivateTrustedLocationShares(");
+    expect(delivery).toContain("await expireTrustedLocationSessions(payload.ownerId)");
+    expect(delivery).toContain("tss.status = 'active' AND tss.owner_enabled = true AND tss.contact_accepted = true");
     expect(delivery).toContain("provider_accepted");
     expect(delivery).toContain("in_app_created");
     expect(delivery).not.toContain('deliveryStatus = "sent"');

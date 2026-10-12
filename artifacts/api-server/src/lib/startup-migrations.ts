@@ -6317,6 +6317,109 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
         ALTER COLUMN safety_alert_ice SET DEFAULT FALSE;
     `,
   },
+  {
+    // Additive, default-off family impact intelligence. This does not ingest an
+    // alert, collect a location, enable a provider, or change existing contacts.
+    name: "trusted_safety_durable_delivery_v2",
+    sql: `
+      ALTER TABLE IF EXISTS trusted_safety_alert_log
+        ADD COLUMN IF NOT EXISTS event_fingerprint CHAR(64),
+        ADD COLUMN IF NOT EXISTS in_app_notification_id VARCHAR,
+        ADD COLUMN IF NOT EXISTS attempt_count INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS attempted_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS next_retry_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS acknowledged_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+      CREATE UNIQUE INDEX IF NOT EXISTS trusted_safety_alert_event_share_dedupe_idx
+        ON trusted_safety_alert_log (event_fingerprint, share_id)
+        WHERE event_fingerprint IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS trusted_safety_alert_retry_idx
+        ON trusted_safety_alert_log (next_retry_at)
+        WHERE delivery_status = 'retry_scheduled';
+    `,
+  },
+  {
+    // Family-impact consent is relationship-specific. It never stores a member
+    // coordinate; current temporary location sessions remain the only location
+    // input, and a separate explicit member choice is required to evaluate them.
+    name: "family_impact_intelligence_v1",
+    sql: `
+      CREATE TABLE IF NOT EXISTS family_impact_consents (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        owner_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        trusted_share_id UUID NOT NULL REFERENCES trusted_safety_shares(id) ON DELETE CASCADE,
+        location_scope VARCHAR(64) NOT NULL CHECK (location_scope = 'active_temporary_location_only'),
+        consent_version VARCHAR(64) NOT NULL,
+        consented_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        expires_at TIMESTAMPTZ NOT NULL,
+        revoked_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (owner_id, trusted_share_id)
+      );
+      CREATE INDEX IF NOT EXISTS family_impact_consents_active_idx
+        ON family_impact_consents (owner_id, trusted_share_id, expires_at)
+        WHERE revoked_at IS NULL;
+      CREATE TABLE IF NOT EXISTS family_impact_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        source VARCHAR(32) NOT NULL CHECK (source IN ('nws', 'fema_ipaws', 'local_emergency', 'reviewed_violence')),
+        source_event_id VARCHAR(160) NOT NULL,
+        event_type VARCHAR(32) NOT NULL CHECK (event_type IN ('severe_weather', 'natural_disaster', 'serious_violent_threat')),
+        status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'cancelled', 'expired', 'withdrawn', 'corrected')),
+        boundary JSONB NOT NULL,
+        general_area VARCHAR(160) NOT NULL,
+        starts_at TIMESTAMPTZ,
+        expires_at TIMESTAMPTZ NOT NULL,
+        reviewer_approved_at TIMESTAMPTZ,
+        reviewer_id VARCHAR REFERENCES users(id) ON DELETE SET NULL,
+        correction_note VARCHAR(500),
+        withdrawn_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (source, source_event_id)
+      );
+      CREATE INDEX IF NOT EXISTS family_impact_events_current_idx
+        ON family_impact_events (status, expires_at);
+      CREATE TABLE IF NOT EXISTS family_impact_violence_reports (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        incident_id UUID NOT NULL REFERENCES family_impact_events(id) ON DELETE CASCADE,
+        reporter_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        abuse_state VARCHAR(24) NOT NULL DEFAULT 'accepted' CHECK (abuse_state IN ('accepted', 'rate_limited', 'rejected')),
+        UNIQUE (incident_id, reporter_id)
+      );
+      CREATE TABLE IF NOT EXISTS family_impact_delivery_attempts (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        event_id UUID NOT NULL REFERENCES family_impact_events(id) ON DELETE CASCADE,
+        trusted_share_id UUID NOT NULL REFERENCES trusted_safety_shares(id) ON DELETE CASCADE,
+        owner_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        contact_user_id VARCHAR REFERENCES users(id) ON DELETE SET NULL,
+        impact_status VARCHAR(32) NOT NULL CHECK (impact_status IN ('potentially_affected','outside_reported_area','location_unknown','member_confirmed_safety')),
+        delivery_state VARCHAR(32) NOT NULL DEFAULT 'queued' CHECK (delivery_state IN ('queued','provider_accepted','provider_rejected','retry_scheduled','acknowledged','cancelled','disabled','failed')),
+        attempt_count INTEGER NOT NULL DEFAULT 0,
+        next_retry_at TIMESTAMPTZ,
+        in_app_notification_id VARCHAR,
+        acknowledged_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (event_id, trusted_share_id)
+      );
+      CREATE INDEX IF NOT EXISTS family_impact_delivery_retry_idx
+        ON family_impact_delivery_attempts (next_retry_at)
+        WHERE delivery_state = 'retry_scheduled';
+      CREATE TABLE IF NOT EXISTS family_impact_checkin_requests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        event_id UUID NOT NULL REFERENCES family_impact_events(id) ON DELETE CASCADE,
+        trusted_share_id UUID NOT NULL REFERENCES trusted_safety_shares(id) ON DELETE CASCADE,
+        owner_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        contact_user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        state VARCHAR(24) NOT NULL DEFAULT 'requested' CHECK (state IN ('requested','safe','need_assistance','cancelled','expired')),
+        requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        responded_at TIMESTAMPTZ,
+        expires_at TIMESTAMPTZ NOT NULL,
+        UNIQUE (event_id, trusted_share_id)
+      );
+    `,
+  },
 ];
 
 /**

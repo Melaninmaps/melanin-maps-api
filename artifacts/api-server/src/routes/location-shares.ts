@@ -7,9 +7,9 @@ import { requireFamilySafety } from "../middleware/requireFamilySafety";
 const router: IRouter = Router();
 const ALLOWED_DURATION_MINUTES = new Set([30, 60, 120, 240, 480, 1440]);
 const MAX_LABEL_LENGTH = 150;
-// Live location uses the same finite, affirmative trusted-contact consent as
-// safety alerts. A stale acceptance cannot authorize coordinates indefinitely.
-export const TRUSTED_LOCATION_CONSENT_INTERVAL = "30 days";
+// Each location session is independently time-bounded and explicitly confirmed.
+// The trusted-contact relationship authorizes the selected recipient but never
+// turns a durable alert authorization into continuous location consent.
 // The mobile foreground client publishes about every 30 seconds. A stale fix is
 // never shown as live; two minutes tolerates ordinary request jitter only.
 const MAX_COORDINATE_AGE_MS = 2 * 60 * 1000;
@@ -97,8 +97,6 @@ async function deactivateIneligibleLocationShares(sharerId: string): Promise<voi
                AND tss.status = 'active'
                AND tss.owner_enabled = true
                AND tss.contact_accepted = true
-               AND tss.activated_at > NOW() - INTERVAL '30 days'
-               AND tss.activated_at <= NOW()
                AND owner.approved = true
                AND COALESCE(owner.account_status, 'active') = 'active'
                AND recipient.approved = true
@@ -223,8 +221,6 @@ router.post("/safety/location-shares", requireFamilySafety, async (req: Request,
           AND tss.status = 'active'
           AND tss.owner_enabled = true
           AND tss.contact_accepted = true
-          AND tss.activated_at > NOW() - INTERVAL '30 days'
-          AND tss.activated_at <= NOW()
           AND owner.approved = true
           AND COALESCE(owner.account_status, 'active') = 'active'
           AND recipient.approved = true
@@ -287,8 +283,6 @@ router.patch("/safety/location-shares/:token/update", async (req: Request, res: 
           AND tss.status = 'active'
           AND tss.owner_enabled = true
           AND tss.contact_accepted = true
-          AND tss.activated_at > NOW() - INTERVAL '30 days'
-          AND tss.activated_at <= NOW()
           AND owner.approved = true
           AND COALESCE(owner.account_status, 'active') = 'active'
           AND recipient.approved = true
@@ -339,8 +333,6 @@ router.get("/safety/location-shares/:token/view", async (req: Request, res: Resp
           AND tss.status = 'active'
           AND tss.owner_enabled = true
           AND tss.contact_accepted = true
-          AND tss.activated_at > NOW() - INTERVAL '30 days'
-          AND tss.activated_at <= NOW()
           AND owner.approved = true
           AND COALESCE(owner.account_status, 'active') = 'active'
           AND recipient.approved = true

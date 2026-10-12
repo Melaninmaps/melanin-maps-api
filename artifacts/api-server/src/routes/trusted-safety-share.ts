@@ -8,7 +8,7 @@
  *   • Trusted contacts see only: owner's first name, general city/region, alert text.
  *   • No GPS coordinates, no searches, no saves, no activity ever exposed.
  *   • Owner can revoke instantly; revocation is silent (no notification sent).
- *   • Auto-pauses when owner's location matches their registered home city.
+ *   • Does not use member location to change alert authorization.
  *
  * Routes (all mounted under /api via routes/index.ts):
  *   POST   /safety/trusted-shares                  — create a share
@@ -25,11 +25,11 @@ import { pool } from "@workspace/db";
 import { createHash, randomUUID } from "crypto";
 import {
   deactivateTrustedLocationShares,
-  expireTrustedSafetySessions,
-  isFiniteTrustedSafetySession,
+  expireTrustedLocationSessions,
+  isDurableTrustedSafetyRelationship,
 } from "../lib/trustedSafetyShareLifecycle";
 
-export { isFiniteTrustedSafetySession } from "../lib/trustedSafetyShareLifecycle";
+export { isDurableTrustedSafetyRelationship } from "../lib/trustedSafetyShareLifecycle";
 
 const router = Router();
 
@@ -563,7 +563,7 @@ router.get("/safety/trusted-shares", async (req: Request, res: Response) => {
   if (!requireAuth(req, res)) return;
   try {
     const ownerId = req.user!.id;
-    await expireTrustedSafetySessions(ownerId);
+    await expireTrustedLocationSessions(ownerId);
     const result = await pool.query(
       `SELECT tss.*,
               u.first_name AS contact_first_name,
@@ -595,12 +595,12 @@ router.patch("/safety/trusted-shares/consent", async (req: Request, res: Respons
       res.status(400).json({ error: "enabled (boolean) is required" });
       return;
     }
-    await expireTrustedSafetySessions(ownerId);
+    await expireTrustedLocationSessions(ownerId);
     const result = await pool.query(
       `UPDATE trusted_safety_shares
           SET owner_enabled = $1,
               status = CASE
-                WHEN $1 = false AND status IN ('active', 'paused_home') THEN 'paused_manual'
+                WHEN $1 = false AND status = 'active' THEN 'paused_manual'
                 WHEN $1 = true AND status = 'paused_manual' AND contact_accepted = true THEN 'active'
                 ELSE status
               END,
@@ -646,13 +646,6 @@ router.get("/safety/trusted-shares/received", async (req: Request, res: Response
          ON contact_blocks.blocker_id = $1 AND contact_blocks.blocked_id = tss.owner_id
        WHERE tss.contact_user_id = $1
          AND tss.status NOT IN ('revoked')
-         AND (
-           tss.status NOT IN ('active', 'paused_home')
-           OR (
-             tss.activated_at > NOW() - INTERVAL '30 days'
-             AND tss.activated_at <= NOW()
-           )
-         )
          AND owner_blocks.id IS NULL
          AND contact_blocks.id IS NULL
        ORDER BY tss.created_at DESC`,
@@ -713,7 +706,7 @@ router.patch("/safety/trusted-shares/:id/enabled", async (req: Request, res: Res
       res.status(400).json({ error: "enabled (boolean) is required" });
       return;
     }
-    await expireTrustedSafetySessions(ownerId);
+    await expireTrustedLocationSessions(ownerId);
 
     const result = enabled
       ? await pool.query(
@@ -723,7 +716,6 @@ router.patch("/safety/trusted-shares/:id/enabled", async (req: Request, res: Res
                   WHEN status = 'paused_manual' AND contact_accepted = true THEN 'active'
                   ELSE status
                 END,
-                activated_at = CASE WHEN contact_accepted = true THEN NOW() ELSE activated_at END,
                 updated_at = NOW()
           WHERE id = $1
             AND owner_id = $2
@@ -734,7 +726,7 @@ router.patch("/safety/trusted-shares/:id/enabled", async (req: Request, res: Res
       : await pool.query(
         `UPDATE trusted_safety_shares
             SET owner_enabled = false,
-                status = CASE WHEN status IN ('active', 'paused_home') THEN 'paused_manual' ELSE status END,
+                status = CASE WHEN status = 'active' THEN 'paused_manual' ELSE status END,
                 updated_at = NOW()
           WHERE id = $1
             AND owner_id = $2
@@ -768,7 +760,7 @@ router.patch("/safety/trusted-shares/:id/pause", async (req: Request, res: Respo
       res.status(400).json({ error: "pause (boolean) is required" });
       return;
     }
-    await expireTrustedSafetySessions(ownerId);
+    await expireTrustedLocationSessions(ownerId);
 
     const existing = await pool.query(
       `SELECT * FROM trusted_safety_shares WHERE id = $1`,
@@ -801,7 +793,6 @@ router.patch("/safety/trusted-shares/:id/pause", async (req: Request, res: Respo
     const result = await pool.query(
       `UPDATE trusted_safety_shares
        SET status = $1,
-           activated_at = CASE WHEN $1 = 'active' THEN NOW() ELSE activated_at END,
            updated_at = NOW()
        WHERE id = $2
          AND owner_id = $3
