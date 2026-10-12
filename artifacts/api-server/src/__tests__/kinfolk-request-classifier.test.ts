@@ -180,13 +180,23 @@ describe("classifyKinfolkRequest — general current-affairs protection", () => 
     });
   });
 
-  it("retains explicit travel planning as an additive capability", () => {
+  it("requires an explicit itinerary action before entering travel planning", () => {
     expect(classifyKinfolkRequest("I am going to Atlanta this weekend")).toMatchObject({
+      route: "general_knowledge",
+      discoveryKind: "general",
+      location: "Atlanta",
+    });
+    expect(classifyKinfolkRequest("I am traveling to Atlanta")).toMatchObject({
+      route: "general_knowledge",
+      discoveryKind: "general",
+      location: "Atlanta",
+    });
+    expect(classifyKinfolkRequest("Plan a two-day trip to Atlanta")).toMatchObject({
       route: "travel_planning",
       discoveryKind: "travel",
       location: "Atlanta",
     });
-    expect(classifyKinfolkRequest("I am traveling to Atlanta")).toMatchObject({
+    expect(classifyKinfolkRequest("Could you make a weekend itinerary for Atlanta?")).toMatchObject({
       route: "travel_planning",
       discoveryKind: "travel",
       location: "Atlanta",

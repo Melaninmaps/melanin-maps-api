@@ -144,9 +144,9 @@ export function classifyKinfolkRequest(
     hasBusinessSubject: normalizedBusinessSubject,
   });
   const currentTurnLocation = cleanLocation(text.match(LOCATION_RE)?.[1]);
-  // A direct travel declaration is actionable only when it names a destination
-  // in this turn. This admits “I am going to Atlanta” without allowing a stale
-  // resolved city to turn ordinary “going to see a movie” language into travel.
+  // An explicit itinerary action is actionable only when it names a destination
+  // in this turn. A destination declaration alone remains ordinary conversation,
+  // so a stale resolved city cannot turn “going to see a movie” into travel.
   const explicitTravelPlanningIntent = isExplicitCurrentItineraryRequest(text);
   const postalCode = text.match(POSTAL_CODE_RE)?.[1] ?? null;
   // Use server-resolved city (alias-aware) when available; fall back to regex.

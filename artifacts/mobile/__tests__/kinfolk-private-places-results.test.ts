@@ -5,9 +5,11 @@ const privatePlacesSource = readFileSync(
   new URL("../app/kinfolk-private-places.tsx", import.meta.url),
   "utf8",
 );
+const projectionStart = privatePlacesSource.indexOf("type NearbyDirectoryBusiness");
+const projectionEnd = privatePlacesSource.indexOf("async function memberToken");
 const projectionSource = privatePlacesSource.slice(
-  privatePlacesSource.indexOf("type NearbyDirectoryBusiness"),
-  privatePlacesSource.indexOf("function apiBase"),
+  projectionStart,
+  projectionEnd,
 );
 const nearbySearchSource = privatePlacesSource.slice(
   privatePlacesSource.indexOf("const nearby = async"),
@@ -37,6 +39,8 @@ describe("mobile Private Places governed nearby results", () => {
   });
 
   it("projects an explicit public card allowlist and keeps the nearby presentation away from private data", () => {
+    expect(projectionStart).toBeGreaterThan(-1);
+    expect(projectionEnd).toBeGreaterThan(projectionStart);
     for (const safeField of ["id", "name", "category", "city", "stateCode", "verified"]) {
       expect(projectionSource).toContain(safeField);
     }

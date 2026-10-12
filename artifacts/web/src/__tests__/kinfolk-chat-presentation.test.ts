@@ -205,7 +205,9 @@ describe("Kinfolk chat presentation", () => {
     expect(inlineMemoryConsentSource).toContain("if (plan.sensitive.length > 0)");
     expect(inlineMemoryConsentSource).toContain("setSelected(allItems.map((item) => item.id));");
     expect(inlineMemoryConsentSource).toContain("I agree to save the selected sensitive details for relevant use.");
-    expect(inlineMemoryConsentSource).toContain("selectedSensitive && !sensitiveConsent");
+    expect(inlineMemoryConsentSource).toContain("selectedSensitive && (!sensitiveConsent || !sensitivePassword)");
+    expect(inlineMemoryConsentSource).toContain("sensitive-memory-vault/reauth");
+    expect(inlineMemoryConsentSource).toContain("Confirm your password before saving a sensitive detail.");
     expect(inlineMemoryConsentSource).toContain("sensitiveConsent: true");
     expect(inlineMemoryConsentSource).not.toContain(
       "onClick={() => void save(allItems.map((item) => item.id))}",
