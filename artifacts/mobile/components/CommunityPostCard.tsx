@@ -12,7 +12,7 @@ import { ReportButton } from "@/components/ReportButton";
 import AudienceRatingBadge from "@/components/AudienceRatingBadge";
 import type { CommunityPost } from "@/constants/types";
 import { openExternalUrl } from "@/lib/safeLinking";
-import { getApiBase } from "@/lib/api";
+import { getApiBase, getMemberApiHeaders } from "@/lib/api";
 import { detectSocialVideoPlatform, getSocialVideoPlatformLabel } from "@workspace/constants";
 import { useSocialVideoPreferences } from "@/hooks/useSocialVideoPreferences";
 
@@ -58,9 +58,11 @@ const WARNING_LABELS: Record<string, string> = {
 const COMMUNITY_CAPTION_PREVIEW_LENGTH = 280;
 
 
-function NativeCommunityVideoModal({ url, onClose }: { url: string; onClose: () => void }) {
+type CommunityMediaItem = { url: string; type?: "image" | "video"; private: boolean };
+
+function NativeCommunityVideoModal({ item, headers, onClose }: { item: CommunityMediaItem; headers: Record<string, string>; onClose: () => void }) {
   const colors = useColors();
-  const player = useVideoPlayer({ uri: url, useCaching: true }, (instance) => {
+  const player = useVideoPlayer({ uri: item.url, headers: item.private ? headers : undefined, useCaching: !item.private }, (instance) => {
     instance.play();
   });
   const { status } = useEvent(player, "statusChange", { status: player.status });
@@ -84,14 +86,14 @@ function NativeCommunityVideoModal({ url, onClose }: { url: string; onClose: () 
         {status === "error" ? (
           <View style={{ padding: 20, alignItems: "center", gap: 12 }}>
             <Text style={{ color: "#FFFFFF", textAlign: "center" }}>This video could not be played in the app.</Text>
-            <TouchableOpacity
-              onPress={() => { void openExternalUrl(url, { unavailableMessage: "This video is unavailable." }); }}
+            {!item.private ? <TouchableOpacity
+              onPress={() => { void openExternalUrl(item.url, { unavailableMessage: "This video is unavailable." }); }}
               style={{ borderColor: "#FFFFFF", borderWidth: 1, borderRadius: 8, paddingHorizontal: 16, paddingVertical: 10 }}
               accessibilityRole="button"
               accessibilityLabel="Open video externally"
             >
               <Text style={{ color: "#FFFFFF" }}>Open externally</Text>
-            </TouchableOpacity>
+            </TouchableOpacity> : null}
           </View>
         ) : null}
         <TouchableOpacity
@@ -115,17 +117,19 @@ function NativeCommunityVideoModal({ url, onClose }: { url: string; onClose: () 
  * player render over it when a frame is available.
  */
 function InlineCommunityVideoPreview({
-  url,
+  item,
+  headers,
   emphasized,
   compact,
   onPress,
 }: {
-  url: string;
+  item: CommunityMediaItem;
+  headers: Record<string, string>;
   emphasized: boolean;
   compact: boolean;
   onPress: () => void;
 }) {
-  const player = useVideoPlayer({ uri: url, useCaching: true }, (instance) => {
+  const player = useVideoPlayer({ uri: item.url, headers: item.private ? headers : undefined, useCaching: !item.private }, (instance) => {
     instance.muted = true;
   });
   const { status } = useEvent(player, "statusChange", { status: player.status });
@@ -235,18 +239,23 @@ function TikTokCommunityPreview({
   );
 }
 
-function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType, emphasized = false, compact = false }: {
+function MediaGrid({ mediaUrls, privateMedia = [], mediaHeaders, hasContentWarning, contentWarningType, emphasized = false, compact = false }: {
   mediaUrls: string[];
+  privateMedia?: NonNullable<CommunityPost["privateMedia"]>;
+  mediaHeaders: Record<string, string>;
   hasContentWarning: boolean;
   contentWarningType?: string;
   emphasized?: boolean;
   compact?: boolean;
 }) {
   const [revealed, setRevealed] = useState(false);
-  const [activeVideoUrl, setActiveVideoUrl] = useState<string | null>(null);
+  const [activeVideo, setActiveVideo] = useState<CommunityMediaItem | null>(null);
   const { allows } = useSocialVideoPreferences();
-  const visibleUrls = mediaUrls.filter((url) => allows(detectSocialVideoPlatform(url)));
-  if (visibleUrls.length === 0) return null;
+  const visibleMedia: CommunityMediaItem[] = [
+    ...mediaUrls.map((url) => ({ url, private: false })),
+    ...privateMedia.map((media) => ({ url: `${getApiBase()}${media.url}`, type: media.type, private: true })),
+  ].filter((item) => allows(detectSocialVideoPlatform(item.url)));
+  if (visibleMedia.length === 0) return null;
   if (hasContentWarning && !revealed) {
     return (
       <TouchableOpacity
@@ -258,66 +267,37 @@ function MediaGrid({ mediaUrls, hasContentWarning, contentWarningType, emphasize
         activeOpacity={0.85}
       >
         <Feather name="eye-off" size={26} color="#FFFFFF" />
-        <Text style={s.warningTitle}>
-          {WARNING_LABELS[contentWarningType ?? "other"] ?? "Sensitive Content"}
-        </Text>
+        <Text style={s.warningTitle}>{WARNING_LABELS[contentWarningType ?? "other"] ?? "Sensitive Content"}</Text>
         <Text style={s.warningSubtitle}>Tap to view</Text>
       </TouchableOpacity>
     );
   }
-
   return (
     <>
-      {activeVideoUrl ? (
-        <NativeCommunityVideoModal url={activeVideoUrl} onClose={() => setActiveVideoUrl(null)} />
-      ) : null}
+      {activeVideo ? <NativeCommunityVideoModal item={activeVideo} headers={mediaHeaders} onClose={() => setActiveVideo(null)} /> : null}
       <View style={[s.mediaGrid, compact && s.mediaGridCompact, emphasized && s.mediaGridEmphasized]}>
-      {hasContentWarning && revealed && (
-        <TouchableOpacity
-          style={s.warningBadge}
-          onPress={() => setRevealed(false)}
-          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-        >
-          <Feather name="eye-off" size={11} color="#FFFFFF" />
-          <Text style={s.warningBadgeText}>{WARNING_LABELS[contentWarningType ?? "other"] ?? "Sensitive Content"}</Text>
-        </TouchableOpacity>
-      )}
-      {visibleUrls.map((url, i) => {
-        const socialPlatform = detectSocialVideoPlatform(url);
-        const isVideo = url.endsWith(".mp4") || url.endsWith(".mov") || url.endsWith(".webm") || url.includes("video");
-        return socialPlatform === "tiktok" ? (
-          <TikTokCommunityPreview
-            key={i}
-            url={url}
-            emphasized={Boolean(emphasized)}
-            compact={Boolean(compact)}
-          />
-        ) : socialPlatform ? (
-          <TouchableOpacity
-            key={i}
-            style={[s.mediaThumb, compact && s.mediaThumbCompact, emphasized && s.mediaThumbEmphasized, { backgroundColor: "#23160F", justifyContent: "center", alignItems: "center", padding: 12 }]}
-            onPress={() => { void openExternalUrl(url, { unavailableMessage: "This public social video is unavailable." }); }}
-            activeOpacity={0.8}
-            accessibilityRole="link"
-            accessibilityLabel={`Open ${getSocialVideoPlatformLabel(socialPlatform)} video`}
-          >
-            <Feather name="external-link" size={28} color="#CA922B" />
-            <Text style={{ color: "#FFFFFF", fontSize: 12, fontFamily: "Inter_600SemiBold", marginTop: 7, textAlign: "center" }}>
-              Watch on {getSocialVideoPlatformLabel(socialPlatform)}
-            </Text>
+        {hasContentWarning && revealed && (
+          <TouchableOpacity style={s.warningBadge} onPress={() => setRevealed(false)} hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}>
+            <Feather name="eye-off" size={11} color="#FFFFFF" />
+            <Text style={s.warningBadgeText}>{WARNING_LABELS[contentWarningType ?? "other"] ?? "Sensitive Content"}</Text>
           </TouchableOpacity>
-        ) : isVideo ? (
-          <InlineCommunityVideoPreview
-            key={i}
-            url={url}
-            emphasized={Boolean(emphasized)}
-            compact={Boolean(compact)}
-            onPress={() => setActiveVideoUrl(url)}
-          />
-        ) : (
-          <Image key={i} source={{ uri: url }} style={[s.mediaThumb, compact && s.mediaThumbCompact, emphasized && s.mediaThumbEmphasized]} resizeMode="cover" />
-        );
-      })}
+        )}
+        {visibleMedia.map((item, i) => {
+          const socialPlatform = detectSocialVideoPlatform(item.url);
+          const isVideo = item.type === "video" || item.url.endsWith(".mp4") || item.url.endsWith(".mov") || item.url.endsWith(".webm") || item.url.includes("video");
+          return socialPlatform === "tiktok" ? (
+            <TikTokCommunityPreview key={i} url={item.url} emphasized={Boolean(emphasized)} compact={Boolean(compact)} />
+          ) : socialPlatform ? (
+            <TouchableOpacity key={i} style={[s.mediaThumb, compact && s.mediaThumbCompact, emphasized && s.mediaThumbEmphasized, { backgroundColor: "#23160F", justifyContent: "center", alignItems: "center", padding: 12 }]} onPress={() => { void openExternalUrl(item.url, { unavailableMessage: "This public social video is unavailable." }); }} activeOpacity={0.8} accessibilityRole="link" accessibilityLabel={`Open ${getSocialVideoPlatformLabel(socialPlatform)} video`}>
+              <Feather name="external-link" size={28} color="#CA922B" />
+              <Text style={{ color: "#FFFFFF", fontSize: 12, fontFamily: "Inter_600SemiBold", marginTop: 7, textAlign: "center" }}>Watch on {getSocialVideoPlatformLabel(socialPlatform)}</Text>
+            </TouchableOpacity>
+          ) : isVideo ? (
+            <InlineCommunityVideoPreview key={i} item={item} headers={mediaHeaders} emphasized={Boolean(emphasized)} compact={Boolean(compact)} onPress={() => setActiveVideo(item)} />
+          ) : (
+            <Image key={i} source={{ uri: item.url, headers: item.private ? mediaHeaders : undefined, cache: item.private ? "reload" : "default" }} style={[s.mediaThumb, compact && s.mediaThumbCompact, emphasized && s.mediaThumbEmphasized]} resizeMode="cover" />
+          );
+        })}
       </View>
     </>
   );
@@ -436,7 +416,13 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
   const [showBizCard, setShowBizCard] = useState(false);
   const [commentPolicy, setCommentPolicy] = useState(post.commentPolicy ?? "everyone");
   const [captionExpanded, setCaptionExpanded] = useState(false);
+  const [mediaHeaders, setMediaHeaders] = useState<Record<string, string>>({});
 
+  useEffect(() => {
+    let active = true;
+    void getMemberApiHeaders().then((headers) => { if (active) setMediaHeaders(headers); });
+    return () => { active = false; };
+  }, []);
   useEffect(() => { setLiked(post.liked); }, [post.id, post.liked]);
   useEffect(() => { setLikeCount(post.likes); }, [post.id, post.likes]);
 
@@ -488,7 +474,7 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
   const accentColor = POST_TYPE_ACCENT[post.postType ?? "community"] ?? POST_TYPE_ACCENT.community;
   const isRepost = !!post.repostId;
   const isConversation = presentation === "text_first";
-  const hasMedia = Boolean(post.mediaUrls?.length);
+  const hasMedia = Boolean(post.mediaUrls?.length || post.privateMedia?.length);
   // Community Mix and Watch lead with a member-selected image or video. The
   // explicit Conversation preference remains text-first for members who want
   // a compact reading view.
@@ -498,9 +484,11 @@ export function CommunityPostCard({ post, presentation = "mixed", currentUserId,
   const visibleCaption = captionExpanded || !hasLongCaption
     ? post.content
     : `${post.content.slice(0, COMMUNITY_CAPTION_PREVIEW_LENGTH).trimEnd()}…`;
-  const postMedia = post.mediaUrls && post.mediaUrls.length > 0 ? (
+  const postMedia = hasMedia ? (
     <MediaGrid
-      mediaUrls={post.mediaUrls}
+      mediaUrls={post.mediaUrls ?? []}
+      privateMedia={post.privateMedia}
+      mediaHeaders={mediaHeaders}
       hasContentWarning={post.hasContentWarning ?? false}
       contentWarningType={post.contentWarningType}
       emphasized={!isConversation}

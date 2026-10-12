@@ -12,23 +12,26 @@ const mobileCommunity = readFileSync(
 );
 
 describe("private Community media privacy boundary", () => {
-  it("refuses new public-bucket media on followers-only, private-topic, and Group posts", () => {
+  it("requires owner-controlled private assets for followers-only, private-topic, and Group posts", () => {
     expect(communityRoute).toContain("const privateAudienceRequested = visibility === \"followers_only\" || isPrivateTopic || resolvedGroupId !== null;");
     expect(communityRoute).toContain("if (privateAudienceRequested && mediaValidation.urls.length > 0)");
-    expect(communityRoute).toContain('code: "PRIVATE_MEDIA_UNAVAILABLE"');
-    expect(communityRoute).toContain("General Community uploads use public delivery");
+    expect(communityRoute).toContain('code: "PRIVATE_MEDIA_REQUIRED"');
+    expect(communityRoute).toContain("validatePrivateCommunityMediaAssetIds");
+    expect(communityRoute).toContain("toPrivateCommunityMediaReference");
   });
 
-  it("does not return legacy public media URLs within a private Community audience", () => {
+  it("does not return legacy public media URLs and uses authenticated application routes", () => {
     expect(communityRoute).toContain("function hasPrivateCommunityAudience");
     expect(communityRoute).toContain("mediaUrls: hasPrivateAudience ? [] : normalizeCommunityMediaUrls");
-    expect(communityRoute).toContain("mediaUrls: hasPrivateCommunityAudience(r) ? [] : normalizeCommunityMediaUrls");
+    expect(communityRoute).toContain('router.get("/community/posts/:id/private-media/:assetId"');
+    expect(communityRoute).toContain('res.setHeader("Cache-Control", "private, no-store, max-age=0")');
+    expect(communityRoute).toContain("privateCommunityMediaAssetIdsFromValue");
   });
 
-  it("keeps the native composer truthful before a member uploads or changes privacy", () => {
-    expect(mobileCommunity).toContain("Private Community media isn't available yet");
-    expect(mobileCommunity).toContain("Remove media before changing privacy");
-    expect(mobileCommunity).toContain("Remove media before making this topic private");
+  it("keeps native private uploads audience-bound and avoids storage URLs", () => {
+    expect(mobileCommunity).toContain('"community_post_private"');
+    expect(mobileCommunity).toContain("privateMediaAssetIds");
+    expect(mobileCommunity).toContain("Reattach media for a private audience");
     expect(mobileCommunity).toContain("newPostVisibility === \"followers_only\" || newPostIsPrivateTopic || activeGroupId !== null");
   });
 });

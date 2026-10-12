@@ -30,6 +30,19 @@ function formatTimeAgo(value: unknown): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+function privateMediaFromRaw(value: unknown): CommunityPost["privateMedia"] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const media = item as Record<string, unknown>;
+    return typeof media.assetId === "string" && typeof media.url === "string"
+      && (media.type === "image" || media.type === "video")
+      && media.url.startsWith("/api/community/posts/")
+      ? [{ assetId: media.assetId, type: media.type as "image" | "video", url: media.url }]
+      : [];
+  }).slice(0, 5);
+}
+
 function toThreadPost(raw: Record<string, unknown>): CommunityPost {
   return {
     id: String(raw.id ?? ""),
@@ -58,6 +71,7 @@ function toThreadPost(raw: Record<string, unknown>): CommunityPost {
     businessName: typeof raw.businessName === "string" ? raw.businessName : undefined,
     businessLink: typeof raw.businessLink === "string" ? raw.businessLink : undefined,
     mediaUrls: Array.isArray(raw.mediaUrls) ? raw.mediaUrls.filter((url): url is string => typeof url === "string") : [],
+    privateMedia: privateMediaFromRaw(raw.privateMedia),
     locationTag: typeof raw.locationTag === "string" ? raw.locationTag : undefined,
     locationType: typeof raw.locationType === "string" ? raw.locationType : undefined,
     topicTag: typeof raw.topicTag === "string" ? raw.topicTag : undefined,

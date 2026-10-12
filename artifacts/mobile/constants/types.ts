@@ -96,6 +96,13 @@ export interface Event {
 export type PostCategory = "discussion" | "recommendation" | "alert" | "question";
 export type PostType = "community" | "business" | "question" | "safety" | "travel" | "saved_place";
 
+export type PrivateCommunityMedia = {
+  assetId: string;
+  type: "image" | "video";
+  /** Authenticated application path; never a storage-provider URL. */
+  url: string;
+};
+
 export interface CommunityPost {
   id: string;
   author: string;
@@ -118,6 +125,7 @@ export interface CommunityPost {
   businessName?: string;
   businessLink?: string;
   mediaUrls?: string[];
+  privateMedia?: PrivateCommunityMedia[];
   savedPlaceId?: string;
   locationTag?: string;
   locationVenueName?: string;

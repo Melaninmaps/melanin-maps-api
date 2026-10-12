@@ -102,7 +102,8 @@ describe("native Community content-first surface", () => {
       "Community video",
       "Play Community video",
       "inlineVideoCallToAction",
-      "useVideoPlayer({ uri: url, useCaching: true }",
+      "headers: item.private ? headers : undefined",
+      "useCaching: !item.private",
     ]) {
       expect(postCardSource).toContain(marker);
     }

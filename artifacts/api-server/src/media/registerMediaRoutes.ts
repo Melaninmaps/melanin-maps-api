@@ -37,7 +37,7 @@ const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 const MAX_DOC_BYTES = 10 * 1024 * 1024;
 const MAX_KINFOLK_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_PURPOSES = new Set([
-  "general", "community_post", "business_submission", "business_claim", "business_photo", "kinfolk_question",
+  "general", "community_post", "community_post_private", "business_submission", "business_claim", "business_photo", "kinfolk_question",
 ]);
 
 export const MEDIA_UPLOAD_ERROR_CODES = {
@@ -264,6 +264,8 @@ export function getMediaUploadReadiness(purpose?: string): Record<string, unknow
   const privateBucketConfigured = Boolean(process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID?.trim());
   const kinfolkQuestionBucketConfigured = Boolean(getKinfolkQuestionImageBucketId());
   const isPrivateKinfolkQuestion = purpose === "kinfolk_question";
+  const isPrivateCommunityPost = purpose === "community_post_private";
+  const isPrivatePurpose = isPrivateKinfolkQuestion || isPrivateCommunityPost;
   const storage = isPrivateKinfolkQuestion
     ? getKinfolkQuestionImageStorageDiagnostics()
     : getObjectStorageDiagnostics();
@@ -271,6 +273,8 @@ export function getMediaUploadReadiness(purpose?: string): Record<string, unknow
     ...(storage.configured ? [] : ["Object-storage credential mode is invalid or incomplete."]),
     ...(isPrivateKinfolkQuestion
       ? (kinfolkQuestionBucketConfigured ? [] : ["KINFOLK_MEDIA_BUCKET_ID is required for private Kinfolk image uploads."])
+      : isPrivateCommunityPost
+      ? (privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private Community uploads."])
       : [
           ...(delivery.blocker ? [delivery.blocker] : []),
           ...(privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private uploads."]),
@@ -280,8 +284,8 @@ export function getMediaUploadReadiness(purpose?: string): Record<string, unknow
     ready: blockers.length === 0,
     purpose: purpose ?? null,
     credentialMode: storage.credentialMode,
-    publicDeliveryMode: delivery.mode,
-    publicBucketConfigured: Boolean(delivery.bucketId),
+    publicDeliveryMode: isPrivatePurpose ? null : delivery.mode,
+    publicBucketConfigured: isPrivatePurpose ? false : Boolean(delivery.bucketId),
     privateBucketConfigured,
     kinfolkQuestionBucketConfigured,
     publicBaseConfigured: Boolean(delivery.publicBaseUrl),
@@ -433,7 +437,8 @@ async function handleMediaUpload(
   }
 
   const isKinfolkQuestion = purpose === "kinfolk_question";
-  const isPrivate = isKinfolkQuestion || purpose === "business_submission";
+  const isPrivateCommunityPost = purpose === "community_post_private";
+  const isPrivate = isKinfolkQuestion || isPrivateCommunityPost || purpose === "business_submission";
   const delivery = getPublicDeliveryConfiguration();
   const activeStorageClient = isKinfolkQuestion ? kinfolkQuestionStorageClient : storageClient;
   const storageDiagnostics = isKinfolkQuestion
@@ -475,6 +480,8 @@ async function handleMediaUpload(
   const folder = isPrivate
     ? purpose === "business_submission"
       ? "media-uploads/business-submission-private"
+      : isPrivateCommunityPost
+      ? "media-uploads/community-post-private"
       : "media-uploads/kinfolk-private"
     : isVideo
     ? "media-uploads/videos"
@@ -512,10 +519,11 @@ async function handleMediaUpload(
 
   let url: string | null;
   try {
-    if (purpose === "kinfolk_question") {
+    if (purpose === "kinfolk_question" || isPrivateCommunityPost) {
       // The browser gets a local preview only. A short-lived signed URL is
-      // created server-side for the active, consented model request and is never
-      // returned to the browser or stored in the conversation.
+      // created server-side only for the active, consented model request. Private
+      // Community media is streamed by an authenticated Community route instead;
+      // neither flow returns or stores a provider URL in the client.
       url = null;
     } else if (isPrivate) {
       const [signedUrl] = await storageFile.getSignedUrl({ action: "read", expires: Date.now() + 15 * 60 * 1000 });
@@ -539,7 +547,7 @@ async function handleMediaUpload(
   }
 
   try {
-    await recordAsset([assetId, user.id, purpose, mime, req.file.size, objectKey, purpose === "business_submission" ? null : url]);
+    await recordAsset([assetId, user.id, purpose, mime, req.file.size, objectKey, isPrivate ? null : url]);
   } catch (error: unknown) {
     await bestEffortDelete(storageFile);
     logUploadFailure(req, "warn", {
@@ -564,6 +572,8 @@ async function handleMediaUpload(
     assetId,
     type: fileType,
     requestId,
-    expiresAt: isPrivate ? new Date(Date.now() + 15 * 60 * 1000).toISOString() : null,
+    expiresAt: purpose === "business_submission" || purpose === "kinfolk_question"
+      ? new Date(Date.now() + 15 * 60 * 1000).toISOString()
+      : null,
   });
 }

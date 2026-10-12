@@ -26,6 +26,12 @@ let _client: Storage | null = null;
 let _clientError: Error | null = null;
 let _kinfolkQuestionImageClient: Storage | null = null;
 let _kinfolkQuestionImageClientError: Error | null = null;
+let testObjectStorageClient: Storage | null = null;
+
+/** Test-only override for local route integration; never configured by runtime environment. */
+export function setObjectStorageClientForTest(client: Storage | null): void {
+  testObjectStorageClient = client;
+}
 
 function assertRailwayAdcBinding(mode: ObjectStorageCredentialMode): void {
   if (
@@ -161,6 +167,7 @@ function createStorageClient(): Storage {
 }
 
 function getClient(): Storage {
+  if (testObjectStorageClient) return testObjectStorageClient;
   if (_clientError) throw _clientError;
   if (!_client) {
     try {

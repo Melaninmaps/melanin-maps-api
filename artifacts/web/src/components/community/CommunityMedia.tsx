@@ -117,7 +117,7 @@ export function classifyCommunityMedia(rawUrl: string): CommunityMediaKind {
   return { type: "provider-link", provider: "External media" };
 }
 
-function NativeVideo({ url, compact }: { url: string; compact: boolean }) {
+function NativeVideo({ url, compact, allowExternal = true }: { url: string; compact: boolean; allowExternal?: boolean }) {
   const [unavailable, setUnavailable] = useState(false);
 
   if (unavailable) {
@@ -129,9 +129,7 @@ function NativeVideo({ url, compact }: { url: string; compact: boolean }) {
       >
         <AlertCircle className="h-5 w-5 text-[#CA922B]" aria-hidden="true" />
         <span className="text-xs font-semibold">Video unavailable</span>
-        <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#F5EBD8] underline underline-offset-2">
-          Open video
-        </a>
+        {allowExternal ? <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs text-[#F5EBD8] underline underline-offset-2">Open video</a> : null}
       </div>
     );
   }
@@ -147,12 +145,12 @@ function NativeVideo({ url, compact }: { url: string; compact: boolean }) {
       aria-label="Community post video"
       className={compact ? "h-24 w-44 rounded-xl bg-black object-cover" : "max-h-72 w-full rounded-xl bg-black object-cover"}
     >
-      Your browser cannot play this video. <a href={url}>Open the video instead.</a>
+      Your browser cannot play this video. {allowExternal ? <a href={url}>Open the video instead.</a> : null}
     </video>
   );
 }
 
-function ImagePreview({ url, index, compact }: { url: string; index: number; compact: boolean }) {
+function ImagePreview({ url, index, compact, allowExternal = true }: { url: string; index: number; compact: boolean; allowExternal?: boolean }) {
   const [unavailable, setUnavailable] = useState(false);
 
   if (unavailable) {
@@ -164,9 +162,7 @@ function ImagePreview({ url, index, compact }: { url: string; index: number; com
       >
         <AlertCircle className="h-5 w-5 text-[#CA922B]" aria-hidden="true" />
         {!compact && <span className="text-xs font-semibold">Image preview unavailable</span>}
-        <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-[#3A1F0E] underline underline-offset-2">
-          Open image
-        </a>
+        {allowExternal ? <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs font-semibold text-[#3A1F0E] underline underline-offset-2">Open image</a> : null}
       </div>
     );
   }
@@ -275,15 +271,25 @@ export function CommunityMedia({
   index,
   compact = false,
   onRemove,
+  privateMedia = false,
+  mediaType,
 }: {
   url: string;
   index: number;
   compact?: boolean;
   onRemove?: () => void;
+  /** An application-relative, authenticated delivery path—not a storage URL. */
+  privateMedia?: boolean;
+  mediaType?: "image" | "video";
 }) {
   const { allows } = useSocialVideoPreferences();
-  const media = classifyCommunityMedia(url);
-  const safeUrl = safeHttpUrl(url)?.toString();
+  const privatePath = privateMedia && /^\/api\/community\/posts\/[A-Za-z0-9-]+\/private-media\/[A-Za-z0-9-]+$/.test(url)
+    ? `${BASE.replace(/\/?$/, "/")}${url.replace(/^\//, "")}`
+    : null;
+  const media = privatePath
+    ? { type: mediaType === "video" ? "native-video" as const : "image" as const }
+    : classifyCommunityMedia(url);
+  const safeUrl = privatePath ?? safeHttpUrl(url)?.toString();
   const removeButton = onRemove ? (
     <button
       type="button"
@@ -297,7 +303,7 @@ export function CommunityMedia({
 
   // A hidden provider should not appear in the feed, but a person composing a
   // post must still be able to remove it after changing source preferences.
-  if (!allows(detectSocialVideoPlatform(url))) {
+  if (!privatePath && !allows(detectSocialVideoPlatform(url))) {
     if (!removeButton) return null;
     return (
       <div data-testid={`community-media-hidden-${index}`} role="status" className="relative flex min-h-11 items-center rounded-xl border border-[#CA922B]/25 bg-[#FAF6EF] py-2 pl-3 pr-10 text-xs font-semibold text-[#3A1F0E]/70">
@@ -401,7 +407,7 @@ export function CommunityMedia({
   if (media.type === "native-video") {
     return (
       <div className="relative">
-        <NativeVideo url={safeUrl ?? url} compact={compact} />
+        <NativeVideo url={safeUrl ?? url} compact={compact} allowExternal={!privatePath} />
         {removeButton}
       </div>
     );
@@ -409,7 +415,7 @@ export function CommunityMedia({
 
   return (
     <div className={`relative overflow-hidden rounded-xl ${compact ? "h-20 w-20" : "w-full"}`}>
-      <ImagePreview url={safeUrl ?? url} index={index} compact={compact} />
+      <ImagePreview url={safeUrl ?? url} index={index} compact={compact} allowExternal={!privatePath} />
       {removeButton}
     </div>
   );

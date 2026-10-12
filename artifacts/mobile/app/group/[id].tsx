@@ -77,6 +77,19 @@ function formatPostTimeAgo(iso: unknown): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+function privateMediaFromRaw(value: unknown): CommunityPost["privateMedia"] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const media = item as Record<string, unknown>;
+    return typeof media.assetId === "string" && typeof media.url === "string"
+      && (media.type === "image" || media.type === "video")
+      && media.url.startsWith("/api/community/posts/")
+      ? [{ assetId: media.assetId, type: media.type as "image" | "video", url: media.url }]
+      : [];
+  }).slice(0, 5);
+}
+
 function toMemberGroupPost(raw: Record<string, unknown>): CommunityPost {
   const category = raw.category === "recommendation" || raw.category === "alert" || raw.category === "question"
     ? raw.category
@@ -104,6 +117,7 @@ function toMemberGroupPost(raw: Record<string, unknown>): CommunityPost {
     groupId: typeof raw.groupId === "number" ? raw.groupId : undefined,
     liked: raw.liked === true,
     mediaUrls: parseMediaUrls(raw.mediaUrls),
+    privateMedia: privateMediaFromRaw(raw.privateMedia),
     hasContentWarning: raw.hasContentWarning === true,
     contentWarningType: typeof raw.contentWarningType === "string" ? raw.contentWarningType : undefined,
     threadId: typeof raw.threadId === "string" ? raw.threadId : undefined,

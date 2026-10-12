@@ -22,6 +22,13 @@ import {
   normalizeCommunityMediaUrls,
   validateCommunityMediaUrls,
 } from "../community/communityMediaValidation";
+import {
+  describePrivateCommunityMedia,
+  normalizePrivateCommunityMediaAssetIds,
+  privateCommunityMediaAssetIdsFromValue,
+  toPrivateCommunityMediaReference,
+  validatePrivateCommunityMediaAssetIds,
+} from "../community/privateCommunityMedia";
 import { fetchTikTokVideoPreview, type TikTokVideoPreview } from "../community/tiktokPreview";
 import { attachEligibleBusinessImages } from "../businesses/businessImageEligibility";
 
@@ -234,8 +241,11 @@ async function resolveCommentAccess(postId: string, viewerId: string): Promise<C
 }
 
 /** Keeps feed and thread responses on the same camel-case public contract. */
-function serializeCommunityPost(row: Record<string, any>) {
+async function serializeCommunityPost(row: Record<string, any>) {
   const hasPrivateAudience = hasPrivateCommunityAudience(row);
+  const privateMedia = hasPrivateAudience
+    ? await describePrivateCommunityMedia(String(row.id), row.media_urls ?? row.mediaUrls)
+    : [];
   return {
     id: row.id,
     authorId: row.author_id ?? row.authorId,
@@ -250,10 +260,10 @@ function serializeCommunityPost(row: Record<string, any>) {
     businessId: row.business_id ?? row.businessId,
     businessName: row.business_name ?? row.businessName,
     businessLink: row.business_link ?? row.businessLink,
-    // General Community uploads use public delivery. Until a private-object
-    // delivery path exists, never return those public URLs for a private
-    // audience post, including Group posts.
+    // Restricted assets are represented by authenticated application routes.
+    // No storage path, provider URL, or signed token reaches the feed response.
     mediaUrls: hasPrivateAudience ? [] : normalizeCommunityMediaUrls(row.media_urls ?? row.mediaUrls),
+    privateMedia,
     savedPlaceId: row.saved_place_id ?? row.savedPlaceId,
     locationTag: row.location_tag ?? row.locationTag,
     locationVenueName: row.location_venue_name ?? row.locationVenueName ?? null,
@@ -400,14 +410,18 @@ router.get("/community/posts", async (req: Request, res: Response) => {
 
     const likedPostIds = await fetchViewerReactionIds(rows.map((row) => row.id), req.user.id);
 
-    // Map snake_case → camelCase to match existing shape
-    const posts = rows.map((r: any) => ({
+    // Map snake_case → camelCase to match existing shape. Restricted assets are
+    // resolved only after the feed's relationship, block, Group, moderation,
+    // and privacy query has admitted the post for this viewer.
+    const posts = await Promise.all(rows.map(async (r: any) => ({
       id: r.id, authorId: r.author_id, authorName: r.author_name, authorInitials: r.author_initials,
       authorColor: r.author_color, authorImageUrl: r.author_image_url ?? null,
       content: r.content, category: r.category, postType: r.post_type,
       groupId: r.group_id ?? null,
       businessId: r.business_id, businessName: r.business_name, businessLink: r.business_link,
-      mediaUrls: hasPrivateCommunityAudience(r) ? [] : normalizeCommunityMediaUrls(r.media_urls), savedPlaceId: r.saved_place_id,
+      mediaUrls: hasPrivateCommunityAudience(r) ? [] : normalizeCommunityMediaUrls(r.media_urls),
+      privateMedia: hasPrivateCommunityAudience(r) ? await describePrivateCommunityMedia(String(r.id), r.media_urls) : [],
+      savedPlaceId: r.saved_place_id,
       locationTag: r.location_tag, locationVenueName: (r as any).location_venue_name ?? null,
       locationCity: (r as any).location_city ?? null, locationCountry: (r as any).location_country ?? null,
       locationPlaceId: (r as any).location_place_id ?? null, locationType: r.location_type,
@@ -435,7 +449,7 @@ router.get("/community/posts", async (req: Request, res: Response) => {
       upvotes: r.upvotes, downvotes: r.downvotes, liked: likedPostIds.has(r.id), commentsCount: r.comments_count,
       threadId: r.thread_id ?? null, threadPosition: r.thread_position ?? 1, threadTotal: r.thread_total ?? 1,
       createdAt: r.created_at,
-    }));
+    })));
 
     const locationTagFilter = typeof req.query.locationTag === "string" ? req.query.locationTag : undefined;
     const topicTagFilter = typeof req.query.topicTag === "string" ? req.query.topicTag : undefined;
@@ -449,6 +463,9 @@ router.get("/community/posts", async (req: Request, res: Response) => {
     const hashtagFilter = typeof req.query.hashtag === "string" ? req.query.hashtag.toLowerCase().replace(/^#/, "") : undefined;
     if (hashtagFilter) filtered = filtered.filter((p) => Array.isArray((p as any).hashtags) && (p as any).hashtags.includes(hashtagFilter));
 
+    if (posts.some((post) => post.privateMedia.length > 0)) {
+      res.setHeader("Cache-Control", "private, no-store");
+    }
     res.json({ posts: filtered, total: filtered.length, offset, limit });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch community posts");
@@ -492,6 +509,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       businessName: providedBusinessName,
       businessLink,
       mediaUrls,
+      privateMediaAssetIds,
       savedPlaceId,
       visibility = "public",
       commentPolicy,
@@ -530,6 +548,7 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       businessName?: string;
       businessLink?: string;
       mediaUrls?: unknown;
+      privateMediaAssetIds?: unknown;
       savedPlaceId?: string;
       visibility?: "public" | "followers_only";
       commentPolicy?: CommentPolicy;
@@ -597,18 +616,34 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       });
       return;
     }
+    const requestedPrivateAssetIds = normalizePrivateCommunityMediaAssetIds(privateMediaAssetIds);
     if (privateAudienceRequested && mediaValidation.urls.length > 0) {
-      // Community uploads are delivered from a public bucket. Treating a URL as
-      // private merely because its post is follower- or Group-scoped would leak
-      // the media outside the Community visibility check. Do not create a post
-      // that makes that promise until private media delivery is implemented.
       res.status(400).json({
-        error: "Photos and videos are not available for followers-only or Group posts yet. Remove the attachment or share the post publicly.",
-        code: "PRIVATE_MEDIA_UNAVAILABLE",
+        error: "Restricted posts can use only a private Community upload. Remove the public link and upload the attachment from this composer.",
+        code: "PRIVATE_MEDIA_REQUIRED",
       });
       return;
     }
-    const normalizedMediaUrls = mediaValidation.urls;
+    if (!privateAudienceRequested && requestedPrivateAssetIds.length > 0) {
+      res.status(400).json({
+        error: "Private Community uploads cannot be attached to a public post.",
+        code: "PRIVATE_MEDIA_AUDIENCE_REQUIRED",
+      });
+      return;
+    }
+    const privateMediaValidation = privateAudienceRequested
+      ? await validatePrivateCommunityMediaAssetIds(requestedPrivateAssetIds, req.user.id)
+      : { assetIds: [], rejected: [] };
+    if (privateMediaValidation.rejected.length > 0) {
+      res.status(400).json({
+        error: "One or more private attachments are unavailable. Upload them again before posting.",
+        code: "INVALID_PRIVATE_MEDIA_ASSET",
+      });
+      return;
+    }
+    const normalizedMediaUrls = privateAudienceRequested
+      ? privateMediaValidation.assetIds.map(toPrivateCommunityMediaReference)
+      : mediaValidation.urls;
 
     // Extract hashtags from content
     const extractedHashtags = extractHashtags(content.trim());
@@ -935,13 +970,105 @@ router.post("/community/posts", async (req: Request, res: Response) => {
       }
     }
 
+    const serializedPost = await serializeCommunityPost({ ...post, authorImageUrl: imageUrl });
+    if (serializedPost.privateMedia.length > 0) {
+      res.setHeader("Cache-Control", "private, no-store");
+    }
     res.status(201).json({
-      post: { ...post, authorImageUrl: imageUrl },
+      post: serializedPost,
       ...(kinfolkSuggestions.length ? { kinfolkSuggestions } : {}),
     });
   } catch (err) {
     req.log.error({ err }, "Failed to create community post");
     res.status(500).json({ error: "Failed to create post" });
+  }
+});
+
+// GET /community/posts/:id/private-media/:assetId — authenticated private
+// media proxy. The application validates the current audience for every read
+// and streams bytes from the private bucket without returning a storage path or
+// a signed-provider URL to the client.
+router.get("/community/posts/:id/private-media/:assetId", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const postId = String(req.params.id);
+  const [assetId] = normalizePrivateCommunityMediaAssetIds([req.params.assetId]);
+  if (!assetId) { res.status(404).json({ error: "Media not found" }); return; }
+
+  try {
+    const access = await resolveCommentAccess(postId, req.user.id);
+    if (!access.post || !access.canView) { res.status(404).json({ error: "Media not found" }); return; }
+
+    const postMedia = await pool.query<{ media_urls: unknown }>(
+      `SELECT media_urls FROM community_posts WHERE id = $1 LIMIT 1`,
+      [postId],
+    );
+    if (!privateCommunityMediaAssetIdsFromValue(postMedia.rows[0]?.media_urls).includes(assetId)) {
+      res.status(404).json({ error: "Media not found" });
+      return;
+    }
+
+    const assetResult = await pool.query<{ object_key: string; mime_type: string; byte_size: string | number }>(
+      `SELECT object_key, mime_type, byte_size
+         FROM media_assets
+        WHERE id = $1
+          AND purpose = 'community_post_private'
+          AND status = 'ready'
+          AND public_url IS NULL
+        LIMIT 1`,
+      [assetId],
+    );
+    const asset = assetResult.rows[0];
+    const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID?.trim();
+    const total = Number(asset?.byte_size ?? 0);
+    if (!asset || !bucketId || !Number.isFinite(total) || total <= 0) {
+      res.status(404).json({ error: "Media not found" });
+      return;
+    }
+
+    let start = 0;
+    let end = total - 1;
+    const range = req.header("range");
+    if (range) {
+      const match = /^bytes=(\d*)-(\d*)$/i.exec(range.trim());
+      if (!match) {
+        res.setHeader("Content-Range", `bytes */${total}`);
+        res.status(416).end();
+        return;
+      }
+      const requestedStart = match[1] ? Number(match[1]) : Math.max(total - Number(match[2] || 0), 0);
+      const requestedEnd = match[2] ? Number(match[2]) : total - 1;
+      if (!Number.isInteger(requestedStart) || !Number.isInteger(requestedEnd) || requestedStart < 0 || requestedStart >= total || requestedEnd < requestedStart) {
+        res.setHeader("Content-Range", `bytes */${total}`);
+        res.status(416).end();
+        return;
+      }
+      start = requestedStart;
+      end = Math.min(requestedEnd, total - 1);
+    }
+
+    const file = objectStorageClient.bucket(bucketId).file(asset.object_key);
+    res.status(range ? 206 : 200);
+    res.setHeader("Content-Type", asset.mime_type);
+    res.setHeader("Content-Length", String(end - start + 1));
+    res.setHeader("Accept-Ranges", "bytes");
+    res.setHeader("Content-Disposition", "inline; filename=community-media");
+    res.setHeader("Cache-Control", "private, no-store, max-age=0");
+    res.setHeader("Cross-Origin-Resource-Policy", "same-site");
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    if (range) res.setHeader("Content-Range", `bytes ${start}-${end}/${total}`);
+
+    const stream = file.createReadStream({ start, end });
+    stream.on("error", () => {
+      if (!res.headersSent) res.status(404).json({ error: "Media not found" });
+      else res.destroy();
+    });
+    stream.pipe(res);
+  } catch {
+    // The response deliberately avoids logging asset IDs, object keys, provider
+    // URLs, or provider errors. A retrieval failure must not disclose whether a
+    // private asset, post, or relationship exists.
+    if (!res.headersSent) res.status(404).json({ error: "Media not found" });
+    else res.destroy();
   }
 });
 
@@ -1406,6 +1533,54 @@ router.patch("/community/posts/:id/comment-policy", async (req: Request, res: Re
   }
 });
 
+// PATCH /community/posts/:id/visibility — audience changes are permitted only
+// when the current media cannot become public or otherwise promise privacy it
+// does not have. Private assets stay bound to their restricted audience until
+// removed and re-uploaded deliberately.
+router.patch("/community/posts/:id/visibility", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const postId = String(req.params.id);
+  const visibility = (req.body as { visibility?: unknown }).visibility;
+  if (visibility !== "public" && visibility !== "followers_only") {
+    res.status(400).json({ error: "visibility must be public or followers_only." });
+    return;
+  }
+  try {
+    const current = await pool.query<{ media_urls: unknown; group_id: number | null; is_private_topic: boolean }>(
+      `SELECT media_urls, group_id, is_private_topic
+         FROM community_posts
+        WHERE id = $1 AND author_id = $2
+        LIMIT 1`,
+      [postId, req.user.id],
+    );
+    const post = current.rows[0];
+    if (!post) { res.status(404).json({ error: "Post not found or not yours" }); return; }
+    if (post.group_id !== null) {
+      res.status(409).json({ error: "Group post visibility is controlled by current Group membership.", code: "GROUP_AUDIENCE_LOCKED" });
+      return;
+    }
+    const privateAssetIds = privateCommunityMediaAssetIdsFromValue(post.media_urls);
+    const publicAssets = normalizeCommunityMediaUrls(post.media_urls);
+    if (visibility === "public" && (post.is_private_topic || privateAssetIds.length > 0)) {
+      res.status(409).json({ error: "Remove private media or the private-topic setting before making this post public.", code: "PRIVATE_MEDIA_AUDIENCE_LOCKED" });
+      return;
+    }
+    if (visibility === "followers_only" && publicAssets.length > 0) {
+      res.status(409).json({ error: "Remove public media and re-upload it privately before restricting this post.", code: "PUBLIC_MEDIA_REATTACH_REQUIRED" });
+      return;
+    }
+    const [updated] = await db.update(communityPostsTable)
+      .set({ visibility })
+      .where(and(eq(communityPostsTable.id, postId), eq(communityPostsTable.authorId, req.user.id)))
+      .returning({ id: communityPostsTable.id, visibility: communityPostsTable.visibility });
+    if (!updated) { res.status(404).json({ error: "Post not found or not yours" }); return; }
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({ post: updated });
+  } catch {
+    res.status(500).json({ error: "Could not update post visibility" });
+  }
+});
+
 // PATCH /community/posts/:id — author can edit content (text only)
 router.patch("/community/posts/:id", async (req: Request, res: Response) => {
   try {
@@ -1563,8 +1738,12 @@ router.get("/community/thread/:threadId", async (req: Request, res: Response) =>
       suggestVideoUpgrade = completionReaders >= 10 && completionRate >= 0.7;
     }
 
+    const serializedPosts = await Promise.all(posts.map((post) => serializeCommunityPost(post)));
+    if (serializedPosts.some((post) => post.privateMedia.length > 0)) {
+      res.setHeader("Cache-Control", "private, no-store");
+    }
     res.json({
-      posts: posts.map((post) => serializeCommunityPost(post)),
+      posts: serializedPosts,
       threadId,
       totalSegments,
       stats: statsPayload,

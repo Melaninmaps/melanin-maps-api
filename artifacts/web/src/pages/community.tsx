@@ -32,6 +32,7 @@ interface Post {
   category: string;
   postType: string;
   mediaUrls?: string[];
+  privateMedia?: Array<{ assetId: string; type: "image" | "video"; url: string }>;
   businessName?: string;
   businessId?: string;
   locationVenueName?: string;
@@ -166,6 +167,20 @@ function normalizeMediaUrls(value: unknown): string[] | undefined {
   return undefined;
 }
 
+function normalizePrivateMedia(value: unknown): Post["privateMedia"] {
+  if (!Array.isArray(value)) return undefined;
+  const items = value.flatMap((entry) => {
+    if (!entry || typeof entry !== "object") return [];
+    const media = entry as Record<string, unknown>;
+    return typeof media.assetId === "string" && typeof media.url === "string"
+      && (media.type === "image" || media.type === "video")
+      && media.url.startsWith("/api/community/posts/")
+      ? [{ assetId: media.assetId, type: media.type as "image" | "video", url: media.url }]
+      : [];
+  }).slice(0, 5);
+  return items.length ? items : undefined;
+}
+
 function reactionMemberName(member: ReactionMember): string {
   return [member.firstName, member.lastName].filter(Boolean).join(" ") || member.username || "Community member";
 }
@@ -242,10 +257,14 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
   const [showWarning, setShowWarning] = useState(post.hasContentWarning ?? false);
   const [commentPolicy, setCommentPolicy] = useState(post.commentPolicy ?? "everyone");
   const { toast } = useToast();
-  const media = post.mediaUrls && post.mediaUrls.length > 0 ? (
-    <div className={`grid gap-1 mx-4 mb-3 rounded-xl overflow-hidden ${post.mediaUrls.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-      {post.mediaUrls.slice(0, 4).map((url, i) => (
-        <CommunityMedia key={url} url={url} index={i} />
+  const mediaItems = [
+    ...(post.mediaUrls ?? []).map((url) => ({ url, type: undefined, privateMedia: false as const })),
+    ...(post.privateMedia ?? []).map((item) => ({ url: item.url, type: item.type, privateMedia: true as const })),
+  ];
+  const media = mediaItems.length > 0 ? (
+    <div className={`grid gap-1 mx-4 mb-3 rounded-xl overflow-hidden ${mediaItems.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+      {mediaItems.slice(0, 4).map((item, i) => (
+        <CommunityMedia key={`${item.privateMedia ? "private" : "public"}-${item.url}`} url={item.url} index={i} privateMedia={item.privateMedia} mediaType={item.type} />
       ))}
     </div>
   ) : null;
@@ -437,6 +456,7 @@ function ComposeModal({ groupId, groupName, onClose, onPost }: { groupId?: numbe
   const [visibility, setVisibility] = useState<"public" | "followers_only">("public");
   const [commentPolicy, setCommentPolicy] = useState<"everyone" | "followers" | "off">("everyone");
   const [mediaUrls, setMediaUrls] = useState<string[]>([]);
+  const [privateMediaAssetIds, setPrivateMediaAssetIds] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [hashtagInput, setHashtagInput] = useState("");
   const [hashtags, setHashtags] = useState<string[]>([]);
@@ -448,6 +468,7 @@ function ComposeModal({ groupId, groupName, onClose, onPost }: { groupId?: numbe
   const [topicTag, setTopicTag] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
+  const privateAudience = visibility === "followers_only" || groupId !== undefined;
 
   const uploadMediaFile = async (file: File) => {
     setUploading(true);
@@ -455,19 +476,23 @@ function ComposeModal({ groupId, groupName, onClose, onPost }: { groupId?: numbe
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const resp = await authenticatedFetch(`${BASE}api/media/upload?purpose=community_post`, {
+      const resp = await authenticatedFetch(`${BASE}api/media/upload?purpose=${privateAudience ? "community_post_private" : "community_post"}`, {
         method: "POST",
         body: formData,
       });
       const requestId = resp.headers.get("x-request-id");
-      const data = await resp.json().catch(() => ({})) as { url?: string; error?: string; code?: string; requestId?: string };
-      if (!resp.ok || !data.url) {
+      const data = await resp.json().catch(() => ({})) as { url?: string; assetId?: string; error?: string; code?: string; requestId?: string };
+      if (!resp.ok || (privateAudience ? !data.assetId : !data.url)) {
         const supportId = data.requestId ?? requestId;
         const detail = data.error ?? "Upload failed. Please try again.";
         setUploadError(supportId ? `${detail} (Request ID: ${supportId})` : detail);
         return;
       }
-      setMediaUrls((urls) => urls.includes(data.url!) ? urls : [...urls, data.url!]);
+      if (privateAudience) {
+        setPrivateMediaAssetIds((assetIds) => assetIds.includes(data.assetId!) ? assetIds : [...assetIds, data.assetId!]);
+      } else {
+        setMediaUrls((urls) => urls.includes(data.url!) ? urls : [...urls, data.url!]);
+      }
     } catch {
       setUploadError("Upload failed. Check your connection and try again.");
     } finally {
@@ -476,6 +501,10 @@ function ComposeModal({ groupId, groupName, onClose, onPost }: { groupId?: numbe
   };
 
   const addMediaUrl = () => {
+    if (privateAudience) {
+      toast({ title: "Private media must stay in Community", description: "Upload a file so Community can protect it for the selected audience.", variant: "destructive" });
+      return;
+    }
     const url = mediaUrlInput.trim();
     if (!url) return;
     try {
@@ -498,6 +527,14 @@ function ComposeModal({ groupId, groupName, onClose, onPost }: { groupId?: numbe
 
   const submit = async () => {
     if (!content.trim()) return;
+    if (privateAudience && mediaUrls.length > 0) {
+      toast({ title: "Reattach media for this audience", description: "Remove public media, keep the restricted audience selected, then upload it again.", variant: "destructive" });
+      return;
+    }
+    if (!privateAudience && privateMediaAssetIds.length > 0) {
+      toast({ title: "Private media needs a restricted audience", description: "Choose Followers Only or remove the private attachment.", variant: "destructive" });
+      return;
+    }
     setSubmitting(true);
     try {
       const body = {
@@ -510,7 +547,8 @@ function ComposeModal({ groupId, groupName, onClose, onPost }: { groupId?: numbe
         locationTag: locationTag.trim() || undefined,
         locationVenueName: locationTag.trim() || undefined,
         topicTag: topicTag.trim() || undefined,
-        mediaUrls: mediaUrls.length ? mediaUrls : undefined,
+        mediaUrls: privateAudience ? undefined : mediaUrls.length ? mediaUrls : undefined,
+        privateMediaAssetIds: privateAudience && privateMediaAssetIds.length ? privateMediaAssetIds : undefined,
         hashtags: hashtags.length ? hashtags : undefined,
       };
       const res = await authenticatedFetch(`${BASE}api/community/posts`, {
@@ -538,7 +576,8 @@ function ComposeModal({ groupId, groupName, onClose, onPost }: { groupId?: numbe
         createdAt: new Date().toISOString(),
         category: "general",
         postType: "community",
-        mediaUrls,
+        mediaUrls: normalizeMediaUrls(raw.mediaUrls),
+        privateMedia: normalizePrivateMedia(raw.privateMedia),
         hashtags,
       };
       onPost(newPost);
@@ -588,7 +627,7 @@ function ComposeModal({ groupId, groupName, onClose, onPost }: { groupId?: numbe
           </div>
 
           {/* Media preview */}
-          {mediaUrls.length > 0 && (
+          {(mediaUrls.length > 0 || privateMediaAssetIds.length > 0) && (
             <div data-testid="community-media-previews" className="flex gap-2 flex-wrap">
               {mediaUrls.map((url, i) => (
                 <CommunityMedia
@@ -598,6 +637,12 @@ function ComposeModal({ groupId, groupName, onClose, onPost }: { groupId?: numbe
                   compact
                   onRemove={() => setMediaUrls((urls) => urls.filter((_, index) => index !== i))}
                 />
+              ))}
+              {privateMediaAssetIds.map((assetId, i) => (
+                <div key={assetId} data-testid={`community-private-media-ready-${i}`} className="relative flex h-20 w-28 items-center justify-center rounded-xl border border-[#7B2D8B]/25 bg-[#7B2D8B]/8 px-2 text-center text-xs font-semibold text-[#4C1D5F]">
+                  Private attachment ready
+                  <button type="button" onClick={() => setPrivateMediaAssetIds((assetIds) => assetIds.filter((id) => id !== assetId))} aria-label={`Remove private attachment ${i + 1}`} className="absolute right-1 top-1 rounded-full bg-white/90 p-1 text-[#4C1D5F]"><X className="h-3 w-3" /></button>
+                </div>
               ))}
             </div>
           )}
@@ -1118,6 +1163,7 @@ export default function Community() {
           category: (p.category as string) ?? "general",
           postType: (p.postType as string) ?? "community",
           mediaUrls: normalizeMediaUrls(p.mediaUrls),
+          privateMedia: normalizePrivateMedia(p.privateMedia),
           businessName: p.businessName as string | undefined,
           businessId: p.businessId as string | undefined,
           locationVenueName: p.locationVenueName as string | undefined,
