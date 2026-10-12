@@ -41,7 +41,13 @@ export function KinfolkMemoryManager({ onClose, onReset }: KinfolkMemoryManagerP
   const [error, setError] = useState<string | null>(null);
   const [continuityEnabled, setContinuityEnabled] = useState(false);
   const [updatingContinuity, setUpdatingContinuity] = useState(false);
-  const [editing, setEditing] = useState<{ id: string; content: string; sensitiveConfirmationRequired: boolean } | null>(null);
+  const [editing, setEditing] = useState<{
+    id: string;
+    content: string;
+    sensitiveConfirmationRequired: boolean;
+    sensitivePassword: string;
+    sensitiveRestricted: boolean;
+  } | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
   const [updatingMemoryId, setUpdatingMemoryId] = useState<string | null>(null);
   const [vaultPassword, setVaultPassword] = useState("");
@@ -153,11 +159,27 @@ export function KinfolkMemoryManager({ onClose, onReset }: KinfolkMemoryManagerP
     if (!editing || !editing.content.trim() || savingEdit) return;
     setSavingEdit(true); setError(null);
     try {
+      if (editing.sensitiveConfirmationRequired && !vaultUnlocked) {
+        if (!editing.sensitivePassword) {
+          throw new Error("Confirm your current password before saving a sensitive memory.");
+        }
+        const reauth = await fetch(`${BASE}api/kinfolk/sensitive-memory-vault/reauth`, {
+          method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: editing.sensitivePassword }),
+        });
+        const reauthBody = await reauth.json().catch(() => ({})) as { error?: string };
+        if (!reauth.ok) throw new Error(reauthBody.error ?? "Sensitive memory could not be confirmed.");
+        setVaultUnlocked(true);
+      }
       const response = await fetch(`${BASE}api/kinfolk/memories/${encodeURIComponent(editing.id)}`, {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: editing.content.trim(), sensitiveConsent: editing.sensitiveConfirmationRequired }),
+        body: JSON.stringify({
+          content: editing.content.trim(),
+          sensitiveConsent: editing.sensitiveConfirmationRequired,
+          sensitiveRestricted: editing.sensitiveRestricted,
+        }),
       });
       const body = await response.json().catch(() => ({})) as { memory?: MemoryRecord; error?: string };
       if (response.status === 409) {
@@ -217,7 +239,7 @@ export function KinfolkMemoryManager({ onClose, onReset }: KinfolkMemoryManagerP
                       {isEditing ? (
                         <>
                           <textarea value={editing.content} onChange={(event) => setEditing({ ...editing, content: event.target.value })} maxLength={1000} rows={3} aria-label="Edit private Kinfolk memory" className="w-full resize-y rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm text-[#2B1507] outline-none focus:border-[#CA922B]/55" />
-                          {editing.sensitiveConfirmationRequired && <p className="mt-2 text-xs leading-5 text-[#8D5C17]">This memory is sensitive. Confirm separately to save this edit privately.</p>}
+                          {editing.sensitiveConfirmationRequired && <div className="mt-2 rounded-xl border border-[#CA922B]/25 bg-[#FFF8EC] p-3 text-xs leading-5 text-[#3A1F0E]"><p className="font-semibold">This memory is sensitive. Kinfolk has not saved the edit.</p><p className="mt-1">Choose how it may be used, then confirm your current password before saving.</p><div className="mt-2 flex flex-wrap gap-2"><button type="button" onClick={() => setEditing({ ...editing, sensitiveRestricted: false })} className={`rounded-lg px-2 py-1 ${!editing.sensitiveRestricted ? "bg-[#2B1507] text-white" : "bg-white text-[#3A1F0E]"}`}>Allow relevant use</button><button type="button" onClick={() => setEditing({ ...editing, sensitiveRestricted: true })} className={`rounded-lg px-2 py-1 ${editing.sensitiveRestricted ? "bg-[#2B1507] text-white" : "bg-white text-[#3A1F0E]"}`}>Only mention if I ask</button></div>{!vaultUnlocked ? <input type="password" value={editing.sensitivePassword} onChange={(event) => setEditing({ ...editing, sensitivePassword: event.target.value })} autoComplete="current-password" aria-label="Current password to confirm sensitive memory edit" placeholder="Current password" className="mt-2 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-2 py-1.5" /> : null}</div>}
                           <div className="mt-2 flex gap-3"><button type="button" onClick={() => void saveEdit()} disabled={savingEdit || !editing.content.trim()} className="rounded-lg bg-[#2B1507] px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60">{savingEdit ? "Saving…" : editing.sensitiveConfirmationRequired ? "Confirm sensitive edit" : "Save edit"}</button><button type="button" onClick={() => setEditing(null)} disabled={savingEdit} className="text-xs font-semibold text-[#3A1F0E]/55">Cancel</button></div>
                         </>
                       ) : (
@@ -230,7 +252,7 @@ export function KinfolkMemoryManager({ onClose, onReset }: KinfolkMemoryManagerP
                     </div>
                     {!isEditing && !isLockedSensitive && (
                       <div className="flex shrink-0 flex-col items-end gap-1">
-                        <button onClick={() => setEditing({ id: memory.id, content: memory.content ?? "", sensitiveConfirmationRequired: false })} aria-label={companion ? `Edit companion ${companion}` : "Edit this memory"} className="rounded-full p-2 text-[#3A1F0E]/35 hover:bg-[#CA922B]/10 hover:text-[#8D5C17]"><Pencil className="h-4 w-4" /></button>
+                        <button onClick={() => setEditing({ id: memory.id, content: memory.content ?? "", sensitiveConfirmationRequired: false, sensitivePassword: "", sensitiveRestricted: memory.sensitiveRestricted !== false })} aria-label={companion ? `Edit companion ${companion}` : "Edit this memory"} className="rounded-full p-2 text-[#3A1F0E]/35 hover:bg-[#CA922B]/10 hover:text-[#8D5C17]"><Pencil className="h-4 w-4" /></button>
                         <button type="button" onClick={() => void setMemoryPaused(memory.id, memory.state !== "paused")} disabled={updatingMemoryId === memory.id} aria-label={memory.state === "paused" ? "Resume use of this memory" : "Pause use of this memory"} className="rounded-lg px-2 py-1 text-[10px] font-semibold text-[#8D5C17] hover:bg-[#CA922B]/10 disabled:opacity-60">{memory.state === "paused" ? "Resume use" : "Pause use"}</button>
                         {memory.isSensitive ? <button type="button" onClick={() => void setSensitiveRestricted(memory, memory.sensitiveRestricted !== true)} className="rounded-lg px-2 py-1 text-[10px] font-semibold text-[#8D5C17] hover:bg-[#CA922B]/10">{memory.sensitiveRestricted !== false ? "Only mention if I ask" : "Relevant use allowed"}</button> : null}<button onClick={() => void revokeMemory(memory.id)} aria-label={companion ? `Revoke use of companion ${companion}` : "Revoke use of this memory"} title="Revoke use of this memory" disabled={updatingMemoryId === memory.id} className="rounded-full p-2 text-[#3A1F0E]/35 hover:bg-red-50 hover:text-red-600 disabled:opacity-60"><Trash2 className="h-4 w-4" /></button>
                       </div>

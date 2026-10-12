@@ -1065,6 +1065,7 @@ function TravelPage() {
   const [conversationHandoff, setConversationHandoff] = useState<ConversationHandoffStatus | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionsError, setSessionsError] = useState<string | null>(null);
   const [kinfolkContinuityEnabled, setKinfolkContinuityEnabled] = useState(false);
   const [kinfolkContinuityDisclosureRequired, setKinfolkContinuityDisclosureRequired] = useState(false);
   const [pendingSensitiveMemory, setPendingSensitiveMemory] = useState<{
@@ -1815,9 +1816,14 @@ function TravelPage() {
   const loadSessions = useCallback(async () => {
     if (!isLoggedIn) return;
     setSessionsLoading(true);
+    setSessionsError(null);
     try {
       const r = await fetch(`${BASE}api/kinfolk/sessions?view=${historyView}`, { credentials: "include", headers: kinfolkAuthHeaders() });
-      if (r.ok) { const d = await r.json() as { sessions: Session[] }; setSessions(d.sessions); }
+      if (!r.ok) throw new Error("Kinfolk conversation history could not be loaded.");
+      const d = await r.json() as { sessions: Session[] };
+      setSessions(d.sessions);
+    } catch (cause) {
+      setSessionsError(cause instanceof Error ? cause.message : "Kinfolk conversation history could not be loaded.");
     } finally { setSessionsLoading(false); }
   }, [isLoggedIn, historyView]);
 
@@ -2281,12 +2287,13 @@ function TravelPage() {
 
   const loadSession = useCallback(async (id: string) => {
     try {
+      setSessionsError(null);
       const r = await fetch(`${BASE}api/kinfolk/sessions/${id}`, { credentials: "include", headers: kinfolkAuthHeaders() });
-      if (!r.ok) return;
+      if (!r.ok) throw new Error("Kinfolk could not open this conversation. Try again.");
       const d = await r.json() as { session: { id: string; messages: Message[] }; resumePreview?: ConversationHandoffStatus | null };
       setSessionId(d.session.id); setMessages(d.session.messages ?? []); setConversationHandoff(d.resumePreview ?? null);
       setShowHistory(false);
-    } catch { /* ignore */ }
+    } catch (cause) { setSessionsError(cause instanceof Error ? cause.message : "Kinfolk could not open this conversation. Try again."); }
   }, []);
 
   const newChat = () => {
@@ -2631,6 +2638,8 @@ function TravelPage() {
           </div>
           {sessionsLoading ? (
             <div className="flex items-center justify-center py-8"><Loader2 size={16} className="text-[#CA922B] animate-spin" /></div>
+          ) : sessionsError ? (
+            <div className="px-3 py-6 text-center text-xs leading-5 text-red-700"><p>{sessionsError}</p><button type="button" onClick={() => void loadSessions()} className="mt-2 font-bold text-[#8D5C17]">Retry</button></div>
           ) : !kinfolkContinuityEnabled ? (
             <div className="px-3 py-6 text-center text-xs leading-5 text-[#3A1F0E]/40">Continuity is off. Turn it on in Memory settings whenever you want Kinfolk to use your saved conversations or approved memory again.</div>
           ) : sessions.length === 0 ? (

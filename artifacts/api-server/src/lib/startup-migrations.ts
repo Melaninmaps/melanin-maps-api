@@ -8311,6 +8311,25 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
   }
 }
 
+/**
+ * Initializes only the source-backed cultural registry required by the
+ * disposable release-database gate. It is deliberately separate from normal
+ * application startup: release startup remains schema-only and must never
+ * populate content or directory data implicitly. The gate runner invokes this
+ * only with RUN_RELEASE_DB_GATE=1 against a disposable database.
+ */
+export async function ensureKinfolkReleaseGateCulturalContext(
+  logger?: Logger,
+): Promise<void> {
+  const log = (msg: string) =>
+    logger ? logger.info(msg) : console.log(`[startup-migrations] ${msg}`);
+  const warn = (msg: string) =>
+    logger ? logger.warn(msg) : console.warn(`[startup-migrations] ${msg}`);
+
+  await ensureKinfolkEntityRegistry(log, warn);
+  await ensureKinfolkCulturalContextV1(log, warn);
+}
+
 // ── Helper: bulk dedup key set from cultural_sites (name|state) ──────────────
 async function loadCulturalSiteKeys(): Promise<Set<string>> {
   const r = await pool.query(
@@ -16028,9 +16047,11 @@ async function ensureKinfolkCulturalContextV1(
     // ── 5. education_institutions — add optional tracking columns ─────────────
     await pool.query(`
       DO $$ BEGIN
-        ALTER TABLE education_institutions ADD COLUMN IF NOT EXISTS source_id text;
-        ALTER TABLE education_institutions ADD COLUMN IF NOT EXISTS source_status text;
-        ALTER TABLE education_institutions ADD COLUMN IF NOT EXISTS last_verified_at timestamptz;
+        IF to_regclass('public.education_institutions') IS NOT NULL THEN
+          ALTER TABLE education_institutions ADD COLUMN IF NOT EXISTS source_id text;
+          ALTER TABLE education_institutions ADD COLUMN IF NOT EXISTS source_status text;
+          ALTER TABLE education_institutions ADD COLUMN IF NOT EXISTS last_verified_at timestamptz;
+        END IF;
       END $$
     `);
 

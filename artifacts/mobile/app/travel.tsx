@@ -1709,17 +1709,19 @@ const tpStyles = StyleSheet.create({
 // ─── Sub-component: Session History Drawer ───────────────────────────────────
 function SessionHistoryDrawer({
   visible, sessions, onClose, onSelect, onNew, continuityEnabled, onToggleContinuity,
-  onLoadView, onOrganize, colors,
+  onLoadView, onOrganize, error, onRetry, colors,
 }: {
   visible: boolean;
   sessions: { id: string; title: string | null; destination: string | null; createdAt: string; isPinned?: boolean }[];
   onClose: () => void;
-  onSelect: (id: string) => void;
+  onSelect: (id: string) => Promise<void>;
   onNew: () => void;
   continuityEnabled: boolean;
   onToggleContinuity: (enabled: boolean) => void;
   onLoadView: (view: "active" | "archived") => void;
   onOrganize: (id: string, action: "archive" | "restore" | "pin" | "unpin") => void;
+  error: string | null;
+  onRetry: () => void;
   colors: ReturnType<typeof useColors>;
 }) {
   const [historyView, setHistoryView] = useState<"active" | "archived">("active");
@@ -1759,12 +1761,14 @@ function SessionHistoryDrawer({
         keyboardDismissMode="on-drag" style={{ flex: 1 }}>
           {!continuityEnabled ? (
             <Text style={[shStyles.empty, { color: colors.mutedForeground }]}>Turn on continuity to see or use saved conversations.</Text>
+          ) : error ? (
+            <View style={{ alignItems: "center", paddingTop: 40, paddingHorizontal: 24 }}><Text style={[shStyles.empty, { color: "#B42318", paddingTop: 0 }]}>{error}</Text><TouchableOpacity onPress={onRetry} style={[shStyles.continuityButton, { backgroundColor: colors.primary, borderColor: colors.primary, marginTop: 12 }]}><Text style={[shStyles.continuityButtonText, { color: colors.primaryForeground }]}>Retry</Text></TouchableOpacity></View>
           ) : sessions.length === 0 ? (
             <Text style={[shStyles.empty, { color: colors.mutedForeground }]}>{historyView === "archived" ? "Nothing archived yet" : "No past conversations yet"}</Text>
           ) : (
             sessions.map((s) => (
               <View key={s.id} style={[shStyles.item, { borderBottomColor: colors.border }]}>
-                <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }} onPress={() => { onSelect(s.id); onClose(); }} activeOpacity={0.7}>
+                <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }} onPress={() => { void onSelect(s.id); }} activeOpacity={0.7}>
                   <Ionicons name={s.isPinned ? "pin" : "chatbubble-outline"} size={16} color={s.isPinned ? colors.primary : colors.mutedForeground} />
                   <View style={{ flex: 1 }}>
                     <Text style={[shStyles.itemTitle, { color: colors.text }]} numberOfLines={1}>{s.title ?? s.destination ?? "Conversation"}</Text>
@@ -2087,7 +2091,7 @@ export default function TravelScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
-  const { messages, sessionId, conversationHandoff, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent } = useKinfolk();
+  const { messages, sessionId, conversationHandoff, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, sessionError, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent } = useKinfolk();
   const { preferences, update: updatePreferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
   const { isAuthenticated } = useAuth();
@@ -2595,8 +2599,11 @@ export default function TravelScreen() {
   }, [addItem, removeItem, sessionId, isAuthenticated]);
 
   const handleHistorySelect = useCallback(async (id: string) => {
-    await loadSession(id);
-    void loadSessions();
+    const loaded = await loadSession(id);
+    if (loaded) {
+      setShowHistory(false);
+      void loadSessions();
+    }
   }, [loadSession, loadSessions]);
 
   const handleNewSession = useCallback(() => {
@@ -3096,6 +3103,8 @@ export default function TravelScreen() {
         onToggleContinuity={(enabled) => { void setKinfolkContinuity(enabled); }}
         onLoadView={(view) => { void loadSessions(view); }}
         onOrganize={(id, action) => { void organizeSession(id, action); }}
+        error={sessionError}
+        onRetry={() => { void loadSessions(); }}
         colors={colors}
       />
 

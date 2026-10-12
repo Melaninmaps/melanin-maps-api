@@ -163,6 +163,47 @@ describe("Kinfolk conversation handoffs", () => {
     expect(scoped.messages.map((item) => item.content).join(" ")).not.toContain("health");
   });
 
+  it("returns one explicitly named non-sensitive subject without importing intervening topics", () => {
+    const recipe = message("user", "Share a lentil soup recipe for tonight.");
+    const recipeReply = message("assistant", "Start with lentils, onion, and stock.");
+    const city = message("user", "What should I see in Atlanta?");
+    const cityReply = message("assistant", "A city answer.");
+    const scoped = resolveConversationContextScope({
+      messages: [recipe, recipeReply, city, cityReply] as never,
+      currentMessage: "Go back to that recipe and make it vegetarian.",
+    });
+
+    expect(scoped.messages).toEqual([recipe, recipeReply]);
+    expect(scoped.messages.map((item) => item.content).join(" ")).not.toContain("Atlanta");
+    expect(scoped.requiresReferenceClarification).toBe(false);
+  });
+
+  it("keeps an immediate non-sensitive revision attached to its preceding answer", () => {
+    const draft = message("user", "Draft an email to my manager.");
+    const draftReply = message("assistant", "Here is a concise email draft.");
+    const scoped = resolveConversationContextScope({
+      messages: [draft, draftReply] as never,
+      currentMessage: "Make it more formal.",
+    });
+
+    expect(scoped.messages).toEqual([draft, draftReply]);
+  });
+
+  it("asks for one clarification instead of guessing when a return reference has no unique safe subject", () => {
+    const scoped = resolveConversationContextScope({
+      messages: [
+        message("user", "Share a vegetarian recipe."),
+        message("assistant", "Recipe one."),
+        message("user", "Share another recipe."),
+        message("assistant", "Recipe two."),
+      ] as never,
+      currentMessage: "Go back to that recipe and make it vegetarian.",
+    });
+
+    expect(scoped.messages).toEqual([]);
+    expect(scoped.requiresReferenceClarification).toBe(true);
+  });
+
   it("does not echo sensitive address or health content in a handoff preview", () => {
     const messages = [
       message("user", "My home address is 10 Example Street and I need help after my diagnosis."),

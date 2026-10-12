@@ -4,12 +4,19 @@ import { applyReleaseGateDatabaseUrl } from "../lib/releaseDbGate";
 applyReleaseGateDatabaseUrl(process.env);
 
 const { pool } = await import("@workspace/db");
-const { ensureRequiredPublicationSchema, runStartupMigrations } = await import(
+const {
+  ensureKinfolkReleaseGateCulturalContext,
+  ensureRequiredPublicationSchema,
+  runStartupMigrations,
+} = await import(
   "../lib/startup-migrations"
 );
 
 try {
   await runStartupMigrations();
+  if (process.env.RUN_RELEASE_DB_GATE === "1") {
+    await ensureKinfolkReleaseGateCulturalContext();
+  }
   await ensureRequiredPublicationSchema(false);
   console.log("Release database publication schema verified.");
 } finally {

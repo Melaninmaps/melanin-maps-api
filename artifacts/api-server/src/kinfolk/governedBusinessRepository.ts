@@ -811,7 +811,8 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
                 b.address,
                 b.city,
                 b.state,
-                COALESCE(b.tags, '[]'::jsonb)::text
+                COALESCE(b.tags, '[]'::jsonb)::text,
+                COALESCE(bi.accessibility_features, '[]'::jsonb)::text
               )) ~ contextual.pattern
             )
           )

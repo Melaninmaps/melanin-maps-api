@@ -237,7 +237,14 @@ export function buildRankedCatalogItinerary(input: {
       day: index + 1,
       theme: index === 0 ? "Arrival and local highlights" : `Day ${index + 1} highlights`,
       activities: input.catalog.length > 0
-        ? [governedActivity(input.catalog[index % input.catalog.length]!)]
+        ? [...new Map(
+            [
+              input.catalog[index % input.catalog.length]!,
+              ...(input.catalog.length > 1
+                ? [input.catalog[(index + 1) % input.catalog.length]!]
+                : []),
+            ].map((business) => [business.id, governedActivity(business)]),
+          ).values()]
         : [genericActivity(index + 1)],
     })),
   };

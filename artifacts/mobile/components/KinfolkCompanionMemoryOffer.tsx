@@ -28,6 +28,7 @@ export function KinfolkCompanionMemoryOfferCard({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [sensitiveConfirmationRequired, setSensitiveConfirmationRequired] = useState(false);
+  const [sensitivePassword, setSensitivePassword] = useState("");
 
   if (dismissed) return null;
 
@@ -39,6 +40,16 @@ export function KinfolkCompanionMemoryOfferCard({
     try {
       const token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
       if (!token) throw new Error("Sign in to save a private note.");
+      if (sensitiveConsent) {
+        if (!sensitivePassword) throw new Error("Confirm your current password before saving a sensitive private note.");
+        const reauth = await fetch(`${getApiBase()}/api/kinfolk/sensitive-memory-vault/reauth`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ password: sensitivePassword }),
+        });
+        const reauthBody = await reauth.json().catch(() => ({})) as { error?: string };
+        if (!reauth.ok) throw new Error(reauthBody.error ?? "Sensitive memory could not be confirmed.");
+      }
       const response = await fetch(`${getApiBase()}/api/kinfolk/memories`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -123,7 +134,7 @@ export function KinfolkCompanionMemoryOfferCard({
           <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 10, lineHeight: 14, marginTop: 7 }}>
             Separate from your profile. Kinfolk uses it only when you bring up {offer.label}, and your current request always comes first.
           </Text>
-          {sensitiveConfirmationRequired && <Text style={{ color: colors.primary, fontFamily: "Inter_500Medium", fontSize: 10, lineHeight: 14, marginTop: 7 }}>This note may include a sensitive detail. Kinfolk has not saved it. Choose separately if you want to keep it private.</Text>}
+          {sensitiveConfirmationRequired ? <><Text style={{ color: colors.primary, fontFamily: "Inter_500Medium", fontSize: 10, lineHeight: 14, marginTop: 7 }}>This note may include a sensitive detail. Kinfolk has not saved it. Confirm your current password before choosing to save it privately.</Text><TextInput value={sensitivePassword} onChangeText={setSensitivePassword} secureTextEntry autoCapitalize="none" autoCorrect={false} placeholder="Current password" placeholderTextColor={colors.mutedForeground} accessibilityLabel="Current password to confirm sensitive companion note" style={{ minHeight: 40, marginTop: 8, borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.card, color: colors.foreground, fontFamily: "Inter_400Regular", fontSize: 12, paddingHorizontal: 10 }} /></> : null}
           {!!error && <Text style={{ color: "#B91C1C", fontFamily: "Inter_500Medium", fontSize: 10, marginTop: 6 }}>{error}</Text>}
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10 }}>
             <TouchableOpacity

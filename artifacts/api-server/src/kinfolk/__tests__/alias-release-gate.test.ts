@@ -10,6 +10,7 @@
 import { describe, it, expect, afterAll } from "vitest";
 import { pool } from "@workspace/db";
 import { getQueryClass } from "../intent-router";
+import { resolveEntity } from "../entity-resolver";
 
 afterAll(async () => {
   await Promise.race([pool.end(), new Promise((r) => setTimeout(r, 3000))]);
@@ -300,15 +301,30 @@ describe("ALIAS-12: Dual language preference — no ethnicity inference", () => 
 // ── ALIAS-13: Unsafe social source → no entity alias activated ────────────────
 
 describe("ALIAS-13: Unsafe/unverified social source does not activate entity alias", () => {
-  it("alias record in kinfolk_entity_aliases requires active source backing (confidence > 0)", async () => {
-    // Verify: any alias with confidence = 0 would not pass the resolver's threshold
-    // The resolver in entity-resolver.ts uses confidence * weight in scoring
-    // A confidence of 0 contributes 0 points — never reaches resolution threshold
-    const zeroConfidenceAlias = await pool.query<{ count: string }>(
-      `SELECT COUNT(*) FROM kinfolk_entity_aliases WHERE confidence = 0`,
+  it("retains a zero-confidence audit alias without allowing it to resolve", async () => {
+    // A rejected/uncorroborated source can remain in the audit corpus at zero
+    // confidence. Deleting it would discard provenance; resolution must instead
+    // fail closed because its weighted alias score cannot reach the threshold.
+    const fixtureAlias = "release-gate-unverified-alias";
+    const fixtureId = "release-gate-unverified-alias-fixture";
+    const entity = await pool.query<{ id: string }>(
+      `SELECT id FROM kinfolk_entities WHERE resolution_status = 'active' ORDER BY id LIMIT 1`,
     );
-    // There should be no zero-confidence aliases in the system
-    expect(parseInt(zeroConfidenceAlias.rows[0].count)).toBe(0);
+    expect(entity.rows[0]?.id).toBeTruthy();
+
+    try {
+      await pool.query(`DELETE FROM kinfolk_entity_aliases WHERE id = $1`, [fixtureId]);
+      await pool.query(
+        `INSERT INTO kinfolk_entity_aliases
+           (id, entity_id, alias, alias_type, confidence, normalized_alias)
+         VALUES ($1, $2, $3, 'audit_only', 0, $3)`,
+        [fixtureId, entity.rows[0]!.id, fixtureAlias],
+      );
+      const resolved = await resolveEntity(fixtureAlias, {});
+      expect(resolved.state).not.toBe("resolved");
+    } finally {
+      await pool.query(`DELETE FROM kinfolk_entity_aliases WHERE id = $1`, [fixtureId]);
+    }
   });
 });
 

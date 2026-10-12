@@ -4646,7 +4646,7 @@ GENERAL ASSISTANT BASELINE — NON-NEGOTIABLE:
 - For a cultural-consensus question, explain the conclusion as a consensus or an evaluative judgment, name the criteria (for example impact, critical reception, awards, sales, or audience response), acknowledge a defensible alternative when warranted, and never present an opinion as settled fact.
 - Give a complete answer at the depth the question calls for. A simple fact may be brief; a comparison, planning question, explanation, or "what should I do next" question deserves the useful context, tradeoffs, and next steps in the same response.
 
-CONVERSATION STYLE: Warm, conversational, like a well-connected Big Cousin for everyday life. Ask follow-ups when needed. Reference their history. Never sound like a brochure — no "boasts", "features", "renowned". Use "you" and "your" naturally. Leave the door open: "Want me to compare options?"
+CONVERSATION STYLE: Follow the member's selected Kinfolk conversation mode for delivery. Ask follow-ups when needed. Reference only the bounded private history supplied for this turn. Never sound like a brochure — no "boasts", "features", "renowned". Use "you" and "your" naturally. Leave the door open: "Want me to compare options?"
 
 KINFOLK VOICE IDENTITY — WHO YOU ARE:
 You are Kinfolk: a culturally aware companion whose presence feels warm, familiar, intelligent, and grounded. You speak with confidence but never talk down. You are playful during discovery, strategic during business conversations, and calm and direct when safety is involved. Your cultural familiarity is authentic — never exaggerated, never performed.
@@ -7067,6 +7067,7 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
         id: kinfolkPrivateMemoriesTable.id,
         purpose: kinfolkPrivateMemoriesTable.purpose,
         isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
+        sensitiveRestricted: kinfolkPrivateMemoriesTable.sensitiveRestricted,
         sensitiveConsentGrantedAt:
           kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt,
       })
@@ -7093,6 +7094,16 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
     }
     if (willBeSensitive && !await requireSensitiveMemoryVaultReauth(req, res)) return;
     const sensitiveCiphertext = willBeSensitive ? encryptSensitiveMemoryContent(content) : null;
+    // An edit must not silently narrow a member's previously consented relevant
+    // use. Preserve its selected scope unless the member supplies a new explicit
+    // boolean choice; an ordinary-to-sensitive correction starts restricted.
+    const sensitiveRestricted = willBeSensitive
+      ? typeof body.sensitiveRestricted === "boolean"
+        ? body.sensitiveRestricted
+        : existing.isSensitive
+          ? existing.sensitiveRestricted
+          : true
+      : false;
 
     const [memory] = await db
       .update(kinfolkPrivateMemoriesTable)
@@ -7106,9 +7117,7 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
           : existing.purpose,
         isSensitive: willBeSensitive,
         sensitiveConsentGrantedAt: willBeSensitive ? new Date() : null,
-        sensitiveRestricted: willBeSensitive
-          ? body.sensitiveRestricted !== false
-          : false,
+        sensitiveRestricted,
         sensitiveEncryptedContent: sensitiveCiphertext?.encryptedContent ?? null,
         sensitiveEncryptionKeyId: sensitiveCiphertext?.encryptionKeyId ?? null,
         updatedAt: new Date(),
@@ -7128,6 +7137,7 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
         isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
         sensitiveConsentGrantedAt:
           kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt,
+        sensitiveRestricted: kinfolkPrivateMemoriesTable.sensitiveRestricted,
         updatedAt: kinfolkPrivateMemoriesTable.updatedAt,
       });
     if (!memory) return void res.status(404).json({ error: "Memory not found" });
@@ -8090,10 +8100,12 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     noResultAction === "showOwnershipUndocumented"
       ? "not_documented" as const
       : undefined;
+  // Only a verified, immediately preceding Kinfolk action can widen a strict
+  // discovery cohort. Free text such as "show all places" is ordinary language,
+  // not consent to relax documented ownership or evidence requirements.
   const explicitAllPlacesExpansion =
     noResultAction === "showOtherPublicPlaces" ||
-    ownershipDocumentationScope === "not_documented" ||
-    /\b(?:show|search|include|open to|expand to)\s+(?:all\s+)?(?:public\s+)?(?:places|businesses|options)\b|\bopen\s+to\s+any(?:\s+place)?\b/i.test(input.message);
+    ownershipDocumentationScope === "not_documented";
   const discoveryDesignationIds = explicitAllPlacesExpansion || broadenDocumentedOwnershipScope
     ? []
     : requiredDesignationIds;
@@ -8103,8 +8115,8 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   const strictSourceBackedDiscovery =
     discoveryDesignationIds.length > 0 || broadenDocumentedOwnershipScope;
   const radiusMiles =
-    strictSourceBackedDiscovery && requestsExactRadius(input.message)
-      ? requestedRadiusMiles(input.message)
+    strictSourceBackedDiscovery && requestsExactRadius(discoveryMessage)
+      ? requestedRadiusMiles(discoveryMessage)
       : null;
   // A separate Exact-radius field is still supported. When a member instead
   // naturally names a public hotel/venue in this one request, use that bounded
@@ -10233,8 +10245,21 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       namedBusiness ? "named" : "none";
 
     if (namedBusinessResolution.state === "needs_location") {
-      res.json({
+      const clarificationSessionId = await persistDeterministicDiscoveryTurn({
+        userId: req.user.id,
+        memoryEnabled,
         sessionId,
+        message,
+        reply: namedBusinessResolution.reply,
+        recommendations: null,
+        resultView: null,
+        followUpSuggestions: [],
+        sources: [],
+        destination: "",
+        vibes,
+      });
+      res.json({
+        sessionId: clarificationSessionId,
         reply: namedBusinessResolution.reply,
         recommendations: null,
         itinerary: null,
@@ -10292,9 +10317,24 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     }
 
     if (generalAnswerRoute.requiresFocusedClarification) {
-      res.json({
+      const clarificationReply = generalAnswerRoute.clarificationQuestion
+        ?? "What would you like Kinfolk to focus on?";
+      const clarificationSessionId = await persistDeterministicDiscoveryTurn({
+        userId: req.user.id,
+        memoryEnabled,
         sessionId,
-        reply: generalAnswerRoute.clarificationQuestion,
+        message,
+        reply: clarificationReply,
+        recommendations: null,
+        resultView: null,
+        followUpSuggestions: [],
+        sources: [],
+        destination: "",
+        vibes,
+      });
+      res.json({
+        sessionId: clarificationSessionId,
+        reply: clarificationReply,
         recommendations: null,
         itinerary: null,
         followUpSuggestions: [],
@@ -12692,7 +12732,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const currentTurnCorrectionInstruction =
       buildKinfolkCurrentTurnCorrectionInstruction({
         message,
-        history: existingMessages,
+        // The resolved scope is the only history this turn is permitted to use.
+        // Never let a correction block reintroduce an intervening topic.
+        history: scopedConversationMessages,
       });
     // A remembered destination is useful only while the member is actually
     // asking a location-aware question. Do not let an earlier work trip make a
@@ -12900,7 +12942,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       verifiedImageUrls.length > 0
         ? `IMAGE GUIDANCE (non-negotiable): Describe only what is visibly supported. Never infer ethnicity, identity, diagnosis, disability, intent, or socioeconomic status from an image. If the image may show a health concern, describe observable features in neutral language, explain common possibilities without diagnosing, ask about urgent red flags, and recommend appropriate professional care when warranted. Distinguish what you can see from what the member told you.`
         : "";
-    const leanGeneralChat = canUseLeanGeneralChat({
+    const leanGeneralChat = !currentTurnCorrectionInstruction && canUseLeanGeneralChat({
       intentClass,
       requiresCurrentEvidence: generalAnswerRoute.requiresCurrentEvidence,
       hasLocation: Boolean(destination),
@@ -12944,7 +12986,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       conversationContextScope?.handoff?.state === "resumed"
         ? "\n\nEXPLICIT RESUMED THREAD: The member deliberately resumed only the bounded private thread supplied in this conversation. Answer a clear follow-up directly with details supported by that thread. Do not ask a confirmation question or request repetition when the thread already answers the member's question."
         : "";
-    const systemPromptWithResponseFormat = `${systemPromptWithLibrary}${explicitResumeResponsePolicy}\n\n${conversationalIntentPrompt}\n\n${buildKinfolkFormalResponseContract()}`;
+    const unresolvedReferenceInstruction = conversationContextScope?.requiresReferenceClarification
+      ? "\n\nEXPLICIT PRIOR-SUBJECT REFERENCE: The member asked to return to an earlier subject, but the safe bounded session did not identify exactly one non-sensitive subject. Ask one short clarification naming no private details. Do not infer, retrieve, or repeat another topic."
+      : "";
+    const systemPromptWithResponseFormat = `${systemPromptWithLibrary}${explicitResumeResponsePolicy}${unresolvedReferenceInstruction}\n\n${conversationalIntentPrompt}\n\n${buildKinfolkFormalResponseContract()}`;
 
     const continuityInstruction = conversationalResearchSubject.inheritedSubject
       ? `\n\n[Conversation continuity: The member's immediately preceding subject was “${conversationalResearchSubject.inheritedSubject}”. Answer this follow-up about that subject. Do not ask them to repeat it.]`
@@ -13813,6 +13858,51 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const memberFacingReply = contextualPartialEvidenceSourceContext
       ? `${reply}\n\nEvidence note: ${contextualPartialEvidenceSourceContext}`
       : reply;
+    const memberFacingSourceContext = isPrivateImageTurn
+      ? undefined
+      : currentEvidenceSourceContext ??
+        lifeGuidance?.sourceContext ??
+        (contextualPlan?.taskMode === "city_briefing"
+          ? contextualPlan.freshness === "stable"
+            ? "This stable city background is not a current travel-status update. Check current alerts, hours, transit conditions, and events again closer to travel. Any optional follow-up is based only on interests you chose to save, never an assumption about you."
+            : "This current city briefing uses the linked public sources. Any optional follow-up is based only on interests you chose to save, never an assumption about you."
+          : undefined);
+    // The first persistence pass establishes a session ID before answer-plan
+    // telemetry. Enrich that same owner-scoped message after the final response
+    // metadata exists so reopening a session preserves only safe citations and
+    // reviewed resource cards, never model prompts or private-memory text.
+    const persistedAiMessage: SessionMessage & {
+      sourceContext?: string;
+      resourceCards?: Array<Record<string, unknown>>;
+    } = {
+      ...newAiMsg,
+      content: memberFacingReply,
+      sources: memberFacingSources.flatMap((source) =>
+        typeof source.title === "string" && typeof source.url === "string"
+          ? [{ title: source.title, url: source.url }]
+          : [],
+      ),
+      sourceContext: memberFacingSourceContext,
+      resourceCards: webResourceCards.length > 0 ? webResourceCards : undefined,
+    };
+    const enrichedMessages = [...existingMessages, newUserMsg, persistedAiMessage];
+    if (req.user?.id && finalSessionId) {
+      if (memoryEnabled && sessionPersistenceAvailable) {
+        await db
+          .update(kinfolkSessionsTable)
+          .set({ messages: enrichedMessages, updatedAt: new Date() })
+          .where(and(
+            eq(kinfolkSessionsTable.id, finalSessionId),
+            eq(kinfolkSessionsTable.userId, req.user.id),
+          ));
+      } else if (!memoryEnabled && !staffAuditPolicy) {
+        writeEphemeralKinfolkSession({
+          userId: req.user.id,
+          messages: enrichedMessages,
+          destination: detectedDestination,
+        }, finalSessionId);
+      }
+    }
     const memberFacingMemoryUse = memberFacingPrivateMemoryUseForAnswer({
       decision: privateMemoryUseDecision,
       answerUsedPersonalization:
@@ -13886,15 +13976,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           : undefined,
       // Source relevance is server-authored guidance, not a model-generated
       // claim. Clients display it directly above the existing source links.
-      sourceContext: isPrivateImageTurn
-        ? undefined
-        : currentEvidenceSourceContext ??
-        lifeGuidance?.sourceContext ??
-        (contextualPlan?.taskMode === "city_briefing"
-          ? contextualPlan.freshness === "stable"
-            ? "This stable city background is not a current travel-status update. Check current alerts, hours, transit conditions, and events again closer to travel. Any optional follow-up is based only on interests you chose to save, never an assumption about you."
-            : "This current city briefing uses the linked public sources. Any optional follow-up is based only on interests you chose to save, never an assumption about you."
-          : undefined),
+      sourceContext: memberFacingSourceContext,
       // sources — health retrieval sources merged with entity-resolution sources.
       // Always an array so client-side checks (Array.isArray) don't need a guard.
       sources: memberFacingSources,

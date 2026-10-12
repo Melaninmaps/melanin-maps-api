@@ -12,6 +12,8 @@ export type ConversationContextScope = {
   handoff: KinfolkConversationHandoff | null;
   /** Marks a clear request to return later in the existing private session. */
   handoffRequested: boolean;
+  /** A return reference was clear but did not identify one safe prior subject. */
+  requiresReferenceClarification: boolean;
 };
 
 /** A member-owned, active session considered only after an explicit resume. */
@@ -68,6 +70,8 @@ const COMPARATIVE_FOLLOW_UP_RE = /\b(?:which|better|best|worse|less|more|safer|r
 const DRAFT_REQUEST_RE = /\b(?:draft|write|compose|revise|rewrite|edit)\b[\s\S]{0,100}\b(?:email|letter|message|note|proposal)\b/i;
 const PRIOR_DRAFT_REFERENCE_RE = /\b(?:go\s+back|return|back\s+to|earlier)\b[\s\S]{0,80}\b(?:email|letter|message|draft|paragraph|tone|version)\b/i;
 const SENSITIVE_DRAFT_CONTENT = /\b(?:address|home\s+address|medical|medication|diagnos(?:is|ed)|doctor|therap(?:y|ist)|suicid|self[- ]?harm|abuse|assault|trauma|pregnan|credit|debt|income|salary|bank|race|religion|muslim|christian|jewish|sexual(?:ity)?|gender|phone)\b|\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b/i;
+const PRIOR_SUBJECT_REFERENCE_RE = /\b(?:go\s+back|return|back\s+to|earlier)\b[\s\S]{0,60}\b(?:that|the)\s+([a-z][a-z-]{2,40})(?=\s+(?:and|but|please|make|can|could|to)\b|[,.!?]|$)/i;
+const IMMEDIATE_REVISION_RE = /^(?:please\s+)?(?:make|rewrite|reword|rephrase|edit|proofread|polish|shorten|expand|tighten|change|adjust)\b[\s\S]{0,100}\b(?:it|that|this|the|more|less)\b/i;
 
 /**
  * An explicit return-to-writing request may recover only the most recent earlier
@@ -86,6 +90,32 @@ function resolvePriorDraftScope(messages: readonly SessionMessage[], currentMess
       : [candidate];
   }
   return [];
+}
+
+/**
+ * A member may explicitly return to one non-sensitive subject in the current
+ * session. This stays narrower than generic semantic recall: the member has to
+ * name the subject, exactly one safe pair must match, and intervening turns are
+ * never supplied to the model.
+ */
+function resolvePriorSubjectScope(messages: readonly SessionMessage[], currentMessage: string): SessionMessage[] | null {
+  if (SENSITIVE_HANDOFF_TOPIC.test(currentMessage)) return [];
+  const subject = PRIOR_SUBJECT_REFERENCE_RE.exec(currentMessage)?.[1]?.trim().toLowerCase();
+  if (!subject) return [];
+  const matches = messages.flatMap((candidate, index) => {
+    if (candidate.role !== "user" || SENSITIVE_HANDOFF_TOPIC.test(candidate.content)) return [];
+    const subjectPattern = new RegExp(`\\b${subject.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+    if (!subjectPattern.test(candidate.content)) return [];
+    const reply = messages[index + 1];
+    return reply?.role === "assistant" && !SENSITIVE_HANDOFF_TOPIC.test(reply.content)
+      ? [[candidate, reply] as SessionMessage[]]
+      : [];
+  });
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function isImmediateRevisionRequest(message: string): boolean {
+  return !SENSITIVE_HANDOFF_TOPIC.test(message) && IMMEDIATE_REVISION_RE.test(message);
 }
 
 /**
@@ -182,16 +212,23 @@ export function resolveConversationContextScope(input: {
   const resumeRequested = savedResume !== null
     && isExplicitConversationResumeRequest(input.currentMessage);
   const priorDraftScope = !resumeRequested ? resolvePriorDraftScope(input.messages, input.currentMessage) : [];
-  const directFollowUp = !resumeRequested && priorDraftScope.length === 0 && (
-    isDirectConversationFollowUp(input.currentMessage)
+  const priorSubjectScope = !resumeRequested && priorDraftScope.length === 0
+    ? resolvePriorSubjectScope(input.messages, input.currentMessage)
+    : [];
+  const directFollowUp = !resumeRequested && priorDraftScope.length === 0 && priorSubjectScope?.length === 0 && (
+    isImmediateRevisionRequest(input.currentMessage)
+    || isDirectConversationFollowUp(input.currentMessage)
     || isBoundedSameSessionContinuation(input)
   );
+  const requiresReferenceClarification = !resumeRequested && priorDraftScope.length === 0 && priorSubjectScope === null;
 
   return {
     messages: resumeRequested
       ? input.messages.slice(-6)
       : priorDraftScope.length > 0
         ? priorDraftScope
+      : priorSubjectScope && priorSubjectScope.length > 0
+        ? priorSubjectScope
       : directFollowUp
         ? input.messages.slice(-4)
         : [],
@@ -201,5 +238,6 @@ export function resolveConversationContextScope(input: {
         ? savedResume
         : null,
     handoffRequested,
+    requiresReferenceClarification,
   };
 }

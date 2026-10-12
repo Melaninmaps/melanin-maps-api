@@ -634,7 +634,8 @@ describe("Kinfolk chat static wiring", () => {
 
     expect(correctionInstruction).toBeGreaterThan(sessionRead);
     expect(correctionInstruction).toBeLessThan(systemPrompt);
-    expect(chatRoute).toContain("history: existingMessages");
+    expect(chatRoute).toContain("history: scopedConversationMessages");
+    expect(chatRoute).not.toContain("history: existingMessages");
     expect(chatRoute).toContain("currentTurnCorrectionInstruction");
   });
 

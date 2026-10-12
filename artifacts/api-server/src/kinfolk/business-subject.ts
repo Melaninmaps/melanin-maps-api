@@ -488,6 +488,18 @@ const AMENITY_EVIDENCE_TERMS = [
   "wheelchair accessible",
 ] as const;
 
+const CONTEXTUAL_EVIDENCE_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  "wheelchair accessible": [
+    "wheelchair accessible",
+    "wheelchair access",
+    "ada compliant",
+    "ada accessible",
+    "accessible entrance",
+    "step free",
+    "elevator",
+  ],
+};
+
 function normalizeEvidenceTerm(value: string): string {
   return value
     .normalize("NFKD")
@@ -495,6 +507,11 @@ function normalizeEvidenceTerm(value: string): string {
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .replace(/\s+/g, " ");
+}
+
+function contextualEvidenceAlternatives(term: string): readonly string[] {
+  const normalized = normalizeEvidenceTerm(term);
+  return CONTEXTUAL_EVIDENCE_ALIASES[normalized] ?? [normalized];
 }
 
 /**
@@ -532,6 +549,9 @@ export function deriveContextualBusinessEvidenceTerms(
     if (new RegExp(`(^|[^a-z0-9])${normalized.replace(/ /g, "\\s+")}([^a-z0-9]|$)`, "i").test(message)) {
       terms.add(normalized);
     }
+  }
+  if (/\b(?:wheelchair|ada|accessible|accessibility|mobility|step[- ]free|elevator)\b/i.test(message)) {
+    terms.add("wheelchair accessible");
   }
   return [...terms].slice(0, 4);
 }
@@ -827,6 +847,7 @@ export function matchesDocumentedContextualEvidence(
     stateCode?: string | null;
     tags?: readonly string[] | null;
     specialties?: readonly string[] | null;
+    accessibilityFeatures?: readonly string[] | null;
   }>,
   evidenceTerms: readonly string[] | undefined,
 ): boolean {
@@ -841,15 +862,18 @@ export function matchesDocumentedContextualEvidence(
     business.stateCode ?? "",
     ...(business.tags ?? []),
     ...(business.specialties ?? []),
+    ...(business.accessibilityFeatures ?? []),
   ]
     .join(" ")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
-  return evidenceTerms.every((term) => {
-    const phrase = normalizeEvidenceTerm(term);
-    return Boolean(phrase) && ` ${evidence} `.includes(` ${phrase} `);
-  });
+  return evidenceTerms.every((term) =>
+    contextualEvidenceAlternatives(term).some((alternative) => {
+      const phrase = normalizeEvidenceTerm(alternative);
+      return Boolean(phrase) && ` ${evidence} `.includes(` ${phrase} `);
+    }),
+  );
 }
 
 function searchTermPatterns(searchTerms: readonly string[]): string[] {
@@ -889,7 +913,10 @@ export function documentedServiceRequirementSearchPatterns(
 export function contextualEvidenceSearchPatterns(
   evidenceTerms: readonly string[] | undefined,
 ): string[] {
-  return searchTermPatterns(evidenceTerms ?? []);
+  return (evidenceTerms ?? []).flatMap((term) => {
+    const patterns = searchTermPatterns(contextualEvidenceAlternatives(term));
+    return patterns.length > 1 ? [`(?:${patterns.join("|")})`] : patterns;
+  });
 }
 
 export const BUSINESS_SUBJECTS = SUBJECTS.map(

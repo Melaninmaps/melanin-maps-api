@@ -253,6 +253,7 @@ export function useKinfolk() {
   /** Client-request timing only; never a claim about server-side research. */
   const [requestStartedAt, setRequestStartedAt] = useState<number | null>(null);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const [kinfolkContinuityEnabled, setKinfolkContinuityEnabled] = useState(false);
   const [kinfolkContinuityDisclosureRequired, setKinfolkContinuityDisclosureRequired] = useState(false);
   const [kinfolkContinuityDecision, setKinfolkContinuityDecision] = useState<"accepted" | "declined" | null>(null);
@@ -423,7 +424,10 @@ export function useKinfolk() {
           sourceNote: data.sourceNote ?? null,
           sourceContext: data.sourceContext ?? null,
           communityPerspective: data.communityPerspective ?? null,
-          sources: data.sources ?? null,
+          sources: (data.sources ?? []).flatMap((source) => {
+            const safe = parseSafeSourceLink(source);
+            return safe ? [safe] : [];
+          }).slice(0, 5),
           clarificationSteps: data.clarificationSteps ?? undefined,
           needsClarification: data.needsClarification === true,
           originalQuery: data.originalQuery ?? text,
@@ -555,19 +559,26 @@ export function useKinfolk() {
     } catch {}
   }, [sessionId]);
 
-  const loadSessions = useCallback(async (view: "active" | "archived" = "active") => {
+  const loadSessions = useCallback(async (view: "active" | "archived" = "active"): Promise<boolean> => {
     const token = await getToken();
     const apiBase = getApiBase();
-    if (!token || !apiBase) return;
+    if (!token || !apiBase) {
+      setSessionError("Sign in to load Kinfolk conversation history.");
+      return false;
+    }
+    setSessionError(null);
     try {
       const res = await fetch(`${apiBase}/api/kinfolk/sessions?view=${view}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        const data = (await res.json()) as { sessions: SessionSummary[] };
-        setSessions(data.sessions);
-      }
-    } catch {}
+      if (!res.ok) throw new Error("Kinfolk conversation history could not be loaded.");
+      const data = (await res.json()) as { sessions: SessionSummary[] };
+      setSessions(data.sessions);
+      return true;
+    } catch (cause) {
+      setSessionError(cause instanceof Error ? cause.message : "Kinfolk conversation history could not be loaded.");
+      return false;
+    }
   }, []);
 
   const loadKinfolkContinuity = useCallback(async () => {
@@ -636,23 +647,27 @@ export function useKinfolk() {
     } catch { return false; }
   }, [loadSessions]);
 
-  const loadSession = useCallback(async (id: string) => {
+  const loadSession = useCallback(async (id: string): Promise<boolean> => {
     const token = await getToken();
     const apiBase = getApiBase();
-    if (!token || !apiBase) return;
+    if (!token || !apiBase) {
+      setSessionError("Sign in to open this conversation.");
+      return false;
+    }
+    setSessionError(null);
     setIsLoading(true);
     try {
       const res = await fetch(`${apiBase}/api/kinfolk/sessions/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        const data = (await res.json()) as {
-          session: { id: string; messages: { role: string; content: string; recommendations?: unknown; resultView?: unknown; followUpSuggestions?: string[]; companionMemoryOffer?: KinfolkCompanionMemoryOffer | null; timestamp: string }[] };
+      if (!res.ok) throw new Error("Kinfolk could not open this conversation. Try again.");
+      const data = (await res.json()) as {
+          session: { id: string; messages: { role: string; content: string; recommendations?: unknown; resultView?: unknown; followUpSuggestions?: string[]; companionMemoryOffer?: KinfolkCompanionMemoryOffer | null; sourceContext?: string | null; sources?: Array<{ title?: unknown; url?: unknown }>; resourceCards?: KinfolkResourceCard[]; timestamp: string }[] };
           resumePreview?: ConversationHandoffStatus | null;
         };
-        setSessionId(id);
-        setConversationHandoff(data.resumePreview ?? null);
-        setMessages(
+      setSessionId(id);
+      setConversationHandoff(data.resumePreview ?? null);
+      setMessages(
           data.session.messages.map((m) => ({
             id: makeId(),
             role: m.role as "user" | "assistant",
@@ -661,12 +676,28 @@ export function useKinfolk() {
             resultView: (m.resultView as ConversationalBusinessResultView | null) ?? null,
             followUpSuggestions: m.followUpSuggestions ?? [],
             companionMemoryOffer: m.companionMemoryOffer ?? null,
+            sourceContext: typeof m.sourceContext === "string" ? m.sourceContext : null,
+            sources: (m.sources ?? []).flatMap((source) => {
+              const safe = parseSafeSourceLink(source);
+              return safe ? [safe] : [];
+            }).slice(0, 5),
+            resourceCards: (m.resourceCards ?? []).flatMap((card) => {
+              const safe = parseSafeSourceLink(card);
+              return safe && typeof card.id === "string" && card.id
+                && typeof card.description === "string" && card.description
+                && isKinfolkResourceCardType(card.type)
+                ? [{ id: card.id, title: safe.title, url: safe.url, description: card.description, type: card.type, ...(typeof card.safetyNote === "string" && card.safetyNote ? { safetyNote: card.safetyNote } : {}) }]
+                : [];
+            }).slice(0, 3),
             timestamp: new Date(m.timestamp),
             feedback: {},
           })),
-        );
-      }
-    } catch {}
+      );
+      return true;
+    } catch (cause) {
+      setSessionError(cause instanceof Error ? cause.message : "Kinfolk could not open this conversation. Try again.");
+      return false;
+    }
     finally { setIsLoading(false); }
   }, []);
 
@@ -735,6 +766,7 @@ export function useKinfolk() {
     isLoading,
     requestStartedAt,
     sessions,
+    sessionError,
     kinfolkContinuityEnabled,
     kinfolkContinuityDisclosureRequired,
     kinfolkContinuityDecision,
