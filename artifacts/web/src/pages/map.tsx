@@ -238,32 +238,11 @@ export default function MapPage() {
   const [mapRefreshGeneration, setMapRefreshGeneration] = useState(0);
   const [savedDesignations, setSavedDesignations] = useState<string[]>([]);
   const [supportLensError, setSupportLensError] = useState<string | null>(null);
-  useEffect(() => {
-    fetch(`${BASE.replace(/\/$/, "")}/api/kinfolk/preferences`, { credentials: "include" })
-      .then((response) => response.ok ? response.json() : null)
-      .then((payload) => {
-        const prefs = payload?.preferences;
-        const values = Array.isArray(prefs?.preferredOwnershipTypes)
-          ? prefs.preferredOwnershipTypes
-          : Array.isArray(prefs?.ownershipTypes) ? prefs.ownershipTypes : [];
-        if (prefs?.supportLensMode === "strict_documented_designations") setSavedDesignations(values);
-      })
-      .catch(() => {});
-  }, []);
-  const removeMapDesignation = async (designation: string) => {
+  const removeMapDesignation = (designation: string) => {
     setSupportLensError(null);
-    const result = await persistReducedSupportLensRemoval({
-      baseUrl: `${BASE.replace(/\/$/, "")}/`, savedDesignations, removeDesignation: designation,
-    });
-    if (result.error) {
-      setSupportLensError(result.error);
-    } else {
-      const update = result.update;
-      setSavedDesignations(update.preferredOwnershipTypes);
-      setMapSupportScope(update.preferredOwnershipTypes.length ? null : "all_businesses");
-      setMapRefreshGeneration((generation) => generation + 1);
-      setUniversalResults(null);
-    }
+    setSavedDesignations((current) => current.filter((value) => value !== designation));
+    setMapRefreshGeneration((generation) => generation + 1);
+    setUniversalResults(null);
   };
   const { data: authData } = useGetCurrentAuthUser();
   const savedHomeCity = useMemo(() => {
@@ -2263,21 +2242,12 @@ export default function MapPage() {
                         Remove {OWNERSHIP_FILTER_OPTIONS.find((option) => option.id === designation)?.label ?? designation}
                       </button>) : null}
                       <button
-                        onClick={() => { void (async () => {
+                        onClick={() => {
                           setSupportLensError(null);
-                          try {
-                            const response = await fetch(`${BASE.replace(/\/$/, "")}/api/kinfolk/preferences`, {
-                            method: "PUT", credentials: "include",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ preferredOwnershipTypes: [], supportLensMode: "all_businesses" }),
-                            });
-                            if (!response.ok) throw new Error("preference update failed");
-                            setMapSupportScope("all_businesses");
-                            setSearch(""); setMapDiscoveryFocus("all"); setBusinessSearchActive(false); setUniversalResults(null);
-                          } catch {
-                            setSupportLensError("Could not update Support Lens. Please try again.");
-                          }
-                        })(); }}
+                          setSavedDesignations([]);
+                          setMapSupportScope("all_businesses");
+                          setSearch(""); setMapDiscoveryFocus("all"); setBusinessSearchActive(false); setUniversalResults(null);
+                        }}
                         className="px-4 py-2 rounded-full border border-[#CA922B] text-[#CA922B] text-xs font-bold"
                       >
                         Show all businesses
