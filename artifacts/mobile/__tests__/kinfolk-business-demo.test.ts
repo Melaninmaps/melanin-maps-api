@@ -8,6 +8,9 @@ const travelSource = readFileSync(fileURLToPath(new URL("../app/travel.tsx", imp
 const hookSource = readFileSync(fileURLToPath(new URL("../hooks/useKinfolk.ts", import.meta.url)), "utf8");
 const detailSource = readFileSync(fileURLToPath(new URL("../app/business/[id].tsx", import.meta.url)), "utf8");
 const widgetSource = readFileSync(fileURLToPath(new URL("../components/AIChatWidget.tsx", import.meta.url)), "utf8");
+const voiceSource = readFileSync(fileURLToPath(new URL("../hooks/useKinfolkVoiceSource.ts", import.meta.url)), "utf8");
+const voiceControls = readFileSync(fileURLToPath(new URL("../components/KinfolkVoiceSourceControls.tsx", import.meta.url)), "utf8");
+const voiceContract = readFileSync(fileURLToPath(new URL("../lib/kinfolkVoiceSourceContract.ts", import.meta.url)), "utf8");
 const settingsSource = readFileSync(fileURLToPath(new URL("../components/KinfolkSettingsControlCenter.tsx", import.meta.url)), "utf8");
 const disclosureSource = readFileSync(fileURLToPath(new URL("../components/KinfolkContinuityDisclosure.tsx", import.meta.url)), "utf8");
 const inlineMemoryConsentSource = readFileSync(fileURLToPath(new URL("../components/KinfolkInlineMemoryConsent.tsx", import.meta.url)), "utf8");
@@ -77,10 +80,12 @@ describe("Expo Kinfolk business demo cards", () => {
   it("keeps Kinfolk voice modes discoverable and makes microphone failures visible", () => {
     expect(widgetSource).toContain('router.push("/kinfolk-settings" as never)');
     expect(widgetSource).toContain("Choose Big Cousin, Professor, and other Kinfolk preferences");
-    expect(widgetSource).toContain("Microphone access is off");
-    expect(widgetSource).toContain("Kinfolk Voice could not start");
-    expect(widgetSource).toContain("Recording… 60-second maximum. Tap the microphone again when you’re finished.");
-    expect(widgetSource).toContain("Turning your words into text…");
+    expect(widgetSource).toContain("useKinfolkVoiceSource({ isAuthenticated })");
+    expect(widgetSource).toContain("KinfolkVoiceSourceControls");
+    expect(voiceContract).toContain("Microphone access is off");
+    expect(voiceContract).toContain("Recording did not start");
+    expect(voiceControls).toContain("Recording {source.elapsedSeconds}s / 60s");
+    expect(voiceSource).toContain("Sending temporary audio for transcription…");
   });
 
   it("keeps follow-up suggestions readable in both Kinfolk mobile surfaces", () => {
@@ -98,14 +103,14 @@ describe("Expo Kinfolk business demo cards", () => {
   });
 
   it("enables the Expo Audio iOS recording session before starting Kinfolk Voice", () => {
-    expect(widgetSource).toContain("setAudioModeAsync");
-    expect(widgetSource).toContain("allowsRecording: true");
-    expect(widgetSource).toContain("playsInSilentMode: true");
-    expect(widgetSource.indexOf("allowsRecording: true")).toBeLessThan(
-      widgetSource.indexOf("recorder.prepareToRecordAsync()"),
+    expect(voiceSource).toContain("setAudioModeAsync");
+    expect(voiceSource).toContain("allowsRecording: true");
+    expect(voiceSource).toContain("playsInSilentMode: true");
+    expect(voiceSource.indexOf("allowsRecording: true")).toBeLessThan(
+      voiceSource.indexOf("recorder.prepareToRecordAsync()"),
     );
-    expect(widgetSource).toContain("allowsRecording: false");
-    expect(widgetSource).toContain("isStartingVoice");
+    expect(voiceSource).toContain("allowsRecording: false");
+    expect(widgetSource).toContain("widgetVoiceSource.state.phase === \"starting\"");
   });
 
   it("invalidates deferred widget voice responses after background or close", async () => {

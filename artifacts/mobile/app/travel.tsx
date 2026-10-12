@@ -37,13 +37,9 @@ import * as SecureStore from "expo-secure-store";
 import * as FileSystem from "expo-file-system";
 import * as Clipboard from "expo-clipboard";
 import {
-  RecordingPresets,
-  requestRecordingPermissionsAsync,
   setAudioModeAsync,
   useAudioPlayer,
   useAudioPlayerStatus,
-  useAudioRecorder,
-  useAudioRecorderState,
 } from "expo-audio";
 import * as ImagePicker from "expo-image-picker";
 import { getApiBase } from "@/lib/api";
@@ -62,7 +58,6 @@ import { KinfolkVoiceSourceControls } from "@/components/KinfolkVoiceSourceContr
 import { useKinfolkVoiceSource } from "@/hooks/useKinfolkVoiceSource";
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
-const NATIVE_VOICE_MAX_DURATION_MS = 60_000;
 
 const ALL_CATEGORIES = [
   "Food & Drink", "Nightlife", "Culture & Art", "Music & Live Events",
@@ -2101,21 +2096,6 @@ export default function TravelScreen() {
     content: string;
     phase: "preparing" | "playing" | "finished";
   } | null>(null);
-  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
-  const [isTranscribingVoice, setIsTranscribingVoice] = useState(false);
-  const [voiceInputStatus, setVoiceInputStatus] = useState<string | null>(null);
-  const [voiceTranscriptReview, setVoiceTranscriptReview] = useState<{
-    originalText: string;
-    suggestedText: string;
-    clarification: string | null;
-  } | null>(null);
-  const [voiceRecordingElapsedSeconds, setVoiceRecordingElapsedSeconds] = useState(0);
-  const primaryRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  // Native recorder state is authoritative. A pressed mic must not show a
-  // recording state unless the operating system actually began capturing.
-  const primaryRecorderState = useAudioRecorderState(primaryRecorder, 250);
-  const primaryRecordingStartedAtRef = useRef<number | null>(null);
-  const primaryRecordingDraftRef = useRef("");
   const serverVoicePlayer = useAudioPlayer(voiceAudioUri);
   const serverVoicePlayerStatus = useAudioPlayerStatus(serverVoicePlayer);
   const autoSpeechGuardRef = useRef(createVoicePlaybackGuard(
@@ -2389,9 +2369,8 @@ export default function TravelScreen() {
   }, [playServerVoice, playingVoice, stopServerVoice]);
 
   const interruptKinfolk = useCallback(() => {
-    const stoppedReply = interruptCurrentReply();
+    interruptCurrentReply();
     stopServerVoice("member_interrupt");
-    if (stoppedReply) setVoiceInputStatus("Kinfolk stopped. Finish your thought and send it when you’re ready.");
   }, [interruptCurrentReply, stopServerVoice]);
 
   const uploadKinfolkImage = useCallback(async (asset: ImagePicker.ImagePickerAsset) => {
@@ -2486,67 +2465,7 @@ export default function TravelScreen() {
     // This intentionally edits only the member's composer. It never creates a
     // chat turn—the member must still review and explicitly press Send.
     setInputText(transcript);
-    setVoiceTranscriptReview(null);
-    setVoiceInputStatus("Voice transcription was added to your draft. Review or edit it, then tap Send when you’re ready.");
   }, []);
-  const startPrimaryVoiceRecording = useCallback(async () => {
-    if (Platform.OS === "web" || primaryRecorder.isRecording || isTranscribingVoice) return;
-    if (!isAuthenticated) {
-      Alert.alert("Sign in to use Kinfolk Voice", "Create or sign in to a free account to record a question. You can still type your question.");
-      return;
-    }
-    try {
-      const permission = await requestRecordingPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert(
-          "Microphone access is off",
-          permission.canAskAgain
-            ? "Allow microphone access, then tap the microphone again."
-            : "Allow microphone access for Mapping With Melanin in your phone Settings, then try again.",
-          permission.canAskAgain
-            ? [{ text: "Not now", style: "cancel" }]
-            : [
-                { text: "Not now", style: "cancel" },
-                { text: "Open Settings", onPress: () => void Linking.openSettings() },
-              ],
-        );
-        return;
-      }
-      // An active reply player can keep the audio session from handing the
-      // microphone to the recorder without surfacing a useful native error.
-      stopServerVoice("voice_input_start");
-      await setAudioModeAsync({
-        allowsRecording: true,
-        playsInSilentMode: true,
-        interruptionMode: "doNotMix",
-        shouldPlayInBackground: false,
-        shouldRouteThroughEarpiece: false,
-      });
-      await primaryRecorder.prepareToRecordAsync();
-      if (!primaryRecorder.getStatus().canRecord) {
-        throw new Error("Your phone could not prepare its microphone. Try again, or check microphone access in Settings.");
-      }
-      primaryRecorder.record();
-      // Recorder startup is asynchronous on physical devices. Verify it before
-      // switching the control into its red Stop state.
-      await new Promise<void>((resolve) => setTimeout(resolve, 80));
-      if (!primaryRecorder.getStatus().isRecording) {
-        throw new Error("Your phone did not begin recording. Check microphone access and try again.");
-      }
-      primaryRecordingStartedAtRef.current = Date.now();
-      primaryRecordingDraftRef.current = inputText;
-      setVoiceRecordingElapsedSeconds(0);
-      setIsRecordingVoice(true);
-      setVoiceInputStatus("Recording… 60-second maximum. Tap stop when you’re finished.");
-    } catch (cause) {
-      primaryRecordingStartedAtRef.current = null;
-      setIsRecordingVoice(false);
-      setVoiceInputStatus(null);
-      Alert.alert("Kinfolk Voice could not start", cause instanceof Error ? cause.message : "Check microphone permission and try again, or type your question.");
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
-    }
-  }, [inputText, isAuthenticated, isTranscribingVoice, primaryRecorder, stopServerVoice]);
-
   const handleSend = useCallback(async (text?: string) => {
     const msg = (text ?? inputText).trim();
     if (!msg) return;
@@ -2579,7 +2498,6 @@ export default function TravelScreen() {
     });
     if (accepted) {
       setInputText("");
-      setVoiceTranscriptReview(null);
       // The origin is one-turn public context only. It is never shown in the
       // conversation, attached to memory, or kept in the composer after send.
       setExactRadiusOrigin("");
@@ -2588,155 +2506,6 @@ export default function TravelScreen() {
       Keyboard.dismiss();
     }
   }, [inputText, voiceMode, sendMessage, isAuthenticated, onUserSend, kinfolkImages, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin]);
-
-  const stopPrimaryVoiceRecording = useCallback(async () => {
-    const recordingWasActive = primaryRecorder.isRecording || isRecordingVoice;
-    if (!recordingWasActive) return;
-    setIsRecordingVoice(false);
-    setIsTranscribingVoice(true);
-    setVoiceInputStatus("Turning your words into text…");
-    try {
-      const durationMs = primaryRecordingStartedAtRef.current === null
-        ? 0
-        : Math.max(0, Date.now() - primaryRecordingStartedAtRef.current);
-      primaryRecordingStartedAtRef.current = null;
-      if (primaryRecorder.isRecording) await primaryRecorder.stop();
-      const uri = primaryRecorder.uri;
-      if (!uri) throw new Error("No recording was captured. Please try again or type your question.");
-      const ext = (uri.split(".").pop() ?? "m4a").toLowerCase();
-      const mimeType = ({
-        m4a: "audio/mp4",
-        mp4: "audio/mp4",
-        mp3: "audio/mpeg",
-        wav: "audio/wav",
-        webm: "audio/webm",
-      } as const)[ext as "m4a" | "mp4" | "mp3" | "wav" | "webm"];
-      if (!mimeType) throw new Error("This recording format is not supported. Please try again or type your question.");
-      const token = await SecureStore.getItemAsync("auth_session_token");
-      const form = new FormData();
-      // Use Expo's Blob-compatible File rather than the legacy React Native
-      // multipart object. The latter produces "Unsupported FormDataPart" on
-      // current native runtimes before transcription is even requested.
-      form.append("audio", new FileSystem.File(uri));
-      form.append("durationMs", String(durationMs));
-      form.append("mimeType", mimeType);
-      form.append(
-        "regionalFlavor",
-        typeof preferences?.regionalFlavor === "string"
-          ? preferences.regionalFlavor
-          : "off",
-      );
-      const response = await fetch(`${getApiBase()}/api/kinfolk/transcribe`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: form,
-      });
-      const payload = await response.json().catch(() => ({})) as {
-        text?: string;
-        message?: string;
-        error?: string;
-        meaningReview?: {
-          originalText?: string;
-          suggestedText?: string | null;
-          clarification?: string | null;
-          requiresConfirmation?: boolean;
-        };
-      };
-      if (!response.ok) {
-        const recovery = payload.error === "AUDIO_UNREADABLE" || payload.error === "AUDIO_MIME_MISMATCH"
-          ? "Kinfolk could not read that recording. Please try recording again; if it repeats, type your message and keep the conversation going."
-          : payload.error === "VOICE_INPUT_RATE_LIMITED"
-            ? "Voice input is taking a short break. You can type your message and try recording again after the displayed wait."
-            : payload.message ?? "Voice transcription failed. Please try again or type your question.";
-        throw new Error(recovery);
-      }
-      if (!payload.text?.trim()) throw new Error("Kinfolk could not hear that clearly. Please try again or type your question.");
-      // The exact transcript remains the draft. A provider suggestion is shown
-      // separately and can only be used by a deliberate member tap; neither
-      // original nor suggestion is sent automatically.
-      const originalText = payload.meaningReview?.originalText?.trim() || payload.text.trim();
-      setInputText(originalText);
-      const suggestedText = payload.meaningReview?.suggestedText?.trim();
-      if (payload.meaningReview?.requiresConfirmation && suggestedText && suggestedText !== originalText) {
-        setVoiceTranscriptReview({
-          originalText,
-          suggestedText,
-          clarification: payload.meaningReview.clarification?.trim() || null,
-        });
-        setVoiceInputStatus("Review your original transcript. You can use Kinfolk’s optional wording or edit it before Send.");
-      } else {
-        setVoiceTranscriptReview(null);
-        setVoiceInputStatus("Review your transcription, then tap Send when you’re ready.");
-      }
-    } catch (cause) {
-      setVoiceInputStatus(null);
-      Alert.alert("Voice Input", cause instanceof Error ? cause.message : "Recording error. Please try again or type your question.");
-    } finally {
-      primaryRecordingStartedAtRef.current = null;
-      setVoiceRecordingElapsedSeconds(0);
-      setIsTranscribingVoice(false);
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
-    }
-  }, [isRecordingVoice, preferences?.regionalFlavor, primaryRecorder]);
-
-  const cancelPrimaryVoiceRecording = useCallback(async () => {
-    if (!primaryRecorder.isRecording) return;
-    setIsRecordingVoice(false);
-    setInputText(primaryRecordingDraftRef.current);
-    setVoiceInputStatus(primaryRecordingDraftRef.current
-      ? "Recording canceled. Your draft was restored."
-      : "Recording canceled. Nothing was uploaded.");
-    try {
-      await primaryRecorder.stop();
-      const uri = primaryRecorder.uri;
-      if (uri) {
-        const temporaryFile = new FileSystem.File(uri);
-        try { temporaryFile.delete(); } catch { /* cache cleanup is best effort */ }
-      }
-    } catch { /* cancellation must never trigger an upload */ }
-    finally {
-      primaryRecordingStartedAtRef.current = null;
-      setVoiceRecordingElapsedSeconds(0);
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
-    }
-  }, [primaryRecorder]);
-
-  useEffect(() => {
-    if (!isRecordingVoice || primaryRecordingStartedAtRef.current === null) return;
-    const updateElapsed = () => {
-      const elapsedMs = Math.max(0, Date.now() - (primaryRecordingStartedAtRef.current ?? Date.now()));
-      setVoiceRecordingElapsedSeconds(Math.min(60, Math.floor(elapsedMs / 1000)));
-    };
-    updateElapsed();
-    const ticker = setInterval(updateElapsed, 250);
-    const remainingMs = Math.max(0, NATIVE_VOICE_MAX_DURATION_MS - (Date.now() - primaryRecordingStartedAtRef.current));
-    const limit = setTimeout(() => {
-      setVoiceInputStatus("60-second limit reached. Turning your words into text…");
-      void stopPrimaryVoiceRecording();
-    }, remainingMs);
-    return () => {
-      clearInterval(ticker);
-      clearTimeout(limit);
-    };
-  }, [isRecordingVoice, stopPrimaryVoiceRecording]);
-
-  // Calls, route changes, and media-service resets can stop native recording
-  // behind React's back. Recover to the same transcription/retry path instead
-  // of leaving the microphone control visually active but inert.
-  useEffect(() => {
-    if (!isRecordingVoice || primaryRecorderState.isRecording) return;
-    if (primaryRecordingStartedAtRef.current === null) return;
-    const timeout = setTimeout(() => {
-      if (!primaryRecorder.getStatus().isRecording) {
-        void stopPrimaryVoiceRecording();
-      }
-    }, 350);
-    return () => clearTimeout(timeout);
-  }, [isRecordingVoice, primaryRecorder, primaryRecorderState.isRecording, stopPrimaryVoiceRecording]);
-
-  useEffect(() => () => {
-    if (primaryRecorder.isRecording) void primaryRecorder.stop();
-  }, [primaryRecorder]);
 
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);
@@ -3154,59 +2923,6 @@ export default function TravelScreen() {
             <Text style={[styles.voiceInputStatusText, { color: colors.mutedForeground }]}>{voiceOutputStatus}</Text>
           </View>
         ) : null}
-        {voiceTranscriptReview ? (
-          <View style={[styles.voiceMeaningReview, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-            <Text style={[styles.voiceInputStatusText, { color: colors.text }]}>Kinfolk’s optional interpretation is ready for your review. It will not be sent unless you choose it and tap Send.</Text>
-            <Text style={[styles.voiceMeaningSuggestion, { color: colors.text }]}>Suggested wording: {voiceTranscriptReview.suggestedText}</Text>
-            {voiceTranscriptReview.clarification ? <Text style={[styles.voiceMeaningClarification, { color: colors.mutedForeground }]}>{voiceTranscriptReview.clarification}</Text> : null}
-            <View style={styles.voiceMeaningActions}>
-              <TouchableOpacity
-                onPress={() => {
-                  setInputText(voiceTranscriptReview.suggestedText);
-                  setVoiceTranscriptReview(null);
-                  setVoiceInputStatus("Suggestion added to your draft. Review or edit it, then tap Send when you’re ready.");
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Use Kinfolk's optional transcript interpretation"
-                style={[styles.voiceMeaningButton, { backgroundColor: colors.primary }]}
-              >
-                <Text style={styles.voiceMeaningButtonText}>Use suggestion</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  setInputText(voiceTranscriptReview.originalText);
-                  setVoiceTranscriptReview(null);
-                  setVoiceInputStatus("Your original transcript is ready to review or edit before Send.");
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Keep my original transcript"
-                style={[styles.voiceMeaningButton, { borderColor: colors.border, borderWidth: 1 }]}
-              >
-                <Text style={[styles.voiceMeaningKeepText, { color: colors.text }]}>Keep original</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : null}
-        {voiceInputStatus ? (
-          <View style={[styles.voiceInputStatus, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-            {isRecordingVoice || isTranscribingVoice ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="mic-outline" size={15} color={colors.primary} />}
-            <Text style={[styles.voiceInputStatusText, { color: colors.mutedForeground }]}>
-              {isRecordingVoice ? `${voiceInputStatus} ${voiceRecordingElapsedSeconds}s / 60s` : voiceInputStatus}
-            </Text>
-            {isRecordingVoice ? (
-              <TouchableOpacity
-                onPress={() => void cancelPrimaryVoiceRecording()}
-                accessibilityRole="button"
-                accessibilityLabel="Cancel recording and restore my draft"
-                style={styles.voiceCancelButton}
-                activeOpacity={0.75}
-              >
-                <Text style={styles.voiceCancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
-        ) : null}
-
         {/\b(?:within|under|inside|less than|no more than|up to)\s+\d{1,3}\s*(?:mi|miles?)\b|\b\d{1,3}[ -]?mile\s+radius\b/i.test(inputText) ? (
           <View style={{ backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingHorizontal: 16, paddingTop: 10 }}>
             <Text style={{ color: colors.text, fontFamily: "Inter_600SemiBold", fontSize: 12, marginBottom: 5 }}>
@@ -3296,10 +3012,7 @@ export default function TravelScreen() {
             placeholder="Or tell me anything…"
             placeholderTextColor={colors.mutedForeground}
             value={inputText}
-            onChangeText={(value) => {
-              setInputText(value);
-              if (voiceTranscriptReview) setVoiceTranscriptReview(null);
-            }}
+            onChangeText={setInputText}
             multiline
             returnKeyType="send"
             submitBehavior="submit"

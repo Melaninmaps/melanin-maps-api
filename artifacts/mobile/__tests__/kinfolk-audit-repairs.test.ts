@@ -18,11 +18,13 @@ describe("Kinfolk audit repairs on mobile", () => {
   });
 
   it("authenticates before requesting microphone permission in the widget", () => {
-    const start = widget.indexOf("const startVoice = async () => {");
-    const end = widget.indexOf("const stopVoice", start);
-    const block = widget.slice(start, end);
-    expect(block.indexOf("if (!isAuthenticated || !token)")).toBeGreaterThan(-1);
-    expect(block.indexOf("requestRecordingPermissionsAsync()")).toBeGreaterThan(block.indexOf("if (!isAuthenticated || !token)"));
+    const voiceSource = readFileSync(
+      fileURLToPath(new URL("../hooks/useKinfolkVoiceSource.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(widget).toContain("useKinfolkVoiceSource({ isAuthenticated })");
+    expect(voiceSource).toContain("if (!options.isAuthenticated)");
+    expect(voiceSource).toContain("requestRecordingPermissionsAsync");
   });
 
   it("shows, persists, and uses the four widget delivery modes", () => {
@@ -35,16 +37,23 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(widget).toContain("sendToKinfolk(text, token, voiceMode");
   });
 
-  it("keeps native voice controls off web and enforces a visible cancel-safe 60-second limit", () => {
+  it("keeps native voice controls off web and uses one visible cancel-safe 60-second source lifecycle", () => {
+    const voiceSource = readFileSync(
+      fileURLToPath(new URL("../hooks/useKinfolkVoiceSource.ts", import.meta.url)),
+      "utf8",
+    );
+    const voiceControls = readFileSync(
+      fileURLToPath(new URL("../components/KinfolkVoiceSourceControls.tsx", import.meta.url)),
+      "utf8",
+    );
     expect(widget).toContain('Platform.OS !== "web" ? (');
     expect(travel).toContain('Platform.OS !== "web" ? (');
-    expect(widget).toContain("NATIVE_VOICE_MAX_DURATION_MS = 60_000");
-    expect(travel).toContain("NATIVE_VOICE_MAX_DURATION_MS = 60_000");
-    expect(widget).toContain("recordingElapsedSeconds}s / 60s");
-    expect(travel).toContain("voiceRecordingElapsedSeconds}s / 60s");
-    expect(widget).toContain("setInput(draft)");
-    expect(travel).toContain("setInputText(primaryRecordingDraftRef.current)");
-    expect(travel).toContain("cancelPrimaryVoiceRecording()");
+    expect(widget).toContain("KinfolkVoiceSourceControls");
+    expect(widget).toContain("addWidgetVoiceTranscriptToDraft");
+    expect(travel).toContain("addPrimaryVoiceTranscriptToDraft");
+    expect(voiceSource).toContain("KINFOLK_VOICE_MAX_DURATION_MS");
+    expect(voiceControls).toContain("Cancel transcription");
+    expect(voiceControls).toContain("onUseTranscript");
   });
 
   it("does not silently persist a mobile reminder proposal and preserves its due date on explicit save", () => {

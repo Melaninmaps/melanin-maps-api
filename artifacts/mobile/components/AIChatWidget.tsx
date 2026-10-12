@@ -5,19 +5,18 @@ import * as Location from "expo-location";
 import { usePathname, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
 import {
-  useAudioRecorder,
   useAudioPlayer,
   useAudioPlayerStatus,
-  requestRecordingPermissionsAsync,
   setAudioModeAsync,
-  RecordingPresets,
 } from "expo-audio";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { NativeScrollEvent, NativeSyntheticEvent ,
+  ActivityIndicator,
   Alert,
   Animated,
   AppState,
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Linking,
   Modal,
@@ -37,6 +36,8 @@ import { getApiBase } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { parseSafeSourceLink } from "@/lib/sourceLinks";
 import { KinfolkAnswerText } from "@/components/KinfolkAnswerText";
+import { KinfolkVoiceSourceControls } from "@/components/KinfolkVoiceSourceControls";
+import { useKinfolkVoiceSource } from "@/hooks/useKinfolkVoiceSource";
 import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
 import {
   KinfolkBusinessRecommendationSheet,
@@ -114,7 +115,6 @@ async function getToken(): Promise<string | null> {
 const GREETING = "Kinfolk's here. Let's map it out.";
 const AAVE_LEVEL_KEY = "@kinfolk_aave_level";
 const KINFOLK_PREVIEW_TEXT = "Kinfolk is here. I will give you the direct answer, explain what matters, and help you decide what comes next.";
-const NATIVE_VOICE_MAX_DURATION_MS = 60_000;
 
 const AAVE_OPTIONS = [
   { level: 0, label: "Off",       desc: "Standard Kinfolk voice" },
@@ -177,7 +177,13 @@ async function nearbyCityHint(message: string): Promise<string | undefined> {
   }
 }
 
-async function sendToKinfolk(message: string, token: string | null, voiceMode: VoiceMode, cityHint?: string): Promise<{
+async function sendToKinfolk(
+  message: string,
+  token: string | null,
+  voiceMode: VoiceMode,
+  cityHint?: string,
+  signal?: AbortSignal,
+): Promise<{
   reply: string;
   taskAction?: TaskActionPayload | null;
   followUpSuggestions: string[];
@@ -216,6 +222,7 @@ async function sendToKinfolk(message: string, token: string | null, voiceMode: V
       cityHint,
       clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     }),
+    signal,
   });
   if (!res.ok) {
     // Extract server error message so the catch block can surface it to the user
@@ -365,9 +372,6 @@ export function AIChatWidget() {
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isStartingVoice, setIsStartingVoice] = useState(false);
-  const [voiceInputStatus, setVoiceInputStatus] = useState<string | null>(null);
   const [voiceOutputStatus, setVoiceOutputStatus] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [listenUri, setListenUri] = useState<string | undefined>(undefined);
@@ -379,13 +383,13 @@ export function AIChatWidget() {
   const [voiceModeSaving, setVoiceModeSaving] = useState(false);
   const [aaveLevel, setAaveLevel] = useState<number>(0);
   const [aaveSaving, setAaveSaving] = useState(false);
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
   const player = useAudioPlayer(listenUri);
   const playerStatus = useAudioPlayerStatus(player);
-  const recordingStartedAtRef = useRef<number | null>(null);
-  const recordingDraftRef = useRef("");
-  const [recordingElapsedSeconds, setRecordingElapsedSeconds] = useState(0);
+  const widgetVoiceSource = useKinfolkVoiceSource({ isAuthenticated });
+  const listenFileRef = useRef<FileSystem.File | null>(null);
   const listRef = useRef<FlatList>(null);
+  const activeChatRequestRef = useRef<AbortController | null>(null);
+  const chatRequestGenerationRef = useRef(0);
   const openRef = useRef(false);
   const appStateRef = useRef(AppState.currentState);
   const queuedPlaybackRequestRef = useRef<VoicePlaybackRequest | null>(null);
@@ -490,179 +494,6 @@ export function AIChatWidget() {
     })
   );
 
-  const startVoice = async () => {
-    if (Platform.OS === "web" || isStartingVoice || recorder.isRecording) return;
-    if (authLoading) return;
-    const token = await getToken();
-    if (!isAuthenticated || !token) {
-      Alert.alert(
-        "Sign in to use Kinfolk Voice",
-        "Sign in before recording so your audio is sent only to your authenticated Kinfolk session. You can still type your question.",
-        [
-          { text: "Not now", style: "cancel" },
-          { text: "Sign in", onPress: () => router.push("/login" as never) },
-        ],
-      );
-      return;
-    }
-    setIsStartingVoice(true);
-    try {
-      const permission = await requestRecordingPermissionsAsync();
-      const { granted } = permission;
-      if (!granted) {
-        setVoiceInputStatus(null);
-        Alert.alert(
-          "Microphone access is off",
-          permission.canAskAgain
-            ? "Please allow microphone access, then try Kinfolk Voice again. You can also type your question."
-            : "Allow microphone access for Mapping With Melanin in your phone Settings, then try Kinfolk Voice again.",
-        );
-        return;
-      }
-      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
-      await recorder.prepareToRecordAsync();
-      recorder.record();
-      recordingStartedAtRef.current = Date.now();
-      recordingDraftRef.current = input;
-      setRecordingElapsedSeconds(0);
-      setIsRecording(true);
-      setVoiceInputStatus("Recording… 60-second maximum. Tap the microphone again when you’re finished.");
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } catch (error) {
-      recordingStartedAtRef.current = null;
-      setIsRecording(false);
-      setVoiceInputStatus(null);
-      const detail = error instanceof Error ? error.message : "Unable to start recording.";
-      console.warn("[Kinfolk Voice] recording start failed", detail);
-      Alert.alert("Kinfolk Voice could not start", "Check microphone permission and try again, or type your question.");
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
-    } finally {
-      setIsStartingVoice(false);
-    }
-  };
-
-  const stopVoice = useCallback(async () => {
-    if (!recorder.isRecording) return;
-    setIsRecording(false);
-    setVoiceInputStatus("Turning your words into text…");
-    try {
-      const durationMs = recordingStartedAtRef.current === null
-        ? 0
-        : Math.max(0, Date.now() - recordingStartedAtRef.current);
-      recordingStartedAtRef.current = null;
-      await recorder.stop();
-      const uri = recorder.uri;
-      if (!uri) {
-        setVoiceInputStatus(null);
-        Alert.alert("Voice Input", "No recording was captured. Please try again or type your question.");
-        return;
-      }
-
-      const base = getApiBase();
-      const token = await getToken();
-      if (!token) {
-        setInput(recordingDraftRef.current);
-        throw new Error("Your sign-in expired before transcription. Your draft was restored; please sign in and try again.");
-      }
-      const ext = (uri.split(".").pop() ?? "m4a").toLowerCase();
-      const mimeType = ({
-        m4a: "audio/mp4",
-        mp4: "audio/mp4",
-        mp3: "audio/mpeg",
-        wav: "audio/wav",
-        webm: "audio/webm",
-      } as const)[ext as "m4a" | "mp4" | "mp3" | "wav" | "webm"];
-      if (!mimeType) {
-        Alert.alert("Voice Input", "This recording format is not supported. Please try again or type your question.");
-        return;
-      }
-      const form = new FormData();
-      // Expo's native FormData does not support React Native's legacy
-      // `{ uri, name, type }` part shape in every runtime. `File` is a real
-      // Blob, so this reaches the server as a normal multipart attachment.
-      form.append("audio", new FileSystem.File(uri));
-      form.append("durationMs", String(durationMs));
-      form.append("mimeType", mimeType);
-
-      const r = await fetch(`${base}/api/kinfolk/transcribe`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: form,
-      });
-
-      if (r.ok) {
-        const { text } = await r.json() as { text?: string };
-        if (text) {
-          setInput(text);
-          setVoiceInputStatus("Your words are ready to review. Tap Send when you’re ready.");
-        } else {
-          setVoiceInputStatus(null);
-          Alert.alert("Voice Input", "I couldn't hear that clearly — please try again or type your question.");
-        }
-      } else {
-        // Surface the server's error message so the founder can see exactly what failed
-        let serverMessage = "Voice transcription failed — please try again or type your question.";
-        try {
-          const errBody = await r.json() as { message?: string; error?: string };
-          if (errBody.message) serverMessage = errBody.message;
-        } catch { /* ignore parse error */ }
-        setVoiceInputStatus(null);
-        Alert.alert("Voice Input", serverMessage);
-      }
-    } catch (err) {
-      recordingStartedAtRef.current = null;
-      setVoiceInputStatus(null);
-      const msg = err instanceof Error ? err.message : String(err);
-      Alert.alert("Voice Input", `Recording error: ${msg}. Please try again.`);
-    } finally {
-      recordingStartedAtRef.current = null;
-      setRecordingElapsedSeconds(0);
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
-    }
-  }, [recorder]);
-
-  const discardVoiceRecording = useCallback(async () => {
-    if (!recorder.isRecording) return;
-    setIsRecording(false);
-    const draft = recordingDraftRef.current;
-    setInput(draft);
-    setVoiceInputStatus(draft ? "Recording canceled. Your draft was restored." : "Recording canceled. Nothing was uploaded.");
-    try {
-      await recorder.stop();
-      const uri = recorder.uri;
-      if (uri) {
-        const file = new FileSystem.File(uri);
-        try { file.delete(); } catch { /* cache cleanup best effort */ }
-      }
-    } catch { /* discard is intentionally quiet */ }
-    finally {
-      recordingStartedAtRef.current = null;
-      setRecordingElapsedSeconds(0);
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
-    }
-  }, [recorder]);
-
-  useEffect(() => {
-    if (!isRecording || recordingStartedAtRef.current === null) return;
-    const updateElapsed = () => {
-      const elapsedMs = Math.max(0, Date.now() - (recordingStartedAtRef.current ?? Date.now()));
-      setRecordingElapsedSeconds(Math.min(60, Math.floor(elapsedMs / 1000)));
-    };
-    updateElapsed();
-    const ticker = setInterval(updateElapsed, 250);
-    const remainingMs = Math.max(0, NATIVE_VOICE_MAX_DURATION_MS - (Date.now() - recordingStartedAtRef.current));
-    const limit = setTimeout(() => {
-      setVoiceInputStatus("60-second limit reached. Turning your words into text…");
-      void stopVoice();
-    }, remainingMs);
-    return () => {
-      clearInterval(ticker);
-      clearTimeout(limit);
-    };
-  }, [isRecording, stopVoice]);
-
   useEffect(() => {
     if (!isAuthenticated) {
       cachedVoiceMode = null;
@@ -737,6 +568,11 @@ export function AIChatWidget() {
     voiceGuardRef.current.invalidate(reason);
     queuedPlaybackRequestRef.current = null;
     if (player.playing || player.isLoaded) player.pause();
+    const temporaryFile = listenFileRef.current;
+    listenFileRef.current = null;
+    if (temporaryFile?.exists) {
+      try { temporaryFile.delete(); } catch { /* device-cache cleanup is best effort */ }
+    }
     setListenUri(undefined);
     setPlayingId(null);
     setPreviewingVoice(null);
@@ -746,7 +582,13 @@ export function AIChatWidget() {
   const setWidgetOpen = useCallback((nextOpen: boolean) => {
     openRef.current = nextOpen;
     setOpen(nextOpen);
-    if (!nextOpen) stopPlayback("widget_closed");
+    if (!nextOpen) {
+      activeChatRequestRef.current?.abort();
+      activeChatRequestRef.current = null;
+      chatRequestGenerationRef.current += 1;
+      setTyping(false);
+      stopPlayback("widget_closed");
+    }
   }, [stopPlayback]);
 
   const openRecommendationBusiness = useCallback((businessId: string) => {
@@ -803,13 +645,19 @@ export function AIChatWidget() {
     stopPlayback("playback_error");
   }, [playerStatus.error, playingId, stopPlayback]);
 
-  // ── Clear playingId when audio finishes ───────────────────────────────────
+  // ── Clear finished audio and its temporary device-cache file ──────────────
   useEffect(() => {
-    if (playingId && !player.playing && player.isLoaded) {
-      const timer = setTimeout(() => setPlayingId(null), 0);
-      return () => clearTimeout(timer);
+    if (!playingId || !playerStatus.didJustFinish || queuedPlaybackRequestRef.current) return;
+    const temporaryFile = listenFileRef.current;
+    listenFileRef.current = null;
+    if (temporaryFile?.exists) {
+      try { temporaryFile.delete(); } catch { /* device-cache cleanup is best effort */ }
     }
-  }, [player, player.playing, player.isLoaded, playingId]);
+    setListenUri(undefined);
+    setVoiceOutputStatus("Voice finished. Tap Listen to play it again.");
+    const timer = setTimeout(() => setPlayingId(null), 0);
+    return () => clearTimeout(timer);
+  }, [playerStatus.didJustFinish, playingId]);
 
   useEffect(() => {
     const subscription = AppState.addEventListener("change", (state) => {
@@ -859,6 +707,7 @@ export function AIChatWidget() {
       stopPlayback("manual_stop");
       return;
     }
+    stopPlayback("new_manual_playback");
     setVoiceOutputStatus(null);
     const request = voiceGuardRef.current.begin();
     let queued = false;
@@ -901,7 +750,7 @@ export function AIChatWidget() {
         audio: string; format: string; charsUsed: number;
         charsLimit: number; percentRemaining: number; tierName: string;
       };
-      if (!audio || !format) {
+      if (!audio || !["wav", "mp3", "m4a"].includes(format) || audio.length < 256) {
         setVoiceOutputStatus("Kinfolk did not return playable audio. Please try Listen again.");
         return;
       }
@@ -909,7 +758,11 @@ export function AIChatWidget() {
       setVoiceUsage({ used: charsUsed, limit: charsLimit, percent: percentRemaining, tierName });
       const tempFile = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_${msgId}.${format}`);
       tempFile.write(audio, { encoding: FileSystem.EncodingType.Base64 });
-      if (!voiceGuardRef.current.canPlay(request)) return;
+      if (!voiceGuardRef.current.canPlay(request)) {
+        if (tempFile.exists) tempFile.delete();
+        return;
+      }
+      listenFileRef.current = tempFile;
       queuedPlaybackRequestRef.current = request;
       setPlayingId(msgId);
       setListenUri(tempFile.uri);
@@ -927,6 +780,7 @@ export function AIChatWidget() {
 
   const previewVoice = async (mode: string) => {
     if (Platform.OS === "web" || previewingVoice !== null || !openRef.current || appStateRef.current !== "active") return;
+    stopPlayback("new_voice_preview");
     const request = voiceGuardRef.current.begin();
     let queued = false;
     setPreviewingVoice(mode);
@@ -955,14 +809,18 @@ export function AIChatWidget() {
       }
       if (voiceGuardRef.current.canPlay(request)) {
         const { audio, format } = await r.json() as { audio: string; format: string };
-        if (!audio || !format) {
+        if (!audio || !["wav", "mp3", "m4a"].includes(format) || audio.length < 256) {
           setVoiceOutputStatus("Kinfolk did not return playable preview audio. Please try again.");
           return;
         }
         if (!voiceGuardRef.current.canPlay(request)) return;
         const file = new FileSystem.File(FileSystem.Paths.cache, `kinfolk_preview_${mode}.${format}`);
         file.write(audio, { encoding: FileSystem.EncodingType.Base64 });
-        if (!voiceGuardRef.current.canPlay(request)) return;
+        if (!voiceGuardRef.current.canPlay(request)) {
+          if (file.exists) file.delete();
+          return;
+        }
+        listenFileRef.current = file;
         queuedPlaybackRequestRef.current = request;
         setPlayingId(`__preview_${mode}__`);
         setListenUri(file.uri);
@@ -979,22 +837,40 @@ export function AIChatWidget() {
     }
   };
 
+  useEffect(() => {
+    if (!suppressed) return;
+    activeChatRequestRef.current?.abort();
+    activeChatRequestRef.current = null;
+    chatRequestGenerationRef.current += 1;
+    setTyping(false);
+    stopPlayback("widget_suppressed");
+  }, [stopPlayback, suppressed]);
+
   if (suppressed) return null;
 
   const sendMessage = async (rawText: string) => {
     const text = rawText.trim();
     if (!text) return;
+    activeChatRequestRef.current?.abort();
+    const requestGeneration = ++chatRequestGenerationRef.current;
+    const request = new AbortController();
+    activeChatRequestRef.current = request;
+    stopPlayback("member_new_turn");
+    Keyboard.dismiss();
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
     const userMsg: Message = { id: String(Date.now()), text, fromUser: true, ts: Date.now() };
     setMessages((m) => [...m, userMsg]);
     setInput("");
-    setVoiceInputStatus(null);
     setSuggestions([]);
     setTyping(true);
+    setWidgetAtBottom(true);
+    requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
 
     try {
       const token = await getToken();
+      const cityHint = await nearbyCityHint(text);
+      if (requestGeneration !== chatRequestGenerationRef.current) return;
       const {
         reply,
         taskAction,
@@ -1018,7 +894,8 @@ export function AIChatWidget() {
         mediaLinks,
         relatedConnections,
         researchStatus,
-      } = await sendToKinfolk(text, token, voiceMode, await nearbyCityHint(text));
+      } = await sendToKinfolk(text, token, voiceMode, cityHint, request.signal);
+      if (requestGeneration !== chatRequestGenerationRef.current) return;
 
       const aiMsg: Message = {
         id: String(Date.now() + 1),
@@ -1052,6 +929,7 @@ export function AIChatWidget() {
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
     } catch (err) {
+      if (requestGeneration !== chatRequestGenerationRef.current || (err instanceof Error && err.name === "AbortError")) return;
       // Prefer the server's error message (rate limit, session expired, etc.)
       // over a generic "trouble connecting" — helps the user take the right action.
       const status = (err as { status?: number }).status;
@@ -1072,9 +950,12 @@ export function AIChatWidget() {
       };
       setMessages((m) => [...m, errMsg]);
     } finally {
-      setTyping(false);
-      setWidgetAtBottom(true);
-      setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+      if (requestGeneration === chatRequestGenerationRef.current) {
+        activeChatRequestRef.current = null;
+        setTyping(false);
+        setWidgetAtBottom(true);
+        setTimeout(() => listRef.current?.scrollToEnd({ animated: true }), 100);
+      }
     }
   };
 
@@ -1099,6 +980,14 @@ export function AIChatWidget() {
       ? { ...item, taskActionDone: true }
       : item));
   };
+
+  const addWidgetVoiceTranscriptToDraft = useCallback((transcript: string) => {
+    // A transcript is a member-controlled draft. The shared source controller
+    // never creates a chat turn; Send remains the member’s explicit action.
+    setInput(transcript);
+    setWidgetAtBottom(true);
+    requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
+  }, []);
 
   const send = () => void sendMessage(input);
 
@@ -1745,40 +1634,39 @@ export function AIChatWidget() {
             </View>
           )}
 
-          {voiceInputStatus ? (
-            <View style={[styles.voiceInputStatus, { backgroundColor: isRecording ? "#FEF2F2" : colors.muted }]}>
-              <Feather name={isRecording ? "mic" : "message-circle"} size={14} color={isRecording ? "#B91C1C" : colors.mutedForeground} />
-              <Text style={[styles.voiceInputStatusText, { color: isRecording ? "#B91C1C" : colors.mutedForeground }]}>
-                {isRecording ? `${voiceInputStatus} ${recordingElapsedSeconds}s / 60s` : voiceInputStatus}
-              </Text>
-              {isRecording ? (
-                <TouchableOpacity
-                  accessibilityLabel="Cancel and discard Kinfolk Voice recording"
-                  onPress={() => void discardVoiceRecording()}
-                  style={styles.discardVoiceBtn}
-                >
-                  <Text style={styles.discardVoiceText}>Discard</Text>
-                </TouchableOpacity>
-              ) : null}
+          {Platform.OS !== "web" && widgetVoiceSource.state.phase !== "idle" ? (
+            <View style={{ backgroundColor: colors.muted, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingHorizontal: 12, paddingVertical: 8 }}>
+              <KinfolkVoiceSourceControls
+                source={widgetVoiceSource}
+                onUseTranscript={addWidgetVoiceTranscriptToDraft}
+              />
             </View>
           ) : null}
 
           <View style={[styles.inputRow, { borderTopColor: colors.border, paddingBottom: bottomPad + 8, backgroundColor: colors.background }]}>
             {Platform.OS !== "web" ? (
               <TouchableOpacity
-                style={[styles.micBtn, { backgroundColor: isRecording ? "#DC2626" : colors.muted, opacity: isStartingVoice || authLoading ? 0.6 : 1 }]}
-                onPress={() => isRecording ? void stopVoice() : void startVoice()}
-                disabled={isStartingVoice || authLoading}
-                accessibilityLabel={isRecording ? "Stop Kinfolk Voice recording" : isStartingVoice ? "Starting Kinfolk Voice recording" : "Start Kinfolk Voice recording, 60 second maximum"}
+                style={[styles.micBtn, { backgroundColor: widgetVoiceSource.canStop ? "#DC2626" : colors.muted, opacity: typing || authLoading || (!widgetVoiceSource.canStart && !widgetVoiceSource.canStop) ? 0.6 : 1 }]}
+                onPress={() => {
+                  if (widgetVoiceSource.canStop) {
+                    void widgetVoiceSource.stop();
+                  } else {
+                    stopPlayback("voice_input_start");
+                    void widgetVoiceSource.start();
+                  }
+                }}
+                disabled={typing || authLoading || (!widgetVoiceSource.canStart && !widgetVoiceSource.canStop)}
+                accessibilityLabel={widgetVoiceSource.canStop ? "Stop Kinfolk Voice recording" : "Start Kinfolk Voice recording, 60 second maximum"}
+                accessibilityState={{ busy: widgetVoiceSource.state.phase === "requesting_permission" || widgetVoiceSource.state.phase === "starting" || widgetVoiceSource.state.phase === "stopping" || widgetVoiceSource.state.phase === "uploading", selected: widgetVoiceSource.canStop }}
                 activeOpacity={0.8}
               >
-                <Feather name={isRecording ? "mic-off" : "mic"} size={18} color={isRecording ? "#FFF" : colors.mutedForeground} />
+                {widgetVoiceSource.state.phase === "requesting_permission" || widgetVoiceSource.state.phase === "starting" || widgetVoiceSource.state.phase === "stopping" || widgetVoiceSource.state.phase === "uploading" ? <ActivityIndicator size="small" color={colors.mutedForeground} /> : <Feather name={widgetVoiceSource.canStop ? "mic-off" : "mic"} size={18} color={widgetVoiceSource.canStop ? "#FFF" : colors.mutedForeground} />}
               </TouchableOpacity>
             ) : null}
             <TextInput
-              style={[styles.input, { backgroundColor: colors.card, borderColor: isRecording ? "#DC262640" : colors.border, color: colors.foreground }]}
-              placeholder={isRecording ? "Recording… tap mic to stop" : "What's on your mind today?"}
-              placeholderTextColor={isRecording ? "#DC2626" : colors.mutedForeground}
+              style={[styles.input, { backgroundColor: colors.card, borderColor: widgetVoiceSource.canStop ? "#DC262640" : colors.border, color: colors.foreground }]}
+              placeholder={widgetVoiceSource.canStop ? "Recording… tap mic to stop" : "What's on your mind today?"}
+              placeholderTextColor={widgetVoiceSource.canStop ? "#DC2626" : colors.mutedForeground}
               value={input}
               onChangeText={setInput}
               onFocus={() => {
@@ -1788,12 +1676,12 @@ export function AIChatWidget() {
               onSubmitEditing={send}
               returnKeyType="send"
               multiline={false}
-              editable={!isRecording}
+              editable={!widgetVoiceSource.canStop}
             />
             <TouchableOpacity
               style={[styles.sendBtn, { backgroundColor: input.trim() ? colors.primary : colors.muted }]}
               onPress={send}
-              disabled={!input.trim() || isRecording}
+              disabled={!input.trim() || widgetVoiceSource.canStop}
               activeOpacity={0.8}
             >
               <Feather name="send" size={18} color={input.trim() ? "#FFF" : colors.mutedForeground} />

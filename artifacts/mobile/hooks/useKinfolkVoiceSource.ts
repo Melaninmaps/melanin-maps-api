@@ -252,7 +252,9 @@ export function useKinfolkVoiceSource(options: UseKinfolkVoiceSourceOptions): Ki
       fail("authentication_required");
       return;
     }
-    if (phaseRef.current === "requesting_permission" || phaseRef.current === "starting" || phaseRef.current === "recording" || phaseRef.current === "stopping" || phaseRef.current === "uploading") return;
+    // A reviewed transcript is a member-controlled draft. It must be used or
+    // explicitly discarded before another recording can replace its state.
+    if (phaseRef.current === "requesting_permission" || phaseRef.current === "starting" || phaseRef.current === "recording" || phaseRef.current === "stopping" || phaseRef.current === "uploading" || phaseRef.current === "review") return;
 
     const operation = operationRef.current + 1;
     operationRef.current = operation;
@@ -350,9 +352,9 @@ export function useKinfolkVoiceSource(options: UseKinfolkVoiceSourceOptions): Ki
       ? Math.min(60, Math.floor(Math.max(0, recorderState.durationMillis) / 1000))
       : 0,
     isNative: isNativeVoicePlatform(),
-    canStart: state.phase === "idle" || state.phase === "error" || state.phase === "review",
+    canStart: state.phase === "idle" || state.phase === "error",
     canStop: state.phase === "recording" || state.phase === "starting",
-    canCancel: state.phase === "requesting_permission" || state.phase === "starting" || state.phase === "recording" || state.phase === "stopping",
+    canCancel: state.phase === "requesting_permission" || state.phase === "starting" || state.phase === "recording" || state.phase === "stopping" || state.phase === "uploading",
     start,
     stop,
     cancel,

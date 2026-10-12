@@ -102,6 +102,17 @@ export function KinfolkVoiceSourceControls({
         </View>
       ) : null}
 
+      {state.phase === "uploading" ? (
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel="Cancel Kinfolk voice transcription and discard temporary audio"
+          onPress={() => void source.cancel()}
+          style={[styles.settingsButton, { borderColor: colors.primary }]}
+        >
+          <Text style={[styles.settingsText, { color: colors.primary }]}>Cancel transcription</Text>
+        </TouchableOpacity>
+      ) : null}
+
       {state.message ? (
         <Text accessibilityLiveRegion="polite" style={[styles.status, { color: state.phase === "error" || renderError ? "#B91C1C" : colors.mutedForeground }]}>
           {renderError ?? state.message}

@@ -74,8 +74,16 @@ describe("Kinfolk native voice source contract", () => {
     expect(controls).toContain("Cancel recording and discard local audio");
     expect(controls).toContain("Review transcription");
     expect(controls).toContain("Add to draft");
+    expect(controls).toContain("Cancel transcription");
     expect(controls).toContain("It will not be sent until you review it");
     expect(controls).not.toContain("/api/kinfolk/chat");
+  });
+
+  it("does not replace a reviewed draft with another recording", () => {
+    const hook = source("hooks/useKinfolkVoiceSource.ts");
+    expect(hook).toContain('phaseRef.current === "review"');
+    expect(hook).toContain('canStart: state.phase === "idle" || state.phase === "error"');
+    expect(hook).toContain('state.phase === "uploading"');
   });
 
   it("integrates the native lifecycle into the primary chat without auto-sending a turn", () => {
@@ -87,5 +95,16 @@ describe("Kinfolk native voice source contract", () => {
     expect(travel).toContain("It never creates a");
     expect(travel).toContain("chat turn—the member must still review");
     expect(travel).toContain("setInputText(transcript)");
+  });
+
+  it("uses the same reviewed input lifecycle and interruptible request handling in the floating chat", () => {
+    const widget = source("components/AIChatWidget.tsx");
+    expect(widget).toContain("useKinfolkVoiceSource({ isAuthenticated })");
+    expect(widget).toContain("KinfolkVoiceSourceControls");
+    expect(widget).toContain("addWidgetVoiceTranscriptToDraft");
+    expect(widget).toContain("activeChatRequestRef.current?.abort()");
+    expect(widget).toContain("Keyboard.dismiss()");
+    expect(widget).toContain("playerStatus.didJustFinish");
+    expect(widget).toContain('stopPlayback("widget_suppressed")');
   });
 });

@@ -302,13 +302,16 @@ describe("privacy-first protected-read and Kinfolk response contracts", () => {
 
   it("uploads native Kinfolk voice as bounded multipart audio with duration metadata", () => {
     const widget = source("../components/AIChatWidget.tsx");
-    expect(widget).toContain('form.append("audio"');
-    expect(widget).toContain('form.append("durationMs", String(durationMs))');
-    expect(widget).toContain('form.append("mimeType", mimeType)');
-    expect(widget).toContain('webm: "audio/webm"');
-    expect(widget).toContain('m4a: "audio/mp4"');
-    expect(widget).toContain("if (errBody.message) serverMessage = errBody.message");
-    expect(widget).not.toContain('"Content-Type": "multipart/form-data"');
+    const voiceSource = source("../hooks/useKinfolkVoiceSource.ts");
+    const voiceContract = source("../lib/kinfolkVoiceSourceContract.ts");
+    expect(widget).toContain("useKinfolkVoiceSource({ isAuthenticated })");
+    expect(voiceSource).toContain('form.append("audio"');
+    expect(voiceSource).toContain('form.append("durationMs", String(durationMs))');
+    expect(voiceSource).toContain('form.append("mimeType", inspection.mimeType)');
+    expect(voiceContract).toContain('webm: "audio/webm"');
+    expect(voiceContract).toContain('m4a: "audio/mp4"');
+    expect(voiceSource).toContain("classifyKinfolkVoiceUploadFailure");
+    expect(voiceSource).not.toContain('"Content-Type": "multipart/form-data"');
   });
 
   it("uses the configured API host for native business, profile, reference, and preview requests", () => {
