@@ -11,6 +11,7 @@ const geoAlertSource = source("../hooks/useGeoSafeAlert.ts");
 const communityIntelligenceSource = source("../app/report-intelligence.tsx");
 const safetyPulseSource = source("../components/SafetyPulseWidget.tsx");
 const neighborhoodSurveySource = source("../app/neighborhood-survey.tsx");
+const safetyHubSource = source("../app/(tabs)/safety-hub.tsx");
 
 describe("mobile Safety Heat privacy and evidence presentation", () => {
   it("shows no city circle when the API marks evidence insufficient or unavailable", () => {
@@ -52,6 +53,18 @@ describe("mobile Safety Heat privacy and evidence presentation", () => {
     expect(communityIntelligenceSource).toContain("No city signal is shown");
     expect(communityIntelligenceSource).not.toContain("expo-location");
     expect(communityIntelligenceSource).not.toContain("getCurrentPositionAsync");
+  });
+
+  it("keeps the Safety Hub on the manual city-aggregate path and removes its dormant proximity-alert surface", () => {
+    expect(safetyHubSource).toContain("Community Intelligence never requests or uses your location.");
+    expect(safetyHubSource).toContain("No member activity maps, individual reports, locations, timestamps, or route histories are displayed.");
+    expect(safetyHubSource).toContain('router.push("/report-intelligence"');
+    expect(safetyHubSource).toContain('router.push("/neighborhood-survey"');
+    expect(safetyHubSource).toContain("Small samples are suppressed");
+    expect(safetyHubSource).toContain("one accepted Kinfolk contact for a chosen time");
+    expect(safetyHubSource).not.toContain("distanceMeters");
+    expect(safetyHubSource).not.toContain("community-alerts/");
+    expect(safetyHubSource).not.toContain("Nearby verified members are alerted");
   });
 
   it("does not fetch or reveal individual surveys in the Safety Pulse card", () => {

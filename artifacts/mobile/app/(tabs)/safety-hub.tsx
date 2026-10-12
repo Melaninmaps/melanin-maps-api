@@ -17,7 +17,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-import { useAuth } from "@/lib/auth";
 import { getApiBase } from "@/lib/api";
 import { DisclaimerNote } from "@/components/DisclaimerNote";
 
@@ -56,46 +55,13 @@ type MeetupVerification = {
   cancelledAt: string | null;
 };
 
-type IntelAlert = {
-  id: string;
-  type: string;
-  lat: number;
-  lng: number;
-  description: string | null;
-  confirmedCount: number;
-  clearedCount: number;
-  status: "possible" | "confirmed";
-  distanceMeters: number;
-  expiresAt: string;
-  createdAt: string;
-};
-
-const INTEL_TYPE_META: Record<string, { icon: string; label: string; color: string }> = {
-  road_closure:       { icon: "🚧", label: "Road Closure",            color: "#F59E0B" },
-  construction:       { icon: "🏗️", label: "Construction Zone",       color: "#D97706" },
-  road_reopened:      { icon: "✅", label: "Road Reopened",           color: "#16A34A" },
-  transit_disruption: { icon: "🚌", label: "Transit Disruption",      color: "#0EA5E9" },
-  protest:            { icon: "✊🏾", label: "Active Protest",         color: "#8B5CF6" },
-  celebration:        { icon: "🎉", label: "Community Celebration",  color: "#10B981" },
-  festival:           { icon: "🎊", label: "Festival or Event",       color: "#EC4899" },
-  severe_weather:     { icon: "⛈️", label: "Severe Weather",          color: "#6366F1" },
-  emergency:          { icon: "🚨", label: "Neighborhood Emergency",  color: "#DC2626" },
-  avoid_area:         { icon: "⛔", label: "Area to Avoid",           color: "#DC2626" },
-  situation_cleared:  { icon: "🟢", label: "Situation Cleared",       color: "#16A34A" },
-  police:             { icon: "🚔", label: "Police Activity",         color: "#3B82F6" },
-  ice:                { icon: "🚨", label: "ICE / Immigration",       color: "#DC2626" },
-  checkpoint:         { icon: "⛔", label: "Checkpoint",              color: "#F59E0B" },
-  traffic:            { icon: "🚦", label: "Traffic Issue",           color: "#F59E0B" },
-  other:              { icon: "⚠️", label: "Community Alert",         color: "#8B5CF6" },
-};
-
 const ALL_FEATURES: { id: string; icon: React.ComponentProps<typeof Feather>["name"]; title: string; desc: string; color: string; route: string | null; externalUrl?: string }[] = [
   { id: "intel",       icon: "radio",         title: "Community Intelligence",       desc: "Review moderated safety context without collecting or sharing member location.",          color: "#CA922B", route: "/report-intelligence" },
   { id: "live-location", icon: "navigation-2", title: "Trusted Live Location",        desc: "Voluntarily share a minimized current location with one accepted Kinfolk contact for a chosen time. Stop anytime.", color: "#2563EB", route: "/location-share" },
-  { id: "tip",         icon: "alert-triangle", title: "Submit Safety Tip",           desc: "Pin a location where violence or hate occurred. Nearby verified members are alerted to confirm.",      color: "#DC2626", route: "/safety-tip" },
+  { id: "tip",         icon: "alert-triangle", title: "Submit Safety Tip",           desc: "Submit a moderated safety concern without sharing member location.",      color: "#DC2626", route: "/report-safety" },
   { id: "checkin",     icon: "check-circle",   title: "Safety Check-In",             desc: "Schedule a check-in. Your contact is alerted if you don't confirm.",                                   color: "#16A34A", route: "/checkin" },
   { id: "meetup",      icon: "users",          title: "Meetup Verification",         desc: "Mutually verify in-person meetups with connections you trust.",                                         color: "#7C3AED", route: "/member-connections" },
-  { id: "police",      icon: "shield-off",     title: "Report Police or ICE",        desc: "Report a police encounter, ICE activity, racial profiling, or checkpoint in your area.",               color: "#991B1B", route: "/report-police" },
+  { id: "police",      icon: "shield-off",     title: "Report Police or ICE",        desc: "Report a police encounter, ICE activity, racial profiling, or checkpoint for a city or region you choose.",               color: "#991B1B", route: "/report-police" },
   { id: "serious-threat", icon: "shield",      title: "Serious Threat Report",       desc: "Submit a city-level report for restricted private review. It does not create an immediate public alert.", color: "#B42318", route: "/serious-credible-threat" },
   { id: "report",      icon: "flag",           title: "Report a Safety Concern",     desc: "Report unsafe content or behavior without revealing your identity.",                                    color: "#DC2626", route: "/report-safety" },
   { id: "space",       icon: "alert-octagon",  title: "Report an Unsafe Space",      desc: "Flag any business or venue where you experienced unsafe, discriminatory, or unwelcoming treatment.",    color: "#7C2D12", route: "/report-space" },
@@ -118,36 +84,14 @@ function applyOrder(ids: string[]) {
   return ordered;
 }
 
-function formatAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return `${Math.floor(hrs / 24)}d ago`;
-}
-
-function formatDist(meters: number): string {
-  if (meters < 161) return "< 0.1 mi away";
-  const miles = meters / 1609;
-  return `${(Math.round(miles * 10) / 10).toFixed(1)} mi away`;
-}
-
 export default function SafetyHubTab() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user } = useAuth();
-
   const topPad = Platform.OS === "web" ? 67 : insets.top;
 
   const [checkins, setCheckins] = useState<SafetyCheckin[]>([]);
   const [meetups, setMeetups] = useState<MeetupVerification[]>([]);
-  const [intelAlerts, setIntelAlerts] = useState<IntelAlert[]>([]);
-  const [intelLoading, setIntelLoading] = useState(false);
-  const [intelError, setIntelError] = useState<string | null>(null);
-  const [intelChecked, setIntelChecked] = useState(false);
   const [protectedDataError, setProtectedDataError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
@@ -161,13 +105,6 @@ export default function SafetyHubTab() {
         setFeatures(applyOrder(ids));
       } catch {}
     });
-  }, []);
-
-  const fetchIntel = useCallback(async () => {
-    setIntelLoading(false);
-    setIntelError(null);
-    setIntelAlerts([]);
-    setIntelChecked(true);
   }, []);
 
   const fetchData = useCallback(async () => {
@@ -228,40 +165,6 @@ export default function SafetyHubTab() {
     else Alert.alert("Error", "Failed to confirm check-in.");
   };
 
-  const handleConfirmAlert = async (alertId: string) => {
-    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const token = await getRequiredSafetyToken();
-    if (!token) return;
-    const res = await fetch(`${getApiBase()}/api/community-alerts/${alertId}/confirm`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      const data = await res.json() as { confirmedCount: number; status: "possible" | "confirmed" };
-      setIntelAlerts((prev) =>
-        prev.map((a) =>
-          a.id === alertId
-            ? { ...a, confirmedCount: data.confirmedCount, status: data.status }
-            : a
-        )
-      );
-    }
-  };
-
-  const handleClearAlert = async (alertId: string) => {
-    if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    const token = await getRequiredSafetyToken();
-    if (!token) return;
-    const res = await fetch(`${getApiBase()}/api/community-alerts/${alertId}/clear`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      setIntelAlerts((prev) => prev.filter((a) => a.id !== alertId));
-    }
-  };
-
-
   const pendingCheckins = checkins.filter((checkin) => checkin.status === "pending");
   const pendingMeetups = meetups.filter((meetup) => meetup.role === "partner" && meetup.status === "awaiting_partner");
 
@@ -283,9 +186,6 @@ export default function SafetyHubTab() {
       else Alert.alert("Unable to open", "Please visit nsopw.gov in your browser.");
     });
   };
-
-  const confirmedAlerts = intelAlerts.filter((a) => a.status === "confirmed");
-  const possibleAlerts = intelAlerts.filter((a) => a.status === "possible");
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -363,99 +263,39 @@ export default function SafetyHubTab() {
                 <View style={styles.sectionTitleRow}>
                   <Text style={styles.intelDot}>📡</Text>
                   <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Community Intelligence</Text>
-                  {intelAlerts.length > 0 && (
-                    <View style={[styles.intelCount, { backgroundColor: "#CA922B18" }]}>
-                      <Text style={styles.intelCountText}>{intelAlerts.length}</Text>
-                    </View>
-                  )}
                 </View>
                 <TouchableOpacity
-                  onPress={() => void fetchIntel()}
-                  style={[styles.reportIntelBtn, { backgroundColor: "#CA922B18", borderColor: "#CA922B40" }]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Choose a city for Community Intelligence"
+                  onPress={() => router.push("/report-intelligence" as Parameters<typeof router.push>[0])}
+                  style={[styles.citySignalButton, { backgroundColor: "#CA922B18", borderColor: "#CA922B40" }]}
                   activeOpacity={0.8}
                 >
-                  <Feather name="shield" size={13} color="#CA922B" />
-                  <Text style={styles.reportIntelBtnText}>Privacy notice</Text>
+                  <Feather name="bar-chart-2" size={13} color="#CA922B" />
+                  <Text style={styles.citySignalButtonText}>Choose a city</Text>
                 </TouchableOpacity>
               </View>
 
-              <Text style={[styles.intelConsentText, { color: colors.mutedForeground }]}>Community Intelligence never requests or uses your location. Trusted Live Location is separate and only starts after you choose an accepted contact, a time limit, and explicit confirmation.</Text>
-
-              <View style={[styles.threeStarRuleRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <View style={[styles.statusBadge, { backgroundColor: "#F59E0B18", borderColor: "#F59E0B40" }]}>
-                  <Text style={[styles.statusBadgeText, { color: "#F59E0B" }]}>⚡ Possible</Text>
+              <View style={[styles.communityIntelligenceCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <Feather name="shield" size={18} color="#CA922B" />
+                <View style={styles.flex}>
+                  <Text style={[styles.communityIntelligenceTitle, { color: colors.foreground }]}>Delayed, consented city aggregates</Text>
+                  <Text style={[styles.communityIntelligenceText, { color: colors.mutedForeground }]}>Community Intelligence never requests or uses your location. No member activity maps, individual reports, locations, timestamps, or route histories are displayed.</Text>
                 </View>
-                <Text style={[styles.ruleSlash, { color: colors.mutedForeground }]}>1–2 reports</Text>
-                <View style={[styles.statusBadge, { backgroundColor: "#16A34A18", borderColor: "#16A34A40" }]}>
-                  <Text style={[styles.statusBadgeText, { color: "#16A34A" }]}>✓ Confirmed</Text>
-                </View>
-                <Text style={[styles.ruleSlash, { color: colors.mutedForeground }]}>3+ reports</Text>
               </View>
 
-              {intelLoading && (
-                <View style={styles.intelLoadingRow}>
-                  <ActivityIndicator size="small" color="#CA922B" />
-                  <Text style={[styles.intelLoadingText, { color: colors.mutedForeground }]}>Scanning your area…</Text>
-                </View>
-              )}
+              <Text style={[styles.communityIntelligenceFootnote, { color: colors.mutedForeground }]}>Only approved neighborhood surveys with explicit aggregate consent can contribute. Small samples are suppressed, and a city signal is never a safety guarantee.</Text>
 
-              {!intelLoading && intelError && (
-                <View style={[styles.intelEmptyCard, { backgroundColor: colors.card, borderColor: "#D97706" }]}>
-                  <Text style={styles.intelEmptyEmoji}>⚠</Text>
-                  <Text style={[styles.intelEmptyTitle, { color: colors.foreground }]}>Could not verify nearby conditions</Text>
-                  <Text style={[styles.intelEmptySub, { color: colors.mutedForeground }]}>{intelError}</Text>
-                </View>
-              )}
-
-              {!intelLoading && !intelError && !intelChecked && (
-                <View style={[styles.intelEmptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <Text style={styles.intelEmptyEmoji}>📍</Text>
-                  <Text style={[styles.intelEmptyTitle, { color: colors.foreground }]}>Privacy-first community intelligence</Text>
-                  <Text style={[styles.intelEmptySub, { color: colors.mutedForeground }]}>No proximity lookup is available. Moderated reports remain general-area context, not a member activity map.</Text>
-                </View>
-              )}
-
-              {!intelLoading && !intelError && intelChecked && intelAlerts.length === 0 && (
-                <View style={[styles.intelEmptyCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <Text style={styles.intelEmptyEmoji}>🟢</Text>
-                  <Text style={[styles.intelEmptyTitle, { color: colors.foreground }]}>No location-sensitive community feed</Text>
-                  <Text style={[styles.intelEmptySub, { color: colors.mutedForeground }]}>
-                    This is not a guarantee that an area is safe. Use the report tools if you witness something the community should know.
-                  </Text>
-                </View>
-              )}
-
-              {confirmedAlerts.length > 0 && (
-                <View style={styles.intelGroup}>
-                  <Text style={[styles.intelGroupLabel, { color: "#16A34A" }]}>✓ Confirmed ({confirmedAlerts.length})</Text>
-                  {confirmedAlerts.map((a) => (
-                    <IntelAlertCard
-                      key={a.id}
-                      alert={a}
-                      colors={colors}
-                      onConfirm={() => void handleConfirmAlert(a.id)}
-                      onClear={() => void handleClearAlert(a.id)}
-                      isAuthed={!!user}
-                    />
-                  ))}
-                </View>
-              )}
-
-              {possibleAlerts.length > 0 && (
-                <View style={styles.intelGroup}>
-                  <Text style={[styles.intelGroupLabel, { color: "#F59E0B" }]}>⚡ Possible ({possibleAlerts.length})</Text>
-                  {possibleAlerts.map((a) => (
-                    <IntelAlertCard
-                      key={a.id}
-                      alert={a}
-                      colors={colors}
-                      onConfirm={() => void handleConfirmAlert(a.id)}
-                      onClear={() => void handleClearAlert(a.id)}
-                      isAuthed={!!user}
-                    />
-                  ))}
-                </View>
-              )}
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Share a consented neighborhood survey"
+                style={[styles.communityIntelligenceSurvey, { borderColor: colors.border }]}
+                onPress={() => router.push("/neighborhood-survey" as Parameters<typeof router.push>[0])}
+                activeOpacity={0.8}
+              >
+                <Feather name="edit-3" size={15} color={colors.foreground} />
+                <Text style={[styles.communityIntelligenceSurveyText, { color: colors.foreground }]}>Share a consented neighborhood survey</Text>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -572,69 +412,6 @@ export default function SafetyHubTab() {
   );
 }
 
-type ColorsType = ReturnType<typeof useColors>;
-
-function IntelAlertCard({
-  alert,
-  colors,
-  onConfirm,
-  onClear,
-  isAuthed,
-}: {
-  alert: IntelAlert;
-  colors: ColorsType;
-  onConfirm: () => void;
-  onClear: () => void;
-  isAuthed: boolean;
-}) {
-  const meta = INTEL_TYPE_META[alert.type] ?? { icon: "⚠️", label: "Community Alert", color: "#8B5CF6" };
-  const isConfirmed = alert.status === "confirmed";
-  const statusColor = isConfirmed ? "#16A34A" : "#F59E0B";
-  const statusLabel = isConfirmed ? "✓ Confirmed" : "⚡ Possible";
-
-  return (
-    <View style={[styles.intelCard, { backgroundColor: colors.card, borderColor: isConfirmed ? "#16A34A30" : "#F59E0B30", borderLeftColor: statusColor }]}>
-      <View style={styles.intelCardTop}>
-        <Text style={styles.intelCardEmoji}>{meta.icon}</Text>
-        <View style={{ flex: 1, gap: 3 }}>
-          <View style={styles.intelCardTitleRow}>
-            <Text style={[styles.intelCardLabel, { color: colors.foreground }]} numberOfLines={1}>{meta.label}</Text>
-            <View style={[styles.statusBadgeSmall, { backgroundColor: statusColor + "18", borderColor: statusColor + "40" }]}>
-              <Text style={[styles.statusBadgeSmallText, { color: statusColor }]}>{statusLabel}</Text>
-            </View>
-          </View>
-          <Text style={[styles.intelCardMeta, { color: colors.mutedForeground }]}>
-            {formatAgo(alert.createdAt)} · {formatDist(alert.distanceMeters)} · {alert.confirmedCount} confirmation{alert.confirmedCount !== 1 ? "s" : ""}
-          </Text>
-          {alert.description ? (
-            <Text style={[styles.intelCardDesc, { color: colors.foreground }]} numberOfLines={2}>{alert.description}</Text>
-          ) : null}
-        </View>
-      </View>
-      {isAuthed && (
-        <View style={styles.intelCardActions}>
-          <TouchableOpacity
-            style={[styles.intelActionBtn, { backgroundColor: "#16A34A18", borderColor: "#16A34A40" }]}
-            onPress={onConfirm}
-            activeOpacity={0.8}
-          >
-            <Feather name="check" size={13} color="#16A34A" />
-            <Text style={[styles.intelActionText, { color: "#16A34A" }]}>Confirm</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.intelActionBtn, { backgroundColor: "#6B728018", borderColor: "#6B728040" }]}
-            onPress={onClear}
-            activeOpacity={0.8}
-          >
-            <Feather name="x" size={13} color="#6B7280" />
-            <Text style={[styles.intelActionText, { color: "#6B7280" }]}>All Clear</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   root: { flex: 1 },
   header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, paddingBottom: 16, borderBottomWidth: 1 },
@@ -653,6 +430,15 @@ const styles = StyleSheet.create({
   imSafeBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10 },
   imSafeBtnText: { fontFamily: "Inter_700Bold", fontSize: 12, color: "#fff" },
   section: { gap: 12 },
+  flex: { flex: 1 },
+  communityIntelligenceCard: { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 14, borderWidth: 1, borderRadius: 14 },
+  communityIntelligenceTitle: { fontFamily: "Inter_700Bold", fontSize: 14, marginBottom: 3 },
+  communityIntelligenceText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18 },
+  communityIntelligenceFootnote: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
+  citySignalButton: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, borderWidth: 1 },
+  citySignalButtonText: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#CA922B" },
+  communityIntelligenceSurvey: { minHeight: 46, borderWidth: 1, borderRadius: 12, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8, paddingHorizontal: 14 },
+  communityIntelligenceSurveyText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   sectionHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   sectionTitleRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   intelDot: { fontSize: 16 },

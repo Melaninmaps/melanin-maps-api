@@ -259,14 +259,17 @@ describe("privacy-first protected-read and Kinfolk response contracts", () => {
     const home = source("../app/(tabs)/index.tsx");
 
     // Discovery never renders a fabricated all-clear state. Safety Hub retains
-    // only authenticated private Check-In and meetup reads; it does not present
-    // nearby member activity, a location-derived radius, or an all-clear claim.
+    // only authenticated private Check-In and meetup reads; Community
+    // Intelligence is an explicit, suppressed city aggregate rather than a
+    // nearby member-activity or location-derived feed.
     expect(home).not.toContain('import { ALERTS } from "@/constants/data"');
     expect(home).not.toContain('useAlerts("GA")');
     expect(safetyHub).toContain("Authorization: `Bearer ${token}`");
-    expect(safetyHub).toContain("setIntelAlerts([])");
-    expect(safetyHub).toContain("setIntelChecked(true)");
-    expect(safetyHub).toContain("Could not verify nearby conditions");
+    expect(safetyHub).toContain("Community Intelligence never requests or uses your location.");
+    expect(safetyHub).toContain("Small samples are suppressed");
+    expect(safetyHub).toContain('router.push("/report-intelligence"');
+    expect(safetyHub).not.toContain("community-alerts/");
+    expect(safetyHub).not.toContain("distanceMeters");
     expect(safetyHub).not.toContain("No nearby safety alerts");
     expect(safetyHub).toContain("if (!token) throw new Error");
     expect(safetyHub).toContain("setProtectedDataError");
