@@ -54,15 +54,29 @@ async function main(): Promise<void> {
         author_initials varchar(4) NOT NULL DEFAULT 'CM',
         author_color varchar(20) NOT NULL DEFAULT '#3B1F0E',
         content text NOT NULL DEFAULT '',
+        category varchar(64) NOT NULL DEFAULT 'general',
+        post_type varchar(64) NOT NULL DEFAULT 'community',
         group_id integer,
+        business_id varchar(255), business_name text, business_link text,
         visibility varchar(32) NOT NULL DEFAULT 'public',
         comment_policy varchar(32) NOT NULL DEFAULT 'everyone',
         is_private_topic boolean NOT NULL DEFAULT false,
         status varchar(32) NOT NULL DEFAULT 'active',
         requires_moderation boolean NOT NULL DEFAULT false,
+        media_urls jsonb,
+        saved_place_id varchar(255),
+        location_tag text, location_venue_name text, location_city text, location_country text,
+        location_lat double precision, location_lng double precision, location_place_id text, location_type text,
+        hashtags jsonb, topic_tag text,
+        has_content_warning boolean NOT NULL DEFAULT false, content_warning_type text, audience_rating text, rating_reason text,
+        link_url text, link_title text, link_description text, link_domain text, link_favicon text,
+        repost_id varchar(255), repost_author_name text, repost_author_initials varchar(8), repost_content text,
+        mentioned_business_id varchar(255), mentioned_business_name text, mentioned_business_tag text, mentioned_business_rating numeric,
+        is_trusted_author boolean NOT NULL DEFAULT false,
         upvotes integer NOT NULL DEFAULT 0,
         downvotes integer NOT NULL DEFAULT 0,
         comments_count integer NOT NULL DEFAULT 0,
+        thread_id varchar(255), thread_position integer, thread_total integer,
         created_at timestamptz NOT NULL DEFAULT now()
       );
       CREATE TABLE community_post_comments (
@@ -190,6 +204,16 @@ async function main(): Promise<void> {
 
     const notificationRows = await client.query<{ body: string; data: unknown }>("SELECT body, data FROM notifications WHERE user_id = 'author' ORDER BY created_at ASC");
     assert(notificationRows.rows.every((row) => !row.body.includes("Thoughtful") && !row.body.includes("comment".repeat(50))), "In-app activity must not retain private comment content");
+
+    const unauthorizedPostEdit = await request(app).patch("/community/posts/post").set(as("other")).send({ content: "Attempted overwrite" });
+    assert(unauthorizedPostEdit.status === 404, "A member cannot edit another member's Community post");
+    const authorPostEdit = await request(app).patch("/community/posts/post").set(as("author")).send({ content: "Corrected public Community post" });
+    assert(authorPostEdit.status === 200 && authorPostEdit.body.post?.content === "Corrected public Community post", "The post author must be able to correct their own Community post through the protected route");
+    const deletedPost = await request(app).delete("/community/posts/post").set(as("author"));
+    assert(deletedPost.status === 200 && deletedPost.body.deleted === true, "The post author must be able to delete their own Community post");
+    const deletedPostRow = await client.query<{ count: string }>("SELECT count(*)::text AS count FROM community_posts WHERE id = 'post'");
+    assert(Number(deletedPostRow.rows[0]?.count ?? 1) === 0, "Deleted Community content must no longer remain in the active post table");
+
     console.log(JSON.stringify({
       status: "passed",
       localPostgres: true,
@@ -197,6 +221,7 @@ async function main(): Promise<void> {
       actualFollowRoutes: true,
       followLifecycle: true,
       likeIdempotency: true,
+      postEditAndDelete: true,
       commentReplyEditDelete: true,
       moderationReport: true,
       notificationPreferences: true,

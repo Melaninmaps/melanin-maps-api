@@ -141,4 +141,15 @@ describe("native Community content-first surface", () => {
     expect(threadSource).toContain("Community thread");
     expect(threadSource).toContain("keyboardDismissMode=\"on-drag\"");
   });
+
+  it("lets Group administrators manage roles and remove members through protected routes", () => {
+    expect(groupDetailSource).toContain("async (memberId: string, role: \"admin\" | \"member\")");
+    expect(groupDetailSource).toContain("/api/groups/${group.id}/members/${encodeURIComponent(memberId)}/role");
+    expect(groupDetailSource).toContain('method: "PATCH"');
+    expect(groupDetailSource).toContain("/api/groups/${group.id}/members/${encodeURIComponent(memberId)}");
+    expect(groupDetailSource).toContain('method: "DELETE"');
+    expect(groupDetailSource).toContain("Make moderator");
+    expect(groupDetailSource).toContain("Remove this member?");
+    expect(groupDetailSource).toContain("They will lose access to this Group’s posts, media, members, and plans.");
+  });
 });

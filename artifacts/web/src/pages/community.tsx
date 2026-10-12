@@ -244,8 +244,8 @@ function ReactionsDialog({ post, onClose }: { post: Post; onClose: () => void })
 }
 
 // ── Post Card ──────────────────────────────────────────────────────────────
-function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpenComments, onOpenReactions, presentation = "mixed" }: {
-  post: Post; onLike: (id: string, direction: "up" | "down") => Promise<boolean>; onDelete: (id: string) => void;
+function PostCard({ post, onLike, onEdit, onDelete, currentUserId, onHashtagClick, onOpenComments, onOpenReactions, presentation = "mixed" }: {
+  post: Post; onLike: (id: string, direction: "up" | "down") => Promise<boolean>; onEdit: (id: string, content: string) => void; onDelete: (id: string) => void;
   currentUserId?: string; onHashtagClick: (tag: string) => void;
   onOpenComments: (post: Post) => void;
   onOpenReactions: (post: Post) => void;
@@ -256,6 +256,8 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
   const [menuOpen, setMenuOpen] = useState(false);
   const [showWarning, setShowWarning] = useState(post.hasContentWarning ?? false);
   const [commentPolicy, setCommentPolicy] = useState(post.commentPolicy ?? "everyone");
+  const [editingContent, setEditingContent] = useState<string | null>(null);
+  const [savingEdit, setSavingEdit] = useState(false);
   const { toast } = useToast();
   const mediaItems = [
     ...(post.mediaUrls ?? []).map((url) => ({ url, type: undefined, privateMedia: false as const })),
@@ -293,6 +295,29 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
       body: JSON.stringify({ commentPolicy: next }),
     });
     if (response.ok) setCommentPolicy(next);
+  };
+
+  const savePostEdit = async () => {
+    const content = editingContent?.trim() ?? "";
+    if (!content) {
+      toast({ title: "Post cannot be empty", description: "Add text or cancel this edit.", variant: "destructive" });
+      return;
+    }
+    setSavingEdit(true);
+    try {
+      const response = await authenticatedFetch(`${BASE}api/community/posts/${encodeURIComponent(post.id)}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content }),
+      });
+      if (!response.ok) throw new Error("edit failed");
+      onEdit(post.id, content);
+      setEditingContent(null);
+    } catch {
+      toast({ title: "Could not save post", description: "Please try again.", variant: "destructive" });
+    } finally {
+      setSavingEdit(false);
+    }
   };
 
   const reportPost = async () => {
@@ -384,6 +409,10 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
               )}
               {post.authorId === currentUserId && (
                 <>
+                  <button className="w-full px-4 py-2.5 text-left text-sm text-[#3A1F0E]/70 hover:bg-[#FAF6EF]"
+                    onClick={() => { setEditingContent(post.content); setMenuOpen(false); }}>
+                    Edit post
+                  </button>
                   <p className="border-t border-[#3A1F0E]/8 px-4 pt-2 text-[10px] font-bold uppercase tracking-wide text-[#3A1F0E]/40">Who can comment</p>
                   {(["everyone", "followers", "off"] as const).map((policy) => (
                     <button key={policy} className="w-full px-4 py-2 text-left text-sm text-[#3A1F0E]/70 hover:bg-[#FAF6EF]"
@@ -413,9 +442,18 @@ function PostCard({ post, onLike, onDelete, currentUserId, onHashtagClick, onOpe
 
       {/* Content */}
       <div className="px-4 pb-3">
-        <p className="text-sm text-[#3A1F0E] leading-relaxed whitespace-pre-wrap">{post.content}</p>
+        {editingContent !== null ? (
+          <div className="space-y-2" data-testid={`community-post-edit-${post.id}`}>
+            <label className="sr-only" htmlFor={`community-post-edit-input-${post.id}`}>Edit post</label>
+            <textarea id={`community-post-edit-input-${post.id}`} value={editingContent} onChange={(event) => setEditingContent(event.target.value)} maxLength={10_000} rows={4} className="w-full rounded-xl border border-[#CA922B]/40 bg-[#FFFDF9] px-3 py-2 text-sm leading-6 text-[#2B1507] outline-none focus:border-[#CA922B]" />
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setEditingContent(null)} disabled={savingEdit} className="rounded-lg px-3 py-2 text-xs font-semibold text-[#3A1F0E]/65 hover:bg-[#FAF6EF]">Cancel</button>
+              <button type="button" onClick={() => void savePostEdit()} disabled={savingEdit || !editingContent.trim()} className="rounded-lg bg-[#2B1507] px-3 py-2 text-xs font-semibold text-white disabled:opacity-60">{savingEdit ? "Saving…" : "Save changes"}</button>
+            </div>
+          </div>
+        ) : <p className="text-sm text-[#3A1F0E] leading-relaxed whitespace-pre-wrap">{post.content}</p>}
         {/* Hashtags */}
-        {post.hashtags && post.hashtags.length > 0 && (
+        {editingContent === null && post.hashtags && post.hashtags.length > 0 && (
           <div className="flex flex-wrap gap-1.5 mt-2">
             {post.hashtags.map(tag => (
               <button key={tag} onClick={() => onHashtagClick(tag)}
@@ -834,10 +872,22 @@ function EventsTab() {
 function MyGroupsPage({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [groups, setGroups] = useState<Group[]>([]);
   const [invites, setInvites] = useState<GroupInvite[]>([]);
+  const [discoverGroups, setDiscoverGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [inviteError, setInviteError] = useState(false);
   const [respondingInviteId, setRespondingInviteId] = useState<number | null>(null);
+  const [joiningGroupId, setJoiningGroupId] = useState<string | null>(null);
+  const [showCreateGroup, setShowCreateGroup] = useState(false);
+  const [creatingGroup, setCreatingGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupDescription, setNewGroupDescription] = useState("");
+  const [newGroupCategory, setNewGroupCategory] = useState("general");
+  const [newGroupCity, setNewGroupCity] = useState("");
+  const [newGroupState, setNewGroupState] = useState("");
+  const [newGroupPrivate, setNewGroupPrivate] = useState(false);
+  const [newGroupAgeRestricted, setNewGroupAgeRestricted] = useState(false);
+  const [newGroupRules, setNewGroupRules] = useState("");
   const { toast } = useToast();
   const [, navigate] = useLocation();
 
@@ -846,13 +896,22 @@ function MyGroupsPage({ isAuthenticated }: { isAuthenticated: boolean }) {
     setLoadError(false);
     setInviteError(false);
     try {
-      const [res, inviteResponse] = await Promise.all([
+      const [res, inviteResponse, discoverResponse] = await Promise.all([
         authenticatedFetch(`${BASE}api/groups/mine`),
         authenticatedFetch(`${BASE}api/groups/my-invites`),
+        authenticatedFetch(`${BASE}api/groups`),
       ]);
       if (!res.ok) throw new Error("Could not load groups");
       const d = await res.json() as { groups: Group[] };
       setGroups(d.groups ?? []);
+      if (discoverResponse.ok) {
+        const discoverPayload = await discoverResponse.json() as { groups?: Group[] };
+        // The server is authoritative for Group visibility. The client further
+        // avoids rendering private or already-joined Groups as discovery cards.
+        setDiscoverGroups((discoverPayload.groups ?? []).filter((group) => !group.isPrivate && !group.isMember));
+      } else {
+        setDiscoverGroups([]);
+      }
       if (inviteResponse.ok) {
         const invitePayload = await inviteResponse.json() as { invites?: GroupInvite[] };
         setInvites(invitePayload.invites ?? []);
@@ -894,10 +953,62 @@ function MyGroupsPage({ isAuthenticated }: { isAuthenticated: boolean }) {
     }
   };
 
+  const joinGroup = async (group: Group) => {
+    if (joiningGroupId !== null) return;
+    setJoiningGroupId(group.id);
+    try {
+      const response = await authenticatedFetch(`${BASE}api/groups/${encodeURIComponent(String(group.id))}/join`, { method: "POST" });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(payload.error ?? "Could not join group");
+      toast({ title: "Joined group", description: `${group.name} is now in My Groups.` });
+      await load();
+      navigate(`/community/groups/${encodeURIComponent(String(group.id))}`);
+    } catch (error) {
+      toast({ title: "Could not join group", description: error instanceof Error ? error.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setJoiningGroupId(null);
+    }
+  };
+
+  const createGroup = async () => {
+    if (!newGroupName.trim() || creatingGroup) return;
+    setCreatingGroup(true);
+    try {
+      const response = await authenticatedFetch(`${BASE}api/groups`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: newGroupName.trim(), description: newGroupDescription.trim() || undefined, category: newGroupCategory,
+          city: newGroupCity.trim() || undefined, state: newGroupState.trim() || undefined,
+          isPrivate: newGroupPrivate, isAgeRestricted: newGroupAgeRestricted,
+          rules: newGroupRules.split("\n").map((rule) => rule.trim()).filter(Boolean).slice(0, 10),
+        }),
+      });
+      const payload = await response.json().catch(() => ({})) as { group?: Group; error?: string };
+      if (!response.ok || !payload.group) throw new Error(payload.error ?? "Could not create group");
+      setShowCreateGroup(false);
+      setNewGroupName(""); setNewGroupDescription(""); setNewGroupCity(""); setNewGroupState(""); setNewGroupRules("");
+      toast({ title: "Group created", description: `${payload.group.name} is ready for its first member conversation.` });
+      await load();
+      navigate(`/community/groups/${encodeURIComponent(String(payload.group.id))}`);
+    } catch (error) {
+      toast({ title: "Could not create group", description: error instanceof Error ? error.message : "Please try again.", variant: "destructive" });
+    } finally {
+      setCreatingGroup(false);
+    }
+  };
+
   if (loading) return <div data-testid="community-my-groups-loading" role="status" aria-live="polite" className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-[#CA922B]" aria-hidden="true" /><span className="sr-only">Loading your groups</span></div>;
 
   return (
     <div className="space-y-3">
+      {isAuthenticated ? <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[#3A1F0E]/8 bg-white p-4">
+        <div>
+          <h2 className="font-serif text-lg font-bold text-[#2B1507]">Your Groups</h2>
+          <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/55">Join public groups, accept private invitations, or start a member-governed group of your own.</p>
+        </div>
+        <button type="button" data-testid="community-group-create-open" onClick={() => setShowCreateGroup(true)} className="inline-flex items-center gap-1.5 rounded-xl bg-[#2B1507] px-3.5 py-2.5 text-xs font-bold text-white hover:bg-[#3A1F0E]"><Plus className="h-3.5 w-3.5" />Create group</button>
+      </section> : null}
       {isAuthenticated && (invites.length > 0 || inviteError) && (
         <section aria-labelledby="community-group-invitations-heading" className="rounded-2xl border border-[#CA922B]/25 bg-white p-4">
           <div className="flex items-start justify-between gap-3">
@@ -978,6 +1089,37 @@ function MyGroupsPage({ isAuthenticated }: { isAuthenticated: boolean }) {
           </div>
         </button>
       ))}
+      {isAuthenticated ? <section aria-labelledby="community-group-discovery-heading" className="mt-6 rounded-2xl border border-[#3A1F0E]/8 bg-white p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#CA922B]/12"><Globe className="h-4 w-4 text-[#CA922B]" /></div>
+          <div>
+            <h2 id="community-group-discovery-heading" className="font-serif text-lg font-bold text-[#2B1507]">Explore public Groups</h2>
+            <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/55">Only public groups are listed here. Private groups stay invite-only and are never exposed through discovery.</p>
+          </div>
+        </div>
+        {discoverGroups.length ? <div className="mt-4 space-y-3">{discoverGroups.map((group) => {
+          const joining = joiningGroupId === group.id;
+          return <article key={group.id} data-testid={`community-group-discover-${group.id}`} className="flex items-start gap-3 rounded-xl border border-[#3A1F0E]/8 bg-[#FAF6EF] p-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" style={{ backgroundColor: `${categoryColor(group.category)}18` }}><Users className="h-4 w-4" style={{ color: categoryColor(group.category) }} /></div>
+            <div className="min-w-0 flex-1"><p className="truncate text-sm font-bold text-[#2B1507]">{group.name}</p>{group.description ? <p className="mt-1 line-clamp-2 text-xs leading-5 text-[#3A1F0E]/60">{group.description}</p> : null}<p className="mt-1.5 text-[10px] text-[#3A1F0E]/45">{group.memberCount} {group.memberCount === 1 ? "member" : "members"}{group.city ? ` · ${group.city}${group.state ? `, ${group.state}` : ""}` : ""}</p></div>
+            <button type="button" data-testid={`community-group-join-${group.id}`} onClick={() => void joinGroup(group)} disabled={joining} className="shrink-0 rounded-lg bg-[#CA922B] px-3 py-2 text-xs font-bold text-white hover:bg-[#B38024] disabled:cursor-wait disabled:opacity-60">{joining ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Join"}</button>
+          </article>;
+        })}</div> : <p className="mt-4 rounded-xl bg-[#FAF6EF] p-4 text-sm text-[#3A1F0E]/55">No public groups are available to join right now.</p>}
+      </section> : null}
+      {showCreateGroup ? <div data-testid="community-group-create-dialog" className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center" onClick={() => !creatingGroup && setShowCreateGroup(false)}>
+        <form onSubmit={(event) => { event.preventDefault(); void createGroup(); }} className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white p-5 shadow-2xl" onClick={(event) => event.stopPropagation()}>
+          <div className="flex items-start justify-between gap-3"><div><h2 className="font-serif text-xl font-bold text-[#2B1507]">Create a Group</h2><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/55">Use clear rules and choose privacy deliberately. Private Groups remain invitation-only.</p></div><button type="button" onClick={() => setShowCreateGroup(false)} disabled={creatingGroup} aria-label="Close create group" className="rounded-full p-2 hover:bg-[#FAF6EF]"><X className="h-4 w-4" /></button></div>
+          <div className="mt-5 space-y-3">
+            <label className="block text-xs font-bold text-[#3A1F0E]/65">Name<input required value={newGroupName} onChange={(event) => setNewGroupName(event.target.value)} maxLength={100} className="mt-1.5 w-full rounded-xl border border-[#3A1F0E]/15 bg-[#FFFDF9] px-3 py-2.5 text-sm text-[#2B1507] outline-none focus:border-[#CA922B]" /></label>
+            <label className="block text-xs font-bold text-[#3A1F0E]/65">Description<textarea value={newGroupDescription} onChange={(event) => setNewGroupDescription(event.target.value)} maxLength={1000} rows={3} className="mt-1.5 w-full resize-none rounded-xl border border-[#3A1F0E]/15 bg-[#FFFDF9] px-3 py-2.5 text-sm text-[#2B1507] outline-none focus:border-[#CA922B]" /></label>
+            <div className="grid gap-3 sm:grid-cols-2"><label className="block text-xs font-bold text-[#3A1F0E]/65">Category<select value={newGroupCategory} onChange={(event) => setNewGroupCategory(event.target.value)} className="mt-1.5 w-full rounded-xl border border-[#3A1F0E]/15 bg-[#FFFDF9] px-3 py-2.5 text-sm text-[#2B1507]"><option value="general">General</option><option value="social">Social</option><option value="culture">Culture</option><option value="professional">Professional</option><option value="travel">Travel</option><option value="health">Health</option><option value="activism">Activism</option></select></label><label className="block text-xs font-bold text-[#3A1F0E]/65">City<input value={newGroupCity} onChange={(event) => setNewGroupCity(event.target.value)} maxLength={80} className="mt-1.5 w-full rounded-xl border border-[#3A1F0E]/15 bg-[#FFFDF9] px-3 py-2.5 text-sm text-[#2B1507]" /></label></div>
+            <label className="block text-xs font-bold text-[#3A1F0E]/65">State or region<input value={newGroupState} onChange={(event) => setNewGroupState(event.target.value)} maxLength={80} className="mt-1.5 w-full rounded-xl border border-[#3A1F0E]/15 bg-[#FFFDF9] px-3 py-2.5 text-sm text-[#2B1507]" /></label>
+            <label className="block text-xs font-bold text-[#3A1F0E]/65">Group rules <span className="font-normal text-[#3A1F0E]/45">(one per line)</span><textarea value={newGroupRules} onChange={(event) => setNewGroupRules(event.target.value)} maxLength={1500} rows={3} placeholder="Be respectful\nKeep member content inside the group" className="mt-1.5 w-full resize-none rounded-xl border border-[#3A1F0E]/15 bg-[#FFFDF9] px-3 py-2.5 text-sm text-[#2B1507]" /></label>
+            <div className="grid gap-2 sm:grid-cols-2"><label className="flex items-start gap-2 rounded-xl border border-[#3A1F0E]/10 p-3 text-xs text-[#3A1F0E]/70"><input type="checkbox" checked={newGroupPrivate} onChange={(event) => setNewGroupPrivate(event.target.checked)} className="mt-0.5" /><span><strong className="block text-[#2B1507]">Private Group</strong>Members join only by invitation.</span></label><label className="flex items-start gap-2 rounded-xl border border-[#3A1F0E]/10 p-3 text-xs text-[#3A1F0E]/70"><input type="checkbox" checked={newGroupAgeRestricted} onChange={(event) => setNewGroupAgeRestricted(event.target.checked)} className="mt-0.5" /><span><strong className="block text-[#2B1507]">18+ only</strong>Members must meet the group age requirement.</span></label></div>
+          </div>
+          <button type="submit" disabled={creatingGroup || !newGroupName.trim()} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-[#2B1507] px-4 py-3 text-sm font-bold text-white hover:bg-[#3A1F0E] disabled:cursor-wait disabled:opacity-60">{creatingGroup ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}{creatingGroup ? "Creating Group…" : "Create Group"}</button>
+        </form>
+      </div> : null}
     </div>
   );
 }
@@ -1218,6 +1360,10 @@ export default function Community() {
     } catch { toast({ title: "Could not delete post", variant: "destructive" }); }
   };
 
+  const handleEdit = (postId: string, content: string) => {
+    setPosts((current) => current.map((post) => post.id === postId ? { ...post, content } : post));
+  };
+
   const handleRefresh = () => {
     setRefreshing(true);
     loadPosts();
@@ -1434,7 +1580,7 @@ export default function Community() {
                 )}
                 {posts.map(post => (
                   <PostCard key={post.id} post={post}
-                    onLike={handleLike} onDelete={handleDelete}
+                    onLike={handleLike} onEdit={handleEdit} onDelete={handleDelete}
                     currentUserId={(auth?.user as any)?.id}
                     presentation={communityFeedDisplay}
                     onHashtagClick={tag => setHashtagFilter(hashtagFilter === tag ? null : tag)}

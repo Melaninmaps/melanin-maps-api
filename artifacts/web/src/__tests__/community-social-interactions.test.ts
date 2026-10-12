@@ -23,4 +23,13 @@ describe("web Community social interactions", () => {
     expect(dialog).toContain("onCommentCountChanged(postId, body.commentsCount)");
     expect(page).toContain("onCommentCountChanged={(postId, commentsCount)");
   });
+
+  it("lets only the current post author edit text through the existing protected route", () => {
+    expect(page).toContain("post.authorId === currentUserId");
+    expect(page).toContain("Edit post");
+    expect(page).toContain("api/community/posts/${encodeURIComponent(post.id)}");
+    expect(page).toContain('method: "PATCH"');
+    expect(page).toContain("onEdit(post.id, content)");
+    expect(page).toContain("Save changes");
+  });
 });

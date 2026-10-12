@@ -913,6 +913,19 @@ router.patch("/groups/:id/members/:userId/role", async (req: Request, res: Respo
       return;
     }
 
+    const [target] = await db
+      .select()
+      .from(groupMembers)
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, targetUserId)))
+      .limit(1);
+    if (!target) { res.status(404).json({ error: "Group member not found" }); return; }
+    if (role === "member" && target.role === "admin") {
+      const [{ count }] = await db.select({ count: sql<number>`count(*)::int` })
+        .from(groupMembers)
+        .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.role, "admin")));
+      if (count <= 1) { res.status(409).json({ error: "A Group must keep at least one moderator" }); return; }
+    }
+
     await db
       .update(groupMembers)
       .set({ role })
@@ -939,6 +952,19 @@ router.delete("/groups/:id/members/:userId", async (req: Request, res: Response)
       .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, requesterId), eq(groupMembers.role, "admin")))
       .limit(1);
     if (!admin) { res.status(403).json({ error: "Only admins can remove members" }); return; }
+
+    const [target] = await db
+      .select()
+      .from(groupMembers)
+      .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.userId, targetUserId)))
+      .limit(1);
+    if (!target) { res.status(404).json({ error: "Group member not found" }); return; }
+    if (target.role === "admin") {
+      const [{ count }] = await db.select({ count: sql<number>`count(*)::int` })
+        .from(groupMembers)
+        .where(and(eq(groupMembers.groupId, groupId), eq(groupMembers.role, "admin")));
+      if (count <= 1) { res.status(409).json({ error: "A Group must keep at least one moderator" }); return; }
+    }
 
     await db
       .delete(groupMembers)
