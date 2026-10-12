@@ -25,8 +25,8 @@ type OpportunityRow = {
  */
 async function ensureCommunityOpportunitySchema(): Promise<void> {
   if (!schemaReady) {
-    schemaReady = Promise.all([
-      pool.query(`
+    schemaReady = (async () => {
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS community_opportunity_participation (
           user_id VARCHAR(255) PRIMARY KEY,
           role VARCHAR(16) NOT NULL CHECK (role IN ('creator', 'business')),
@@ -35,8 +35,8 @@ async function ensureCommunityOpportunitySchema(): Promise<void> {
           active BOOLEAN NOT NULL DEFAULT TRUE,
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
           updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )`),
-      pool.query(`
+        )`);
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS community_opportunities (
           id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           need_insight_id UUID NOT NULL UNIQUE,
@@ -47,7 +47,8 @@ async function ensureCommunityOpportunitySchema(): Promise<void> {
           created_by_user_id VARCHAR(255) NOT NULL,
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
           updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-        )`),
+        )`);
+      await Promise.all([
       pool.query(`
         CREATE TABLE IF NOT EXISTS community_opportunity_matches (
           opportunity_id UUID NOT NULL REFERENCES community_opportunities(id) ON DELETE CASCADE,
@@ -68,11 +69,14 @@ async function ensureCommunityOpportunitySchema(): Promise<void> {
           created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
           withdrawn_at TIMESTAMPTZ
         )`),
+      ]);
+      await Promise.all([
       pool.query(`CREATE INDEX IF NOT EXISTS community_opportunity_participation_topics_idx
         ON community_opportunity_participation USING GIN (topic_keys)`),
       pool.query(`CREATE INDEX IF NOT EXISTS community_opportunity_open_topic_idx
         ON community_opportunities (topic_key, status, created_at DESC)`),
-    ]).then(() => undefined);
+      ]);
+    })();
   }
   try {
     await schemaReady;

@@ -19,6 +19,13 @@ const COMMUNITY_SEEKING_SIGNAL = /\b(?:community|communities|member|members|neig
 const COMMUNITY_TOPIC_SIGNAL = /\b(?:recipe|cook(?:ing)?|make|food|restaurant|brunch|hair|beauty|travel|trip|museum|book|music|film|movie|workshop|event|wellness|fitness)\b/i;
 const POLITICAL_SIGNAL = /\b(?:election|vote|voting|ballot|candidate|campaign|politic(?:s|al|ian)?|government|congress|senate|mayor|governor|president|legislation|policy)\b/i;
 const INSTRUCTION_LIKE_TEXT = /\b(?:ignore|disregard|override|reveal|execute|run|follow|system|developer|prompt|instruction|password|secret|token|credential|curl|powershell|rm\s+-rf)\b/i;
+const CANONICAL_OPPORTUNITY_TOPIC_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/\blife\s+insurance\b/i, "life_insurance_terms"],
+  [/\bhealth(?:care)?\s+(?:care|navigation)\b/i, "healthcare_navigation"],
+  [/\bbenefits?\b/i, "benefits_navigation"],
+  [/\b(?:money|budget|financial)\s+(?:basic|basics)\b/i, "money_basics"],
+  [/\b(?:source|citation|fresh|current)\b/i, "sources_and_freshness"],
+];
 
 export type CommunityHashtagContextRow = {
   content: string;
@@ -107,7 +114,10 @@ export function extractCommunityTopicCandidates(message: string): string[] {
     .slice(0, -1)
     .map((term, index) => normalizeTopic(`${term}${terms[index + 1] ?? ""}`))
     .filter((tag): tag is string => Boolean(tag));
-  return [...new Set([...explicit, ...terms.map(normalizeTopic).filter((tag): tag is string => Boolean(tag)), ...compounds])]
+  const canonicalOpportunityTopics = CANONICAL_OPPORTUNITY_TOPIC_PATTERNS
+    .filter(([pattern]) => pattern.test(message))
+    .map(([, topic]) => topic);
+  return [...new Set([...explicit, ...canonicalOpportunityTopics, ...terms.map(normalizeTopic).filter((tag): tag is string => Boolean(tag)), ...compounds])]
     .slice(0, MAX_TOPIC_CANDIDATES);
 }
 
