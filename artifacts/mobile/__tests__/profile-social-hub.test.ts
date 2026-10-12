@@ -79,4 +79,13 @@ describe("mobile social profile hub", () => {
     expect(memberProfile).toContain("Community visibility, block, moderation, and group checks");
     expect(memberProfile).toContain("No visible tagged activity yet");
   });
+
+  it("places a permitted bio immediately after the member name before profile metadata", () => {
+    const nameIndex = memberProfile.indexOf('<View style={s.nameRow}>');
+    const bioIndex = memberProfile.indexOf('{profile.bio && canSeeContent && (');
+    const badgeIndex = memberProfile.indexOf('{memberBadge && (');
+    expect(nameIndex).toBeGreaterThan(-1);
+    expect(bioIndex).toBeGreaterThan(nameIndex);
+    expect(badgeIndex).toBeGreaterThan(bioIndex);
+  });
 });

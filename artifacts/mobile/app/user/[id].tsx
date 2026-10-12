@@ -424,6 +424,9 @@ export default function VisitorProfileScreen() {
                   <Feather name="check-circle" size={16} color="#2D7A4F" />
                 )}
               </View>
+              {profile.bio && canSeeContent && (
+                <Text style={[s.bio, { color: colors.foreground }]}>{profile.bio}</Text>
+              )}
               {memberBadge && (
                 <View style={[s.memberBadge, { backgroundColor: memberBadge.color + "15", borderColor: memberBadge.color + "40" }]}>
                   <View style={[s.memberDot, { backgroundColor: memberBadge.color }]} />
@@ -444,11 +447,6 @@ export default function VisitorProfileScreen() {
                   {profile.age ? <Text style={[s.profileFact, { color: colors.mutedForeground }]}><Feather name="user" size={12} color={colors.primary} /> {profile.age}</Text> : null}
                   {profile.birthday ? <Text style={[s.profileFact, { color: colors.mutedForeground }]}><Feather name="gift" size={12} color={colors.primary} /> {profile.birthday}</Text> : null}
                 </View>
-              )}
-
-              {/* Bio */}
-              {profile.bio && canSeeContent && (
-                <Text style={[s.bio, { color: colors.foreground }]}>{profile.bio}</Text>
               )}
 
               {earnedBadges.length > 0 && canSeeContent ? (
