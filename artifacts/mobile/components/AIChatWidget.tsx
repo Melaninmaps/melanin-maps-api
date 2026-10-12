@@ -358,7 +358,7 @@ export function AIChatWidget() {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, refreshUser } = useAuth();
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [messages, setMessages] = useState<Message[]>(() => [
@@ -851,6 +851,36 @@ export function AIChatWidget() {
   const sendMessage = async (rawText: string) => {
     const text = rawText.trim();
     if (!text) return;
+    // Keep the floating entrypoint at the same authenticated boundary as the
+    // primary Kinfolk screen. Do not append a turn or call the provider before
+    // local session restoration completes.
+    if (authLoading) return;
+    if (!isAuthenticated) {
+      Alert.alert(
+        "Sign in to ask Kinfolk",
+        "Create or sign in to a free account to start a Kinfolk conversation and keep control of your preferences.",
+        [
+          { text: "Not now", style: "cancel" },
+          { text: "Sign in", onPress: () => router.push("/login" as never) },
+        ],
+      );
+      return;
+    }
+    const token = await getToken();
+    if (!token) {
+      // A SecureStore/session race is recoverable and must never appear as a
+      // provider or connection failure. The draft remains in the composer.
+      void refreshUser();
+      Alert.alert(
+        "Sign in again",
+        "Your Kinfolk session needs to be refreshed before sending this question.",
+        [
+          { text: "Not now", style: "cancel" },
+          { text: "Sign in", onPress: () => router.push("/login" as never) },
+        ],
+      );
+      return;
+    }
     activeChatRequestRef.current?.abort();
     const requestGeneration = ++chatRequestGenerationRef.current;
     const request = new AbortController();
@@ -868,7 +898,6 @@ export function AIChatWidget() {
     requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
 
     try {
-      const token = await getToken();
       const cityHint = await nearbyCityHint(text);
       if (requestGeneration !== chatRequestGenerationRef.current) return;
       const {
@@ -934,17 +963,25 @@ export function AIChatWidget() {
       // over a generic "trouble connecting" — helps the user take the right action.
       const status = (err as { status?: number }).status;
       const serverText = err instanceof Error ? err.message : null;
-      const text =
+      const errorText =
         status === 429 && serverText
           ? serverText                                // e.g. "You've used your 10 free queries…"
           : status === 401
-            ? "Please sign in again to use KinfolkAI."
+            ? "Your Kinfolk session expired. Please sign in again, then resend your question."
             : status === 503
               ? "KinfolkAI is temporarily unavailable. Please try again in a moment."
-              : "I'm having trouble connecting right now. Check your connection and try again.";
+              : "Kinfolk couldn't reach the service. Your question is back in the composer — check your connection, then tap Send to retry.";
+      if (status === 401) {
+        setInput(text);
+        void refreshUser();
+      } else if (!status || status === 503) {
+        // Keep a recoverable network or temporary-service question available;
+        // never make a member retype it after a failed transport attempt.
+        setInput(text);
+      }
       const errMsg: Message = {
         id: String(Date.now() + 1),
-        text,
+        text: errorText,
         fromUser: false,
         ts: Date.now(),
       };

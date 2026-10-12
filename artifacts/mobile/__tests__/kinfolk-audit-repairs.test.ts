@@ -27,6 +27,26 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(voiceSource).toContain("requestRecordingPermissionsAsync");
   });
 
+  it("does not turn an absent or expired floating-widget session into a provider failure", () => {
+    const hook = readFileSync(
+      fileURLToPath(new URL("../hooks/useKinfolk.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(widget).toContain("if (!isAuthenticated) {");
+    expect(widget).toContain('"Sign in to ask Kinfolk"');
+    expect(widget).toContain("if (!token) {");
+    expect(widget).toContain("void refreshUser()");
+    expect(widget).toContain("status === 401");
+    expect(widget).toContain("setInput(text)");
+    expect(widget).toContain("const errorText =");
+    expect(widget).toContain("Kinfolk couldn't reach the service. Your question is back in the composer");
+    expect(widget).toContain("} else if (!status || status === 503) {");
+    expect(widget.indexOf("if (!token) {")).toBeLessThan(widget.indexOf("const userMsg: Message"));
+    expect(hook).toContain('content: "Your Kinfolk session needs to be refreshed. Please sign in again before sending your question."');
+    expect(hook).toContain("} else if (res.status === 401) {");
+    expect(hook).toContain('content: "Your Kinfolk session expired. Please sign in again, then resend your question."');
+  });
+
   it("shows, persists, and uses the four widget delivery modes", () => {
     for (const mode of ["community", "professor", "business_manager", "best_friend"]) {
       expect(widget).toContain(`id: "${mode}"`);

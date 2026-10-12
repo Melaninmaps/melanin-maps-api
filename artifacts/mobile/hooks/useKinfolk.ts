@@ -300,6 +300,16 @@ export function useKinfolk() {
     const controller = new AbortController();
     activeRequestRef.current = controller;
     const token = await getToken();
+    if (!token) {
+      const aiMsg: ChatMessage = {
+        id: makeId(),
+        role: "assistant",
+        content: "Your Kinfolk session needs to be refreshed. Please sign in again before sending your question.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, aiMsg]);
+      return false;
+    }
     const apiBase = getApiBase();
     const conversationContext = messagesRef.current.slice(-6).map((message) => ({
       role: message.role,
@@ -464,6 +474,15 @@ export function useKinfolk() {
         setPendingRetryText(null); // clear retry on success
         setMessages((prev) => [...prev, aiMsg]);
         return true;
+      } else if (res.status === 401) {
+        const aiMsg: ChatMessage = {
+          id: makeId(),
+          role: "assistant",
+          content: "Your Kinfolk session expired. Please sign in again, then resend your question.",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, aiMsg]);
+        return false;
       } else if (res.status === 503) {
         // KINFOLK_BUSY or KINFOLK_RATE_LIMITED — temporary, user question preserved for retry
         const errData = await res.json().catch(() => ({})) as { code?: string };
