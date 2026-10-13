@@ -147,8 +147,16 @@ let sessionId: string | undefined;
 
 let cachedVoiceMode: VoiceMode | null = null;
 
-async function getVoiceMode(token: string | null): Promise<VoiceMode> {
-  if (!token) return "community";
+type VoiceModeLoadResult = {
+  mode: VoiceMode;
+  sessionExpired: boolean;
+};
+
+async function getVoiceMode(token: string | null): Promise<VoiceModeLoadResult> {
+  // A widget may remain mounted briefly while the auth provider discovers that
+  // the stored session is gone. Treat a missing token as a session recovery,
+  // not as a valid default preference read.
+  if (!token) return { mode: "community", sessionExpired: true };
   try {
     const base = getApiBase();
     const res = await fetch(`${base}/api/kinfolk/preferences`, {
@@ -158,10 +166,15 @@ async function getVoiceMode(token: string | null): Promise<VoiceMode> {
       const data = await res.json() as { preferences?: { personalityMode?: string | null } };
       const mode = normalizeVoiceMode(data.preferences?.personalityMode);
       cachedVoiceMode = mode;
-      return mode;
+      return { mode, sessionExpired: false };
     }
-  } catch { /* ignore */ }
-  return "community";
+    // This request is an authenticated read. Do not silently keep the widget
+    // in a signed-in state after the API has definitively rejected its token.
+    return { mode: "community", sessionExpired: res.status === 401 };
+  } catch {
+    // A transport failure is not proof that a session expired.
+    return { mode: "community", sessionExpired: false };
+  }
 }
 
 async function nearbyCityHint(message: string): Promise<string | undefined> {
@@ -519,10 +532,19 @@ export function AIChatWidget() {
     let active = true;
     void getToken()
       .then((token) => getVoiceMode(token))
-      .then((mode) => { if (active) setVoiceMode(mode); })
+      .then((result) => {
+        if (!active) return;
+        if (result.sessionExpired) {
+          // Reconcile through the single AuthProvider path so the member gets
+          // the intentional sign-in recovery rather than a silent widget.
+          void refreshUser();
+          return;
+        }
+        setVoiceMode(result.mode);
+      })
       .catch(() => undefined);
     return () => { active = false; };
-  }, [isAuthenticated, open]);
+  }, [isAuthenticated, open, refreshUser]);
 
   const saveVoiceMode = useCallback(async (nextMode: VoiceMode) => {
     if (nextMode === voiceMode || voiceModeSaving) return;
@@ -1134,6 +1156,8 @@ export function AIChatWidget() {
     router.push("/kinfolk-tasks");
   };
 
+  const sendDisabled = !input.trim() || widgetVoiceSource.canStop || authLoading;
+
   return (
     <>
       {dismissed ? (
@@ -1689,6 +1713,13 @@ export function AIChatWidget() {
             </View>
           )}
 
+          {authLoading ? (
+            <View style={[styles.authRestoreNotice, { backgroundColor: colors.secondary, borderColor: colors.border }]} accessibilityLiveRegion="polite" accessibilityLabel="Restoring secure Kinfolk sign-in">
+              <ActivityIndicator size="small" color={colors.primary} />
+              <Text style={[styles.authRestoreNoticeText, { color: colors.mutedForeground }]}>Restoring secure sign-in…</Text>
+            </View>
+          ) : null}
+
           {Platform.OS !== "web" && widgetVoiceSource.state.phase !== "idle" ? (
             <View style={{ backgroundColor: colors.muted, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingHorizontal: 12, paddingVertical: 8 }}>
               <KinfolkVoiceSourceControls
@@ -1734,12 +1765,14 @@ export function AIChatWidget() {
               editable={!widgetVoiceSource.canStop}
             />
             <TouchableOpacity
-              style={[styles.sendBtn, { backgroundColor: input.trim() ? colors.primary : colors.muted }]}
+              style={[styles.sendBtn, { backgroundColor: sendDisabled ? colors.muted : colors.primary }]}
               onPress={send}
-              disabled={!input.trim() || widgetVoiceSource.canStop}
+              disabled={sendDisabled}
+              accessibilityLabel={authLoading ? "Kinfolk is restoring your secure sign-in" : "Send message to Kinfolk"}
+              accessibilityState={{ disabled: sendDisabled, busy: authLoading }}
               activeOpacity={0.8}
             >
-              <Feather name="send" size={18} color={input.trim() ? "#FFF" : colors.mutedForeground} />
+              <Feather name="send" size={18} color={sendDisabled ? colors.mutedForeground : "#FFF"} />
             </TouchableOpacity>
           </View>
 
@@ -1967,6 +2000,8 @@ const styles = StyleSheet.create({
   libraryActionText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
   trustWrap: { borderTopWidth: 1, paddingHorizontal: 20, paddingVertical: 12 },
   trustTxt: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 18, textAlign: "center", fontStyle: "italic" },
+  authRestoreNotice: { flexDirection: "row", alignItems: "center", gap: 8, marginHorizontal: 16, marginTop: 8, paddingHorizontal: 12, paddingVertical: 9, borderWidth: StyleSheet.hairlineWidth, borderRadius: 10 },
+  authRestoreNoticeText: { flex: 1, fontSize: 12, fontFamily: "Inter_500Medium", lineHeight: 17 },
   voiceInputStatus: { flexDirection: "row", alignItems: "center", gap: 8, marginHorizontal: 16, marginTop: 8, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },
   voiceInputStatusText: { flex: 1, fontSize: 12, fontFamily: "Inter_500Medium", lineHeight: 17 },
   chipsScroll: { borderTopWidth: 1 },

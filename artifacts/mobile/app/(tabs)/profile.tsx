@@ -606,6 +606,45 @@ function RecommendedSpotsSection() {
   );
 }
 
+type ProfileSurfaceBoundaryProps = {
+  children: React.ReactNode;
+  colors: ReturnType<typeof useColors>;
+  onRetry: () => void;
+};
+
+class ProfileSurfaceBoundary extends React.Component<
+  ProfileSurfaceBoundaryProps,
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError(): { failed: boolean } {
+    return { failed: true };
+  }
+
+  private retry = () => {
+    this.setState({ failed: false });
+    this.props.onRetry();
+  };
+
+  render() {
+    if (!this.state.failed) return this.props.children;
+    const { colors } = this.props;
+    return (
+      <View style={[styles.profileRecoveryCard, { backgroundColor: colors.card, borderColor: colors.border }]} accessibilityRole="alert">
+        <Feather name="alert-circle" size={20} color={colors.primary} />
+        <View style={styles.profileRecoveryCopy}>
+          <Text style={[styles.profileRecoveryTitle, { color: colors.foreground }]}>Your profile could not open right now.</Text>
+          <Text style={[styles.profileRecoveryDetail, { color: colors.mutedForeground }]}>Try again without leaving the app.</Text>
+        </View>
+        <TouchableOpacity onPress={this.retry} accessibilityRole="button" accessibilityLabel="Try loading profile again" style={[styles.profileRecoveryRetry, { borderColor: colors.primary }]}>
+          <Text style={[styles.profileRecoveryRetryText, { color: colors.primary }]}>Try again</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+}
+
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -617,6 +656,7 @@ export default function ProfileScreen() {
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
   const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [profileSurfaceRetryKey, setProfileSurfaceRetryKey] = useState(0);
   const [showRedemption, setShowRedemption] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showIndustryPicker, setShowIndustryPicker] = useState(false);
@@ -954,12 +994,17 @@ export default function ProfileScreen() {
         </View>
       ) : (
         <>
-          {user ? <MemberSocialProfileRecap
-            userId={user.id}
-            fallbackName={{ firstName: user.firstName, lastName: user.lastName, username: (user as any)?.username ?? null }}
-            onEditProfile={openEditModal}
-            onEditAvatar={pickProfileImage}
-          /> : null}
+          {user ? (
+            <ProfileSurfaceBoundary colors={colors} onRetry={() => setProfileSurfaceRetryKey((current) => current + 1)}>
+              <MemberSocialProfileRecap
+                key={`member-social-profile-${profileSurfaceRetryKey}`}
+                userId={user.id}
+                fallbackName={{ firstName: user.firstName, lastName: user.lastName, username: (user as any)?.username ?? null }}
+                onEditProfile={openEditModal}
+                onEditAvatar={pickProfileImage}
+              />
+            </ProfileSurfaceBoundary>
+          ) : null}
           {false && <View style={[styles.profileCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
             <TouchableOpacity onPress={pickProfileImage} activeOpacity={0.8} style={styles.avatarWrap} disabled={uploadingAvatar}>
               {localAvatarUri || user?.profileImageUrl ? (
@@ -1005,13 +1050,16 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>}
 
-          {isAuthenticated && (
-            <StatusComposer
-              authorName={(user as any)?.username ? `@${(user as any).username}` : "You"}
-              authorInitials={((user as any)?.username ?? "YO").slice(0, 2).toUpperCase()}
-              authorColor="#CA922B"
-            />
-          )}
+          {isAuthenticated ? (
+            <ProfileSurfaceBoundary colors={colors} onRetry={() => setProfileSurfaceRetryKey((current) => current + 1)}>
+              <StatusComposer
+                key={`profile-status-composer-${profileSurfaceRetryKey}`}
+                authorName={(user as any)?.username ? `@${(user as any).username}` : "You"}
+                authorInitials={((user as any)?.username ?? "YO").slice(0, 2).toUpperCase()}
+                authorColor="#CA922B"
+              />
+            </ProfileSurfaceBoundary>
+          ) : null}
 
           {false && <>
           {/* Business management remains reachable from Settings, not the social Profile. */}
@@ -1681,6 +1729,21 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 60,
   },
+  profileRecoveryCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderRadius: 14,
+  },
+  profileRecoveryCopy: { flex: 1, gap: 2 },
+  profileRecoveryTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14, lineHeight: 19 },
+  profileRecoveryDetail: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  profileRecoveryRetry: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 7 },
+  profileRecoveryRetryText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   signInCard: {
     marginHorizontal: 20,
     marginBottom: 24,

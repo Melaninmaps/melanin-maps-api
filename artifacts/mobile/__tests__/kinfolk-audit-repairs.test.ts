@@ -45,6 +45,11 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(widget).toContain("KINFOLK_CLIENT_TRACE_HEADER");
     expect(widget).toContain("createKinfolkClientTrace");
     expect(widget).toContain("kinfolkTraceReference(trace)");
+    expect(widget).toContain("sessionExpired: res.status === 401");
+    expect(widget).toContain("if (result.sessionExpired)");
+    expect(widget).toContain("Restoring secure sign-in…");
+    expect(widget).toContain("const sendDisabled = !input.trim() || widgetVoiceSource.canStop || authLoading");
+    expect(widget).toContain("disabled={sendDisabled}");
     expect(widget.indexOf("if (!token) {")).toBeLessThan(widget.indexOf("const userMsg: Message"));
     expect(hook).toContain("KINFOLK_CLIENT_TRACE_HEADER");
     expect(hook).toContain("createKinfolkClientTrace");

@@ -55,6 +55,10 @@ describe("mobile social profile hub", () => {
 
   it("makes a real Community recap the primary profile while moving optional display details to settings", () => {
     expect(profile).toContain("MemberSocialProfileRecap");
+    expect(profile).toContain("class ProfileSurfaceBoundary");
+    expect(profile).toContain("Your profile could not open right now.");
+    expect(profile).toContain("setProfileSurfaceRetryKey((current) => current + 1)");
+    expect(profile).toContain("<ProfileSurfaceBoundary");
     expect(layout).toContain('name="profile-presentation-settings"');
     expect(profile).toContain("{false && <>");
     expect(settings).toContain('label: "Profile Display & Badges"');
