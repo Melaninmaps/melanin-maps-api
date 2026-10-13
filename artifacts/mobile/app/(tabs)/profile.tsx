@@ -610,6 +610,7 @@ type ProfileSurfaceBoundaryProps = {
   children: React.ReactNode;
   colors: ReturnType<typeof useColors>;
   onRetry: () => void;
+  onRecoverSession: () => void;
 };
 
 class ProfileSurfaceBoundary extends React.Component<
@@ -637,9 +638,14 @@ class ProfileSurfaceBoundary extends React.Component<
           <Text style={[styles.profileRecoveryTitle, { color: colors.foreground }]}>Your profile could not open right now.</Text>
           <Text style={[styles.profileRecoveryDetail, { color: colors.mutedForeground }]}>Try again without leaving the app.</Text>
         </View>
-        <TouchableOpacity onPress={this.retry} accessibilityRole="button" accessibilityLabel="Try loading profile again" style={[styles.profileRecoveryRetry, { borderColor: colors.primary }]}>
-          <Text style={[styles.profileRecoveryRetryText, { color: colors.primary }]}>Try again</Text>
-        </TouchableOpacity>
+        <View style={styles.profileRecoveryActions}>
+          <TouchableOpacity onPress={this.retry} accessibilityRole="button" accessibilityLabel="Try loading profile again" style={[styles.profileRecoveryRetry, { borderColor: colors.primary }]}>
+            <Text style={[styles.profileRecoveryRetryText, { color: colors.primary }]}>Try again</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={this.props.onRecoverSession} accessibilityRole="button" accessibilityLabel="Sign out and return to sign in" style={[styles.profileRecoveryRetry, { borderColor: colors.border }]}>
+            <Text style={[styles.profileRecoveryRetryText, { color: colors.mutedForeground }]}>Sign out</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -704,6 +710,12 @@ export default function ProfileScreen() {
     setShowIndustryPicker(false);
     setShowEditModal(true);
   };
+
+  const recoverProfileSession = useCallback(() => {
+    void logout().finally(() => {
+      router.replace("/login?recovery=1" as never);
+    });
+  }, [logout, router]);
 
   const checkUsername = (raw: string) => {
     const val = raw.toLowerCase().replace(/[^a-z0-9_]/g, "");
@@ -995,7 +1007,7 @@ export default function ProfileScreen() {
       ) : (
         <>
           {user ? (
-            <ProfileSurfaceBoundary colors={colors} onRetry={() => setProfileSurfaceRetryKey((current) => current + 1)}>
+            <ProfileSurfaceBoundary colors={colors} onRetry={() => setProfileSurfaceRetryKey((current) => current + 1)} onRecoverSession={recoverProfileSession}>
               <MemberSocialProfileRecap
                 key={`member-social-profile-${profileSurfaceRetryKey}`}
                 userId={user.id}
@@ -1051,7 +1063,7 @@ export default function ProfileScreen() {
           </View>}
 
           {isAuthenticated ? (
-            <ProfileSurfaceBoundary colors={colors} onRetry={() => setProfileSurfaceRetryKey((current) => current + 1)}>
+            <ProfileSurfaceBoundary colors={colors} onRetry={() => setProfileSurfaceRetryKey((current) => current + 1)} onRecoverSession={recoverProfileSession}>
               <StatusComposer
                 key={`profile-status-composer-${profileSurfaceRetryKey}`}
                 authorName={(user as any)?.username ? `@${(user as any).username}` : "You"}
@@ -1742,6 +1754,7 @@ const styles = StyleSheet.create({
   profileRecoveryCopy: { flex: 1, gap: 2 },
   profileRecoveryTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14, lineHeight: 19 },
   profileRecoveryDetail: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  profileRecoveryActions: { flexDirection: "row", gap: 8, alignItems: "center" },
   profileRecoveryRetry: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 7 },
   profileRecoveryRetryText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   signInCard: {

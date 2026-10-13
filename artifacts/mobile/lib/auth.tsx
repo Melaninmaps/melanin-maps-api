@@ -11,10 +11,27 @@ import * as SecureStore from "expo-secure-store";
 import { AppState, Platform } from "react-native";
 import { getApiBase } from "@/lib/api";
 import { identifyRevenueCatUser, resetRevenueCatUser } from "@/lib/revenuecat";
+import { registerUnauthorizedApiResponseHandler } from "@/lib/authSessionSignals";
 
 WebBrowser.maybeCompleteAuthSession();
 
-const AUTH_TOKEN_KEY = "auth_session_token";
+export const AUTH_TOKEN_KEY = "auth_session_token";
+const FRESH_LOGIN_KEY = "@melanin_maps_fresh_login";
+const APPLE_USER_ID_KEY = "apple_user_id";
+
+/**
+ * Removes only this device's persisted credentials. It never deletes a member
+ * record, Community content, Kinfolk memory, or server-side saved places.
+ * The global error boundary uses this when its normal AuthProvider is no
+ * longer renderable, so a member always has a local account-recovery escape.
+ */
+export async function clearStoredAuthSession(): Promise<void> {
+  await Promise.all([
+    SecureStore.deleteItemAsync(AUTH_TOKEN_KEY).catch(() => {}),
+    SecureStore.deleteItemAsync(FRESH_LOGIN_KEY).catch(() => {}),
+    SecureStore.deleteItemAsync(APPLE_USER_ID_KEY).catch(() => {}),
+  ]);
+}
 
 export interface User {
   id: string;
@@ -73,6 +90,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const expiringSessionRef = React.useRef(false);
+
+  const expireSession = useCallback(async (): Promise<void> => {
+    if (expiringSessionRef.current) return;
+    expiringSessionRef.current = true;
+    try {
+      await clearStoredAuthSession();
+      setUser(null);
+      setSessionExpired(true);
+      setIsLoading(false);
+      void resetRevenueCatUser();
+    } finally {
+      expiringSessionRef.current = false;
+    }
+  }, []);
 
   const fetchUser = useCallback(async (): Promise<boolean> => {
     let token: string | null = null;
@@ -118,11 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return true;
         } else if (res.status === 401) {
           // Server explicitly says this token is invalid (401) — safe to sign out.
-          await SecureStore.deleteItemAsync(AUTH_TOKEN_KEY);
-          setUser(null);
-          setSessionExpired(true);
-          setIsLoading(false);
-          void resetRevenueCatUser();
+          await expireSession();
           return false;
         } else {
           // Non-401 response with no user (e.g. 500 server error, transient failure).
@@ -159,11 +187,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // valid, we just couldn't reach the server.
     setIsLoading(false);
     return false;
-  }, []);
+  }, [expireSession]);
 
   useEffect(() => {
     void Promise.resolve().then(fetchUser);
   }, [fetchUser]);
+
+  useEffect(() => {
+    // Most native screens issue authenticated fetches directly. A verified 401
+    // from the configured API must reconcile AuthProvider as well, otherwise a
+    // stale in-memory user can remain visible while every protected screen
+    // fails. The global fetch instrumentation filters this to our API origin.
+    return registerUnauthorizedApiResponseHandler(() => {
+      void expireSession();
+    });
+  }, [expireSession]);
 
   const login = useCallback(async () => {
     try {
@@ -178,7 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const token = url.searchParams.get("token");
         if (token) {
           await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
-          await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
+          await SecureStore.setItemAsync(FRESH_LOGIN_KEY, "1");
         }
       }
 
@@ -336,7 +374,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Step 2 — set fresh-login flag (non-critical, failure is allowed)
       try {
-        await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
+        await SecureStore.setItemAsync(FRESH_LOGIN_KEY, "1");
       } catch (step2Err: unknown) {
         const e = step2Err as Error;
         console.error("login step 2: fresh_login flag failed (non-critical)", {
@@ -374,11 +412,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Step 2: Delete both local keys before the login screen can mount.
     // Auto-restore cannot find a token after this point.
-    await Promise.all([
-      SecureStore.deleteItemAsync(AUTH_TOKEN_KEY).catch(() => {}),
-      SecureStore.deleteItemAsync("@melanin_maps_fresh_login").catch(() => {}),
-      SecureStore.deleteItemAsync("apple_user_id").catch(() => {}),
-    ]);
+    await clearStoredAuthSession();
 
     // Step 3: Reset in-memory state. Login screen mounts here.
     // Token is already gone — auto-restore will find nothing.
@@ -441,7 +475,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         lastCheckRef.current = Date.now();
 
         const appleUserId = await SecureStore.getItemAsync(
-          "apple_user_id",
+          APPLE_USER_ID_KEY,
         ).catch(() => null);
         if (!appleUserId) return;
 
@@ -455,7 +489,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             credState === AppleAuth.AppleAuthenticationCredentialState.REVOKED
           ) {
             // Definitive revocation — log out immediately.
-            await SecureStore.deleteItemAsync("apple_user_id").catch(() => {});
+            await SecureStore.deleteItemAsync(APPLE_USER_ID_KEY).catch(() => {});
             await logout();
           } else if (
             credState === AppleAuth.AppleAuthenticationCredentialState.NOT_FOUND
@@ -470,7 +504,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               retryState ===
               AppleAuth.AppleAuthenticationCredentialState.NOT_FOUND
             ) {
-              await SecureStore.deleteItemAsync("apple_user_id").catch(
+              await SecureStore.deleteItemAsync(APPLE_USER_ID_KEY).catch(
                 () => {},
               );
               await logout();

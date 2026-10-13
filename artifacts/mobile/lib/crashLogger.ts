@@ -26,6 +26,8 @@
 
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Platform } from "react-native";
+import { getApiBase } from "./api";
+import { notifyUnauthorizedApiResponse } from "./authSessionSignals";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -132,6 +134,34 @@ function sanitizeBreadcrumbUrl(rawUrl: string): string {
   }
 }
 
+function isConfiguredApiRequest(rawUrl: string): boolean {
+  const apiBase = getApiBase();
+  if (!apiBase) return false;
+  try {
+    const request = new URL(rawUrl, apiBase);
+    const configuredApi = new URL(apiBase);
+    return (
+      request.origin === configuredApi.origin &&
+      request.pathname.startsWith("/api/")
+    );
+  } catch {
+    return false;
+  }
+}
+
+function requestHasAuthorization(
+  input: RequestInfo | URL,
+  init?: RequestInit,
+): boolean {
+  try {
+    const requestHeaders =
+      init?.headers ?? (input instanceof Request ? input.headers : undefined);
+    return new Headers(requestHeaders).has("authorization");
+  } catch {
+    return false;
+  }
+}
+
 function sanitizeMapState(state: Partial<MapState>): Partial<MapState> {
   return {
     permissionStatus: typeof state.permissionStatus === "string" ? state.permissionStatus : undefined,
@@ -209,8 +239,10 @@ export function setMapState(state: Partial<MapState>): void {
 }
 
 // ─── API fetch interceptor ────────────────────────────────────────────────────
-// Wraps global fetch to record the last MAX_API_RECORDS requests.
-// Does NOT alter request or response behaviour.
+// Wraps global fetch to record the last MAX_API_RECORDS requests. A verified
+// 401 from an authenticated request to the configured API also tells
+// AuthProvider to reconcile stale local session state; it never records
+// credentials, payloads, or raw URLs.
 
 function installFetchInterceptor(): void {
   const origFetch = global.fetch;
@@ -230,6 +262,13 @@ function installFetchInterceptor(): void {
       rec.status = resp.status;
       rec.durationMs = Date.now() - start;
       pushApiRecord(rec);
+      if (
+        resp.status === 401 &&
+        isConfiguredApiRequest(url) &&
+        requestHasAuthorization(input, init)
+      ) {
+        notifyUnauthorizedApiResponse();
+      }
       return resp;
     } catch (err: unknown) {
       rec.durationMs = Date.now() - start;
