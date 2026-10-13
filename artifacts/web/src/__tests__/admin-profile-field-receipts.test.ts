@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   addAdminProfileFieldReceipt,
   ADMIN_PROFILE_FIELD_RECEIPT_OPTIONS,
+  ADMIN_PROFILE_RECEIPT_IDENTITY_MATCH_SIGNALS,
   newAdminProfileFieldReceipt,
 } from "../lib/adminProfileFieldReceipts";
 
@@ -31,6 +32,16 @@ describe("admin profile field receipt presets", () => {
     expect(ADMIN_PROFILE_FIELD_RECEIPT_OPTIONS.map((option) => option.value)).toEqual([
       "identity", "description", "category", "hours", "price_range", "phone", "address",
       "website", "instagram", "tiktok", "facebook", "service_tags", "ownership",
+    ]);
+  });
+
+  it("exposes only server-accepted identity-match signals", () => {
+    expect(ADMIN_PROFILE_RECEIPT_IDENTITY_MATCH_SIGNALS).toEqual([
+      { value: "business_name", label: "Exact business name" },
+      { value: "street_address", label: "Street address" },
+      { value: "full_phone", label: "Full phone number" },
+      { value: "official_domain", label: "Official domain" },
+      { value: "official_social_profile", label: "Official profile linkage" },
     ]);
   });
 });

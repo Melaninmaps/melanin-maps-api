@@ -29,6 +29,14 @@ describe("audited admin business editor", () => {
     expect(editor).toContain("Every changed public fact needs a source before save");
   });
 
+  it("requires an explicit, clickable identity-match signal for official presence receipts", () => {
+    const editor = source();
+    expect(editor).toContain("ADMIN_PROFILE_RECEIPT_IDENTITY_MATCH_SIGNALS.map");
+    expect(editor).toContain('aria-pressed={receipt.identityMatchSignal === value}');
+    expect(editor).toContain("Evidence matched by");
+    expect(editor).not.toContain('disabled={receipt.identityMatch !== true} value={receipt.identityMatchSignal ?? ""}');
+  });
+
   it("keeps ownership verification, map pins, and lifecycle separate from generic edits", () => {
     const editor = source();
     expect(editor).not.toContain("blackOwned:");

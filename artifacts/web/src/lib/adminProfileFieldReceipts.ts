@@ -13,6 +13,13 @@ export type AdminProfileFieldReceiptName =
   | "service_tags"
   | "ownership";
 
+export type AdminProfileReceiptIdentityMatchSignal =
+  | "business_name"
+  | "street_address"
+  | "full_phone"
+  | "official_domain"
+  | "official_social_profile";
+
 export type AdminProfileFieldReceipt = {
   field: AdminProfileFieldReceiptName;
   sourceUrl: string;
@@ -21,7 +28,7 @@ export type AdminProfileFieldReceipt = {
   confidence: "high" | "medium" | "low";
   note: string | null;
   identityMatch?: boolean;
-  identityMatchSignal?: "business_name" | "street_address" | "full_phone" | "official_domain" | "official_social_profile" | null;
+  identityMatchSignal?: AdminProfileReceiptIdentityMatchSignal | null;
 };
 
 export const ADMIN_PROFILE_FIELD_RECEIPT_OPTIONS: ReadonlyArray<{
@@ -41,6 +48,22 @@ export const ADMIN_PROFILE_FIELD_RECEIPT_OPTIONS: ReadonlyArray<{
   { value: "facebook", label: "Facebook" },
   { value: "service_tags", label: "Service tags / vibes" },
   { value: "ownership", label: "Ownership" },
+];
+
+/**
+ * Each official website or social update requires a deliberate, auditable
+ * explanation of how its source was tied to the exact business. Buttons use
+ * this controlled list rather than accepting a free-form assertion.
+ */
+export const ADMIN_PROFILE_RECEIPT_IDENTITY_MATCH_SIGNALS: ReadonlyArray<{
+  value: AdminProfileReceiptIdentityMatchSignal;
+  label: string;
+}> = [
+  { value: "business_name", label: "Exact business name" },
+  { value: "street_address", label: "Street address" },
+  { value: "full_phone", label: "Full phone number" },
+  { value: "official_domain", label: "Official domain" },
+  { value: "official_social_profile", label: "Official profile linkage" },
 ];
 
 export function newAdminProfileFieldReceipt(field: AdminProfileFieldReceiptName): AdminProfileFieldReceipt {
