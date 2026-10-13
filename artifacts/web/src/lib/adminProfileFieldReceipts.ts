@@ -10,6 +10,9 @@ export type AdminProfileFieldReceiptName =
   | "instagram"
   | "tiktok"
   | "facebook"
+  | "twitter"
+  | "youtube"
+  | "pinterest"
   | "service_tags"
   | "ownership";
 
@@ -46,6 +49,9 @@ export const ADMIN_PROFILE_FIELD_RECEIPT_OPTIONS: ReadonlyArray<{
   { value: "instagram", label: "Instagram" },
   { value: "tiktok", label: "TikTok" },
   { value: "facebook", label: "Facebook" },
+  { value: "twitter", label: "X / Twitter" },
+  { value: "youtube", label: "YouTube" },
+  { value: "pinterest", label: "Pinterest" },
   { value: "service_tags", label: "Service tags / vibes" },
   { value: "ownership", label: "Ownership" },
 ];

@@ -34,6 +34,7 @@ describe("audited admin business editor", () => {
     expect(editor).toContain("ADMIN_PROFILE_RECEIPT_IDENTITY_MATCH_SIGNALS.map");
     expect(editor).toContain('aria-pressed={receipt.identityMatchSignal === value}');
     expect(editor).toContain("Evidence matched by");
+    expect(editor).toContain('"twitter", "youtube", "pinterest"');
     expect(editor).not.toContain('disabled={receipt.identityMatch !== true} value={receipt.identityMatchSignal ?? ""}');
   });
 

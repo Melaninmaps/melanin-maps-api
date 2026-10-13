@@ -16,7 +16,7 @@ export const ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS = new Set([
 ]);
 
 export type OwnershipSourceReceiptInput = { sourceUrl: string; sourceLabel: string; observedAt: string; note: string | null };
-export type ProfileFieldReceiptName = "identity" | "description" | "category" | "hours" | "price_range" | "phone" | "address" | "website" | "instagram" | "tiktok" | "facebook" | "service_tags" | "ownership";
+export type ProfileFieldReceiptName = "identity" | "description" | "category" | "hours" | "price_range" | "phone" | "address" | "website" | "instagram" | "tiktok" | "facebook" | "twitter" | "youtube" | "pinterest" | "service_tags" | "ownership";
 export type ReceiptIdentityMatchSignal = "business_name" | "street_address" | "full_phone" | "official_domain" | "official_social_profile";
 export type ProfileFieldReceiptInput = { field: ProfileFieldReceiptName; sourceUrl: string; sourceLabel: string; observedAt: string; confidence: "high" | "medium" | "low"; note: string | null; identityMatch: boolean; identityMatchSignal: ReceiptIdentityMatchSignal | null };
 export type ReceiptObservedValue = { fields: Record<string, string | string[] | null>; identityMatch: { asserted: boolean; signal: ReceiptIdentityMatchSignal | null } };
@@ -32,7 +32,7 @@ type ExistingProfile = {
 const OPTIONAL_TEXT_FIELDS: Record<string, { column: string; max: number }> = {
   description: { column: "description", max: 5000 }, address: { column: "address", max: 255 }, city: { column: "city", max: 100 }, state: { column: "state", max: 50 }, phone: { column: "phone", max: 30 }, hours: { column: "hours", max: 255 }, priceRange: { column: "price_range", max: 10 }, instagram: { column: "instagram", max: 255 }, tiktok: { column: "tiktok", max: 255 }, facebook: { column: "facebook", max: 255 }, twitter: { column: "twitter", max: 255 }, youtube: { column: "youtube", max: 255 }, pinterest: { column: "pinterest", max: 255 }, category: { column: "category", max: 100 }, subcategory: { column: "subcategory", max: 100 },
 };
-const RECEIPT_FIELDS = new Set<ProfileFieldReceiptName>(["identity", "description", "category", "hours", "price_range", "phone", "address", "website", "instagram", "tiktok", "facebook", "service_tags", "ownership"]);
+const RECEIPT_FIELDS = new Set<ProfileFieldReceiptName>(["identity", "description", "category", "hours", "price_range", "phone", "address", "website", "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest", "service_tags", "ownership"]);
 const ADMIN_PROFILE_JSONB_COLUMNS = new Set(["ownership_designations", "vibes", "tags"]);
 const RECEIPT_REQUIRED_CREATION_PRESENCE_FIELDS = ["website", "instagram", "facebook", "tiktok", "twitter", "youtube", "pinterest"] as const;
 
@@ -131,6 +131,13 @@ function cleanFieldReceipt(value: unknown): ProfileFieldReceiptInput {
   return { field: field as ProfileFieldReceiptName, sourceUrl: cleanPublicUrl(raw.sourceUrl, "source receipt URL") as string, sourceLabel: cleanText(raw.sourceLabel, "source receipt label", 255, false) as string, observedAt: validObservedDate(raw.observedAt, "source receipt observation date"), confidence, note: cleanText(raw.note, "source receipt note", 1000), identityMatch, identityMatchSignal: identityMatchSignal as ReceiptIdentityMatchSignal | null ?? null };
 }
 function sameValue(a: unknown, b: unknown): boolean { return JSON.stringify(a ?? null) === JSON.stringify(b ?? null); }
+function sameProfileColumnValue(column: string, current: unknown, next: unknown): boolean {
+  // Older profiles can retain NULL tags/vibes while the editor faithfully submits
+  // its empty-array UI state. Treat only that representation difference as a no-op;
+  // a non-empty list is still audited and requires its own source receipt.
+  if (["tags", "vibes"].includes(column)) return sameValue(current ?? [], next ?? []);
+  return sameValue(current, next);
+}
 function receiptFieldForColumn(column: string): ProfileFieldReceiptName | null {
   if (["name", "city", "state"].includes(column)) return "identity";
   if (column === "description") return "description";
@@ -140,8 +147,7 @@ function receiptFieldForColumn(column: string): ProfileFieldReceiptName | null {
   if (column === "phone") return "phone";
   if (column === "address") return "address";
   if (column === "website") return "website";
-  if (["instagram", "tiktok", "facebook"].includes(column)) return column as ProfileFieldReceiptName;
-  if (["twitter", "youtube", "pinterest"].includes(column)) return "service_tags";
+  if (["instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest"].includes(column)) return column as ProfileFieldReceiptName;
   if (["tags", "vibes"].includes(column)) return "service_tags";
   if (column === "ownership_designations") return "ownership";
   return null;
@@ -181,7 +187,7 @@ export function validateAdminBusinessProfilePatch(input: unknown, existing: Exis
   const receiptFields = new Set(fieldReceipts.map((receipt) => receipt.field));
   if (fieldReceipts.length !== receiptFields.size) throw new Error("Submit at most one source receipt per public fact field per save");
   const existingValue: Record<string, unknown> = { ...existing, price_range: existing.priceRange ?? null, ownership_designations: existing.ownershipDesignations ?? [] };
-  const changedColumns = Object.entries(patch).filter(([column, next]) => !sameValue(existingValue[column], next)).map(([column]) => column);
+  const changedColumns = Object.entries(patch).filter(([column, next]) => !sameProfileColumnValue(column, existingValue[column], next)).map(([column]) => column);
   const requiredReceiptFields = [...new Set(changedColumns.map(receiptFieldForColumn).filter((field): field is ProfileFieldReceiptName => Boolean(field)))];
   const missing = requiredReceiptFields.filter((field) => !receiptFields.has(field));
   if (missing.length) throw new Error(`A public source receipt is required for: ${missing.join(", ")}`);

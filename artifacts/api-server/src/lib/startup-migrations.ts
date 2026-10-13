@@ -6030,7 +6030,7 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       business_id TEXT NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
       field_name TEXT NOT NULL CHECK (field_name IN (
         'identity', 'description', 'category', 'hours', 'price_range', 'phone', 'address', 'website',
-        'instagram', 'tiktok', 'facebook', 'service_tags', 'ownership'
+        'instagram', 'tiktok', 'facebook', 'twitter', 'youtube', 'pinterest', 'service_tags', 'ownership'
       )),
       source_url TEXT NOT NULL CHECK (char_length(source_url) <= 2048),
       source_label TEXT NOT NULL CHECK (char_length(source_label) BETWEEN 1 AND 255),
@@ -6047,7 +6047,7 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ADD CONSTRAINT business_profile_field_receipts_field_name_check
       CHECK (field_name IN (
         'identity', 'description', 'category', 'hours', 'price_range', 'phone', 'address', 'website',
-        'instagram', 'tiktok', 'facebook', 'service_tags', 'ownership'
+        'instagram', 'tiktok', 'facebook', 'twitter', 'youtube', 'pinterest', 'service_tags', 'ownership'
       )) NOT VALID;
     ALTER TABLE business_profile_field_receipts
       VALIDATE CONSTRAINT business_profile_field_receipts_field_name_check;
@@ -6111,6 +6111,21 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       BEFORE UPDATE OR DELETE ON business_catalog_cohort_audit_events
       FOR EACH ROW EXECUTE FUNCTION public.prevent_business_profile_receipt_mutation();`,
   },
+  {
+    // Social platforms are distinct public facts. Do not force YouTube, X, or
+    // Pinterest corrections to masquerade as a service-tag receipt.
+    name: "business_profile_field_receipt_social_platforms_v1",
+    sql: `ALTER TABLE business_profile_field_receipts
+      DROP CONSTRAINT IF EXISTS business_profile_field_receipts_field_name_check;
+    ALTER TABLE business_profile_field_receipts
+      ADD CONSTRAINT business_profile_field_receipts_field_name_check
+      CHECK (field_name IN (
+        'identity', 'description', 'category', 'hours', 'price_range', 'phone', 'address', 'website',
+        'instagram', 'tiktok', 'facebook', 'twitter', 'youtube', 'pinterest', 'service_tags', 'ownership'
+      )) NOT VALID;
+    ALTER TABLE business_profile_field_receipts
+      VALIDATE CONSTRAINT business_profile_field_receipts_field_name_check;`,
+  },
 ];
 
 /**
@@ -6123,13 +6138,14 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
 export async function ensureAdminBusinessProfileReceiptsAndCatalogSchema(
   logger?: Logger,
 ): Promise<void> {
-  const migration = MIGRATIONS.find(
-    (candidate) => candidate.name === "admin_business_profile_receipts_and_catalog_v1",
-  );
-  if (!migration) {
+  const migrations = [
+    "admin_business_profile_receipts_and_catalog_v1",
+    "business_profile_field_receipt_social_platforms_v1",
+  ].map((name) => MIGRATIONS.find((candidate) => candidate.name === name));
+  if (migrations.some((migration) => !migration)) {
     throw new Error("Admin profile and Kinfolk Catalog schema migration is unavailable");
   }
-  await pool.query(migration.sql);
+  for (const migration of migrations) await pool.query(migration!.sql);
   await Promise.all([
     pool.query("SELECT business_id, field_name, source_url FROM business_profile_field_receipts LIMIT 0"),
     pool.query("SELECT business_id, state, reason FROM business_catalog_cohort_memberships LIMIT 0"),

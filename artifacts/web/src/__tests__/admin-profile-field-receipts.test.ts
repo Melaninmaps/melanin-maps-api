@@ -31,7 +31,7 @@ describe("admin profile field receipt presets", () => {
   it("exposes every controlled receipt field to the editor", () => {
     expect(ADMIN_PROFILE_FIELD_RECEIPT_OPTIONS.map((option) => option.value)).toEqual([
       "identity", "description", "category", "hours", "price_range", "phone", "address",
-      "website", "instagram", "tiktok", "facebook", "service_tags", "ownership",
+      "website", "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest", "service_tags", "ownership",
     ]);
   });
 

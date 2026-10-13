@@ -4294,7 +4294,17 @@ router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response
       return;
     }
 
-    const patch = { ...validated.patch };
+    // The full editor submits its current form state. Only write values that
+    // validation identified as materially changed, so retained legacy NULL
+    // values and unchanged protected profile facts are never rewritten.
+    const patch = Object.fromEntries(
+      Object.entries(validated.patch).filter(([column]) => validated.changedColumns.includes(column)),
+    );
+    if (Object.keys(patch).length === 0) {
+      await client.query("ROLLBACK");
+      res.status(400).json({ error: "No public profile fields changed." });
+      return;
+    }
     const nextName = String(patch.name ?? existing.name);
     const nextAddress = String(patch.address ?? existing.address ?? "");
     const nextCity = String(patch.city ?? existing.city ?? "");
