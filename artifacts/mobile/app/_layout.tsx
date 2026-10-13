@@ -401,14 +401,30 @@ function DobChecker() {
 
 function SessionExpiryWatcher() {
   const router = useRouter();
-  const { isLoading, sessionExpired } = useAuth();
+  const pathname = usePathname();
+  const { isLoading, isAuthenticated, sessionExpired, sessionRecoveryError } = useAuth();
 
   useEffect(() => {
     if (isLoading) return;
     if (sessionExpired) {
       router.replace("/login?expired=1");
+      return;
     }
-  }, [isLoading, sessionExpired, router]);
+    if (
+      sessionRecoveryError &&
+      !isAuthenticated &&
+      !pathname.startsWith("/login")
+    ) {
+      router.replace(`/login?recovery=${sessionRecoveryError}` as Href);
+    }
+  }, [
+    isLoading,
+    isAuthenticated,
+    sessionExpired,
+    sessionRecoveryError,
+    pathname,
+    router,
+  ]);
 
   return null;
 }

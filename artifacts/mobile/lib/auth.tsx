@@ -12,6 +12,7 @@ import { AppState, Platform } from "react-native";
 import { getApiBase } from "@/lib/api";
 import { identifyRevenueCatUser, resetRevenueCatUser } from "@/lib/revenuecat";
 import { registerUnauthorizedApiResponseHandler } from "@/lib/authSessionSignals";
+import { withAuthOperationDeadline } from "@/lib/authOperationDeadline";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -26,10 +27,21 @@ const APPLE_USER_ID_KEY = "apple_user_id";
  * longer renderable, so a member always has a local account-recovery escape.
  */
 export async function clearStoredAuthSession(): Promise<void> {
-  await Promise.all([
-    SecureStore.deleteItemAsync(AUTH_TOKEN_KEY).catch(() => {}),
-    SecureStore.deleteItemAsync(FRESH_LOGIN_KEY).catch(() => {}),
-    SecureStore.deleteItemAsync(APPLE_USER_ID_KEY).catch(() => {}),
+  // SecureStore normally resolves promptly. A device-local keychain operation
+  // must never leave the member trapped behind a permanent auth spinner.
+  await Promise.allSettled([
+    withAuthOperationDeadline(
+      SecureStore.deleteItemAsync(AUTH_TOKEN_KEY),
+      "Secure sign-in cleanup",
+    ),
+    withAuthOperationDeadline(
+      SecureStore.deleteItemAsync(FRESH_LOGIN_KEY),
+      "Secure sign-in cleanup",
+    ),
+    withAuthOperationDeadline(
+      SecureStore.deleteItemAsync(APPLE_USER_ID_KEY),
+      "Secure sign-in cleanup",
+    ),
   ]);
 }
 
@@ -59,6 +71,7 @@ interface AuthContextValue {
   isLoading: boolean;
   isAuthenticated: boolean;
   sessionExpired: boolean;
+  sessionRecoveryError: "secure_storage" | "connection" | null;
   login: () => Promise<void>;
   loginWithEmail: (
     email: string,
@@ -78,6 +91,7 @@ const AuthContext = createContext<AuthContextValue>({
   isLoading: true,
   isAuthenticated: false,
   sessionExpired: false,
+  sessionRecoveryError: null,
   login: async () => {},
   loginWithEmail: async () => ({}),
   logout: async () => {},
@@ -90,16 +104,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [sessionRecoveryError, setSessionRecoveryError] = useState<
+    "secure_storage" | "connection" | null
+  >(null);
   const expiringSessionRef = React.useRef(false);
 
   const expireSession = useCallback(async (): Promise<void> => {
     if (expiringSessionRef.current) return;
     expiringSessionRef.current = true;
     try {
-      await clearStoredAuthSession();
+      // Settle visible state before best-effort local cleanup. The server has
+      // already rejected this session; cleanup cannot be allowed to block the
+      // route back to usable sign-in UI.
       setUser(null);
       setSessionExpired(true);
+      setSessionRecoveryError(null);
       setIsLoading(false);
+      void clearStoredAuthSession();
       void resetRevenueCatUser();
     } finally {
       expiringSessionRef.current = false;
@@ -109,18 +130,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUser = useCallback(async (): Promise<boolean> => {
     let token: string | null = null;
     try {
-      token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+      token = await withAuthOperationDeadline(
+        SecureStore.getItemAsync(AUTH_TOKEN_KEY),
+        "Secure sign-in restoration",
+      );
     } catch (secureErr: unknown) {
       const e = secureErr as Error;
       console.error("fetchUser: SecureStore.getItemAsync threw", {
         errorName: e?.name,
         errorMessage: e?.message,
       });
+      setSessionExpired(false);
+      setSessionRecoveryError("secure_storage");
       setIsLoading(false);
       return false;
     }
     if (!token) {
       setUser(null);
+      setSessionExpired(false);
+      setSessionRecoveryError(null);
       setIsLoading(false);
       return false;
     }
@@ -138,11 +166,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           signal: controller.signal,
         });
         clearTimeout(timer);
-        const data = await res.json();
+        const data = await withAuthOperationDeadline(
+          res.json(),
+          "Secure sign-in response",
+        );
 
         if (data.user) {
           setUser(data.user as User);
           setSessionExpired(false);
+          setSessionRecoveryError(null);
           setIsLoading(false);
           // Tie RC entitlements to this MWM account so they are portable
           // across devices and reinstalls.
@@ -166,6 +198,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             continue;
           }
           // All retries exhausted — keep existing user state.
+          setSessionRecoveryError("connection");
           setIsLoading(false);
           return false;
         }
@@ -185,6 +218,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // All retries exhausted due to network errors. Keep the existing user
     // state (if any) rather than forcing a sign-out — the token is still
     // valid, we just couldn't reach the server.
+    setSessionRecoveryError("connection");
     setIsLoading(false);
     return false;
   }, [expireSession]);
@@ -205,6 +239,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = useCallback(async () => {
     try {
+      setSessionRecoveryError(null);
       const apiBase = getApiBaseUrl();
       const result = await WebBrowser.openAuthSessionAsync(
         `${apiBase}/api/mobile-auth/init`,
@@ -244,6 +279,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       errorCode?: string;
       mustChangePassword?: boolean;
     }> => {
+      setSessionRecoveryError(null);
       const apiBase = getApiBaseUrl();
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 12_000);
@@ -276,7 +312,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const contentType = response.headers.get("content-type") ?? "";
       let rawBody = "";
       try {
-        rawBody = await response.text();
+        rawBody = await withAuthOperationDeadline(
+          response.text(),
+          "Sign-in response",
+        );
       } catch (textErr: unknown) {
         const e = textErr as Error;
         console.error("login response.text() threw", {
@@ -335,7 +374,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Step 1 — persist session token
       try {
-        await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
+        await withAuthOperationDeadline(
+          SecureStore.setItemAsync(AUTH_TOKEN_KEY, token),
+          "Secure sign-in storage",
+        );
       } catch (step1Err: unknown) {
         const e = step1Err as Error;
         console.error("login step 1 FAILED: SecureStore.setItemAsync(token)", {
@@ -351,7 +393,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Step 1 verify — read the token back immediately to confirm it was retained
       try {
-        const verified = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+        const verified = await withAuthOperationDeadline(
+          SecureStore.getItemAsync(AUTH_TOKEN_KEY),
+          "Secure sign-in verification",
+        );
         if (!verified) {
           console.error(
             "login step 1 verify: token not retained after save (read-back null)",
@@ -374,7 +419,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       // Step 2 — set fresh-login flag (non-critical, failure is allowed)
       try {
-        await SecureStore.setItemAsync(FRESH_LOGIN_KEY, "1");
+        await withAuthOperationDeadline(
+          SecureStore.setItemAsync(FRESH_LOGIN_KEY, "1"),
+          "Secure sign-in setup",
+        );
       } catch (step2Err: unknown) {
         const e = step2Err as Error;
         console.error("login step 2: fresh_login flag failed (non-critical)", {
@@ -403,27 +451,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Step 1: Read token while the authenticated screen is still mounted.
     let token: string | null = null;
     try {
-      token = await SecureStore.getItemAsync(AUTH_TOKEN_KEY);
+      token = await withAuthOperationDeadline(
+        SecureStore.getItemAsync(AUTH_TOKEN_KEY),
+        "Secure sign-in logout",
+      );
     } catch {
       // Local logout must still complete if a device storage read is briefly
       // unavailable. The delete, in-memory reset, and login return below are
       // intentionally not conditional on this best-effort server revocation.
     }
 
-    // Step 2: Delete both local keys before the login screen can mount.
-    // Auto-restore cannot find a token after this point.
-    await clearStoredAuthSession();
-
-    // Step 3: Reset in-memory state. Login screen mounts here.
-    // Token is already gone — auto-restore will find nothing.
+    // Step 2: Reset in-memory state before best-effort local deletion so a
+    // stalled device credential operation cannot trap the member in-app.
     setUser(null);
     setSessionExpired(false);
+    setSessionRecoveryError(null);
     setIsLoading(false);
+    void clearStoredAuthSession();
 
-    // Step 4: RevenueCat session cleanup (non-blocking).
+    // Step 3: RevenueCat session cleanup (non-blocking).
     void resetRevenueCatUser();
 
-    // Step 5: Bounded server-side revocation. Uses the old token retained in
+    // Step 4: Bounded server-side revocation. Uses the old token retained in
     // memory — does not read or restore anything from SecureStore.
     // 3-second deadline: responsive logout with a genuine revocation attempt.
     // Failure does not restore the local token or block the return.
@@ -525,6 +574,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         isAuthenticated: !!user,
         sessionExpired,
+        sessionRecoveryError,
         login,
         loginWithEmail,
         logout,

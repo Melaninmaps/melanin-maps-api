@@ -1,7 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState, useEffect, useRef } from "react";
 import {
   ActivityIndicator,
@@ -21,7 +21,7 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
-import { useAuth, getApiBaseUrl } from "@/lib/auth";
+import { clearStoredAuthSession, useAuth, getApiBaseUrl } from "@/lib/auth";
 import {
   getBiometricCapabilities,
   isBiometricsEnabled,
@@ -33,12 +33,14 @@ export default function LoginScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { recovery } = useLocalSearchParams<{ recovery?: string }>();
   const {
     login,
     loginWithEmail,
     refreshUser,
     isAuthenticated,
     isLoading: authLoading,
+    sessionRecoveryError,
   } = useAuth();
 
   const [emailMode, setEmailMode] = useState(true);
@@ -53,6 +55,18 @@ export default function LoginScreen() {
   const [biometricLoading, setBiometricLoading] = useState(false);
   const [connecting, setConnecting] = useState(false);
 
+  useEffect(() => {
+    if (recovery === "secure_storage") {
+      setError(
+        "Your saved sign-in could not be restored on this device. Please sign in again.",
+      );
+    } else if (recovery === "connection") {
+      setError(
+        "Your saved sign-in could not be verified. Please check your connection and sign in again.",
+      );
+    }
+  }, [recovery]);
+
   // Track the latest isAuthenticated value inside async callbacks without stale closures
   const isAuthRef = useRef(isAuthenticated);
   useEffect(() => {
@@ -64,7 +78,7 @@ export default function LoginScreen() {
   // silently attempt to reload the user profile and skip the login form.
   useEffect(() => {
     if ((Platform.OS as string) === "web") return;
-    if (isAuthenticated || authLoading) {
+    if (isAuthenticated || authLoading || sessionRecoveryError) {
       return;
     }
     let cancelled = false;
@@ -383,12 +397,11 @@ export default function LoginScreen() {
                 <TouchableOpacity
                   activeOpacity={0.85}
                   disabled={loading}
-                  onPress={async () => {
-                    await SecureStore.deleteItemAsync(
-                      "auth_session_token",
-                    ).catch(() => {});
-                    setConnecting(false);
-                    setError("");
+                  onPress={() => {
+                    void clearStoredAuthSession().finally(() => {
+                      setConnecting(false);
+                      setError("");
+                    });
                   }}
                 >
                   <Text
