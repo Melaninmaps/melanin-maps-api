@@ -13,6 +13,48 @@ import { DIASPORA_OWNERSHIP_DESIGNATIONS, ownershipDesignationFilterId } from "@
 export const DOCUMENTED_DISCOVERY_POLICY_VERSION =
   "documented_diaspora_discovery_v1" as const;
 
+/**
+ * Versioned, evidence-quality reconciliation for Kinfolk/Discovery promotion.
+ * It is deliberately independent from legacy receipt identity and from map
+ * evidence. Production remains in observe mode until an immutable-ID review
+ * manifest has classified the corresponding ownership receipt.
+ */
+export const OWNERSHIP_EVIDENCE_STANDARD_POLICY_VERSION =
+  "ownership_evidence_standard_v1" as const;
+
+export const OWNERSHIP_EVIDENCE_STANDARD_MODE_ENV =
+  "MWM_OWNERSHIP_EVIDENCE_STANDARD_MODE" as const;
+
+export const OWNERSHIP_EVIDENCE_LEVELS = [
+  "OE0",
+  "OE1",
+  "OE2",
+  "OE3-D",
+  "OE3-V",
+] as const;
+
+export type OwnershipEvidenceLevel = (typeof OWNERSHIP_EVIDENCE_LEVELS)[number];
+
+const QUALIFYING_OWNERSHIP_EVIDENCE_LEVELS = new Set<OwnershipEvidenceLevel>([
+  "OE1",
+  "OE2",
+  "OE3-D",
+  "OE3-V",
+]);
+
+/** Only an explicit enforce value turns the reconciliation gate on. */
+export function isOwnershipEvidenceStandardEnforced(
+  configuredValue: string | undefined = process.env[OWNERSHIP_EVIDENCE_STANDARD_MODE_ENV],
+): boolean {
+  return configuredValue?.trim().toLowerCase() === "enforce";
+}
+
+export function isQualifyingOwnershipEvidenceLevel(
+  value: string | null | undefined,
+): value is Exclude<OwnershipEvidenceLevel, "OE0"> {
+  return typeof value === "string" && QUALIFYING_OWNERSHIP_EVIDENCE_LEVELS.has(value as OwnershipEvidenceLevel);
+}
+
 /** A fail-closed operational switch. There is intentionally no permissive "off" mode. */
 export const DOCUMENTED_DISCOVERY_POLICY_MODE_ENV =
   "MWM_DOCUMENTED_DISCOVERY_POLICY_MODE" as const;
@@ -42,6 +84,10 @@ export type DocumentedDiscoveryEligibilityCandidate = Readonly<{
   review_after?: string | null;
   ownershipDesignations?: readonly string[] | null;
   ownership_designations?: readonly string[] | null;
+  ownershipEvidenceLevel?: string | null;
+  ownership_evidence_level?: string | null;
+  ownershipEvidencePolicyVersion?: string | null;
+  ownership_evidence_policy_version?: string | null;
 }>;
 
 export function isDocumentedDiscoveryHoldEnabled(
@@ -69,9 +115,15 @@ export function documentedDiscoveryEligibilitySqlPredicate(
   businessIdExpression: string,
   surface: DocumentedDiscoverySurface = "discovery",
   configuredValue: string | undefined = process.env[DOCUMENTED_DISCOVERY_POLICY_MODE_ENV],
+  ownershipEvidenceStandardMode: string | undefined = process.env[OWNERSHIP_EVIDENCE_STANDARD_MODE_ENV],
 ): string {
   if (isDocumentedDiscoveryHoldEnabled(configuredValue)) return "FALSE";
   const businessId = columnFor(businessIdExpression, "id");
+  const ownershipEvidenceStandardClause = isOwnershipEvidenceStandardEnforced(ownershipEvidenceStandardMode)
+    ? `
+       AND documented_eligibility.ownership_evidence_policy_version = '${OWNERSHIP_EVIDENCE_STANDARD_POLICY_VERSION}'
+       AND documented_eligibility.ownership_evidence_level IN ('OE1', 'OE2', 'OE3-D', 'OE3-V')`
+    : "";
   const mapClause = surface === "map"
     ? `
        AND (
@@ -102,7 +154,7 @@ export function documentedDiscoveryEligibilitySqlPredicate(
          OR documented_eligibility.official_social_evidence_id IS NOT NULL
        )
        AND documented_eligibility.ownership_source_expires_at > CURRENT_TIMESTAMP
-       AND documented_eligibility.review_after > CURRENT_TIMESTAMP${mapClause}
+       AND documented_eligibility.review_after > CURRENT_TIMESTAMP${ownershipEvidenceStandardClause}${mapClause}
   )`;
 }
 
@@ -112,6 +164,7 @@ export function isDocumentedDiscoveryEligible(
   surface: DocumentedDiscoverySurface = "discovery",
   now: Date = new Date(),
   configuredValue: string | undefined = process.env[DOCUMENTED_DISCOVERY_POLICY_MODE_ENV],
+  ownershipEvidenceStandardMode: string | undefined = process.env[OWNERSHIP_EVIDENCE_STANDARD_MODE_ENV],
 ): boolean {
   if (isDocumentedDiscoveryHoldEnabled(configuredValue)) return false;
   const value = (camel: keyof DocumentedDiscoveryEligibilityCandidate, snake: keyof DocumentedDiscoveryEligibilityCandidate) =>
@@ -126,6 +179,8 @@ export function isDocumentedDiscoveryEligible(
   const ownershipEvidence = value("ownershipEvidenceId", "ownership_evidence_id");
   const officialWebsite = value("officialWebsiteEvidenceId", "official_website_evidence_id");
   const officialSocial = value("officialSocialEvidenceId", "official_social_evidence_id");
+  const ownershipEvidenceLevel = value("ownershipEvidenceLevel", "ownership_evidence_level");
+  const ownershipEvidencePolicyVersion = value("ownershipEvidencePolicyVersion", "ownership_evidence_policy_version");
   if (
     value("eligibilityStatus", "eligibility_status") !== "qualified"
     || value("policyVersion", "policy_version") !== DOCUMENTED_DISCOVERY_POLICY_VERSION
@@ -134,6 +189,10 @@ export function isDocumentedDiscoveryEligible(
     || !dateIsFuture(expiresAt as string | null)
     || !dateIsFuture(reviewAfter as string | null)
   ) return false;
+  if (isOwnershipEvidenceStandardEnforced(ownershipEvidenceStandardMode) && (
+    ownershipEvidencePolicyVersion !== OWNERSHIP_EVIDENCE_STANDARD_POLICY_VERSION
+    || !isQualifyingOwnershipEvidenceLevel(ownershipEvidenceLevel as string | null)
+  )) return false;
   if (surface === "map") {
     const mapEvidence = value("mapPinEvidenceId", "map_pin_evidence_id");
     const legacyAttested = value("legacyMapLocationAttested", "legacy_map_location_attested") === true;
@@ -149,4 +208,4 @@ export function isDocumentedDiscoveryEligible(
 }
 
 export const DOCUMENTED_DISCOVERY_EVIDENCE_RULE =
-  "Ordinary directory, Discovery, and Kinfolk recommendations require a current, audited ownership receipt and at least one audited official website or official social receipt. Standard map pins require sourced address and geocode receipts. A separately audited, revocable legacy-location attestation may restore only an unchanged pre-receipt-gate stored location; it never represents a first-party address receipt or changes eligibility. A source designation is documented by source, never owner verification. Missing, revoked, or stale ownership evidence removes recommendation eligibility immediately; direct named safety/context lookup remains separate.";
+  "Ordinary directory, Discovery, and Kinfolk recommendations require a current, audited ownership receipt and at least one audited official website or official social receipt. The ownership-evidence standard can only be enforced explicitly after immutable-ID classification: OE1, OE2, OE3-D, and OE3-V qualify; OE0 does not. Standard map pins require sourced address and geocode receipts. A separately audited, revocable legacy-location attestation may restore only an unchanged pre-receipt-gate stored location; it never represents a first-party address receipt or changes eligibility. A source designation is documented by source, never owner verification. Missing, revoked, stale, or explicitly nonqualifying ownership evidence removes recommendation eligibility when enforcement is enabled; direct named safety/context lookup remains separate.";

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DOCUMENTED_DISCOVERY_POLICY_VERSION,
+  OWNERSHIP_EVIDENCE_STANDARD_POLICY_VERSION,
   documentedDiscoveryEligibilitySqlPredicate,
   isDocumentedDiscoveryEligible,
 } from "../documentedDiscoveryEligibility";
@@ -15,6 +16,8 @@ const current = {
   ownershipSourceExpiresAt: "2027-01-01T00:00:00.000Z",
   reviewAfter: "2026-12-01T00:00:00.000Z",
   ownershipDesignations: ["Black / African American-Owned"],
+  ownershipEvidenceLevel: "OE3-D",
+  ownershipEvidencePolicyVersion: OWNERSHIP_EVIDENCE_STANDARD_POLICY_VERSION,
 } as const;
 const now = new Date("2026-10-05T00:00:00.000Z");
 
@@ -52,6 +55,29 @@ describe("documented Discovery eligibility", () => {
   it("uses a fail-closed operational hold rather than an all-live fallback", () => {
     expect(isDocumentedDiscoveryEligible(current, "discovery", now, "hold")).toBe(false);
     expect(documentedDiscoveryEligibilitySqlPredicate("b.id", "discovery", "hold")).toBe("FALSE");
+  });
+
+  it("keeps the standard in observe mode until an immutable-ID reconciliation is explicitly enforced", () => {
+    const legacyUnclassified = {
+      ...current,
+      ownershipEvidenceLevel: null,
+      ownershipEvidencePolicyVersion: null,
+    };
+    expect(isDocumentedDiscoveryEligible(legacyUnclassified, "discovery", now, undefined, "observe")).toBe(true);
+    expect(isDocumentedDiscoveryEligible(legacyUnclassified, "discovery", now, undefined, "enforce")).toBe(false);
+    expect(isDocumentedDiscoveryEligible({ ...current, ownershipEvidenceLevel: "OE0" }, "discovery", now, undefined, "enforce")).toBe(false);
+    expect(isDocumentedDiscoveryEligible({ ...current, ownershipEvidenceLevel: "OE1" }, "discovery", now, undefined, "enforce")).toBe(true);
+    expect(isDocumentedDiscoveryEligible({ ...current, ownershipEvidenceLevel: "OE2" }, "discovery", now, undefined, "enforce")).toBe(true);
+    expect(isDocumentedDiscoveryEligible({ ...current, ownershipEvidenceLevel: "OE3-V" }, "discovery", now, undefined, "enforce")).toBe(true);
+    expect(isDocumentedDiscoveryEligible({ ...current, ownershipEvidencePolicyVersion: "obsolete" }, "discovery", now, undefined, "enforce")).toBe(false);
+  });
+
+  it("adds the evidence-level condition only in explicit enforcement mode", () => {
+    const observe = documentedDiscoveryEligibilitySqlPredicate("b.id", "discovery", undefined, "observe");
+    const enforced = documentedDiscoveryEligibilitySqlPredicate("b.id", "discovery", undefined, "enforce");
+    expect(observe).not.toContain("ownership_evidence_level IN");
+    expect(enforced).toContain("ownership_evidence_policy_version");
+    expect(enforced).toContain("ownership_evidence_level IN ('OE1', 'OE2', 'OE3-D', 'OE3-V')");
   });
 
   it("builds a static server predicate with receipt, expiry, and surface guards", () => {

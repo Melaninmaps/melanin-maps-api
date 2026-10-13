@@ -6111,6 +6111,59 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       BEFORE UPDATE OR DELETE ON business_catalog_cohort_audit_events
       FOR EACH ROW EXECUTE FUNCTION public.prevent_business_profile_receipt_mutation();`,
   },
+  {
+    // This is additive and data-neutral. It intentionally does not classify,
+    // de-qualify, or re-publish any historical record. A future approved,
+    // immutable-ID reconciliation must write both the classification columns
+    // and the immutable audit event before enforcement can be enabled.
+    name: "business_discovery_eligibility_ownership_evidence_standard_v1",
+    sql: `ALTER TABLE business_discovery_eligibility
+      ADD COLUMN IF NOT EXISTS ownership_evidence_level text,
+      ADD COLUMN IF NOT EXISTS ownership_evidence_policy_version text,
+      ADD COLUMN IF NOT EXISTS ownership_evidence_evaluated_at timestamptz;
+      ALTER TABLE business_discovery_eligibility
+      DROP CONSTRAINT IF EXISTS business_discovery_eligibility_ownership_evidence_level_check;
+      ALTER TABLE business_discovery_eligibility
+      ADD CONSTRAINT business_discovery_eligibility_ownership_evidence_level_check
+      CHECK (
+        ownership_evidence_level IS NULL
+        OR ownership_evidence_level IN ('OE0', 'OE1', 'OE2', 'OE3-D', 'OE3-V')
+      ) NOT VALID;
+      ALTER TABLE business_discovery_eligibility
+      VALIDATE CONSTRAINT business_discovery_eligibility_ownership_evidence_level_check;
+      CREATE INDEX IF NOT EXISTS business_discovery_eligibility_ownership_evidence_standard_idx
+        ON business_discovery_eligibility (
+          ownership_evidence_policy_version,
+          ownership_evidence_level,
+          ownership_evidence_evaluated_at DESC
+        );
+
+      CREATE TABLE IF NOT EXISTS business_ownership_evidence_standard_audit_events (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        business_id varchar(255) NOT NULL REFERENCES businesses(id) ON DELETE RESTRICT,
+        ownership_evidence_id uuid NOT NULL REFERENCES business_profile_evidence_receipts(id) ON DELETE RESTRICT,
+        policy_version text NOT NULL,
+        action text NOT NULL CHECK (action IN ('classified', 'reclassified')),
+        actor_id varchar(255),
+        reason text NOT NULL CHECK (char_length(reason) BETWEEN 3 AND 4000),
+        before_state jsonb NOT NULL DEFAULT '{}'::jsonb,
+        after_state jsonb NOT NULL DEFAULT '{}'::jsonb,
+        created_at timestamptz NOT NULL DEFAULT now()
+      );
+      CREATE INDEX IF NOT EXISTS business_ownership_evidence_standard_audit_business_idx
+        ON business_ownership_evidence_standard_audit_events (business_id, created_at DESC);
+      CREATE OR REPLACE FUNCTION public.prevent_business_ownership_evidence_standard_audit_mutation()
+      RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        RAISE EXCEPTION 'business_ownership_evidence_standard_audit_events are immutable';
+      END;
+      $$;
+      DROP TRIGGER IF EXISTS business_ownership_evidence_standard_audit_immutable
+        ON business_ownership_evidence_standard_audit_events;
+      CREATE TRIGGER business_ownership_evidence_standard_audit_immutable
+      BEFORE UPDATE OR DELETE ON business_ownership_evidence_standard_audit_events
+      FOR EACH ROW EXECUTE FUNCTION public.prevent_business_ownership_evidence_standard_audit_mutation();`,
+  },
 ];
 
 /**
