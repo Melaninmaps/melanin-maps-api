@@ -20,7 +20,7 @@ export type ProfileFieldReceiptName = "identity" | "description" | "category" | 
 export type ReceiptIdentityMatchSignal = "business_name" | "street_address" | "full_phone" | "official_domain" | "official_social_profile";
 export type ProfileFieldReceiptInput = { field: ProfileFieldReceiptName; sourceUrl: string; sourceLabel: string; observedAt: string; confidence: "high" | "medium" | "low"; note: string | null; identityMatch: boolean; identityMatchSignal: ReceiptIdentityMatchSignal | null };
 export type ReceiptObservedValue = { fields: Record<string, string | string[] | null>; identityMatch: { asserted: boolean; signal: ReceiptIdentityMatchSignal | null } };
-export type ValidatedAdminProfilePatch = { patch: Record<string, string | string[] | null>; ownershipReceipt: OwnershipSourceReceiptInput | null; fieldReceipts: ProfileFieldReceiptInput[]; requiredReceiptFields: ProfileFieldReceiptName[]; receiptObservedValues: Partial<Record<ProfileFieldReceiptName, ReceiptObservedValue>>; changeNote: string; locationChanged: boolean };
+export type ValidatedAdminProfilePatch = { patch: Record<string, string | string[] | null>; ownershipReceipt: OwnershipSourceReceiptInput | null; fieldReceipts: ProfileFieldReceiptInput[]; requiredReceiptFields: ProfileFieldReceiptName[]; receiptObservedValues: Partial<Record<ProfileFieldReceiptName, ReceiptObservedValue>>; changeNote: string; changedColumns: string[]; locationChanged: boolean };
 
 type ExistingProfile = {
   name: string; description?: string | null; address: string | null; city: string | null; state: string | null;
@@ -210,5 +210,5 @@ export function validateAdminBusinessProfilePatch(input: unknown, existing: Exis
     };
   }
   const locationChanged = ["address", "city", "state"].some((column) => changedColumns.includes(column));
-  return { patch, ownershipReceipt, fieldReceipts, requiredReceiptFields, receiptObservedValues, changeNote, locationChanged };
+  return { patch, ownershipReceipt, fieldReceipts, requiredReceiptFields, receiptObservedValues, changeNote, changedColumns, locationChanged };
 }

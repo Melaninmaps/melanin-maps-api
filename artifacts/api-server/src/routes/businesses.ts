@@ -4384,7 +4384,7 @@ router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response
         ],
       );
     }
-    const changedFields = [...Object.keys(validated.patch), ...(validated.locationChanged ? ["map_coordinates_cleared_after_address_change"] : [])];
+    const changedFields = [...validated.changedColumns, ...(validated.locationChanged ? ["map_coordinates_cleared_after_address_change"] : [])];
     await client.query(
       `INSERT INTO business_admin_profile_edit_audit_events
          (id, business_id, actor_user_id, change_note, changed_fields, before_state, after_state)

@@ -31,6 +31,36 @@ describe("audited administrator business profile policy", () => {
     expect(priceChange.requiredReceiptFields).toEqual(["price_range"]);
     expect(priceChange.receiptObservedValues).toEqual({ price_range: { fields: { price_range: "$$" }, identityMatch: { asserted: false, signal: null } } });
   });
+  it("audits only Instagram when a full editor form changes only Instagram", () => {
+    const fullEditorSubmission = {
+      name: existing.name,
+      description: existing.description,
+      address: existing.address,
+      city: existing.city,
+      state: existing.state,
+      phone: existing.phone,
+      website: existing.website,
+      hours: existing.hours,
+      priceRange: existing.priceRange,
+      instagram: "https://www.instagram.com/communitybooks/",
+      tiktok: existing.tiktok,
+      facebook: existing.facebook,
+      twitter: existing.twitter,
+      youtube: existing.youtube,
+      pinterest: existing.pinterest,
+      category: existing.category,
+      subcategory: existing.subcategory,
+      tags: existing.tags,
+      vibes: existing.vibes,
+      ownershipDesignations: existing.ownershipDesignations,
+      changeNote: "Added the verified official Instagram profile.",
+      sourceReceipts: [receipt("instagram", true)],
+    };
+
+    const validated = validateAdminBusinessProfilePatch(fullEditorSubmission, existing);
+    expect(validated.changedColumns).toEqual(["instagram"]);
+    expect(routeSource()).toContain('const changedFields = [...validated.changedColumns');
+  });
   it("requires a public ownership source receipt for an ownership designation change", () => {
     expect(() => validateAdminBusinessProfilePatch(patch({ ownershipDesignations: ["Black-Owned"] }), existing)).toThrow("source receipt is required");
     expect(validateAdminBusinessProfilePatch(patch({ ownershipDesignations: ["Black-Owned"], ownershipReceipt: { sourceUrl: "https://example.org/owners", sourceLabel: "Dated official ownership announcement", observedAt: "2026-10-05", note: "Explicit ownership statement." } }), existing).fieldReceipts).toContainEqual(expect.objectContaining({ field: "ownership", sourceUrl: "https://example.org/owners" }));
