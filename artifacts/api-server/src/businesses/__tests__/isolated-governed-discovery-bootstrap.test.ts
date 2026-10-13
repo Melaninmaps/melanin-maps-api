@@ -18,6 +18,7 @@ describe("isolated governed discovery bootstrap", () => {
     expect(bootstrap).toContain('"business_discovery_eligibility_v1"');
     expect(bootstrap).toContain('"business_discovery_eligibility_audit_events_v1"');
     expect(bootstrap).toContain('"founder_source_presence_publication_v1"');
+    expect(bootstrap).toContain('"founder_source_receipt_integrity_review_v1"');
     expect(bootstrap).toContain(
       "SELECT business_id, source_record_key FROM business_source_directory_receipts LIMIT 0",
     );

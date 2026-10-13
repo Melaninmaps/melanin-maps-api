@@ -6710,6 +6710,10 @@ const ISOLATED_GOVERNED_DISCOVERY_SCHEMA_MIGRATIONS = [
   // broad runner, so this additive migration is required before the route can
   // truthfully return an empty result instead of a missing-relation 500.
   "founder_source_presence_publication_v1",
+  // The canonical public predicate excludes held or superseded source receipts.
+  // Keep its additive status column available in the same isolated-only bootstrap
+  // so staging reads do not fail after the relation itself has been created.
+  "founder_source_receipt_integrity_review_v1",
 ] as const;
 
 export async function ensureIsolatedGovernedDiscoverySchema(
