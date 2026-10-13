@@ -37,6 +37,13 @@ describe("audited admin business editor", () => {
     expect(editor).toContain("It never creates a listing, changes public visibility, or turns a business into an owner-verified profile.");
   });
 
+  it("exposes a separate documented Kinfolk qualification control rather than broadening profile saves", () => {
+    const editor = source();
+    expect(editor).toContain("AdminKinfolkQualification");
+    expect(editor).toContain('tab === "kinfolk"');
+    expect(editor).toContain('tab === "catalog" || tab === "kinfolk"');
+  });
+
   it("exposes the separate Kinfolk Catalog review surface while retaining the reconciliation ledger", () => {
     const page = adminPage();
     expect(page).toContain("KinfolkCatalogCohort");

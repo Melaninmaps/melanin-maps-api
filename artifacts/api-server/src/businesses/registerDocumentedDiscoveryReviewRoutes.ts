@@ -944,8 +944,11 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
-      const existingBusiness = await client.query<{ id: string; name: string; website: string | null }>(
-        `SELECT id, name, website FROM businesses
+      const existingBusiness = await client.query<{
+        id: string; name: string; website: string | null;
+        is_duplicate: boolean; duplicate_of_id: string | null;
+      }>(
+        `SELECT id, name, website, COALESCE(is_duplicate, false) AS is_duplicate, duplicate_of_id FROM businesses
           WHERE id = $1 AND status NOT IN ('removed', 'deleted')
           FOR UPDATE`,
         [businessId],
@@ -953,6 +956,11 @@ export function registerDocumentedDiscoveryReviewRoutes(app: Express): void {
       if (existingBusiness.rows.length === 0) {
         await client.query("ROLLBACK");
         res.status(404).json({ error: "Business not found" });
+        return;
+      }
+      if (existingBusiness.rows[0].is_duplicate || existingBusiness.rows[0].duplicate_of_id) {
+        await client.query("ROLLBACK");
+        res.status(409).json({ error: "A retained duplicate cannot receive a Kinfolk qualification; use the audited duplicate workflow to resolve the existing canonical record first." });
         return;
       }
       if (input.websiteCleanup) {
