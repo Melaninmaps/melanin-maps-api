@@ -9,6 +9,7 @@ import {
   mergeActivePreferredNameForPrompt,
   resolveExplicitMemberMemoryAccess,
   resolveKinfolkMemoryAccess,
+  resolvePrivateMemoryPersonalizationAccess,
   resolvePublicSharedKinfolkSession,
 } from "../private-memory";
 
@@ -46,6 +47,21 @@ describe("Kinfolk private-memory production control", () => {
       NODE_ENV: "production",
       KINFOLK_EXPLICIT_MEMBER_MEMORY_ENABLED: "false",
     })).toBe(false);
+  });
+
+  it("allows explicitly selected memory without enabling retained chat continuity", () => {
+    expect(resolvePrivateMemoryPersonalizationAccess({
+      continuityEnabled: false,
+      explicitMemberMemoryEnabled: true,
+    })).toBe(true);
+    expect(resolvePrivateMemoryPersonalizationAccess({
+      continuityEnabled: false,
+      explicitMemberMemoryEnabled: false,
+    })).toBe(false);
+    expect(resolvePrivateMemoryPersonalizationAccess({
+      continuityEnabled: true,
+      explicitMemberMemoryEnabled: false,
+    })).toBe(true);
   });
 
   it("cannot inject private content into a prompt when disabled", () => {
@@ -181,8 +197,10 @@ describe("Kinfolk private-memory production control", () => {
     expect((source.match(/code: "PRIVATE_MEMORY_DISABLED"/g) ?? []).length).toBeGreaterThanOrEqual(3);
     expect(source).toContain("if (memoryEnabled && sessionId && req.user?.id)");
     expect(source).toContain("if (req.user?.id && memoryEnabled && sessionPersistenceAvailable)");
-    expect(source).toContain("const memberMemoryEnabled = memoryEnabled");
+    expect(source).toContain("const memberMemoryEnabled = resolvePrivateMemoryPersonalizationAccess({");
     expect(source).toContain("const activePrivateMemories = memberMemoryEnabled && req.user?.id");
+    expect(source).toContain("const directPrivateMemoryEnabled = resolvePrivateMemoryPersonalizationAccess({");
+    expect(source).toContain("directPrivateMemoryEnabled && directPrivateMemoryRuntimeEnabled");
     expect(source).toContain("const ephemeralSession = !memoryEnabled");
     expect(source).toContain("writeEphemeralKinfolkSession(");
     expect(source).toContain("persistExplicitMemberMemory({");

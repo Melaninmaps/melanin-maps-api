@@ -35,6 +35,19 @@ export function resolveExplicitMemberMemoryAccess(
   return isExplicitMemberMemoryEnabled(environment);
 }
 
+/**
+ * A member's explicit selection of a private-memory item is narrower than
+ * retained chat continuity. It may personalize a later relevant Kinfolk answer
+ * even when the member has kept ordinary chat-history continuity off. This
+ * never authorizes reading or writing conversation sessions.
+ */
+export function resolvePrivateMemoryPersonalizationAccess(input: {
+  continuityEnabled: boolean;
+  explicitMemberMemoryEnabled: boolean;
+}): boolean {
+  return input.continuityEnabled || input.explicitMemberMemoryEnabled;
+}
+
 export type KinfolkMemoryConsentReader = (userId: string) => Promise<boolean | null | undefined>;
 
 /** Resolve this authenticated owner's opt-out before any retained session read. */

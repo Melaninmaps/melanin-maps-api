@@ -340,6 +340,7 @@ import {
   mergeActivePreferredNameForPrompt,
   resolveExplicitMemberMemoryAccess,
   resolveKinfolkMemoryAccess,
+  resolvePrivateMemoryPersonalizationAccess,
   resolvePublicSharedKinfolkSession,
 } from "../kinfolk/private-memory";
 import {
@@ -7974,9 +7975,13 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
   // preference can be a soft metadata-ranking cue without changing eligibility.
   const explicitMemberMemoryEnabled = isExplicitMemberMemoryEnabled();
   const directPrivateMemoryRuntimeEnabled = isKinfolkPrivateMemoryEnabled();
+  const directPrivateMemoryEnabled = resolvePrivateMemoryPersonalizationAccess({
+    continuityEnabled: input.memoryEnabled,
+    explicitMemberMemoryEnabled,
+  });
   let directPrivateMemoryStorageUnavailable = false;
   const directActivePrivateMemories =
-    input.memoryEnabled && directPrivateMemoryRuntimeEnabled
+    directPrivateMemoryEnabled && directPrivateMemoryRuntimeEnabled
     ? await db
         .select({
           content: kinfolkPrivateMemoriesTable.content,
@@ -12632,11 +12637,14 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const reproductiveBlock = buildReproductiveContextInstruction(memberCtx);
     const lifeStageBlock = buildLifeStageInstruction(memberCtx);
 
-    // A member's direct remember command may be used even when production does
-    // not retain ordinary chat sessions. Both paths still honor the same owner
-    // opt-out, and only relevant selected facts reach the response prompt.
+    // A direct member selection is its own item-level opt-in and may be used
+    // even when ordinary chat continuity is off. It never enables session
+    // persistence; only relevant selected facts reach the response prompt.
     const explicitMemberMemoryEnabled = isExplicitMemberMemoryEnabled();
-    const memberMemoryEnabled = memoryEnabled;
+    const memberMemoryEnabled = resolvePrivateMemoryPersonalizationAccess({
+      continuityEnabled: memoryEnabled,
+      explicitMemberMemoryEnabled,
+    });
     let privateMemoryStorageUnavailable = false;
     const activePrivateMemories = memberMemoryEnabled && req.user?.id
         ? await db
