@@ -2709,7 +2709,7 @@ export default function TravelScreen() {
 
       {/* Header */}
         <View style={[styles.header, { paddingTop: topPad + 10, backgroundColor: colors.primary }]}>
-          <TouchableOpacity activeOpacity={0.85} style={styles.headerBtn} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity activeOpacity={0.85} style={styles.headerBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)} accessibilityRole="button" accessibilityLabel="Return to the app" hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons name="arrow-back" size={22} color={colors.primaryForeground} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>

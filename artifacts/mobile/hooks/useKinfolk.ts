@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getApiBase } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import {
   createKinfolkClientTrace,
   KINFOLK_CLIENT_TRACE_HEADER,
@@ -250,6 +251,7 @@ function makeId() {
 }
 
 export function useKinfolk() {
+  const { refreshUser } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const messagesRef = useRef<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -306,6 +308,9 @@ export function useKinfolk() {
     activeRequestRef.current = controller;
     const token = await getToken();
     if (!token) {
+      // Reconcile an in-memory authenticated state with SecureStore before the
+      // member is asked to sign in again. This mirrors the widget boundary.
+      void refreshUser();
       const aiMsg: ChatMessage = {
         id: makeId(),
         role: "assistant",
@@ -484,6 +489,10 @@ export function useKinfolk() {
         setMessages((prev) => [...prev, aiMsg]);
         return true;
       } else if (res.status === 401) {
+        // A definitive API 401 means this saved token is no longer usable.
+        // Let AuthProvider clear it and route through the normal sign-in state
+        // instead of leaving the primary Kinfolk screen semi-authenticated.
+        void refreshUser();
         const aiMsg: ChatMessage = {
           id: makeId(),
           role: "assistant",
@@ -554,7 +563,7 @@ export function useKinfolk() {
         setRequestStartedAt(null);
       }
     }
-  }, [sessionId]);
+  }, [refreshUser, sessionId]);
 
   const submitFeedback = useCallback(async (
     messageId: string,

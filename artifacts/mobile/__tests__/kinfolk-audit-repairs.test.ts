@@ -49,9 +49,17 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(hook).toContain("KINFOLK_CLIENT_TRACE_HEADER");
     expect(hook).toContain("createKinfolkClientTrace");
     expect(hook).toContain("kinfolkTraceReference(clientTrace)");
+    expect(hook).toContain('import { useAuth } from "@/lib/auth";');
+    expect(hook).toContain("const { refreshUser } = useAuth();");
     expect(hook).toContain('content: "Your Kinfolk session needs to be refreshed. Please sign in again before sending your question."');
     expect(hook).toContain("} else if (res.status === 401) {");
     expect(hook).toContain('content: "Your Kinfolk session expired. Please sign in again, then resend your question."');
+    expect(hook.match(/void refreshUser\(\);/g)).toHaveLength(2);
+  });
+
+  it("returns the standalone primary Kinfolk route to the app when navigation history is unavailable", () => {
+    expect(travel).toContain('router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)');
+    expect(travel).toContain('accessibilityLabel="Return to the app"');
   });
 
   it("shows, persists, and uses the four widget delivery modes", () => {
