@@ -2918,23 +2918,35 @@ export default function TravelScreen() {
           </View>
         )}
 
-        <TouchableOpacity
-          activeOpacity={0.82}
-          onPress={() => setShowComposerControls((visible) => !visible)}
-          style={[styles.composerSettingsRow, { backgroundColor: colors.card, borderTopColor: colors.border }]}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: showComposerControls }}
-          accessibilityLabel="Open Kinfolk memory and privacy controls"
-        >
-          <View style={styles.composerSettingsLeading}>
-            <Ionicons name="options-outline" size={16} color={colors.primary} />
-            <Text style={[styles.composerSettingsTitle, { color: colors.foreground }]}>Memory & privacy</Text>
-            <Text style={[styles.composerSettingsSummary, { color: colors.mutedForeground }]}>
-              Review or turn off memory anytime
-            </Text>
-          </View>
-          <Ionicons name={showComposerControls ? "chevron-up" : "chevron-down"} size={17} color={colors.mutedForeground} />
-        </TouchableOpacity>
+        <View style={[styles.composerSettingsRow, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+          <TouchableOpacity
+            activeOpacity={0.82}
+            onPress={() => setShowComposerControls((visible) => !visible)}
+            style={styles.composerSettingsToggle}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showComposerControls }}
+            accessibilityLabel="Open Kinfolk memory and privacy controls"
+          >
+            <View style={styles.composerSettingsLeading}>
+              <Ionicons name="options-outline" size={16} color={colors.primary} />
+              <Text style={[styles.composerSettingsTitle, { color: colors.foreground }]}>Memory & privacy</Text>
+              <Text style={[styles.composerSettingsSummary, { color: colors.mutedForeground }]}>
+                Review or turn off memory anytime
+              </Text>
+            </View>
+            <Ionicons name={showComposerControls ? "chevron-up" : "chevron-down"} size={17} color={colors.mutedForeground} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.82}
+            onPress={() => router.push("/kinfolk-settings" as any)}
+            style={[styles.composerSettingsLink, { borderColor: colors.border }]}
+            accessibilityRole="button"
+            accessibilityLabel="Open KinfolkAI Settings"
+          >
+            <Text style={[styles.composerSettingsLinkText, { color: colors.primary }]}>Settings</Text>
+            <Ionicons name="settings-outline" size={15} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
 
         {showComposerControls && <>
         <View style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, gap: 7 }}>
@@ -3219,10 +3231,13 @@ const styles = StyleSheet.create({
   compareBarText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 13 },
   compareGoBtn: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8 },
   compareGoBtnText: { fontFamily: "Inter_700Bold", fontSize: 13 },
-  composerSettingsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 8, borderTopWidth: 1 },
+  composerSettingsRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, paddingVertical: 8, borderTopWidth: 1 },
+  composerSettingsToggle: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   composerSettingsLeading: { flexDirection: "row", alignItems: "center", gap: 7, flex: 1 },
   composerSettingsTitle: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   composerSettingsSummary: { fontFamily: "Inter_400Regular", fontSize: 11 },
+  composerSettingsLink: { flexDirection: "row", alignItems: "center", gap: 4, borderWidth: 1, borderRadius: 14, paddingHorizontal: 9, paddingVertical: 6 },
+  composerSettingsLinkText: { fontFamily: "Inter_700Bold", fontSize: 11 },
   voicesBar: { flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 14, paddingRight: 8, paddingVertical: 8, borderTopWidth: 1 },
   voicesBarLabel: { fontFamily: "Inter_600SemiBold", fontSize: 10, letterSpacing: 0.4, textTransform: "uppercase" },
   voicesPills: { flexDirection: "row", gap: 6, paddingVertical: 2 },

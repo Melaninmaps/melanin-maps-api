@@ -6702,6 +6702,12 @@ export async function ensureIsolatedActivationInvitationReviewerFixtureSchema(
 }
 
 const ISOLATED_GOVERNED_DISCOVERY_SCHEMA_MIGRATIONS = [
+  // Explore's approved Community Experience search condition references this
+  // aggregate-only relation whenever a recognized service signal is searched.
+  // Explicit release mode bypasses the broad migration runner, so the empty,
+  // additive table and index must exist before a public directory read.
+  "business_member_feedback_table_v1",
+  "business_member_feedback_index_v1",
   "business_profile_evidence_receipts_v1",
   "business_discovery_eligibility_v1",
   "business_discovery_eligibility_audit_events_v1",
@@ -6735,6 +6741,7 @@ export async function ensureIsolatedGovernedDiscoverySchema(
   }
 
   await Promise.all([
+    pool.query("SELECT business_id, member_id, kind, key, status FROM business_member_feedback LIMIT 0"),
     pool.query("SELECT id, business_id, field_name FROM business_profile_evidence_receipts LIMIT 0"),
     pool.query("SELECT business_id, eligibility_status FROM business_discovery_eligibility LIMIT 0"),
     pool.query("SELECT id, business_id, action FROM business_discovery_eligibility_audit_events LIMIT 0"),
