@@ -19,6 +19,8 @@ export type KinfolkVoiceSourceControlsProps = Readonly<{
   source: KinfolkVoiceSourceController;
   /** Places the reviewed text in the host composer; it must not send a turn. */
   onUseTranscript: (transcript: string) => void | Promise<void>;
+  /** The host is restoring a verified member session; retain drafts but do not start a new recording. */
+  disabled?: boolean;
 }>;
 
 function isPermissionFailure(failure: KinfolkVoiceSourceFailure | null): boolean {
@@ -32,6 +34,7 @@ function isPermissionFailure(failure: KinfolkVoiceSourceFailure | null): boolean
 export function KinfolkVoiceSourceControls({
   source,
   onUseTranscript,
+  disabled = false,
 }: KinfolkVoiceSourceControlsProps) {
   const colors = useColors();
   const [renderError, setRenderError] = useState<string | null>(null);
@@ -75,11 +78,11 @@ export function KinfolkVoiceSourceControls({
           accessibilityLabel={source.canStop ? "Stop recording for Kinfolk" : "Start recording a Kinfolk question, 60 second maximum"}
           accessibilityState={{ busy: isBusy, selected: state.phase === "recording" }}
           activeOpacity={0.8}
-          disabled={isBusy || (!source.canStart && !source.canStop)}
+          disabled={isBusy || (disabled && !source.canStop) || (!source.canStart && !source.canStop)}
           onPress={() => void (source.canStop ? source.stop() : source.start())}
           style={[
             styles.micButton,
-            { backgroundColor: state.phase === "recording" ? "#B42318" : colors.primary, opacity: isBusy || (!source.canStart && !source.canStop) ? 0.58 : 1 },
+            { backgroundColor: state.phase === "recording" ? "#B42318" : colors.primary, opacity: isBusy || (disabled && !source.canStop) || (!source.canStart && !source.canStop) ? 0.58 : 1 },
           ]}
         >
           {isBusy
@@ -135,6 +138,7 @@ export function KinfolkVoiceSourceControls({
           accessibilityRole="button"
           accessibilityLabel="Try recording a Kinfolk voice question again"
           onPress={() => void source.start()}
+          disabled={disabled}
           style={[styles.retryButton, { borderColor: colors.primary }]}
         >
           <Feather name="rotate-ccw" size={14} color={colors.primary} />

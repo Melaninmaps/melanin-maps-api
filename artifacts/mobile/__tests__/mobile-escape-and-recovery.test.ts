@@ -17,6 +17,7 @@ const crashLoggerSource = source("../lib/crashLogger.ts");
 const errorFallbackSource = source("../components/ErrorFallback.tsx");
 const layoutSource = source("../app/_layout.tsx");
 const profileSource = source("../app/(tabs)/profile.tsx");
+const travelSource = source("../app/travel.tsx");
 
 describe("mobile dismissal and recovery contracts", () => {
   it("keeps review writing dismissible by backdrop, close button, and downward swipe", () => {
@@ -57,17 +58,27 @@ describe("mobile dismissal and recovery contracts", () => {
     expect(errorFallbackSource).toContain("Your account and saved data stay intact.");
   });
 
-  it("reconciles a verified configured-API 401 instead of leaving Profile stale", () => {
+  it("revalidates a verified member-session 401 before clearing Profile state", () => {
     expect(authSessionSignalsSource).toContain("registerUnauthorizedApiResponseHandler");
     expect(authSessionSignalsSource).toContain("notifyUnauthorizedApiResponse");
     expect(crashLoggerSource).toContain("function isConfiguredApiRequest");
     expect(crashLoggerSource).toContain("function requestHasAuthorization");
+    expect(crashLoggerSource).toContain("/^Bearer\\s+\\S+$/i");
     expect(crashLoggerSource).toContain("resp.status === 401");
     expect(crashLoggerSource).toContain("isConfiguredApiRequest(url)");
     expect(crashLoggerSource).toContain("requestHasAuthorization(input, init)");
     expect(crashLoggerSource).toContain("notifyUnauthorizedApiResponse()");
     expect(authSource).toContain("return registerUnauthorizedApiResponseHandler");
-    expect(authSource).toContain("await expireSession()");
+    expect(authSource).toContain("const reconcileUnauthorizedSession");
+    expect(authSource).toContain("await fetchUser()");
+    expect(authSource).toContain("reconcilingUnauthorizedRef");
+  });
+
+  it("holds primary Kinfolk actions while the member session restores", () => {
+    expect(travelSource).toContain("isLoading: authLoading");
+    expect(travelSource).toContain('Alert.alert("Restoring secure sign-in"');
+    expect(travelSource).toContain("disabled={!inputText.trim() || uploadingKinfolkImage || authLoading}");
+    expect(travelSource).toContain("disabled={authLoading}");
   });
 
   it("leaves a contained Profile failure with a safe sign-out escape", () => {

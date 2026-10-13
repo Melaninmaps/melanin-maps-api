@@ -156,7 +156,10 @@ function requestHasAuthorization(
   try {
     const requestHeaders =
       init?.headers ?? (input instanceof Request ? input.headers : undefined);
-    return new Headers(requestHeaders).has("authorization");
+    const authorization = new Headers(requestHeaders).get("authorization");
+    // The session bridge only observes the member Bearer scheme. API-key,
+    // Basic, and malformed Authorization values cannot affect local sign-in.
+    return /^Bearer\s+\S+$/i.test(authorization ?? "");
   } catch {
     return false;
   }

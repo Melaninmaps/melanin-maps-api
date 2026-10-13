@@ -21,7 +21,7 @@ import * as AppleAuthentication from "expo-apple-authentication";
 import * as Crypto from "expo-crypto";
 import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
-import { clearStoredAuthSession, useAuth, getApiBaseUrl } from "@/lib/auth";
+import { clearStoredAuthSession, persistAuthSession, useAuth, getApiBaseUrl } from "@/lib/auth";
 import {
   getBiometricCapabilities,
   isBiometricsEnabled,
@@ -199,11 +199,21 @@ export default function LoginScreen() {
         setError(data.error ?? "Apple Sign-In failed. Please try again.");
         return;
       }
-      await SecureStore.setItemAsync("auth_session_token", data.token);
-      await SecureStore.setItemAsync("apple_user_id", credential.user).catch(
-        () => {},
-      );
-      await refreshUser();
+      try {
+        await persistAuthSession(data.token, { appleUserId: credential.user });
+      } catch {
+        setError(
+          "Apple Sign-In worked, but this device could not save your secure session. Please try again.",
+        );
+        return;
+      }
+      const loaded = await refreshUser();
+      if (!loaded) {
+        setError(
+          "Apple Sign-In worked, but the account could not be verified. Check your connection and try again.",
+        );
+        return;
+      }
       router.replace(
         data.profileSetupComplete === false ? "/profile-setup" : "/(tabs)",
       );

@@ -19,6 +19,10 @@ const loginSource = readFileSync(
   fileURLToPath(new URL("../app/login.tsx", import.meta.url)),
   "utf8",
 );
+const authCompleteSource = readFileSync(
+  fileURLToPath(new URL("../app/auth-complete.tsx", import.meta.url)),
+  "utf8",
+);
 
 afterEach(() => {
   vi.useRealTimers();
@@ -51,5 +55,15 @@ describe("authentication operation deadline", () => {
     expect(authSource).toContain("void clearStoredAuthSession()");
     expect(rootLayoutSource).toContain("/login?recovery=${sessionRecoveryError}");
     expect(loginSource).toContain("Your saved sign-in could not be restored on this device");
+  });
+
+  it("bounds SSO and Apple credential persistence before navigation", () => {
+    expect(authSource).toContain("export async function persistAuthSession");
+    expect(authSource).toContain('"Secure sign-in verification"');
+    expect(authSource).toContain("await persistAuthSession(token)");
+    expect(authCompleteSource).toContain("await persistAuthSession(token)");
+    expect(authCompleteSource).toContain('router.replace("/login?recovery=secure_storage")');
+    expect(loginSource).toContain("await persistAuthSession(data.token, { appleUserId: credential.user })");
+    expect(loginSource).toContain("could not save your secure session");
   });
 });

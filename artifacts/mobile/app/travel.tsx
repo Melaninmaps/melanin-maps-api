@@ -2094,7 +2094,7 @@ export default function TravelScreen() {
   const { messages, sessionId, conversationHandoff, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, sessionError, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent } = useKinfolk();
   const { preferences, update: updatePreferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { subscription } = useMembership();
 
   const { q: searchHandoff } = useLocalSearchParams<{ q?: string }>();
@@ -2494,12 +2494,16 @@ export default function TravelScreen() {
   }, [generatingImage, imageCreationBrief, isAuthenticated, noRealPersonOrPrivateInfoConfirmed, providerDisclosureAccepted]);
 
   const startPrimaryVoiceSource = useCallback(async () => {
+    if (authLoading) {
+      Alert.alert("Restoring secure sign-in", "Please wait a moment before recording a Kinfolk question.");
+      return;
+    }
     // The server-owned reply player can hold the native audio session. Stop it
     // before requesting the microphone; the source hook then owns recording,
     // cancellation, transcription, temporary-file cleanup, and draft review.
     stopServerVoice("voice_input_start");
     await primaryVoiceSource.start();
-  }, [primaryVoiceSource, stopServerVoice]);
+  }, [authLoading, primaryVoiceSource, stopServerVoice]);
   const addPrimaryVoiceTranscriptToDraft = useCallback((transcript: string) => {
     // This intentionally edits only the member's composer. It never creates a
     // chat turn—the member must still review and explicitly press Send.
@@ -2508,6 +2512,10 @@ export default function TravelScreen() {
   const handleSend = useCallback(async (text?: string) => {
     const msg = (text ?? inputText).trim();
     if (!msg) return;
+    if (authLoading) {
+      Alert.alert("Restoring secure sign-in", "Please wait a moment before sending Kinfolk a message.");
+      return;
+    }
     if (!isAuthenticated) {
       Alert.alert(
         "Sign in to ask Kinfolk",
@@ -2544,7 +2552,7 @@ export default function TravelScreen() {
       setIncludeCommunityPerspective(false);
       Keyboard.dismiss();
     }
-  }, [inputText, voiceMode, sendMessage, isAuthenticated, onUserSend, kinfolkImages, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin]);
+  }, [inputText, voiceMode, sendMessage, isAuthenticated, authLoading, onUserSend, kinfolkImages, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin]);
 
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);
@@ -2956,6 +2964,7 @@ export default function TravelScreen() {
             <KinfolkVoiceSourceControls
               source={primaryVoiceSource}
               onUseTranscript={addPrimaryVoiceTranscriptToDraft}
+              disabled={authLoading}
             />
           </View>
         ) : null}
@@ -3038,9 +3047,9 @@ export default function TravelScreen() {
           ) : null}
           {Platform.OS !== "web" ? (
             <TouchableOpacity
-              style={[styles.voiceOutputBtn, { backgroundColor: primaryVoiceSource.state.phase === "recording" ? "#B42318" : colors.background, borderColor: primaryVoiceSource.state.phase === "recording" ? "#B42318" : colors.border, opacity: isLoading || (!primaryVoiceSource.canStart && !primaryVoiceSource.canStop) ? 0.55 : 1 }]}
+              style={[styles.voiceOutputBtn, { backgroundColor: primaryVoiceSource.state.phase === "recording" ? "#B42318" : colors.background, borderColor: primaryVoiceSource.state.phase === "recording" ? "#B42318" : colors.border, opacity: isLoading || authLoading || (!primaryVoiceSource.canStart && !primaryVoiceSource.canStop) ? 0.55 : 1 }]}
               onPress={() => void (primaryVoiceSource.canStop ? primaryVoiceSource.stop() : startPrimaryVoiceSource())}
-              disabled={isLoading || (!primaryVoiceSource.canStart && !primaryVoiceSource.canStop)}
+              disabled={isLoading || authLoading || (!primaryVoiceSource.canStart && !primaryVoiceSource.canStop)}
               accessibilityRole="button"
               accessibilityLabel={primaryVoiceSource.canStop ? "Stop recording for Kinfolk" : "Record a voice question for Kinfolk, 60 second maximum"}
               accessibilityState={{ busy: primaryVoiceSource.state.phase === "uploading" || primaryVoiceSource.state.phase === "stopping", selected: primaryVoiceSource.state.phase === "recording" }}
@@ -3074,12 +3083,12 @@ export default function TravelScreen() {
             </Pressable>
           ) : null}
           <Pressable
-            style={[styles.sendBtn, { backgroundColor: inputText.trim() && !uploadingKinfolkImage ? colors.primary : colors.border }]}
+            style={[styles.sendBtn, { backgroundColor: inputText.trim() && !uploadingKinfolkImage && !authLoading ? colors.primary : colors.border }]}
             onPress={() => void handleSend()}
-            disabled={!inputText.trim() || uploadingKinfolkImage}
+            disabled={!inputText.trim() || uploadingKinfolkImage || authLoading}
             accessibilityLabel="Send message to Kinfolk"
           >
-            <Ionicons name="arrow-up" size={20} color={inputText.trim() && !uploadingKinfolkImage ? colors.primaryForeground : "#fff"} />
+            <Ionicons name="arrow-up" size={20} color={inputText.trim() && !uploadingKinfolkImage && !authLoading ? colors.primaryForeground : "#fff"} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>

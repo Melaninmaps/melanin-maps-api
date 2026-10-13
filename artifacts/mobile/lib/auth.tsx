@@ -45,6 +45,44 @@ export async function clearStoredAuthSession(): Promise<void> {
   ]);
 }
 
+/**
+ * Stores a newly issued member session without allowing a native keychain
+ * operation to strand the application on an authentication spinner. The token
+ * is immediately read back before navigation proceeds; no token value is
+ * logged or retained by this helper.
+ */
+export async function persistAuthSession(
+  token: string,
+  options: { appleUserId?: string } = {},
+): Promise<void> {
+  await withAuthOperationDeadline(
+    SecureStore.setItemAsync(AUTH_TOKEN_KEY, token),
+    "Secure sign-in storage",
+  );
+  const retained = await withAuthOperationDeadline(
+    SecureStore.getItemAsync(AUTH_TOKEN_KEY),
+    "Secure sign-in verification",
+  );
+  if (!retained) {
+    throw new Error("Secure sign-in verification did not retain the session");
+  }
+  await withAuthOperationDeadline(
+    SecureStore.setItemAsync(FRESH_LOGIN_KEY, "1"),
+    "Secure sign-in setup",
+  );
+  if (options.appleUserId) {
+    try {
+      await withAuthOperationDeadline(
+        SecureStore.setItemAsync(APPLE_USER_ID_KEY, options.appleUserId),
+        "Apple sign-in setup",
+      );
+    } catch {
+      // Apple foreground credential checks are optional. The member session
+      // is already stored and verified, so this may not block sign-in.
+    }
+  }
+}
+
 export interface User {
   id: string;
   email: string | null;
@@ -108,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     "secure_storage" | "connection" | null
   >(null);
   const expiringSessionRef = React.useRef(false);
+  const reconcilingUnauthorizedRef = React.useRef(false);
 
   const expireSession = useCallback(async (): Promise<void> => {
     if (expiringSessionRef.current) return;
@@ -227,15 +266,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void Promise.resolve().then(fetchUser);
   }, [fetchUser]);
 
+  const reconcileUnauthorizedSession = useCallback(async () => {
+    if (reconcilingUnauthorizedRef.current) return;
+    reconcilingUnauthorizedRef.current = true;
+    try {
+      // A response-level 401 can come from a stale request or a route-specific
+      // authorization failure. Revalidate the current member session before
+      // clearing it; fetchUser itself expires only on /api/auth/user 401.
+      await fetchUser();
+    } finally {
+      reconcilingUnauthorizedRef.current = false;
+    }
+  }, [fetchUser]);
+
   useEffect(() => {
     // Most native screens issue authenticated fetches directly. A verified 401
-    // from the configured API must reconcile AuthProvider as well, otherwise a
-    // stale in-memory user can remain visible while every protected screen
-    // fails. The global fetch instrumentation filters this to our API origin.
+    // from the configured API must reconcile AuthProvider as well. It first
+    // revalidates /api/auth/user so a route-specific 401 cannot erase a valid
+    // local session.
     return registerUnauthorizedApiResponseHandler(() => {
-      void expireSession();
+      void reconcileUnauthorizedSession();
     });
-  }, [expireSession]);
+  }, [reconcileUnauthorizedSession]);
 
   const login = useCallback(async () => {
     try {
@@ -250,8 +302,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const url = new URL(result.url);
         const token = url.searchParams.get("token");
         if (token) {
-          await SecureStore.setItemAsync(AUTH_TOKEN_KEY, token);
-          await SecureStore.setItemAsync(FRESH_LOGIN_KEY, "1");
+          await persistAuthSession(token);
         }
       }
 
@@ -265,7 +316,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await fetchUser();
     } catch (err) {
       console.error("Login error:", err);
+      setSessionRecoveryError("secure_storage");
       setIsLoading(false);
+      throw err;
     }
   }, [fetchUser]);
 

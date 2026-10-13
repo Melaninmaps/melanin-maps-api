@@ -6705,12 +6705,22 @@ const ISOLATED_GOVERNED_DISCOVERY_SCHEMA_MIGRATIONS = [
   "business_profile_evidence_receipts_v1",
   "business_discovery_eligibility_v1",
   "business_discovery_eligibility_audit_events_v1",
+  // Public directory reads use the source-presence relation through the
+  // documented eligibility predicate. Explicit release mode bypasses the
+  // broad runner, so this additive migration is required before the route can
+  // truthfully return an empty result instead of a missing-relation 500.
+  "founder_source_presence_publication_v1",
 ] as const;
 
 export async function ensureIsolatedGovernedDiscoverySchema(
   logger?: Logger,
 ): Promise<void> {
-  if (process.env.KINFOLK_MEMORY_STAGING_ISOLATION !== "true") return;
+  if (
+    process.env.RAILWAY_ENVIRONMENT_NAME !== "staging"
+    || process.env.KINFOLK_MEMORY_STAGING_ISOLATION !== "true"
+  ) {
+    return;
+  }
 
   for (const name of ISOLATED_GOVERNED_DISCOVERY_SCHEMA_MIGRATIONS) {
     const migration = MIGRATIONS.find((candidate) => candidate.name === name);
@@ -6724,6 +6734,7 @@ export async function ensureIsolatedGovernedDiscoverySchema(
     pool.query("SELECT id, business_id, field_name FROM business_profile_evidence_receipts LIMIT 0"),
     pool.query("SELECT business_id, eligibility_status FROM business_discovery_eligibility LIMIT 0"),
     pool.query("SELECT id, business_id, action FROM business_discovery_eligibility_audit_events LIMIT 0"),
+    pool.query("SELECT business_id, source_record_key FROM business_source_directory_receipts LIMIT 0"),
   ]);
   logger?.info("Isolated governed discovery schemas ready before traffic acceptance");
 }
