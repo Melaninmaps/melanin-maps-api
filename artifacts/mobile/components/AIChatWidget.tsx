@@ -88,6 +88,19 @@ const AAVE_LEVEL_KEY = "@kinfolk_aave_level";
 const KINFOLK_PREVIEW_TEXT = "Kinfolk is here. I will give you the direct answer, explain what matters, and help you decide what comes next.";
 const NATIVE_VOICE_MAX_DURATION_MS = 60_000;
 
+// Founder-approved Kinfolk presentation tokens. These are scoped to the
+// companion surface so existing semantic app theme states remain intact.
+const KINFOLK_VISUAL = {
+  espresso: "#3A1F0E",
+  cream: "#FAF6EF",
+  paper: "#FFFCF8",
+  gold: "#CA922B",
+  goldSoft: "#F5D99A",
+  green: "#2D7A4F",
+  line: "#E8D3BA",
+  muted: "#6D5642",
+} as const;
+
 function renderKinfolkMessageText(text: string, color: string, linkColor: string): React.ReactNode[] {
   const tokens = text.split(/(\[[^\]]+\]\(https?:\/\/[^\s)]+\)|\*\*[^*]+\*\*)/g);
   return tokens.filter(Boolean).map((token, index) => {
@@ -1111,7 +1124,7 @@ export function AIChatWidget() {
             }}
             activeOpacity={0.88}
           >
-            <View style={[styles.fabIconWrap, { backgroundColor: colors.primary }]}>
+            <View style={[styles.fabIconWrap, { backgroundColor: KINFOLK_VISUAL.espresso }]}>
               <Image source={require("@/assets/images/icon.png")} style={styles.fabBrandMark} contentFit="contain" accessibilityLabel="Mapping With Melanin" />
             </View>
             <View style={styles.fabTextWrap}>
@@ -1124,24 +1137,24 @@ export function AIChatWidget() {
 
       <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setWidgetOpen(false)}>
         <KeyboardAvoidingView
-          style={[styles.modal, { backgroundColor: colors.background }]}
+          style={[styles.modal, { backgroundColor: KINFOLK_VISUAL.cream }]}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           keyboardVerticalOffset={Platform.OS === "ios" ? insets.top : 0}
         >
-          <View style={[styles.modalHeader, { paddingTop: Platform.OS === "web" ? 24 : insets.top + 12, borderBottomColor: colors.border }]}>
+          <View style={[styles.modalHeader, { paddingTop: Platform.OS === "web" ? 24 : insets.top + 12, borderBottomColor: KINFOLK_VISUAL.line }]}>
             <View style={styles.modalHeaderLeft}>
-              <View style={[styles.avatarDot, { backgroundColor: colors.primary }]}>
-                <Image source={require("@/assets/images/icon.png")} style={styles.headerBrandMark} contentFit="contain" accessibilityLabel="Mapping With Melanin" />
+              <View style={[styles.avatarDot, { backgroundColor: KINFOLK_VISUAL.espresso }]}>
+              <Image source={require("@/assets/images/icon.png")} style={styles.headerBrandMark} contentFit="contain" accessibilityLabel="Mapping With Melanin" />
               </View>
               <View>
-                <Text style={[styles.modalTitle, { color: colors.foreground }]}>KinfolkAI™</Text>
-                <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>Helping you navigate what matters most.</Text>
+                <Text style={[styles.modalTitle, { color: KINFOLK_VISUAL.espresso }]}>KinfolkAI™</Text>
+                <Text style={[styles.modalSub, { color: KINFOLK_VISUAL.muted }]}>Helping you navigate what matters most.</Text>
               </View>
             </View>
             <View style={styles.headerActions}>
-              <TouchableOpacity onPress={goToTasks} style={[styles.tasksBtn, { borderColor: colors.border }]}>
-                <Feather name="check-square" size={14} color={colors.primary} />
-                <Text style={[styles.tasksBtnTxt, { color: colors.primary }]}>My Lists</Text>
+              <TouchableOpacity onPress={goToTasks} style={[styles.tasksBtn, { borderColor: KINFOLK_VISUAL.line }]}>
+                <Feather name="check-square" size={14} color={KINFOLK_VISUAL.gold} />
+                <Text style={[styles.tasksBtnTxt, { color: KINFOLK_VISUAL.espresso }]}>My Lists</Text>
               </TouchableOpacity>
               {Platform.OS !== "web" ? (
                 <TouchableOpacity
@@ -1149,9 +1162,9 @@ export function AIChatWidget() {
                   accessibilityRole="button"
                   accessibilityLabel="Choose and preview Kinfolk delivery modes"
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  style={[styles.minimizeBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
+                  style={[styles.minimizeBtn, { backgroundColor: KINFOLK_VISUAL.paper, borderColor: KINFOLK_VISUAL.line }]}
                 >
-                  <Feather name="volume-2" size={15} color={colors.mutedForeground} />
+                  <Feather name="volume-2" size={15} color={KINFOLK_VISUAL.espresso} />
                 </TouchableOpacity>
               ) : null}
               <TouchableOpacity
@@ -1163,16 +1176,16 @@ export function AIChatWidget() {
                 accessibilityLabel="Tune Kinfolk voice and personality"
                 accessibilityHint="Choose Big Cousin, Professor, and other Kinfolk preferences"
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                style={[styles.minimizeBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
+                style={[styles.minimizeBtn, { backgroundColor: KINFOLK_VISUAL.paper, borderColor: KINFOLK_VISUAL.line }]}
               >
-                <Feather name="sliders" size={15} color={colors.mutedForeground} />
+                <Feather name="sliders" size={15} color={KINFOLK_VISUAL.espresso} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => { setWidgetOpen(false); if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
                 hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-                style={[styles.minimizeBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
+                style={[styles.minimizeBtn, { backgroundColor: KINFOLK_VISUAL.paper, borderColor: KINFOLK_VISUAL.line }]}
               >
-                <Feather name="chevron-down" size={20} color={colors.foreground} />
+                <Feather name="chevron-down" size={20} color={KINFOLK_VISUAL.espresso} />
               </TouchableOpacity>
             </View>
           </View>
@@ -1217,23 +1230,28 @@ export function AIChatWidget() {
               <View>
                 <View style={[styles.msgRow, item.fromUser && styles.msgRowUser]}>
                   {!item.fromUser && (
-                    <View style={[styles.msgAvatar, { backgroundColor: colors.primary }]}>
+                    <View style={[styles.msgAvatar, { backgroundColor: KINFOLK_VISUAL.espresso }]}>
                       <Image source={require("@/assets/images/icon.png")} style={styles.messageBrandMark} contentFit="contain" accessibilityLabel="Mapping With Melanin" />
                     </View>
                   )}
-                  <View style={[
-                    styles.bubble,
-                    item.fromUser
-                      ? { backgroundColor: colors.primary, borderBottomRightRadius: 4 }
-                      : { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderBottomLeftRadius: 4 },
-                  ]}>
-                    <Text style={[styles.bubbleTxt, { color: item.fromUser ? "#FFF" : colors.foreground }]}>
-                      {renderKinfolkMessageText(
-                        item.text,
-                        item.fromUser ? "#FFF" : colors.foreground,
-                        item.fromUser ? "#FFF" : colors.primary,
-                      )}
+                  <View style={[styles.messageBubbleGroup, item.fromUser && styles.messageBubbleGroupUser]}>
+                    <Text style={[styles.messageLabel, { color: item.fromUser ? KINFOLK_VISUAL.muted : KINFOLK_VISUAL.gold }]}>
+                      {item.fromUser ? "YOU" : "KINFOLK"}
                     </Text>
+                    <View style={[
+                      styles.bubble,
+                      item.fromUser
+                        ? { backgroundColor: KINFOLK_VISUAL.espresso, borderBottomRightRadius: 4 }
+                        : { backgroundColor: KINFOLK_VISUAL.paper, borderColor: KINFOLK_VISUAL.line, borderWidth: 1, borderBottomLeftRadius: 4 },
+                    ]}>
+                      <Text style={[styles.bubbleTxt, { color: item.fromUser ? "#FFF" : KINFOLK_VISUAL.espresso }]}>
+                        {renderKinfolkMessageText(
+                          item.text,
+                          item.fromUser ? "#FFF" : KINFOLK_VISUAL.espresso,
+                          item.fromUser ? "#FFF" : KINFOLK_VISUAL.espresso,
+                        )}
+                      </Text>
+                    </View>
                   </View>
                 </View>
                 {/* Location resolution pill — shows which city Kinfolk resolved */}
@@ -1347,11 +1365,11 @@ export function AIChatWidget() {
                 )}
                 {!item.fromUser && item.recommendations?.length ? (
                   <View style={[styles.recommendationList, { marginLeft: 42 }]}>
-                    <Text style={[styles.recommendationHeading, { color: colors.mutedForeground }]}>KINFOLK PICKS</Text>
+                    <Text style={[styles.recommendationHeading, { color: KINFOLK_VISUAL.gold }]}>KINFOLK PICKS</Text>
                     {item.recommendations.map((recommendation: KinfolkBusinessRecommendation) => (
                       <View
                         key={recommendation.id}
-                        style={[styles.recommendationCard, { backgroundColor: colors.card, borderColor: "#CA922B66" }]}
+                        style={[styles.recommendationCard, { backgroundColor: KINFOLK_VISUAL.paper, borderColor: `${KINFOLK_VISUAL.gold}88` }]}
                       >
                         <TouchableOpacity
                           onPress={() => openRecommendationBusiness(recommendation.id)}
@@ -1361,21 +1379,21 @@ export function AIChatWidget() {
                           accessibilityLabel={`Open ${recommendation.name} on Mapping with Melanin`}
                           accessibilityHint="Opens this business's Mapping with Melanin listing page"
                         >
-                          <View style={[styles.recommendationIcon, { backgroundColor: "#CA922B1A" }]}>
-                            <Feather name="briefcase" size={16} color={colors.primary} />
+                          <View style={[styles.recommendationIcon, { backgroundColor: KINFOLK_VISUAL.goldSoft }]}>
+                            <Feather name="briefcase" size={16} color={KINFOLK_VISUAL.espresso} />
                           </View>
                           <View style={{ flex: 1 }}>
-                            <Text style={[styles.recommendationName, { color: colors.foreground }]} numberOfLines={1}>{recommendation.name}</Text>
-                            <Text style={[styles.recommendationMeta, { color: colors.mutedForeground }]} numberOfLines={1}>
+                            <Text style={[styles.recommendationName, { color: KINFOLK_VISUAL.espresso }]} numberOfLines={1}>{recommendation.name}</Text>
+                            <Text style={[styles.recommendationMeta, { color: KINFOLK_VISUAL.muted }]} numberOfLines={1}>
                               {[recommendation.category, recommendation.city, recommendation.state].filter(Boolean).join(" · ")}
                             </Text>
                             {recommendation.recommendationReason ? (
-                              <Text style={[styles.recommendationReason, { color: colors.mutedForeground }]} numberOfLines={2}>
+                              <Text style={[styles.recommendationReason, { color: KINFOLK_VISUAL.muted }]} numberOfLines={2}>
                                 {recommendation.recommendationReason}
                               </Text>
                             ) : null}
                           </View>
-                          <Feather name="chevron-right" size={18} color={colors.primary} />
+                          <Feather name="chevron-right" size={18} color={KINFOLK_VISUAL.espresso} />
                         </TouchableOpacity>
                         <TouchableOpacity
                           onPress={() => setSelectedRecommendation(recommendation)}
@@ -1385,7 +1403,7 @@ export function AIChatWidget() {
                           accessibilityLabel={`More options for ${recommendation.name}`}
                           accessibilityHint="Shows directions, website, phone, and listing options"
                         >
-                          <Feather name="more-horizontal" size={19} color={colors.primary} />
+                          <Feather name="more-horizontal" size={19} color={KINFOLK_VISUAL.espresso} />
                         </TouchableOpacity>
                       </View>
                     ))}
@@ -1473,11 +1491,14 @@ export function AIChatWidget() {
             )}
             ListFooterComponent={typing ? (
               <View style={[styles.msgRow]}>
-                <View style={[styles.msgAvatar, { backgroundColor: colors.primary }]}>
+                <View style={[styles.msgAvatar, { backgroundColor: KINFOLK_VISUAL.espresso }]}>
                   <Image source={require("@/assets/images/icon.png")} style={styles.messageBrandMark} contentFit="contain" accessibilityLabel="Mapping With Melanin" />
                 </View>
-                <View style={[styles.bubble, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderBottomLeftRadius: 4 }]}>
-                  <Text style={[styles.typingDots, { color: colors.mutedForeground }]}>●  ●  ●</Text>
+                <View style={styles.messageBubbleGroup}>
+                  <Text style={[styles.messageLabel, { color: KINFOLK_VISUAL.gold }]}>KINFOLK</Text>
+                  <View style={[styles.bubble, { backgroundColor: KINFOLK_VISUAL.paper, borderColor: KINFOLK_VISUAL.line, borderWidth: 1, borderBottomLeftRadius: 4 }]}>
+                    <Text style={[styles.typingDots, { color: KINFOLK_VISUAL.muted }]}>●  ●  ●</Text>
+                  </View>
                 </View>
               </View>
             ) : null}
@@ -1487,7 +1508,7 @@ export function AIChatWidget() {
           {!widgetAtBottom && messages.length > 0 && (
             <TouchableOpacity
               onPress={() => { setWidgetAtBottom(true); listRef.current?.scrollToEnd({ animated: true }); }}
-              style={[wStyles.jumpBtn, { backgroundColor: colors.primary }]}
+              style={[wStyles.jumpBtn, { backgroundColor: KINFOLK_VISUAL.espresso }]}
               activeOpacity={0.85}
             >
               <Text style={wStyles.jumpTxt}>↓ Jump to latest</Text>
@@ -1499,14 +1520,14 @@ export function AIChatWidget() {
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
-              style={[styles.chipsScroll, { borderTopColor: colors.border }]}
+              style={[styles.chipsScroll, { borderTopColor: KINFOLK_VISUAL.line }]}
               contentContainerStyle={styles.chipsRow}
               keyboardDismissMode="on-drag"
             >
               {suggestions.map((s, i) => (
                 <TouchableOpacity
                   key={i}
-                  style={[styles.chip, { backgroundColor: colors.secondary, borderColor: colors.primary }]}
+                  style={[styles.chip, { backgroundColor: KINFOLK_VISUAL.paper, borderColor: KINFOLK_VISUAL.gold }]}
                   onPress={() => {
                     setSuggestions([]);
                     setInput(s);
@@ -1514,15 +1535,15 @@ export function AIChatWidget() {
                   }}
                   activeOpacity={0.8}
                 >
-                  <Text numberOfLines={2} style={[styles.chipTxt, { color: colors.primary }]}>{s}</Text>
+                  <Text numberOfLines={2} style={[styles.chipTxt, { color: KINFOLK_VISUAL.espresso }]}>{s}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>
           )}
 
           {messages.length === 1 && !typing && (
-            <View style={[styles.trustWrap, { borderTopColor: colors.border }]}>
-              <Text style={[styles.trustTxt, { color: colors.mutedForeground }]}>
+            <View style={[styles.trustWrap, { borderTopColor: KINFOLK_VISUAL.line }]}>
+              <Text style={[styles.trustTxt, { color: KINFOLK_VISUAL.muted }]}>
                 Ask me anything. I&apos;ll always be honest about what I know—and what I don&apos;t.
               </Text>
             </View>
@@ -1546,22 +1567,22 @@ export function AIChatWidget() {
             </View>
           ) : null}
 
-          <View style={[styles.inputRow, { borderTopColor: colors.border, paddingBottom: bottomPad + 8, backgroundColor: colors.background }]}>
+          <View style={[styles.inputRow, { borderTopColor: KINFOLK_VISUAL.line, paddingBottom: bottomPad + 8, backgroundColor: KINFOLK_VISUAL.cream }]}>
             {Platform.OS !== "web" ? (
               <TouchableOpacity
-                style={[styles.micBtn, { backgroundColor: isRecording ? "#DC2626" : colors.muted, opacity: isStartingVoice || authLoading ? 0.6 : 1 }]}
+                style={[styles.micBtn, { backgroundColor: isRecording ? "#DC2626" : KINFOLK_VISUAL.paper, borderColor: KINFOLK_VISUAL.line, opacity: isStartingVoice || authLoading ? 0.6 : 1 }]}
                 onPress={() => isRecording ? void stopVoice() : void startVoice()}
                 disabled={isStartingVoice || authLoading}
                 accessibilityLabel={isRecording ? "Stop Kinfolk Voice recording" : isStartingVoice ? "Starting Kinfolk Voice recording" : "Start Kinfolk Voice recording, 60 second maximum"}
                 activeOpacity={0.8}
               >
-                <Feather name={isRecording ? "mic-off" : "mic"} size={18} color={isRecording ? "#FFF" : colors.mutedForeground} />
+                <Feather name={isRecording ? "mic-off" : "mic"} size={18} color={isRecording ? "#FFF" : KINFOLK_VISUAL.espresso} />
               </TouchableOpacity>
             ) : null}
             <TextInput
-              style={[styles.input, { backgroundColor: colors.card, borderColor: isRecording ? "#DC262640" : colors.border, color: colors.foreground }]}
+              style={[styles.input, { backgroundColor: KINFOLK_VISUAL.paper, borderColor: isRecording ? "#DC262640" : KINFOLK_VISUAL.line, color: KINFOLK_VISUAL.espresso }]}
               placeholder={isRecording ? "Recording… tap mic to stop" : "What's on your mind today?"}
-              placeholderTextColor={isRecording ? "#DC2626" : colors.mutedForeground}
+              placeholderTextColor={isRecording ? "#DC2626" : KINFOLK_VISUAL.muted}
               value={input}
               onChangeText={setInput}
               onFocus={() => {
@@ -1574,12 +1595,12 @@ export function AIChatWidget() {
               editable={!isRecording}
             />
             <TouchableOpacity
-              style={[styles.sendBtn, { backgroundColor: input.trim() ? colors.primary : colors.muted }]}
+              style={[styles.sendBtn, { backgroundColor: input.trim() ? KINFOLK_VISUAL.espresso : KINFOLK_VISUAL.goldSoft }]}
               onPress={send}
               disabled={!input.trim() || isRecording}
               activeOpacity={0.8}
             >
-              <Feather name="send" size={18} color={input.trim() ? "#FFF" : colors.mutedForeground} />
+              <Feather name="send" size={18} color={input.trim() ? "#FFF" : KINFOLK_VISUAL.muted} />
             </TouchableOpacity>
           </View>
 
@@ -1721,12 +1742,12 @@ const styles = StyleSheet.create({
   fab: { position: "absolute", right: 16, zIndex: 999 },
   fabPill: {
     flexDirection: "row", alignItems: "center", gap: 10,
-    backgroundColor: "#FAF1E4",
+    backgroundColor: KINFOLK_VISUAL.cream,
     borderRadius: 50,
     paddingVertical: 10, paddingHorizontal: 14,
-    shadowColor: "#3B1F0E", shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.18, shadowRadius: 12, elevation: 8,
-    borderWidth: 1, borderColor: "#E8D9C4",
+    shadowColor: KINFOLK_VISUAL.espresso, shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.16, shadowRadius: 14, elevation: 8,
+    borderWidth: 1, borderColor: KINFOLK_VISUAL.line,
   },
   fabIconWrap: {
     width: 34, height: 34, borderRadius: 17,
@@ -1734,8 +1755,8 @@ const styles = StyleSheet.create({
   },
   fabBrandMark: { width: 25, height: 25 },
   fabTextWrap: { gap: 1 },
-  fabTitle: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#3B1F0E" },
-  fabSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#8B6F4E" },
+  fabTitle: { fontSize: 13, fontFamily: "Inter_700Bold", color: KINFOLK_VISUAL.espresso },
+  fabSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: KINFOLK_VISUAL.muted },
   restoreTab: {
     position: "absolute", right: 0, zIndex: 999,
     borderTopLeftRadius: 12, borderBottomLeftRadius: 12,
@@ -1747,7 +1768,7 @@ const styles = StyleSheet.create({
     alignItems: "center", justifyContent: "center", gap: 2,
   },
   restoreBrandMark: { width: 22, height: 22 },
-  restoreTabTxt: { fontSize: 8, fontFamily: "Inter_700Bold", color: "#FAF1E4", letterSpacing: 0.25 },
+  restoreTabTxt: { fontSize: 8, fontFamily: "Inter_700Bold", color: KINFOLK_VISUAL.cream, letterSpacing: 0.25 },
   modal: { flex: 1 },
   modalHeader: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
@@ -1761,16 +1782,19 @@ const styles = StyleSheet.create({
     borderRadius: 20, borderWidth: 1,
   },
   tasksBtnTxt: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
-  avatarDot: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+  avatarDot: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: KINFOLK_VISUAL.gold },
   headerBrandMark: { width: 30, height: 30 },
   modalTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
   modalSub: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
-  msgList: { padding: 16, gap: 12 },
+  msgList: { padding: 16, gap: 16 },
   msgRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
   msgRowUser: { justifyContent: "flex-end" },
-  msgAvatar: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
+  msgAvatar: { width: 30, height: 30, borderRadius: 15, alignItems: "center", justifyContent: "center", flexShrink: 0, borderWidth: 1, borderColor: KINFOLK_VISUAL.gold },
   messageBrandMark: { width: 21, height: 21 },
-  bubble: { maxWidth: "78%", padding: 12, borderRadius: 16, shadowColor: "#3A1F0E", shadowOpacity: 0.035, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
+  messageBubbleGroup: { maxWidth: "78%", gap: 4 },
+  messageBubbleGroupUser: { alignItems: "flex-end" },
+  messageLabel: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 1.05, marginHorizontal: 3 },
+  bubble: { maxWidth: "100%", paddingHorizontal: 13, paddingVertical: 12, borderRadius: 17, shadowColor: KINFOLK_VISUAL.espresso, shadowOpacity: 0.06, shadowRadius: 7, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
   bubbleTxt: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 },
   typingDots: { fontSize: 10, letterSpacing: 4 },
   taskCreatedBadge: {
@@ -1781,12 +1805,12 @@ const styles = StyleSheet.create({
     alignSelf: "flex-start",
   },
   taskCreatedTxt: { fontSize: 12, fontFamily: "Inter_500Medium", flexShrink: 1 },
-  recommendationList: { marginTop: 10, gap: 7, maxWidth: "86%" },
-  recommendationHeading: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.9, marginBottom: 1 },
-  recommendationCard: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 14, overflow: "hidden" },
-  recommendationPrimaryHit: { flex: 1, flexDirection: "row", alignItems: "center", gap: 9, padding: 10 },
-  recommendationOptions: { alignSelf: "stretch", minWidth: 42, alignItems: "center", justifyContent: "center", borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: "#CA922B66" },
-  recommendationIcon: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center" },
+  recommendationList: { marginTop: 10, gap: 8, maxWidth: "86%" },
+  recommendationHeading: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 1.1, marginBottom: 2 },
+  recommendationCard: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 16, overflow: "hidden", shadowColor: KINFOLK_VISUAL.espresso, shadowOpacity: 0.045, shadowRadius: 7, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
+  recommendationPrimaryHit: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10, padding: 12, minHeight: 74 },
+  recommendationOptions: { alignSelf: "stretch", minWidth: 46, alignItems: "center", justifyContent: "center", borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: `${KINFOLK_VISUAL.gold}88` },
+  recommendationIcon: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center" },
   recommendationName: { fontSize: 13, fontFamily: "Inter_700Bold" },
   recommendationMeta: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 2 },
   recommendationReason: { fontSize: 11, fontFamily: "Inter_400Regular", lineHeight: 15, marginTop: 4 },
@@ -1803,7 +1827,7 @@ const styles = StyleSheet.create({
   voiceInputStatus: { flexDirection: "row", alignItems: "center", gap: 8, marginHorizontal: 16, marginTop: 8, paddingHorizontal: 12, paddingVertical: 9, borderRadius: 10 },
   voiceInputStatusText: { flex: 1, fontSize: 12, fontFamily: "Inter_500Medium", lineHeight: 17 },
   chipsScroll: { borderTopWidth: 1 },
-  chipsRow: { paddingHorizontal: 16, paddingVertical: 8, gap: 8, alignItems: "stretch" },
+  chipsRow: { paddingHorizontal: 16, paddingVertical: 10, gap: 8, alignItems: "stretch" },
   chip: {
     minHeight: 42, maxWidth: 280, justifyContent: "center",
     paddingHorizontal: 14, paddingVertical: 8,
@@ -1819,8 +1843,8 @@ const styles = StyleSheet.create({
     flex: 1, borderWidth: 1, borderRadius: 24, paddingHorizontal: 14,
     paddingVertical: 11, fontSize: 14, fontFamily: "Inter_400Regular",
   },
-  micBtn: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  sendBtn: { width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center" },
+  micBtn: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center", flexShrink: 0, borderWidth: 1 },
+  sendBtn: { width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center" },
   minimizeBtn: {
     width: 34, height: 34, borderRadius: 17,
     alignItems: "center", justifyContent: "center",

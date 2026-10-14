@@ -4,7 +4,8 @@
  *
  * This intentionally checks only that the refreshed presentation continues to
  * retain the existing interaction entry points. It does not call services
- * or mutate data; category artwork is the only permitted business-surface change.
+ * or mutate data; scoped Kinfolk conversation and recommendation-sheet styling
+ * are permitted while protected product routes remain unchanged.
  */
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
@@ -19,6 +20,16 @@ const required = [
     "KinfolkBusinessRecommendationSheet",
     "saveProposedTaskAction",
     'router.push("/kinfolk-settings"',
+    "KINFOLK_VISUAL",
+    "KINFOLK PICKS",
+  ]],
+  ["components/KinfolkBusinessRecommendationSheet.tsx", [
+    "getBusinessCategoryIcon",
+    "recommendation.imageUrl",
+    "openDirections",
+    "onViewBusiness",
+    "KINFOLK PICK",
+    "View Business",
   ]],
   ["app/kinfolk-settings.tsx", [
     "@/assets/images/logo-transparent.png",
@@ -53,4 +64,5 @@ const changedProtected = execFileSync(
 if (changedProtected) throw new Error(`Protected business UI was changed unexpectedly:\n${changedProtected}`);
 
 console.log("PASS: Kinfolk visual layout retains chat, settings, memory, task, recommendation, and brand entry points.");
+console.log("PASS: Recommendation sheets retain directions, website, phone, and business-profile actions while using actual images or category-matched visual fallbacks.");
 console.log("PASS: Business cards and preview modal retain interactions while using category-matched visual fallbacks; profiles and owner dashboard are unchanged.");
