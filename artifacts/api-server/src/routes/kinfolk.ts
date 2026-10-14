@@ -417,6 +417,16 @@ import {
   SensitiveMemoryEncryptionUnavailableError,
 } from "../kinfolk/sensitive-memory-encryption";
 import {
+  encryptOrdinaryMemoryContent,
+  matchesPrivateMemoryDuplicate,
+  ordinaryMemoryFingerprint,
+  ordinaryMemoriesForPrompt,
+  privateMemoryOwnerResponse,
+  readOrdinaryMemoryContent,
+  PrivateMemoryEncryptionIntegrityError,
+  PrivateMemoryEncryptionUnavailableError,
+} from "../kinfolk/private-memory-encryption";
+import {
   reauthenticateSensitiveMemoryVault,
   requireSensitiveMemoryVaultReauth,
   sensitiveMemoryVaultReauthState,
@@ -6193,6 +6203,9 @@ async function findPreferredNameMemory(userId: string) {
     .select({
       id: kinfolkPrivateMemoriesTable.id,
       content: kinfolkPrivateMemoriesTable.content,
+      encryptedContent: kinfolkPrivateMemoriesTable.encryptedContent,
+      encryptionKeyId: kinfolkPrivateMemoriesTable.encryptionKeyId,
+      contentFingerprint: kinfolkPrivateMemoriesTable.contentFingerprint,
       purpose: kinfolkPrivateMemoriesTable.purpose,
       expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
       pausedAt: kinfolkPrivateMemoriesTable.pausedAt,
@@ -6208,7 +6221,7 @@ async function findPreferredNameMemory(userId: string) {
     )
     .orderBy(desc(kinfolkPrivateMemoriesTable.updatedAt))
     .limit(1);
-  return memory ?? null;
+  return memory ? { ...memory, content: readOrdinaryMemoryContent(memory, userId) } : null;
 }
 
 // A preferred name is an explicit, revocable, owner-scoped memory. It never
@@ -6230,6 +6243,7 @@ router.get("/kinfolk/preferred-name", async (req: Request, res: Response) => {
     });
     res.json({ name, state, updatedAt: memory.updatedAt });
   } catch (err) {
+    if (respondToPrivateMemoryEncryptionError(res, err)) return;
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to read explicit preferred name");
     res.status(500).json({ error: "Preferred name could not be loaded." });
   }
@@ -6252,13 +6266,15 @@ router.put("/kinfolk/preferred-name", async (req: Request, res: Response) => {
     const result = await withSerializedPreferredNameWrite({
       userId: req.user.id,
       write: async ({ memory, tx }) => {
+        if (memory) readOrdinaryMemoryContent(memory, req.user!.id);
+        const ordinaryCiphertext = encryptOrdinaryMemoryContent(formatPreferredNameMemory(name), req.user!.id, PREFERRED_NAME_MEMORY_PURPOSE);
         const now = new Date();
         const outcome = preferredNameSaveOutcome({ activeRecordId: memory?.id ?? null });
         const [saved] = memory
           ? await tx
               .update(kinfolkPrivateMemoriesTable)
               .set({
-                content: formatPreferredNameMemory(name),
+                ...ordinaryCiphertext,
                 isSensitive: false,
                 pausedAt: null,
                 // Clear only the old pause sentinel. Preferred names never
@@ -6281,7 +6297,7 @@ router.put("/kinfolk/preferred-name", async (req: Request, res: Response) => {
               .insert(kinfolkPrivateMemoriesTable)
               .values({
                 userId: req.user!.id,
-                content: formatPreferredNameMemory(name),
+                ...ordinaryCiphertext,
                 purpose: PREFERRED_NAME_MEMORY_PURPOSE,
                 isSensitive: false,
                 expiresAt: null,
@@ -6303,6 +6319,7 @@ router.put("/kinfolk/preferred-name", async (req: Request, res: Response) => {
       idempotent: result.outcome === "updated",
     });
   } catch (err) {
+    if (respondToPrivateMemoryEncryptionError(res, err)) return;
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to save explicit preferred name");
     res.status(500).json({ error: "Preferred name could not be saved." });
   }
@@ -6321,7 +6338,7 @@ router.patch("/kinfolk/preferred-name/pause", async (req: Request, res: Response
     const result = await withSerializedPreferredNameWrite({
       userId: req.user.id,
       write: async ({ memory, tx }) => {
-        const name = memory ? parsePreferredNameMemory(memory) : null;
+        const name = memory ? parsePreferredNameMemory({ ...memory, content: readOrdinaryMemoryContent(memory, req.user!.id) }) : null;
         if (!memory || !name) return null;
         const now = new Date();
         const [updated] = await tx
@@ -6346,6 +6363,7 @@ router.patch("/kinfolk/preferred-name/pause", async (req: Request, res: Response
     if (!result) return void res.status(404).json({ error: "Preferred name not found." });
     res.json(result);
   } catch (err) {
+    if (respondToPrivateMemoryEncryptionError(res, err)) return;
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to pause explicit preferred name");
     res.status(500).json({ error: "Preferred name could not be updated." });
   }
@@ -6444,6 +6462,9 @@ async function withSerializedPreferredNameWrite<T>(input: {
     memory: {
       id: string;
       content: string;
+      encryptedContent: string | null;
+      encryptionKeyId: string | null;
+      contentFingerprint: string | null;
       purpose: string;
       expiresAt: Date | null;
       pausedAt: Date | null;
@@ -6459,6 +6480,9 @@ async function withSerializedPreferredNameWrite<T>(input: {
       .select({
         id: kinfolkPrivateMemoriesTable.id,
         content: kinfolkPrivateMemoriesTable.content,
+        encryptedContent: kinfolkPrivateMemoriesTable.encryptedContent,
+        encryptionKeyId: kinfolkPrivateMemoriesTable.encryptionKeyId,
+        contentFingerprint: kinfolkPrivateMemoriesTable.contentFingerprint,
         purpose: kinfolkPrivateMemoriesTable.purpose,
         expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
         pausedAt: kinfolkPrivateMemoriesTable.pausedAt,
@@ -6528,6 +6552,37 @@ function requirePrivateMemoryCapacity(input: {
     );
   }
   return capacity;
+}
+
+function respondToPrivateMemoryEncryptionError(res: Response, error: unknown): boolean {
+  if (!(error instanceof PrivateMemoryEncryptionUnavailableError) &&
+      !(error instanceof PrivateMemoryEncryptionIntegrityError)) return false;
+  res.status(error instanceof PrivateMemoryEncryptionUnavailableError ? 503 : 409).json({
+    error: "Private memory could not be securely opened or saved. Please retry after secure access is restored; the existing record was not changed.",
+    code: "PRIVATE_MEMORY_SECURE_ACCESS_REQUIRED",
+    recoverable: true,
+  });
+  return true;
+}
+
+async function findActivePrivateMemoryDuplicates(
+  tx: KinfolkDatabaseTransaction,
+  userId: string,
+  contents: readonly string[],
+) {
+  const fingerprints = contents.map((content) => ordinaryMemoryFingerprint(content, userId));
+  // Controlled owner-scoped legacy read, never a backfill or a plaintext logging/query parameter path.
+  return tx.select().from(kinfolkPrivateMemoriesTable).where(and(
+    eq(kinfolkPrivateMemoriesTable.userId, userId),
+    ne(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
+    isNull(kinfolkPrivateMemoriesTable.revokedAt),
+    isNull(kinfolkPrivateMemoriesTable.pausedAt),
+    or(isNull(kinfolkPrivateMemoriesTable.expiresAt), gt(kinfolkPrivateMemoriesTable.expiresAt, new Date())),
+    or(
+      inArray(kinfolkPrivateMemoriesTable.contentFingerprint, fingerprints),
+      and(isNull(kinfolkPrivateMemoriesTable.encryptedContent), isNull(kinfolkPrivateMemoriesTable.encryptionKeyId)),
+    ),
+  ));
 }
 
 router.get("/kinfolk/sensitive-memory-vault", async (req: Request, res: Response) => {
@@ -6659,6 +6714,9 @@ router.get("/kinfolk/memories", async (req: Request, res: Response) => {
       .select({
         id: kinfolkPrivateMemoriesTable.id,
         content: kinfolkPrivateMemoriesTable.content,
+        encryptedContent: kinfolkPrivateMemoriesTable.encryptedContent,
+        encryptionKeyId: kinfolkPrivateMemoriesTable.encryptionKeyId,
+        contentFingerprint: kinfolkPrivateMemoriesTable.contentFingerprint,
         purpose: kinfolkPrivateMemoriesTable.purpose,
         isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
         sensitiveConsentGrantedAt:
@@ -6689,11 +6747,11 @@ router.get("/kinfolk/memories", async (req: Request, res: Response) => {
     const activeCount = Number(activeRow?.active ?? 0);
     res.json({
       memories: memories.map((memory) => ({
-        ...memory,
+        ...privateMemoryOwnerResponse(memory, req.user!.id),
         // The regular memory manager is never a sensitive-vault disclosure
         // channel. A separate, recently reauthenticated endpoint is required
         // before content can be opened or changed.
-        content: memory.isSensitive ? null : memory.content,
+
         vaultLocked: memory.isSensitive,
         state: resolvePrivateMemoryState({
           revokedAt: null,
@@ -6713,6 +6771,7 @@ router.get("/kinfolk/memories", async (req: Request, res: Response) => {
           : null,
     });
   } catch (err) {
+    if (respondToPrivateMemoryEncryptionError(res, err)) return;
     req.log.error(
       safeKinfolkErrorMetadata(err),
       "Failed to load Kinfolk memories",
@@ -6759,29 +6818,10 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
       userId: req.user.id,
       write: async ({ activeCount, tx }) => {
         const now = new Date();
-        const activeDuplicates = await tx
-          .select({ content: kinfolkPrivateMemoriesTable.content })
-          .from(kinfolkPrivateMemoriesTable)
-          .where(
-            and(
-              eq(kinfolkPrivateMemoriesTable.userId, req.user!.id),
-              ne(kinfolkPrivateMemoriesTable.purpose, PREFERRED_NAME_MEMORY_PURPOSE),
-              inArray(
-                kinfolkPrivateMemoriesTable.content,
-                selected.map((item) => item.content),
-              ),
-              isNull(kinfolkPrivateMemoriesTable.revokedAt),
-              isNull(kinfolkPrivateMemoriesTable.pausedAt),
-              or(
-                isNull(kinfolkPrivateMemoriesTable.expiresAt),
-                gt(kinfolkPrivateMemoriesTable.expiresAt, now),
-              ),
-            ),
-          );
-        const activeContent = new Set(activeDuplicates.map((memory) => memory.content));
+        const activeDuplicates = await findActivePrivateMemoryDuplicates(tx, req.user!.id, selected.map((item) => item.content));
         const queuedContent = new Set<string>();
         const itemsToSave = selected.filter((item) => {
-          if (activeContent.has(item.content) || queuedContent.has(item.content)) {
+          if (activeDuplicates.some((memory) => matchesPrivateMemoryDuplicate(memory, item.content, ordinaryMemoryFingerprint(item.content, req.user!.id))) || queuedContent.has(item.content)) {
             return false;
           }
           queuedContent.add(item.content);
@@ -6830,9 +6870,15 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
           const sensitiveCiphertext = item.kind === "sensitive"
             ? encryptSensitiveMemoryContent(item.content)
             : null;
+          const ordinaryCiphertext = item.kind === "ordinary"
+            ? encryptOrdinaryMemoryContent(item.content, req.user!.id, plan.purpose)
+            : null;
           await tx.insert(kinfolkPrivateMemoriesTable).values({
             userId: req.user!.id,
-            content: sensitiveCiphertext ? sensitiveMemoryStoragePlaceholder() : item.content,
+            content: sensitiveCiphertext ? sensitiveMemoryStoragePlaceholder() : ordinaryCiphertext!.content,
+            encryptedContent: ordinaryCiphertext?.encryptedContent ?? null,
+            encryptionKeyId: ordinaryCiphertext?.encryptionKeyId ?? null,
+            contentFingerprint: ordinaryCiphertext?.contentFingerprint ?? null,
             purpose: plan.purpose,
             sourceSessionId: sessionId,
             isSensitive: item.kind === "sensitive",
@@ -6863,6 +6909,7 @@ router.post("/kinfolk/memory-consent", async (req: Request, res: Response) => {
       availableSlots: result.capacity.availableSlots - result.saved,
     });
   } catch (err) {
+    if (respondToPrivateMemoryEncryptionError(res, err)) return;
     if (err instanceof PrivateMemoryCapacityError) {
       return void res.status(409).json({
         error: err.message,
@@ -6959,49 +7006,20 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
     }
     if (isSensitive && !await requireSensitiveMemoryVaultReauth(req, res)) return;
     const sensitiveCiphertext = isSensitive ? encryptSensitiveMemoryContent(content) : null;
+    const ordinaryCiphertext = !isSensitive ? encryptOrdinaryMemoryContent(content, req.user.id, purpose) : null;
 
     const result = await withSerializedPrivateMemoryWrite({
       userId: req.user.id,
       write: async ({ activeCount, tx }) => {
-        const [existing] = await tx
-          .select({
-            id: kinfolkPrivateMemoriesTable.id,
-            content: kinfolkPrivateMemoriesTable.content,
-            purpose: kinfolkPrivateMemoriesTable.purpose,
-            isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
-            sensitiveConsentGrantedAt:
-              kinfolkPrivateMemoriesTable.sensitiveConsentGrantedAt,
-            expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
-            pausedAt: kinfolkPrivateMemoriesTable.pausedAt,
-            revokedAt: kinfolkPrivateMemoriesTable.revokedAt,
-            createdAt: kinfolkPrivateMemoriesTable.createdAt,
-            updatedAt: kinfolkPrivateMemoriesTable.updatedAt,
-          })
-          .from(kinfolkPrivateMemoriesTable)
-          .where(
-            and(
-              eq(kinfolkPrivateMemoriesTable.userId, req.user!.id),
-              ne(
-                kinfolkPrivateMemoriesTable.purpose,
-                PREFERRED_NAME_MEMORY_PURPOSE,
-              ),
-              eq(kinfolkPrivateMemoriesTable.content, content),
-              isNull(kinfolkPrivateMemoriesTable.revokedAt),
-              isNull(kinfolkPrivateMemoriesTable.pausedAt),
-              or(
-                isNull(kinfolkPrivateMemoriesTable.expiresAt),
-                gt(kinfolkPrivateMemoriesTable.expiresAt, new Date()),
-              ),
-            ),
-          )
-          .limit(1);
+        const duplicates = await findActivePrivateMemoryDuplicates(tx, req.user!.id, [content]);
+        const existing = duplicates.find((memory) => matchesPrivateMemoryDuplicate(memory, content, ordinaryMemoryFingerprint(content, req.user!.id)));
         if (existing) {
           return {
             capacity: resolvePrivateMemoryCapacity({
               activeCount,
               requestedCount: 0,
             }),
-            memory: existing,
+            memory: privateMemoryOwnerResponse(existing, req.user!.id),
             created: false,
           };
         }
@@ -7013,7 +7031,10 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
           .insert(kinfolkPrivateMemoriesTable)
           .values({
             userId: req.user!.id,
-            content: isSensitive ? sensitiveMemoryStoragePlaceholder() : content,
+            content: isSensitive ? sensitiveMemoryStoragePlaceholder() : ordinaryCiphertext!.content,
+            encryptedContent: ordinaryCiphertext?.encryptedContent ?? null,
+            encryptionKeyId: ordinaryCiphertext?.encryptionKeyId ?? null,
+            contentFingerprint: ordinaryCiphertext?.contentFingerprint ?? null,
             purpose,
             sourceSessionId:
               typeof body.sessionId === "string" ? body.sessionId : null,
@@ -7025,7 +7046,7 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
             expiresAt,
           })
           .returning();
-        return { capacity, memory, created: true };
+        return { capacity, memory: privateMemoryOwnerResponse(memory, req.user!.id), created: true };
       },
     });
     res.status(result.created ? 201 : 200).json({
@@ -7040,6 +7061,7 @@ router.post("/kinfolk/memories", async (req: Request, res: Response) => {
         : "That private note is already active. You can pause, edit, or revoke it in Kinfolk settings.",
     });
   } catch (err) {
+    if (respondToPrivateMemoryEncryptionError(res, err)) return;
     if (err instanceof PrivateMemoryCapacityError) {
       return void res.status(409).json({
         error: err.message,
@@ -7078,6 +7100,10 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
     const [existing] = await db
       .select({
         id: kinfolkPrivateMemoriesTable.id,
+        content: kinfolkPrivateMemoriesTable.content,
+        encryptedContent: kinfolkPrivateMemoriesTable.encryptedContent,
+        encryptionKeyId: kinfolkPrivateMemoriesTable.encryptionKeyId,
+        contentFingerprint: kinfolkPrivateMemoriesTable.contentFingerprint,
         purpose: kinfolkPrivateMemoriesTable.purpose,
         isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
         sensitiveRestricted: kinfolkPrivateMemoriesTable.sensitiveRestricted,
@@ -7106,7 +7132,10 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
       });
     }
     if (willBeSensitive && !await requireSensitiveMemoryVaultReauth(req, res)) return;
+    if (!existing.isSensitive) readOrdinaryMemoryContent(existing, req.user.id);
+    const correctedPurpose = isExplicitMemberMemoryRequirement(content) ? "requirement_context" : existing.purpose;
     const sensitiveCiphertext = willBeSensitive ? encryptSensitiveMemoryContent(content) : null;
+    const ordinaryCiphertext = !willBeSensitive ? encryptOrdinaryMemoryContent(content, req.user.id, correctedPurpose) : null;
     // An edit must not silently narrow a member's previously consented relevant
     // use. Preserve its selected scope unless the member supplies a new explicit
     // boolean choice; an ordinary-to-sensitive correction starts restricted.
@@ -7121,13 +7150,14 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
     const [memory] = await db
       .update(kinfolkPrivateMemoriesTable)
       .set({
-        content: sensitiveCiphertext ? sensitiveMemoryStoragePlaceholder() : content,
+        content: sensitiveCiphertext ? sensitiveMemoryStoragePlaceholder() : ordinaryCiphertext!.content,
+        encryptedContent: ordinaryCiphertext?.encryptedContent ?? null,
+        encryptionKeyId: ordinaryCiphertext?.encryptionKeyId ?? null,
+        contentFingerprint: ordinaryCiphertext?.contentFingerprint ?? null,
         // Preserve provenance and an existing hard boundary. A direct edit may
         // promote newly explicit requirement language, but it cannot silently
         // relax an earlier member requirement into a soft preference.
-        purpose: isExplicitMemberMemoryRequirement(content)
-          ? "requirement_context"
-          : existing.purpose,
+        purpose: correctedPurpose,
         isSensitive: willBeSensitive,
         sensitiveConsentGrantedAt: willBeSensitive ? new Date() : null,
         sensitiveRestricted,
@@ -7154,8 +7184,9 @@ router.patch("/kinfolk/memories/:id", async (req: Request, res: Response) => {
         updatedAt: kinfolkPrivateMemoriesTable.updatedAt,
       });
     if (!memory) return void res.status(404).json({ error: "Memory not found" });
-    res.json({ memory });
+    res.json({ memory: { ...memory, content: willBeSensitive ? null : content } });
   } catch (err) {
+    if (respondToPrivateMemoryEncryptionError(res, err)) return;
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to edit Kinfolk memory");
     res.status(500).json({ error: "Failed to edit memory" });
   }
@@ -7182,6 +7213,11 @@ router.patch("/kinfolk/memories/:id/pause", async (req: Request, res: Response) 
     const [existing] = await db
       .select({
         id: kinfolkPrivateMemoriesTable.id,
+        content: kinfolkPrivateMemoriesTable.content,
+        purpose: kinfolkPrivateMemoriesTable.purpose,
+        encryptedContent: kinfolkPrivateMemoriesTable.encryptedContent,
+        encryptionKeyId: kinfolkPrivateMemoriesTable.encryptionKeyId,
+        contentFingerprint: kinfolkPrivateMemoriesTable.contentFingerprint,
         expiresAt: kinfolkPrivateMemoriesTable.expiresAt,
         isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
       })
@@ -7199,6 +7235,7 @@ router.patch("/kinfolk/memories/:id/pause", async (req: Request, res: Response) 
       return void res.status(404).json({ error: "Memory not found" });
     }
     if (existing.isSensitive && !await requireSensitiveMemoryVaultReauth(req, res)) return;
+    const ownerContent = existing.isSensitive ? null : readOrdinaryMemoryContent(existing, req.user.id);
     const now = new Date();
     if (body.paused === false && existing.expiresAt && existing.expiresAt <= now) {
       return void res.status(409).json({
@@ -7233,6 +7270,7 @@ router.patch("/kinfolk/memories/:id/pause", async (req: Request, res: Response) 
     res.json({
       memory: {
         ...memory,
+        content: ownerContent,
         state: resolvePrivateMemoryState({
           revokedAt: null,
           pausedAt: memory.pausedAt,
@@ -7242,6 +7280,7 @@ router.patch("/kinfolk/memories/:id/pause", async (req: Request, res: Response) 
       },
     });
   } catch (err) {
+    if (respondToPrivateMemoryEncryptionError(res, err)) return;
     req.log.error(safeKinfolkErrorMetadata(err), "Failed to pause Kinfolk memory");
     res.status(500).json({ error: "Failed to update memory" });
   }
@@ -8140,6 +8179,9 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
     ? await db
         .select({
           content: kinfolkPrivateMemoriesTable.content,
+          encryptedContent: kinfolkPrivateMemoriesTable.encryptedContent,
+          encryptionKeyId: kinfolkPrivateMemoriesTable.encryptionKeyId,
+          contentFingerprint: kinfolkPrivateMemoriesTable.contentFingerprint,
           purpose: kinfolkPrivateMemoriesTable.purpose,
           isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
           sensitiveRestricted: kinfolkPrivateMemoriesTable.sensitiveRestricted,
@@ -8167,8 +8209,10 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
           return [];
         })
     : [];
+  const openedOrdinaryMemories = ordinaryMemoriesForPrompt(directActivePrivateMemories, input.req.user?.id ?? "");
+  directPrivateMemoryStorageUnavailable ||= openedOrdinaryMemories.unavailable;
   const directRelevantPrivateMemories = selectRelevantPrivateMemoriesForTurn({
-    memories: directActivePrivateMemories,
+    memories: openedOrdinaryMemories.memories,
     currentMessage: input.message,
     explicitMemoryEnabled: explicitMemberMemoryEnabled,
   });
@@ -12916,6 +12960,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         ? await db
             .select({
               content: kinfolkPrivateMemoriesTable.content,
+              encryptedContent: kinfolkPrivateMemoriesTable.encryptedContent,
+              encryptionKeyId: kinfolkPrivateMemoriesTable.encryptionKeyId,
+              contentFingerprint: kinfolkPrivateMemoriesTable.contentFingerprint,
               purpose: kinfolkPrivateMemoriesTable.purpose,
               isSensitive: kinfolkPrivateMemoriesTable.isSensitive,
               sensitiveRestricted: kinfolkPrivateMemoriesTable.sensitiveRestricted,
@@ -12943,8 +12990,10 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
               return [];
             })
         : [];
+    const openedOrdinaryMemories = ordinaryMemoriesForPrompt(activePrivateMemories, req.user?.id ?? "");
+    privateMemoryStorageUnavailable ||= openedOrdinaryMemories.unavailable;
     const relevantPrivateMemories = selectRelevantPrivateMemoriesForTurn({
-      memories: activePrivateMemories,
+      memories: openedOrdinaryMemories.memories,
       currentMessage: message,
       explicitMemoryEnabled: explicitMemberMemoryEnabled,
     });

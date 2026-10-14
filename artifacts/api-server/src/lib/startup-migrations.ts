@@ -5097,6 +5097,48 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ADD COLUMN IF NOT EXISTS sensitive_encryption_key_id varchar(64)`,
   },
   {
+    // SOURCE ONLY in this repair: execution requires separate authorization.
+    // No backfill. Untouched legacy plaintext remains until an explicit owner
+    // correction or a separately approved controlled at-rest conversion.
+    name: "kinfolk_private_memories_ordinary_encryption_v5",
+    sql: `ALTER TABLE kinfolk_private_memories
+      ADD COLUMN IF NOT EXISTS encrypted_content text,
+      ADD COLUMN IF NOT EXISTS encryption_key_id varchar(64),
+      ADD COLUMN IF NOT EXISTS content_fingerprint varchar(64);
+    CREATE OR REPLACE FUNCTION kinfolk_private_memories_require_ordinary_ciphertext()
+      RETURNS trigger LANGUAGE plpgsql AS $$
+      DECLARE must_encrypt boolean;
+      BEGIN
+        must_encrypt := TG_OP = 'INSERT';
+        IF TG_OP = 'UPDATE' THEN
+          must_encrypt := NEW.content IS DISTINCT FROM OLD.content
+            OR NEW.encrypted_content IS DISTINCT FROM OLD.encrypted_content
+            OR NEW.encryption_key_id IS DISTINCT FROM OLD.encryption_key_id
+            OR NEW.content_fingerprint IS DISTINCT FROM OLD.content_fingerprint
+            OR NEW.purpose IS DISTINCT FROM OLD.purpose
+            OR NEW.is_sensitive IS DISTINCT FROM OLD.is_sensitive;
+        END IF;
+        -- Legacy pause/revoke/expiry metadata changes remain available without
+        -- rewriting content. Sensitive vault representation is unchanged.
+        IF NOT NEW.is_sensitive AND must_encrypt THEN
+          IF NEW.content IS DISTINCT FROM '[Encrypted private memory]'
+            OR NEW.encrypted_content IS NULL
+            OR NEW.encrypted_content !~ '^v1\\.[A-Za-z0-9_-]{16}\\.[A-Za-z0-9_-]{22}\\.[A-Za-z0-9_-]+$'
+            OR NEW.encryption_key_id IS NULL OR btrim(NEW.encryption_key_id) = ''
+            OR NEW.content_fingerprint IS NULL OR NEW.content_fingerprint !~ '^[0-9a-f]{64}$' THEN
+            RAISE EXCEPTION 'Ordinary Kinfolk private memory requires encrypted storage'
+              USING ERRCODE = '23514';
+          END IF;
+        END IF;
+        RETURN NEW;
+      END;
+    $$;
+    DROP TRIGGER IF EXISTS kinfolk_private_memories_ordinary_ciphertext_guard ON kinfolk_private_memories;
+    CREATE TRIGGER kinfolk_private_memories_ordinary_ciphertext_guard
+      BEFORE INSERT OR UPDATE ON kinfolk_private_memories FOR EACH ROW
+      EXECUTE FUNCTION kinfolk_private_memories_require_ordinary_ciphertext()`,
+  },
+  {
     // Personal Memory V1 adds only control metadata. It does not change, pause,
     // revoke, delete, or otherwise backfill any existing member memory.
     name: "kinfolk_private_memories_pause_and_capacity_v3",
@@ -7670,10 +7712,19 @@ export async function ensureKinfolkPreferredNameSchema(logger?: Logger): Promise
       WHERE purpose = 'preferred_name' AND revoked_at IS NULL;
   `);
 
+  // Keep explicit feature-release mode on the same additive ordinary-storage
+  // guard as the broad runner. This is source only until a separately approved
+  // deployment/startup; never invoke this gate from source validation.
+  const ordinaryEncryptionMigration = MIGRATIONS.find(
+    (entry) => entry.name === "kinfolk_private_memories_ordinary_encryption_v5",
+  );
+  if (!ordinaryEncryptionMigration) throw new Error("Missing private-memory encryption schema guard");
+  await pool.query(ordinaryEncryptionMigration.sql);
+
   // Structural read only: fail before traffic if an older production baseline
   // cannot satisfy the active lifecycle query shape.
   await pool.query(
-    "SELECT id, user_id, content, purpose, sensitive_encrypted_content, sensitive_encryption_key_id, sensitive_restricted, expires_at, paused_at, revoked_at, created_at, updated_at FROM kinfolk_private_memories LIMIT 0",
+    "SELECT id, user_id, content, encrypted_content, encryption_key_id, content_fingerprint, purpose, sensitive_encrypted_content, sensitive_encryption_key_id, sensitive_restricted, expires_at, paused_at, revoked_at, created_at, updated_at FROM kinfolk_private_memories LIMIT 0",
   );
   log("Kinfolk preferred-name schema is ready before traffic acceptance");
 }

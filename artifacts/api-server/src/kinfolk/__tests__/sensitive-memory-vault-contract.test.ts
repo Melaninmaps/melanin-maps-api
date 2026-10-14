@@ -21,7 +21,9 @@ describe("sensitive private memory vault contract", () => {
     const listEnd = routeSource.indexOf('router.post("/kinfolk/memory-consent"', listStart);
     const listRoute = routeSource.slice(listStart, listEnd);
 
-    expect(listRoute).toContain("content: memory.isSensitive ? null : memory.content");
+    expect(listRoute).toContain("...privateMemoryOwnerResponse(memory, req.user!.id)");
+    const ordinaryCryptoSource = readFileSync(fileURLToPath(new URL("../private-memory-encryption.ts", import.meta.url)), "utf8");
+    expect(ordinaryCryptoSource).toContain("content: memory.isSensitive ? null : readOrdinaryMemoryContent(memory, userId)");
     expect(listRoute).toContain("vaultLocked: memory.isSensitive");
     expect(listRoute).toContain("sensitiveRestricted: kinfolkPrivateMemoriesTable.sensitiveRestricted");
   });

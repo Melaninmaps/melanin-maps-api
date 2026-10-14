@@ -57,6 +57,61 @@ export declare const kinfolkPrivateMemoriesTable: import("drizzle-orm/pg-core").
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        encryptedContent: import("drizzle-orm/pg-core").PgColumn<{
+            name: "encrypted_content";
+            tableName: "kinfolk_private_memories";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        encryptionKeyId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "encryption_key_id";
+            tableName: "kinfolk_private_memories";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 64;
+        }>;
+        contentFingerprint: import("drizzle-orm/pg-core").PgColumn<{
+            name: "content_fingerprint";
+            tableName: "kinfolk_private_memories";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 64;
+        }>;
         purpose: import("drizzle-orm/pg-core").PgColumn<{
             name: "purpose";
             tableName: "kinfolk_private_memories";
