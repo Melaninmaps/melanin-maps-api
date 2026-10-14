@@ -120,7 +120,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("/admin/businesses/philadelphia-kinfolk-current/duplicate-reconciliation");
     expect(adminRoute).toContain("expectedPlanHash !== manifest.planHash");
     expect(adminRoute).toContain("Manual-review records were left unchanged");
-    expect(adminScreen).toContain("PhiladelphiaKinfolkDuplicateReconciliation");
+    expect(adminScreen).toContain("KinfolkCurrentCityDuplicateReconciliation");
     expect(philadelphiaDuplicateDashboard).toContain("No-terminal duplicate cleanup");
     expect(philadelphiaDuplicateDashboard).toContain("Apply safe cleanup");
     expect(philadelphiaDuplicateDashboard).toContain("planHash: preview.planHash");

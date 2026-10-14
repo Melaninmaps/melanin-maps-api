@@ -82,6 +82,11 @@ export type DuplicateReconciliationPlan = Readonly<{
   manualReview: ManualReviewDuplicate[];
 }>;
 
+export type KinfolkCurrentCityScope = Readonly<{
+  city: string;
+  state: string;
+}>;
+
 function normalizedBusinessName(value: string | null | undefined): string {
   return normalizeText(
     String(value ?? "").replace(/[\u0027\u2018\u2019]/g, ""),
@@ -360,25 +365,26 @@ function candidateReason(
 }
 
 /**
- * Builds an intentionally narrow, reviewable consolidation plan.
+ * Builds an intentionally narrow, reviewable city-scoped consolidation plan.
  *
  * It never considers same-name listings alone. An automatic plan is emitted only
- * for exactly two current Kinfolk records in Philadelphia, with one stored pin,
- * high-confidence duplicate identity evidence, and no conflicting official
- * values. Missing social profiles are copied only with the duplicate's own
- * identity-attested field receipt or at least two exact identity signals.
- * A pair with no missing profiles is still consolidated when the identity and
- * pin safeguards are met. Everything else is a manual-review case.
+ * for exactly two current Kinfolk records in the requested city and state, with
+ * one stored pin, high-confidence duplicate identity evidence, and no
+ * conflicting official values. Missing social profiles are copied only with the
+ * duplicate's own identity-attested field receipt or at least two exact identity
+ * signals. A pair with no missing profiles is still consolidated when the
+ * identity and pin safeguards are met. Everything else is a manual-review case.
  */
-export function buildPhiladelphiaKinfolkCurrentDuplicatePlan(
+export function buildKinfolkCurrentCityDuplicatePlan(
   records: readonly KinfolkCurrentBusinessRecord[],
   receiptsByBusinessId: ReadonlyMap<string, readonly ProfileFieldReceipt[]>,
+  scope: KinfolkCurrentCityScope,
 ): DuplicateReconciliationPlan {
   const byName = new Map<string, KinfolkCurrentBusinessRecord[]>();
   for (const record of records) {
     if (
-      normalizedLocation(record.city) !== "philadelphia" ||
-      normalizedLocation(record.state) !== "pa"
+      normalizedLocation(record.city) !== normalizedLocation(scope.city) ||
+      normalizedLocation(record.state) !== normalizedLocation(scope.state)
     ) {
       continue;
     }
@@ -446,4 +452,15 @@ export function buildPhiladelphiaKinfolkCurrentDuplicatePlan(
       ),
     ),
   };
+}
+
+/** Retains the deployed Philadelphia contract while adding city scope. */
+export function buildPhiladelphiaKinfolkCurrentDuplicatePlan(
+  records: readonly KinfolkCurrentBusinessRecord[],
+  receiptsByBusinessId: ReadonlyMap<string, readonly ProfileFieldReceipt[]>,
+): DuplicateReconciliationPlan {
+  return buildKinfolkCurrentCityDuplicatePlan(records, receiptsByBusinessId, {
+    city: "Philadelphia",
+    state: "PA",
+  });
 }

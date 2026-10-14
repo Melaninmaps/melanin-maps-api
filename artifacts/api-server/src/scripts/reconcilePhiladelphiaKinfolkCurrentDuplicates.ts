@@ -29,10 +29,12 @@ import { pool } from "@workspace/db";
 import {
   PHILADELPHIA_KINFOLK_DUPLICATE_RECONCILIATION_POLICY_VERSION,
   SOCIAL_FIELDS,
+  buildKinfolkCurrentCityDuplicatePlan,
   buildPhiladelphiaKinfolkCurrentDuplicatePlan,
   type ApprovedDuplicateConsolidation,
   type DuplicateReconciliationPlan,
   type KinfolkCurrentBusinessRecord,
+  type KinfolkCurrentCityScope,
   type ProfileFieldReceipt,
   type SocialField,
 } from "../businesses/philadelphiaKinfolkCurrentDuplicateReconciliation";
@@ -82,13 +84,13 @@ type Arguments = {
   confirmation: string | null;
 };
 
-export type PhiladelphiaKinfolkCurrentDuplicateManifest = {
+export type KinfolkCurrentCityDuplicateManifest = {
   manifestVersion: 1;
   generatedAt: string;
   mode: "dry_run";
   policyVersion: typeof PHILADELPHIA_KINFOLK_DUPLICATE_RECONCILIATION_POLICY_VERSION;
   planHash: string;
-  scope: "Philadelphia, PA — Kinfolk Current";
+  scope: KinfolkCurrentCityScope & { label: string };
   summary: {
     currentKinfolkRowsRead: number;
     approvedConsolidations: number;
@@ -97,6 +99,19 @@ export type PhiladelphiaKinfolkCurrentDuplicateManifest = {
   };
   plan: DuplicateReconciliationPlan;
 };
+
+export type KinfolkCurrentCityDuplicateInventory = Readonly<{
+  totalCurrentKinfolkRowsRead: number;
+  citiesWithDuplicateSignals: Array<{
+    city: string;
+    state: string;
+    label: string;
+    summary: KinfolkCurrentCityDuplicateManifest["summary"];
+  }>;
+}>;
+
+export type PhiladelphiaKinfolkCurrentDuplicateManifest =
+  KinfolkCurrentCityDuplicateManifest;
 
 function valueAfter(name: string): string | null {
   const index = process.argv.indexOf(name);
@@ -170,49 +185,67 @@ function mapBusiness(row: RawBusinessRow): KinfolkCurrentBusinessRecord {
   };
 }
 
-async function loadCurrentKinfolkRecords(): Promise<{
+function normalizedScopePart(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function scopeLabel(scope: KinfolkCurrentCityScope): string {
+  return `${scope.city.trim()}, ${scope.state.trim().toUpperCase()} — Kinfolk Current`;
+}
+
+function summaryFor(
+  plan: DuplicateReconciliationPlan,
+  currentKinfolkRowsRead: number,
+) {
+  return {
+    currentKinfolkRowsRead,
+    approvedConsolidations: plan.approved.length,
+    manualReviewCases: plan.manualReview.length,
+    socialFieldsToCopy: plan.approved.reduce(
+      (count, candidate) => count + candidate.transfers.length,
+      0,
+    ),
+  };
+}
+
+async function loadCurrentKinfolkRecords(
+  scope?: KinfolkCurrentCityScope,
+): Promise<{
   records: KinfolkCurrentBusinessRecord[];
   receiptsByBusinessId: Map<string, readonly ProfileFieldReceipt[]>;
 }> {
-  // This reproduces the Kinfolk Current eligibility gate used by the Admin
-  // dashboard. The public view excludes archived, duplicate, hidden, and demo
-  // records before the script ever evaluates a pair.
+  const scopeSql = scope
+    ? `AND REGEXP_REPLACE(LOWER(BTRIM(COALESCE(b.city, ''))), '[^a-z0-9]+', '', 'g') = $1
+        AND REGEXP_REPLACE(LOWER(BTRIM(COALESCE(b.state, ''))), '[^a-z0-9]+', '', 'g') = $2`
+    : "";
+  const scopeParams = scope
+    ? [normalizedScopePart(scope.city), normalizedScopePart(scope.state)]
+    : [];
   const businesses = await pool.query<RawBusinessRow>(
     `SELECT b.id::text AS id,
-            b.name,
-            b.address,
-            b.city,
-            b.state,
-            b.phone,
-            b.website,
-            b.instagram,
-            b.facebook,
-            b.tiktok,
-            b.twitter,
-            b.youtube,
-            b.pinterest,
-            b.latitude,
-            b.longitude,
-            b.updated_at::text AS "updatedAt"
+            b.name, b.address, b.city, b.state, b.phone, b.website,
+            b.instagram, b.facebook, b.tiktok, b.twitter, b.youtube, b.pinterest,
+            b.latitude, b.longitude, b.updated_at::text AS "updatedAt"
        FROM public.businesses AS b
        JOIN public.public_businesses AS current_kinfolk ON current_kinfolk.id::text = b.id::text
-      WHERE REGEXP_REPLACE(LOWER(BTRIM(COALESCE(b.city, ''))), '[^a-z0-9]+', '', 'g') = 'philadelphia'
-        AND REGEXP_REPLACE(LOWER(BTRIM(COALESCE(b.state, ''))), '[^a-z0-9]+', '', 'g') = 'pa'
-        AND EXISTS (
-          SELECT 1
-            FROM public.business_discovery_eligibility AS documented_eligibility
-           WHERE documented_eligibility.business_id::text = current_kinfolk.id::text
-             AND documented_eligibility.eligibility_status = 'qualified'
-             AND documented_eligibility.policy_version = 'documented_diaspora_discovery_v1'
-             AND documented_eligibility.ownership_evidence_id IS NOT NULL
-             AND (
-               documented_eligibility.official_website_evidence_id IS NOT NULL
-               OR documented_eligibility.official_social_evidence_id IS NOT NULL
-             )
-             AND documented_eligibility.ownership_source_expires_at > CURRENT_TIMESTAMP
-             AND documented_eligibility.review_after > CURRENT_TIMESTAMP
-        )
-      ORDER BY b.name ASC, b.id ASC`,
+      WHERE EXISTS (
+        SELECT 1
+          FROM public.business_discovery_eligibility AS documented_eligibility
+         WHERE documented_eligibility.business_id::text = current_kinfolk.id::text
+           AND documented_eligibility.eligibility_status = 'qualified'
+           AND documented_eligibility.policy_version = 'documented_diaspora_discovery_v1'
+           AND documented_eligibility.ownership_evidence_id IS NOT NULL
+           AND (documented_eligibility.official_website_evidence_id IS NOT NULL
+             OR documented_eligibility.official_social_evidence_id IS NOT NULL)
+           AND documented_eligibility.ownership_source_expires_at > CURRENT_TIMESTAMP
+           AND documented_eligibility.review_after > CURRENT_TIMESTAMP
+      )
+      ${scopeSql}
+      ORDER BY b.city ASC NULLS LAST, b.state ASC NULLS LAST, b.name ASC, b.id ASC`,
+    scopeParams,
   );
   const records = businesses.rows.map(mapBusiness);
   const ids = records.map((record) => record.id);
@@ -221,15 +254,10 @@ async function loadCurrentKinfolkRecords(): Promise<{
     readonly ProfileFieldReceipt[]
   >();
   if (ids.length === 0) return { records, receiptsByBusinessId };
-
   const receipts = await pool.query<RawReceiptRow>(
-    `SELECT business_id::text AS "businessId",
-            field_name AS "fieldName",
-            source_url AS "sourceUrl",
-            source_label AS "sourceLabel",
-            observed_at::text AS "observedAt",
-            confidence,
-            note,
+    `SELECT business_id::text AS "businessId", field_name AS "fieldName",
+            source_url AS "sourceUrl", source_label AS "sourceLabel",
+            observed_at::text AS "observedAt", confidence, note,
             observed_value AS "observedValue"
        FROM public.business_profile_field_receipts
       WHERE business_id::text = ANY($1::text[])
@@ -244,11 +272,15 @@ async function loadCurrentKinfolkRecords(): Promise<{
   return { records, receiptsByBusinessId };
 }
 
-export async function buildPhiladelphiaKinfolkCurrentDuplicateManifest(): Promise<PhiladelphiaKinfolkCurrentDuplicateManifest> {
-  const { records, receiptsByBusinessId } = await loadCurrentKinfolkRecords();
-  const plan = buildPhiladelphiaKinfolkCurrentDuplicatePlan(
+export async function buildKinfolkCurrentCityDuplicateManifest(
+  scope: KinfolkCurrentCityScope,
+): Promise<KinfolkCurrentCityDuplicateManifest> {
+  const { records, receiptsByBusinessId } =
+    await loadCurrentKinfolkRecords(scope);
+  const plan = buildKinfolkCurrentCityDuplicatePlan(
     records,
     receiptsByBusinessId,
+    scope,
   );
   return {
     manifestVersion: 1,
@@ -256,18 +288,62 @@ export async function buildPhiladelphiaKinfolkCurrentDuplicateManifest(): Promis
     mode: "dry_run",
     policyVersion: PHILADELPHIA_KINFOLK_DUPLICATE_RECONCILIATION_POLICY_VERSION,
     planHash: hashPlan(plan),
-    scope: "Philadelphia, PA — Kinfolk Current",
-    summary: {
-      currentKinfolkRowsRead: records.length,
-      approvedConsolidations: plan.approved.length,
-      manualReviewCases: plan.manualReview.length,
-      socialFieldsToCopy: plan.approved.reduce(
-        (count, candidate) => count + candidate.transfers.length,
-        0,
-      ),
-    },
+    scope: { ...scope, label: scopeLabel(scope) },
+    summary: summaryFor(plan, records.length),
     plan,
   };
+}
+
+export async function listKinfolkCurrentCityDuplicateInventory(): Promise<KinfolkCurrentCityDuplicateInventory> {
+  const { records, receiptsByBusinessId } = await loadCurrentKinfolkRecords();
+  const scopes = new Map<string, KinfolkCurrentCityScope>();
+  for (const record of records) {
+    const city = record.city?.trim() ?? "";
+    const state = record.state?.trim() ?? "";
+    if (!city || !state) continue;
+    const key = `${normalizedScopePart(city)}:${normalizedScopePart(state)}`;
+    scopes.set(key, { city, state });
+  }
+  const citiesWithDuplicateSignals = [...scopes.values()]
+    .map((scope) => {
+      const plan = buildKinfolkCurrentCityDuplicatePlan(
+        records,
+        receiptsByBusinessId,
+        scope,
+      );
+      return {
+        city: scope.city,
+        state: scope.state,
+        label: scopeLabel(scope),
+        summary: summaryFor(
+          plan,
+          records.filter(
+            (record) =>
+              normalizedScopePart(record.city ?? "") ===
+                normalizedScopePart(scope.city) &&
+              normalizedScopePart(record.state ?? "") ===
+                normalizedScopePart(scope.state),
+          ).length,
+        ),
+      };
+    })
+    .filter(
+      (city) =>
+        city.summary.approvedConsolidations > 0 ||
+        city.summary.manualReviewCases > 0,
+    )
+    .sort((left, right) => left.label.localeCompare(right.label));
+  return {
+    totalCurrentKinfolkRowsRead: records.length,
+    citiesWithDuplicateSignals,
+  };
+}
+
+export async function buildPhiladelphiaKinfolkCurrentDuplicateManifest(): Promise<PhiladelphiaKinfolkCurrentDuplicateManifest> {
+  return buildKinfolkCurrentCityDuplicateManifest({
+    city: "Philadelphia",
+    state: "PA",
+  });
 }
 
 function pickSocials(
@@ -281,11 +357,14 @@ function pickSocials(
   ) as Record<SocialField, string | null>;
 }
 
-export async function applyPhiladelphiaKinfolkCurrentDuplicateManifest(
-  manifest: PhiladelphiaKinfolkCurrentDuplicateManifest,
+export async function applyKinfolkCurrentCityDuplicateManifest(
+  manifest: KinfolkCurrentCityDuplicateManifest,
   actor: string,
 ): Promise<void> {
   const client = await pool.connect();
+  const confirmationPhrase = `MERGE ${manifest.scope.city.toUpperCase()} ${manifest.scope.state.toUpperCase()} KINFOLK CURRENT DUPLICATES`;
+  const changeNote = `Consolidated a confirmed ${manifest.scope.label} duplicate while preserving the canonical map pin and copying only audited official social profiles.`;
+  const mergeReason = `Confirmed high-confidence duplicate in ${manifest.scope.label}; retained the only stored map pin and copied only missing social profiles backed by an identity-attested receipt or multiple exact identity signals.`;
   try {
     await client.query("BEGIN");
     for (const candidate of manifest.plan.approved) {
@@ -413,7 +492,7 @@ export async function applyPhiladelphiaKinfolkCurrentDuplicateManifest(
             randomUUID(),
             candidate.canonicalId,
             actor,
-            CHANGE_NOTE,
+            changeNote,
             JSON.stringify(
               candidate.transfers.map((transfer) => transfer.field),
             ),
@@ -436,7 +515,7 @@ export async function applyPhiladelphiaKinfolkCurrentDuplicateManifest(
             candidate_website, candidate_phone, candidate_latitude, candidate_longitude, candidate_source_provider,
             matched_business_id, evidence, reason)
          VALUES ($1::uuid, 'existing_directory_duplicate', 'pending', $2, $3, $4, $5,
-                 $6, $7, $8, $9, 'kinfolk_current_philadelphia_reconciliation', $10, $11::jsonb, $12)`,
+                 $6, $7, $8, $9, 'kinfolk_current_city_reconciliation', $10, $11::jsonb, $12)`,
         [
           reviewItemId,
           duplicateBefore.name,
@@ -449,8 +528,7 @@ export async function applyPhiladelphiaKinfolkCurrentDuplicateManifest(
           duplicateBefore.longitude,
           candidate.canonicalId,
           JSON.stringify({
-            policyVersion:
-              PHILADELPHIA_KINFOLK_DUPLICATE_RECONCILIATION_POLICY_VERSION,
+            policyVersion: manifest.policyVersion,
             identityReasons: candidate.identityReasons,
             canonicalBusinessId: candidate.canonicalId,
             duplicateBusinessId: candidate.duplicateId,
@@ -459,8 +537,9 @@ export async function applyPhiladelphiaKinfolkCurrentDuplicateManifest(
               provenance: transfer.provenance,
             })),
             manifestHash: manifest.planHash,
+            scope: manifest.scope,
           }),
-          MERGE_REASON,
+          mergeReason,
         ],
       );
 
@@ -468,7 +547,7 @@ export async function applyPhiladelphiaKinfolkCurrentDuplicateManifest(
         `UPDATE public.businesses
             SET is_duplicate = true,
                 duplicate_of_id = $1,
-                duplicate_reason = 'philadelphia_kinfolk_pin_social_reconciliation',
+                duplicate_reason = 'kinfolk_current_city_pin_social_reconciliation',
                 duplicate_marked_at = NOW(),
                 listing_status = 'permanently_hidden',
                 status = 'permanently_hidden',
@@ -505,12 +584,12 @@ export async function applyPhiladelphiaKinfolkCurrentDuplicateManifest(
           candidate.duplicateId,
           candidate.canonicalId,
           actor,
-          PHILADELPHIA_KINFOLK_DUPLICATE_APPLY_CONFIRMATION,
-          MERGE_REASON,
+          confirmationPhrase,
+          mergeReason,
           JSON.stringify({
-            policyVersion:
-              PHILADELPHIA_KINFOLK_DUPLICATE_RECONCILIATION_POLICY_VERSION,
+            policyVersion: manifest.policyVersion,
             manifestHash: manifest.planHash,
+            scope: manifest.scope,
             identityReasons: candidate.identityReasons,
             copiedSocialFields: candidate.transfers.map((transfer) => ({
               field: transfer.field,
@@ -545,9 +624,16 @@ export async function applyPhiladelphiaKinfolkCurrentDuplicateManifest(
   }
 }
 
+export async function applyPhiladelphiaKinfolkCurrentDuplicateManifest(
+  manifest: PhiladelphiaKinfolkCurrentDuplicateManifest,
+  actor: string,
+): Promise<void> {
+  await applyKinfolkCurrentCityDuplicateManifest(manifest, actor);
+}
+
 async function writeManifest(
   path: string,
-  manifest: PhiladelphiaKinfolkCurrentDuplicateManifest,
+  manifest: KinfolkCurrentCityDuplicateManifest,
 ): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, `${JSON.stringify(manifest, null, 2)}\n`);

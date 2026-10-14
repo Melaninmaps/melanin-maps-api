@@ -56,7 +56,7 @@ import { KinfolkCatalogCohort } from "@/components/KinfolkCatalogCohort";
 import { AdminFeedbackTab } from "@/components/AdminFeedbackTab";
 import { AdminAccessLedger } from "@/components/AdminAccessLedger";
 import { AdminBusinessVideoContributions } from "@/components/AdminBusinessVideoContributions";
-import { PhiladelphiaKinfolkDuplicateReconciliation } from "@/components/PhiladelphiaKinfolkDuplicateReconciliation";
+import { KinfolkCurrentCityDuplicateReconciliation } from "@/components/KinfolkCurrentCityDuplicateReconciliation";
 import AdminBusinessReview from "@/pages/admin-business-review";
 import FounderDirectoryImports from "@/pages/founder-directory-imports";
 import {
@@ -5334,7 +5334,7 @@ Selected: ${summary}`);
               </p>
             </div>
 
-            <PhiladelphiaKinfolkDuplicateReconciliation
+            <KinfolkCurrentCityDuplicateReconciliation
               onApplied={() => loadBusinesses()}
             />
 

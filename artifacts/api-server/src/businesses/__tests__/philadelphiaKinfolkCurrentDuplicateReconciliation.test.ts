@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildKinfolkCurrentCityDuplicatePlan,
   buildPhiladelphiaKinfolkCurrentDuplicatePlan,
   type KinfolkCurrentBusinessRecord,
   type ProfileFieldReceipt,
@@ -210,6 +211,44 @@ describe("Philadelphia Kinfolk Current duplicate reconciliation", () => {
     expect(plan.approved[0]?.transfers[0]).toMatchObject({
       field: "instagram",
       provenance: "multi_signal_identity_legacy",
+    });
+  });
+
+  it("keeps same-name records in another city outside the selected city plan", () => {
+    const philadelphiaPinned = record({ id: "philadelphia-pinned" });
+    const philadelphiaDuplicate = record({
+      id: "philadelphia-duplicate",
+      latitude: null,
+      longitude: null,
+    });
+    const baltimorePinned = record({
+      id: "baltimore-pinned",
+      city: "Baltimore",
+      state: "MD",
+    });
+    const baltimoreDuplicate = record({
+      id: "baltimore-duplicate",
+      city: "Baltimore",
+      state: "MD",
+      latitude: null,
+      longitude: null,
+    });
+
+    const plan = buildKinfolkCurrentCityDuplicatePlan(
+      [
+        philadelphiaPinned,
+        philadelphiaDuplicate,
+        baltimorePinned,
+        baltimoreDuplicate,
+      ],
+      new Map(),
+      { city: "Baltimore", state: "MD" },
+    );
+
+    expect(plan.approved).toHaveLength(1);
+    expect(plan.approved[0]).toMatchObject({
+      canonicalId: "baltimore-pinned",
+      duplicateId: "baltimore-duplicate",
     });
   });
 });
