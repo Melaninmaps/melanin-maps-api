@@ -42,7 +42,7 @@ const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 const MAX_DOC_BYTES = 10 * 1024 * 1024;
 const MAX_KINFOLK_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_PURPOSES = new Set([
-  "general", "community_post", "community_post_private", "business_submission", "business_claim", "business_photo", "kinfolk_question", "kinfolk_question_document",
+  "general", "community_post", "community_post_private", "business_submission", "business_claim", "business_photo", "kinfolk_question", "kinfolk_question_document", "kinfolk_journey_private",
 ]);
 export const MEDIA_UPLOAD_ERROR_CODES = {
   FILE_REQUIRED: "MEDIA_FILE_REQUIRED",
@@ -270,7 +270,8 @@ export function getMediaUploadReadiness(purpose?: string): Record<string, unknow
   const kinfolkQuestionBucketConfigured = Boolean(getKinfolkQuestionImageBucketId());
   const isPrivateKinfolkQuestion = purpose === "kinfolk_question" || purpose === "kinfolk_question_document";
   const isPrivateCommunityPost = purpose === "community_post_private";
-  const isPrivatePurpose = isPrivateKinfolkQuestion || isPrivateCommunityPost;
+  const isPrivateJourney = purpose === "kinfolk_journey_private";
+  const isPrivatePurpose = isPrivateKinfolkQuestion || isPrivateCommunityPost || isPrivateJourney;
   const storage = isPrivateKinfolkQuestion
     ? getKinfolkQuestionImageStorageDiagnostics()
     : getObjectStorageDiagnostics();
@@ -278,8 +279,8 @@ export function getMediaUploadReadiness(purpose?: string): Record<string, unknow
     ...(storage.configured ? [] : ["Object-storage credential mode is invalid or incomplete."]),
     ...(isPrivateKinfolkQuestion
       ? (kinfolkQuestionBucketConfigured ? [] : ["KINFOLK_MEDIA_BUCKET_ID is required for private Kinfolk attachment uploads."])
-      : isPrivateCommunityPost
-      ? (privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private Community uploads."])
+      : isPrivateCommunityPost || isPrivateJourney
+      ? (privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private uploads."])
       : [
           ...(delivery.blocker ? [delivery.blocker] : []),
           ...(privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private uploads."]),
@@ -484,7 +485,8 @@ async function handleMediaUpload(
     return;
   }
   const isPrivateCommunityPost = purpose === "community_post_private";
-  const isPrivate = isPrivateKinfolkQuestion || isPrivateCommunityPost || purpose === "business_submission";
+  const isPrivateJourney = purpose === "kinfolk_journey_private";
+  const isPrivate = isPrivateKinfolkQuestion || isPrivateCommunityPost || isPrivateJourney || purpose === "business_submission";
   const delivery = getPublicDeliveryConfiguration();
   const activeStorageClient = isPrivateKinfolkQuestion ? kinfolkQuestionStorageClient : storageClient;
   const storageDiagnostics = isPrivateKinfolkQuestion
@@ -528,6 +530,8 @@ async function handleMediaUpload(
       ? "media-uploads/business-submission-private"
       : isPrivateCommunityPost
       ? "media-uploads/community-post-private"
+      : isPrivateJourney
+      ? "media-uploads/kinfolk-journeys-private"
       : isKinfolkQuestionDocument
       ? "media-uploads/kinfolk-private-documents"
       : "media-uploads/kinfolk-private"
@@ -567,11 +571,10 @@ async function handleMediaUpload(
 
   let url: string | null;
   try {
-    if (isPrivateKinfolkQuestion || isPrivateCommunityPost) {
+    if (isPrivateKinfolkQuestion || isPrivateCommunityPost || isPrivateJourney) {
       // The browser gets a local preview only. A short-lived signed URL is
       // created server-side only for the active, consented model request. Private
-      // Community media is streamed by an authenticated Community route instead;
-      // neither flow returns or stores a provider URL in the client.
+      // Community and Journey media never return or store a provider URL in the client.
       url = null;
     } else if (isPrivate) {
       const [signedUrl] = await storageFile.getSignedUrl({ action: "read", expires: Date.now() + 15 * 60 * 1000 });

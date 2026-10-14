@@ -1613,6 +1613,23 @@ export default function ProfileScreen() {
         <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
       </TouchableOpacity>
 
+      <TouchableOpacity
+        style={[styles.messagesBanner, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.foreground }]}
+        onPress={() => router.push("/kinfolk-journeys" as never)}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Open private Kinfolk Journeys"
+      >
+        <View style={[styles.messagesBannerIcon, { backgroundColor: colors.primary + "18" }]}>
+          <Feather name="map" size={22} color={colors.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.messagesBannerTitle, { color: colors.foreground }]}>Kinfolk Journeys</Text>
+          <Text style={[styles.messagesBannerSub, { color: colors.mutedForeground }]}>Private plans, confirmations, and selected calendar events</Text>
+        </View>
+        <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+      </TouchableOpacity>
+
       {isAuthenticated && biometricSupported && (
         <View style={[styles.biometricRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <View style={[styles.biometricIconWrap, { backgroundColor: colors.primary + "15" }]}>

@@ -1005,6 +1005,10 @@ function RootLayoutNav() {
         options={{ headerShown: false, presentation: "card" }}
       />
       <Stack.Screen
+        name="kinfolk-journeys"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
         name="location-share"
         options={{ headerShown: false, presentation: "modal" }}
       />

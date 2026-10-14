@@ -77,6 +77,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     { href: "/community", label: "Community" },
     { href: "/library", label: "Library" },
     { href: "/travel", label: "KinfolkAI™" },
+    { href: "/journeys", label: "Journeys" },
     { href: "/events", label: "Events" },
     { href: "/circles", label: "Circles" },
     { href: "/guides", label: "Guides" },
@@ -279,6 +280,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <li><Link href="/jobs"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Job Board</span></Link></li>
                     <li><Link href="/events"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Cultural Events</span></Link></li>
                     <li><Link href="/travel"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">KinfolkAI™</span></Link></li>
+                    <li><Link href="/journeys"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Private Journeys</span></Link></li>
                   </>
                 ) : (
                   <li><Link href="/membership"><span className="hover:text-[#CA922B] transition-colors cursor-pointer">Create an Account →</span></Link></li>
