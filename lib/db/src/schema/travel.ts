@@ -7,19 +7,22 @@ export const travelFlights = pgTable("travel_flights", {
   userId: varchar("user_id", { length: 255 }).notNull(),
   // Legacy plaintext rows may remain unlinked until an explicit member correction.
   tripId: uuid("trip_id"),
-  flightNumber: text("flight_number").notNull(),
+  // Keep established column limits intact. New encrypted writes use a short
+  // generic marker that fits the narrowest legacy column rather than widening
+  // or rewriting member records.
+  flightNumber: varchar("flight_number", { length: 20 }).notNull(),
   encryptedFlightNumber: text("encrypted_flight_number"),
   flightNumberEncryptionKeyId: varchar("flight_number_encryption_key_id", { length: 64 }),
-  airline: text("airline"),
+  airline: varchar("airline", { length: 100 }),
   encryptedAirline: text("encrypted_airline"),
   airlineEncryptionKeyId: varchar("airline_encryption_key_id", { length: 64 }),
-  departureDate: text("departure_date").notNull(),
+  departureDate: varchar("departure_date", { length: 10 }).notNull(),
   encryptedDepartureDate: text("encrypted_departure_date"),
   departureDateEncryptionKeyId: varchar("departure_date_encryption_key_id", { length: 64 }),
-  origin: text("origin"),
+  origin: varchar("origin", { length: 10 }),
   encryptedOrigin: text("encrypted_origin"),
   originEncryptionKeyId: varchar("origin_encryption_key_id", { length: 64 }),
-  destination: text("destination"),
+  destination: varchar("destination", { length: 10 }),
   encryptedDestination: text("encrypted_destination"),
   destinationEncryptionKeyId: varchar("destination_encryption_key_id", { length: 64 }),
   notes: text("notes"),

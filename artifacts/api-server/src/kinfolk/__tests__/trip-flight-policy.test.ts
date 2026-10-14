@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
+  FLIGHT_STORAGE_PLACEHOLDER,
   KINFOLK_TRIP_FLIGHT_DEFAULT_NON_USE,
   openTripFlight,
   parseFlightAttachInput,
@@ -54,16 +55,30 @@ describe("private Trip flight encryption policy", () => {
 
   it("encrypts every new field and opens it only for its owner", () => {
     const row = encryptedRow();
-    expect(row.flightNumber).toBe("[Encrypted private memory]");
-    expect(row.airline).toBe("[Encrypted private memory]");
-    expect(row.departureDate).toBe("[Encrypted private memory]");
-    expect(row.origin).toBe("[Encrypted private memory]");
-    expect(row.destination).toBe("[Encrypted private memory]");
-    expect(row.notes).toBe("[Encrypted private memory]");
+    expect(FLIGHT_STORAGE_PLACEHOLDER.length).toBeLessThanOrEqual(10);
+    expect(row.flightNumber).toBe(FLIGHT_STORAGE_PLACEHOLDER);
+    expect(row.airline).toBe(FLIGHT_STORAGE_PLACEHOLDER);
+    expect(row.departureDate).toBe(FLIGHT_STORAGE_PLACEHOLDER);
+    expect(row.origin).toBe(FLIGHT_STORAGE_PLACEHOLDER);
+    expect(row.destination).toBe(FLIGHT_STORAGE_PLACEHOLDER);
+    expect(row.notes).toBe(FLIGHT_STORAGE_PLACEHOLDER);
     expect(JSON.stringify(row)).not.toContain("Synthetic Air");
     const { memberConfirmed: _memberConfirmed, ...expected } = input;
     expect(openTripFlight(row, ownerId)).toEqual(expected);
     expect(() => openTripFlight(row, "synthetic-other-owner")).toThrow(PrivateMemoryEncryptionIntegrityError);
+  });
+
+  it("reads a previously sealed long-marker envelope without treating it as plaintext", () => {
+    const row = encryptedRow();
+    Object.assign(row, {
+      flightNumber: "[Encrypted private memory]",
+      airline: "[Encrypted private memory]",
+      departureDate: "[Encrypted private memory]",
+      origin: "[Encrypted private memory]",
+      destination: "[Encrypted private memory]",
+      notes: "[Encrypted private memory]",
+    });
+    expect(openTripFlight(row, ownerId)).toMatchObject({ flightNumber: input.flightNumber, origin: input.origin });
   });
 
   it("permits owner-only legacy reads but fails closed on a partial or tampered envelope", () => {

@@ -4,7 +4,7 @@ import request from "supertest";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createKinfolkTripFlightsRouter, type KinfolkTripFlightRepository } from "../kinfolk-trip-flights";
 import { sealTrip, type StoredKinfolkTrip } from "../../kinfolk/trip-policy";
-import { sealTripFlight, type StoredKinfolkTripFlight } from "../../kinfolk/trip-flight-policy";
+import { FLIGHT_STORAGE_PLACEHOLDER, sealTripFlight, type StoredKinfolkTripFlight } from "../../kinfolk/trip-flight-policy";
 
 const TRIP_ID = "10000000-0000-4000-8000-000000000001";
 const OTHER_TRIP_ID = "10000000-0000-4000-8000-000000000099";
@@ -90,7 +90,7 @@ describe("authenticated private selected-Trip flight routes", () => {
     expect(created.body.flight).toMatchObject({ id: FIRST_ID, ...publicFlight });
     expect(created.body.flight.memberConfirmed).toBeUndefined();
     expect(JSON.stringify(created.body)).not.toMatch(/encrypted|keyId|fingerprint|userId|\[Encrypted private memory\]/i);
-    expect(f.rows[0]!.flightNumber).toBe("[Encrypted private memory]");
+    expect(f.rows[0]!.flightNumber).toBe(FLIGHT_STORAGE_PLACEHOLDER);
     expect(JSON.stringify(f.rows[0])).not.toContain(input.flightNumber);
     expect((await f.request("get")).body.flights[0].flightNumber).toBe(input.flightNumber);
     expect((await f.request("get", `/${FIRST_ID}`)).body.flight.destination).toBe(input.destination);
@@ -109,7 +109,7 @@ describe("authenticated private selected-Trip flight routes", () => {
     const { memberConfirmed: _memberConfirmed, ...correction } = input;
     const attached = await f.request("put", `/${legacy.id}/attach`, { memberConfirmed: true, flight: correction });
     expect(attached.statusCode).toBe(200); expect(attached.body.flight).toMatchObject({ id: legacy.id, flightNumber: input.flightNumber });
-    expect(f.rows[0]!.tripId).toBe(TRIP_ID); expect(f.rows[0]!.flightNumber).toBe("[Encrypted private memory]");
+    expect(f.rows[0]!.tripId).toBe(TRIP_ID); expect(f.rows[0]!.flightNumber).toBe(FLIGHT_STORAGE_PLACEHOLDER);
     expect(JSON.stringify(attached.body)).not.toMatch(/encrypted|keyId|fingerprint|userId|placeholder/i);
     const unlinked = await f.request("delete", `/${legacy.id}/attachment`, { memberConfirmed: true });
     expect(unlinked.statusCode).toBe(200); expect(unlinked.body.unlinked).toBe(true); expect(f.rows[0]!.tripId).toBeNull();
@@ -163,6 +163,8 @@ describe("authenticated private selected-Trip flight routes", () => {
     expect(migration).toContain("BEFORE INSERT OR UPDATE ON travel_flights");
     expect(migration).toContain("safe_detach BOOLEAN");
     expect(migration).toContain("IF safe_detach THEN RETURN NEW; END IF;");
+    expect(migration).toContain("[private]");
+    expect(migration).not.toMatch(/ALTER\s+COLUMN|DROP\s+TRIGGER|CREATE\s+OR\s+REPLACE/i);
     expect(migration).not.toMatch(/^\s*(?:INSERT\s+INTO|UPDATE\s+travel_flights\s+SET|DELETE\s+FROM)\b/im);
     expect(startup).not.toContain("kinfolk_trip_flights_encryption");
     expect(routes).toContain('import kinfolkTripFlightsRouter from "./kinfolk-trip-flights"');

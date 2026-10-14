@@ -12,6 +12,15 @@ const IATA = /^[A-Z]{3}$/;
 type FlightField = "flightNumber" | "airline" | "departureDate" | "origin" | "destination" | "notes";
 const fields: readonly FlightField[] = ["flightNumber", "airline", "departureDate", "origin", "destination", "notes"];
 
+/** Fits every established legacy flight column without widening or rewriting it. */
+export const FLIGHT_STORAGE_PLACEHOLDER = "[private]" as const;
+
+function isFlightStoragePlaceholder(value: unknown): value is string {
+  // Accept the former generic marker only for owner-scoped reads, so no prior
+  // encrypted envelope is mistaken for legacy plaintext during this rollout.
+  return value === FLIGHT_STORAGE_PLACEHOLDER || value === TRIP_STORAGE_PLACEHOLDER;
+}
+
 function exactObject(body: unknown, allowed: readonly string[]): body is Record<string, unknown> {
   return Boolean(body) && typeof body === "object" && !Array.isArray(body) &&
     Object.keys(body as Record<string, unknown>).every((key) => allowed.includes(key));
@@ -148,13 +157,13 @@ function encryptedEnvelopeState(flight: StoredKinfolkTripFlight): "legacy" | "en
   });
   if (values.every((value) => value == null)) {
     // A placeholder-only legacy row is neither readable plaintext nor a valid vault envelope.
-    if (fields.some((field) => storage(flight, field).content === TRIP_STORAGE_PLACEHOLDER)) {
+    if (fields.some((field) => isFlightStoragePlaceholder(storage(flight, field).content))) {
       throw new PrivateMemoryEncryptionIntegrityError();
     }
     return "legacy";
   }
   if (values.some((value) => !value)) throw new PrivateMemoryEncryptionIntegrityError();
-  if (fields.some((field) => storage(flight, field).content !== TRIP_STORAGE_PLACEHOLDER)) {
+  if (fields.some((field) => !isFlightStoragePlaceholder(storage(flight, field).content))) {
     throw new PrivateMemoryEncryptionIntegrityError();
   }
   return "encrypted";
@@ -171,7 +180,7 @@ function legacyField(flight: StoredKinfolkTripFlight, field: FlightField): strin
 
 function openEncryptedField(flight: StoredKinfolkTripFlight, ownerId: string, field: FlightField): string {
   const value = storage(flight, field);
-  if (value.content !== TRIP_STORAGE_PLACEHOLDER || !value.encryptedContent || !value.encryptionKeyId) {
+  if (!isFlightStoragePlaceholder(value.content) || !value.encryptedContent || !value.encryptionKeyId) {
     throw new PrivateMemoryEncryptionIntegrityError();
   }
   // Build a complete typed envelope after the fail-closed validation above; do
@@ -223,10 +232,10 @@ export function openTripFlight(flight: StoredKinfolkTripFlight, ownerId: string)
 
 function sealField(value: string, flight: FlightIdentity, field: FlightField) {
   // Do not persist the helper's transient duplicate fingerprint: flights have no plaintext hash or fingerprint column.
-  const { content, encryptedContent, encryptionKeyId } = encryptOrdinaryMemoryContent(
+  const { encryptedContent, encryptionKeyId } = encryptOrdinaryMemoryContent(
     JSON.stringify({ [field]: value }), flight.userId, purpose(flight, field),
   );
-  return { placeholder: content, ciphertext: encryptedContent, keyId: encryptionKeyId };
+  return { placeholder: FLIGHT_STORAGE_PLACEHOLDER, ciphertext: encryptedContent, keyId: encryptionKeyId };
 }
 
 /** Every newly authored/corrected field is independently AES-GCM sealed. */

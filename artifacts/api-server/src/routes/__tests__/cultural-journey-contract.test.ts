@@ -82,7 +82,9 @@ describe("cultural Journey route contract", () => {
     expect(reflectionMigration).toContain("CREATE TRIGGER cultural_journey_entries_require_encrypted_reflection");
     expect(reflectionMigration).toContain("BEFORE INSERT OR UPDATE OF reflection, encrypted_reflection, reflection_encryption_key_id");
     expect(reflectionMigration).toContain("NEW.reflection = '[Encrypted private memory]'");
-    expect(reflectionMigration).toContain("UPDATE OF deliberately excludes removed_at");
+    expect(reflectionMigration).toContain("CREATE FUNCTION cultural_journey_entries_require_encrypted_reflection_v1");
+    expect(reflectionMigration).toContain("existing cultural journey reflection guard is preserved");
+    expect(reflectionMigration).not.toMatch(/DROP\s+TRIGGER|CREATE\s+OR\s+REPLACE/i);
     expect(reflectionMigration).not.toMatch(/\b(?:INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM|COPY\s+|TRUNCATE\s+)\b/i);
     expect(route).not.toContain("20261014_cultural_journey_reflection_encryption");
   });

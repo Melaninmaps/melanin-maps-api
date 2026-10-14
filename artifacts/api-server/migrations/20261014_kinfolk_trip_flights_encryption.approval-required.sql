@@ -3,47 +3,51 @@
 -- Additive owner-only Trip context and encrypted flight envelope only. No backfill, copy, rewrite, migration, or data operation is authorized.
 -- No PNR/booking reference, exact address, coordinates, live location, provider activation/status, calendar, reminder,
 -- chat-memory, recommendations, sharing, Directory, Map, Community, Safety, analytics, or public/read-share relation.
+-- If the canonical flight guard already exists, this migration fails before changing it; a separate reviewed plan is required.
 BEGIN;
 
--- Placeholders require room beyond the legacy varchar limits. This is schema-only and preserves every existing value.
+-- Keep every established column type unchanged. [private] fits the legacy 10-character destination/date/origin columns.
 ALTER TABLE travel_flights
-  ALTER COLUMN flight_number TYPE TEXT,
-  ALTER COLUMN airline TYPE TEXT,
-  ALTER COLUMN departure_date TYPE TEXT,
-  ALTER COLUMN origin TYPE TEXT,
-  ALTER COLUMN destination TYPE TEXT,
-  ADD COLUMN trip_id UUID NULL,
-  ADD COLUMN encrypted_flight_number TEXT NULL,
-  ADD COLUMN flight_number_encryption_key_id VARCHAR(64) NULL,
-  ADD COLUMN encrypted_airline TEXT NULL,
-  ADD COLUMN airline_encryption_key_id VARCHAR(64) NULL,
-  ADD COLUMN encrypted_departure_date TEXT NULL,
-  ADD COLUMN departure_date_encryption_key_id VARCHAR(64) NULL,
-  ADD COLUMN encrypted_origin TEXT NULL,
-  ADD COLUMN origin_encryption_key_id VARCHAR(64) NULL,
-  ADD COLUMN encrypted_destination TEXT NULL,
-  ADD COLUMN destination_encryption_key_id VARCHAR(64) NULL,
-  ADD COLUMN encrypted_notes TEXT NULL,
-  ADD COLUMN notes_encryption_key_id VARCHAR(64) NULL,
-  ADD COLUMN member_confirmed_at TIMESTAMPTZ NULL,
-  ADD COLUMN updated_at TIMESTAMPTZ NULL;
+  ADD COLUMN IF NOT EXISTS trip_id UUID NULL,
+  ADD COLUMN IF NOT EXISTS encrypted_flight_number TEXT NULL,
+  ADD COLUMN IF NOT EXISTS flight_number_encryption_key_id VARCHAR(64) NULL,
+  ADD COLUMN IF NOT EXISTS encrypted_airline TEXT NULL,
+  ADD COLUMN IF NOT EXISTS airline_encryption_key_id VARCHAR(64) NULL,
+  ADD COLUMN IF NOT EXISTS encrypted_departure_date TEXT NULL,
+  ADD COLUMN IF NOT EXISTS departure_date_encryption_key_id VARCHAR(64) NULL,
+  ADD COLUMN IF NOT EXISTS encrypted_origin TEXT NULL,
+  ADD COLUMN IF NOT EXISTS origin_encryption_key_id VARCHAR(64) NULL,
+  ADD COLUMN IF NOT EXISTS encrypted_destination TEXT NULL,
+  ADD COLUMN IF NOT EXISTS destination_encryption_key_id VARCHAR(64) NULL,
+  ADD COLUMN IF NOT EXISTS encrypted_notes TEXT NULL,
+  ADD COLUMN IF NOT EXISTS notes_encryption_key_id VARCHAR(64) NULL,
+  ADD COLUMN IF NOT EXISTS member_confirmed_at TIMESTAMPTZ NULL,
+  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NULL;
 
--- kinfolk_trips has the matching (id, user_id) uniqueness. The nullable link deliberately leaves legacy flights unlinked.
--- Only trip_id is nulled on deletion: user_id must stay owner-bound and NOT NULL.
-ALTER TABLE travel_flights
-  ADD CONSTRAINT travel_flights_owner_trip_fk
-  FOREIGN KEY (trip_id, user_id) REFERENCES kinfolk_trips (id, user_id) ON DELETE SET NULL (trip_id);
-CREATE INDEX travel_flights_owner_trip_created_idx ON travel_flights (user_id, trip_id, created_at DESC, id);
+-- kinfolk_trips has the matching (id, user_id) uniqueness. An existing constraint is preserved.
+DO $constraint$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'travel_flights_owner_trip_fk'
+      AND conrelid = 'travel_flights'::regclass
+  ) THEN
+    EXECUTE 'ALTER TABLE travel_flights
+      ADD CONSTRAINT travel_flights_owner_trip_fk
+      FOREIGN KEY (trip_id, user_id) REFERENCES kinfolk_trips (id, user_id)
+      ON DELETE SET NULL (trip_id)';
+  END IF;
+END;
+$constraint$;
+CREATE INDEX IF NOT EXISTS travel_flights_owner_trip_created_idx ON travel_flights (user_id, trip_id, created_at DESC, id);
 
--- New/corrected writes must carry a complete encrypted envelope and placeholders. An untouched all-null legacy envelope
--- may only keep every existing canonical field unchanged (for an explicit link/unlink); it cannot create or rewrite plaintext.
--- DELETE is intentionally absent: a member can remove legacy, partial, tampered, or key-unavailable rows without crypto.
-CREATE OR REPLACE FUNCTION travel_flights_no_new_plaintext_guard() RETURNS trigger LANGUAGE plpgsql AS $$
+-- New/corrected writes use a short generic marker plus complete ciphertext. All-null envelopes retain owner-only legacy reads.
+CREATE FUNCTION travel_flights_no_new_plaintext_guard_v1() RETURNS trigger LANGUAGE plpgsql AS $function$
 DECLARE
   new_complete BOOLEAN :=
-    NEW.flight_number = '[Encrypted private memory]' AND NEW.airline = '[Encrypted private memory]' AND
-    NEW.departure_date = '[Encrypted private memory]' AND NEW.origin = '[Encrypted private memory]' AND
-    NEW.destination = '[Encrypted private memory]' AND NEW.notes = '[Encrypted private memory]' AND
+    NEW.flight_number = '[private]' AND NEW.airline = '[private]' AND
+    NEW.departure_date = '[private]' AND NEW.origin = '[private]' AND
+    NEW.destination = '[private]' AND NEW.notes = '[private]' AND
     NEW.encrypted_flight_number IS NOT NULL AND NEW.flight_number_encryption_key_id IS NOT NULL AND
     NEW.encrypted_airline IS NOT NULL AND NEW.airline_encryption_key_id IS NOT NULL AND
     NEW.encrypted_departure_date IS NOT NULL AND NEW.departure_date_encryption_key_id IS NOT NULL AND
@@ -57,12 +61,12 @@ DECLARE
     OLD.encrypted_origin IS NULL AND OLD.origin_encryption_key_id IS NULL AND
     OLD.encrypted_destination IS NULL AND OLD.destination_encryption_key_id IS NULL AND
     OLD.encrypted_notes IS NULL AND OLD.notes_encryption_key_id IS NULL AND
-    OLD.flight_number IS DISTINCT FROM '[Encrypted private memory]' AND
-    OLD.airline IS DISTINCT FROM '[Encrypted private memory]' AND
-    OLD.departure_date IS DISTINCT FROM '[Encrypted private memory]' AND
-    OLD.origin IS DISTINCT FROM '[Encrypted private memory]' AND
-    OLD.destination IS DISTINCT FROM '[Encrypted private memory]' AND
-    OLD.notes IS DISTINCT FROM '[Encrypted private memory]';
+    OLD.flight_number IS DISTINCT FROM '[private]' AND OLD.flight_number IS DISTINCT FROM '[Encrypted private memory]' AND
+    OLD.airline IS DISTINCT FROM '[private]' AND OLD.airline IS DISTINCT FROM '[Encrypted private memory]' AND
+    OLD.departure_date IS DISTINCT FROM '[private]' AND OLD.departure_date IS DISTINCT FROM '[Encrypted private memory]' AND
+    OLD.origin IS DISTINCT FROM '[private]' AND OLD.origin IS DISTINCT FROM '[Encrypted private memory]' AND
+    OLD.destination IS DISTINCT FROM '[private]' AND OLD.destination IS DISTINCT FROM '[Encrypted private memory]' AND
+    OLD.notes IS DISTINCT FROM '[private]' AND OLD.notes IS DISTINCT FROM '[Encrypted private memory]';
   safe_detach BOOLEAN := TG_OP = 'UPDATE' AND NEW.trip_id IS NULL AND
     NEW.user_id IS NOT DISTINCT FROM OLD.user_id AND
     NEW.flight_number IS NOT DISTINCT FROM OLD.flight_number AND
@@ -99,8 +103,26 @@ BEGIN
   END IF;
   RAISE EXCEPTION 'travel_flights must use a complete encrypted private-memory envelope';
 END;
-$$;
-CREATE TRIGGER travel_flights_no_new_plaintext_guard
-  BEFORE INSERT OR UPDATE ON travel_flights FOR EACH ROW EXECUTE FUNCTION travel_flights_no_new_plaintext_guard();
+$function$;
+
+-- Never replace an existing guard. A clean destination receives the new short-marker safeguard.
+DO $migration$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM pg_trigger
+    WHERE tgrelid = 'travel_flights'::regclass
+      AND tgname = 'travel_flights_no_new_plaintext_guard'
+      AND NOT tgisinternal
+  ) THEN
+    RAISE EXCEPTION 'existing Trip flight guard is preserved; use a separately reviewed migration plan';
+  END IF;
+
+  EXECUTE 'CREATE TRIGGER travel_flights_no_new_plaintext_guard
+    BEFORE INSERT OR UPDATE ON travel_flights
+    FOR EACH ROW
+    EXECUTE FUNCTION travel_flights_no_new_plaintext_guard_v1()';
+END;
+$migration$;
 
 COMMIT;
