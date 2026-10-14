@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#190b04">
+  <title>Kinfolk — One Problem. Your Whole Day.</title>
+  <style>
+    :root { --ink:#2b1507; --night:#190b04; --brown:#40210f; --cream:#fbf1e2; --paper:#fffaf1; --gold:#d39a2b; --gold-soft:#f0d796; --sage:#1e5140; --mint:#dff0e5; --red:#c93e31; --muted:#775e4e; --line:#e3d0ba; --sans:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; --serif:Georgia,"Times New Roman",serif; }
+    * { box-sizing:border-box; }
+    html { background:var(--night); scroll-behavior:smooth; }
+    body { margin:0; background:var(--cream); color:var(--ink); font-family:var(--sans); }
+    button { font:inherit; cursor:pointer; }
+    button:focus-visible, a:focus-visible { outline:3px solid var(--gold-soft); outline-offset:3px; }
+    .skip { position:fixed; z-index:99; top:10px; left:10px; padding:9px 12px; color:var(--night); background:var(--gold-soft); transform:translateY(-190%); }
+    .skip:focus { transform:translateY(0); }
+    .header { position:fixed; z-index:30; top:0; right:0; left:0; display:flex; align-items:center; justify-content:space-between; padding:17px clamp(18px,4vw,62px); color:var(--cream); border-bottom:1px solid rgba(255,255,255,.09); background:linear-gradient(to bottom,rgba(23,10,3,.9),rgba(23,10,3,.38),transparent); backdrop-filter:blur(8px); }
+    .brand { color:var(--cream); font-size:.7rem; font-weight:900; letter-spacing:.15em; line-height:1.14; text-decoration:none; text-transform:uppercase; }
+    .brand em { color:var(--gold-soft); font-style:normal; }
+    .header-note { color:rgba(255,247,232,.7); font-size:.65rem; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }.experience-links{display:flex;gap:14px;align-items:center;max-width:min(76vw,650px);overflow-x:auto;white-space:nowrap;scrollbar-width:none}.experience-links::-webkit-scrollbar{display:none}.experience-links a{color:rgba(255,247,232,.72);font-size:.62rem;font-weight:900;letter-spacing:.08em;text-decoration:none;text-transform:uppercase}.experience-links a[aria-current="page"]{color:var(--gold-soft)}@media(max-width:560px){.header{gap:12px}.brand{font-size:.57rem}.experience-links{gap:12px;max-width:67vw}.experience-links a{font-size:.54rem}}
+    .hero { position:relative; display:grid; min-height:78svh; padding:clamp(124px,14vw,172px) clamp(24px,8vw,130px) 78px; overflow:hidden; isolation:isolate; }
+    .hero::before { position:absolute; z-index:-2; inset:0; background:linear-gradient(90deg,rgba(25,11,4,.94) 0%,rgba(25,11,4,.75) 48%,rgba(25,11,4,.27) 100%),linear-gradient(0deg,rgba(25,11,4,.82),transparent 48%),url("assets/cinematic/car-morning.jpg") center/cover; content:""; }
+    .hero::after { position:absolute; z-index:-1; right:-14vw; bottom:-35vw; width:min(68vw,900px); aspect-ratio:1; border:1px solid rgba(240,215,150,.28); border-radius:50%; box-shadow:0 0 0 52px rgba(240,215,150,.05),0 0 0 104px rgba(240,215,150,.025); content:""; }
+    .hero-inner { max-width:790px; align-self:center; }
+    .eyebrow { display:flex; align-items:center; gap:10px; margin:0 0 19px; color:var(--gold-soft); font-size:.68rem; font-weight:900; letter-spacing:.14em; text-transform:uppercase; }
+    .eyebrow::before { width:30px; height:1px; background:currentColor; content:""; }
+    h1,h2,h3,p { margin-top:0; }
+    h1 { margin-bottom:23px; font-family:var(--serif); font-size:clamp(3.8rem,8vw,8rem); font-weight:500; letter-spacing:-.065em; line-height:.86; }
+    h1 em { color:var(--gold-soft); font-style:italic; }
+    .hero p:not(.eyebrow) { max-width:610px; margin-bottom:28px; color:rgba(255,247,232,.82); font-size:clamp(1.02rem,1.6vw,1.22rem); line-height:1.62; }
+    .hero-quote { display:flex; align-items:start; gap:12px; max-width:580px; padding:15px 17px; border:1px solid rgba(240,215,150,.38); border-radius:16px; background:rgba(26,12,4,.5); box-shadow:0 15px 35px rgba(0,0,0,.2); backdrop-filter:blur(10px); }
+    .hero-quote b { display:grid; flex:none; place-items:center; width:31px; height:31px; color:var(--night); border-radius:50%; background:var(--gold-soft); font-family:var(--serif); font-size:1.08rem; }
+    .hero-quote span { display:block; color:rgba(255,247,232,.6); font-size:.65rem; font-weight:900; letter-spacing:.11em; text-transform:uppercase; }
+    .hero-quote strong { display:block; margin-top:3px; color:var(--paper); font-size:.98rem; line-height:1.42; }
+    .hero-action { display:inline-flex; align-items:center; gap:9px; margin-top:25px; padding:13px 17px; color:var(--night); border-radius:99px; background:var(--gold-soft); font-size:.78rem; font-weight:900; text-decoration:none; }
+    .hero-action:hover { transform:translateY(-2px); }
+
+    .intro { padding:clamp(74px,10vw,128px) clamp(24px,8vw,130px); background:var(--cream); }
+    .intro > div { max-width:850px; margin:auto; }
+    .intro .eyebrow { color:#9a6b1e; }
+    .intro h2 { margin-bottom:21px; font-family:var(--serif); font-size:clamp(3rem,6.5vw,6.5rem); font-weight:500; letter-spacing:-.06em; line-height:.91; }
+    .intro h2 em { color:#a57527; font-style:italic; }
+    .intro p:last-child { max-width:670px; color:#715644; font-size:1.05rem; line-height:1.65; }
+
+    .experience { position:relative; padding:0 clamp(18px,6vw,112px); background:#f7ead8; }
+    .experience::before { position:absolute; inset:0; background:radial-gradient(circle at 90% 10%,rgba(210,154,43,.2),transparent 22%),linear-gradient(90deg,rgba(250,240,224,.92),rgba(250,240,224,.77)),url("assets/cinematic/car-morning.jpg") 70% 0/cover fixed; opacity:.54; pointer-events:none; content:""; }
+    .experience-grid { position:relative; z-index:1; display:grid; grid-template-columns:minmax(360px,.86fr) minmax(440px,1fr); gap:clamp(42px,8vw,126px); width:min(100%,1280px); margin:auto; }
+    .phone-column { align-self:stretch; }
+    .phone-sticky { position:sticky; top:81px; display:grid; min-height:calc(100svh - 92px); place-items:center; }
+    .phone { position:relative; width:min(100%,408px); padding:10px; border:2px solid rgba(255,250,240,.86); border-radius:44px; background:#100804; box-shadow:0 35px 70px rgba(52,26,9,.28),0 0 0 4px rgba(204,144,37,.12); }
+    .notch { position:absolute; z-index:9; top:10px; left:31%; width:38%; height:19px; border-radius:0 0 14px 14px; background:#080503; }
+    .app { position:relative; min-height:706px; overflow:hidden; border-radius:33px; background:#fffaf1; }
+    .app-screen { position:absolute; inset:0; display:flex; flex-direction:column; overflow:hidden; opacity:0; pointer-events:none; transform:translateX(44px) scale(.98); transition:opacity .43s ease, transform .5s cubic-bezier(.2,.8,.2,1); }
+    .app-screen.active { z-index:2; opacity:1; pointer-events:auto; transform:translateX(0) scale(1); }
+    .app-status { display:flex; align-items:center; justify-content:space-between; padding:15px 20px 7px; color:#78604e; font-size:9px; font-weight:900; letter-spacing:.06em; }
+    .app-header { display:flex; align-items:center; justify-content:space-between; padding:9px 19px 13px; border-bottom:1px solid #eadac8; }
+    .app-header strong { display:block; font-size:15px; letter-spacing:-.02em; }
+    .app-header small { display:block; margin-top:2px; color:#957459; font-size:8px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
+    .mark { display:grid; place-items:center; width:29px; height:29px; color:#fff; border-radius:50%; background:var(--gold); font-family:var(--serif); font-size:16px; }
+    .app-body { display:flex; flex:1; flex-direction:column; gap:11px; padding:15px 16px 16px; overflow:hidden; }
+    .screen-kicker { margin:0; color:#906820; font-size:8px; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
+    .screen-title { margin:0; font-family:var(--serif); font-size:27px; font-weight:500; letter-spacing:-.046em; line-height:.96; }
+    .screen-sub { margin:-1px 0 0; color:#7b6351; font-size:9px; line-height:1.42; }
+    .thread { display:grid; gap:8px; }
+    .bubble { max-width:91%; padding:10px 11px; border-radius:14px; font-size:10px; line-height:1.38; }
+    .bubble.member { justify-self:end; color:#fff8ec; border-bottom-right-radius:3px; background:#3c1f0d; }
+    .bubble.kinfolk { justify-self:start; border:1px solid #e0cdb8; border-bottom-left-radius:3px; background:#fffdf8; }
+    .bubble b { display:block; margin-bottom:3px; color:inherit; font-size:7px; letter-spacing:.1em; text-transform:uppercase; opacity:.68; }
+    .photo-upload { position:relative; display:grid; grid-template-columns:1fr auto; gap:10px; min-height:166px; padding:12px; overflow:hidden; color:#fff9ec; border-radius:16px; background:#15110d; }
+    .photo-upload::before { position:absolute; inset:0; z-index:1; background:linear-gradient(90deg,rgba(11,6,3,.9) 0%,rgba(11,6,3,.54) 58%,rgba(11,6,3,.12) 100%),linear-gradient(0deg,rgba(11,6,3,.5),transparent 55%); content:""; }
+    .dashboard-photo { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center; }
+    .photo-upload > * { position:relative; z-index:2; }
+    .photo-upload.opened { box-shadow:0 0 0 3px rgba(240,215,150,.52) inset; }
+    .photo-upload p { margin:0; color:rgba(255,249,236,.7); font-size:8px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    .photo-upload strong { display:block; margin-top:7px; font-size:14px; line-height:1.13; }
+    .engine-light { display:grid; place-items:center; align-self:end; width:47px; height:47px; color:#ffbd36; border:1px solid rgba(255,189,54,.36); border-radius:13px; background:rgba(0,0,0,.25); font-size:26px; }
+    .image-label { display:flex; align-items:center; gap:5px; margin-top:7px; color:rgba(255,249,236,.72); font-size:7px; }
+    .image-label i { width:6px; height:6px; border-radius:50%; background:#83d46f; }
+    .photo-tap { padding:8px 10px; color:#76521b; border:1px solid #e2c37f; border-radius:11px; background:#fff8e8; font-size:8px; font-weight:900; text-align:left; }
+    .choice-row { display:flex; gap:7px; }
+    .choice-row button { flex:1; padding:9px 8px; color:#6d4c1b; border:1px solid #dfc37e; border-radius:11px; background:#fff8e9; font-size:8px; font-weight:900; }
+    .choice-row button.selected { color:#fff; border-color:#b32e26; background:#b32e26; }
+    .safety-answer { display:none; padding:10px; color:#6e221b; border:1px solid #efbbb4; border-radius:13px; background:#fff0ee; font-size:9px; line-height:1.42; }
+    .safety-answer.visible { display:block; }
+    .safety-answer b { display:block; margin-bottom:3px; color:#aa3026; font-size:9px; }
+    .inline-action { margin-top:auto; padding:11px; color:#fff; border:0; border-radius:13px; background:#3b1f0e; font-size:10px; font-weight:900; }
+    .inline-action.gold { color:#261308; background:var(--gold-soft); }
+    .screen-note { color:#8b7160; font-size:8px; line-height:1.35; }
+
+    .cost-card { padding:11px; border:1px solid #e1cdb4; border-radius:15px; background:#fffdf8; }
+    .cost-card h4 { margin:0 0 8px; color:#3b2416; font-size:10px; }
+    .cost-row { display:grid; grid-template-columns:29px 1fr; gap:8px; padding:8px 0; border-top:1px solid #efe2d2; }
+    .cost-row b { color:#9b6a19; font-size:9px; }
+    .cost-row strong { display:block; font-size:9px; }
+    .cost-row span { display:block; margin-top:2px; color:#866b58; font-size:8px; line-height:1.3; }
+    .question-list { padding:10px 11px; color:#6a513e; border-radius:13px; background:#f4e6d2; font-size:9px; line-height:1.45; }
+    .question-list b { display:block; margin-bottom:3px; color:#8f641d; }
+
+    .map-panel { position:relative; min-height:248px; overflow:hidden; border-radius:16px; background:#203c31; }
+    .map-panel.compact { min-height:92px; }
+    .map-panel::before { position:absolute; inset:0; opacity:.42; background:repeating-linear-gradient(0deg,transparent 0 26px,rgba(255,244,220,.22) 27px 28px),repeating-linear-gradient(90deg,transparent 0 37px,rgba(255,244,220,.18) 38px 39px),linear-gradient(124deg,transparent 0 27%,rgba(210,156,46,.64) 28% 29%,transparent 30% 59%,rgba(255,244,220,.45) 60% 61%,transparent 62%); content:""; }
+    .map-pin { position:absolute; z-index:1; display:grid; place-items:center; width:28px; height:28px; color:#fff; border:2px solid #fff7e8; border-radius:50% 50% 50% 0; background:#d59926; box-shadow:0 5px 11px rgba(0,0,0,.23); transform:rotate(-45deg); }
+    .map-pin span { transform:rotate(45deg); font-size:13px; }
+    .map-pin.one { top:28%; left:25%; }.map-pin.two { top:54%; right:25%; background:#2f8062; }.map-pin.three { bottom:18%; left:42%; background:#a54635; }
+    .map-legend { position:absolute; z-index:1; right:9px; bottom:9px; padding:7px 9px; color:#4f3822; border-radius:10px; background:rgba(255,250,241,.93); font-size:7px; font-weight:900; }
+    .result-card { display:grid; grid-template-columns:40px 1fr auto; gap:9px; align-items:center; margin-top:-25px; margin-right:9px; margin-left:9px; padding:11px; color:#332016; border:1px solid #e1cab1; border-radius:15px; background:#fffdf8; box-shadow:0 10px 18px rgba(43,21,7,.13); }
+    .result-icon { display:grid; place-items:center; width:40px; height:40px; color:#ecd798; border-radius:11px; background:#265542; font-size:18px; }
+    .result-card small { display:block; color:#9a7626; font-size:7px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }
+    .result-card strong { display:block; margin-top:3px; font-size:10px; }
+    .result-card span { display:block; margin-top:2px; color:#806855; font-size:8px; }
+    .result-card b { color:#26714e; font-size:8px; }
+    .result-note { margin:9px 10px 0; color:#8a6c58; font-size:7px; line-height:1.35; }
+    .memory-context { padding:9px 10px; color:#45604b; border:1px solid #cde2d1; border-radius:12px; background:#eff8f0; font-size:8px; line-height:1.4; }
+    .memory-context b { color:#275c41; }.memory-context small { display:block; margin-bottom:3px; color:#6f8e79; font-size:7px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+    .shop-options { display:grid; gap:6px; }.shop-option { display:grid; grid-template-columns:1fr auto; gap:3px 8px; padding:8px 9px; text-align:left; border:1px solid #dbc4a6; border-radius:11px; background:#fffdf8; }.shop-option.selected { border-color:#c9942b; background:#fff5dd; }.shop-option small { grid-column:1/-1; color:#9b7423; font-size:6px; font-weight:900; letter-spacing:.06em; text-transform:uppercase; }.shop-option b { font-size:9px; }.shop-option span { color:#846b58; font-size:7px; }.shop-option strong { align-self:center; color:#2d7653; font-size:7px; }
+
+    /* Current native BusinessPreviewModal presentation, kept inside this preview phone. */
+    .business-sheet { position:absolute; z-index:14; inset:0; display:grid; align-items:end; background:rgba(22,10,4,.52); opacity:0; pointer-events:none; transform:translateX(var(--business-sheet-x,0px)); transition:opacity .22s ease; }
+    .business-sheet.is-open { opacity:1; pointer-events:auto; }
+    .business-sheet-card { width:100%; max-height:88%; overflow:auto; color:#2b1707; border-radius:24px 24px 0 0; background:#fffaf2; box-shadow:0 -12px 36px rgba(0,0,0,.28); transform:translateY(22px); transition:transform .25s ease; }
+    .business-sheet.is-open .business-sheet-card { transform:translateY(0); }
+    .business-sheet-handle { width:39px; height:4px; margin:10px auto 5px; border-radius:99px; background:#dcccb8; }
+    .business-sheet-hero { position:relative; height:138px; overflow:hidden; color:#fff; background:#3b1f0e; }
+    .business-sheet-hero img { width:100%; height:100%; object-fit:cover; }
+    .business-sheet-hero.is-category-art { background:radial-gradient(circle at 22% 22%,rgba(240,215,150,.18),transparent 34%),linear-gradient(135deg,#2d1608,#6f3b16); }
+    .business-sheet-hero.is-category-art img { display:none; }
+    .business-sheet-feather { position:absolute; z-index:1; top:50%; left:50%; display:none; width:70px; height:70px; color:var(--gold-soft); border:1px solid rgba(240,215,150,.48); border-radius:21px; background:rgba(20,10,4,.24); transform:translate(-50%,-52%); }
+    .business-sheet-hero.is-category-art .business-sheet-feather { display:grid; place-items:center; }
+    .business-sheet-feather svg { width:45px; height:45px; fill:none; stroke:currentColor; stroke-linecap:round; stroke-linejoin:round; stroke-width:1.5; }
+    .business-sheet-hero::after { position:absolute; inset:0; background:linear-gradient(0deg,rgba(23,10,4,.8),rgba(23,10,4,.05) 70%); content:""; }
+    .business-sheet-copy { position:absolute; z-index:1; right:48px; bottom:12px; left:15px; }.business-sheet-copy small { display:block; margin-bottom:3px; color:rgba(255,250,241,.78); font-size:7px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }.business-sheet-copy h4 { margin:0; font-family:var(--serif); font-size:22px; font-weight:500; letter-spacing:-.04em; line-height:.95; }.business-sheet-copy span { display:block; margin-top:4px; color:rgba(255,250,241,.74); font-size:8px; }
+    .business-sheet-close { position:absolute; z-index:2; top:11px; right:11px; display:grid; place-items:center; width:32px; height:32px; color:#fff; border:0; border-radius:50%; background:rgba(0,0,0,.34); font-size:18px; }
+    .business-sheet-body { display:grid; gap:9px; padding:12px 14px 14px; }.business-sheet-rating { display:flex; align-items:center; justify-content:space-between; gap:8px; color:#5c4531; font-size:9px; font-weight:800; }.business-sheet-pinned { padding:5px 7px; color:#795819; border:1px solid #e4ca97; border-radius:99px; background:#fff5df; font-size:7px; font-weight:900; }.business-sheet-label { margin:0 0 5px; color:#8c7160; font-size:7px; font-weight:900; letter-spacing:.09em; text-transform:uppercase; }.business-sheet-chips { display:flex; flex-wrap:wrap; gap:5px; }.business-sheet-chips span { padding:5px 7px; color:#315d48; border:1px solid #b9d9c2; border-radius:99px; background:#eef8ef; font-size:7px; font-weight:800; }.business-sheet-chips .quote { color:#a34e2c; border-color:#e7b79f; background:#fff2ec; }.business-sheet-description { margin:0; color:#735a47; font-size:8px; line-height:1.4; }.business-sheet-boundary { padding:8px; color:#6f593e; border-left:2px solid #c9922b; background:#fff4dc; font-size:7px; line-height:1.35; }.business-sheet-action { width:100%; padding:9px; color:#fff; border:0; border-radius:11px; background:#3b1f0e; font-size:8px; font-weight:900; }.business-sheet-return { width:100%; padding:8px; color:#725439; border:1px solid #dfc8ac; border-radius:11px; background:#fffdf9; font-size:8px; font-weight:900; }
+
+    .route-map { position:relative; min-height:195px; overflow:hidden; border-radius:16px; background:#ece1cb; }
+    .route-map.compact { min-height:106px; }
+    .route-map::before { position:absolute; inset:0; opacity:.86; background:repeating-linear-gradient(0deg,transparent 0 27px,rgba(74,65,47,.15) 28px 29px),repeating-linear-gradient(90deg,transparent 0 39px,rgba(74,65,47,.12) 40px 41px),linear-gradient(39deg,transparent 0 15%,#d39a2b 16% 18%,transparent 19% 38%,#d39a2b 39% 41%,transparent 42%); content:""; }
+    .route-line { position:absolute; z-index:1; top:35px; right:56px; bottom:34px; left:53px; border:3px dashed #c43d31; border-radius:50% 40% 35% 54%; transform:rotate(-17deg); }
+    .route-stop { position:absolute; z-index:2; display:grid; place-items:center; width:29px; height:29px; color:#fff; border:2px solid #fffaf1; border-radius:50%; background:#c43d31; font-size:9px; font-weight:900; }
+    .route-stop.a { top:36px; left:47px; }.route-stop.b { right:51px; bottom:37px; background:#315d49; }
+    .route-summary { display:grid; grid-template-columns:1fr 1fr; gap:8px; padding:10px; }
+    .route-summary div { padding:9px; border:1px solid #e5d3bc; border-radius:11px; background:#fffdf8; }
+    .route-summary span { display:block; color:#8b6c55; font-size:7px; font-weight:900; letter-spacing:.07em; text-transform:uppercase; }.route-summary b { display:block; margin-top:3px; font-size:9px; line-height:1.25; }
+    .route-note { padding:0 10px; color:#8a6c58; font-size:7px; line-height:1.35; }
+    .transport-options { display:grid; grid-template-columns:1fr 1fr; gap:7px; }.transport-options div { padding:8px; border:1px solid #d9c7b2; border-radius:11px; background:#fffdf8; }.transport-options b { display:block; color:#3b281b; font-size:8px; }.transport-options span { display:block; margin-top:3px; color:#876c59; font-size:7px; line-height:1.28; }.arrival-check { padding:9px 10px; color:#6d4c25; border:1px solid #e3c77e; border-radius:12px; background:#fff3d4; font-size:8px; line-height:1.38; }.arrival-check b { display:block; margin-bottom:2px; color:#956c1e; font-size:8px; }
+    .route-screen .app-body { gap:6px; padding:11px 16px 10px; }.route-screen .screen-title { font-size:23px; }.route-screen .bubble { padding:7px 8px; font-size:8px; }.route-screen .bubble b { font-size:6px; }.route-screen .transport-options div { padding:7px; }.route-screen .arrival-check { padding:7px 8px; font-size:7px; }.route-screen .arrival-check b { font-size:7px; }
+
+    .draft-card { padding:11px; color:#443122; border:1px solid #e0cdb6; border-radius:15px; background:#fffdf8; }
+    .draft-card small { display:block; color:#906a23; font-size:7px; font-weight:900; letter-spacing:.08em; text-transform:uppercase; }
+    .draft-card p { margin:7px 0; color:#6c5341; font-size:9px; line-height:1.42; }
+    .draft-card button { padding:7px 8px; color:#fff; border:0; border-radius:9px; background:#3b1f0e; font-size:8px; font-weight:900; }
+    .breakfast { display:grid; grid-template-columns:38px 1fr auto; gap:9px; align-items:center; padding:10px; border:1px solid #d9c5a9; border-radius:14px; background:#f7ead7; }
+    .breakfast .icon { display:grid; place-items:center; width:38px; height:38px; border-radius:11px; background:#4b2b15; font-size:17px; }.breakfast b { display:block; font-size:9px; }.breakfast span { display:block; margin-top:2px; color:#7b604c; font-size:8px; }.breakfast strong { color:#2b7651; font-size:8px; }
+
+    .story-column { position:relative; padding:clamp(86px,9vw,118px) 0 calc(clamp(84px,9vw,118px) + 76svh); }
+    .story-column::before { position:absolute; top:116px; bottom:116px; left:8px; width:1px; background:rgba(87,55,28,.22); content:""; }
+    .beat { position:relative; min-height:min(76svh,760px); padding:12px 0 30px 42px; scroll-margin-top:90px; }
+    .beat::before { position:absolute; top:18px; left:0; width:17px; height:17px; border:3px solid #f7ead8; border-radius:50%; background:#b77c27; box-shadow:0 0 0 1px rgba(80,47,18,.45); content:""; transition:transform .25s ease,background .25s ease; }
+    .beat.active::before { background:#2b1507; transform:scale(1.3); }
+    .beat-count { display:block; margin-bottom:13px; color:#966a1d; font-size:.68rem; font-weight:900; letter-spacing:.13em; text-transform:uppercase; }
+    .beat h3 { max-width:600px; margin-bottom:15px; font-family:var(--serif); font-size:clamp(2.65rem,4.8vw,5.25rem); font-weight:500; letter-spacing:-.055em; line-height:.93; }.beat h3 em { color:#a67725; font-style:italic; }
+    .beat > p { max-width:530px; color:#725745; font-size:1rem; line-height:1.64; }
+    .beat-note { max-width:475px; margin-top:20px; padding:13px 14px; color:#704f33; border-left:2px solid #c98f2b; background:rgba(255,255,255,.45); font-size:.77rem; line-height:1.48; }
+    .beat-button { display:inline-flex; align-items:center; gap:8px; margin-top:24px; padding:10px 13px; color:#fff; border:0; border-radius:99px; background:#3b1f0e; font-size:.75rem; font-weight:900; }
+    .beat-button[aria-current="step"] { box-shadow:0 0 0 4px rgba(201,143,43,.2); }
+
+    .capabilities { padding:clamp(78px,11vw,135px) clamp(24px,8vw,130px); color:var(--cream); background:#173b30; }
+    .capabilities > div { width:min(100%,1130px); margin:auto; }.capabilities h2 { max-width:800px; margin-bottom:38px; font-family:var(--serif); font-size:clamp(3rem,6vw,6rem); font-weight:500; letter-spacing:-.06em; line-height:.92; }.capabilities h2 em { color:var(--gold-soft); font-style:italic; }
+    .cap-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:13px; }.cap-grid article { padding:21px; border:1px solid rgba(255,248,232,.15); border-radius:18px; background:rgba(255,255,255,.055); }.cap-grid span { color:var(--gold-soft); font-size:.66rem; font-weight:900; letter-spacing:.11em; text-transform:uppercase; }.cap-grid h3 { margin:9px 0 7px; font-family:var(--serif); font-size:1.65rem; font-weight:500; }.cap-grid p { margin:0; color:rgba(255,247,232,.72); font-size:.86rem; line-height:1.54; }
+    .closing { position:relative; padding:clamp(108px,15vw,180px) clamp(24px,8vw,130px); overflow:hidden; color:var(--cream); background:#190b04; }.closing::before { position:absolute; inset:0; background:linear-gradient(90deg,rgba(25,11,4,.94),rgba(25,11,4,.52)),url("assets/cinematic/garage-guidance.jpg") center/cover; opacity:.86; content:""; }.closing > div { position:relative; max-width:830px; }.closing h2 { margin-bottom:22px; font-family:var(--serif); font-size:clamp(3.5rem,7.5vw,7.7rem); font-weight:500; letter-spacing:-.065em; line-height:.89; }.closing h2 em { color:var(--gold-soft); font-style:italic; }.closing p { max-width:615px; color:rgba(255,247,232,.79); font-size:1.07rem; line-height:1.62; }.closing .micro { margin-top:32px; color:rgba(255,247,232,.5); font-size:.72rem; }
+
+    @media (max-width:860px) { .header { padding:16px 18px; }.header-note { font-size:.54rem; }.hero { min-height:88svh; padding:124px 24px 67px; }.hero::before { background-position:62% center; }.experience-grid { grid-template-columns:1fr; gap:0; }.phone-column { z-index:3; grid-row:1; }.phone-sticky { z-index:3; top:59px; min-height:min(81svh,728px); padding-top:20px; background:linear-gradient(to bottom,rgba(247,234,216,.96),rgba(247,234,216,.77) 76%,transparent); }.phone { width:min(91vw,374px); transform:scale(.91); transform-origin:top center; }.app { min-height:676px; }.story-column { z-index:4; grid-row:2; padding-top:28px; }.story-column::before { top:49px; bottom:62px; }.beat { min-height:70svh; padding-left:37px; }.beat h3 { font-size:clamp(2.65rem,12vw,4rem); }.cap-grid { grid-template-columns:1fr; }.capabilities { padding:80px 24px; } }
+    @media (max-width:420px) { .header-note { max-width:125px; text-align:right; }.hero h1 { font-size:3.8rem; }.phone { transform:scale(.85); margin-bottom:-93px; }.phone-sticky { min-height:600px; }.beat { min-height:67svh; }.hero-quote strong { font-size:.9rem; } }
+    @media (prefers-reduced-motion:reduce) { *,*::before,*::after { scroll-behavior:auto !important; animation-duration:.01ms !important; transition-duration:.01ms !important; } }
+
+    .mark { overflow: hidden; } .mark img { display:block; width: 72%; height: 72%; object-fit: contain; }
+</style>
+</head>
+<body>
+  <a class="skip" href="#experience">Skip to the interactive Kinfolk demo</a>
+  <header class="header"><a class="brand" href="kinfolk-preview-suite.html">← All<br>experiences</a><nav class="experience-links" aria-label="Preview experience navigation"><a href="preview-one-problem-whole-day.html" aria-current="page">01 Everyday</a><a href="preview-everyday-stories.html#kinfolk-story">02 Travel</a><a href="preview-everyday-stories.html#owner-story">03 Business</a><a href="preview-safety-peace-of-mind.html">04 Safety</a><a href="preview-explore-your-way.html#app-preview">05 Explore</a></nav></header>
+  <main id="top">
+    <section class="hero" aria-labelledby="page-title"><div class="hero-inner"><p class="eyebrow">An everyday Kinfolk conversation</p><h1 id="page-title">One problem.<br><em>Your whole day.</em></h1><p>When a check-engine light interrupts the morning, the problem is never only the car. It becomes safety, money, a mechanic, a commute, a work message, and breakfast on the way.</p><div class="hero-quote"><b>K</b><div><span>The beginning of one thread</span><strong>“My check-engine light came on, and I still need to get to work.”</strong></div></div><a class="hero-action" href="#experience">Hold the phone <span aria-hidden="true">↓</span></a></div></section>
+
+    <section class="intro"><div><p class="eyebrow">The product point</p><h2>Kinfolk does not leave<br>when the first answer<br><em>creates the next problem.</em></h2><p>Advance through the actual decisions in one connected morning. The phone remembers what happened before, explains what it can, flags what needs professional help, and keeps the person moving through the rest of the day.</p></div></section>
+
+    <section class="experience" id="experience" data-demo aria-labelledby="experience-heading">
+      <div class="experience-grid">
+        <div class="phone-column" aria-label="Interactive Kinfolk mobile app demonstration"><div class="phone-sticky"><div class="phone"><div class="notch" aria-hidden="true"></div><div class="app">
+          <article class="app-screen active" data-screen="understand">
+            <div class="app-status"><span>7:15</span><span>● ● ●</span></div><div class="app-header"><div><strong>Kinfolk</strong><small>One morning · one thread</small></div><span class="mark"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+            <div class="app-body"><p class="screen-kicker">Something changed</p><h3 class="screen-title">Let’s understand<br>the light first.</h3><div class="photo-upload"><img class="dashboard-photo" src="assets/cinematic/kinfolk-dashboard-photo.jpg" alt="Dashboard photo sent by the member showing an illuminated check-engine symbol"><div><p>Image sent to Kinfolk · 7:15 AM</p><strong>Can you look at this<br>dashboard warning?</strong><span class="image-label"><i></i> Attached in this conversation</span></div><span class="engine-light">▰</span></div><button class="photo-tap" type="button" data-photo-review>Review the dashboard photo with Kinfolk <span aria-hidden="true">↗</span></button><div class="thread"><div class="bubble member"><b>You</b>What does this light mean? Can I still drive?</div><div class="bubble kinfolk"><b>Kinfolk</b>It may be a check-engine warning. Is the light flashing or staying on? That changes how carefully you should move next.</div></div><div class="choice-row"><button type="button" data-flash="steady">It’s staying on</button><button type="button" data-flash="flashing">It’s flashing</button></div><div class="safety-answer" id="flash-answer"><b>Flashing needs a safer pause.</b>Don’t treat this as a diagnosis. A flashing check-engine light can point to a problem that needs prompt professional attention; consider roadside assistance instead of continuing to drive.</div><button class="inline-action" type="button" data-next="money">What might this cost? <span aria-hidden="true">→</span></button></div>
+          </article>
+          <article class="app-screen" data-screen="money">
+            <div class="app-status"><span>7:18</span><span>● ● ●</span></div><div class="app-header"><div><strong>Kinfolk</strong><small>Car context carried forward</small></div><span class="mark"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+            <div class="app-body"><p class="screen-kicker">The money question</p><h3 class="screen-title">Understand the estimate<br>before approving work.</h3><div class="thread"><div class="bubble member"><b>You</b>How much is this going to cost? I don’t have money for a huge repair.</div><div class="bubble kinfolk"><b>Kinfolk</b>The light alone can’t tell us the repair cost. A diagnostic scan narrows the cause. I can help you know what to ask before you agree to anything.</div></div><article class="cost-card"><h4>Illustrative only · diagnosis comes first</h4><div class="cost-row"><b>01</b><div><strong>Diagnostic scan</strong><span>Ask what it includes, whether it is credited toward repair, and when you will get the findings.</span></div></div><div class="cost-row"><b>02</b><div><strong>Repair path</strong><span>Minor, moderate, and urgent causes can look similar from a warning light alone.</span></div></div><div class="cost-row"><b>03</b><div><strong>Approval</strong><span>Ask for the cause, total, parts/labor split, and what is essential today.</span></div></div></article><div class="question-list"><b>Questions to take with you</b>“What did the scan find?” · “What needs to happen now?” · “What can wait?”</div><button class="inline-action" type="button" data-next="find">Find a mechanic I can trust <span aria-hidden="true">→</span></button></div>
+          </article>
+          <article class="app-screen" data-screen="find">
+            <div class="app-status"><span>7:22</span><span>● ● ●</span></div><div class="app-header"><div><strong>Kinfolk</strong><small>Member-approved context · demo</small></div><span class="mark"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+            <div class="app-body"><p class="screen-kicker">Find the right person</p><h3 class="screen-title">Your preference is<br>already part of the search.</h3><div class="memory-context"><small>Fictional member-approved data · preview only</small><b>Saved places:</b> Home · Work &nbsp; <b>Preference:</b> Black-owned &nbsp; <b>Vehicle:</b> 2018 Honda Civic</div><div class="thread"><div class="bubble member"><b>You</b>Okay, I probably need someone to look at it.</div><div class="bubble kinfolk"><b>Kinfolk</b>I’m finding mechanics near you based on your saved preferences. You prefer Black-owned businesses, so I’ll prioritize verified Black-owned repair shops with Honda service evidence.</div></div><div class="map-panel compact" aria-label="Fictional preview map of mechanic options"><span class="map-pin one"><span>⚑</span></span><span class="map-pin two"><span>⚑</span></span><span class="map-pin three"><span>⚑</span></span><span class="map-legend">Fictional map preview</span></div><div class="shop-options" aria-label="Fictional mechanic preview choices"><button class="shop-option selected" type="button" data-select-shop="Cedar Auto Collective · fictional demo" data-business-preview="cedar" aria-pressed="true"><small>Fictional demo directory record</small><b>Cedar Auto Collective</b><strong>Selected</strong><span>Demo verification field · Honda service-evidence field</span></button><button class="shop-option" type="button" data-select-shop="Maple Street Motor Works · fictional demo" data-business-preview="maple" aria-pressed="false"><small>Fictional demo directory record</small><b>Maple Street Motor Works</b><strong>Preview</strong><span>Demo verification field · service-evidence field</span></button></div><p class="result-note">These are fictional sample records. Live cards may show a verified ownership field and Honda service evidence only after those claims are supported by connected directory data.</p><button class="inline-action" type="button" data-next="route">Use the selected shop & plan the next step <span aria-hidden="true">→</span></button></div>
+          </article>
+          <article class="app-screen route-screen" data-screen="route">
+            <div class="app-status"><span>7:30</span><span>● ● ●</span></div><div class="app-header"><div><strong>Kinfolk</strong><small>Proactive schedule check · demo</small></div><span class="mark"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+            <div class="app-body"><p class="screen-kicker">The next problem, recognized</p><h3 class="screen-title">Your car can stay.<br>Your schedule still matters.</h3><div class="memory-context"><small>Fictional authorized demo context</small><b>Selected shop:</b> <span data-selected-shop>Cedar Auto Collective · fictional demo</span><br><b>Saved place:</b> Work &nbsp; <b>Calendar:</b> 9:00 AM call</div><div class="thread"><div class="bubble kinfolk"><b>Kinfolk</b>I see you have a call at 9:00 AM, and I already have your work address saved. Let’s figure out how to get you there on time if you leave your car at the shop.</div></div><div class="route-map compact" aria-label="Illustrative route comparison map"><span class="route-line"></span><span class="route-stop a">A</span><span class="route-stop b">B</span></div><div class="route-summary"><div><span>Origin</span><b data-selected-shop>Cedar Auto Collective · fictional demo</b></div><div><span>Destination</span><b>Work · saved demo place</b></div></div><div class="transport-options"><div><b>Bus / rail</b><span>Live transfers, arrival time, and fare appear when Maps/Transit is connected.</span></div><div><b>Rideshare</b><span>Live pickup, estimate, and timing appear only after a supported provider query.</span></div></div><div class="arrival-check"><b>Arrival check needs live route data.</b>If no available option reaches work before the 9:00 AM call, Kinfolk must say so and offer alternatives—earlier departure, rideshare, a work-message draft, or joining remotely where appropriate.</div><button class="inline-action" type="button" data-next="carry">Help me handle the rest <span aria-hidden="true">→</span></button></div>
+          </article>
+          <article class="app-screen" data-screen="carry">
+            <div class="app-status"><span>7:35</span><span>● ● ●</span></div><div class="app-header"><div><strong>Kinfolk</strong><small>The day continues</small></div><span class="mark"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+            <div class="app-body"><p class="screen-kicker">Carry on</p><h3 class="screen-title">One rough morning<br>doesn’t erase the day.</h3><div class="thread"><div class="bubble member"><b>You</b>Can you text my boss that I might be late? And is there somewhere to grab breakfast near the shop?</div><div class="bubble kinfolk"><b>Kinfolk</b>Here’s a concise draft. Once the repair stop is chosen, I can use that location for the nearby breakfast search.</div></div><article class="draft-card"><small>Draft · local preview</small><p>“Good morning—my car needs attention this morning, so I may arrive a little late. I’ll keep you updated and will be online as soon as I can.”</p><button type="button" data-copy-draft>Copy draft</button></article><article class="breakfast"><span class="icon">☕</span><div><b>Breakfast near the repair stop</b><span>Discovery follows the location selected in the last step.</span></div><strong>Explore →</strong></article><p class="screen-note">This preview never sends a message, creates an appointment, or returns a live business/routing result.</p><button class="inline-action gold" type="button" data-restart>Start the story again <span aria-hidden="true">↺</span></button></div>
+          </article>
+          <aside class="business-sheet" data-business-sheet aria-hidden="true" aria-labelledby="mechanic-sheet-title"><div class="business-sheet-card" role="dialog" aria-modal="true"><div class="business-sheet-handle" aria-hidden="true"></div><div class="business-sheet-hero"><img data-business-sheet-image src="assets/mwm/icon.png" alt=""><span class="business-sheet-feather" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 1 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"></path></svg></span><div class="business-sheet-copy"><small data-business-sheet-kicker>Mechanic preview</small><h4 id="mechanic-sheet-title" data-business-sheet-title>Business name</h4><span data-business-sheet-subtitle>Auto repair · local preview</span></div><button class="business-sheet-close" type="button" data-close-business-sheet aria-label="Close business preview">×</button></div><div class="business-sheet-body"><div class="business-sheet-rating"><span>★★★★★ · Community rating</span><span class="business-sheet-pinned">▱ Pinned locally</span></div><div><p class="business-sheet-label">Community ratings</p><div class="business-sheet-chips"><span>Verification field</span><span>Service evidence field</span></div></div><div><p class="business-sheet-label">Community says</p><div class="business-sheet-chips"><span class="quote" data-business-sheet-quote>“Preview feedback appears here.”</span></div></div><p class="business-sheet-description" data-business-sheet-description>Preview business details.</p><div class="business-sheet-boundary">Demonstration only · this profile mirrors the current Kinfolk preview-sheet pattern. It does not assert a real listing, verification, service, price, availability, routing, or booking.</div><button class="business-sheet-action" type="button" data-business-sheet-action>View full profile locally</button><button class="business-sheet-return" type="button" data-close-business-sheet>Return to Kinfolk</button></div></div></aside>
+        </div></div></div></div>
+        <div class="story-column">
+          <section class="beat active" data-beat="understand"><span class="beat-count">01 · 7:15 AM</span><h3 id="experience-heading">A photo. A warning.<br><em>A safer next question.</em></h3><p>The visitor taps a dashboard photo, asks a human question, and sees Kinfolk do the most important thing first: distinguish what it can explain from what deserves a careful, professional response.</p><div class="beat-note">The preview explicitly avoids diagnosing the car or telling someone it is safe to drive. A flashing warning is treated as a reason to pause and consider roadside help.</div><button class="beat-button" type="button" data-go="understand" aria-current="step">Hold this screen <span aria-hidden="true">↗</span></button></section>
+          <section class="beat" data-beat="money"><span class="beat-count">02 · 7:18 AM</span><h3>A car question becomes<br><em>a money question.</em></h3><p>Kinfolk retains the warning-light context but does not pretend it knows the repair bill. It makes the estimate legible: get the diagnostic finding, ask what is essential, and know what to confirm before work begins.</p><div class="beat-note">Costs are intentionally not fabricated. The demonstration shows a responsible estimate-explainer until sourced local pricing or provider data is available.</div><button class="beat-button" type="button" data-go="money" aria-current="false">Hold this screen <span aria-hidden="true">↗</span></button></section>
+          <section class="beat" data-beat="find"><span class="beat-count">03 · 7:22 AM</span><h3>Kinfolk already knows<br><em>what matters to you.</em></h3><p>The member says only that they need someone to look at the car. Kinfolk carries forward the fictional, approved demo preference for Black-owned businesses and the saved Honda profile—without asking them to repeat either.</p><div class="beat-note">The business cards are fictional preview records. Verification and Honda-service fields are shown as data the live directory must substantiate, never as invented claims.</div><button class="beat-button" type="button" data-go="find" aria-current="false">Hold this screen <span aria-hidden="true">↗</span></button></section>
+          <section class="beat" data-beat="route"><span class="beat-count">04 · 7:30 AM</span><h3>The calendar knows.<br><em>Kinfolk acts.</em></h3><p>With authorized calendar access and a saved work place in the fictional preview profile, Kinfolk recognizes the 9:00 AM call on its own. It turns the selected mechanic into the starting point for the next decision before the member has to ask.</p><div class="beat-note">No arrival is promised without live route data. If the 9:00 AM call cannot be reached, the design says so and presents practical alternatives instead.</div><button class="beat-button" type="button" data-go="route" aria-current="false">Hold this screen <span aria-hidden="true">↗</span></button></section>
+          <section class="beat" data-beat="carry"><span class="beat-count">05 · 7:35 AM</span><h3>Keep the person moving.<br><em>Not just the car.</em></h3><p>The day ends this preview the way real life does: with an employer update and something to eat. Kinfolk carries the situation forward, so the next practical request is already rooted in the first one.</p><div class="beat-note">The message action is local-only; a supported messaging integration could turn a copied draft into an approved send flow later.</div><button class="beat-button" type="button" data-go="carry" aria-current="false">Hold this screen <span aria-hidden="true">↗</span></button></section>
+        </div>
+      </div>
+    </section>
+
+    <section class="capabilities" aria-labelledby="cap-title"><div><p class="eyebrow">A responsible preview distinguishes what it knows</p><h2 id="cap-title">The promise is continuity.<br><em>The boundaries stay clear.</em></h2><div class="cap-grid"><article><span>Current product direction</span><h3>One thread</h3><p>Conversation context, member-selected preferences, business discovery patterns, and task/reminder workflows shape the real Kinfolk experience.</p></article><article><span>Founder-preview simulation</span><h3>See the handoff</h3><p>Vehicle-image interpretation, local repair pricing, live mechanic results, routing, and drafted-message delivery are shown as interactions to evaluate—not released integrations.</p></article><article><span>What connects next</span><h3>Verified inputs</h3><p>Directory records, ownership verification, provider/service data, Maps/transit sources, and member-approved messaging can make the demonstrated handoffs live.</p></article></div></div></section>
+
+    <section class="closing"><div><p class="eyebrow">KinfolkAI · Mapping With Melanin</p><h2>Life doesn’t happen<br>one question at a time.<br><em>Neither should your AI.</em></h2><p>Understanding the problem. Evaluating options. Finding the right support. Keeping the day moving. This is the everyday companion difference—not another directory, and not five unrelated searches.</p><p class="micro">Founder-review simulation only. No vehicle diagnosis, repair pricing, business verification, availability, route, fare, message, or appointment is live or submitted from this preview.</p></div></section>
+  </main>
+  <script>
+    (() => {
+      const demo = document.querySelector('[data-demo]');
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const activate = (key, scroll = false) => {
+        demo.querySelectorAll('[data-screen]').forEach((screen) => screen.classList.toggle('active', screen.dataset.screen === key));
+        demo.querySelectorAll('[data-beat]').forEach((beat) => beat.classList.toggle('active', beat.dataset.beat === key));
+        demo.querySelectorAll('[data-go]').forEach((button) => button.setAttribute('aria-current', button.dataset.go === key ? 'step' : 'false'));
+        if (scroll) demo.querySelector(`[data-beat="${key}"]`)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+      };
+      demo.querySelectorAll('[data-go]').forEach((button) => button.addEventListener('click', () => activate(button.dataset.go, true)));
+      demo.querySelectorAll('[data-next]').forEach((button) => button.addEventListener('click', () => activate(button.dataset.next, true)));
+      demo.querySelector('[data-restart]')?.addEventListener('click', () => activate('understand', true));
+      demo.querySelectorAll('[data-flash]').forEach((button) => button.addEventListener('click', () => {
+        demo.querySelectorAll('[data-flash]').forEach((option) => option.classList.toggle('selected', option === button));
+        const answer = document.querySelector('#flash-answer');
+        answer.classList.toggle('visible', button.dataset.flash === 'flashing');
+      }));
+      demo.querySelector('[data-photo-review]')?.addEventListener('click', (event) => {
+        const button = event.currentTarget;
+        demo.querySelector('.photo-upload')?.classList.add('opened');
+        button.textContent = 'Dashboard photo reviewed locally';
+      });
+      const mechanicProfiles = {
+        cedar: { name:'Cedar Auto Collective', kicker:'Mechanic preview', subtitle:'Auto repair · local preview', visual:'auto', image:'', quote:'“Clear questions before any work begins.”', description:'A mechanic preview card for a member who needs a careful next step after a dashboard warning.' },
+        maple: { name:'Maple Street Motor Works', kicker:'Mechanic preview', subtitle:'Auto repair · local preview', visual:'auto', image:'', quote:'“A practical option to compare.”', description:'An alternate mechanic preview card shown within the same Kinfolk conversation.' }
+      };
+      const mechanicSheet = demo.querySelector('[data-business-sheet]');
+      const appSurface = demo.querySelector('.app');
+      if (mechanicSheet.parentElement !== appSurface) appSurface.append(mechanicSheet);
+      const closeMechanicSheet = () => { mechanicSheet.classList.remove('is-open'); mechanicSheet.setAttribute('aria-hidden','true'); };
+      const openMechanicSheet = (key) => { const profile=mechanicProfiles[key]; if(!profile) return; mechanicSheet.style.setProperty('--business-sheet-x', `${appSurface.getBoundingClientRect().left - mechanicSheet.getBoundingClientRect().left}px`); mechanicSheet.querySelector('[data-business-sheet-kicker]').textContent=profile.kicker; mechanicSheet.querySelector('[data-business-sheet-title]').textContent=profile.name; mechanicSheet.querySelector('[data-business-sheet-subtitle]').textContent=profile.subtitle; const mechanicHero=mechanicSheet.querySelector('.business-sheet-hero'); mechanicHero.classList.toggle('is-category-art', profile.visual === 'auto'); const mechanicImage=mechanicSheet.querySelector('[data-business-sheet-image]'); if(profile.image) mechanicImage.src=profile.image; mechanicImage.alt=profile.visual === 'auto' ? `${profile.name} automotive category mark` : `${profile.name} business preview image`; mechanicSheet.querySelector('[data-business-sheet-quote]').textContent=profile.quote; mechanicSheet.querySelector('[data-business-sheet-description]').textContent=profile.description; mechanicSheet.classList.add('is-open'); mechanicSheet.setAttribute('aria-hidden','false'); };
+      demo.querySelectorAll('[data-select-shop]').forEach((button) => button.addEventListener('click', () => {
+        const selected = button.dataset.selectShop;
+        demo.querySelectorAll('[data-select-shop]').forEach((option) => {
+          const current = option === button;
+          option.classList.toggle('selected', current);
+          option.setAttribute('aria-pressed', String(current));
+          option.querySelector('strong').textContent = current ? 'Selected' : 'Preview';
+        });
+        demo.querySelectorAll('[data-selected-shop]').forEach((target) => { target.textContent = selected; });
+        openMechanicSheet(button.dataset.businessPreview);
+      }));
+      demo.querySelectorAll('[data-close-business-sheet]').forEach((button) => button.addEventListener('click', closeMechanicSheet));
+      mechanicSheet?.addEventListener('click', (event) => { if (event.target === mechanicSheet) closeMechanicSheet(); });
+      demo.querySelector('[data-business-sheet-action]')?.addEventListener('click', (event) => { const button=event.currentTarget; const original=button.textContent; button.textContent='Profile preview opened locally'; window.setTimeout(()=>{button.textContent=original},1600); });
+      demo.querySelector('[data-copy-draft]')?.addEventListener('click', (event) => {
+        const button = event.currentTarget;
+        const original = button.textContent;
+        button.textContent = 'Copied locally';
+        window.setTimeout(() => { button.textContent = original; }, 1700);
+      });
+      const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
+        if (entry.isIntersecting) activate(entry.target.dataset.beat);
+      }), { threshold:.57, rootMargin:'-12% 0px -12% 0px' });
+      demo.querySelectorAll('[data-beat]').forEach((beat) => observer.observe(beat));
+    })();
+  </script>
+</body>
+</html>

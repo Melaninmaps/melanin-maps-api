@@ -1,9 +1,9 @@
-const approvedPreviewUrl = `${import.meta.env.BASE_URL}approved-preview-8-5.html`;
+const approvedPreviewUrl = `${import.meta.env.BASE_URL}kinfolk-preview/kinfolk-preview-suite.html`;
 
 /**
- * The approved 8/5 visitor preview is intentionally served as its original,
- * self-contained HTML document. This wrapper keeps /preview as the canonical
- * React route without rewriting the approved visual or animation artifact.
+ * The founder-approved Kinfolk preview suite is served as its original,
+ * self-contained HTML experience. This wrapper keeps /preview (and its existing
+ * aliases) canonical without rewriting the approved visual or interactions.
  */
 export function ApprovedAnimatedPreview() {
   return (
