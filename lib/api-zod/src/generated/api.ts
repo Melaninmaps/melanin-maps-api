@@ -32,7 +32,8 @@ export const GetCurrentAuthUserResponse = zod.object({
   "lastName": zod.string().nullable(),
   "profileImageUrl": zod.string().nullable(),
   "role": zod.enum(['user', 'tester', 'admin']),
-  "approved": zod.boolean().optional()
+  "approved": zod.boolean().optional(),
+  "profileSetupComplete": zod.boolean().optional()
 }),zod.null()])
 })
 
@@ -314,6 +315,15 @@ export const GetMyProfileResponse = zod.object({
   "firstName": zod.string().nullish(),
   "lastName": zod.string().nullish(),
   "profileImageUrl": zod.string().nullish(),
+  "username": zod.string().nullish(),
+  "bio": zod.string().nullish(),
+  "jobTitle": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "phoneNumber": zod.string().nullish(),
+  "homeCity": zod.string().nullish(),
+  "homeState": zod.string().nullish(),
+  "showCity": zod.boolean().optional(),
+  "isPrivate": zod.boolean().optional(),
   "role": zod.enum(['user', 'tester', 'admin']).optional().describe('The user\'s platform role. Determines access level and admin privileges.'),
   "createdAt": zod.coerce.date().nullish()
 })
@@ -324,7 +334,16 @@ export const GetMyProfileResponse = zod.object({
  */
 export const UpdateMyProfileBody = zod.object({
   "firstName": zod.string().optional(),
-  "lastName": zod.string().optional()
+  "lastName": zod.string().optional(),
+  "profileImageUrl": zod.string().optional(),
+  "username": zod.string().optional(),
+  "bio": zod.string().optional(),
+  "jobTitle": zod.string().optional(),
+  "industry": zod.string().optional(),
+  "phoneNumber": zod.string().optional(),
+  "homeCity": zod.string().optional(),
+  "homeState": zod.string().optional(),
+  "showCity": zod.boolean().optional()
 })
 
 export const UpdateMyProfileResponse = zod.object({
@@ -333,6 +352,15 @@ export const UpdateMyProfileResponse = zod.object({
   "firstName": zod.string().nullish(),
   "lastName": zod.string().nullish(),
   "profileImageUrl": zod.string().nullish(),
+  "username": zod.string().nullish(),
+  "bio": zod.string().nullish(),
+  "jobTitle": zod.string().nullish(),
+  "industry": zod.string().nullish(),
+  "phoneNumber": zod.string().nullish(),
+  "homeCity": zod.string().nullish(),
+  "homeState": zod.string().nullish(),
+  "showCity": zod.boolean().optional(),
+  "isPrivate": zod.boolean().optional(),
   "role": zod.enum(['user', 'tester', 'admin']).optional().describe('The user\'s platform role. Determines access level and admin privileges.'),
   "createdAt": zod.coerce.date().nullish()
 })

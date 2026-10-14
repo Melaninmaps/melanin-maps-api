@@ -8,6 +8,7 @@ import { Layout } from "@/components/layout";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { useEffect, useState } from "react";
 import { LocationContextProvider } from "@/features/discovery/LocationContext";
+import { AccountContextProvider } from "@/contexts/account-context";
 
 // Scroll to top on every route change so pages always open at the correct position
 function ScrollToTop() {
@@ -503,16 +504,18 @@ function App() {
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <LocationContextProvider>
-            <WouterRouter base={ROUTER_BASE}>
-              <ScrollToTop />
-              <OgRedirectHandler />
-              <Router />
-            </WouterRouter>
-            <Toaster />
-          </LocationContextProvider>
-        </TooltipProvider>
+        <AccountContextProvider>
+          <TooltipProvider>
+            <LocationContextProvider>
+              <WouterRouter base={ROUTER_BASE}>
+                <ScrollToTop />
+                <OgRedirectHandler />
+                <Router />
+              </WouterRouter>
+              <Toaster />
+            </LocationContextProvider>
+          </TooltipProvider>
+        </AccountContextProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

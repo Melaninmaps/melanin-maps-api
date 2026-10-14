@@ -53,7 +53,9 @@ router.get("/guides", async (req: Request, res: Response) => {
         authorFirstName: usersTable.firstName,
         authorLastName: usersTable.lastName,
         authorAvatar: usersTable.profileImageUrl,
-        authorCity: usersTable.homeCity,
+        // A guide's explicitly authored city is separate from the member's
+        // private home area.
+        authorCity: sql<string | null>`NULL`,
       })
       .from(payItForwardGuidesTable)
       .innerJoin(usersTable, eq(payItForwardGuidesTable.userId, usersTable.id))
@@ -136,7 +138,8 @@ router.get("/guides/:id", async (req: Request, res: Response) => {
         authorFirstName: usersTable.firstName,
         authorLastName: usersTable.lastName,
         authorAvatar: usersTable.profileImageUrl,
-        authorCity: usersTable.homeCity,
+        // Preserve response compatibility without releasing home area.
+        authorCity: sql<string | null>`NULL`,
       })
       .from(payItForwardGuidesTable)
       .innerJoin(usersTable, eq(payItForwardGuidesTable.userId, usersTable.id))

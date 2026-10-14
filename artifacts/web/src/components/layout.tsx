@@ -6,6 +6,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useTheme } from "@/contexts/theme";
 import { KinfolkOnboarding } from "./KinfolkOnboarding";
 import { OFFICIAL_SOCIAL_LINKS } from "@/lib/socialLinks";
+import { AccountContextSwitcher } from "./AccountContextSwitcher";
+import { useAccountContext } from "@/contexts/account-context";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -34,6 +36,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const requireApproval = useRequireApproval();
   const { theme, setTheme } = useTheme();
+  const { activeContext } = useAccountContext();
 
   // Onboarding: show once when an authenticated member hasn't completed profile setup
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
@@ -90,7 +93,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-[100dvh] flex flex-col bg-background">
       {/* First-time Kinfolk onboarding — shown once when profileSetupComplete is false */}
-      {needsOnboarding && (
+      {needsOnboarding && activeContext.kind === "personal" && (
         <KinfolkOnboarding
           firstName={auth?.user?.firstName ?? undefined}
           onComplete={handleOnboardingComplete}
@@ -150,6 +153,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Auth / Right side */}
           <div className="hidden xl:flex items-center gap-4">
+            {auth?.user && <AccountContextSwitcher />}
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
               aria-label="Toggle light/dark mode"
@@ -228,9 +232,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 {theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
               </button>
               {authLoading ? null : auth?.user ? (
+                <>
+                  <div className="py-2"><AccountContextSwitcher compact /></div>
                   <Link href="/profile" onClick={() => setIsMobileMenuOpen(false)} data-testid="mobile-profile-link">
-                  <span className="block text-[15px] font-medium text-[#F5EBD8] cursor-pointer py-2">Profile</span>
-                </Link>
+                    <span className="block text-[15px] font-medium text-[#F5EBD8] cursor-pointer py-2">Profile</span>
+                  </Link>
+                </>
               ) : (
                 <div className="flex flex-col gap-2">
                   <Link href="/login" onClick={() => setIsMobileMenuOpen(false)} data-testid="mobile-login-link">

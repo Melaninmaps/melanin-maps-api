@@ -8,5 +8,14 @@
 export interface UserProfileUpdate {
     firstName?: string;
     lastName?: string;
+    profileImageUrl?: string;
+    username?: string;
+    bio?: string;
+    jobTitle?: string;
+    industry?: string;
+    phoneNumber?: string;
+    homeCity?: string;
+    homeState?: string;
+    showCity?: boolean;
 }
 //# sourceMappingURL=userProfileUpdate.d.ts.map

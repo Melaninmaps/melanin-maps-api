@@ -9,6 +9,11 @@ function source(relativePath: string): string {
 describe("member privacy contract", () => {
   const users = source("../routes/users.ts");
   const privacyScreen = source("../../../mobile/app/privacy.tsx");
+  const collections = source("../routes/collections.ts");
+  const globalRecommendations = source("../routes/global-recommendations.ts");
+  const guides = source("../routes/guides.ts");
+  const hubBadges = source("../routes/hub-badges.ts");
+  const knowledgeHubs = source("../routes/knowledge-hubs.ts");
 
   it("returns only real, authenticated profile and direct-message controls", () => {
     expect(users).toMatch(/router\.get\("\/users\/me\/privacy"/);
@@ -27,5 +32,17 @@ describe("member privacy contract", () => {
     expect(users).toContain("reviews: canSeeContent ? reviews : []");
     expect(users).toContain("tags: canSeeContent ? tags : []");
     expect(users).toContain("canSeeContent,");
+  });
+
+  it("does not attach a member's home area to public authored content", () => {
+    expect(collections).not.toContain("creatorCity: usersTable.homeCity");
+    expect(globalRecommendations).not.toContain("contributorHomeCity: usersTable.homeCity");
+    expect(guides).not.toContain("authorCity: usersTable.homeCity");
+    expect(hubBadges).not.toContain("city: usersTable.homeCity");
+
+    // Knowledge hubs may use a home area only to match a local topic. The
+    // resulting public creator card must not disclose the matching value.
+    expect(knowledgeHubs).not.toContain("homeCity: usersTable.homeCity");
+    expect(knowledgeHubs).toContain("ilike(usersTable.homeCity");
   });
 });

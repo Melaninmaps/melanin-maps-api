@@ -16,6 +16,7 @@ export async function persistReducedSupportLensRemoval(input: {
   baseUrl: string;
   savedDesignations: readonly string[];
   removeDesignation: string;
+  accountContextHeader?: string;
   fetchImpl?: typeof fetch;
 }): Promise<{ update: ReturnType<typeof buildReducedSupportLensUpdate>; error?: string }> {
   const update = buildReducedSupportLensUpdate(input.savedDesignations, input.removeDesignation);
@@ -23,7 +24,12 @@ export async function persistReducedSupportLensRemoval(input: {
     const response = await (input.fetchImpl ?? fetch)(`${input.baseUrl}api/kinfolk/preferences`, {
       method: "PUT",
       credentials: "include",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(input.accountContextHeader
+          ? { "X-MWM-Account-Context": input.accountContextHeader }
+          : {}),
+      },
       body: JSON.stringify(update),
     });
     if (!response.ok) return { update, error: "Could not update Support Lens. Please try again." };

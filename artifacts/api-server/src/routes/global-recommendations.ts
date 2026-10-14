@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, globalRecommendationsTable, usersTable } from "@workspace/db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -84,7 +84,9 @@ router.get("/global-recommendations", async (req: Request, res: Response) => {
         badge: globalRecommendationsTable.badge,
         createdAt: globalRecommendationsTable.createdAt,
         contributorFirstName: usersTable.firstName,
-        contributorHomeCity: usersTable.homeCity,
+        // Home area remains member-private; recommendation location is
+        // separately supplied content, not a profile disclosure.
+        contributorHomeCity: sql<string | null>`NULL`,
       })
       .from(globalRecommendationsTable)
       .leftJoin(usersTable, eq(globalRecommendationsTable.userId, usersTable.id))

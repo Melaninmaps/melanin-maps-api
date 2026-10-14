@@ -62,6 +62,7 @@ import { KinfolkExperienceSettings } from "@/components/kinfolk/KinfolkExperienc
 import { SocialVideoPreferences } from "@/features/profile/SocialVideoPreferences";
 import { BusinessSupportPreferences } from "@/features/profile/BusinessSupportPreferences";
 import { MemberContextPreferences } from "@/features/profile/MemberContextPreferences";
+import { useAccountContext } from "@/contexts/account-context";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -1156,11 +1157,13 @@ function SocialProfileHub({
 
 export default function Profile() {
   const { data: auth, isLoading: authLoading } = useGetCurrentAuthUser();
+  const { activeContext } = useAccountContext();
+  const isPersonalAccountContext = activeContext.kind === "personal";
   const { data: profile } = useGetMyProfile({
-    query: { queryKey: ["getMyProfile"], enabled: !!auth?.user },
+    query: { queryKey: ["getMyProfile"], enabled: !!auth?.user && isPersonalAccountContext },
   });
   const { data: savedPlaces } = useListSavedPlaces({
-    query: { queryKey: ["listSavedPlaces"], enabled: !!auth?.user },
+    query: { queryKey: ["listSavedPlaces"], enabled: !!auth?.user && isPersonalAccountContext },
   });
 
   const updateProfile = useUpdateMyProfile();
@@ -1171,6 +1174,9 @@ export default function Profile() {
   const [bio, setBio] = useState("");
   const [jobTitle, setJobTitle] = useState("");
   const [industry, setIndustry] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [homeCity, setHomeCity] = useState("");
+  const [homeState, setHomeState] = useState("");
   const [usernameStatus, setUsernameStatus] = useState<
     "idle" | "checking" | "available" | "taken" | "reserved"
   >("idle");
@@ -1178,15 +1184,18 @@ export default function Profile() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    if (profile) {
+    if (isPersonalAccountContext && profile) {
       setFirstName(profile.firstName || "");
       setLastName(profile.lastName || "");
-      setUsername((profile as any).username || "");
-      setBio((profile as any).bio || "");
-      setJobTitle((profile as any).jobTitle || "");
-      setIndustry((profile as any).industry || "");
+      setUsername(profile.username || "");
+      setBio(profile.bio || "");
+      setJobTitle(profile.jobTitle || "");
+      setIndustry(profile.industry || "");
+      setPhoneNumber(profile.phoneNumber || "");
+      setHomeCity(profile.homeCity || "");
+      setHomeState(profile.homeState || "");
     }
-  }, [profile]);
+  }, [isPersonalAccountContext, profile]);
 
   // ── All hooks must be declared before any early return ─────────────────
   // React rule: hooks must run on every render in the same order.
@@ -1302,7 +1311,10 @@ export default function Profile() {
   }, [activeProfileSection]);
 
   useEffect(() => {
-    if (!auth?.user) return;
+    if (!auth?.user || !isPersonalAccountContext) {
+      setKinfolkPrefs(null);
+      return;
+    }
     const userId = (auth.user as any).id;
     const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     // Points
@@ -1365,7 +1377,10 @@ export default function Profile() {
       })
       .catch(() => {});
     // Kinfolk personalization preferences
-    fetch(`${base}/api/kinfolk/preferences`, { credentials: "include" })
+    fetch(`${base}/api/kinfolk/preferences`, {
+      credentials: "include",
+      headers: { "X-MWM-Account-Context": "personal" },
+    })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (d?.preferences) {
@@ -1414,23 +1429,26 @@ export default function Profile() {
         if (d?.circles) setMyCircles(d.circles.slice(0, 3));
       })
       .catch(() => {});
-  }, [auth?.user]);
+  }, [auth?.user, isPersonalAccountContext]);
 
   useEffect(() => {
-    if (!auth?.user) { setMembershipLabel(null); return; }
+    if (!auth?.user || !isPersonalAccountContext) { setMembershipLabel(null); return; }
     const base = import.meta.env.BASE_URL.replace(/\/$/, "");
     fetch(`${base}/api/users/me/membership-status`, { credentials: "include" })
       .then((response) => response.ok ? response.json() as Promise<{ membershipLabel?: string }> : null)
       .then((data) => setMembershipLabel(data?.membershipLabel ?? null))
       .catch(() => setMembershipLabel(null));
-  }, [auth?.user]);
+  }, [auth?.user, isPersonalAccountContext]);
 
   // Sync isPrivate from profile data once loaded
   useEffect(() => {
-    if (profile) {
-      setIsPrivate((profile as any).isPrivate === true);
+    if (isPersonalAccountContext && profile) {
+      setIsPrivate(profile.isPrivate === true);
     }
-  }, [profile]);
+  }, [isPersonalAccountContext, profile]);
+
+  if (activeContext.kind === "business") return <Redirect to="/business-dashboard" />;
+  if (activeContext.kind === "admin") return <Redirect to="/admin" />;
 
   if (authLoading)
     return (
@@ -1462,7 +1480,10 @@ export default function Profile() {
           bio: bio || undefined,
           jobTitle: jobTitle || undefined,
           industry: industry || undefined,
-        } as any,
+          phoneNumber,
+          homeCity,
+          homeState,
+        },
       },
       {
         onSuccess: () => {
@@ -1488,7 +1509,7 @@ export default function Profile() {
 
   const checkUsername = async (val: string) => {
     const clean = val.trim().toLowerCase().replace(/^@/, "");
-    if (!clean || clean === ((profile as any)?.username ?? "")) {
+    if (!clean || clean === (profile?.username ?? "")) {
       setUsernameStatus("idle");
       return;
     }
@@ -1858,21 +1879,21 @@ export default function Profile() {
               <h2 className="text-2xl font-serif font-bold text-[#3A1F0E]">
                 {profile?.firstName} {profile?.lastName}
               </h2>
-              {(profile as any)?.username && (
+              {profile?.username && (
                 <p className="text-sm font-medium text-[#CA922B] -mt-0.5">
-                  @{(profile as any).username}
+                  @{profile.username}
                 </p>
               )}
-              {(profile as any)?.bio && (
+              {profile?.bio && (
                 <p className="text-xs text-[#3A1F0E]/60 mt-1 max-w-xs text-center">
-                  {(profile as any).bio}
+                  {profile.bio}
                 </p>
               )}
-              {(profile as any)?.jobTitle && (
+              {profile?.jobTitle && (
                 <p className="text-xs text-[#3A1F0E]/50 mt-0.5">
-                  {(profile as any).jobTitle}
-                  {(profile as any)?.industry
-                    ? ` · ${(profile as any).industry}`
+                  {profile.jobTitle}
+                  {profile.industry
+                    ? ` · ${profile.industry}`
                     : ""}
                 </p>
               )}
@@ -1985,6 +2006,32 @@ export default function Profile() {
                     />
                   </div>
                 </div>
+                <div className="rounded-2xl border border-[#3A1F0E]/10 bg-white/60 p-4 space-y-3">
+                  <div>
+                    <p className="text-sm font-bold text-[#2B1507]">Private contact &amp; home area</p>
+                    <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">Your login email stays private. Add or update a private contact number and home city only if you want them on your member account. Mapping with Melanin does not ask for a street address here.</p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">Login email</label>
+                    <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-11 text-[#3A1F0E]/55" value={profile?.email ?? ""} disabled aria-label="Login email" />
+                  </div>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">Private phone</label>
+                      <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-11 focus-visible:ring-[#CA922B] text-[#3A1F0E]" value={phoneNumber} inputMode="tel" placeholder="(555) 555-5555" onChange={(e) => setPhoneNumber(e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">Home city</label>
+                      <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-11 focus-visible:ring-[#CA922B] text-[#3A1F0E]" value={homeCity} maxLength={100} placeholder="Philadelphia" onChange={(e) => setHomeCity(e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-28 space-y-1.5">
+                      <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/70">State</label>
+                      <Input className="bg-[#FAF6EF] border-transparent rounded-xl h-11 uppercase focus-visible:ring-[#CA922B] text-[#3A1F0E]" value={homeState} maxLength={2} placeholder="PA" onChange={(e) => setHomeState(e.target.value.toUpperCase())} />
+                    </div>
+                  </div>
+                </div>
                 <Button
                   type="submit"
                   className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white h-12 mt-2"
@@ -2061,7 +2108,7 @@ export default function Profile() {
                     </span>
                   </Button>
                 </Link>
-                <Link href="/submit-business?source=profile&campaign=member-community-business-entry">
+                <Link href="/submit-business?source=profile&campaign=member-business-entry">
                   <Button variant="outline" className="h-auto w-full justify-start rounded-2xl border-[#CA922B]/40 bg-[#FAF6EF] px-4 py-4 text-left text-[#2B1507] hover:border-[#CA922B] hover:bg-[#CA922B]/10">
                     <Heart className="mr-3 h-5 w-5 shrink-0 text-[#CA922B]" />
                     <span>

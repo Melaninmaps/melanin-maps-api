@@ -36,6 +36,7 @@ export declare const GetCurrentAuthUserResponse: zod.ZodObject<{
         profileImageUrl: zod.ZodNullable<zod.ZodString>;
         role: zod.ZodEnum<["user", "tester", "admin"]>;
         approved: zod.ZodOptional<zod.ZodBoolean>;
+        profileSetupComplete: zod.ZodOptional<zod.ZodBoolean>;
     }, "strip", zod.ZodTypeAny, {
         id: string;
         email: string | null;
@@ -44,6 +45,7 @@ export declare const GetCurrentAuthUserResponse: zod.ZodObject<{
         profileImageUrl: string | null;
         role: "user" | "tester" | "admin";
         approved?: boolean | undefined;
+        profileSetupComplete?: boolean | undefined;
     }, {
         id: string;
         email: string | null;
@@ -52,6 +54,7 @@ export declare const GetCurrentAuthUserResponse: zod.ZodObject<{
         profileImageUrl: string | null;
         role: "user" | "tester" | "admin";
         approved?: boolean | undefined;
+        profileSetupComplete?: boolean | undefined;
     }>, zod.ZodNull]>;
 }, "strip", zod.ZodTypeAny, {
     user: {
@@ -62,6 +65,7 @@ export declare const GetCurrentAuthUserResponse: zod.ZodObject<{
         profileImageUrl: string | null;
         role: "user" | "tester" | "admin";
         approved?: boolean | undefined;
+        profileSetupComplete?: boolean | undefined;
     } | null;
 }, {
     user: {
@@ -72,6 +76,7 @@ export declare const GetCurrentAuthUserResponse: zod.ZodObject<{
         profileImageUrl: string | null;
         role: "user" | "tester" | "admin";
         approved?: boolean | undefined;
+        profileSetupComplete?: boolean | undefined;
     } | null;
 }>;
 /**
@@ -729,6 +734,15 @@ export declare const GetMyProfileResponse: zod.ZodObject<{
     firstName: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
     lastName: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
     profileImageUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    username: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    jobTitle: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    industry: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    phoneNumber: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    homeCity: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    homeState: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    showCity: zod.ZodOptional<zod.ZodBoolean>;
+    isPrivate: zod.ZodOptional<zod.ZodBoolean>;
     role: zod.ZodOptional<zod.ZodEnum<["user", "tester", "admin"]>>;
     createdAt: zod.ZodOptional<zod.ZodNullable<zod.ZodDate>>;
 }, "strip", zod.ZodTypeAny, {
@@ -739,6 +753,15 @@ export declare const GetMyProfileResponse: zod.ZodObject<{
     profileImageUrl?: string | null | undefined;
     role?: "user" | "tester" | "admin" | undefined;
     createdAt?: Date | null | undefined;
+    username?: string | null | undefined;
+    bio?: string | null | undefined;
+    jobTitle?: string | null | undefined;
+    industry?: string | null | undefined;
+    phoneNumber?: string | null | undefined;
+    homeCity?: string | null | undefined;
+    homeState?: string | null | undefined;
+    showCity?: boolean | undefined;
+    isPrivate?: boolean | undefined;
 }, {
     id: string;
     email?: string | null | undefined;
@@ -747,6 +770,15 @@ export declare const GetMyProfileResponse: zod.ZodObject<{
     profileImageUrl?: string | null | undefined;
     role?: "user" | "tester" | "admin" | undefined;
     createdAt?: Date | null | undefined;
+    username?: string | null | undefined;
+    bio?: string | null | undefined;
+    jobTitle?: string | null | undefined;
+    industry?: string | null | undefined;
+    phoneNumber?: string | null | undefined;
+    homeCity?: string | null | undefined;
+    homeState?: string | null | undefined;
+    showCity?: boolean | undefined;
+    isPrivate?: boolean | undefined;
 }>;
 /**
  * @summary Update current user profile
@@ -754,12 +786,39 @@ export declare const GetMyProfileResponse: zod.ZodObject<{
 export declare const UpdateMyProfileBody: zod.ZodObject<{
     firstName: zod.ZodOptional<zod.ZodString>;
     lastName: zod.ZodOptional<zod.ZodString>;
+    profileImageUrl: zod.ZodOptional<zod.ZodString>;
+    username: zod.ZodOptional<zod.ZodString>;
+    bio: zod.ZodOptional<zod.ZodString>;
+    jobTitle: zod.ZodOptional<zod.ZodString>;
+    industry: zod.ZodOptional<zod.ZodString>;
+    phoneNumber: zod.ZodOptional<zod.ZodString>;
+    homeCity: zod.ZodOptional<zod.ZodString>;
+    homeState: zod.ZodOptional<zod.ZodString>;
+    showCity: zod.ZodOptional<zod.ZodBoolean>;
 }, "strip", zod.ZodTypeAny, {
     firstName?: string | undefined;
     lastName?: string | undefined;
+    profileImageUrl?: string | undefined;
+    username?: string | undefined;
+    bio?: string | undefined;
+    jobTitle?: string | undefined;
+    industry?: string | undefined;
+    phoneNumber?: string | undefined;
+    homeCity?: string | undefined;
+    homeState?: string | undefined;
+    showCity?: boolean | undefined;
 }, {
     firstName?: string | undefined;
     lastName?: string | undefined;
+    profileImageUrl?: string | undefined;
+    username?: string | undefined;
+    bio?: string | undefined;
+    jobTitle?: string | undefined;
+    industry?: string | undefined;
+    phoneNumber?: string | undefined;
+    homeCity?: string | undefined;
+    homeState?: string | undefined;
+    showCity?: boolean | undefined;
 }>;
 export declare const UpdateMyProfileResponse: zod.ZodObject<{
     id: zod.ZodString;
@@ -767,6 +826,15 @@ export declare const UpdateMyProfileResponse: zod.ZodObject<{
     firstName: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
     lastName: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
     profileImageUrl: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    username: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    bio: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    jobTitle: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    industry: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    phoneNumber: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    homeCity: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    homeState: zod.ZodOptional<zod.ZodNullable<zod.ZodString>>;
+    showCity: zod.ZodOptional<zod.ZodBoolean>;
+    isPrivate: zod.ZodOptional<zod.ZodBoolean>;
     role: zod.ZodOptional<zod.ZodEnum<["user", "tester", "admin"]>>;
     createdAt: zod.ZodOptional<zod.ZodNullable<zod.ZodDate>>;
 }, "strip", zod.ZodTypeAny, {
@@ -777,6 +845,15 @@ export declare const UpdateMyProfileResponse: zod.ZodObject<{
     profileImageUrl?: string | null | undefined;
     role?: "user" | "tester" | "admin" | undefined;
     createdAt?: Date | null | undefined;
+    username?: string | null | undefined;
+    bio?: string | null | undefined;
+    jobTitle?: string | null | undefined;
+    industry?: string | null | undefined;
+    phoneNumber?: string | null | undefined;
+    homeCity?: string | null | undefined;
+    homeState?: string | null | undefined;
+    showCity?: boolean | undefined;
+    isPrivate?: boolean | undefined;
 }, {
     id: string;
     email?: string | null | undefined;
@@ -785,6 +862,15 @@ export declare const UpdateMyProfileResponse: zod.ZodObject<{
     profileImageUrl?: string | null | undefined;
     role?: "user" | "tester" | "admin" | undefined;
     createdAt?: Date | null | undefined;
+    username?: string | null | undefined;
+    bio?: string | null | undefined;
+    jobTitle?: string | null | undefined;
+    industry?: string | null | undefined;
+    phoneNumber?: string | null | undefined;
+    homeCity?: string | null | undefined;
+    homeState?: string | null | undefined;
+    showCity?: boolean | undefined;
+    isPrivate?: boolean | undefined;
 }>;
 /**
  * @summary List community feed posts

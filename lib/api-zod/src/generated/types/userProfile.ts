@@ -17,6 +17,22 @@ export interface UserProfile {
   lastName?: string | null;
   /** @nullable */
   profileImageUrl?: string | null;
+  /** @nullable */
+  username?: string | null;
+  /** @nullable */
+  bio?: string | null;
+  /** @nullable */
+  jobTitle?: string | null;
+  /** @nullable */
+  industry?: string | null;
+  /** @nullable */
+  phoneNumber?: string | null;
+  /** @nullable */
+  homeCity?: string | null;
+  /** @nullable */
+  homeState?: string | null;
+  showCity?: boolean;
+  isPrivate?: boolean;
   /** The user's platform role. Determines access level and admin privileges. */
   role?: UserProfileRole;
   /** @nullable */
