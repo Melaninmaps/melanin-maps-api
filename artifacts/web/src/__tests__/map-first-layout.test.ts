@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { DEFAULT_MAP_VIEWPORT } from "../features/map/defaultMapViewport";
 
 const homeSource = readFileSync(
   new URL("../pages/home.tsx", import.meta.url),
@@ -40,5 +41,19 @@ describe("map-first Web layout", () => {
     expect(mapSource).toContain("requestMapDeviceLocation({ onUnavailable: () => centerSavedHomeArea(savedHomeCity) });");
     expect(mapSource).toContain("if (!ready || userCoords || handoffQuery || searchViewportLockedRef.current) return;");
     expect(mapSource).toContain("centerSavedHomeArea(savedHomeCity);");
+  });
+
+  it("uses a useful Philadelphia fallback when location and home area are unavailable", () => {
+    expect(DEFAULT_MAP_VIEWPORT).toEqual({
+      center: { lat: 39.9526, lng: -75.1652 },
+      zoom: 12,
+    });
+    expect(mapSource).toContain('import { DEFAULT_MAP_VIEWPORT } from "@/features/map/defaultMapViewport";');
+    expect(mapSource).toContain("center: DEFAULT_MAP_VIEWPORT.center");
+    expect(mapSource).toContain("zoom: DEFAULT_MAP_VIEWPORT.zoom");
+    expect(mapSource).toContain("mapRef.current.panTo(DEFAULT_MAP_VIEWPORT.center);");
+    expect(mapSource).toContain("mapRef.current.setZoom(DEFAULT_MAP_VIEWPORT.zoom);");
+    expect(mapSource).not.toContain("const US_CENTER");
+    expect(mapSource).not.toContain("lat: 38.5, lng: -96.5");
   });
 });

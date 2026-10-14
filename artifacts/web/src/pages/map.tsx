@@ -11,9 +11,10 @@ import {
 import { Link, useLocation, useSearch } from "wouter";
 import { Search, MapPin, X, Navigation, Navigation2, Plus, Sparkles } from "lucide-react";
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { MarkerClusterer } from "@googlemaps/markerclusterer";
+import { MarkerClusterer, type Renderer } from "@googlemaps/markerclusterer";
 import { LocalBusinessResults } from "@/features/map/LocalBusinessResults";
 import { applyLocalMapViewport, type MapViewportAdapter } from "@/features/map/applyLocalMapViewport";
+import { DEFAULT_MAP_VIEWPORT } from "@/features/map/defaultMapViewport";
 import { parseLocalMapSearch } from "@/features/map/parseLocalMapSearch";
 import { parseBusinessMapSearchPhrase } from "@/features/map/parseBusinessMapSearchPhrase";
 import AddPlaceModal from "@/components/AddPlaceModal";
@@ -202,6 +203,34 @@ const BRAND_STYLE: object[] = [
   { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9b99a" }] },
   { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#8b6e4e" }] },
 ];
+
+// The library renderer is intentionally replaced: its stock red/blue markers
+// convey no MWM meaning. This renderer changes only the visual treatment; the
+// count remains the exact number of currently clustered map-pin records and a
+// cluster click retains MarkerClusterer's default zoom-to-bounds behavior.
+const MWM_CLUSTER_RENDERER: Renderer = {
+  render({ count, position }) {
+    const g = (window as any).google?.maps;
+    if (!g?.Marker) throw new Error("Google Maps is unavailable for cluster rendering.");
+    const size = count >= 100 ? 58 : count >= 25 ? 52 : 46;
+    const fontSize = count >= 100 ? 16 : 15;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+      <circle cx="32" cy="32" r="29" fill="#2B1507" fill-opacity="0.92" stroke="#F7E4B9" stroke-width="3"/>
+      <circle cx="32" cy="32" r="23" fill="#CA922B" fill-opacity="0.88"/>
+      <text x="32" y="37" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="${fontSize}" font-weight="700">${count}</text>
+    </svg>`;
+    return new g.Marker({
+      position,
+      title: `${count} MWM businesses`,
+      zIndex: (Number(g.Marker.MAX_ZINDEX) || 1000) + count,
+      icon: {
+        url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+        scaledSize: new g.Size(size, size),
+        anchor: new g.Point(size / 2, size / 2),
+      },
+    });
+  },
+};
 
 // Haversine distance in km between two lat/lng points
 function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
@@ -1437,12 +1466,11 @@ export default function MapPage() {
     if (!g) { setApiKeyError(true); return; }
 
     try {
-      // Start at US center so no city feels "default". We'll immediately move to
-      // homeCity from the user's profile, and geolocation can override that.
-      const US_CENTER = { lat: 38.5, lng: -96.5 };
+      // A location-less visitor still needs a usable first map view. Browser GPS
+      // and a saved home city replace this fallback as soon as either is known.
       const map: GMap = new g.Map(mapDivRef.current, {
-        center: US_CENTER,
-        zoom: 4,
+        center: DEFAULT_MAP_VIEWPORT.center,
+        zoom: DEFAULT_MAP_VIEWPORT.zoom,
         styles: BRAND_STYLE,
         mapTypeControl: false,
         streetViewControl: false,
@@ -1549,8 +1577,8 @@ export default function MapPage() {
       mapRef.current.panTo(resetTarget);
       mapRef.current.setZoom(userCoords ? 13 : 12);
     } else {
-      mapRef.current.panTo({ lat: 38.5, lng: -96.5 });
-      mapRef.current.setZoom(4);
+      mapRef.current.panTo(DEFAULT_MAP_VIEWPORT.center);
+      mapRef.current.setZoom(DEFAULT_MAP_VIEWPORT.zoom);
     }
     infoWindowRef.current?.close();
     markersRef.current.forEach((mk) => {
@@ -1646,7 +1674,7 @@ export default function MapPage() {
       .filter(([id]) => activeIds.has(id))
       .map(([, marker]) => marker);
     if (markers.length === 0) return;
-    const clusterer = new MarkerClusterer({ map, markers });
+    const clusterer = new MarkerClusterer({ map, markers, renderer: MWM_CLUSTER_RENDERER });
     markerClustererRef.current = clusterer;
     return () => {
       clusterer.clearMarkers();
@@ -2449,7 +2477,11 @@ export default function MapPage() {
         <button
           type="button"
           onClick={resetView}
-          aria-label={userCoords ? "Recenter map on my location" : "Reset map to Philadelphia"}
+          aria-label={userCoords
+            ? "Recenter map on my location"
+            : profileCoords
+              ? "Recenter map on your saved home area"
+              : "Reset map to Philadelphia"}
           className="absolute right-4 top-4 z-10 inline-flex items-center gap-2 rounded-2xl border border-[#3A1F0E]/10 bg-white px-4 py-2.5 text-sm font-bold text-[#2B1507] shadow-lg transition-all hover:border-[#CA922B]/30 hover:shadow-xl"
         >
           <Navigation className="h-4 w-4 text-[#CA922B]" />
