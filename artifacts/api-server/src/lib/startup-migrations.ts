@@ -5964,13 +5964,32 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ADD COLUMN IF NOT EXISTS mapping_status text NOT NULL DEFAULT 'active',
       ADD COLUMN IF NOT EXISTS mapping_hold_reason text,
       ADD COLUMN IF NOT EXISTS mapping_reviewed_at timestamptz;
-      ALTER TABLE business_source_directory_receipts
-      ADD CONSTRAINT business_source_directory_receipts_mapping_status_check
-      CHECK (mapping_status IN ('active', 'review_hold', 'superseded')) NOT VALID;
+      -- This migration runs at every isolated-staging boot. The first boot may
+      -- have already created the named check constraint before a later health
+      -- check restarts the process, so preserve the existing constraint rather
+      -- than attempting to add it again.
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conrelid = 'business_source_directory_receipts'::regclass
+            AND conname = 'business_source_directory_receipts_mapping_status_check'
+        ) THEN
+          BEGIN
+            ALTER TABLE business_source_directory_receipts
+            ADD CONSTRAINT business_source_directory_receipts_mapping_status_check
+            CHECK (mapping_status IN ('active', 'review_hold', 'superseded')) NOT VALID;
+          EXCEPTION WHEN duplicate_object THEN
+            -- A concurrent startup installed the same named constraint.
+            NULL;
+          END;
+        END IF;
+      END $$;
       ALTER TABLE business_source_directory_receipts
       VALIDATE CONSTRAINT business_source_directory_receipts_mapping_status_check;
       CREATE INDEX IF NOT EXISTS business_source_directory_receipts_mapping_status_idx
-        ON business_source_directory_receipts (mapping_status, source_record_key);
+      ON business_source_directory_receipts (mapping_status, source_record_key);
 
       CREATE TABLE IF NOT EXISTS founder_source_identity_review_queue (
         id uuid PRIMARY KEY DEFAULT gen_random_uuid(),

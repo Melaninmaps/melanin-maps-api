@@ -30,4 +30,22 @@ describe("isolated governed discovery bootstrap", () => {
     expect(bootstrap).toContain('process.env.RAILWAY_ENVIRONMENT_NAME !== "staging"');
     expect(bootstrap).toContain('process.env.KINFOLK_MEMORY_STAGING_ISOLATION !== "true"');
   });
+
+  it("does not re-add the existing source-receipt status constraint after a restart", () => {
+    const migrationsFile = resolve(
+      dirname(fileURLToPath(import.meta.url)),
+      "../../lib/startup-migrations.ts",
+    );
+    const source = readFileSync(migrationsFile, "utf8");
+    const start = source.indexOf('name: "founder_source_receipt_integrity_review_v1"');
+    const end = source.indexOf('name: "business_directory_reconciliation_ledger_v1"', start);
+    const migration = source.slice(start, end);
+
+    expect(migration).toContain("FROM pg_constraint");
+    expect(migration).toContain("conrelid = 'business_source_directory_receipts'::regclass");
+    expect(migration).toContain("business_source_directory_receipts_mapping_status_check");
+    expect(migration).toContain("WHEN duplicate_object THEN");
+    expect(migration).toContain("VALIDATE CONSTRAINT business_source_directory_receipts_mapping_status_check");
+    expect(migration).not.toContain("DROP CONSTRAINT");
+  });
 });
