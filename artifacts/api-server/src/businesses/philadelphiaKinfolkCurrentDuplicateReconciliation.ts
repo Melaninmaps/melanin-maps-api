@@ -8,7 +8,7 @@ import {
 import { normalizeText } from "../lib/business-dedup";
 
 export const PHILADELPHIA_KINFOLK_DUPLICATE_RECONCILIATION_POLICY_VERSION =
-  "philadelphia-kinfolk-current-pin-social-v1" as const;
+  "philadelphia-kinfolk-current-pin-social-v2-shared-website-phone" as const;
 
 export const SOCIAL_FIELDS = [
   "instagram",
@@ -55,6 +55,7 @@ export type SocialTransfer = Readonly<{
   field: SocialField;
   value: string;
   receipt: ProfileFieldReceipt;
+  provenance: "identity_attested_receipt" | "shared_website_phone_legacy";
 }>;
 
 export type ApprovedDuplicateConsolidation = Readonly<{
@@ -172,6 +173,24 @@ function socialProfileMatches(
   );
 }
 
+function hasSharedOfficialWebsiteAndPhone(
+  canonical: KinfolkCurrentBusinessRecord,
+  duplicate: KinfolkCurrentBusinessRecord,
+): boolean {
+  const canonicalDomain = normalizeOfficialWebsiteDomain(canonical.website);
+  const duplicateDomain = normalizeOfficialWebsiteDomain(duplicate.website);
+  const canonicalPhone = normalizeBusinessPhone(canonical.phone);
+  const duplicatePhone = normalizeBusinessPhone(duplicate.phone);
+  return Boolean(
+    canonicalDomain &&
+    duplicateDomain &&
+    canonicalDomain === duplicateDomain &&
+    canonicalPhone &&
+    duplicatePhone &&
+    canonicalPhone === duplicatePhone,
+  );
+}
+
 function differingOfficialFields(
   canonical: KinfolkCurrentBusinessRecord,
   duplicate: KinfolkCurrentBusinessRecord,
@@ -207,10 +226,39 @@ function differingOfficialFields(
   return conflicts;
 }
 
+function legacySharedWebsitePhoneReceipt(
+  duplicate: KinfolkCurrentBusinessRecord,
+  field: SocialField,
+  value: string,
+): ProfileFieldReceipt {
+  const website = text(duplicate.website);
+  if (!website) {
+    throw new Error(
+      "Legacy social transfer requires the duplicate's official website URL.",
+    );
+  }
+  return {
+    fieldName: receiptFieldForSocial(field),
+    sourceUrl: website,
+    sourceLabel: "Legacy Kinfolk Current shared website + phone match",
+    observedAt: duplicate.updatedAt,
+    confidence: "medium",
+    note: "Legacy social profile transferred only after exact official-domain and normalized-phone agreement between the pinned canonical record and its same-name duplicate.",
+    observedValue: {
+      fields: { [field]: value },
+      identityMatch: {
+        asserted: true,
+        signal: "legacy_shared_website_phone",
+      },
+    },
+  };
+}
+
 function buildTransfers(
   canonical: KinfolkCurrentBusinessRecord,
   duplicate: KinfolkCurrentBusinessRecord,
   receiptsByBusinessId: ReadonlyMap<string, readonly ProfileFieldReceipt[]>,
+  allowLegacySharedWebsitePhone: boolean,
 ): { transfers: SocialTransfer[]; missingReceipts: string[] } {
   const sourceReceipts = receiptsByBusinessId.get(duplicate.id) ?? [];
   const transfers: SocialTransfer[] = [];
@@ -226,12 +274,30 @@ function buildTransfers(
     }
     const receipt = receiptForSocial(sourceReceipts, field, sourceValue);
     if (!receipt) {
+      if (allowLegacySharedWebsitePhone) {
+        transfers.push({
+          field,
+          value: sourceValue,
+          receipt: legacySharedWebsitePhoneReceipt(
+            duplicate,
+            field,
+            sourceValue,
+          ),
+          provenance: "shared_website_phone_legacy",
+        });
+        continue;
+      }
       missingReceipts.push(
         `${field} lacks a matching identity-attested field receipt`,
       );
       continue;
     }
-    transfers.push({ field, value: sourceValue, receipt });
+    transfers.push({
+      field,
+      value: sourceValue,
+      receipt,
+      provenance: "identity_attested_receipt",
+    });
   }
 
   return { transfers, missingReceipts };
@@ -256,15 +322,21 @@ function candidateReason(
   if (!hasStoredMapPin(canonical))
     reasons.push("the canonical record has no stored map pin");
 
+  const allowLegacySharedWebsitePhone = hasSharedOfficialWebsiteAndPhone(
+    canonical,
+    duplicate,
+  );
+
   const { transfers, missingReceipts } = buildTransfers(
     canonical,
     duplicate,
     receiptsByBusinessId,
+    allowLegacySharedWebsitePhone,
   );
   reasons.push(...missingReceipts);
   if (transfers.length === 0)
     reasons.push(
-      "no source-receipted social profile is missing from the pinned record",
+      "no transferable official social profile is missing from the pinned record",
     );
 
   if (reasons.length > 0) {
@@ -296,8 +368,9 @@ function candidateReason(
  * It never considers same-name listings alone. An automatic plan is emitted only
  * for exactly two current Kinfolk records in Philadelphia, with one stored pin,
  * high-confidence duplicate identity evidence, no conflicting official values,
- * and at least one missing social profile backed by the duplicate's own
- * identity-attested field receipt. Everything else is a manual-review case.
+ * and at least one missing social profile backed by either the duplicate's own
+ * identity-attested field receipt or an exact shared official website domain
+ * plus normalized phone number. Everything else is a manual-review case.
  */
 export function buildPhiladelphiaKinfolkCurrentDuplicatePlan(
   records: readonly KinfolkCurrentBusinessRecord[],

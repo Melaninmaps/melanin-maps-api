@@ -89,7 +89,7 @@ describe("Philadelphia Kinfolk Current duplicate reconciliation", () => {
     ]);
   });
 
-  it("leaves a social link without its own identity-attested receipt for manual review", () => {
+  it("uses the narrow shared-website-and-phone legacy fallback when a receipt is absent", () => {
     const pinned = record({ id: "business-pinned" });
     const duplicate = record({
       id: "business-socials",
@@ -103,8 +103,40 @@ describe("Philadelphia Kinfolk Current duplicate reconciliation", () => {
       new Map(),
     );
 
+    expect(plan.manualReview).toEqual([]);
+    expect(plan.approved).toHaveLength(1);
+    expect(plan.approved[0]?.transfers).toMatchObject([
+      {
+        field: "instagram",
+        value: "https://www.instagram.com/barberlife/",
+        provenance: "shared_website_phone_legacy",
+        receipt: {
+          sourceLabel: "Legacy Kinfolk Current shared website + phone match",
+        },
+      },
+    ]);
+  });
+
+  it("requires both the same official website domain and normalized phone for the legacy fallback", () => {
+    const pinned = record({ id: "business-pinned" });
+    const duplicate = record({
+      id: "business-socials",
+      latitude: null,
+      longitude: null,
+      phone: "267-555-0142",
+      instagram: "https://www.instagram.com/barberlife/",
+      updatedAt: "2026-10-14 20:01:00+00",
+    });
+    const plan = buildPhiladelphiaKinfolkCurrentDuplicatePlan(
+      [pinned, duplicate],
+      new Map(),
+    );
+
     expect(plan.approved).toEqual([]);
     expect(plan.manualReview).toHaveLength(1);
+    expect(plan.manualReview[0]?.reasons).toContain(
+      "different normalized phone numbers",
+    );
     expect(plan.manualReview[0]?.reasons).toContain(
       "instagram lacks a matching identity-attested field receipt",
     );

@@ -39,9 +39,9 @@ import {
 
 const APPLY_CONFIRMATION = "MERGE PHILADELPHIA KINFOLK CURRENT DUPLICATES";
 const CHANGE_NOTE =
-  "Consolidated a confirmed Philadelphia Kinfolk Current duplicate while preserving the canonical map pin and source-receipted official social profiles.";
+  "Consolidated a confirmed Philadelphia Kinfolk Current duplicate while preserving the canonical map pin and copying only audited official social profiles.";
 const MERGE_REASON =
-  "Confirmed high-confidence duplicate in Philadelphia Kinfolk Current; retained the only stored map pin and copied only missing source-receipted official social profiles.";
+  "Confirmed high-confidence duplicate in Philadelphia Kinfolk Current; retained the only stored map pin and copied only missing social profiles backed by an identity-attested receipt or exact shared official website domain plus normalized phone legacy provenance.";
 
 type RawBusinessRow = {
   id: string;
@@ -443,9 +443,10 @@ async function applyPlan(manifest: Manifest, actor: string): Promise<void> {
             identityReasons: candidate.identityReasons,
             canonicalBusinessId: candidate.canonicalId,
             duplicateBusinessId: candidate.duplicateId,
-            copiedSocialFields: candidate.transfers.map(
-              (transfer) => transfer.field,
-            ),
+            copiedSocialFields: candidate.transfers.map((transfer) => ({
+              field: transfer.field,
+              provenance: transfer.provenance,
+            })),
             manifestHash: manifest.planHash,
           }),
           MERGE_REASON,
@@ -500,9 +501,10 @@ async function applyPlan(manifest: Manifest, actor: string): Promise<void> {
               PHILADELPHIA_KINFOLK_DUPLICATE_RECONCILIATION_POLICY_VERSION,
             manifestHash: manifest.planHash,
             identityReasons: candidate.identityReasons,
-            copiedSocialFields: candidate.transfers.map(
-              (transfer) => transfer.field,
-            ),
+            copiedSocialFields: candidate.transfers.map((transfer) => ({
+              field: transfer.field,
+              provenance: transfer.provenance,
+            })),
             businessBefore: {
               isDuplicate: duplicateBefore.isDuplicate,
               duplicateOfId: duplicateBefore.duplicateOfId ?? null,
