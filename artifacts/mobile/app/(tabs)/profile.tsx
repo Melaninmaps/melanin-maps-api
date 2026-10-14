@@ -34,7 +34,6 @@ import { usePoints } from "@/hooks/usePoints";
 import { useCheckins } from "@/hooks/useCheckins";
 import { useSpaceWarnings } from "@/hooks/useSpaceWarnings";
 import { BadgeSection } from "@/components/BadgeSection";
-import { MilestoneSection } from "@/components/MilestoneSection";
 import { PointsRedemptionModal } from "@/components/PointsRedemptionModal";
 import { TrustLevelCard } from "@/components/TrustBadge";
 import { BrandQuoteBanner } from "@/components/BrandQuoteBanner";
@@ -51,6 +50,7 @@ const SOCIAL_PROFILE_ACTIONS = [
   { icon: "message-circle" as const, label: "Community activity", detail: "Posts, comments & conversations", route: "/(tabs)/community" as const },
   { icon: "bookmark" as const, label: "Saved places", detail: "Businesses you have saved", route: "/dashboard" as const },
   { icon: "users" as const, label: "Circles", detail: "Your private group spaces", route: "/circles" as const },
+  { icon: "compass" as const, label: "My Passport", detail: "Private moments you choose to keep", route: "/passport" as const },
 ];
 
 const INDUSTRIES = [
@@ -1232,17 +1232,6 @@ export default function ProfileScreen() {
             helpfulReviewsCount={trustData?.helpfulReviewsCount ?? 0}
             progress={trustData?.progress ?? { current: { label: "Member", description: "", badge: "" }, next: null, requirements: [] }}
             onVerifyPress={() => router.push("/trust-verification" as any)}
-          />
-        </View>
-      )}
-
-      {isAuthenticated && (
-        <View style={{ paddingHorizontal: 16 }}>
-          <MilestoneSection
-            reviewCount={reviewCount}
-            savedCount={savedIds.length}
-            pointsTotal={pointsTotal}
-            checkInCount={checkInCount}
           />
         </View>
       )}

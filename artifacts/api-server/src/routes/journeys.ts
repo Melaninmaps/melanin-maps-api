@@ -1,15 +1,7 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { db, pool, lifeJourneysTable, businessesTable, type JourneyPhase } from "@workspace/db";
-import { eq, and, desc, gte, count } from "drizzle-orm";
-import { getUserTier } from "../middleware/requireMembership";
-
-// Monthly journey creation limits by tier
-const JOURNEY_MONTHLY_LIMITS: Record<string, number> = {
-  free: 1,
-  navigator: 10,
-  trailblazer: Infinity,
-};
+import { eq, and, desc } from "drizzle-orm";
 
 const router: IRouter = Router();
 
@@ -132,35 +124,6 @@ router.post("/journeys", async (req: Request, res: Response) => {
     return;
   }
 
-  // ── Tier-based monthly journey limit ────────────────────────────────────────
-  const tier = await getUserTier(req.user.id);
-  const monthLimit = JOURNEY_MONTHLY_LIMITS[tier] ?? 1;
-  if (isFinite(monthLimit)) {
-    const monthStart = new Date();
-    monthStart.setDate(1);
-    monthStart.setHours(0, 0, 0, 0);
-    const [{ value: usedThisMonth }] = await db
-      .select({ value: count() })
-      .from(lifeJourneysTable)
-      .where(and(
-        eq(lifeJourneysTable.userId, req.user.id),
-        gte(lifeJourneysTable.createdAt, monthStart),
-      ));
-    if (Number(usedThisMonth) >= monthLimit) {
-      res.status(429).json({
-        error: tier === "free"
-          ? `Free members can start ${monthLimit} journey per month. Upgrade to Explorer+ for up to 10, or Navigator for unlimited.`
-          : `Explorer+ members can start ${monthLimit} journeys per month. Upgrade to Navigator for unlimited journeys.`,
-        code: "JOURNEY_LIMIT_REACHED",
-        used: Number(usedThisMonth),
-        limit: monthLimit,
-        tier,
-        upgradeUrl: "/membership",
-      });
-      return;
-    }
-  }
-
   const template = JOURNEY_TEMPLATES[journeyType]!;
   const location = [city, state].filter(Boolean).join(", ");
   const title = generateTitle(journeyType, city);
@@ -194,7 +157,7 @@ router.post("/journeys", async (req: Request, res: Response) => {
     const prompt = `You are KinfolkAI™, helping a community member plan their "${journeyType}" journey${location ? ` in ${location}` : ""}. 
 ${needsContext}
 
-Generate a journey with personalized steps and insights for each phase. Prioritize phases and steps that directly address their stated needs. Return EXACTLY this JSON:
+Generate a member-owned guide with personalized invitations and insights for each phase. Prioritize phases and suggestions that directly address their stated needs. Do not create scores, levels, streaks, achievements, locked phases, completion percentages, or pressure to finish. Return EXACTLY this JSON:
 {
   "aiContext": "1-2 sentence summary of this person's journey and what matters most",
   "phases": [
@@ -204,10 +167,9 @@ Generate a journey with personalized steps and insights for each phase. Prioriti
       "icon": "emoji",
       "description": "1-sentence description",
       "categories": ["category1"],
-      "status": "active or upcoming",
       "steps": [
-        { "id": "step1", "label": "Specific action step", "completed": false },
-        { "id": "step2", "label": "Specific action step", "completed": false }
+        { "id": "step1", "label": "Specific invitation or next step", "explored": false },
+        { "id": "step2", "label": "Specific invitation or next step", "explored": false }
       ],
       "aiInsight": "1 sentence of warm, specific advice for this phase",
       "categories": ["relevant business categories"]
@@ -215,7 +177,7 @@ Generate a journey with personalized steps and insights for each phase. Prioriti
   ]
 }
 
-Use these phase IDs and titles (in order, mark first as "active", rest as "upcoming"):
+Use these phase IDs and titles. Every phase must remain available whenever the member chooses to return:
 ${template.phases.map((p) => `- id: "${p.id}", title: "${p.title}", icon: "${p.icon}"`).join("\n")}
 
 ${cityBizCatalog.length ? `MINORITY-OWNED BUSINESSES ON THE PLATFORM${location ? ` IN ${location.toUpperCase()}` : ""} — PRIORITIZE THESE IN YOUR SUGGESTIONS:
@@ -231,7 +193,7 @@ Each phase should have 3-5 specific, actionable steps. When steps involve hiring
 
     const raw = completion.choices[0]?.message?.content ?? "{}";
     const parsed = JSON.parse(raw) as { aiContext?: string; phases?: JourneyPhase[] };
-    phases = parsed.phases ?? buildDefaultPhases(template.phases);
+    phases = memberOwnedJourneyPhases(parsed.phases ?? buildDefaultPhases(template.phases));
     aiContext = parsed.aiContext ?? aiContext;
   } catch {
     phases = buildDefaultPhases(template.phases);
@@ -290,7 +252,14 @@ router.get("/journeys/:id", async (req: Request, res: Response) => {
 router.patch("/journeys/:id/step", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   const id = String(req.params.id);
-  const { phaseId, stepId, completed } = req.body as { phaseId: string; stepId: string; completed: boolean };
+  const { phaseId, stepId, explored, completed } = req.body as {
+    phaseId: string;
+    stepId: string;
+    explored?: boolean;
+    /** Legacy clients can still send completed; it is mapped to a private reflection. */
+    completed?: boolean;
+  };
+  const memberExplored = typeof explored === "boolean" ? explored : completed === true;
 
   try {
     const [journey] = await db
@@ -302,60 +271,28 @@ router.patch("/journeys/:id/step", async (req: Request, res: Response) => {
 
     const phases = (journey.phases as JourneyPhase[]).map((phase) => {
       if (phase.id !== phaseId) return phase;
-      const updatedSteps = phase.steps.map((step) =>
-        step.id === stepId ? { ...step, completed, completedAt: completed ? new Date().toISOString() : undefined } : step
-      );
-      const allDone = updatedSteps.every((s) => s.completed);
-      return { ...phase, steps: updatedSteps, status: allDone ? ("completed" as const) : phase.status };
+      const updatedSteps = phase.steps.map((step) => {
+        if (step.id !== stepId) return step;
+        const { completed: _legacyCompleted, completedAt: _legacyCompletedAt, ...memberOwnedStep } = step;
+        return {
+          ...memberOwnedStep,
+          explored: memberExplored,
+          exploredAt: memberExplored ? new Date().toISOString() : undefined,
+        };
+      });
+      return { ...phase, steps: updatedSteps, status: "available" as const };
     });
 
-    const activePhaseIdx = phases.findIndex((p) => p.status === "active");
-    if (activePhaseIdx !== -1 && phases[activePhaseIdx].status === "completed" && activePhaseIdx + 1 < phases.length) {
-      phases[activePhaseIdx + 1] = { ...phases[activePhaseIdx + 1], status: "active" };
-    }
-
-    const allPhasesComplete = phases.every((p) => p.status === "completed");
-
     const [updated] = await db
       .update(lifeJourneysTable)
-      .set({ phases, status: allPhasesComplete ? "completed" : "active" })
+      .set({ phases, status: journey.status === "paused" ? "paused" : "active" })
       .where(eq(lifeJourneysTable.id, id))
       .returning();
 
     res.json({ journey: updated });
   } catch (err) {
-    req.log.error({ err }, "Failed to update journey step");
-    res.status(500).json({ error: "Failed to update journey step" });
-  }
-});
-
-router.patch("/journeys/:id/phase-status", async (req: Request, res: Response) => {
-  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
-  const id = String(req.params.id);
-  const { phaseId, status } = req.body as { phaseId: string; status: "active" | "completed" };
-
-  try {
-    const [journey] = await db
-      .select()
-      .from(lifeJourneysTable)
-      .where(and(eq(lifeJourneysTable.id, id), eq(lifeJourneysTable.userId, req.user.id)))
-      .limit(1);
-    if (!journey) { res.status(404).json({ error: "Journey not found" }); return; }
-
-    const phases = (journey.phases as JourneyPhase[]).map((p) =>
-      p.id === phaseId ? { ...p, status } : p
-    );
-
-    const [updated] = await db
-      .update(lifeJourneysTable)
-      .set({ phases })
-      .where(eq(lifeJourneysTable.id, id))
-      .returning();
-
-    res.json({ journey: updated });
-  } catch (err) {
-    req.log.error({ err }, "Failed to update phase status");
-    res.status(500).json({ error: "Failed to update phase status" });
+    req.log.error({ err }, "Failed to update journey reflection");
+    res.status(500).json({ error: "Kinfolk could not save that reflection. Your guide is unchanged." });
   }
 });
 
@@ -481,15 +418,33 @@ function generateTitle(journeyType: string, city?: string): string {
 }
 
 function buildDefaultPhases(template: typeof JOURNEY_TEMPLATES[string]["phases"]): JourneyPhase[] {
-  return template.map((p, i) => ({
+  return template.map((p) => ({
     ...p,
-    status: i === 0 ? ("active" as const) : ("upcoming" as const),
+    status: "available" as const,
     steps: [
-      { id: "step1", label: `Research ${p.title.toLowerCase()} options`, completed: false },
-      { id: "step2", label: `Find minority-owned ${p.categories[0] ?? "businesses"} nearby`, completed: false },
-      { id: "step3", label: `Book or contact your top choice`, completed: false },
+      { id: "step1", label: `Explore ${p.title.toLowerCase()} options`, explored: false },
+      { id: "step2", label: `See whether a minority-owned ${p.categories[0] ?? "business"} nearby fits`, explored: false },
+      { id: "step3", label: `Return to Kinfolk when you want to consider a next step`, explored: false },
     ],
   }));
 }
 
+/**
+ * Provider output and legacy plans are normalized before new storage so a
+ * Journey remains a member-paced guide rather than a scorecard or unlock path.
+ */
+function memberOwnedJourneyPhases(phases: JourneyPhase[]): JourneyPhase[] {
+  return phases.map((phase) => ({
+    ...phase,
+    status: "available",
+    steps: phase.steps.map((step) => {
+      const { completed, completedAt, ...memberOwnedStep } = step;
+      return {
+        ...memberOwnedStep,
+        explored: step.explored ?? completed ?? false,
+        exploredAt: step.exploredAt ?? completedAt,
+      };
+    }),
+  }));
+}
 export default router;

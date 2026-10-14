@@ -138,6 +138,7 @@ export * from "./business-owner-links";
 export * from "./show-love";
 export * from "./membership-family";
 export * from "./cultural-sites";
+export * from "./cultural-passport-moments";
 export * from "./heritage-stories";
 export * from "./heritage-support-links";
 export * from "./external-click-events";

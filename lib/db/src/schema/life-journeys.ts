@@ -4,7 +4,11 @@ import { jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 export interface JourneyStep {
   id: string;
   label: string;
-  completed: boolean;
+  /** Member-owned reflection state; never used to calculate a score or unlock content. */
+  explored?: boolean;
+  exploredAt?: string;
+  /** Legacy fields remain readable so existing stored plans are not lost. */
+  completed?: boolean;
   completedAt?: string;
 }
 
@@ -14,7 +18,8 @@ export interface JourneyPhase {
   icon: string;
   description: string;
   categories: string[];
-  status: "upcoming" | "active" | "completed";
+  /** "available" is the non-gamified state for new plans. Legacy values are tolerated on read. */
+  status: "available" | "upcoming" | "active" | "completed";
   steps: JourneyStep[];
   aiInsight?: string;
 }

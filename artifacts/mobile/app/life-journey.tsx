@@ -17,12 +17,14 @@ import { Feather } from "@expo/vector-icons";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
 import * as Haptics from "expo-haptics";
-import { UpgradeModal } from "@/components/UpgradeModal";
 
 interface JourneyStep {
   id: string;
   label: string;
-  completed: boolean;
+  explored?: boolean;
+  exploredAt?: string;
+  /** Legacy plans are still readable but are never shown as completion scores. */
+  completed?: boolean;
   completedAt?: string;
 }
 
@@ -32,7 +34,7 @@ interface JourneyPhase {
   icon: string;
   description: string;
   categories: string[];
-  status: "upcoming" | "active" | "completed";
+  status?: "available" | "upcoming" | "active" | "completed";
   steps: JourneyStep[];
   aiInsight?: string;
 }
@@ -80,9 +82,6 @@ export default function LifeJourneyScreen() {
   const [state, setState] = useState("");
   const [description, setDescription] = useState("");
   const [selectedNeeds, setSelectedNeeds] = useState<string[]>([]);
-  const [showUpgrade, setShowUpgrade] = useState(false);
-  const [upgradeReason, setUpgradeReason] = useState("");
-  const [journeyLimit, setJourneyLimit] = useState<{ used: number; limit: number; tier: string } | null>(null);
 
   const JOURNEY_NEEDS: Record<string, { label: string; emoji: string }[]> = {
     moving: [
@@ -240,19 +239,6 @@ export default function LifeJourneyScreen() {
           selectedNeeds: selectedNeeds.length > 0 ? selectedNeeds.join(", ") : undefined,
         }),
       });
-      if (res.status === 429) {
-        const errData = await res.json() as { error?: string; code?: string; used?: number; limit?: number; tier?: string };
-        if (errData.code === "JOURNEY_LIMIT_REACHED") {
-          setJourneyLimit({ used: errData.used ?? 1, limit: errData.limit ?? 1, tier: errData.tier ?? "free" });
-          setUpgradeReason(
-            errData.tier === "free"
-              ? "Free members get 1 Life Journey per month. Upgrade to Explorer+ for 10/month or Navigator for unlimited."
-              : "Explorer+ members get 10 Life Journeys per month. Upgrade to Navigator for unlimited journeys."
-          );
-          setShowUpgrade(true);
-          return;
-        }
-      }
       if (!res.ok) throw new Error("Failed to create journey");
       const d = await res.json() as { journey: Journey };
       setJourneys((prev) => [d.journey, ...prev]);
@@ -265,13 +251,15 @@ export default function LifeJourneyScreen() {
     } finally { setCreating(false); }
   };
 
-  const toggleStep = async (journey: Journey, phaseId: string, stepId: string, completed: boolean) => {
+  const hasExplored = (step: JourneyStep) => step.explored ?? step.completed ?? false;
+
+  const toggleReflection = async (journey: Journey, phaseId: string, stepId: string, explored: boolean) => {
     const optimistic: Journey = {
       ...journey,
       phases: journey.phases.map((p) =>
         p.id !== phaseId ? p : {
           ...p,
-          steps: p.steps.map((s) => s.id === stepId ? { ...s, completed } : s),
+          steps: p.steps.map((s) => s.id === stepId ? { ...s, explored } : s),
         }
       ),
     };
@@ -284,26 +272,15 @@ export default function LifeJourneyScreen() {
       const res = await fetch(`${apiBase}/api/journeys/${journey.id}/step`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", ...authHeaders(token) },
-        body: JSON.stringify({ phaseId, stepId, completed }),
+        body: JSON.stringify({ phaseId, stepId, explored }),
       });
       if (res.ok) {
         const d = await res.json() as { journey: Journey };
         setActiveJourney(d.journey);
         setJourneys((prev) => prev.map((j) => j.id === journey.id ? d.journey : j));
-        if (completed) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        if (explored) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     } catch { /* silent */ }
-  };
-
-  const phaseProgress = (phase: JourneyPhase) => {
-    const done = phase.steps.filter((s) => s.completed).length;
-    return { done, total: phase.steps.length, pct: phase.steps.length ? done / phase.steps.length : 0 };
-  };
-
-  const journeyProgress = (journey: Journey) => {
-    const allSteps = journey.phases.flatMap((p) => p.steps);
-    const done = allSteps.filter((s) => s.completed).length;
-    return { done, total: allSteps.length, pct: allSteps.length ? done / allSteps.length : 0 };
   };
 
   const primaryGold = "#CA922B";
@@ -328,20 +305,6 @@ export default function LifeJourneyScreen() {
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>Start a Journey</Text>
           <View style={{ width: 36 }} />
         </View>
-
-        {journeyLimit && (
-          <View style={[styles.limitBanner, { backgroundColor: "#DC262612", borderColor: "#DC262630" }]}>
-            <Feather name="alert-circle" size={13} color="#DC2626" />
-            <Text style={styles.limitBannerText}>
-              {journeyLimit.tier === "free"
-                ? `You've used your ${journeyLimit.limit} free journey this month. Upgrade for more.`
-                : `You've used all ${journeyLimit.limit} journeys this month. Upgrade to Navigator for unlimited.`}
-            </Text>
-            <TouchableOpacity onPress={() => setShowUpgrade(true)}>
-              <Text style={styles.limitBannerCta}>Upgrade</Text>
-            </TouchableOpacity>
-          </View>
-        )}
 
         <View style={{ padding: 16 }}>
           <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>What&apos;s happening in your life?</Text>
@@ -450,18 +413,11 @@ export default function LifeJourneyScreen() {
           )}
         </View>
       </ScrollView>
-      <UpgradeModal
-        visible={showUpgrade}
-        onClose={() => setShowUpgrade(false)}
-        feature="Life Journeys™"
-        reason={upgradeReason || "Upgrade to start more Life Journeys and get deeper KinfolkAI™ guidance for every major life event."}
-      />
       </>
     );
   }
 
   if (view === "detail" && activeJourney) {
-    const prog = journeyProgress(activeJourney);
     return (
       <ScrollView
         keyboardDismissMode="on-drag" style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 100 }}>
@@ -524,15 +480,9 @@ export default function LifeJourneyScreen() {
             </View>
           )}
 
-          <View style={[styles.progressCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.progressHeader}>
-              <Text style={[styles.progressLabel, { color: colors.mutedForeground }]}>Overall Progress</Text>
-              <Text style={[styles.progressPct, { color: primaryGold }]}>{Math.round(prog.pct * 100)}%</Text>
-            </View>
-            <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
-              <View style={[styles.progressFill, { width: `${prog.pct * 100}%` as any, backgroundColor: primaryGold }]} />
-            </View>
-            <Text style={[styles.progressStat, { color: colors.mutedForeground }]}>{prog.done} of {prog.total} steps complete</Text>
+          <View style={[styles.journeyPromiseCard, { backgroundColor: "#CA922B0D", borderColor: "#CA922B30" }]}>
+            <Feather name="compass" size={17} color={primaryGold} />
+            <Text style={[styles.journeyPromiseText, { color: colors.foreground }]}>Your story is still unfolding. This guide will be here whenever you&apos;re curious to return.</Text>
           </View>
 
           <TouchableOpacity
@@ -551,9 +501,6 @@ export default function LifeJourneyScreen() {
           </TouchableOpacity>
 
           {activeJourney.phases.map((phase) => {
-            const pp = phaseProgress(phase);
-            const isActive = phase.status === "active";
-            const isDone = phase.status === "completed";
             return (
               <View
                 key={phase.id}
@@ -561,8 +508,7 @@ export default function LifeJourneyScreen() {
                   styles.phaseCard,
                   {
                     backgroundColor: colors.card,
-                    borderColor: isActive ? primaryGold + "60" : isDone ? "#16A34A30" : colors.border,
-                    opacity: phase.status === "upcoming" ? 0.65 : 1,
+                    borderColor: colors.border,
                   },
                 ]}
               >
@@ -573,52 +519,37 @@ export default function LifeJourneyScreen() {
                       <Text style={[styles.phaseTitle, { color: colors.foreground }]}>{phase.title}</Text>
                       <Text style={[styles.phaseDesc, { color: colors.mutedForeground }]}>{phase.description}</Text>
                     </View>
-                    {isDone && (
-                      <View style={[styles.doneBadge, { backgroundColor: "#DCFCE7" }]}>
-                        <Text style={{ fontSize: 10, color: "#16A34A", fontWeight: "700" }}>✓ Done</Text>
-                      </View>
-                    )}
-                    {isActive && (
-                      <View style={[styles.doneBadge, { backgroundColor: "#CA922B20", borderColor: "#CA922B40" }]}>
-                        <Text style={{ fontSize: 10, color: primaryGold, fontWeight: "700" }}>Active</Text>
-                      </View>
-                    )}
                   </View>
-
-                  {(isActive || isDone) && (
-                    <View style={{ marginTop: 6 }}>
-                      <View style={[styles.phaseBar, { backgroundColor: colors.border }]}>
-                        <View style={[styles.phaseFill, { width: `${pp.pct * 100}%` as any, backgroundColor: isDone ? "#16A34A" : primaryGold }]} />
-                      </View>
-                      <Text style={[styles.phaseStat, { color: colors.mutedForeground }]}>{pp.done}/{pp.total} steps</Text>
-                    </View>
-                  )}
+                  <Text style={[styles.phaseAvailability, { color: colors.mutedForeground }]}>Available whenever you&apos;re ready</Text>
                 </View>
 
-                {(isActive || isDone) && phase.steps.length > 0 && (
+                {phase.steps.length > 0 && (
                   <View style={[styles.stepsWrap, { borderTopColor: colors.border }]}>
-                    {phase.steps.map((step) => (
-                      <Pressable
-                        key={step.id}
-                        style={styles.stepRow}
-                        onPress={() => {
-                          if (phase.status !== "upcoming") {
-                            void toggleStep(activeJourney, phase.id, step.id, !step.completed);
-                          }
-                        }}
-                      >
-                        <View style={[styles.checkbox, { borderColor: step.completed ? "#16A34A" : colors.border, backgroundColor: step.completed ? "#DCFCE7" : "transparent" }]}>
-                          {step.completed && <Feather name="check" size={10} color="#16A34A" />}
-                        </View>
-                        <Text style={[styles.stepLabel, { color: step.completed ? colors.mutedForeground : colors.foreground, textDecorationLine: step.completed ? "line-through" : "none" }]}>
-                          {step.label}
-                        </Text>
-                      </Pressable>
-                    ))}
+                    {phase.steps.map((step) => {
+                      const explored = hasExplored(step);
+                      return (
+                        <Pressable
+                          key={step.id}
+                          style={styles.stepRow}
+                          accessibilityRole="checkbox"
+                          accessibilityState={{ checked: explored }}
+                          accessibilityLabel={`${explored ? "Remove from" : "Keep in"} your Journey: ${step.label}`}
+                          onPress={() => { void toggleReflection(activeJourney, phase.id, step.id, !explored); }}
+                        >
+                          <View style={[styles.checkbox, { borderColor: explored ? primaryGold : colors.border, backgroundColor: explored ? "#CA922B18" : "transparent" }]}>
+                            {explored && <Feather name="bookmark" size={10} color={primaryGold} />}
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={[styles.stepLabel, { color: colors.foreground }]}>{step.label}</Text>
+                            {explored && <Text style={[styles.stepReflection, { color: colors.mutedForeground }]}>Kept in your Journey</Text>}
+                          </View>
+                        </Pressable>
+                      );
+                    })}
                   </View>
                 )}
 
-                {phase.aiInsight && isActive && (
+                {phase.aiInsight && (
                   <View style={[styles.insightWrap, { backgroundColor: "#CA922B08", borderTopColor: "#CA922B20" }]}>
                     <Text style={{ fontSize: 12, color: primaryGold }}>✨ {phase.aiInsight}</Text>
                   </View>
@@ -673,8 +604,6 @@ export default function LifeJourneyScreen() {
             </View>
 
             {journeys.map((journey) => {
-              const prog = journeyProgress(journey);
-              const activePhase = journey.phases.find((p) => p.status === "active");
               return (
                 <TouchableOpacity
                   key={journey.id}
@@ -692,17 +621,7 @@ export default function LifeJourneyScreen() {
                     )}
                   </View>
 
-                  <View style={{ marginTop: 8 }}>
-                    <View style={[styles.progressBar, { backgroundColor: colors.border }]}>
-                      <View style={[styles.progressFill, { width: `${prog.pct * 100}%` as any, backgroundColor: primaryGold }]} />
-                    </View>
-                    <View style={styles.journeyMeta}>
-                      <Text style={[styles.journeyMetaText, { color: colors.mutedForeground }]}>{Math.round(prog.pct * 100)}% complete</Text>
-                      {activePhase && (
-                        <Text style={[styles.journeyMetaText, { color: primaryGold }]}>{activePhase.icon} {activePhase.title}</Text>
-                      )}
-                    </View>
-                  </View>
+                  <Text style={[styles.journeyMetaText, { color: colors.mutedForeground, marginTop: 8 }]}>Your story is still unfolding</Text>
                 </TouchableOpacity>
               );
             })}
@@ -714,7 +633,7 @@ export default function LifeJourneyScreen() {
           {[
             { icon: "🗣️", text: "Tell KinfolkAI™ what's happening in your life" },
             { icon: "🗺️", text: "Get a personalized, phase-by-phase guide" },
-            { icon: "✅", text: "Check off steps as you go — KinfolkAI™ remembers everything" },
+            { icon: "✨", text: "Keep the invitations that matter to you — nothing expires" },
             { icon: "🔗", text: "Every question you ask connects back to your journey" },
           ].map((item, i) => (
             <View key={i} style={styles.infoRow}>
@@ -725,12 +644,6 @@ export default function LifeJourneyScreen() {
         </View>
       </View>
     </ScrollView>
-    <UpgradeModal
-      visible={showUpgrade}
-      onClose={() => setShowUpgrade(false)}
-      feature="Life Journeys™"
-      reason={upgradeReason || "Upgrade to start more Life Journeys and get deeper KinfolkAI™ guidance for every major life event."}
-    />
     </>
   );
 }
@@ -802,6 +715,8 @@ const styles = StyleSheet.create({
   smartMatchBizName: { fontSize: 13, flex: 1 },
   verifiedPill: { borderRadius: 4, paddingHorizontal: 5, paddingVertical: 2 },
   smartMatchCta: { marginTop: 12, borderRadius: 8, borderWidth: 1, padding: 10, alignItems: "center" },
+  journeyPromiseCard: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderRadius: 12, borderWidth: 1, padding: 13, marginBottom: 12 },
+  journeyPromiseText: { flex: 1, fontSize: 13, lineHeight: 19 },
   aiContextCard: { flexDirection: "row", borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 12, gap: 8, alignItems: "flex-start" },
   aiContextEmoji: { fontSize: 16 },
   aiContextText: { fontSize: 13, lineHeight: 19, flex: 1 },
@@ -811,6 +726,7 @@ const styles = StyleSheet.create({
   phaseIcon: { fontSize: 22, marginTop: 2 },
   phaseTitle: { fontSize: 15, fontWeight: "700", marginBottom: 2 },
   phaseDesc: { fontSize: 12, lineHeight: 16 },
+  phaseAvailability: { fontSize: 11, marginTop: 8 },
   doneBadge: { borderRadius: 6, borderWidth: 1, paddingHorizontal: 7, paddingVertical: 3, alignSelf: "flex-start" },
   phaseBar: { height: 4, borderRadius: 2, overflow: "hidden", marginTop: 8 },
   phaseFill: { height: 4, borderRadius: 2 },
@@ -819,6 +735,7 @@ const styles = StyleSheet.create({
   stepRow: { flexDirection: "row", alignItems: "center", paddingHorizontal: 14, paddingVertical: 10, gap: 10 },
   checkbox: { width: 20, height: 20, borderRadius: 4, borderWidth: 1.5, justifyContent: "center", alignItems: "center" },
   stepLabel: { fontSize: 14, flex: 1, lineHeight: 20 },
+  stepReflection: { fontSize: 11, marginTop: 1 },
   insightWrap: { borderTopWidth: 1, padding: 12 },
   infoCard: { borderRadius: 12, borderWidth: 1, padding: 16, marginTop: 8 },
   infoTitle: { fontSize: 14, fontWeight: "700", marginBottom: 12 },

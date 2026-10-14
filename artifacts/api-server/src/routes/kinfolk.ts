@@ -4342,18 +4342,14 @@ When recommending businesses or experiences, ALWAYS prioritize matches to these 
     : "";
 
   const journeySection = activeJourney
-    ? `\nACTIVE LIFE JOURNEY — THIS IS CRITICAL CONTEXT:
-The user is currently on a "${activeJourney.journeyType}" journey titled "${activeJourney.title}"${activeJourney.city ? ` in ${activeJourney.city}` : ""}.
+    ? `\nMEMBER-OWNED LIFE JOURNEY CONTEXT:
+The member chose a "${activeJourney.journeyType}" guide titled "${activeJourney.title}"${activeJourney.city ? ` in ${activeJourney.city}` : ""}.
 ${activeJourney.aiContext ? `Journey context: ${activeJourney.aiContext}` : ""}
-Current phases and their status:
+Available invitations in their guide:
 ${activeJourney.phases
-  .map((p) => {
-    const completedSteps = p.steps.filter((s) => s.completed).length;
-    return `- ${p.icon} ${p.title} [${p.status.toUpperCase()}] — ${completedSteps}/${p.steps.length} steps done`;
-  })
+  .map((p) => `- ${p.icon} ${p.title}: ${p.description}`)
   .join("\n")}
-Active phase: ${activeJourney.phases.find((p) => p.status === "active")?.title ?? "none"}
-IMPORTANT: When they ask about any topic related to their journey, connect it back. Reference their journey naturally. Suggest next steps. Help them make progress. This is their guide — make every conversation feel connected to where they're going.`
+IMPORTANT: Connect relevant questions back to this guide naturally, but honor the member's pace. Do not frame their guide as a scorecard, tell them to make progress, cite completion state, or imply that any phase is locked, overdue, or finished. This is their guide — be ready whenever they choose to return.`
     : "";
 
   const crossCitySection = crossCityBridge?.length
