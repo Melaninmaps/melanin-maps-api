@@ -136,6 +136,15 @@ Every **business** presented in a Kinfolk preview must be tappable and reveal a 
 
 Every preview business sheet uses a **category-matched gold Feather-style icon** against the existing dark/gold modal treatment rather than unrelated category photography: beauty uses scissors/comb visual language, automotive uses a tool, dining uses a coffee/food visual, and other categories map to their corresponding utility symbol. The native app follows the same visual-only fallback treatment when a business has no real `imageUrl`; a real business-supplied image remains intact. The actual Mapping With Melanin logo remains exclusive to the application shell, and category icons never replace a business logo or claim a real business identity.
 
+## Railway staging publication
+
+Publish the accepted review suite as a **separate Railway preview service**, never as a production Mapping With Melanin deployment. The service will be pinned to the committed `feature/website-preview-founder-review` Git branch and serve only `artifacts/api-server/web-static/` through a minimal Node static server that honors Railway’s assigned `PORT`.
+
+- The new Railway project/service uses a neutral preview name and a Railway-generated domain; it does not attach a custom domain, production alias, database, volume, environment secret, webhook, or existing live service.
+- The published suite includes both review surfaces requested: the responsive **web front-page preview** and the interactive **in-phone app preview**. They are browser-delivered concept experiences, not an iOS/Android release build.
+- The native visual-only Kinfolk change is integrated separately through the current-main pull request; its next mobile build can consume the merged code without the Railway service changing the native app.
+- A `package.json` and `server.mjs` are added only under the static preview directory. They have no runtime dependencies, data mutations, API calls, or fallback routing to production pages.
+
 ## Scope boundary
 
 This prototype changes only the local isolated founder-review preview. It does not change the live `/preview` route, native onboarding, business tiers, APIs, claims, Safety implementation, database data, Railway, deployment, or production content.
