@@ -162,8 +162,10 @@ import { createOpenAiLibraryWriter } from "../library/openAiLibraryWriter";
 import { resolveKinfolkLivingLibraryWriterConfiguration } from "../kinfolk/living-library-provider-config";
 import {
   createGovernedKinfolkBusinessRepository,
+  normalizeExactBusinessName,
   type GovernedKinfolkBusiness,
   type ValidatedKinfolkCityScope,
+  validateKinfolkCityScope,
 } from "../kinfolk/governedBusinessRepository";
 import { shouldLoadKinfolkHomeCatalog } from "../kinfolk/home-catalog-gate";
 import { matchesDocumentedDesignationScope } from "../kinfolk/designation-predicate-policy";
@@ -15284,78 +15286,25 @@ router.post("/kinfolk/relocation", async (req: Request, res: Response) => {
     ]),
   ];
 
-  // Pull minority-owned businesses across ALL relocation-relevant categories at once.
-  // The AI picks which ones to surface per phase — we don't gate by currentPhase.
-  let verifiedBusinesses: Array<{
-    id: number | string;
-    name: string;
-    category: string;
-    description: string;
-    city: string;
-    verified: boolean;
-    phone: string | null;
-    website: string | null;
-  }> = [];
-
-  if (toCity) {
+  // Relocation is a Kinfolk recommendation surface. It must read the same
+  // governed public catalog used by primary Kinfolk—not a raw businesses table
+  // or an unaudited ownership flag. Invalid/missing scope fails closed to no
+  // named listings, while the remaining relocation guidance stays useful.
+  let relocationScope: ValidatedKinfolkCityScope | null = null;
+  let verifiedBusinesses: GovernedKinfolkBusiness[] = [];
+  if (toCity && toState) {
     try {
-      const allReloCategories = [
-        "Real Estate",
-        "Realtor",
-        "Moving",
-        "Transportation",
-        "Contractor",
-        "Handyman",
-        "Restaurant",
-        "Food",
-        "Café",
-        "Cafe",
-        "Salon",
-        "Barber",
-        "Beauty",
-        "Healthcare",
-        "Medical",
-        "Health",
-        "Fitness",
-        "Gym",
-        "Yoga",
-        "Martial Arts",
-        "Finance",
-        "Banking",
-        "Community",
-        "Childcare",
-        "Education",
-        "Grocery",
-        "Auto",
-        "Home Services",
-        ...allInterests,
-      ];
-      const catConditions = allReloCategories.map((cat) =>
-        ilike(businessesTable.category, `%${cat}%`),
+      relocationScope = validateKinfolkCityScope({
+        city: toCity,
+        stateCode: toState,
+      });
+      verifiedBusinesses = await governedBusinessRepository.findDestinationCatalog(
+        relocationScope,
+        20,
       );
-      verifiedBusinesses = await db
-        .select({
-          id: businessesTable.id,
-          name: businessesTable.name,
-          category: businessesTable.category,
-          description: businessesTable.description,
-          city: businessesTable.city,
-          verified: businessesTable.verified,
-          phone: businessesTable.phone,
-          website: businessesTable.website,
-        })
-        .from(businessesTable)
-        .where(
-          and(
-            ilike(businessesTable.city, `%${toCity}%`),
-            eq(businessesTable.blackOwned, true),
-            eq(businessesTable.status, "active"),
-            or(...catConditions),
-          ),
-        )
-        .limit(20);
     } catch {
-      /* non-critical */
+      relocationScope = null;
+      verifiedBusinesses = [];
     }
   }
 
@@ -15397,14 +15346,14 @@ Prioritize neighborhoods near good ${allInterests.slice(0, 4).join(", ")} option
 
   const businessCatalog =
     verifiedBusinesses.length > 0
-      ? `\n\nMINORITY-OWNED PLATFORM BUSINESSES IN ${toCity?.toUpperCase()} — pick the best fit per need (realtor, mover, contractor, food, salon, fitness, etc.):
+      ? `\n\nGOVERNED MAPPING WITH MELANIN LISTINGS IN ${toCity?.toUpperCase()} — these are the only businesses that may be named in this relocation answer. Select a listing only when its supplied category, subcategory, or tags actually fit the current relocation need:
 ${verifiedBusinesses
   .map(
     (b) =>
-      `• ${b.name} | ${b.category}${b.verified ? " ✓ Verified" : ""}\n  "${(b.description ?? "").slice(0, 140)}"\n  ${b.phone ? `📞 ${b.phone}` : ""}${b.website ? ` | 🌐 ${b.website}` : ""}`,
+      `• ${b.name} | ${b.category}${b.subcategory ? ` / ${b.subcategory}` : ""}${b.verified ? " ✓ Verified" : ""}\n  "${(b.description ?? "").slice(0, 140)}"\n  ${b.phone ? `📞 ${b.phone}` : ""}${b.website ? ` | 🌐 ${b.website}` : ""}`,
   )
   .join("\n\n")}`
-      : `\n\nNo platform businesses yet for ${toCity ?? "this city"} — use your general knowledge and tell them to search Mapping With Melanin™ as new spots are added.`;
+      : `\n\nThere are no eligible governed Mapping With Melanin listings available for this relocation request${relocationScope ? " yet" : " because a valid city and two-letter state were not supplied"}. Do not name a business. Offer a useful non-business next step and say that the directory currently has no eligible listing for this request.`;
 
   const systemPrompt = `You are KinfolkAI's Relocation Concierge — the most well-connected friend anyone could have when moving. You know minority-owned businesses, culturally affirming neighborhoods, and all the hidden knowledge that makes a new city feel like home fast.
 
@@ -15426,18 +15375,18 @@ Suggest 3-4 specific areas at different distances from ${toCity ?? "the destinat
 - A named area 25-35 miles out → if they want quiet or lower cost
 - Optionally a 4th area if there's a particularly strong interest match
 Base proximity suggestions on: ${allInterests.length > 0 ? allInterests.slice(0, 4).join(", ") : "good food, community, and safety"}.
-Return these as "locationSuggestions" in your JSON — each with a minority-owned business example in that area.
+Return these as "locationSuggestions" in your JSON. A location suggestion must not invent or imply a business recommendation; set its business example to null unless it exactly matches a supplied governed listing.
 
 PROACTIVE CHAINING RULE — this is what makes you feel like a real friend, not a search engine:
-After each topic naturally lead to the next thing they need, naming a minority-owned business each time:
-1. Neighborhoods → "Now you need a realtor — [minority-owned realtor name from the platform or your knowledge] works that area"
-2. Realtor found → "Do you need movers? I'd book [minority-owned moving company] now — good ones fill up fast"
-3. Movers sorted → "Once you arrive you'll need a handyman — [minority-owned contractor/handyman name] handles exactly this kind of move-in work"
-4. Home setup → "Time to build your regular spots — here are restaurants you'll love: [minority-owned restaurants in ${toCity}]"
-5. Food → Pivot to interest-based: "Since you're into [their interest], here's the best [karate gym / yoga studio / barbershop / loctician / etc.] there: [minority-owned name]"
+After each topic naturally lead to the next thing they need. You may mention a business only when it exactly appears in the GOVERNED MAPPING WITH MELANIN LISTINGS list and fits that current need:
+1. Neighborhoods → offer a realtor search or a listed realtor that fits the supplied category
+2. Realtor found → offer a mover search or a listed mover that fits the supplied category
+3. Movers sorted → offer a handyman search or a listed home-service provider that fits the supplied category
+4. Home setup → offer a restaurant search or a listed food option that fits the supplied category
+5. Food → offer an interest-based search or a listed relevant option that fits the supplied category
 
-MINORITY-OWNED BUSINESS RULE:
-Every single business you name must be minority-owned or minority-owned. Pull from the PLATFORM BUSINESSES list first. If none match a need, use your general knowledge — name the business and add "Search Mapping With Melanin™ to find more like this."
+GOVERNED BUSINESS RULE:
+Every named business must exactly match a supplied GOVERNED MAPPING WITH MELANIN LISTING. Never name, link, promote, label as minority-owned, or call verified an external/general-knowledge business. Never broaden a listing into a category it does not support. If no supplied listing fits, return an empty businesses list and explain the truthful no-listing limitation without substituting a business.
 
 YOUR VOICE:
 - Warm and direct, like texting your most well-traveled, well-connected friend
@@ -15454,7 +15403,7 @@ RETURN EXACTLY THIS JSON (no markdown fencing, no extra text):
       "distanceMiles": 8,
       "vibe": "1 sentence on the feel",
       "why": "Why this matches their interests and lifestyle",
-      "minorityBiz": "Name of 1 minority-owned business in this area"
+      "minorityBiz": "Exact supplied governed listing name, or null"
     }
   ],
   "businesses": [
@@ -15476,7 +15425,7 @@ RETURN EXACTLY THIS JSON (no markdown fencing, no extra text):
 }
 
 Only include "locationSuggestions" when on the neighborhoods phase or user asks about where to live — otherwise omit it or set to null.
-Include 3-5 businesses from the PLATFORM LIST below. If none match, use general knowledge.
+Include up to 5 businesses from the GOVERNED MAPPING WITH MELANIN LIST below. If none fit, return an empty businesses list. Do not use general knowledge for named businesses.
 ${businessCatalog}`;
 
   try {
@@ -15524,10 +15473,76 @@ ${businessCatalog}`;
       };
     }
 
+    // Provider output cannot create a relocation listing. Return only exact
+    // server-governed catalog entries and replace every factual card field with
+    // its server-supplied counterpart. This keeps the legacy relocation route
+    // aligned with the primary Kinfolk recommendation boundary.
+    const governedByNormalizedName = new Map(
+      verifiedBusinesses.map((business) => [
+        normalizeExactBusinessName(business.name),
+        business,
+      ]),
+    );
+    const selectedBusinessIds = new Set<string>();
+    const relocationBusinesses = Array.isArray(parsed.businesses)
+      ? parsed.businesses.flatMap((candidate) => {
+          if (
+            !candidate ||
+            typeof candidate !== "object" ||
+            typeof (candidate as { name?: unknown }).name !== "string"
+          ) {
+            return [];
+          }
+          const business = governedByNormalizedName.get(
+            normalizeExactBusinessName((candidate as { name: string }).name),
+          );
+          if (!business || selectedBusinessIds.has(String(business.id))) return [];
+          selectedBusinessIds.add(String(business.id));
+          return [{
+            id: business.id,
+            name: business.name,
+            category: business.category,
+            description: business.description,
+            neighborhood: business.city,
+            whyForYou: `Eligible Mapping With Melanin listing in ${business.city}. Verify current availability directly.`,
+            phone: business.phone,
+            website: business.website,
+            verified: business.verified,
+            platformVerified: business.verified,
+          }];
+        }).slice(0, 5)
+      : [];
+    const boundedText = (value: unknown, max: number) =>
+      typeof value === "string" ? value.trim().slice(0, max) : "";
+    const relocationLocationSuggestions = Array.isArray(parsed.locationSuggestions)
+      ? parsed.locationSuggestions.flatMap((candidate) => {
+          if (!candidate || typeof candidate !== "object") return [];
+          const value = candidate as Record<string, unknown>;
+          const area = boundedText(value.area, 160);
+          if (!area) return [];
+          const candidateBusiness = boundedText(value.minorityBiz, 160);
+          const governedBusiness = candidateBusiness
+            ? governedByNormalizedName.get(
+                normalizeExactBusinessName(candidateBusiness),
+              )
+            : undefined;
+          return [{
+            area,
+            distanceMiles:
+              typeof value.distanceMiles === "number" &&
+              Number.isFinite(value.distanceMiles) &&
+              value.distanceMiles >= 0 &&
+              value.distanceMiles <= 100
+                ? value.distanceMiles
+                : null,
+            vibe: boundedText(value.vibe, 300),
+            why: boundedText(value.why, 500),
+            minorityBiz: governedBusiness?.name ?? null,
+          }];
+        }).slice(0, 4)
+      : null;
     const mentionedNames = new Set<string>(
-      ((parsed.businesses as Array<{ name: string }>) ?? []).map((b) =>
-        b.name.toLowerCase(),
-      ),
+      relocationBusinesses.map((business) => business.name.toLowerCase()),
     );
     const extraVerified = verifiedBusinesses
       .filter((b) => !mentionedNames.has(b.name.toLowerCase()))
@@ -15547,6 +15562,8 @@ ${businessCatalog}`;
 
     res.json({
       ...parsed,
+      businesses: relocationBusinesses,
+      locationSuggestions: relocationLocationSuggestions,
       phase: { id: currentPhase, ...phase },
       extraVerified,
     });
