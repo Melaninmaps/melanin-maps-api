@@ -36,8 +36,9 @@ describe("mobile social profile hub", () => {
   it("keeps Profile settings behind the gear and preserves the profile activity privacy response", () => {
     expect(settings).toContain('route: "/privacy"');
     expect(settings).toContain('route: "/(tabs)/profile"');
-    expect(settings).toContain('label: "KinfolkAI™"');
+    expect(settings).toContain('label: "KinfolkAI Settings"');
     expect(settings).toContain('route: "/kinfolk-settings"');
+    expect(settings).toContain('accessibilityLabel="Open KinfolkAI Settings"');
     expect(settings).not.toContain('title: "Your Spaces"');
     expect(profile).toContain("Private Account");
     expect(memberProfile).toContain("if (!profile?.id || !canSeeContent)");

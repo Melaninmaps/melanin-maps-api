@@ -24,6 +24,14 @@ type Row = {
   value?: string;
 };
 
+const kinfolkSettingsEntry: Row = {
+  id: "kinfolk",
+  icon: "message-circle",
+  label: "KinfolkAI Settings",
+  sub: "Memory, privacy, preferences, voice, and saved memories",
+  route: "/kinfolk-settings",
+};
+
 type SectionId = "account" | "app";
 
 type Section = {
@@ -66,7 +74,6 @@ export default function SettingsScreen() {
       title: "App Settings",
       summary: "Kinfolk, notifications, privacy, safety, and appearance",
       rows: [
-        { id: "kinfolk", icon: "message-circle", label: "KinfolkAI™", sub: "Conversation mode, voice, memories, and explicit preferences", route: "/kinfolk-settings" },
         { id: "notifications", icon: "bell", label: "Notifications", sub: "Alerts and reminders", route: "/notifications-settings" },
         { id: "video-sources", icon: "play-circle", label: "Video Sources", sub: "Choose YouTube, TikTok, Twitch, Snapchat & more", route: "/social-video-preferences" },
         { id: "my-circles", icon: "users", label: "My Circles", sub: "Private group spaces and conversations", route: "/circles" },
@@ -121,6 +128,22 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text style={[styles.intro, { color: colors.mutedForeground }]}>Choose a section to manage your account or app controls.</Text>
+        <TouchableOpacity
+          style={[styles.kinfolkShortcut, { backgroundColor: colors.card, borderColor: colors.primary + "44" }]}
+          activeOpacity={0.82}
+          accessibilityRole="button"
+          accessibilityLabel="Open KinfolkAI Settings"
+          onPress={() => handleRow(kinfolkSettingsEntry)}
+        >
+          <View style={[styles.kinfolkShortcutIcon, { backgroundColor: colors.primary + "18" }]}>
+            <Feather name="message-circle" size={21} color={colors.primary} />
+          </View>
+          <View style={styles.kinfolkShortcutContent}>
+            <Text style={[styles.kinfolkShortcutTitle, { color: colors.foreground }]}>KinfolkAI Settings</Text>
+            <Text style={[styles.kinfolkShortcutSub, { color: colors.mutedForeground }]}>Memory, privacy, preferences, voice, and saved memories</Text>
+          </View>
+          <Feather name="chevron-right" size={20} color={colors.primary} />
+        </TouchableOpacity>
         {sections.map((section) => {
           const expanded = expandedSection === section.id;
           return (
@@ -190,6 +213,11 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontFamily: "Inter_700Bold" },
   scroll: { paddingHorizontal: 20, gap: 14 },
   intro: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19, marginBottom: 2 },
+  kinfolkShortcut: { minHeight: 78, flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 18, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 14 },
+  kinfolkShortcutIcon: { width: 42, height: 42, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  kinfolkShortcutContent: { flex: 1 },
+  kinfolkShortcutTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  kinfolkShortcutSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17, marginTop: 3 },
   accordion: { borderWidth: 1, borderRadius: 18, overflow: "hidden" },
   accordionHeader: { minHeight: 84, paddingHorizontal: 16, paddingVertical: 14, flexDirection: "row", alignItems: "center", gap: 12 },
   accordionIcon: { width: 38, height: 38, borderRadius: 11, alignItems: "center", justifyContent: "center" },
