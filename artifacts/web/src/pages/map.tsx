@@ -189,19 +189,20 @@ type RouteInfo = { distance: string; duration: string; bizName: string };
 type MapGeolocationStatus = "idle" | "requesting" | "granted" | "denied" | "unavailable" | "timed_out" | "error";
 
 const BRAND_STYLE: object[] = [
-  { elementType: "geometry", stylers: [{ color: "#f5ede0" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#3a1f0e" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#faf6ef" }] },
-  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#2b1507" }] },
-  { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
-  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#e8d8c0" }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#ffffff" }] },
-  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#f0e0c8" }] },
-  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#e8c89a" }] },
-  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#ca922b" }] },
-  { featureType: "transit", stylers: [{ visibility: "off" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#c9b99a" }] },
-  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#8b6e4e" }] },
+  { elementType: "geometry", stylers: [{ color: "#FAF1E4" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#3B1F0E" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#FAF1E4" }] },
+  { featureType: "administrative.locality", elementType: "labels.text.fill", stylers: [{ color: "#3B1F0E" }] },
+  // Google business POIs compete with MWM's governed markers. Suppressing only
+  // business POIs retains parks, landmarks, geography, and transit context.
+  { featureType: "poi.business", elementType: "all", stylers: [{ visibility: "off" }] },
+  { featureType: "poi.park", elementType: "geometry", stylers: [{ color: "#E9DFC9" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#FFFDF9" }] },
+  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#F4E2C6" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#E8CB96" }] },
+  { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#C9A84C" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#CDBD9E" }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#6B4D32" }] },
 ];
 
 // The library renderer is intentionally replaced: its stock red/blue markers
@@ -215,8 +216,8 @@ const MWM_CLUSTER_RENDERER: Renderer = {
     const size = count >= 100 ? 58 : count >= 25 ? 52 : 46;
     const fontSize = count >= 100 ? 16 : 15;
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-      <circle cx="32" cy="32" r="29" fill="#2B1507" fill-opacity="0.92" stroke="#F7E4B9" stroke-width="3"/>
-      <circle cx="32" cy="32" r="23" fill="#CA922B" fill-opacity="0.88"/>
+      <circle cx="32" cy="32" r="29" fill="#3B1F0E" fill-opacity="0.92" stroke="#FAF1E4" stroke-width="3"/>
+      <circle cx="32" cy="32" r="23" fill="#C9A84C" fill-opacity="0.88"/>
       <text x="32" y="37" text-anchor="middle" fill="#FFFFFF" font-family="system-ui, sans-serif" font-size="${fontSize}" font-weight="700">${count}</text>
     </svg>`;
     return new g.Marker({
@@ -1535,9 +1536,9 @@ export default function MapPage() {
       mk.setIcon({
         path: g.SymbolPath.CIRCLE,
         scale: mid === id ? 10 : 8,
-        fillColor: mid === id ? "#2B1507" : "#CA922B",
+        fillColor: mid === id ? "#3B1F0E" : "#C9A84C",
         fillOpacity: 0.9,
-        strokeColor: mid === id ? "#CA922B" : "#2B1507",
+        strokeColor: mid === id ? "#C9A84C" : "#3B1F0E",
         strokeWeight: 2,
       });
     });
@@ -1545,11 +1546,11 @@ export default function MapPage() {
     const isDemo = biz.description?.startsWith("[DEMO]") ?? false;
     infoWindowRef.current?.setContent(
       `<div style="font-family:serif;padding:4px 2px;min-width:160px">
-        <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px">${biz.name ?? ""}</div>
+        <div style="font-weight:bold;font-size:14px;color:#3B1F0E;margin-bottom:2px">${biz.name ?? ""}</div>
         ${isDemo ? `<div style="display:inline-block;font-size:9px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;background:#fef3c7;color:#b45309;border:1px solid #fcd34d;border-radius:4px;padding:1px 6px;margin-bottom:4px">Demo Listing</div>` : ""}
-        <div style="font-size:12px;color:#CA922B;font-weight:600;margin-bottom:2px">${biz.category ?? ""}</div>
+        <div style="font-size:12px;color:#C9A84C;font-weight:600;margin-bottom:2px">${biz.category ?? ""}</div>
         <div style="font-size:11px;color:#3A1F0E80">${biz.city ?? ""}, ${biz.state ?? ""}</div>
-        <a href="/businesses/${biz.id}" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none;margin-top:4px;display:block">View Business →</a>
+        <a href="/businesses/${biz.id}" style="font-size:11px;color:#C9A84C;font-weight:bold;text-decoration:none;margin-top:4px;display:block">View Business →</a>
       </div>`
     );
     infoWindowRef.current?.open(mapRef.current, m);
@@ -1577,8 +1578,8 @@ export default function MapPage() {
       const marker: GMarker = new g.Marker({
         position: { lat, lng }, map: null, title: biz.name ?? "",
         icon: {
-          path: g.SymbolPath.CIRCLE, scale: 8, fillColor: "#CA922B",
-          fillOpacity: 0.9, strokeColor: "#2B1507", strokeWeight: 2,
+          path: g.SymbolPath.CIRCLE, scale: 8, fillColor: "#C9A84C",
+          fillOpacity: 0.9, strokeColor: "#3B1F0E", strokeWeight: 2,
         },
       });
       marker.addListener("click", () => selectBusiness(biz.id, biz, marker));
@@ -1620,9 +1621,9 @@ export default function MapPage() {
       mk.setIcon({
         path: g.SymbolPath.CIRCLE,
         scale: 8,
-        fillColor: "#CA922B",
+        fillColor: "#C9A84C",
         fillOpacity: 0.9,
-        strokeColor: "#2B1507",
+        strokeColor: "#3B1F0E",
         strokeWeight: 2,
       });
     });

@@ -57,6 +57,22 @@ describe("map-first Web layout", () => {
     expect(mapSource).not.toContain("lat: 38.5, lng: -96.5");
   });
 
+  it("uses the MWM palette while suppressing only unrelated Google business POIs", () => {
+    const styleStart = mapSource.indexOf("const BRAND_STYLE: object[] = [");
+    const styleSource = mapSource.slice(styleStart, mapSource.indexOf("];", styleStart));
+
+    expect(styleSource).toContain('#FAF1E4');
+    expect(styleSource).toContain('#3B1F0E');
+    expect(styleSource).toContain('#C9A84C');
+    expect(styleSource).toContain('featureType: "poi.business", elementType: "all", stylers: [{ visibility: "off" }]');
+    expect(styleSource).not.toContain('featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }]');
+    expect(styleSource).not.toContain('featureType: "transit", stylers: [{ visibility: "off" }]');
+    expect(mapSource).toContain("styles: BRAND_STYLE");
+    expect(mapSource).toContain('fill="#3B1F0E"');
+    expect(mapSource).toContain('fill="#C9A84C"');
+    expect(mapSource).toContain('href="/businesses/${biz.id}"');
+  });
+
   it("clears a searched locality and invalidates late search responses when recentering", () => {
     const resetStart = mapSource.indexOf("const resetView = useCallback(() => {");
     const resetSource = mapSource.slice(resetStart, mapSource.indexOf("const clearRoute", resetStart));
