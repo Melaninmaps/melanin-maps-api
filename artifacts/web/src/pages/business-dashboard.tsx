@@ -113,7 +113,7 @@ export default function BusinessDashboard() {
   const [gSuccess, setGSuccess] = useState(false);
 
   useEffect(() => {
-    authenticatedFetch(`${BASE}api/auth/user`, { credentials: "include" }).then((r) => r.json()).then((d) => setUser(d.user ?? null)).catch(() => {});
+    authenticatedFetch(`${BASE}api/auth/user`, { credentials: "include", cache: "no-store" }).then((r) => r.json()).then((d) => setUser(d.user ?? null)).catch(() => {});
     authenticatedFetch(`${BASE}api/businesses/mine`, { credentials: "include" }).then((r) => r.json()).then((d) => {
       const list = d.businesses ?? (d.business ? [d.business] : []);
       setBusinesses(list);
