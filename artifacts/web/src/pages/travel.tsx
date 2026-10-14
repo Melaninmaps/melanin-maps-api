@@ -2673,6 +2673,12 @@ function TravelPage() {
         </div>
         {isLoggedIn && (
           <div className="flex items-center gap-1.5">
+            <Link href="/trips"
+              aria-label="Open My private Trips"
+              className="flex items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-bold text-[#F5EBD8]/70 transition-colors hover:border-[#CA922B]/30 hover:text-[#CA922B]">
+              <MapPin size={13} />
+              <span className="hidden lg:inline">My Trips</span>
+            </Link>
             <button onClick={() => setShowHistory(v => !v)}
               aria-label={showHistory ? "Close conversation history" : "Open conversation history"}
               aria-pressed={showHistory}

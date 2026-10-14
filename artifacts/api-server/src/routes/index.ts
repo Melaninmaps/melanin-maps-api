@@ -30,6 +30,7 @@ import businessIngestRouter from "./business-ingest";
 import kinfolkRouter, { probeKinfolkAI } from "./kinfolk";
 import kinfolkPrivatePlacesRouter from "./kinfolk-private-places";
 import kinfolkTemporaryStaysRouter from "./kinfolk-temporary-stays";
+import kinfolkTripsRouter from "./kinfolk-trips";
 import kinfolkCurrentChaptersRouter from "./kinfolk-current-chapters";
 import kinfolkCuriosityListsRouter from "./kinfolk-curiosity-lists";
 import kinfolkBehavioralEvidenceRouter from "./kinfolk-behavioral-evidence";
@@ -306,6 +307,9 @@ router.use(kinfolkPrivatePlacesRouter);
 // Temporary Stays shares the encrypted Private Places key ring, but is a
 // separate member-only table and never a business-ingestion path.
 router.use(kinfolkTemporaryStaysRouter);
+// Trips are private encrypted owner records. This mounts no sharing, chat,
+// provider, calendar, flight, hotel, reminder, or public endpoint.
+router.use(kinfolkTripsRouter);
 router.use(kinfolkCurrentChaptersRouter);
 router.use(kinfolkCuriosityListsRouter);
 router.use(kinfolkBehavioralEvidenceRouter);

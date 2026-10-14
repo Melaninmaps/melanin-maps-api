@@ -41,6 +41,7 @@ import PendingApproval from "@/pages/pending-approval";
 import Waitlist from "@/pages/waitlist";
 import Preview from "@/pages/preview";
 import Travel from "@/pages/travel";
+import Trips from "@/pages/trips";
 import MapPage from "@/pages/map";
 import { LocationFirstEvents } from "@/features/events/LocationFirstEvents";
 import PrivacyPolicy from "@/pages/privacy-policy";
@@ -386,6 +387,9 @@ function Router() {
       <Route path="/kinfolk"><Redirect to="/travel" /></Route>
       <Route path="/travel">
         <Layout><PreLaunchRoute><Travel /></PreLaunchRoute></Layout>
+      </Route>
+      <Route path="/trips">
+        <Layout><ProtectedRoute><Trips /></ProtectedRoute></Layout>
       </Route>
       <Route path="/resources/financial-goals">
         <Layout><PreLaunchRoute><FinancialGoals /></PreLaunchRoute></Layout>

@@ -1,8 +1,13 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Platform } from "react-native";
 import { useCallback, useEffect, useState } from "react";
+import { getApiBase, getMemberApiHeaders } from "@/lib/api";
 
-const STORAGE_KEY = "@melanin_maps_itineraries";
-
+/**
+ * Compatibility view for the historic My Trips screen. The canonical lifecycle is
+ * now the authenticated private Trips API; `stops` remains empty because stops,
+ * providers, flights, hotels, events, documents, reminders, and sharing are not
+ * part of this bounded Trip aggregate.
+ */
 export interface ItineraryStop {
   businessId: string;
   businessName: string;
@@ -13,70 +18,146 @@ export interface ItineraryStop {
 export interface Itinerary {
   id: string;
   name: string;
+  destination: string;
   stops: ItineraryStop[];
   notes: string;
   createdAt: string;
   updatedAt: string;
 }
 
-function makeId(): string {
-  return `itin-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+type ApiTrip = Readonly<{
+  id: string;
+  title: string;
+  destination: string;
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+}>;
+
+type ItineraryChanges = Partial<Pick<Itinerary, "name" | "destination" | "notes" | "stops">>;
+
+function toItinerary(trip: ApiTrip): Itinerary {
+  return {
+    id: trip.id,
+    name: trip.title,
+    destination: trip.destination,
+    notes: trip.note,
+    stops: [],
+    createdAt: trip.createdAt,
+    updatedAt: trip.updatedAt,
+  };
 }
 
+async function tripRequest(path: string, init: RequestInit = {}): Promise<Response> {
+  const headers = await getMemberApiHeaders();
+  return fetch(`${getApiBase()}/api/kinfolk/trips${path}`, {
+    ...init,
+    // Browser/native each follow their established authentication convention.
+    credentials: Platform.OS === "web" ? "include" : undefined,
+    headers: { ...headers, ...(init.headers ?? {}) },
+  });
+}
+
+async function responseError(response: Response, fallback: string): Promise<Error> {
+  const payload = await response.json().catch(() => ({})) as { error?: unknown };
+  return new Error(typeof payload.error === "string" ? payload.error : fallback);
+}
+
+/**
+ * My Trips never reads, writes, deletes, or migrates @melanin_maps_itineraries.
+ * Any old AsyncStorage entries stay untouched on that device and are labelled as
+ * legacy, non-migrated data by the screen rather than presented as account Trips.
+ */
 export function useItineraries() {
   const [itineraries, setItineraries] = useState<Itinerary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
     try {
-      const raw = await AsyncStorage.getItem(STORAGE_KEY);
-      if (raw) setItineraries(JSON.parse(raw) as Itinerary[]);
-    } catch {}
-    finally { setIsLoading(false); }
+      const response = await tripRequest("");
+      if (!response.ok) throw await responseError(response, "Saved Trips could not be loaded.");
+      const payload = await response.json() as { trips?: ApiTrip[] };
+      setItineraries(Array.isArray(payload.trips) ? payload.trips.map(toItinerary) : []);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Saved Trips could not be loaded.");
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  useEffect(() => { void Promise.resolve().then(load); }, [load]);
+  useEffect(() => { void load(); }, [load]);
 
-  const persist = useCallback(async (items: Itinerary[]) => {
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    setItineraries(items);
-  }, []);
-
-  const createItinerary = useCallback(async (name: string, notes = ""): Promise<Itinerary> => {
-    const now = new Date().toISOString();
-    const item: Itinerary = { id: makeId(), name, stops: [], notes, createdAt: now, updatedAt: now };
-    const updated = [item, ...itineraries];
-    await persist(updated);
-    return item;
-  }, [itineraries, persist]);
-
-  const updateItinerary = useCallback(async (id: string, changes: Partial<Pick<Itinerary, "name" | "notes" | "stops">>) => {
-    const updated = itineraries.map((i) =>
-      i.id === id ? { ...i, ...changes, updatedAt: new Date().toISOString() } : i
-    );
-    await persist(updated);
-  }, [itineraries, persist]);
-
-  const deleteItinerary = useCallback(async (id: string) => {
-    await persist(itineraries.filter((i) => i.id !== id));
-  }, [itineraries, persist]);
-
-  const addStop = useCallback(async (itineraryId: string, stop: ItineraryStop) => {
-    const updated = itineraries.map((i) => {
-      if (i.id !== itineraryId) return i;
-      const alreadyAdded = i.stops.some((s) => s.businessId === stop.businessId);
-      if (alreadyAdded) return i;
-      return { ...i, stops: [...i.stops, stop], updatedAt: new Date().toISOString() };
+  const createItinerary = useCallback(async (
+    name: string,
+    notes = "",
+    destination = "",
+    memberConfirmed = false,
+  ): Promise<Itinerary> => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to save a private Trip.");
+    const response = await tripRequest("", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: name, destination, note: notes, memberConfirmed: true }),
     });
-    await persist(updated);
-  }, [itineraries, persist]);
+    if (!response.ok) throw await responseError(response, "Saved Trip could not be created.");
+    const payload = await response.json() as { trip?: ApiTrip };
+    if (!payload.trip) throw new Error("Saved Trip could not be created.");
+    const created = toItinerary(payload.trip);
+    setItineraries((current) => [created, ...current]);
+    return created;
+  }, []);
 
-  const removeStop = useCallback(async (itineraryId: string, businessId: string) => {
-    const updated = itineraries.map((i) =>
-      i.id !== itineraryId ? i : { ...i, stops: i.stops.filter((s) => s.businessId !== businessId), updatedAt: new Date().toISOString() }
-    );
-    await persist(updated);
-  }, [itineraries, persist]);
+  const updateItinerary = useCallback(async (id: string, changes: ItineraryChanges, memberConfirmed = false): Promise<Itinerary> => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to update a private Trip.");
+    const current = itineraries.find((item) => item.id === id);
+    if (!current) throw new Error("Saved Trip not found.");
+    // Stops have no server relation in this intentionally bounded aggregate.
+    if (changes.stops !== undefined) throw new Error("Trip stops are not part of the private account-backed Trip lifecycle.");
+    const response = await tripRequest(`/${encodeURIComponent(id)}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: changes.name ?? current.name,
+        destination: changes.destination ?? current.destination,
+        note: changes.notes ?? current.notes,
+        memberConfirmed: true,
+      }),
+    });
+    if (!response.ok) throw await responseError(response, "Saved Trip could not be updated.");
+    const payload = await response.json() as { trip?: ApiTrip };
+    if (!payload.trip) throw new Error("Saved Trip could not be updated.");
+    const updated = toItinerary(payload.trip);
+    setItineraries((items) => items.map((item) => item.id === id ? updated : item));
+    return updated;
+  }, [itineraries]);
 
-  return { itineraries, isLoading, createItinerary, updateItinerary, deleteItinerary, addStop, removeStop, refresh: load };
+  const deleteItinerary = useCallback(async (id: string, memberConfirmed = false): Promise<void> => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to delete a private Trip.");
+    const response = await tripRequest(`/${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberConfirmed: true }),
+    });
+    if (!response.ok) throw await responseError(response, "Saved Trip could not be deleted.");
+    setItineraries((items) => items.filter((item) => item.id !== id));
+  }, []);
+
+  const unsupportedStops = useCallback(async (): Promise<never> => {
+    throw new Error("Trip stops are not part of the private account-backed Trip lifecycle.");
+  }, []);
+
+  return {
+    itineraries,
+    isLoading,
+    error,
+    createItinerary,
+    updateItinerary,
+    deleteItinerary,
+    addStop: unsupportedStops,
+    removeStop: unsupportedStops,
+    refresh: load,
+  };
 }
