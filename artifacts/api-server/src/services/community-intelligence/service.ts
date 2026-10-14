@@ -1,8 +1,9 @@
 import { pool } from "@workspace/db";
 import {
+  applyCommunityIntelligenceSignals,
+  type CommunityAggregateSignal,
   type CommunityIntelligenceSuggestion,
   type CommunitySuggestionAction,
-  rankCommunityIntelligenceSuggestions,
 } from "./policy";
 
 export const COMMUNITY_INTELLIGENCE_MIN_COHORT = 5;
@@ -122,7 +123,7 @@ export async function setCommunityIntelligenceParticipation(
   } finally {
     client.release();
   }
-  return { participationEnabled, collectionEnabled: communityIntelligenceCollectionEnabled() };
+  return { participationEnabled, collectionEnabled: true };
 }
 
 export async function recordCommunityIntelligenceFeedback(input: Readonly<{
@@ -152,35 +153,82 @@ export async function recordCommunityIntelligenceFeedback(input: Readonly<{
   return { recorded: true };
 }
 
-/** Returns only category keys that already clear the member-suppression threshold. */
-export async function getSuppressedSafeCategoryKeys(
+async function readSuppressedSafeCommunitySignals(
   journeyType: "wedding" | "birthday",
-): Promise<string[]> {
-  if (!communityIntelligenceCollectionEnabled()) return [];
-  await requireCommunityIntelligenceSchema();
-  const result = await pool.query<{ category_key: string }>(
-    `SELECT category_key
-       FROM kinfolk_community_intelligence_events
-      WHERE journey_type = $1
-        AND action = 'helpful'
-        AND revoked_at IS NULL
-        AND expires_at > NOW()
-        AND created_at >= NOW() - INTERVAL '90 days'
-      GROUP BY category_key
-     HAVING COUNT(DISTINCT user_id) >= $2
+): Promise<CommunityAggregateSignal[]> {
+  const result = await pool.query<{
+    category_key: string;
+    effect: "support" | "reconsider";
+  }>(
+    `SELECT e.category_key,
+            CASE
+              WHEN COUNT(DISTINCT CASE
+                WHEN e.action IN ('not_relevant', 'already_handled') THEN e.user_id
+              END) >= $2 THEN 'reconsider'
+              ELSE 'support'
+            END AS effect
+       FROM kinfolk_community_intelligence_events e
+       INNER JOIN kinfolk_community_intelligence_preferences p
+         ON p.user_id = e.user_id
+        AND p.participation_enabled = TRUE
+        AND p.revoked_at IS NULL
+      WHERE e.journey_type = $1
+        AND e.revoked_at IS NULL
+        AND e.expires_at > NOW()
+        AND e.created_at >= NOW() - INTERVAL '90 days'
+      GROUP BY e.category_key
+     HAVING COUNT(DISTINCT CASE WHEN e.action = 'helpful' THEN e.user_id END) >= $2
+         OR COUNT(DISTINCT CASE
+              WHEN e.action IN ('not_relevant', 'already_handled') THEN e.user_id
+            END) >= $2
       LIMIT 12`,
     [journeyType, COMMUNITY_INTELLIGENCE_MIN_COHORT],
   );
-  return result.rows.map((row) => row.category_key);
+  return result.rows.flatMap((row) => (
+    row.effect === "support" || row.effect === "reconsider"
+      ? [{ categoryKey: row.category_key, effect: row.effect }]
+      : []
+  ));
 }
 
+/**
+ * Returns only privacy-suppressed aggregate effects. It never returns counts,
+ * raw events, member identifiers, messages, locations, or feedback history.
+ */
+export async function getSuppressedSafeCommunitySignals(
+  journeyType: "wedding" | "birthday",
+): Promise<CommunityAggregateSignal[]> {
+  if (!communityIntelligenceCollectionEnabled()) return [];
+  await requireCommunityIntelligenceSchema();
+  return readSuppressedSafeCommunitySignals(journeyType);
+}
+
+/** Backward-compatible helper for callers that only need positively supported categories. */
+export async function getSuppressedSafeCategoryKeys(
+  journeyType: "wedding" | "birthday",
+): Promise<string[]> {
+  const signals = await getSuppressedSafeCommunitySignals(journeyType);
+  return signals.filter((signal) => signal.effect === "support").map((signal) => signal.categoryKey);
+}
+
+/**
+ * Applies community learning only for a current opted-in member and only from
+ * suppressed aggregate signals. An unavailable schema, disabled collection, or
+ * non-participating recipient leaves safe contextual guidance unchanged.
+ */
 export async function rankSuggestionsWithCommunitySignals(
+  recipientUserId: string | null | undefined,
   suggestions: readonly CommunityIntelligenceSuggestion[],
 ): Promise<CommunityIntelligenceSuggestion[]> {
-  if (suggestions.length === 0) return [];
+  if (suggestions.length === 0 || !recipientUserId || !communityIntelligenceCollectionEnabled()) {
+    return [...suggestions];
+  }
   try {
-    const supportedCategoryKeys = await getSuppressedSafeCategoryKeys(suggestions[0].journeyType);
-    return rankCommunityIntelligenceSuggestions(suggestions, supportedCategoryKeys);
+    await requireCommunityIntelligenceSchema();
+    const recipientPreference = await readCommunityIntelligencePreference(recipientUserId);
+    if (!recipientPreference.participationEnabled) return [...suggestions];
+    const signals = await readSuppressedSafeCommunitySignals(suggestions[0].journeyType);
+    return applyCommunityIntelligenceSignals(suggestions, signals);
   } catch {
     // Community learning is additive. A schema/read outage may not suppress the
     // foundational, safe journey guidance or turn it into a fabricated claim.
@@ -196,15 +244,19 @@ export async function getCommunityIntelligenceGaps(): Promise<CommunityIntellige
     journey_stage: "inspiration";
     category_key: string;
   }>(
-    `SELECT journey_type, journey_stage, category_key
-       FROM kinfolk_community_intelligence_events
-      WHERE action = 'helpful'
-        AND revoked_at IS NULL
-        AND expires_at > NOW()
-        AND created_at >= NOW() - INTERVAL '90 days'
-      GROUP BY journey_type, journey_stage, category_key
-     HAVING COUNT(DISTINCT user_id) >= $1
-      ORDER BY journey_type, category_key
+    `SELECT e.journey_type, e.journey_stage, e.category_key
+       FROM kinfolk_community_intelligence_events e
+       INNER JOIN kinfolk_community_intelligence_preferences p
+         ON p.user_id = e.user_id
+        AND p.participation_enabled = TRUE
+        AND p.revoked_at IS NULL
+      WHERE e.action = 'helpful'
+        AND e.revoked_at IS NULL
+        AND e.expires_at > NOW()
+        AND e.created_at >= NOW() - INTERVAL '90 days'
+      GROUP BY e.journey_type, e.journey_stage, e.category_key
+     HAVING COUNT(DISTINCT e.user_id) >= $1
+      ORDER BY e.journey_type, e.category_key
       LIMIT 30`,
     [COMMUNITY_INTELLIGENCE_MIN_COHORT],
   );

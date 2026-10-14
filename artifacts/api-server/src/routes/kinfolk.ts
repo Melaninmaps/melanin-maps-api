@@ -14240,6 +14240,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const communityIntelligenceSuggestions =
       !isPrivateQuestionAttachment && intentPolicy.consequence === "low"
         ? await rankSuggestionsWithCommunitySignals(
+            req.user?.id,
             communityIntelligenceSuggestionsForMessage(message),
           )
         : [];

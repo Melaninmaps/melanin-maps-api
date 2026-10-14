@@ -2,6 +2,16 @@ export type CommunityJourneyType = "wedding" | "birthday";
 export type CommunityJourneyStage = "inspiration";
 export type CommunitySuggestionAction = "helpful" | "not_relevant" | "already_handled";
 
+/**
+ * A privacy-suppressed aggregate can either support retaining a category or
+ * indicate that Kinfolk should reconsider it. No counts, members, messages,
+ * locations, or individual feedback are represented by this type.
+ */
+export type CommunityAggregateSignal = Readonly<{
+  categoryKey: string;
+  effect: "support" | "reconsider";
+}>;
+
 export type CommunityIntelligenceSuggestion = Readonly<{
   id: string;
   journeyType: CommunityJourneyType;
@@ -12,13 +22,26 @@ export type CommunityIntelligenceSuggestion = Readonly<{
   reason: string;
 }>;
 
+type SuggestionBlueprint = Readonly<
+  Omit<CommunityIntelligenceSuggestion, "journeyType" | "stage" | "intent">
+  & { readonly completedNeedPatterns?: readonly RegExp[] }
+>;
+
 type JourneyBlueprint = Readonly<{
   journeyType: CommunityJourneyType;
   keywords: readonly RegExp[];
-  suggestions: readonly Omit<CommunityIntelligenceSuggestion, "journeyType" | "stage" | "intent">[];
+  suggestions: readonly SuggestionBlueprint[];
 }>;
 
 const EXCLUDED_CONTEXT = /\b(?:medical|diagnos(?:is|e)|prescription|therapy|tax|invest(?:ment|ing)?|loan|bankrupt|lawsuit|attorney|visa|immigration|emergency|assault|police)\b/i;
+
+/**
+ * These patterns only honor a need that the member explicitly says is complete
+ * in the current message. They do not infer a life stage, access memory, or
+ * persist conversation text.
+ */
+const WEDDING_VENUE_COMPLETED = /\b(?:venue|location|ceremony site|reception site)\b[^.]{0,72}\b(?:booked|reserved|secured|confirmed|locked\s*in)\b|\b(?:booked|reserved|secured|confirmed|locked\s*in)\b[^.]{0,72}\b(?:venue|location|ceremony site|reception site)\b/i;
+const BIRTHDAY_DECORATIONS_COMPLETED = /\b(?:decorations?|balloons?|centerpieces?|party decor)\b[^.]{0,72}\b(?:already\s+)?(?:handled|done|finished|sorted|taken\s+care\s+of)\b|\b(?:already\s+)?(?:handled|done|finished|sorted|taken\s+care\s+of)\b[^.]{0,72}\b(?:decorations?|balloons?|centerpieces?|party decor)\b/i;
 
 const JOURNEY_BLUEPRINTS: readonly JourneyBlueprint[] = [
   {
@@ -26,10 +49,17 @@ const JOURNEY_BLUEPRINTS: readonly JourneyBlueprint[] = [
     keywords: [/\bwedding\b/i, /\bbridal\b/i, /\bbride\b/i, /\bgroom\b/i, /\bgetting married\b/i, /\bengagement\b/i],
     suggestions: [
       {
+        id: "wedding-venue-planning",
+        categoryKey: "wedding_venue_planning",
+        label: "Venue planning",
+        reason: "Before other details depend on it, a venue plan can clarify timing, guest flow, and what needs to happen next.",
+        completedNeedPatterns: [WEDDING_VENUE_COMPLETED],
+      },
+      {
         id: "wedding-alterations",
         categoryKey: "wedding_alterations",
         label: "Alterations and fittings",
-        reason: "You are still in the inspiration stage, and checking fitting lead times early can keep your final look from becoming a last-minute task.",
+        reason: "Checking fitting lead times early can keep your final look from becoming a last-minute task.",
       },
       {
         id: "wedding-getting-ready",
@@ -49,6 +79,13 @@ const JOURNEY_BLUEPRINTS: readonly JourneyBlueprint[] = [
     journeyType: "birthday",
     keywords: [/\bbirthday\b/i, /\bturning\s+\d{1,3}\b/i, /\bbirthday party\b/i, /\bbirthday celebration\b/i],
     suggestions: [
+      {
+        id: "birthday-decorations",
+        categoryKey: "birthday_decorations",
+        label: "Decorations and setup",
+        reason: "A simple decoration plan can make the celebration feel intentional without turning the day into extra work.",
+        completedNeedPatterns: [BIRTHDAY_DECORATIONS_COMPLETED],
+      },
       {
         id: "birthday-venue-logistics",
         categoryKey: "birthday_venue_logistics",
@@ -82,24 +119,36 @@ export function communityIntelligenceSuggestionsForMessage(message: string): Com
   if (!journeyType) return [];
   const blueprint = JOURNEY_BLUEPRINTS.find((entry) => entry.journeyType === journeyType);
   if (!blueprint) return [];
-  return blueprint.suggestions.slice(0, 3).map((suggestion) => ({
-    ...suggestion,
-    journeyType,
-    stage: "inspiration",
-    intent: "planning",
-  }));
+
+  return blueprint.suggestions
+    .filter((suggestion) => !suggestion.completedNeedPatterns?.some((pattern) => pattern.test(message)))
+    .map(({ completedNeedPatterns: _completedNeedPatterns, ...suggestion }) => ({
+      ...suggestion,
+      journeyType,
+      stage: "inspiration" as const,
+      intent: "planning" as const,
+    }))
+    .slice(0, 3);
 }
 
 /**
- * Applies only a centrally supplied, already-suppressed category ordering hint.
- * It never creates a category, a business recommendation, or member-facing claim.
+ * Applies only already-suppressed aggregate effects. A reconsider effect removes
+ * an otherwise relevant category; support can reorder remaining categories. It
+ * never creates a category, a business recommendation, or a member-facing claim.
  */
-export function rankCommunityIntelligenceSuggestions(
+export function applyCommunityIntelligenceSignals(
   suggestions: readonly CommunityIntelligenceSuggestion[],
-  supportedCategoryKeys: readonly string[],
+  signals: readonly CommunityAggregateSignal[],
 ): CommunityIntelligenceSuggestion[] {
-  const supported = new Set(supportedCategoryKeys);
-  return [...suggestions]
+  const reconsidered = new Set(
+    signals.filter((signal) => signal.effect === "reconsider").map((signal) => signal.categoryKey),
+  );
+  const supported = new Set(
+    signals.filter((signal) => signal.effect === "support").map((signal) => signal.categoryKey),
+  );
+
+  return suggestions
+    .filter((suggestion) => !reconsidered.has(suggestion.categoryKey))
     .map((suggestion, index) => ({ suggestion, index }))
     .sort((left, right) => {
       const leftPriority = supported.has(left.suggestion.categoryKey) ? 0 : 1;
@@ -108,6 +157,17 @@ export function rankCommunityIntelligenceSuggestions(
     })
     .map(({ suggestion }) => suggestion)
     .slice(0, 3);
+}
+
+/** Backward-compatible helper for callers that only have supported categories. */
+export function rankCommunityIntelligenceSuggestions(
+  suggestions: readonly CommunityIntelligenceSuggestion[],
+  supportedCategoryKeys: readonly string[],
+): CommunityIntelligenceSuggestion[] {
+  return applyCommunityIntelligenceSignals(
+    suggestions,
+    supportedCategoryKeys.map((categoryKey) => ({ categoryKey, effect: "support" as const })),
+  );
 }
 
 export function isCommunitySuggestionAction(value: unknown): value is CommunitySuggestionAction {
@@ -119,8 +179,9 @@ export function getCommunitySuggestionById(id: unknown): CommunityIntelligenceSu
   for (const blueprint of JOURNEY_BLUEPRINTS) {
     const match = blueprint.suggestions.find((suggestion) => suggestion.id === id);
     if (match) {
+      const { completedNeedPatterns: _completedNeedPatterns, ...suggestion } = match;
       return {
-        ...match,
+        ...suggestion,
         journeyType: blueprint.journeyType,
         stage: "inspiration",
         intent: "planning",

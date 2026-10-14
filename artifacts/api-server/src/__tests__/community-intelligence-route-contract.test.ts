@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 const routesIndex = readFileSync(new URL("../routes/index.ts", import.meta.url), "utf8");
 const communityRoute = readFileSync(new URL("../routes/community-intelligence.ts", import.meta.url), "utf8");
 const service = readFileSync(new URL("../services/community-intelligence/service.ts", import.meta.url), "utf8");
+const kinfolkRoute = readFileSync(new URL("../routes/kinfolk.ts", import.meta.url), "utf8");
 const migration = readFileSync(
   new URL("../../migrations/20261014_community_intelligence_source_only.sql", import.meta.url),
   "utf8",
@@ -34,5 +35,12 @@ describe("Community Intelligence route and migration contract", () => {
     expect(migration).toContain("SOURCE-ONLY REVIEW MIGRATION");
     expect(migration).toContain("Do not apply without separate written approval");
     expect(migration).toContain("no question text, free-form feedback, message IDs, location");
+  });
+
+  it("applies aggregate learning only through the authenticated Kinfolk chat response", () => {
+    expect(kinfolkRoute).toContain("rankSuggestionsWithCommunitySignals(");
+    expect(kinfolkRoute).toContain("req.user?.id,");
+    expect(kinfolkRoute).toContain("communityIntelligenceSuggestionsForMessage(message)");
+    expect(kinfolkRoute).toContain("communityIntelligenceSuggestions,");
   });
 });
