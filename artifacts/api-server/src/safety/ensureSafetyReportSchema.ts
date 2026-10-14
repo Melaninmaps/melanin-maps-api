@@ -16,6 +16,11 @@ const REQUIRED_COLUMNS = [
   "correction_note",
 ] as const;
 
+const REQUIRED_SAFETY_REPORT_NOT_NULL_COLUMNS = [
+  "incident_location_source",
+  "incident_location_precision",
+] as const;
+
 const REQUIRED_INCIDENT_COLUMNS = ["region"] as const;
 const REQUIRED_COMMUNITY_ALERT_COLUMNS = [
   "withdrawn_at",
@@ -25,6 +30,33 @@ const REQUIRED_COMMUNITY_ALERT_COLUMNS = [
   "corrected_by",
   "correction_note",
 ] as const;
+
+type SafetyReportNullabilityRow = {
+  attname: (typeof REQUIRED_SAFETY_REPORT_NOT_NULL_COLUMNS)[number];
+  attnotnull: boolean;
+};
+
+async function ensureRequiredSafetyReportNotNullColumns(pool: Pool): Promise<void> {
+  const result = await pool.query<SafetyReportNullabilityRow>(
+    `SELECT a.attname, a.attnotnull
+       FROM pg_attribute AS a
+      WHERE a.attrelid = 'public.safety_reports'::regclass
+        AND a.attname = ANY($1::text[])
+        AND a.attnum > 0
+        AND NOT a.attisdropped`,
+    [REQUIRED_SAFETY_REPORT_NOT_NULL_COLUMNS],
+  );
+  const nullabilityByColumn = new Map(
+    result.rows.map((row) => [row.attname, row.attnotnull]),
+  );
+
+  for (const column of REQUIRED_SAFETY_REPORT_NOT_NULL_COLUMNS) {
+    if (nullabilityByColumn.get(column) === true) continue;
+    await pool.query(
+      `ALTER TABLE safety_reports ALTER COLUMN ${column} SET NOT NULL`,
+    );
+  }
+}
 
 export async function ensureRequiredSafetyReportSchema(pool: Pool): Promise<void> {
   await pool.query(`
@@ -44,10 +76,12 @@ export async function ensureRequiredSafetyReportSchema(pool: Pool): Promise<void
 
     ALTER TABLE safety_reports
       ALTER COLUMN incident_location_source SET DEFAULT 'manual_area',
-      ALTER COLUMN incident_location_source SET NOT NULL,
-      ALTER COLUMN incident_location_precision SET DEFAULT 'city',
-      ALTER COLUMN incident_location_precision SET NOT NULL;
+      ALTER COLUMN incident_location_precision SET DEFAULT 'city';
+  `);
 
+  await ensureRequiredSafetyReportNotNullColumns(pool);
+
+  await pool.query(`
     -- Lifecycle fields only add reversible metadata. No safety evidence is
     -- deleted, overwritten, or automatically purged by this bootstrap.
     ALTER TABLE safety_reports
