@@ -10,6 +10,10 @@ const hookSource = readFileSync(
   fileURLToPath(new URL("../hooks/useKinfolk.ts", import.meta.url)),
   "utf8",
 );
+const widgetSource = readFileSync(
+  fileURLToPath(new URL("../components/AIChatWidget.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("native Kinfolk image privacy controls", () => {
   it("shows an explicit member confirmation before uploading an image", () => {
@@ -36,5 +40,14 @@ describe("native Kinfolk image privacy controls", () => {
   it("offers immediate private-image removal before the expiry backstop", () => {
     expect(travelSource).toContain("/api/media/kinfolk-question/${encodeURIComponent(attachment.assetId)}");
     expect(travelSource).toContain("will expire shortly from private processing");
+  });
+
+  it("keeps floating Kinfolk on the same private image boundary as primary Kinfolk", () => {
+    expect(widgetSource).toContain("Use this image for this answer?");
+    expect(widgetSource).toContain("is not used to train Kinfolk");
+    expect(widgetSource).toContain("is not saved as memory");
+    expect(widgetSource).toContain("expires within 15 minutes");
+    expect(widgetSource).toContain('form.append("kinfolkVisionConsent", "true")');
+    expect(widgetSource).toContain("/api/media/kinfolk-question/${encodeURIComponent(attachment.assetId)}");
   });
 });

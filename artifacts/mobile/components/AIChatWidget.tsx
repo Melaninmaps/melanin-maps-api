@@ -1,6 +1,7 @@
 import { Feather } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
 import * as Haptics from "expo-haptics";
+import * as ImagePicker from "expo-image-picker";
 import * as Location from "expo-location";
 import { usePathname, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -16,6 +17,7 @@ import { NativeScrollEvent, NativeSyntheticEvent ,
   Animated,
   AppState,
   FlatList,
+  Image,
   Keyboard,
   KeyboardAvoidingView,
   Linking,
@@ -101,7 +103,11 @@ interface Message {
   relatedConnections?: KinfolkRelatedConnection[];
   researchStatus?: KinfolkResearchStatus | null;
   resourceCards?: KinfolkResourceCard[];
+  /** Device-local only; never included in the Kinfolk chat payload. */
+  imagePreviewUris?: string[];
 }
+
+type KinfolkQuestionImage = Readonly<{ assetId: string; previewUri: string }>;
 
 interface TaskActionPayload {
   type: "create_list" | "create_task" | "add_tasks";
@@ -201,6 +207,10 @@ async function sendToKinfolk(
   voiceMode: VoiceMode,
   cityHint?: string,
   signal?: AbortSignal,
+  options?: Readonly<{
+    imageAssetIds?: readonly string[];
+    imageVisionConsent?: boolean;
+  }>,
 ): Promise<{
   reply: string;
   taskAction?: TaskActionPayload | null;
@@ -243,6 +253,10 @@ async function sendToKinfolk(
         sessionId,
         voiceMode,
         cityHint,
+        // Private server references only: never send device-local preview URIs,
+        // public URLs, or image bytes through the chat request.
+        imageAssetIds: options?.imageAssetIds ?? [],
+        imageVisionConsent: options?.imageVisionConsent === true,
         clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       }),
       signal,
@@ -399,6 +413,8 @@ export function AIChatWidget() {
   const [responseFeedbackNeedDrafts, setResponseFeedbackNeedDrafts] = useState<Record<string, boolean>>({});
   const [feedbackSavingId, setFeedbackSavingId] = useState<string | null>(null);
   const [input, setInput] = useState("");
+  const [kinfolkImages, setKinfolkImages] = useState<KinfolkQuestionImage[]>([]);
+  const [uploadingKinfolkImage, setUploadingKinfolkImage] = useState(false);
   const [typing, setTyping] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [voiceOutputStatus, setVoiceOutputStatus] = useState<string | null>(null);
@@ -601,6 +617,96 @@ export function AIChatWidget() {
     } catch { /* ignore — local pref still saved */ }
     finally { setAaveSaving(false); }
   };
+
+  const uploadWidgetKinfolkImage = useCallback(async (asset: ImagePicker.ImagePickerAsset) => {
+    setUploadingKinfolkImage(true);
+    try {
+      const token = await getToken();
+      if (!token) {
+        void refreshUser();
+        Alert.alert(
+          "Sign in again",
+          "Your Kinfolk session needs to be refreshed before adding a private image.",
+        );
+        return;
+      }
+      const form = new FormData();
+      form.append("file", {
+        uri: asset.uri,
+        name: asset.fileName ?? `kinfolk-${Date.now()}.jpg`,
+        type: asset.mimeType ?? "image/jpeg",
+      } as never);
+      form.append("kinfolkVisionConsent", "true");
+      const response = await fetch(`${getApiBase()}/api/media/upload?purpose=kinfolk_question`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const body = await response.json().catch(() => ({})) as { assetId?: string; error?: string };
+      if (!response.ok || !body.assetId) {
+        throw new Error(body.error ?? "Could not prepare that private image.");
+      }
+      const assetId = body.assetId;
+      setKinfolkImages((items) => items.some((item) => item.assetId === assetId)
+        ? items
+        : [...items, { assetId, previewUri: asset.uri }].slice(0, 2));
+    } catch (cause) {
+      Alert.alert(
+        "Image upload failed",
+        cause instanceof Error ? cause.message : "Please try again.",
+      );
+    } finally {
+      setUploadingKinfolkImage(false);
+    }
+  }, [refreshUser]);
+
+  const removeWidgetKinfolkImage = useCallback(async (attachment: KinfolkQuestionImage) => {
+    setKinfolkImages((items) => items.filter((item) => item.assetId !== attachment.assetId));
+    try {
+      const token = await getToken();
+      if (!token) {
+        void refreshUser();
+        throw new Error("session needs refresh");
+      }
+      const response = await fetch(
+        `${getApiBase()}/api/media/kinfolk-question/${encodeURIComponent(attachment.assetId)}`,
+        { method: "DELETE", headers: { Authorization: `Bearer ${token}` } },
+      );
+      if (!response.ok) throw new Error("private image deletion deferred");
+    } catch {
+      Alert.alert(
+        "Private image removal",
+        "The image was removed from this screen and will expire shortly from private processing.",
+      );
+    }
+  }, [refreshUser]);
+
+  const pickWidgetKinfolkImage = useCallback(async () => {
+    if (!isAuthenticated || uploadingKinfolkImage || kinfolkImages.length >= 2) return;
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert(
+        "Photo access needed",
+        "Allow photo access to ask Kinfolk about an image. You can still type any question.",
+      );
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.82,
+      allowsMultipleSelection: false,
+    });
+    const asset = result.assets?.[0];
+    if (result.canceled || !asset) return;
+    Alert.alert(
+      "Use this image for this answer?",
+      "Kinfolk will review this image only to answer your current question. It is sent to Kinfolk’s AI provider for that answer, is not used to train Kinfolk, is not saved as memory, and is deleted after the answer. If interrupted, the private upload expires within 15 minutes.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Use image for this answer", onPress: () => void uploadWidgetKinfolkImage(asset) },
+      ],
+    );
+  }, [isAuthenticated, kinfolkImages.length, uploadingKinfolkImage, uploadWidgetKinfolkImage]);
 
   const stopPlayback = useCallback((reason: string) => {
     voiceGuardRef.current.invalidate(reason);
@@ -919,6 +1025,8 @@ export function AIChatWidget() {
       );
       return;
     }
+    const attachedImageAssetIds = kinfolkImages.map((attachment) => attachment.assetId);
+    const attachedImagePreviewUris = kinfolkImages.map((attachment) => attachment.previewUri);
     activeChatRequestRef.current?.abort();
     const requestGeneration = ++chatRequestGenerationRef.current;
     const request = new AbortController();
@@ -927,7 +1035,13 @@ export function AIChatWidget() {
     Keyboard.dismiss();
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    const userMsg: Message = { id: String(Date.now()), text, fromUser: true, ts: Date.now() };
+    const userMsg: Message = {
+      id: String(Date.now()),
+      text,
+      fromUser: true,
+      ts: Date.now(),
+      imagePreviewUris: attachedImagePreviewUris,
+    };
     setMessages((m) => [...m, userMsg]);
     setInput("");
     setSuggestions([]);
@@ -961,8 +1075,12 @@ export function AIChatWidget() {
         mediaLinks,
         relatedConnections,
         researchStatus,
-      } = await sendToKinfolk(text, token, voiceMode, cityHint, request.signal);
+      } = await sendToKinfolk(text, token, voiceMode, cityHint, request.signal, {
+        imageAssetIds: attachedImageAssetIds,
+        imageVisionConsent: attachedImageAssetIds.length > 0,
+      });
       if (requestGeneration !== chatRequestGenerationRef.current) return;
+      setKinfolkImages([]);
 
       const aiMsg: Message = {
         id: String(Date.now() + 1),
@@ -1156,7 +1274,7 @@ export function AIChatWidget() {
     router.push("/kinfolk-tasks");
   };
 
-  const sendDisabled = !input.trim() || widgetVoiceSource.canStop || authLoading;
+  const sendDisabled = !input.trim() || widgetVoiceSource.canStop || authLoading || uploadingKinfolkImage;
 
   return (
     <>
@@ -1313,6 +1431,18 @@ export function AIChatWidget() {
                       linkColor={item.fromUser ? "#FFF" : colors.primary}
                       textStyle={styles.bubbleTxt}
                     />
+                    {item.fromUser && item.imagePreviewUris?.length ? (
+                      <View style={styles.sentImagePreviewRow}>
+                        {item.imagePreviewUris.map((previewUri: string, index: number) => (
+                          <Image
+                            key={`${item.id}-image-${index}`}
+                            source={{ uri: previewUri }}
+                            style={styles.sentImagePreview}
+                            accessibilityLabel={`Private image ${index + 1} included with this Kinfolk question`}
+                          />
+                        ))}
+                      </View>
+                    ) : null}
                   </View>
                 </View>
                 {/* Location resolution pill — shows which city Kinfolk resolved */}
@@ -1729,6 +1859,36 @@ export function AIChatWidget() {
             </View>
           ) : null}
 
+          {(kinfolkImages.length > 0 || uploadingKinfolkImage) ? (
+            <View style={[styles.imageAttachmentTray, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imageAttachmentRow}>
+                {kinfolkImages.map((attachment, index) => (
+                  <View key={attachment.assetId} style={styles.imageAttachment}>
+                    <Image
+                      source={{ uri: attachment.previewUri }}
+                      style={styles.imageAttachmentPreview}
+                      accessibilityLabel={`Private image ${index + 1} ready for this Kinfolk question`}
+                    />
+                    <TouchableOpacity
+                      onPress={() => void removeWidgetKinfolkImage(attachment)}
+                      style={styles.imageAttachmentRemove}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Remove private image ${index + 1}`}
+                    >
+                      <Feather name="x" size={14} color="#FFF" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+                {uploadingKinfolkImage ? (
+                  <View style={[styles.imageAttachmentUploading, { borderColor: colors.border, backgroundColor: colors.muted }]} accessibilityLabel="Preparing private image">
+                    <ActivityIndicator size="small" color={colors.primary} />
+                    <Text style={[styles.imageAttachmentStatus, { color: colors.mutedForeground }]}>Preparing…</Text>
+                  </View>
+                ) : null}
+              </ScrollView>
+            </View>
+          ) : null}
+
           <View style={[styles.inputRow, { borderTopColor: colors.border, paddingBottom: bottomPad + 8, backgroundColor: colors.background }]}>
             {Platform.OS !== "web" ? (
               <TouchableOpacity
@@ -1747,6 +1907,18 @@ export function AIChatWidget() {
                 activeOpacity={0.8}
               >
                 {widgetVoiceSource.state.phase === "requesting_permission" || widgetVoiceSource.state.phase === "starting" || widgetVoiceSource.state.phase === "stopping" || widgetVoiceSource.state.phase === "uploading" ? <ActivityIndicator size="small" color={colors.mutedForeground} /> : <Feather name={widgetVoiceSource.canStop ? "mic-off" : "mic"} size={18} color={widgetVoiceSource.canStop ? "#FFF" : colors.mutedForeground} />}
+              </TouchableOpacity>
+            ) : null}
+            {Platform.OS !== "web" ? (
+              <TouchableOpacity
+                style={[styles.micBtn, { backgroundColor: colors.muted, opacity: typing || authLoading || uploadingKinfolkImage || kinfolkImages.length >= 2 || widgetVoiceSource.canStop || !isAuthenticated ? 0.6 : 1 }]}
+                onPress={() => void pickWidgetKinfolkImage()}
+                disabled={typing || authLoading || uploadingKinfolkImage || kinfolkImages.length >= 2 || widgetVoiceSource.canStop || !isAuthenticated}
+                accessibilityLabel={kinfolkImages.length >= 2 ? "Maximum of two private images attached" : "Add a private image to this Kinfolk question"}
+                accessibilityState={{ disabled: typing || authLoading || uploadingKinfolkImage || kinfolkImages.length >= 2 || widgetVoiceSource.canStop || !isAuthenticated, busy: uploadingKinfolkImage }}
+                activeOpacity={0.8}
+              >
+                {uploadingKinfolkImage ? <ActivityIndicator size="small" color={colors.mutedForeground} /> : <Feather name="image" size={18} color={colors.mutedForeground} />}
               </TouchableOpacity>
             ) : null}
             <TextInput
@@ -1965,6 +2137,8 @@ const styles = StyleSheet.create({
   msgAvatarTxt: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#FFF" },
   bubble: { maxWidth: "78%", minWidth: 0, padding: 12, borderRadius: 16 },
   bubbleTxt: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 },
+  sentImagePreviewRow: { flexDirection: "row", gap: 6, marginTop: 8, flexWrap: "wrap" },
+  sentImagePreview: { width: 96, height: 72, borderRadius: 8, backgroundColor: "#00000022" },
   typingDots: { fontSize: 10, letterSpacing: 4 },
   taskCreatedBadge: {
     flexDirection: "row", alignItems: "center", gap: 6,
@@ -2017,6 +2191,13 @@ const styles = StyleSheet.create({
     flexDirection: "row", alignItems: "center", gap: 8,
     paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1,
   },
+  imageAttachmentTray: { borderTopWidth: 1, paddingHorizontal: 12, paddingVertical: 8 },
+  imageAttachmentRow: { alignItems: "center", gap: 8 },
+  imageAttachment: { width: 64, height: 64, borderRadius: 10, overflow: "hidden", position: "relative" },
+  imageAttachmentPreview: { width: 64, height: 64, borderRadius: 10, backgroundColor: "#00000022" },
+  imageAttachmentRemove: { position: "absolute", top: 3, right: 3, width: 22, height: 22, borderRadius: 11, backgroundColor: "#111827CC", alignItems: "center", justifyContent: "center" },
+  imageAttachmentUploading: { width: 82, height: 64, borderRadius: 10, borderWidth: 1, alignItems: "center", justifyContent: "center", gap: 4 },
+  imageAttachmentStatus: { fontSize: 10, fontFamily: "Inter_500Medium" },
   input: {
     flex: 1, borderWidth: 1, borderRadius: 24, paddingHorizontal: 14,
     paddingVertical: 11, fontSize: 14, fontFamily: "Inter_400Regular",
