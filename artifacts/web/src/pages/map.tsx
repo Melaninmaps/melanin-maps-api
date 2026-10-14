@@ -395,6 +395,10 @@ export default function MapPage() {
   // Prevent home-city geocoder and GPS from overriding a user-initiated search viewport
   const searchViewportLockedRef = useRef(false);
   const searchViewportSequenceRef = useRef(0);
+  // Recenter invalidates any in-flight search or area handoff so a late
+  // response cannot restore a locality the member deliberately left.
+  const universalSearchGenerationRef = useRef(0);
+  const areaHandoffGenerationRef = useRef(0);
   // A profile query commonly resolves after Google Maps has rendered. Keep this
   // ref outside map initialization so the saved-home fallback still applies
   // once the authenticated member record arrives, without repeated geocoding.
@@ -739,6 +743,8 @@ export default function MapPage() {
   const runUniversalSearch = useCallback(async (queryOverride?: string) => {
     const q = (queryOverride ?? search).trim();
     if (!q || q.length < 2) return;
+    const searchGeneration = ++universalSearchGenerationRef.current;
+    const isCurrentSearch = () => universalSearchGenerationRef.current === searchGeneration;
     const localIntent = parseLocalMapSearch(q);
     // Lock synchronously, before geo-extract awaits, so an older asynchronous
     // browser GPS callback can never recenter over a city or ZIP the member typed.
@@ -770,11 +776,13 @@ export default function MapPage() {
           )}`,
           { credentials: "include" }
         );
+        if (!isCurrentSearch()) return;
         if (geoRes.ok) {
           const gd = await geoRes.json() as {
             hasLocation: boolean; locationQuery: string | null;
             contentQuery: string; lat: number | null; lng: number | null;
           };
+          if (!isCurrentSearch()) return;
           if (gd.hasLocation && typeof gd.lat === "number" && typeof gd.lng === "number") {
             geoLat = gd.lat;
             geoLng = gd.lng;
@@ -818,8 +826,10 @@ export default function MapPage() {
         p.set("lng", String(userCoords.lng));
       }
       const res = await fetch(`${apiBase}/api/search/universal?${p}`, { credentials: "include" });
+      if (!isCurrentSearch()) return;
       if (res.ok) {
         const payload = await res.json();
+        if (!isCurrentSearch()) return;
         const universalBusinesses: any[] = payload?.results?.businesses ?? [];
 
         // A structured phrase ("Black-owned restaurants in Philadelphia, PA")
@@ -839,8 +849,10 @@ export default function MapPage() {
             if (parsed.category) bp.set("category", parsed.category);
             if (mapSupportScope) bp.set("supportScope", mapSupportScope);
             const bizRes = await fetch(`${apiBase}/api/businesses?${bp}`, { credentials: "include" });
+            if (!isCurrentSearch()) return;
             if (bizRes.ok) {
               const bizPayload = await bizRes.json();
+              if (!isCurrentSearch()) return;
               phraseBusinesses = Array.isArray(bizPayload.businesses) ? bizPayload.businesses : [];
               usedExactDirectorySearch = phraseBusinesses.length > 0;
             }
@@ -852,8 +864,10 @@ export default function MapPage() {
           try {
             const direct = new URLSearchParams({ search: q.trim(), lookup: "direct_name", limit: "20" });
             const directRes = await fetch(`${apiBase}/api/businesses?${direct}`, { credentials: "include" });
+            if (!isCurrentSearch()) return;
             if (directRes.ok) {
               const directPayload = await directRes.json();
+              if (!isCurrentSearch()) return;
               if (directPayload?.searchScope === "explicit_public_listing" && Array.isArray(directPayload.businesses)) {
                 directNameBusinesses = directPayload.businesses;
               }
@@ -877,6 +891,7 @@ export default function MapPage() {
             }
           : payload;
 
+        if (!isCurrentSearch()) return;
         setUniversalResults(finalPayload);
 
         // Fit canvas to MWM results so the viewport reflects where businesses
@@ -900,7 +915,9 @@ export default function MapPage() {
         }
       }
     } catch { /* fall through to client-side filtered list */ }
-    finally { setUniversalLoading(false); }
+    finally {
+      if (isCurrentSearch()) setUniversalLoading(false);
+    }
   }, [search, userCoords, mapSupportScope, fitMapToBusinessResults, clearEssentialServices]);
 
   // ── Apply directory ?q= handoff exactly once after the map is ready ──────────
@@ -927,12 +944,14 @@ export default function MapPage() {
     if (!handoffArea || !ready) return;
     if (appliedHandoffAreaRef.current === handoffArea) return;
     appliedHandoffAreaRef.current = handoffArea;
+    const areaHandoffGeneration = ++areaHandoffGenerationRef.current;
     const apiBase = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
     fetch(`${apiBase}/api/locations/resolve?q=${encodeURIComponent(handoffArea)}`, {
       credentials: "include",
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
+        if (areaHandoffGeneration !== areaHandoffGenerationRef.current) return;
         if (data?.latitude && data?.longitude) {
           const lat = Number(data.latitude);
           const lng = Number(data.longitude);
@@ -1568,6 +1587,22 @@ export default function MapPage() {
   }, [businesses, ready, selectBusiness]);
 
   const resetView = useCallback(() => {
+    // A visual recenter is also a scope reset. Leaving the old Houston/search
+    // context in state makes the nearby summary describe a place no longer on
+    // the canvas, and late search/area responses could otherwise restore it.
+    universalSearchGenerationRef.current += 1;
+    areaHandoffGenerationRef.current += 1;
+    searchViewportSequenceRef.current += 1;
+    searchViewportLockedRef.current = false;
+    setSearch("");
+    setBusinessSearchActive(false);
+    setMapDiscoveryFocus("all");
+    setUniversalResults(null);
+    setUniversalLoading(false);
+    setDetectedLocation(null);
+    localSearchMarkersRef.current.forEach((marker) => marker.setMap(null));
+    localSearchMarkersRef.current = [];
+    clearEssentialServices();
     setSelected(null);
     clearRoute();
     const g = (window as any).google?.maps;
@@ -1591,7 +1626,7 @@ export default function MapPage() {
         strokeWeight: 2,
       });
     });
-  }, [profileCoords, userCoords]);
+  }, [clearEssentialServices, profileCoords, userCoords]);
 
   const clearRoute = useCallback(() => {
     if (directionsRendererRef.current) {
