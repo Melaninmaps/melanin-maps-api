@@ -41,6 +41,27 @@ async function main() {
       // are never read from a real member record and this branch is never
       // merged. They enable a browser-level claim lifecycle rehearsal without
       // creating a production owner relationship or touching public listings.
+      // The parent app's existing reconciliation trigger may be present before
+      // its narrowly-scoped ledger initializer runs. Create its exact row
+      // target first so a synthetic listing insert cannot fail on that unrelated
+      // startup ordering concern.
+      await client.query(
+        `CREATE TABLE IF NOT EXISTS business_directory_reconciliation_ledger (
+           business_id varchar(255) PRIMARY KEY REFERENCES businesses(id) ON DELETE RESTRICT,
+           reconciliation_state text NOT NULL,
+           reason_code text NOT NULL,
+           presence_status text NOT NULL,
+           ownership_status text NOT NULL,
+           recommended_action text NOT NULL,
+           evidence_receipt_ids jsonb NOT NULL DEFAULT '[]'::jsonb,
+           source_reference_ids jsonb NOT NULL DEFAULT '[]'::jsonb,
+           batch_reference text,
+           reviewed_at timestamptz,
+           reviewed_by varchar(255),
+           created_at timestamptz NOT NULL DEFAULT now(),
+           updated_at timestamptz NOT NULL DEFAULT now()
+         )`,
+      );
       const members = [
         ["mwm.staging.owner.20261014@example.com", "Staging", "Owner"],
         ["mwm.staging.founder.20261014@example.com", "Staging", "Founder"],
