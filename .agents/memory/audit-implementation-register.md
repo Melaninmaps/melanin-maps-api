@@ -45,3 +45,14 @@ All P0s resolved + Decision Ledger + basic appeals + single admin authority + qu
 
 ## Reconciliation Needed
 Before this becomes the final Implementation Constitution™: add line-item findings from Audits 1–10, reconcile counts, assign unique IDs to every P0/P1 item.
+
+## Integrated Release Record — 2026-10-14: Native Interactive Preview Handoff
+
+**Register treatment:** Source integration record only. This does **not** add, close, or double-count an audit requirement or workstream.
+
+- **Integrated source commit:** `309925865cc52ada15d8a80d2f58fcd4852fb76a` on `staging/kinfolk-full-candidate-20261014`.
+- **Files changed:** `artifacts/mobile/app/preview.tsx`; `artifacts/mobile/lib/interactivePreviewHandoff.ts`; `artifacts/mobile/__tests__/interactive-preview-handoff.test.ts`.
+- **Behavior:** The existing native Preview route preserves signed-out access and existing signup/login actions, and now offers **Open Interactive Preview**. It opens the already-live, public `https://www.mappingwithmelanin.com/preview` through the iOS or Android browser handoff. The fixed public URL receives no member data. If the device cannot open the URL, the member remains on the native Preview route and receives an understandable alert instead of a blank screen or navigation loop.
+- **Focused source evidence:** `pnpm --filter @workspace/mobile exec vitest run __tests__/interactive-preview-handoff.test.ts` — **7/7 PASS** (iOS and Android browser handoff, canonical URL, unavailable/open-failure fallback, signed-out action contract, and preserved signup/login navigation). `pnpm --filter @workspace/mobile run typecheck` — **PASS**. No mobile build command ran.
+- **Website status:** The interactive website preview is already live and unchanged by this native-source integration.
+- **Maturity and remaining acceptance:** **CODED / DEV VERIFIED.** Physical-device acceptance remains pending the final coordinated mobile acceptance build; no iOS/Android binary, TestFlight/Google Play submission, production account, waitlist data, database, or website deployment was changed.
