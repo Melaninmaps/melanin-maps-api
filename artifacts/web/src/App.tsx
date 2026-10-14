@@ -76,6 +76,7 @@ import ForgotPassword from "@/pages/forgot-password";
 import TrustAndSafety from "@/pages/trust-and-safety";
 import BusinessGrowthCenter from "@/pages/business-growth-center";
 import Library, { LibraryTopicPage } from "@/pages/library";
+import CulturalJourneyPage from "@/pages/cultural-journey";
 import { LivingLibraryHome } from "@/features/library/LivingLibraryHome";
 import { LibrarySearchPage } from "@/features/library/LibrarySearchPage";
 import Circles from "@/pages/circles";
@@ -431,6 +432,9 @@ function Router() {
       </Route>
       <Route path="/library/search">
         <Layout><LibrarySearchPage /></Layout>
+      </Route>
+      <Route path="/library/cultural-journey">
+        <Layout><ProtectedRoute><CulturalJourneyPage /></ProtectedRoute></Layout>
       </Route>
       <Route path="/library">
         <Layout><LivingLibraryHome /></Layout>

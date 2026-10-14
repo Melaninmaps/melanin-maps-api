@@ -78,6 +78,12 @@ export function LivingLibraryHome() {
           />
           <button type="submit">Search</button>
         </form>
+        <Link
+          className="mt-5 inline-flex rounded-xl border border-[#F4D58D]/65 px-4 py-2 text-sm font-semibold text-[#FFFDF8] transition hover:bg-white/10"
+          href="/library/cultural-journey"
+        >
+          Open My Cultural Journey
+        </Link>
       </section>
 
       <section

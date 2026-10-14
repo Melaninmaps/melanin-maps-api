@@ -390,6 +390,16 @@ export default function CulturalHeritagePage() {
               {loading ? "Loading…" : `${sites.length} sites across America`}
             </Text>
           </View>
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Open My Cultural Journey"
+            activeOpacity={0.8}
+            onPress={() => router.push("/cultural-journey" as never)}
+            style={{ alignItems: "center", borderColor: "#CA922B80", borderRadius: 10, borderWidth: 1, flexDirection: "row", gap: 5, paddingHorizontal: 9, paddingVertical: 8 }}
+          >
+            <Feather name="bookmark" size={14} color="#8D5C17" />
+            <Text style={{ color: "#8D5C17", fontSize: 12, fontWeight: "700" }}>My Journey</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Search */}

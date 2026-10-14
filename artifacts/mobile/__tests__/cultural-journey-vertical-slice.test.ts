@@ -25,4 +25,24 @@ describe("Cultural Journey vertical slice", () => {
     expect(library).toContain("This private reflection is not added to Kinfolk memory or used to change Library research.");
     expect(library).toContain("I choose to save this private reflection in My Cultural Journey.");
   });
+
+  it("provides a private native browse view with owner API requests, explicit edits, and no automatic journey path", () => {
+    const explorer = source("../app/cultural-heritage.tsx");
+    const journey = source("../app/cultural-journey.tsx");
+    expect(explorer).toContain('router.push("/cultural-journey" as never)');
+    expect(journey).toContain('`${getApiBase()}/api/cultural-journeys`');
+    expect(journey).toContain("getMemberApiHeaders");
+    expect(journey).toContain('credentials: "include"');
+    expect(journey).toContain('cache: "no-store"');
+    expect(journey).toContain("memberConfirmed: true, reflection: nextReflection");
+    expect(journey).toContain('JSON.stringify({ memberConfirmed: true })');
+    expect(journey).toContain("Alert.alert");
+    expect(journey).toContain("Clear reflection");
+    expect(journey).toContain("Nothing saved yet");
+    expect(journey).toContain("My Cultural Journey is unavailable");
+    expect(journey).toContain("Try again");
+    expect(journey).toContain("does not mark a visit");
+    expect(journey).toContain("Gentle invitations and nudges are not added here.");
+    expect(journey).not.toMatch(/AsyncStorage|SecureStore|localStorage|analytics|posthog|trackExternalClick|achievement|https?:\/\//i);
+  });
 });

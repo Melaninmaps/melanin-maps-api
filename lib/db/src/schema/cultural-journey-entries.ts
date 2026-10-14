@@ -16,6 +16,8 @@ export const culturalJourneyEntriesTable = pgTable(
     sourceLabel: varchar("source_label", { length: 120 }).notNull(),
     libraryQuestion: varchar("library_question", { length: 500 }).notNull(),
     reflection: text("reflection"),
+    encryptedReflection: text("encrypted_reflection"),
+    reflectionEncryptionKeyId: varchar("reflection_encryption_key_id", { length: 64 }),
     memberConfirmedAt: timestamp("member_confirmed_at", { withTimezone: true }).notNull().defaultNow(),
     reflectionConfirmedAt: timestamp("reflection_confirmed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

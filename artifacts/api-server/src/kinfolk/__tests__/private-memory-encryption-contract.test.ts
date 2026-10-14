@@ -69,8 +69,14 @@ describe("source-only ordinary-memory encryption route contract", () => {
     expect(schema).toContain('sensitiveEncryptedContent: text("sensitive_encrypted_content")');
   });
 
-  it.each(["maps.ts", "businesses.ts", "cultural-journeys.ts", "library-suggest.ts", "library-growth-admin.ts"])("does not introduce memory access to the standalone no-memory surface %s", (file) => {
+  it.each(["maps.ts", "businesses.ts", "cultural-journeys.ts", "library-suggest.ts", "library-growth-admin.ts"])("does not introduce Kinfolk memory-record access to the standalone no-memory surface %s", (file) => {
     const boundary = source(`../../routes/${file}`);
-    expect(boundary).not.toMatch(/kinfolkPrivateMemoriesTable|private-memory-encryption|kinfolk_private_memories/);
+    expect(boundary).not.toMatch(/kinfolkPrivateMemoriesTable|kinfolk_private_memories/);
+  });
+
+  it("permits Cultural Journey to reuse only the shared encryption helper, not Kinfolk memory behavior", () => {
+    const journey = source("../../routes/cultural-journeys.ts");
+    expect(journey).toContain('from "../kinfolk/private-memory-encryption"');
+    expect(journey).not.toMatch(/kinfolkPrivateMemoriesTable|kinfolk_private_memories|ordinaryMemoriesForPrompt|privateMemoryOwnerResponse/);
   });
 });
