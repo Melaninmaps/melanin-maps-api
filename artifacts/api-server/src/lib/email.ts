@@ -116,6 +116,69 @@ export async function sendVerificationSubmissionAdminAlert(
   return sendEmail(buildVerificationSubmissionAdminAlert(input));
 }
 
+// A waitlist registration contains personal contact information. This is a
+// dedicated, opt-in recipient rather than ADMIN_EMAILS so access-control
+// configuration never silently becomes a marketing or founder-alert list.
+const FOUNDER_WAITLIST_NOTIFICATION_EMAIL = "FOUNDER_WAITLIST_NOTIFICATION_EMAIL";
+const EMAIL_ADDRESS_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export type WaitlistFounderRegistrationNotificationInput = {
+  registrationId: string;
+  email: string;
+  city: string | null;
+  submittedAt: Date;
+};
+
+export function configuredWaitlistFounderNotificationRecipient(
+  environment: NodeJS.ProcessEnv = process.env,
+): string | null {
+  const candidate = environment[FOUNDER_WAITLIST_NOTIFICATION_EMAIL]?.trim().toLowerCase() ?? "";
+  return EMAIL_ADDRESS_PATTERN.test(candidate) ? candidate : null;
+}
+
+export function buildWaitlistFounderRegistrationAlert(
+  recipient: string,
+  input: WaitlistFounderRegistrationNotificationInput,
+): Parameters<Resend["emails"]["send"]>[0] {
+  const city = input.city?.trim() || "Not provided";
+  const submittedAt = input.submittedAt.toISOString();
+  const normalizedEmail = input.email.trim().toLowerCase();
+
+  return {
+    from: FROM,
+    to: recipient,
+    replyTo: "founders@mappingwithmelanin.com",
+    subject: "New waitlist registration",
+    // The idempotency header receives only the opaque waitlist record ID, so a
+    // future safe retry cannot create a duplicate founder alert.
+    headers: { "Idempotency-Key": `waitlist-founder-registration:${input.registrationId}` },
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;background:#FAF6EF;padding:32px;border-radius:16px">
+        <h1 style="font-size:22px;color:#2B1507;margin:0 0 20px">New waitlist registration</h1>
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:8px 0;color:#6B5744;font-size:13px;width:150px">Email</td><td style="padding:8px 0;color:#2B1507;font-size:13px">${escapeEmailHtml(normalizedEmail)}</td></tr>
+          <tr style="border-top:1px solid #E8DDD0"><td style="padding:8px 0;color:#6B5744;font-size:13px">City</td><td style="padding:8px 0;color:#2B1507;font-size:13px">${escapeEmailHtml(city)}</td></tr>
+          <tr style="border-top:1px solid #E8DDD0"><td style="padding:8px 0;color:#6B5744;font-size:13px">Submitted</td><td style="padding:8px 0;color:#2B1507;font-size:13px">${escapeEmailHtml(submittedAt)}</td></tr>
+        </table>
+      </div>
+    `,
+  };
+}
+
+/**
+ * Sends no alert until the founder explicitly configures the dedicated
+ * recipient. The absence of configuration is an intentional fail-closed
+ * state, not a fallback to an admin, support, tester, or marketing address.
+ */
+export async function sendWaitlistFounderRegistrationAlert(
+  input: WaitlistFounderRegistrationNotificationInput,
+): Promise<"sent" | "not_configured"> {
+  const recipient = configuredWaitlistFounderNotificationRecipient();
+  if (!recipient) return "not_configured";
+  await sendEmail(buildWaitlistFounderRegistrationAlert(recipient, input));
+  return "sent";
+}
+
 // ─── Tester Issue Report → Founder direct alert ───────────────────────────────
 export async function sendTesterReportEmail({
   userId, userEmail, firstName, page, action, message, timestamp,
