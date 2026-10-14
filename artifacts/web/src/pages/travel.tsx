@@ -2,6 +2,10 @@ import React, { useEffect, useRef, useState, useCallback, Component, type ReactN
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { CONVERSATION_INSTRUCTIONS, useConversationInstruction } from "@/hooks/useConversationInstruction";
 import {
+  TEMPORARY_SENSITIVE_CONTEXT_MAX_LENGTH,
+  useTemporarySensitiveConversationContext,
+} from "@/hooks/useTemporarySensitiveConversationContext";
+import {
   Sparkles, Send, Plus, MapPin, ChevronRight, ThumbsUp, ThumbsDown,
   Clock, Compass, ShieldCheck, Lightbulb, Loader2, Lock, MessageSquare,
   Settings, X, Copy, Check, History, Menu, Share2, ArrowRight, Volume2,
@@ -1038,6 +1042,17 @@ function TravelPage() {
   const authAccountId = (authData?.user as { id?: unknown } | undefined)?.id;
   const { conversationInstruction, setConversationInstruction, clearConversationInstruction, getConversationInstruction } =
     useConversationInstruction(isLoggedIn && typeof authAccountId === "string" ? authAccountId : null);
+  const {
+    draftText: temporarySensitiveDraftText,
+    setDraftText: setTemporarySensitiveDraftText,
+    draftSubject: temporarySensitiveSubject,
+    setDraftSubject: setTemporarySensitiveSubject,
+    temporarySensitiveContext,
+    enableTemporarySensitiveContext,
+    clearTemporarySensitiveContext,
+  } = useTemporarySensitiveConversationContext(
+    isLoggedIn && typeof authAccountId === "string" ? authAccountId : null,
+  );
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -2103,7 +2118,7 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/chat`, {
         method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include",
-        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageAssetIds: attachedImageAssetIds, imageVisionConsent: attachedImageAssetIds.length > 0, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, oneTurnInstruction: oneTurnInstruction ?? undefined, conversationInstruction: getConversationInstruction(), conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageAssetIds: attachedImageAssetIds, imageVisionConsent: attachedImageAssetIds.length > 0, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, oneTurnInstruction: oneTurnInstruction ?? undefined, conversationInstruction: getConversationInstruction(), ...(temporarySensitiveContext ? { temporarySensitiveContext: temporarySensitiveContext } : {}), conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
         signal: controller.signal,
       });
 
@@ -2292,7 +2307,7 @@ function TravelPage() {
       // after its response (or the bounded expiry worker handles interruption).
       setImageAttachments([]);
     }
-  }, [sending, sessionId, loadSessions, imageAttachments, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, exactRadiusOrigin, releaseAudio, getConversationInstruction]);
+  }, [sending, sessionId, loadSessions, imageAttachments, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, exactRadiusOrigin, releaseAudio, getConversationInstruction, temporarySensitiveContext]);
 
   // Change the depth of an existing answer (Show more / Show less).
   // Records the event server-side and updates the local message state optimistically.
@@ -2328,6 +2343,7 @@ function TravelPage() {
 
   const loadSession = useCallback(async (id: string) => {
     clearConversationInstruction();
+    clearTemporarySensitiveContext();
     try {
       setSessionsError(null);
       const r = await fetch(`${BASE}api/kinfolk/sessions/${id}`, { credentials: "include", headers: kinfolkAuthHeaders() });
@@ -2336,10 +2352,11 @@ function TravelPage() {
       setSessionId(d.session.id); setMessages(d.session.messages ?? []); setConversationHandoff(d.resumePreview ?? null);
       setShowHistory(false);
     } catch (cause) { setSessionsError(cause instanceof Error ? cause.message : "Kinfolk could not open this conversation. Try again."); }
-  }, [clearConversationInstruction]);
+  }, [clearConversationInstruction, clearTemporarySensitiveContext]);
 
   const newChat = () => {
     clearConversationInstruction();
+    clearTemporarySensitiveContext();
     clearResponseStatusTimers();
     activeChatControllerRef.current?.abort("new_chat");
     voiceGuardRef.current.invalidate("new_chat");
@@ -3346,6 +3363,42 @@ function TravelPage() {
                         <p aria-live="polite">Current: {CONVERSATION_INSTRUCTIONS.find((option) => option.id === conversationInstruction)?.label ?? "None"}</p>
                         <button type="button" aria-label="Clear conversation instruction" disabled={!conversationInstruction} onClick={clearConversationInstruction} className="min-h-11 px-3 font-bold text-[#8D5C17] disabled:opacity-50">Clear</button>
                       </div>
+                    </fieldset>
+                    <fieldset data-testid="kinfolk-temporary-sensitive-context" className="mb-3 rounded-xl border border-[#CA922B]/30 bg-white p-3 text-xs text-[#3A1F0E]">
+                      <legend className="px-1 font-bold">Private context — active conversation only</legend>
+                      <p id="kinfolk-temporary-sensitive-context-note" className="mt-1 text-[11px] leading-5 text-[#3A1F0E]/65">Private for this active conversation only. It is not saved as memory, profile, or history. Choose who it concerns, then explicitly enable it.</p>
+                      {temporarySensitiveContext ? (
+                        <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+                          <p aria-live="polite" className="text-[11px] font-semibold text-[#3A1F0E]">Private context is active for this conversation only.</p>
+                          <button type="button" aria-label="Clear private context immediately" onClick={clearTemporarySensitiveContext} className="min-h-11 px-3 font-bold text-[#8D5C17]">Clear private context</button>
+                        </div>
+                      ) : (
+                        <>
+                          <label className="mt-3 block text-[11px] font-semibold text-[#3A1F0E]">
+                            Private context for this conversation
+                            <textarea
+                              value={temporarySensitiveDraftText}
+                              onChange={(event) => setTemporarySensitiveDraftText(event.target.value)}
+                              maxLength={TEMPORARY_SENSITIVE_CONTEXT_MAX_LENGTH}
+                              rows={3}
+                              aria-describedby="kinfolk-temporary-sensitive-context-note"
+                              className="mt-1 w-full resize-none rounded-xl border border-[#3A1F0E]/15 bg-[#FAF6EF] p-3 text-xs font-normal text-[#3A1F0E] placeholder:text-[#3A1F0E]/35 focus:border-[#CA922B]/60 focus:outline-none"
+                            />
+                          </label>
+                          <p className="mt-3 text-[11px] font-semibold text-[#3A1F0E]">Who does this concern?</p>
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            <label className="flex min-h-11 items-center gap-2 rounded-xl border border-[#3A1F0E]/15 px-3 py-2">
+                              <input type="radio" name="kinfolk-temporary-sensitive-subject" value="member" checked={temporarySensitiveSubject === "member"} onChange={() => setTemporarySensitiveSubject("member")} />
+                              Me
+                            </label>
+                            <label className="flex min-h-11 items-center gap-2 rounded-xl border border-[#3A1F0E]/15 px-3 py-2">
+                              <input type="radio" name="kinfolk-temporary-sensitive-subject" value="someone_else" checked={temporarySensitiveSubject === "someone_else"} onChange={() => setTemporarySensitiveSubject("someone_else")} />
+                              Someone else
+                            </label>
+                          </div>
+                          <button type="button" aria-label="Use private context for this conversation only" disabled={!temporarySensitiveDraftText.trim()} onClick={enableTemporarySensitiveContext} className="mt-3 min-h-11 rounded-xl bg-[#8D5C17] px-3 text-xs font-bold text-white disabled:opacity-50">Use this for this conversation only</button>
+                        </>
+                      )}
                     </fieldset>
                     <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
                       <label className="flex items-start gap-2 text-[11px] leading-5 text-[#3A1F0E]/60" title="Use approved public Community posts with matching hashtags. This does not share your chat. Community content is perspective, never evidence or a recommendation.">

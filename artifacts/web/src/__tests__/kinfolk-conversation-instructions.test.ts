@@ -12,13 +12,14 @@ describe("web conversation-only instruction source contracts", () => {
     }
     expect(scope.match(/\{ id: "/g)).toHaveLength(4);
     const controls = section('<div id="kinfolk-composer-controls"', "{pendingImageConsent &&");
+    const deliveryControls = controls.slice(0, controls.indexOf("</fieldset>") + "</fieldset>".length);
     expect(controls).toContain("<legend className=\"font-bold\">This conversation only</legend>");
     expect(controls).toContain('type="radio" name="kinfolk-conversation-instruction"');
     expect(controls).toContain("checked={conversationInstruction === option.id}");
     expect(controls).toContain("onChange={() => setConversationInstruction(option.id)}");
     expect(controls).toContain('aria-live="polite">Current:');
     expect(controls).toContain('aria-label="Clear conversation instruction"');
-    expect(controls).not.toContain("textarea");
+    expect(deliveryControls).not.toContain("textarea");
   });
   it("keeps selection component-local and clears for logout, account change, and unmount", () => {
     expect(page).toContain('useConversationInstruction(isLoggedIn && typeof authAccountId === "string" ? authAccountId : null)');

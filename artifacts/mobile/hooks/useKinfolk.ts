@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { getApiBase } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useConversationInstruction } from "./useConversationInstruction";
+import type { TemporarySensitiveConversationContext } from "./useTemporarySensitiveConversationContext";
 import {
   createKinfolkClientTrace,
   KINFOLK_CLIENT_TRACE_HEADER,
@@ -509,6 +510,8 @@ export function useKinfolk() {
       documentProcessingConsent?: boolean;
       includeCommunityPerspective?: boolean;
       publicOrigin?: string;
+      /** Active-screen only; request data, never ChatMessage or session data. */
+      temporarySensitiveContext?: TemporarySensitiveConversationContext;
     },
   ): Promise<boolean> => {
     // A new member turn always wins. Abort the prior fetch without adding an
@@ -585,6 +588,9 @@ export function useKinfolk() {
           publicOrigin: opts?.publicOrigin?.trim() || undefined,
           oneTurnInstruction: oneTurnInstruction ?? undefined,
           conversationInstruction: getConversationInstruction(),
+          ...(opts?.temporarySensitiveContext
+            ? { temporarySensitiveContext: opts.temporarySensitiveContext }
+            : {}),
           conversationContext,
           clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),

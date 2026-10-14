@@ -1,6 +1,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useKinfolkChatScroll } from "@/hooks/useKinfolkChatScroll";
 import { KinfolkConversationInstructionControls } from "@/components/KinfolkConversationInstructionControls";
+import {
+  TEMPORARY_SENSITIVE_CONTEXT_MAX_LENGTH,
+  useTemporarySensitiveConversationContext,
+} from "@/hooks/useTemporarySensitiveConversationContext";
 import { getDailyQuoteText } from "@/constants/brandQuotes";
 import {
   ActivityIndicator,
@@ -2144,7 +2148,18 @@ export default function TravelScreen() {
   const { messages, sessionId, conversationHandoff, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, sessionError, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, conversationInstruction, setConversationInstruction, clearConversationInstruction, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, useOneTimeDeliveryInstruction } = useKinfolk();
   const { preferences, update: updatePreferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
-  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const {
+    draftText: temporarySensitiveDraftText,
+    setDraftText: setTemporarySensitiveDraftText,
+    draftSubject: temporarySensitiveSubject,
+    setDraftSubject: setTemporarySensitiveSubject,
+    temporarySensitiveContext,
+    enableTemporarySensitiveContext,
+    clearTemporarySensitiveContext,
+  } = useTemporarySensitiveConversationContext(
+    isAuthenticated ? user?.id ?? null : null,
+  );
   const { subscription } = useMembership();
 
   const { q: searchHandoff } = useLocalSearchParams<{ q?: string }>();
@@ -2685,6 +2700,7 @@ export default function TravelScreen() {
       documentProcessingConsent: attachedDocumentAssetIds.length > 0,
       includeCommunityPerspective,
       publicOrigin: publicOrigin || undefined,
+      temporarySensitiveContext: temporarySensitiveContext ?? undefined,
     });
     if (accepted) {
       setInputText("");
@@ -2696,7 +2712,7 @@ export default function TravelScreen() {
       setIncludeCommunityPerspective(false);
       Keyboard.dismiss();
     }
-  }, [inputText, voiceMode, sendMessage, isAuthenticated, authLoading, onUserSend, kinfolkImages, kinfolkDocument, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin]);
+  }, [inputText, voiceMode, sendMessage, isAuthenticated, authLoading, onUserSend, kinfolkImages, kinfolkDocument, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin, temporarySensitiveContext]);
 
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);
@@ -2763,18 +2779,20 @@ export default function TravelScreen() {
   }, [addItem, removeItem, sessionId, isAuthenticated]);
 
   const handleHistorySelect = useCallback(async (id: string) => {
+    clearTemporarySensitiveContext();
     const loaded = await loadSession(id);
     if (loaded) {
       setShowHistory(false);
       void loadSessions();
     }
-  }, [loadSession, loadSessions]);
+  }, [loadSession, loadSessions, clearTemporarySensitiveContext]);
 
   const handleNewSession = useCallback(() => {
     clearConversationInstruction();
+    clearTemporarySensitiveContext();
     startNewSession();
     setGeneratedImage(null);
-  }, [startNewSession, clearConversationInstruction]);
+  }, [startNewSession, clearConversationInstruction, clearTemporarySensitiveContext]);
 
   const handleCompareToggle = useCallback((biz: TravelBusiness) => {
     setCompareSelected((prev) => {
@@ -3123,6 +3141,61 @@ export default function TravelScreen() {
         {showComposerControls && <>
         <View style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, gap: 7 }}>
           <KinfolkConversationInstructionControls value={conversationInstruction} onChange={setConversationInstruction} onClear={clearConversationInstruction} />
+          <View accessibilityLabel="Private sensitive context for this conversation" style={{ borderWidth: 1, borderRadius: 10, borderColor: colors.primary + "33", backgroundColor: colors.primary + "08", padding: 10, gap: 7 }}>
+            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.text }}>Private context — active conversation only</Text>
+            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, lineHeight: 14, color: colors.mutedForeground }}>
+              Private for this active conversation only. It is not saved as memory, profile, or history. Choose who it concerns, then explicitly enable it.
+            </Text>
+            {temporarySensitiveContext ? <>
+              <Text accessibilityLiveRegion="polite" style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: colors.text }}>Private context is active for this conversation only.</Text>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Clear private context immediately"
+                onPress={clearTemporarySensitiveContext}
+                style={{ alignSelf: "flex-start", paddingVertical: 5 }}
+              >
+                <Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primary }}>Clear private context</Text>
+              </TouchableOpacity>
+            </> : <>
+              <TextInput
+                value={temporarySensitiveDraftText}
+                onChangeText={setTemporarySensitiveDraftText}
+                maxLength={TEMPORARY_SENSITIVE_CONTEXT_MAX_LENGTH}
+                multiline
+                placeholder="Enter private context for this conversation"
+                placeholderTextColor={colors.mutedForeground}
+                accessibilityLabel="Private context for this conversation only"
+                style={{ minHeight: 72, borderRadius: 8, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, color: colors.text, paddingHorizontal: 10, paddingVertical: 8, fontFamily: "Inter_400Regular", fontSize: 12, textAlignVertical: "top" }}
+              />
+              <Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 10, color: colors.mutedForeground }}>Who does this concern?</Text>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                <TouchableOpacity
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: temporarySensitiveSubject === "member" }}
+                  accessibilityLabel="This private context concerns me"
+                  onPress={() => setTemporarySensitiveSubject("member")}
+                  style={{ borderRadius: 16, borderWidth: 1, borderColor: temporarySensitiveSubject === "member" ? colors.primary : colors.border, backgroundColor: temporarySensitiveSubject === "member" ? colors.primary + "14" : colors.background, paddingHorizontal: 10, paddingVertical: 7 }}
+                ><Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: colors.text }}>Me</Text></TouchableOpacity>
+                <TouchableOpacity
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: temporarySensitiveSubject === "someone_else" }}
+                  accessibilityLabel="This private context concerns someone else"
+                  onPress={() => setTemporarySensitiveSubject("someone_else")}
+                  style={{ borderRadius: 16, borderWidth: 1, borderColor: temporarySensitiveSubject === "someone_else" ? colors.primary : colors.border, backgroundColor: temporarySensitiveSubject === "someone_else" ? colors.primary + "14" : colors.background, paddingHorizontal: 10, paddingVertical: 7 }}
+                ><Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: colors.text }}>Someone else</Text></TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Use private context for this conversation only"
+                accessibilityState={{ disabled: temporarySensitiveDraftText.trim().length === 0 }}
+                disabled={temporarySensitiveDraftText.trim().length === 0}
+                onPress={enableTemporarySensitiveContext}
+                style={{ alignSelf: "flex-start", borderRadius: 16, backgroundColor: colors.primary, paddingHorizontal: 11, paddingVertical: 8, opacity: temporarySensitiveDraftText.trim().length === 0 ? 0.5 : 1 }}
+              >
+                <Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primaryForeground }}>Use this for this conversation only</Text>
+              </TouchableOpacity>
+            </>}
+          </View>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end" }}>
             <TouchableOpacity accessibilityLabel="Manage private Kinfolk memory" onPress={() => router.push("/kinfolk-memory" as any)}><Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primary }}>Manage memory</Text></TouchableOpacity>
           </View>

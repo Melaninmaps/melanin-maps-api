@@ -3,6 +3,7 @@ import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
 import { CONVERSATION_INSTRUCTIONS, buildConversationInstructionPrompt, parseConversationInstruction } from "../conversation-scope-instructions";
 import { buildOneTurnDeliveryPreferencePrompt } from "../explicit-member-memory";
+import { parseTemporarySensitiveConversationContext } from "../temporary-sensitive-conversation-context";
 
 const route = readFileSync(new URL("../../routes/kinfolk.ts", import.meta.url), "utf8");
 const chatStart = route.indexOf('router.post("/kinfolk/chat"');
@@ -24,8 +25,8 @@ function isolatedHandler() {
   const trace = vi.fn(() => null);
   const medical = vi.fn((message: string) => message === "synthetic medical emergency" ? "fixed medical answer" : null);
   const safety = vi.fn((message: string) => message === "synthetic safety emergency" ? "fixed safety answer" : null);
-  new Function("router", "parseConversationInstruction", "parseKinfolkClientTrace", "immediateMedicalEmergencyReply", "immediateSafetyEmergencyReply", executable)(
-    { post: (_path: string, callback: typeof handler) => { handler = callback; } }, parseConversationInstruction, trace, medical, safety,
+  new Function("router", "parseConversationInstruction", "parseTemporarySensitiveConversationContext", "parseKinfolkClientTrace", "immediateMedicalEmergencyReply", "immediateSafetyEmergencyReply", executable)(
+    { post: (_path: string, callback: typeof handler) => { handler = callback; } }, parseConversationInstruction, parseTemporarySensitiveConversationContext, trace, medical, safety,
   );
   return { handler, trace, medical, safety };
 }
