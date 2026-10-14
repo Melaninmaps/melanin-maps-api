@@ -18,6 +18,11 @@ export const businessesTable = pgTable("businesses", {
   province: varchar("province", { length: 100 }),
   listingStatus: varchar("listing_status", { length: 30 }),
   ownerClaimStatus: varchar("owner_claim_status", { length: 30 }),
+  // Private ownership control is separate from public verification,
+  // eligibility, promotion, ranking, and ownership-designation claims.
+  ownershipControlStatus: varchar("ownership_control_status", { length: 32 }),
+  publicationStatus: varchar("publication_status", { length: 32 }),
+  verificationStatus: varchar("verification_status", { length: 32 }),
   rating: numeric("rating", { precision: 3, scale: 1 }).notNull().default("0"),
   reviewCount: integer("review_count").notNull().default(0),
   verified: boolean("verified").notNull().default(false),

@@ -15,6 +15,29 @@
 
 BEGIN;
 
+-- Lifecycle state stays distinct from public verification, eligibility,
+-- promotion, ranking, and ownership-designation claims. Nullable values keep
+-- legacy listing behavior on the route's explicit compatibility fallback.
+ALTER TABLE businesses
+  ADD COLUMN IF NOT EXISTS ownership_control_status varchar(32),
+  ADD COLUMN IF NOT EXISTS publication_status varchar(32),
+  ADD COLUMN IF NOT EXISTS verification_status varchar(32);
+
+-- `business_claims` predates the reviewed ownership-control flow. These
+-- additive fields retain the evidence, attestation, private-review decision,
+-- and audit timestamps used by the protected route; they grant no access on
+-- their own and no column is copied back to a public business profile.
+ALTER TABLE business_claims
+  ADD COLUMN IF NOT EXISTS claim_type varchar(64) NOT NULL DEFAULT 'ownership_control',
+  ADD COLUMN IF NOT EXISTS verification_method varchar(64),
+  ADD COLUMN IF NOT EXISTS evidence_url varchar(500),
+  ADD COLUMN IF NOT EXISTS evidence_summary varchar(255),
+  ADD COLUMN IF NOT EXISTS attested_at timestamptz,
+  ADD COLUMN IF NOT EXISTS decision_reason varchar(1000),
+  ADD COLUMN IF NOT EXISTS reviewed_by varchar(255),
+  ADD COLUMN IF NOT EXISTS reviewed_at timestamptz,
+  ADD COLUMN IF NOT EXISTS withdrawn_at timestamptz;
+
 ALTER TABLE business_owner_links
   ADD COLUMN IF NOT EXISTS claim_id varchar(255),
   ADD COLUMN IF NOT EXISTS approved_by varchar(255),
