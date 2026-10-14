@@ -36,6 +36,7 @@ describe("Journey retention expiry worker", () => {
     expect(sql).toContain("kinfolk_journey_imports");
     expect(sql).toContain("kinfolk_journey_items");
     expect(sql).toContain("kinfolk_journey_reminders");
+    expect(sql).toContain("kinfolk_journey_flight_watches");
     expect(sql).toContain("journey_retention_expired");
     expect(sql).not.toContain("kinfolk_journey_connections");
     expect(release).toHaveBeenCalledOnce();

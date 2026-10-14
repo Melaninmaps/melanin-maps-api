@@ -89,6 +89,7 @@ export type JourneyActionErrorCode =
   | "JOURNEY_CONFIRMED_ITEM_REQUIRES_MEMBER_EDIT"
   | "JOURNEY_OWNER_ONLY"
   | "JOURNEY_REVIEW_REQUIRED"
+  | "JOURNEY_UNAVAILABLE"
   | "JOURNEY_PROVIDER_UNAVAILABLE";
 
 export class JourneyActionError extends Error {

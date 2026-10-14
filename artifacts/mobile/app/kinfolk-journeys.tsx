@@ -90,6 +90,11 @@ export default function KinfolkJourneysScreen() {
   >("note");
   const [importText, setImportText] = useState("");
   const [reminderDueAt, setReminderDueAt] = useState("");
+  const [operatingCarrier, setOperatingCarrier] = useState("");
+  const [flightNumber, setFlightNumber] = useState("");
+  const [flightDate, setFlightDate] = useState("");
+  const [flightOrigin, setFlightOrigin] = useState("");
+  const [flightDestination, setFlightDestination] = useState("");
   const [calendarCandidates, setCalendarCandidates] = useState<
     CalendarCandidate[]
   >([]);
@@ -247,6 +252,31 @@ export default function KinfolkJourneysScreen() {
     }
   };
 
+  const extractPrivateDocument = async (importId: string) => {
+    if (!detail) return;
+    const imported = detail.imports.find((entry) => entry.id === importId);
+    if (!imported || imported.sourceKind !== "document") return;
+    setWorking(true);
+    setError(null);
+    try {
+      await kinfolkJourneysApi.extractPrivateDocument(
+        detail.journey.id,
+        importId,
+      );
+      await refreshDetail();
+      Alert.alert(
+        "Ready for review",
+        "Private document details are suggestions only. Review them before saving anything to your Journey.",
+      );
+    } catch (cause) {
+      setError(
+        errorMessage(cause, "That private document could not be reviewed."),
+      );
+    } finally {
+      setWorking(false);
+    }
+  };
+
   const saveReminder = async () => {
     if (!detail || !reminderDueAt.trim()) return;
     const dueAt = new Date(reminderDueAt.trim());
@@ -335,6 +365,109 @@ export default function KinfolkJourneysScreen() {
     );
   };
 
+  const saveFlightWatch = async () => {
+    if (!detail) return;
+    if (
+      !operatingCarrier.trim() ||
+      !flightNumber.trim() ||
+      !flightDate.trim() ||
+      !flightOrigin.trim() ||
+      !flightDestination.trim()
+    ) {
+      setError(
+        "Enter the operating carrier, flight number, date, origin, and destination before saving a flight watch.",
+      );
+      return;
+    }
+    setWorking(true);
+    setError(null);
+    try {
+      await kinfolkJourneysApi.addFlightWatch(detail.journey.id, {
+        operatingCarrier,
+        flightNumber,
+        scheduledDepartureDate: flightDate,
+        originIata: flightOrigin,
+        destinationIata: flightDestination,
+      });
+      setOperatingCarrier("");
+      setFlightNumber("");
+      setFlightDate("");
+      setFlightOrigin("");
+      setFlightDestination("");
+      await refreshDetail();
+      Alert.alert(
+        "Private flight watch saved",
+        "This is an advisory-only pending watch. Kinfolk has not queried a provider or sent a notification. Confirm any change with the airline or booking channel.",
+      );
+    } catch (cause) {
+      setError(
+        errorMessage(cause, "That private flight watch could not be saved."),
+      );
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const updateFlightWatch = async (
+    watchId: string,
+    action: "pause" | "resume" | "revoke",
+  ) => {
+    if (!detail) return;
+    setWorking(true);
+    setError(null);
+    try {
+      await kinfolkJourneysApi.updateFlightWatch(
+        detail.journey.id,
+        watchId,
+        action,
+      );
+      await refreshDetail();
+    } catch (cause) {
+      setError(
+        errorMessage(cause, "That private flight watch could not be updated."),
+      );
+    } finally {
+      setWorking(false);
+    }
+  };
+
+  const deleteFlightWatch = async (watchId: string) => {
+    if (!detail) return;
+    Alert.alert(
+      "Remove private flight watch?",
+      "This removes the advisory flight watch. It does not change any airline reservation or booking.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Remove",
+          style: "destructive",
+          onPress: () => {
+            void (async () => {
+              setWorking(true);
+              setError(null);
+              try {
+                await kinfolkJourneysApi.deleteFlightWatch(
+                  detail.journey.id,
+                  watchId,
+                );
+                await refreshDetail();
+              } catch (cause) {
+                setError(
+                  errorMessage(
+                    cause,
+                    "That private flight watch could not be removed.",
+                  ),
+                );
+              } finally {
+                setWorking(false);
+              }
+            })();
+          },
+        },
+      ],
+    );
+  };
+
   const uploadAttachment = async (kind: "document" | "image") => {
     if (!detail) return;
     setWorking(true);
@@ -343,7 +476,12 @@ export default function KinfolkJourneysScreen() {
       let file: { uri: string; name: string; type: string } | null = null;
       if (kind === "document") {
         const picked = await DocumentPicker.getDocumentAsync({
-          type: "application/pdf",
+          type: [
+            "application/pdf",
+            "message/rfc822",
+            "text/calendar",
+            "application/ics",
+          ],
           copyToCacheDirectory: true,
           multiple: false,
         });
@@ -351,8 +489,14 @@ export default function KinfolkJourneysScreen() {
         const asset = picked.assets[0];
         file = {
           uri: asset.uri,
-          name: asset.name || "confirmation.pdf",
-          type: asset.mimeType || "application/pdf",
+          name: asset.name || "journey-import",
+          type:
+            asset.mimeType ||
+            (asset.name?.toLowerCase().endsWith(".eml")
+              ? "message/rfc822"
+              : asset.name?.toLowerCase().endsWith(".ics")
+                ? "text/calendar"
+                : "application/pdf"),
         };
       } else {
         const permission =
@@ -885,7 +1029,7 @@ export default function KinfolkJourneysScreen() {
                 onPress={() => void uploadAttachment("document")}
                 style={styles.secondaryButton}
               >
-                <Text style={styles.secondaryText}>Add PDF</Text>
+                <Text style={styles.secondaryText}>Add PDF, EML, or ICS</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 disabled={working}
@@ -1036,15 +1180,32 @@ export default function KinfolkJourneysScreen() {
                           were inferred.
                         </Text>
                       ) : null}
-                      <TouchableOpacity
-                        disabled={working || !entry.parsedFacts.length}
-                        onPress={() => void confirmImportedFacts(entry.id)}
-                        style={[styles.primaryButton, working && styles.dim]}
-                      >
-                        <Text style={styles.primaryText}>
-                          Save reviewed detail
-                        </Text>
-                      </TouchableOpacity>
+                      {entry.sourceKind === "document" &&
+                      !entry.parsedFacts.length ? (
+                        <TouchableOpacity
+                          disabled={working}
+                          onPress={() => void extractPrivateDocument(entry.id)}
+                          style={[
+                            styles.secondaryButton,
+                            working && styles.dim,
+                          ]}
+                        >
+                          <Text style={styles.secondaryText}>
+                            Review private document
+                          </Text>
+                        </TouchableOpacity>
+                      ) : null}
+                      {entry.parsedFacts.length ? (
+                        <TouchableOpacity
+                          disabled={working}
+                          onPress={() => void confirmImportedFacts(entry.id)}
+                          style={[styles.primaryButton, working && styles.dim]}
+                        >
+                          <Text style={styles.primaryText}>
+                            Save reviewed detail
+                          </Text>
+                        </TouchableOpacity>
+                      ) : null}
                     </View>
                   </View>
                 ))}
@@ -1124,6 +1285,173 @@ export default function KinfolkJourneysScreen() {
                 <TouchableOpacity
                   disabled={working}
                   onPress={() => void deleteReminder(reminder.id)}
+                >
+                  <Text style={styles.removeAction}>Remove</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[styles.cardTitle, { color: colors.foreground }]}>
+              Flight watch
+            </Text>
+            <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+              Save one operating flight for a future advisory status watch.
+              Kinfolk never accesses airline accounts, bookings, PNRs, loyalty
+              accounts, tickets, or payment methods.
+            </Text>
+            <TextInput
+              value={operatingCarrier}
+              onChangeText={setOperatingCarrier}
+              placeholder="Operating carrier, e.g. DL"
+              placeholderTextColor={colors.mutedForeground}
+              autoCapitalize="characters"
+              maxLength={3}
+              style={[
+                styles.input,
+                {
+                  color: colors.foreground,
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                },
+              ]}
+            />
+            <TextInput
+              value={flightNumber}
+              onChangeText={setFlightNumber}
+              placeholder="Flight number, e.g. 1234"
+              placeholderTextColor={colors.mutedForeground}
+              keyboardType="number-pad"
+              maxLength={4}
+              style={[
+                styles.input,
+                {
+                  color: colors.foreground,
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                },
+              ]}
+            />
+            <TextInput
+              value={flightDate}
+              onChangeText={setFlightDate}
+              placeholder="Scheduled date, YYYY-MM-DD"
+              placeholderTextColor={colors.mutedForeground}
+              autoCapitalize="none"
+              style={[
+                styles.input,
+                {
+                  color: colors.foreground,
+                  backgroundColor: colors.background,
+                  borderColor: colors.border,
+                },
+              ]}
+            />
+            <View style={styles.formRow}>
+              <TextInput
+                value={flightOrigin}
+                onChangeText={setFlightOrigin}
+                placeholder="Origin, e.g. ATL"
+                placeholderTextColor={colors.mutedForeground}
+                autoCapitalize="characters"
+                maxLength={3}
+                style={[
+                  styles.input,
+                  styles.halfInput,
+                  {
+                    color: colors.foreground,
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
+                  },
+                ]}
+              />
+              <TextInput
+                value={flightDestination}
+                onChangeText={setFlightDestination}
+                placeholder="Destination, e.g. LAX"
+                placeholderTextColor={colors.mutedForeground}
+                autoCapitalize="characters"
+                maxLength={3}
+                style={[
+                  styles.input,
+                  styles.halfInput,
+                  {
+                    color: colors.foreground,
+                    backgroundColor: colors.background,
+                    borderColor: colors.border,
+                  },
+                ]}
+              />
+            </View>
+            <TouchableOpacity
+              disabled={working}
+              onPress={() => void saveFlightWatch()}
+              style={[styles.primaryButton, working && styles.dim]}
+            >
+              <Text style={styles.primaryText}>Save private flight watch</Text>
+            </TouchableOpacity>
+            {detail.flightWatches.map((watch) => (
+              <View
+                key={watch.id}
+                style={[
+                  styles.eventRow,
+                  {
+                    borderColor: colors.border,
+                    backgroundColor: colors.background,
+                  },
+                ]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={[styles.itemTitle, { color: colors.foreground }]}
+                  >
+                    {watch.operatingCarrier} {watch.flightNumber} ·{" "}
+                    {watch.originIata}–{watch.destinationIata}
+                  </Text>
+                  <Text
+                    style={[styles.itemSub, { color: colors.mutedForeground }]}
+                  >
+                    {formatDate(watch.scheduledDepartureDate)} ·{" "}
+                    {titleCase(watch.state)} · {titleCase(watch.status.state)}
+                  </Text>
+                  <Text
+                    style={[styles.itemSub, { color: colors.mutedForeground }]}
+                  >
+                    {watch.status.summary ??
+                      "No live status has been retrieved. Confirm with the airline or booking channel."}
+                  </Text>
+                </View>
+                {watch.state === "paused" ? (
+                  <TouchableOpacity
+                    disabled={working}
+                    onPress={() => void updateFlightWatch(watch.id, "resume")}
+                  >
+                    <Text style={styles.inlineAction}>Resume</Text>
+                  </TouchableOpacity>
+                ) : watch.state !== "revoked" ? (
+                  <TouchableOpacity
+                    disabled={working}
+                    onPress={() => void updateFlightWatch(watch.id, "pause")}
+                  >
+                    <Text style={styles.inlineAction}>Pause</Text>
+                  </TouchableOpacity>
+                ) : null}
+                {watch.state !== "revoked" ? (
+                  <TouchableOpacity
+                    disabled={working}
+                    onPress={() => void updateFlightWatch(watch.id, "revoke")}
+                  >
+                    <Text style={styles.removeAction}>Revoke</Text>
+                  </TouchableOpacity>
+                ) : null}
+                <TouchableOpacity
+                  disabled={working}
+                  onPress={() => void deleteFlightWatch(watch.id)}
                 >
                   <Text style={styles.removeAction}>Remove</Text>
                 </TouchableOpacity>
@@ -1306,6 +1634,8 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     fontSize: 14,
   },
+  formRow: { flexDirection: "row", gap: 8 },
+  halfInput: { flex: 1 },
   textarea: {
     borderWidth: 1,
     borderRadius: 11,

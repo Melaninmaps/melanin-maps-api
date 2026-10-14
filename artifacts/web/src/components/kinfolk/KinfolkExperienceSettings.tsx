@@ -10,6 +10,7 @@ import {
 import { KinfolkMemoryManager } from "./KinfolkMemoryManager";
 import { PrivatePlacesSettings } from "./PrivatePlacesSettings";
 import { TemporaryStaysSettings } from "./TemporaryStaysSettings";
+import { ConnectedAppsSettings } from "./ConnectedAppsSettings";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -396,9 +397,9 @@ export function KinfolkExperienceSettings() {
                   )}
                 </span>
                 <span className="mt-1 block text-xs leading-5 text-[#3A1F0E]/55">
-                  A warm, grounded, confident adult woman's synthetic voice: natural,
-                  clear, steady, and compassionate without vagueness. It remains the
-                  same speaker across every mode.
+                  A warm, grounded, confident adult woman's synthetic voice:
+                  natural, clear, steady, and compassionate without vagueness.
+                  It remains the same speaker across every mode.
                 </span>
               </button>
             </div>
@@ -509,6 +510,7 @@ export function KinfolkExperienceSettings() {
 
           <PrivatePlacesSettings />
           <TemporaryStaysSettings />
+          <ConnectedAppsSettings />
         </div>
       )}
       {showMemoryManager && (

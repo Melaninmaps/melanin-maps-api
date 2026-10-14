@@ -79,6 +79,12 @@ export async function expireMemberSelectedJourneys(input: {
         [journey.id, journey.user_id, now],
       );
       await client.query(
+        `UPDATE kinfolk_journey_flight_watches
+         SET state='deleted', deleted_at=$3, revoked_at=$3, updated_at=$3
+         WHERE journey_id=$1 AND user_id=$2 AND deleted_at IS NULL`,
+        [journey.id, journey.user_id, now],
+      );
+      await client.query(
         `UPDATE kinfolk_journeys
          SET status='deleted', deleted_at=$3, updated_at=$3
          WHERE id=$1 AND user_id=$2`,

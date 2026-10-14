@@ -65,6 +65,20 @@ describe("Kinfolk Journeys API contract", () => {
     expect(mediaRoutes).toContain("isPrivateJourney");
   });
 
+  it("reviews an owned private document only after explicit consent and never persists raw text", () => {
+    expect(journeyRoute).toContain(
+      'router.post(\n  "/kinfolk-journeys/:journeyId/imports/:importId/extract-private-document"',
+    );
+    expect(journeyRoute).toContain("extractJourneyPrivateDocument");
+    expect(journeyRoute).toContain("req.body?.consent !== true");
+    expect(journeyRoute).toContain("journey_private_document_reviewed");
+    expect(journeyRoute).not.toContain("rawPdfText");
+    expect(journeyRoute).not.toContain("attachmentText:");
+    expect(mediaRoutes).toContain("message/rfc822");
+    expect(mediaRoutes).toContain("text/calendar");
+    expect(mediaRoutes).toContain("application/vnd.apple.pkpass");
+  });
+
   it("keeps import provenance and reminder delivery member-confirmed", () => {
     expect(journeyRoute).toContain("kinfolk_journey_sources");
     expect(journeyRoute).toContain("Member-approved");
@@ -73,5 +87,18 @@ describe("Kinfolk Journeys API contract", () => {
     );
     expect(journeyRoute).toContain("req.body?.consent !== true");
     expect(journeyRoute).toContain('delivery: "not_scheduled"');
+  });
+
+  it("keeps flight watching advisory, consented, and revocable", () => {
+    expect(journeyRoute).toContain(
+      'router.post("/kinfolk-journeys/:journeyId/flight-watches"',
+    );
+    expect(journeyRoute).toContain("parseFlightWatchInput");
+    expect(journeyRoute).toContain("getFlightMonitorReadiness");
+    expect(journeyRoute).toContain("journey_flight_watch_consent_recorded");
+    expect(journeyRoute).toContain("journey_flight_watch_${action}");
+    expect(journeyRoute).toContain("kinfolk_journey_flight_watches");
+    expect(journeyRoute).toContain("advisory-only pending watch");
+    expect(journeyRoute).not.toContain("reservation access");
   });
 });

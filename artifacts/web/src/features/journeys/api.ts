@@ -108,6 +108,45 @@ export type JourneyReminder = {
   updatedAt: string;
 };
 
+export type JourneyFlightWatch = {
+  id: string;
+  journeyId: string;
+  itemId: string | null;
+  operatingCarrier: string;
+  flightNumber: string;
+  scheduledDepartureDate: string;
+  originIata: string;
+  destinationIata: string;
+  notificationChannel: "in_app" | "push" | "email";
+  state:
+    | "pending_provider"
+    | "active"
+    | "paused"
+    | "completed"
+    | "revoked"
+    | "deleted";
+  provider: string | null;
+  status: {
+    state: "unknown" | "on_time" | "delayed" | "cancelled" | "diverted";
+    sourceObservedAt: string | null;
+    freshUntil: string | null;
+    summary: string | null;
+  };
+  lastObservedAt: string | null;
+  freshUntil: string | null;
+  consentedAt: string;
+  pausedAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type JourneyFlightMonitor = {
+  status: "disabled" | "not_configured" | "available";
+  provider: "flightaware" | "cirium" | "aviationstack" | null;
+  blockers: string[];
+};
+
 export type JourneyConnection = {
   provider:
     | "google_calendar"
@@ -138,6 +177,7 @@ export type JourneyCapabilities = {
       "provider" | "availability" | "accessModes" | "scopes" | "blockers"
     >
   >;
+  flightMonitor: JourneyFlightMonitor;
   message: string | null;
 };
 
@@ -146,6 +186,7 @@ export type JourneyDetail = {
   items: JourneyItem[];
   imports: JourneyImport[];
   reminders: JourneyReminder[];
+  flightWatches: JourneyFlightWatch[];
 };
 
 export type JourneyDraft = {
@@ -284,6 +325,15 @@ export const journeysApi = {
       method: "POST",
       body: JSON.stringify({ ...input, consent: true }),
     }),
+  extractPrivateDocument: (journeyId: string, importId: string) =>
+    journeyRequest<{
+      import: JourneyImport;
+      parsed: { facts: JourneyImport["parsedFacts"]; warnings: string[] };
+      message: string;
+    }>(
+      `/kinfolk-journeys/${encodeURIComponent(journeyId)}/imports/${encodeURIComponent(importId)}/extract-private-document`,
+      { method: "POST", body: JSON.stringify({ consent: true }) },
+    ),
   confirmImport: (
     journeyId: string,
     importId: string,
@@ -329,6 +379,62 @@ export const journeysApi = {
       };
       throw new JourneyRequestError(
         body.error ?? "Could not remove that reminder.",
+        response.status,
+        body.code,
+      );
+    }
+  },
+  addFlightWatch: (
+    journeyId: string,
+    input: {
+      itemId?: string | null;
+      operatingCarrier: string;
+      flightNumber: string;
+      scheduledDepartureDate: string;
+      originIata: string;
+      destinationIata: string;
+      notificationChannel?: JourneyFlightWatch["notificationChannel"];
+    },
+  ) =>
+    journeyRequest<{
+      watch: JourneyFlightWatch;
+      readiness: JourneyFlightMonitor;
+      boundary: string;
+    }>(`/kinfolk-journeys/${encodeURIComponent(journeyId)}/flight-watches`, {
+      method: "POST",
+      body: JSON.stringify({
+        ...input,
+        notificationChannel: input.notificationChannel ?? "in_app",
+        memberConsent: true,
+      }),
+    }),
+  updateFlightWatch: (
+    journeyId: string,
+    watchId: string,
+    action: "pause" | "resume" | "revoke",
+  ) =>
+    journeyRequest<{
+      watch: JourneyFlightWatch;
+      readiness: JourneyFlightMonitor;
+    }>(
+      `/kinfolk-journeys/${encodeURIComponent(journeyId)}/flight-watches/${encodeURIComponent(watchId)}`,
+      { method: "PATCH", body: JSON.stringify({ action }) },
+    ),
+  deleteFlightWatch: async (
+    journeyId: string,
+    watchId: string,
+  ): Promise<void> => {
+    const response = await authenticatedFetch(
+      `${BASE}api/kinfolk-journeys/${encodeURIComponent(journeyId)}/flight-watches/${encodeURIComponent(watchId)}`,
+      { method: "DELETE", cache: "no-store" },
+    );
+    if (!response.ok) {
+      const body = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        code?: string;
+      };
+      throw new JourneyRequestError(
+        body.error ?? "Could not remove that private flight watch.",
         response.status,
         body.code,
       );

@@ -81,16 +81,10 @@ function detectKind(text: string): JourneyConfirmationParseResult["kind"] {
   return "unknown";
 }
 
-function detectTitle(
-  kind: JourneyConfirmationParseResult["kind"],
-  text: string,
-): string {
-  const subject = text
-    .split(/[\r\n]+/)
-    .map((line) => line.trim())
-    .find((line) => line.length >= 4 && line.length <= 100);
-  if (subject && !/^(?:confirmation|booking|reservation)\b/i.test(subject))
-    return redactedPreview(subject, 100);
+function detectTitle(kind: JourneyConfirmationParseResult["kind"]): string {
+  // A confirmation subject can contain private names, account identifiers, or
+  // arbitrary prose. Return a category label rather than reproducing that raw
+  // source text in a saved draft field.
   const labels: Record<JourneyConfirmationParseResult["kind"], string> = {
     flight: "Flight confirmation",
     lodging: "Lodging confirmation",
@@ -248,7 +242,7 @@ export function parseJourneyConfirmationText(
 
   facts.push({
     field: "title",
-    value: detectTitle(kind, text),
+    value: detectTitle(kind),
     confidence: "low",
     reason:
       "Draft title generated from the member-provided content for review.",
@@ -269,9 +263,129 @@ export function parseJourneyConfirmationText(
 
   return {
     kind,
-    title: detectTitle(kind, text),
+    title: detectTitle(kind),
     facts: distinctFacts(facts),
     warnings,
+    reviewRequired: true,
+  };
+}
+
+function unfoldIcsLines(value: string): string[] {
+  return value
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n")
+    .replace(/\n[ \t]/g, "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+
+function icsValue(lines: readonly string[], property: string): string | null {
+  const match = lines.find((line) =>
+    new RegExp(`^${property}(?:;[^:]*)?:`, "i").test(line),
+  );
+  if (!match) return null;
+  return (
+    match
+      .slice(match.indexOf(":") + 1)
+      .replace(/\\n/gi, " ")
+      .trim() || null
+  );
+}
+
+function icsDateParts(
+  value: string | null,
+): { date: string; time: string | null } | null {
+  if (!value) return null;
+  const match = value.match(
+    /^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(?:\d{2})?(?:Z)?)?$/,
+  );
+  if (!match) return null;
+  return {
+    date: `${match[1]}-${match[2]}-${match[3]}`,
+    time: match[4] && match[5] ? `${match[4]}:${match[5]}` : null,
+  };
+}
+
+/**
+ * Parses one member-selected iCalendar file as a review-only event proposal.
+ * It intentionally reads only the first VEVENT and never writes to a calendar.
+ */
+export function parseJourneyIcs(value: string): JourneyConfirmationParseResult {
+  const lines = unfoldIcsLines(value);
+  const eventStart = lines.findIndex((line) => /^BEGIN:VEVENT$/i.test(line));
+  const eventEnd = lines.findIndex(
+    (line, index) => index > eventStart && /^END:VEVENT$/i.test(line),
+  );
+  if (eventStart < 0 || eventEnd < 0) {
+    const fallback = parseJourneyConfirmationText(value);
+    return {
+      ...fallback,
+      warnings: [
+        "This calendar file did not contain a complete event. Review it manually before saving any details.",
+        ...fallback.warnings,
+      ],
+    };
+  }
+  const event = lines.slice(eventStart + 1, eventEnd);
+  const summary = icsValue(event, "SUMMARY") ?? "Imported calendar event";
+  const location = icsValue(event, "LOCATION");
+  const startsAt = icsDateParts(icsValue(event, "DTSTART"));
+  const endsAt = icsDateParts(icsValue(event, "DTEND"));
+  const facts: JourneyParsedFact[] = [
+    {
+      field: "title",
+      value: redactedPreview(summary, 100),
+      confidence: "high",
+      reason: "Explicit event title in the member-selected calendar file.",
+    },
+  ];
+  if (startsAt) {
+    facts.push({
+      field: "start_date",
+      value: startsAt.date,
+      confidence: "high",
+      reason: "Explicit event start date in the member-selected calendar file.",
+    });
+    if (startsAt.time)
+      facts.push({
+        field: "start_time",
+        value: startsAt.time,
+        confidence: "medium",
+        reason:
+          "Explicit event start time in the member-selected calendar file; confirm its time zone.",
+      });
+  }
+  if (endsAt) {
+    facts.push({
+      field: "end_date",
+      value: endsAt.date,
+      confidence: "high",
+      reason: "Explicit event end date in the member-selected calendar file.",
+    });
+    if (endsAt.time)
+      facts.push({
+        field: "end_time",
+        value: endsAt.time,
+        confidence: "medium",
+        reason:
+          "Explicit event end time in the member-selected calendar file; confirm its time zone.",
+      });
+  }
+  if (location)
+    facts.push({
+      field: "location",
+      value: redactedPreview(location, 160),
+      confidence: "medium",
+      reason: "Explicit location in the member-selected calendar file.",
+    });
+  return {
+    kind: "event",
+    title: redactedPreview(summary, 100),
+    facts: distinctFacts(facts),
+    warnings: [
+      "This is a private calendar-file proposal. It is not written to any calendar or confirmed until you choose what to save.",
+    ],
     reviewRequired: true,
   };
 }

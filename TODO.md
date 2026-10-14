@@ -43,3 +43,11 @@ This checklist records the founder-approved Kinfolk Journeys source implementati
 - [x] Add focused tests for isolation/authorization contracts, private document boundaries, consent/revoke/expiry/reconnect/delete, OAuth state/PKCE/provider validation, duplicate imports, confirmed-commitment immutability, provider failure, no-invention behavior, retention expiry, and Web/mobile parity contracts.
 - [x] Run focused API/Web/mobile tests and typechecks after implementation.
 - [x] Prepare the source-only release packet with exact commit, changed files, review-only migration, feature matrix, provider setup requirements, privacy/security/retention review, rollback plan, and the smallest next approval.
+
+## 7. Connected Apps expansion (in progress)
+
+- [x] Define a single member-controlled Connected Apps catalog for travel, health, finance, and everyday life without falsely representing an unsupported provider as connected.
+- [x] Add a source-only generic consent/revoke/delete model, authenticated API and Web/native settings surface for every catalog entry.
+- [x] Add contextual Kinfolk conversation prompts that offer—not enact—the appropriate optional connection or selected import.
+- [x] Add source-only advisory flight-watch lifecycle controls, with no provider polling, no automatic rebooking, and no notification delivery until those systems are separately approved.
+- [ ] Add real provider/network adapters only after each provider's technical, contractual, security, privacy, and credential prerequisites are approved.

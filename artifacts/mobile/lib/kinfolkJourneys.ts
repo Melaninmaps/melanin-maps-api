@@ -77,11 +77,38 @@ export type KinfolkJourneyReminder = {
   dueAt: string;
   sentAt: string | null;
 };
+export type KinfolkJourneyFlightWatch = {
+  id: string;
+  journeyId: string;
+  itemId: string | null;
+  operatingCarrier: string;
+  flightNumber: string;
+  scheduledDepartureDate: string;
+  originIata: string;
+  destinationIata: string;
+  notificationChannel: "in_app" | "push" | "email";
+  state:
+    | "pending_provider"
+    | "active"
+    | "paused"
+    | "completed"
+    | "revoked"
+    | "deleted";
+  provider: string | null;
+  status: {
+    state: "unknown" | "on_time" | "delayed" | "cancelled" | "diverted";
+    sourceObservedAt: string | null;
+    freshUntil: string | null;
+    summary: string | null;
+  };
+  consentedAt: string;
+};
 export type KinfolkJourneyDetail = {
   journey: KinfolkJourney;
   items: KinfolkJourneyItem[];
   imports: KinfolkJourneyImport[];
   reminders: KinfolkJourneyReminder[];
+  flightWatches: KinfolkJourneyFlightWatch[];
 };
 export type JourneyProvider =
   | "google_calendar"
@@ -189,6 +216,18 @@ export const kinfolkJourneysApi = {
         body: JSON.stringify({ assetId, sourceKind, consent: true }),
       },
     ),
+  extractPrivateDocument: (journeyId: string, importId: string) =>
+    request<{
+      import: KinfolkJourneyImport;
+      parsed: {
+        facts: KinfolkJourneyImport["parsedFacts"];
+        warnings: string[];
+      };
+      message: string;
+    }>(
+      `/kinfolk-journeys/${encodeURIComponent(journeyId)}/imports/${encodeURIComponent(importId)}/extract-private-document`,
+      { method: "POST", body: JSON.stringify({ consent: true }) },
+    ),
   confirmImport: (
     journeyId: string,
     importId: string,
@@ -240,6 +279,58 @@ export const kinfolkJourneysApi = {
       };
       throw new KinfolkJourneyRequestError(
         body.error ?? "Could not remove that reminder.",
+        response.status,
+        body.code,
+      );
+    }
+  },
+  addFlightWatch: (
+    journeyId: string,
+    input: {
+      operatingCarrier: string;
+      flightNumber: string;
+      scheduledDepartureDate: string;
+      originIata: string;
+      destinationIata: string;
+      itemId?: string | null;
+    },
+  ) =>
+    request<{ watch: KinfolkJourneyFlightWatch }>(
+      `/kinfolk-journeys/${encodeURIComponent(journeyId)}/flight-watches`,
+      {
+        method: "POST",
+        body: JSON.stringify({
+          ...input,
+          notificationChannel: "in_app",
+          memberConsent: true,
+        }),
+      },
+    ),
+  updateFlightWatch: (
+    journeyId: string,
+    watchId: string,
+    action: "pause" | "resume" | "revoke",
+  ) =>
+    request<{ watch: KinfolkJourneyFlightWatch }>(
+      `/kinfolk-journeys/${encodeURIComponent(journeyId)}/flight-watches/${encodeURIComponent(watchId)}`,
+      { method: "PATCH", body: JSON.stringify({ action }) },
+    ),
+  deleteFlightWatch: async (
+    journeyId: string,
+    watchId: string,
+  ): Promise<void> => {
+    const headers = await getMemberApiHeaders();
+    const response = await fetch(
+      `${getApiBase()}/api/kinfolk-journeys/${encodeURIComponent(journeyId)}/flight-watches/${encodeURIComponent(watchId)}`,
+      { method: "DELETE", headers },
+    );
+    if (!response.ok) {
+      const body = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        code?: string;
+      };
+      throw new KinfolkJourneyRequestError(
+        body.error ?? "Could not remove that private flight watch.",
         response.status,
         body.code,
       );

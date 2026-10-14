@@ -36,6 +36,16 @@ const VIDEO_MIMES = new Set([
 const DOC_MIMES = new Set([
   "application/pdf",
 ]);
+const JOURNEY_DOCUMENT_MIMES = new Set([
+  "application/pdf",
+  "message/rfc822",
+  "text/calendar",
+  "application/ics",
+]);
+const BLOCKED_JOURNEY_DOCUMENT_MIMES = new Set([
+  "application/vnd.apple.pkpass",
+  "application/vnd.google.wallet",
+]);
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
@@ -101,6 +111,9 @@ function extFromMime(mime: string): string {
     "video/quicktime": "mov",
     "video/webm": "webm",
     "application/pdf": "pdf",
+    "message/rfc822": "eml",
+    "text/calendar": "ics",
+    "application/ics": "ics",
   };
   return map[mime] ?? "bin";
 }
@@ -433,6 +446,7 @@ async function handleMediaUpload(
   }
   const isKinfolkQuestionImage = purpose === "kinfolk_question";
   const isKinfolkQuestionDocument = purpose === "kinfolk_question_document";
+  const isPrivateJourney = purpose === "kinfolk_journey_private";
   const isPrivateKinfolkQuestion = isKinfolkQuestionImage || isKinfolkQuestionDocument;
   if (isKinfolkQuestionImage && req.body?.kinfolkVisionConsent !== "true") {
     respondWithError(
@@ -458,7 +472,18 @@ async function handleMediaUpload(
   const mime = req.file.mimetype.toLowerCase();
   const isImage = IMAGE_MIMES.has(mime);
   const isVideo = VIDEO_MIMES.has(mime);
-  const isDoc = DOC_MIMES.has(mime);
+  const isJourneyDocument = isPrivateJourney && JOURNEY_DOCUMENT_MIMES.has(mime);
+  const isDoc = DOC_MIMES.has(mime) || isJourneyDocument;
+  if (isPrivateJourney && BLOCKED_JOURNEY_DOCUMENT_MIMES.has(mime)) {
+    respondWithError(
+      res,
+      415,
+      MEDIA_UPLOAD_ERROR_CODES.UNSUPPORTED_TYPE,
+      "Wallet passes are not accepted. Select an email, calendar file, readable PDF, or image for private review instead.",
+      requestId,
+    );
+    return;
+  }
   if (!isImage && !isVideo && !isDoc) {
     logUploadFailure(req, "warn", { event: "media_upload_rejected", requestId, code: MEDIA_UPLOAD_ERROR_CODES.UNSUPPORTED_TYPE, purpose, mime }, "Media upload type rejected");
     respondWithError(res, 415, MEDIA_UPLOAD_ERROR_CODES.UNSUPPORTED_TYPE, "File type not supported. Please upload JPEG, PNG, WebP, HEIC, MP4, MOV, WebM, or PDF.", requestId);
@@ -485,7 +510,6 @@ async function handleMediaUpload(
     return;
   }
   const isPrivateCommunityPost = purpose === "community_post_private";
-  const isPrivateJourney = purpose === "kinfolk_journey_private";
   const isPrivate = isPrivateKinfolkQuestion || isPrivateCommunityPost || isPrivateJourney || purpose === "business_submission";
   const delivery = getPublicDeliveryConfiguration();
   const activeStorageClient = isPrivateKinfolkQuestion ? kinfolkQuestionStorageClient : storageClient;

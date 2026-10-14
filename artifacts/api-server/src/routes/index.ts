@@ -89,6 +89,7 @@ import marketplaceFeesRouter from "./marketplace-fees";
 import trustRouter from "./trust";
 import journeysRouter from "./journeys";
 import kinfolkJourneysRouter from "./kinfolk-journeys";
+import kinfolkConnectedAppsRouter from "./kinfolk-connected-apps";
 import entityConnectionsRouter from "./entity-connections";
 import passportRouter from "./passport";
 import safetyHeatmapRouter from "./safety-heatmap";
@@ -300,6 +301,7 @@ router.use(kinfolkRouter);
 // Private travel plans are separate from Life Journeys and stay source-disabled
 // until their additive migration and explicit feature activation are approved.
 router.use(kinfolkJourneysRouter);
+router.use(kinfolkConnectedAppsRouter);
 // Private Places is a separately consented, encrypted member feature. It is
 // not a Kinfolk chat or ordinary-memory route and remains disabled by default.
 router.use(kinfolkPrivatePlacesRouter);

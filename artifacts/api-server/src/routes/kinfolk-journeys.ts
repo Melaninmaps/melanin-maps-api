@@ -30,10 +30,16 @@ import {
   providerNetworkCallsAllowed,
   startJourneyAuthorization,
 } from "../kinfolk/journeys/providers";
+import { extractJourneyPrivateDocument } from "../kinfolk/journeys/attachment-extraction";
 import {
   openJourneyToken,
   sealJourneyToken,
 } from "../kinfolk/journeys/token-vault";
+import {
+  getFlightMonitorReadiness,
+  parseFlightWatchInput,
+  unknownFlightStatus,
+} from "../kinfolk/journeys/flight-watch";
 
 const router: IRouter = Router();
 
@@ -111,6 +117,40 @@ type JourneyReminderRow = {
   state: "enabled" | "paused" | "sent" | "deleted";
   due_at: Date;
   sent_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+};
+
+type JourneyFlightWatchRow = {
+  id: string;
+  journey_id: string;
+  user_id: string;
+  item_id: string | null;
+  operating_carrier: string;
+  flight_number: string;
+  scheduled_departure_date: string;
+  origin_iata: string;
+  destination_iata: string;
+  notification_channel: "in_app" | "push" | "email";
+  state:
+    | "pending_provider"
+    | "active"
+    | "paused"
+    | "completed"
+    | "revoked"
+    | "deleted";
+  provider_key: string | null;
+  last_status: {
+    state?: "unknown" | "on_time" | "delayed" | "cancelled" | "diverted";
+    sourceObservedAt?: string | null;
+    freshUntil?: string | null;
+    summary?: string | null;
+  };
+  last_observed_at: Date | null;
+  fresh_until: Date | null;
+  consented_at: Date;
+  paused_at: Date | null;
+  revoked_at: Date | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -225,6 +265,36 @@ function safeReminder(row: JourneyReminderRow) {
   };
 }
 
+function safeFlightWatch(row: JourneyFlightWatchRow) {
+  const status = row.last_status ?? unknownFlightStatus();
+  return {
+    id: row.id,
+    journeyId: row.journey_id,
+    itemId: row.item_id,
+    operatingCarrier: row.operating_carrier,
+    flightNumber: row.flight_number,
+    scheduledDepartureDate: row.scheduled_departure_date,
+    originIata: row.origin_iata,
+    destinationIata: row.destination_iata,
+    notificationChannel: row.notification_channel,
+    state: row.state,
+    provider: row.provider_key,
+    status: {
+      state: status.state ?? "unknown",
+      sourceObservedAt: status.sourceObservedAt ?? null,
+      freshUntil: status.freshUntil ?? null,
+      summary: status.summary ?? null,
+    },
+    lastObservedAt: row.last_observed_at?.toISOString() ?? null,
+    freshUntil: row.fresh_until?.toISOString() ?? null,
+    consentedAt: row.consented_at.toISOString(),
+    pausedAt: row.paused_at?.toISOString() ?? null,
+    revokedAt: row.revoked_at?.toISOString() ?? null,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
 async function ownedJourney(
   userId: string,
   id: string,
@@ -328,6 +398,7 @@ router.get("/kinfolk-journeys/capabilities", (_req, res) => {
     enabled: journeyFeatureEnabled(),
     visibility: "private",
     providers: listJourneyProviderReadiness(),
+    flightMonitor: getFlightMonitorReadiness(),
     message: journeyFeatureEnabled()
       ? null
       : "Kinfolk Journeys is being prepared and is not enabled in this environment yet.",
@@ -615,7 +686,7 @@ router.get("/kinfolk-journeys/:journeyId", async (req, res) => {
       userId,
       String(req.params.journeyId),
     );
-    const [items, imports, reminders] = await Promise.all([
+    const [items, imports, reminders, flightWatches] = await Promise.all([
       pool.query<JourneyItemRow>(
         `SELECT * FROM kinfolk_journey_items WHERE journey_id=$1 AND user_id=$2 ORDER BY starts_at NULLS LAST, created_at ASC`,
         [journey.id, userId],
@@ -628,12 +699,17 @@ router.get("/kinfolk-journeys/:journeyId", async (req, res) => {
         `SELECT * FROM kinfolk_journey_reminders WHERE journey_id=$1 AND user_id=$2 AND state <> 'deleted' ORDER BY due_at ASC`,
         [journey.id, userId],
       ),
+      pool.query<JourneyFlightWatchRow>(
+        `SELECT * FROM kinfolk_journey_flight_watches WHERE journey_id=$1 AND user_id=$2 AND deleted_at IS NULL ORDER BY created_at DESC`,
+        [journey.id, userId],
+      ),
     ]);
     res.json({
       journey: safeJourney(journey),
       items: items.rows.map(safeItem),
       imports: imports.rows.map(safeImport),
       reminders: reminders.rows.map(safeReminder),
+      flightWatches: flightWatches.rows.map(safeFlightWatch),
     });
   } catch (error) {
     respondError(res, error);
@@ -918,6 +994,95 @@ router.post("/kinfolk-journeys/:journeyId/imports/assets", async (req, res) => {
     respondError(res, error);
   }
 });
+
+router.post(
+  "/kinfolk-journeys/:journeyId/imports/:importId/extract-private-document",
+  async (req, res) => {
+    const userId = requireMember(req, res);
+    if (!userId) return;
+    try {
+      assertJourneyFeatureEnabled();
+      const journey = await requireOwnedJourney(
+        userId,
+        String(req.params.journeyId),
+      );
+      if (req.body?.consent !== true)
+        throw new JourneyActionError(
+          "Choose whether Kinfolk may review the readable details in this private document for this Journey.",
+          400,
+          "JOURNEY_REVIEW_REQUIRED",
+        );
+      const imported = await pool.query<JourneyImportRow>(
+        `SELECT id,journey_id,user_id,source_kind,status,asset_id,parsed_facts,content_digest,created_at,reviewed_at
+           FROM kinfolk_journey_imports
+          WHERE id=$1 AND journey_id=$2 AND user_id=$3 AND deleted_at IS NULL
+          LIMIT 1`,
+        [String(req.params.importId), journey.id, userId],
+      );
+      const sourceImport = imported.rows[0];
+      if (!sourceImport)
+        throw new JourneyActionError(
+          "Journey import not found.",
+          404,
+          "JOURNEY_NOT_FOUND",
+        );
+      if (
+        sourceImport.source_kind !== "document" ||
+        !sourceImport.asset_id ||
+        sourceImport.status === "confirmed"
+      )
+        throw new JourneyActionError(
+          "This private attachment is not available for document review. Add details manually or review a selected PDF, .eml confirmation, or .ics calendar file.",
+          409,
+          "JOURNEY_REVIEW_REQUIRED",
+        );
+
+      const extraction = await extractJourneyPrivateDocument({
+        userId,
+        assetId: sourceImport.asset_id,
+      });
+      const updated = await pool.query<JourneyImportRow>(
+        `UPDATE kinfolk_journey_imports
+            SET status='parsed',
+                parsed_facts=$4::jsonb,
+                member_consented_at=COALESCE(member_consented_at,NOW())
+          WHERE id=$1 AND journey_id=$2 AND user_id=$3
+            AND status IN ('review_needed','parsed')
+          RETURNING id,journey_id,user_id,source_kind,status,asset_id,parsed_facts,content_digest,created_at,reviewed_at`,
+        [sourceImport.id, journey.id, userId, JSON.stringify(extraction.facts)],
+      );
+      const parsedImport = updated.rows[0];
+      if (!parsedImport)
+        throw new JourneyActionError(
+          "This private attachment changed while it was being reviewed. Refresh and try again.",
+          409,
+          "JOURNEY_REVIEW_REQUIRED",
+        );
+      await appendAudit({
+        journeyId: journey.id,
+        userId,
+        eventType: "journey_private_document_reviewed",
+        metadata: {
+          factCount: extraction.facts.length,
+          pageCount: extraction.pageCount,
+          importKind: extraction.kind,
+          source: extraction.source,
+        },
+      });
+      res.status(200).json({
+        import: safeImport(parsedImport),
+        parsed: {
+          facts: extraction.facts,
+          warnings: extraction.warnings,
+        },
+        message:
+          "Private document details are ready for your review. Nothing was added to your Journey until you confirm it.",
+      });
+    } catch (error) {
+      respondError(res, error);
+    }
+  },
+);
 
 router.post("/kinfolk-journeys/:journeyId/imports/text", async (req, res) => {
   const userId = requireMember(req, res);
@@ -1259,6 +1424,161 @@ router.delete(
   },
 );
 
+router.post("/kinfolk-journeys/:journeyId/flight-watches", async (req, res) => {
+  const userId = requireMember(req, res);
+  if (!userId) return;
+  try {
+    assertJourneyFeatureEnabled();
+    const journey = await requireOwnedJourney(
+      userId,
+      String(req.params.journeyId),
+    );
+    const input = parseFlightWatchInput(req.body);
+    if (input.itemId) {
+      const item = await pool.query<{ id: string }>(
+        `SELECT id FROM kinfolk_journey_items WHERE id=$1 AND journey_id=$2 AND user_id=$3 AND kind='flight' LIMIT 1`,
+        [input.itemId, journey.id, userId],
+      );
+      if (!item.rows[0])
+        throw new JourneyActionError(
+          "The selected flight item was not found.",
+          404,
+          "JOURNEY_NOT_FOUND",
+        );
+    }
+    const readiness = getFlightMonitorReadiness();
+    const result = await pool.query<JourneyFlightWatchRow>(
+      `INSERT INTO kinfolk_journey_flight_watches
+         (id,journey_id,user_id,item_id,operating_carrier,flight_number,scheduled_departure_date,origin_iata,destination_iata,notification_channel,state,provider_key,last_status,consented_at)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'pending_provider',$11,$12::jsonb,NOW())
+       ON CONFLICT (user_id,journey_id,operating_carrier,flight_number,scheduled_departure_date,origin_iata,destination_iata) WHERE deleted_at IS NULL
+       DO UPDATE SET item_id=EXCLUDED.item_id,notification_channel=EXCLUDED.notification_channel,consented_at=NOW(),updated_at=NOW()
+       RETURNING *`,
+      [
+        randomUUID(),
+        journey.id,
+        userId,
+        input.itemId ?? null,
+        input.operatingCarrier,
+        input.flightNumber,
+        input.scheduledDepartureDate,
+        input.originIata,
+        input.destinationIata,
+        input.notificationChannel,
+        readiness.provider,
+        JSON.stringify(unknownFlightStatus()),
+      ],
+    );
+    await appendAudit({
+      journeyId: journey.id,
+      userId,
+      eventType: "journey_flight_watch_consent_recorded",
+      metadata: {
+        channel: input.notificationChannel,
+        providerConfigured: readiness.status === "available",
+      },
+    });
+    res.status(201).json({
+      watch: safeFlightWatch(result.rows[0]!),
+      readiness,
+      boundary:
+        "This is an advisory-only pending watch. Kinfolk has not queried a provider, accessed an airline account, or sent a notification. Confirm any disruption with the airline or booking channel.",
+    });
+  } catch (error) {
+    respondError(res, error);
+  }
+});
+
+router.patch(
+  "/kinfolk-journeys/:journeyId/flight-watches/:watchId",
+  async (req, res) => {
+    const userId = requireMember(req, res);
+    if (!userId) return;
+    try {
+      assertJourneyFeatureEnabled();
+      const journey = await requireOwnedJourney(
+        userId,
+        String(req.params.journeyId),
+      );
+      const action = req.body?.action;
+      if (action !== "pause" && action !== "resume" && action !== "revoke")
+        throw new JourneyActionError(
+          "Choose pause, resume, or revoke for this flight watch.",
+          400,
+          "JOURNEY_INVALID",
+        );
+      const nextState =
+        action === "pause"
+          ? "paused"
+          : action === "revoke"
+            ? "revoked"
+            : "pending_provider";
+      const result = await pool.query<JourneyFlightWatchRow>(
+        `UPDATE kinfolk_journey_flight_watches
+            SET state=$4,
+                paused_at=CASE WHEN $4='paused' THEN NOW() ELSE NULL END,
+                revoked_at=CASE WHEN $4='revoked' THEN NOW() ELSE NULL END,
+                updated_at=NOW()
+          WHERE id=$1 AND journey_id=$2 AND user_id=$3 AND deleted_at IS NULL
+          RETURNING *`,
+        [String(req.params.watchId), journey.id, userId, nextState],
+      );
+      if (!result.rows[0])
+        throw new JourneyActionError(
+          "Flight watch not found.",
+          404,
+          "JOURNEY_NOT_FOUND",
+        );
+      await appendAudit({
+        journeyId: journey.id,
+        userId,
+        eventType: `journey_flight_watch_${action}`,
+      });
+      res.json({
+        watch: safeFlightWatch(result.rows[0]),
+        readiness: getFlightMonitorReadiness(),
+      });
+    } catch (error) {
+      respondError(res, error);
+    }
+  },
+);
+
+router.delete(
+  "/kinfolk-journeys/:journeyId/flight-watches/:watchId",
+  async (req, res) => {
+    const userId = requireMember(req, res);
+    if (!userId) return;
+    try {
+      assertJourneyFeatureEnabled();
+      const journey = await requireOwnedJourney(
+        userId,
+        String(req.params.journeyId),
+      );
+      const result = await pool.query(
+        `UPDATE kinfolk_journey_flight_watches
+            SET state='deleted',deleted_at=NOW(),revoked_at=NOW(),updated_at=NOW()
+          WHERE id=$1 AND journey_id=$2 AND user_id=$3 AND deleted_at IS NULL`,
+        [String(req.params.watchId), journey.id, userId],
+      );
+      if (result.rowCount !== 1)
+        throw new JourneyActionError(
+          "Flight watch not found.",
+          404,
+          "JOURNEY_NOT_FOUND",
+        );
+      await appendAudit({
+        journeyId: journey.id,
+        userId,
+        eventType: "journey_flight_watch_deleted",
+      });
+      res.status(204).end();
+    } catch (error) {
+      respondError(res, error);
+    }
+  },
+);
+
 router.delete("/kinfolk-journeys/:journeyId", async (req, res) => {
   const userId = requireMember(req, res);
   if (!userId) return;
@@ -1286,6 +1606,10 @@ router.delete("/kinfolk-journeys/:journeyId", async (req, res) => {
       );
       await client.query(
         `UPDATE kinfolk_journey_reminders SET state='deleted',updated_at=NOW() WHERE journey_id=$1 AND user_id=$2`,
+        [journey.id, userId],
+      );
+      await client.query(
+        `UPDATE kinfolk_journey_flight_watches SET state='deleted',deleted_at=NOW(),revoked_at=NOW(),updated_at=NOW() WHERE journey_id=$1 AND user_id=$2 AND deleted_at IS NULL`,
         [journey.id, userId],
       );
       await client.query(

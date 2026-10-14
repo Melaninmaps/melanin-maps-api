@@ -80,29 +80,12 @@ const PROVIDER_CONFIGURATION: Readonly<
     accessModes: ["free_busy", "calendar_details"],
   },
   gmail: {
-    clientIdEnv: "GOOGLE_JOURNEYS_OAUTH_CLIENT_ID",
-    clientSecretEnv: "GOOGLE_JOURNEYS_OAUTH_CLIENT_SECRET",
-    authorizationEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
-    tokenEndpoint: "https://oauth2.googleapis.com/token",
-    scopesByAccessMode: {
-      selected_items: [
-        "openid",
-        "email",
-        "https://www.googleapis.com/auth/gmail.readonly",
-      ],
-    },
-    accessModes: ["selected_items"],
+    scopesByAccessMode: {},
+    accessModes: ["manual"],
   },
   outlook_mail: {
-    clientIdEnv: "MICROSOFT_JOURNEYS_OAUTH_CLIENT_ID",
-    clientSecretEnv: "MICROSOFT_JOURNEYS_OAUTH_CLIENT_SECRET",
-    authorizationEndpoint:
-      "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
-    tokenEndpoint: "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-    scopesByAccessMode: {
-      selected_items: ["openid", "email", "offline_access", "Mail.ReadBasic"],
-    },
-    accessModes: ["selected_items"],
+    scopesByAccessMode: {},
+    accessModes: ["manual"],
   },
   // Direct device-calendar access is native-only and does not send the device's
   // calendar credentials through the browser/OAuth path.
@@ -165,7 +148,18 @@ export function getJourneyProviderReadiness(
       accessModes: ["manual"],
       scopes: [],
       blockers: [
-        "Live flight monitoring is not configured. Add a flight manually or import a confirmation for review.",
+        "Live flight monitoring needs an approved flight-status provider. Airline account access, scraping, and booking retrieval are not used.",
+      ],
+    };
+  }
+  if (provider === "gmail" || provider === "outlook_mail") {
+    return {
+      provider,
+      status: "disabled",
+      accessModes: ["manual"],
+      scopes: [],
+      blockers: [
+        "Selected confirmation import uses a member-provided .eml, PDF, calendar file, or paste. Standard mailbox OAuth scopes are broader than a selected message and are not enabled here.",
       ],
     };
   }

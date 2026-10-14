@@ -44,6 +44,15 @@ describe("Kinfolk Journeys private workspace contract", () => {
     expect(apiSource).toContain("registerAttachment");
   });
 
+  it("offers an explicit private-document review action without sending attachments to ordinary chat", () => {
+    expect(apiSource).toContain("extractPrivateDocument");
+    expect(pageSource).toContain("Review private document");
+    expect(pageSource).toContain("journeysApi.extractPrivateDocument");
+    expect(pageSource).toContain("message/rfc822");
+    expect(pageSource).toContain("text/calendar");
+    expect(pageSource).toContain("not shared or used by Kinfolk chat");
+  });
+
   it("makes reminder records private and does not imply delivery is active", () => {
     expect(apiSource).toContain("addReminder");
     expect(pageSource).toContain("Private reminders");
@@ -51,5 +60,20 @@ describe("Kinfolk Journeys private workspace contract", () => {
       /Delivery is not active until a future\s+release\s+has your separate\s+notification permission\./,
     );
     expect(pageSource).toContain("Save private reminder");
+  });
+
+  it("offers an advisory-only flight watch with pause, revoke, and removal controls", () => {
+    expect(apiSource).toContain("addFlightWatch");
+    expect(apiSource).toContain("updateFlightWatch");
+    expect(apiSource).toContain("deleteFlightWatch");
+    expect(pageSource).toContain("Flight watch");
+    expect(pageSource).toContain("Save private flight watch");
+    expect(pageSource).toContain("Revoke consent");
+    expect(pageSource).toMatch(
+      /Kinfolk never accesses an airline\s+account, booking, PNR, ticket, loyalty account, or payment method\./,
+    );
+    expect(pageSource).toContain(
+      "Confirm with the airline or booking channel.",
+    );
   });
 });

@@ -158,6 +158,11 @@ interface KinfolkResourceCard {
   type: "image_gallery" | "health_source" | "community_source" | "entity_source";
   safetyNote?: string;
 }
+interface ConnectedAppsPrompt {
+  title: string;
+  description: string;
+  appKeys: string[];
+}
 interface KinfolkLibraryEntry { url: string; readMoreLabel: string }
 interface CommunityPerspective {
   label: "Community perspective";
@@ -194,6 +199,7 @@ interface Message {
   researchStatus?: KinfolkResearchStatus | null;
   contextualVisuals?: KinfolkContextualVisual[];
   resourceCards?: KinfolkResourceCard[];
+  connectedAppsPrompt?: ConnectedAppsPrompt | null;
   followUpSuggestions?: string[]; timestamp: string;
   cultureAction?: CultureAction | null;
   libraryAction?: LibraryAction | null;
@@ -2175,6 +2181,7 @@ function TravelPage() {
         memoryUse?: KinfolkMemoryUse | null;
         contextualVisuals?: KinfolkContextualVisual[] | null;
         resourceCards?: KinfolkResourceCard[] | null;
+        connectedAppsPrompt?: ConnectedAppsPrompt | null;
         responseMeta?: KinfolkResponseMeta | null;
         sensitiveMemoryConfirmation?: {
           confirmationRequired?: boolean;
@@ -2222,6 +2229,7 @@ function TravelPage() {
             ? [{ ...resource, url: href }]
             : [];
         }).slice(0, 3),
+        connectedAppsPrompt: data.connectedAppsPrompt ?? null,
         followUpSuggestions: data.followUpSuggestions ?? [], timestamp: new Date().toISOString(),
         cultureAction: data.cultureAction ?? null,
         libraryAction: data.libraryAction ?? null,
@@ -3026,6 +3034,18 @@ function TravelPage() {
                           </p>
                         </div>
                       )}
+                      {msg.role === "assistant" && msg.connectedAppsPrompt ? (
+                        <aside data-testid="kinfolk-connected-apps-prompt" className="mt-3 rounded-2xl border border-[#CA922B]/25 bg-[#FFF8EC] p-4">
+                          <p className="text-xs font-semibold text-[#2B1507]">{msg.connectedAppsPrompt.title}</p>
+                          <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/65">{msg.connectedAppsPrompt.description}</p>
+                          <Link
+                            href={`/profile?settings=connected-apps&focus=${encodeURIComponent(msg.connectedAppsPrompt.appKeys.join(","))}`}
+                            className="mt-3 inline-flex rounded-full bg-[#2B1507] px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-[#3D2210]"
+                          >
+                            Review Connected Apps
+                          </Link>
+                        </aside>
+                      ) : null}
                       {msg.resultView && <ConversationalBusinessCards view={msg.resultView} />}
                       {msg.recommendations && !msg.resultView && !hasItineraryDays(msg.itinerary) && (
                         <RecommendationCards recs={msg.recommendations} onFeedback={handleFeedback} feedback={feedback} onCopy={copyTrip} onShare={isLoggedIn && sessionId ? shareTrip : undefined} />

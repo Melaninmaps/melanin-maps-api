@@ -797,8 +797,9 @@ function ImportPanel({
         <div>
           <h3 className="font-bold">Import for review</h3>
           <p className="mt-1 text-xs leading-5 text-[#3B1F0E]/65">
-            Paste a confirmation or keep a private PDF/image with this plan.
-            Extracted facts are suggestions until you choose what to save.
+            Paste a confirmation or keep a private PDF, .eml, .ics, or image
+            with this plan. Extracted facts are suggestions until you choose
+            what to save.
           </p>
         </div>
       </div>
@@ -814,13 +815,13 @@ function ImportPanel({
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <input
           type="file"
-          accept="application/pdf,image/jpeg,image/png,image/webp,image/heic"
-          aria-label="Upload a confirmation PDF or image"
+          accept="application/pdf,message/rfc822,text/calendar,.eml,.ics,image/jpeg,image/png,image/webp,image/heic"
+          aria-label="Upload a confirmation PDF, email, calendar file, or image"
           onChange={(event) => setFile(event.target.files?.[0] ?? null)}
           className="max-w-full text-xs"
         />
         <span className="text-xs text-[#3B1F0E]/55">
-          {file ? file.name : "PDF, JPG, PNG, WebP, or HEIC"}
+          {file ? file.name : "PDF, EML, ICS, JPG, PNG, WebP, or HEIC"}
         </span>
       </div>
       <label className="mt-3 flex gap-2 text-xs leading-5 text-[#3B1F0E]/70">
@@ -903,6 +904,20 @@ function ImportedFacts({
       setBusyId(null);
     }
   }
+  async function extractDocument(importId: string) {
+    setBusyId(importId);
+    setError(null);
+    try {
+      await journeysApi.extractPrivateDocument(detail.journey.id, importId);
+      await onChanged();
+    } catch (cause) {
+      setError(
+        requestMessage(cause, "Could not review that private document."),
+      );
+    } finally {
+      setBusyId(null);
+    }
+  }
   const reviewable = detail.imports.filter(
     (entry) => entry.status === "parsed" || entry.status === "review_needed",
   );
@@ -943,18 +958,30 @@ function ImportedFacts({
               </ul>
             ) : (
               <p className="mt-2 text-sm text-[#3B1F0E]/65">
-                This file is private and attached for review. Add a manual item
-                when you are ready; no booking was inferred.
+                This file is private and attached for review. No booking was
+                inferred.
               </p>
             )}
-            <button
-              type="button"
-              className={`mt-3 ${PRIMARY}`}
-              disabled={busyId === entry.id || !entry.parsedFacts.length}
-              onClick={() => void accept(entry.id)}
-            >
-              {busyId === entry.id ? "Saving…" : "Save reviewed suggestion"}
-            </button>
+            {entry.sourceKind === "document" && !entry.parsedFacts.length ? (
+              <button
+                type="button"
+                className={`mt-3 ${SECONDARY}`}
+                disabled={busyId === entry.id}
+                onClick={() => void extractDocument(entry.id)}
+              >
+                {busyId === entry.id ? "Reviewing…" : "Review private document"}
+              </button>
+            ) : null}
+            {entry.parsedFacts.length ? (
+              <button
+                type="button"
+                className={`mt-3 ${PRIMARY}`}
+                disabled={busyId === entry.id}
+                onClick={() => void accept(entry.id)}
+              >
+                {busyId === entry.id ? "Saving…" : "Save reviewed suggestion"}
+              </button>
+            ) : null}
           </article>
         ))}
       </div>
@@ -1110,6 +1137,281 @@ function ReminderPanel({
                     Remove
                   </button>
                 </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : null}
+    </section>
+  );
+}
+
+function FlightWatchPanel({
+  detail,
+  onChanged,
+}: {
+  detail: JourneyDetail;
+  onChanged: () => Promise<void>;
+}) {
+  const [itemId, setItemId] = useState("");
+  const [operatingCarrier, setOperatingCarrier] = useState("");
+  const [flightNumber, setFlightNumber] = useState("");
+  const [scheduledDepartureDate, setScheduledDepartureDate] = useState("");
+  const [originIata, setOriginIata] = useState("");
+  const [destinationIata, setDestinationIata] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [availability, setAvailability] = useState<string | null>(null);
+  const flightItems = detail.items.filter((item) => item.kind === "flight");
+
+  useEffect(() => {
+    let active = true;
+    void journeysApi
+      .capabilities()
+      .then((capabilities) => {
+        if (active)
+          setAvailability(
+            capabilities.flightMonitor.blockers[0] ??
+              "Live status availability is being checked.",
+          );
+      })
+      .catch(() => {
+        if (active)
+          setAvailability(
+            "Live flight status is unavailable right now. Your saved Journey is unchanged.",
+          );
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  async function save() {
+    setBusy("new");
+    setError(null);
+    try {
+      await journeysApi.addFlightWatch(detail.journey.id, {
+        itemId: itemId || null,
+        operatingCarrier,
+        flightNumber,
+        scheduledDepartureDate,
+        originIata,
+        destinationIata,
+        notificationChannel: "in_app",
+      });
+      setOperatingCarrier("");
+      setFlightNumber("");
+      setScheduledDepartureDate("");
+      setOriginIata("");
+      setDestinationIata("");
+      await onChanged();
+    } catch (cause) {
+      setError(
+        requestMessage(cause, "Could not save this private flight watch."),
+      );
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function update(
+    watchId: string,
+    action: "pause" | "resume" | "revoke",
+  ) {
+    setBusy(watchId);
+    setError(null);
+    try {
+      await journeysApi.updateFlightWatch(detail.journey.id, watchId, action);
+      await onChanged();
+    } catch (cause) {
+      setError(
+        requestMessage(cause, "Could not update this private flight watch."),
+      );
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function remove(watchId: string) {
+    if (!window.confirm("Remove this private flight watch?")) return;
+    setBusy(watchId);
+    setError(null);
+    try {
+      await journeysApi.deleteFlightWatch(detail.journey.id, watchId);
+      await onChanged();
+    } catch (cause) {
+      setError(
+        requestMessage(cause, "Could not remove this private flight watch."),
+      );
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <section className="rounded-2xl border border-[#3B1F0E]/10 bg-white p-4">
+      <div className="flex items-start gap-2">
+        <Plane className="mt-0.5 h-4 w-4 text-[#8A5D18]" />
+        <div>
+          <h3 className="font-bold">Flight watch</h3>
+          <p className="mt-1 text-xs leading-5 text-[#3B1F0E]/65">
+            Opt in with one operating flight. Kinfolk never accesses an airline
+            account, booking, PNR, ticket, loyalty account, or payment method.
+          </p>
+        </div>
+      </div>
+      {availability ? (
+        <p className="mt-3 rounded-xl bg-[#FAF1E4] p-3 text-xs leading-5 text-[#3B1F0E]/70">
+          {availability}
+        </p>
+      ) : null}
+      <div className="mt-3 grid gap-2">
+        <label className="text-xs font-bold">
+          Link an existing flight item (optional)
+          <select
+            value={itemId}
+            onChange={(event) => setItemId(event.target.value)}
+            className={FIELD}
+          >
+            <option value="">Enter a flight below</option>
+            {flightItems.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <label className="text-xs font-bold">
+            Operating carrier
+            <input
+              value={operatingCarrier}
+              onChange={(event) => setOperatingCarrier(event.target.value)}
+              placeholder="DL"
+              maxLength={3}
+              className={FIELD}
+            />
+          </label>
+          <label className="text-xs font-bold">
+            Flight number
+            <input
+              value={flightNumber}
+              onChange={(event) => setFlightNumber(event.target.value)}
+              placeholder="1234"
+              maxLength={4}
+              className={FIELD}
+            />
+          </label>
+        </div>
+        <label className="text-xs font-bold">
+          Scheduled departure date
+          <input
+            type="date"
+            value={scheduledDepartureDate}
+            onChange={(event) => setScheduledDepartureDate(event.target.value)}
+            className={FIELD}
+          />
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <label className="text-xs font-bold">
+            Origin
+            <input
+              value={originIata}
+              onChange={(event) => setOriginIata(event.target.value)}
+              placeholder="ATL"
+              maxLength={3}
+              className={FIELD}
+            />
+          </label>
+          <label className="text-xs font-bold">
+            Destination
+            <input
+              value={destinationIata}
+              onChange={(event) => setDestinationIata(event.target.value)}
+              placeholder="LAX"
+              maxLength={3}
+              className={FIELD}
+            />
+          </label>
+        </div>
+        <button
+          type="button"
+          disabled={
+            busy !== null ||
+            !operatingCarrier ||
+            !flightNumber ||
+            !scheduledDepartureDate ||
+            !originIata ||
+            !destinationIata
+          }
+          onClick={() => void save()}
+          className={PRIMARY}
+        >
+          {busy === "new" ? "Saving…" : "Save private flight watch"}
+        </button>
+      </div>
+      {error ? (
+        <p role="alert" className="mt-3 text-xs text-red-700">
+          {error}
+        </p>
+      ) : null}
+      {detail.flightWatches.length ? (
+        <div className="mt-4 space-y-2">
+          {detail.flightWatches.map((watch) => (
+            <article
+              key={watch.id}
+              className="rounded-xl bg-[#FAF1E4] p-3 text-xs"
+            >
+              <p className="font-bold">
+                {watch.operatingCarrier} {watch.flightNumber} ·{" "}
+                {watch.originIata}–{watch.destinationIata}
+              </p>
+              <p className="mt-1 text-[#3B1F0E]/65">
+                {dateLabel(watch.scheduledDepartureDate)} ·{" "}
+                {statusLabel(watch.state)} · {statusLabel(watch.status.state)}
+              </p>
+              <p className="mt-2 leading-5 text-[#3B1F0E]/65">
+                {watch.status.summary ??
+                  "No live status has been retrieved. Confirm with the airline or booking channel."}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {watch.state === "paused" ? (
+                  <button
+                    type="button"
+                    disabled={busy === watch.id}
+                    onClick={() => void update(watch.id, "resume")}
+                    className="font-bold text-[#8A5D18]"
+                  >
+                    Resume
+                  </button>
+                ) : watch.state !== "revoked" ? (
+                  <button
+                    type="button"
+                    disabled={busy === watch.id}
+                    onClick={() => void update(watch.id, "pause")}
+                    className="font-bold text-[#8A5D18]"
+                  >
+                    Pause
+                  </button>
+                ) : null}
+                {watch.state !== "revoked" ? (
+                  <button
+                    type="button"
+                    disabled={busy === watch.id}
+                    onClick={() => void update(watch.id, "revoke")}
+                    className="font-bold text-red-700"
+                  >
+                    Revoke consent
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  disabled={busy === watch.id}
+                  onClick={() => void remove(watch.id)}
+                  className="font-bold text-red-700"
+                >
+                  Remove
+                </button>
               </div>
             </article>
           ))}
@@ -1302,6 +1604,7 @@ export function JourneyDetailPage() {
             <AddItemForm journeyId={detail.journey.id} onAdded={load} />
             <ImportPanel journey={detail} onChanged={load} />
             <ReminderPanel detail={detail} onChanged={load} />
+            <FlightWatchPanel detail={detail} onChanged={load} />
             <section className="rounded-2xl border border-[#3B1F0E]/10 bg-white p-4 text-xs leading-5 text-[#3B1F0E]/65">
               <p className="font-bold text-[#3B1F0E]">Kinfolk boundary</p>
               <p className="mt-1">

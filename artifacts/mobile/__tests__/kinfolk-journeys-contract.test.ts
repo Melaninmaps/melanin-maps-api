@@ -50,12 +50,33 @@ describe("native Kinfolk Journeys contract", () => {
     expect(screen).toContain("Nothing was booked or confirmed.");
   });
 
+  it("requires an explicit private-document review action before presenting extracted facts", () => {
+    expect(client).toContain("extractPrivateDocument");
+    expect(screen).toContain("Review private document");
+    expect(screen).toContain("kinfolkJourneysApi.extractPrivateDocument");
+    expect(screen).toContain('"message/rfc822"');
+    expect(screen).toContain('"text/calendar"');
+    expect(screen).toContain("suggestions only");
+  });
+
   it("persists private reminders without implying notification delivery", () => {
     expect(client).toContain("addReminder");
     expect(client).toContain("updateReminder");
     expect(screen).toContain("Private reminders");
     expect(screen).toMatch(
       /Delivery is off until a future\s+release\s+has your separate\s+notification permission\./,
+    );
+  });
+
+  it("keeps flight watches advisory, member-consented, and removable", () => {
+    expect(client).toContain("addFlightWatch");
+    expect(client).toContain("updateFlightWatch");
+    expect(client).toContain("deleteFlightWatch");
+    expect(screen).toContain("Save private flight watch");
+    expect(screen).toContain("Revoke");
+    expect(screen).toContain("Kinfolk never accesses airline accounts");
+    expect(screen).toContain(
+      "Confirm any change with the airline or booking channel.",
     );
   });
 });

@@ -27,6 +27,16 @@ describe("Journey provider adapters", () => {
     expect(providerNetworkCallsAllowed()).toBe(false);
   });
 
+  it("does not misrepresent mailbox-wide provider scopes as selected-message access", () => {
+    for (const provider of ["gmail", "outlook_mail"] as const) {
+      expect(getJourneyProviderReadiness(provider)).toMatchObject({
+        provider,
+        status: "disabled",
+        accessModes: ["manual"],
+      });
+    }
+  });
+
   it("uses PKCE, state, nonce, and a short-lived server transaction when configured", () => {
     vi.stubEnv("GOOGLE_JOURNEYS_OAUTH_CLIENT_ID", "test-client");
     vi.stubEnv("GOOGLE_JOURNEYS_OAUTH_CLIENT_SECRET", "test-secret");

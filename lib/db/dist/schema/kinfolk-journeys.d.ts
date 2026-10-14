@@ -1864,6 +1864,425 @@ export declare const kinfolkJourneyRemindersTable: import("drizzle-orm/pg-core")
     };
     dialect: "pg";
 }>;
+export declare const kinfolkJourneyFlightWatchesTable: import("drizzle-orm/pg-core").PgTableWithColumns<{
+    name: "kinfolk_journey_flight_watches";
+    schema: undefined;
+    columns: {
+        id: import("drizzle-orm/pg-core").PgColumn<{
+            name: "id";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 36;
+        }>;
+        journeyId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "journey_id";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 36;
+        }>;
+        userId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "user_id";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 255;
+        }>;
+        itemId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "item_id";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 36;
+        }>;
+        operatingCarrier: import("drizzle-orm/pg-core").PgColumn<{
+            name: "operating_carrier";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 3;
+        }>;
+        flightNumber: import("drizzle-orm/pg-core").PgColumn<{
+            name: "flight_number";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 4;
+        }>;
+        scheduledDepartureDate: import("drizzle-orm/pg-core").PgColumn<{
+            name: "scheduled_departure_date";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 10;
+        }>;
+        originIata: import("drizzle-orm/pg-core").PgColumn<{
+            name: "origin_iata";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 3;
+        }>;
+        destinationIata: import("drizzle-orm/pg-core").PgColumn<{
+            name: "destination_iata";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 3;
+        }>;
+        notificationChannel: import("drizzle-orm/pg-core").PgColumn<{
+            name: "notification_channel";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: "email" | "in_app" | "push";
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: ["in_app", "push", "email"];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
+        state: import("drizzle-orm/pg-core").PgColumn<{
+            name: "state";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: "active" | "completed" | "deleted" | "revoked" | "paused" | "pending_provider";
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: ["pending_provider", "active", "paused", "completed", "revoked", "deleted"];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: number | undefined;
+        }>;
+        providerKey: import("drizzle-orm/pg-core").PgColumn<{
+            name: "provider_key";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 40;
+        }>;
+        providerReferenceHash: import("drizzle-orm/pg-core").PgColumn<{
+            name: "provider_reference_hash";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 128;
+        }>;
+        lastStatus: import("drizzle-orm/pg-core").PgColumn<{
+            name: "last_status";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "json";
+            columnType: "PgJsonb";
+            data: {
+                state: "unknown" | "on_time" | "delayed" | "cancelled" | "diverted";
+                sourceObservedAt: string | null;
+                freshUntil: string | null;
+                summary: string | null;
+            };
+            driverParam: unknown;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            $type: {
+                state: "unknown" | "on_time" | "delayed" | "cancelled" | "diverted";
+                sourceObservedAt: string | null;
+                freshUntil: string | null;
+                summary: string | null;
+            };
+        }>;
+        lastObservedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "last_observed_at";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        freshUntil: import("drizzle-orm/pg-core").PgColumn<{
+            name: "fresh_until";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        consentedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "consented_at";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        pausedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "paused_at";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        revokedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "revoked_at";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        deletedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "deleted_at";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        createdAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "created_at";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        updatedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "updated_at";
+            tableName: "kinfolk_journey_flight_watches";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+    };
+    dialect: "pg";
+}>;
 export declare const kinfolkJourneyAuditTable: import("drizzle-orm/pg-core").PgTableWithColumns<{
     name: "kinfolk_journey_audit";
     schema: undefined;
@@ -1989,4 +2408,5 @@ export type KinfolkJourneySource = typeof kinfolkJourneySourcesTable.$inferSelec
 export type KinfolkJourneyImport = typeof kinfolkJourneyImportsTable.$inferSelect;
 export type KinfolkJourneyConnection = typeof kinfolkJourneyConnectionsTable.$inferSelect;
 export type KinfolkJourneyReminder = typeof kinfolkJourneyRemindersTable.$inferSelect;
+export type KinfolkJourneyFlightWatch = typeof kinfolkJourneyFlightWatchesTable.$inferSelect;
 //# sourceMappingURL=kinfolk-journeys.d.ts.map

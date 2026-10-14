@@ -472,6 +472,87 @@ export const kinfolkJourneyRemindersTable = pgTable(
   ],
 );
 
+export const kinfolkJourneyFlightWatchesTable = pgTable(
+  "kinfolk_journey_flight_watches",
+  {
+    id: varchar("id", { length: 36 })
+      .primaryKey()
+      .default(sql`gen_random_uuid()`),
+    journeyId: varchar("journey_id", { length: 36 }).notNull(),
+    userId: varchar("user_id", { length: 255 }).notNull(),
+    itemId: varchar("item_id", { length: 36 }),
+    operatingCarrier: varchar("operating_carrier", { length: 3 }).notNull(),
+    flightNumber: varchar("flight_number", { length: 4 }).notNull(),
+    scheduledDepartureDate: varchar("scheduled_departure_date", {
+      length: 10,
+    }).notNull(),
+    originIata: varchar("origin_iata", { length: 3 }).notNull(),
+    destinationIata: varchar("destination_iata", { length: 3 }).notNull(),
+    notificationChannel: varchar("notification_channel", {
+      enum: ["in_app", "push", "email"] as const,
+    })
+      .notNull()
+      .default("in_app"),
+    state: varchar("state", {
+      enum: [
+        "pending_provider",
+        "active",
+        "paused",
+        "completed",
+        "revoked",
+        "deleted",
+      ] as const,
+    })
+      .notNull()
+      .default("pending_provider"),
+    providerKey: varchar("provider_key", { length: 40 }),
+    providerReferenceHash: varchar("provider_reference_hash", { length: 128 }),
+    lastStatus: jsonb("last_status")
+      .$type<{
+        state: "unknown" | "on_time" | "delayed" | "cancelled" | "diverted";
+        sourceObservedAt: string | null;
+        freshUntil: string | null;
+        summary: string | null;
+      }>()
+      .notNull()
+      .default(sql`'{}'::jsonb`),
+    lastObservedAt: timestamp("last_observed_at", { withTimezone: true }),
+    freshUntil: timestamp("fresh_until", { withTimezone: true }),
+    consentedAt: timestamp("consented_at", { withTimezone: true }).notNull(),
+    pausedAt: timestamp("paused_at", { withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("kinfolk_journey_flight_watches_owner_idx").on(
+      table.userId,
+      table.journeyId,
+    ),
+    index("kinfolk_journey_flight_watches_state_idx").on(
+      table.state,
+      table.scheduledDepartureDate,
+    ),
+    uniqueIndex("kinfolk_journey_flight_watches_owner_flight")
+      .on(
+        table.userId,
+        table.journeyId,
+        table.operatingCarrier,
+        table.flightNumber,
+        table.scheduledDepartureDate,
+        table.originIata,
+        table.destinationIata,
+      )
+      .where(sql`deleted_at IS NULL`),
+  ],
+);
+
 export const kinfolkJourneyAuditTable = pgTable(
   "kinfolk_journey_audit",
   {
@@ -507,3 +588,5 @@ export type KinfolkJourneyConnection =
   typeof kinfolkJourneyConnectionsTable.$inferSelect;
 export type KinfolkJourneyReminder =
   typeof kinfolkJourneyRemindersTable.$inferSelect;
+export type KinfolkJourneyFlightWatch =
+  typeof kinfolkJourneyFlightWatchesTable.$inferSelect;

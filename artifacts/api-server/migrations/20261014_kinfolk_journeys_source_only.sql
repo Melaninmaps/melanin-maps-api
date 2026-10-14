@@ -153,6 +153,43 @@ CREATE TABLE IF NOT EXISTS kinfolk_journey_reminders (
 CREATE INDEX IF NOT EXISTS kinfolk_journey_reminders_due_idx ON kinfolk_journey_reminders (state, due_at);
 CREATE INDEX IF NOT EXISTS kinfolk_journey_reminders_owner_idx ON kinfolk_journey_reminders (user_id, journey_id);
 
+-- Source-only: a future approved flight-status integration may store only a
+-- member-confirmed flight reference and normalized advisory state. This table
+-- contains no PNR, traveler identity, loyalty, ticket, payment, raw provider
+-- payload, airline credential, or booking-management data.
+CREATE TABLE IF NOT EXISTS kinfolk_journey_flight_watches (
+  id varchar(36) PRIMARY KEY DEFAULT gen_random_uuid(),
+  journey_id varchar(36) NOT NULL,
+  user_id varchar(255) NOT NULL,
+  item_id varchar(36),
+  operating_carrier varchar(3) NOT NULL,
+  flight_number varchar(4) NOT NULL,
+  scheduled_departure_date varchar(10) NOT NULL,
+  origin_iata varchar(3) NOT NULL,
+  destination_iata varchar(3) NOT NULL,
+  notification_channel varchar(12) NOT NULL DEFAULT 'in_app',
+  state varchar(32) NOT NULL DEFAULT 'pending_provider',
+  provider_key varchar(40),
+  provider_reference_hash varchar(128),
+  last_status jsonb NOT NULL DEFAULT '{}'::jsonb,
+  last_observed_at timestamptz,
+  fresh_until timestamptz,
+  consented_at timestamptz NOT NULL,
+  paused_at timestamptz,
+  revoked_at timestamptz,
+  deleted_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT kinfolk_journey_flight_watches_channel_check CHECK (notification_channel IN ('in_app','push','email')),
+  CONSTRAINT kinfolk_journey_flight_watches_state_check CHECK (state IN ('pending_provider','active','paused','completed','revoked','deleted')),
+  CONSTRAINT kinfolk_journey_flight_watches_identity_check CHECK (operating_carrier ~ '^[A-Z0-9]{2,3}$' AND flight_number ~ '^[A-Z0-9]{1,4}$' AND origin_iata ~ '^[A-Z]{3}$' AND destination_iata ~ '^[A-Z]{3}$')
+);
+CREATE INDEX IF NOT EXISTS kinfolk_journey_flight_watches_owner_idx ON kinfolk_journey_flight_watches (user_id, journey_id);
+CREATE INDEX IF NOT EXISTS kinfolk_journey_flight_watches_state_idx ON kinfolk_journey_flight_watches (state, scheduled_departure_date);
+CREATE UNIQUE INDEX IF NOT EXISTS kinfolk_journey_flight_watches_owner_flight
+  ON kinfolk_journey_flight_watches (user_id, journey_id, operating_carrier, flight_number, scheduled_departure_date, origin_iata, destination_iata)
+  WHERE deleted_at IS NULL;
+
 CREATE TABLE IF NOT EXISTS kinfolk_journey_audit (
   id varchar(36) PRIMARY KEY DEFAULT gen_random_uuid(),
   journey_id varchar(36) NOT NULL,
@@ -165,6 +202,7 @@ CREATE INDEX IF NOT EXISTS kinfolk_journey_audit_journey_idx ON kinfolk_journey_
 
 -- REVIEW-ONLY ROLLBACK (run only after verified data export and explicit approval):
 -- DROP TABLE IF EXISTS kinfolk_journey_audit;
+-- DROP TABLE IF EXISTS kinfolk_journey_flight_watches;
 -- DROP TABLE IF EXISTS kinfolk_journey_reminders;
 -- DROP TABLE IF EXISTS kinfolk_journey_collaborators;
 -- DROP TABLE IF EXISTS kinfolk_journey_connections;

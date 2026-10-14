@@ -235,6 +235,7 @@ import {
   type KinfolkItinerary,
 } from "../kinfolk/itinerary-response";
 import { inspectProactiveTravelSuggestion } from "../kinfolk/proactive-travel-suggestions";
+import { buildContextualConnectedAppsPrompt } from "../kinfolk/connected-apps/catalog";
 
 // ── Living Library lazy singleton instances ────────────────────────────────────
 // Created once on first research request; degrade gracefully when Tavily key is absent.
@@ -14173,6 +14174,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
             ? "This stable city background is not a current travel-status update. Check current alerts, hours, transit conditions, and events again closer to travel. Any optional follow-up is based only on interests you chose to save, never an assumption about you."
             : "This current city briefing uses the linked public sources. Any optional follow-up is based only on interests you chose to save, never an assumption about you."
           : undefined);
+    const connectedAppsPrompt = isPrivateQuestionAttachment
+      ? null
+      : buildContextualConnectedAppsPrompt(message);
     // The first persistence pass establishes a session ID before answer-plan
     // telemetry. Enrich that same owner-scoped message after the final response
     // metadata exists so reopening a session preserves only safe citations and
@@ -14262,6 +14266,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // Intent classification — lets the client know how this answer was governed.
       // Does not leak user data; intentClass is derived from the message only.
       intentClass,
+      ...(connectedAppsPrompt && { connectedAppsPrompt }),
       // Additive, client-safe explanation of the server decision. It contains
       // no raw question, personal memory, hidden source query, or catalog data.
       responseMeta: kinfolkDecisionResponseMeta(decisionPlan),

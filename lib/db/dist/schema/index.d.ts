@@ -93,6 +93,7 @@ export * from "./identity-verifications";
 export * from "./review-helpful-votes";
 export * from "./life-journeys";
 export * from "./kinfolk-journeys";
+export * from "./kinfolk-connected-apps";
 export * from "./entity-connections";
 export * from "./community-signals";
 export * from "./notifications";

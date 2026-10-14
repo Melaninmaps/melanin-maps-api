@@ -80,6 +80,11 @@ type KinfolkResourceCard = {
   type: "image_gallery" | "health_source" | "community_source" | "entity_source";
   safetyNote?: string;
 };
+type ConnectedAppsPrompt = {
+  title: string;
+  description: string;
+  appKeys: string[];
+};
 
 interface Message {
   id: string;
@@ -110,6 +115,7 @@ interface Message {
   researchStatus?: KinfolkResearchStatus | null;
   contextualVisuals?: KinfolkContextualVisual[];
   resourceCards?: KinfolkResourceCard[];
+  connectedAppsPrompt?: ConnectedAppsPrompt | null;
   /** Device-local only; never included in the Kinfolk chat payload. */
   imagePreviewUris?: string[];
 }
@@ -248,6 +254,7 @@ async function sendToKinfolk(
   researchStatus?: KinfolkResearchStatus | null;
   contextualVisuals?: KinfolkContextualVisual[];
   resourceCards?: KinfolkResourceCard[];
+  connectedAppsPrompt?: ConnectedAppsPrompt | null;
 }> {
   const base = getApiBase();
   const requestSessionId = getKinfolkConversation(accountId)?.sessionId;
@@ -320,6 +327,7 @@ async function sendToKinfolk(
     researchStatus?: KinfolkResearchStatus | null;
     contextualVisuals?: KinfolkContextualVisual[] | null;
     resourceCards?: KinfolkResourceCard[] | null;
+    connectedAppsPrompt?: ConnectedAppsPrompt | null;
   };
   const resolvedSessionId = data.sessionId ?? requestSessionId;
   if (data.sessionId) recordKinfolkConversation(accountId, data.sessionId, "floating");
@@ -354,6 +362,7 @@ async function sendToKinfolk(
         ? [{ ...card, title: safe.title, url: safe.url }]
         : [];
     }).slice(0, 3),
+    connectedAppsPrompt: data.connectedAppsPrompt ?? null,
     clarificationSteps: Array.isArray(data.clarificationSteps) ? data.clarificationSteps.slice(0, 3) : [],
     inlineMemoryConsent: data.memoryConsentPlan ? { message, plan: data.memoryConsentPlan, sessionId: resolvedSessionId } : null,
     sensitiveMemoryDraft:
@@ -1161,6 +1170,7 @@ export function AIChatWidget() {
         relatedConnections,
         researchStatus,
         contextualVisuals,
+        connectedAppsPrompt,
       } = await sendToKinfolk(text, user.id, token, voiceMode, cityHint, request.signal, {
         imageAssetIds: attachedImageAssetIds,
         imageVisionConsent: attachedImageAssetIds.length > 0,
@@ -1202,6 +1212,7 @@ export function AIChatWidget() {
         relatedConnections,
         researchStatus,
         contextualVisuals,
+        connectedAppsPrompt,
       };
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
@@ -1800,6 +1811,20 @@ export function AIChatWidget() {
                         {resource.safetyNote ? <Text style={[styles.contextualDisclosureText, { color: colors.mutedForeground }]}>{resource.safetyNote}</Text> : null}
                       </TouchableOpacity>
                     ))}
+                  </View>
+                ) : null}
+                {!item.fromUser && item.connectedAppsPrompt ? (
+                  <View testID="kinfolk-connected-apps-prompt" style={[styles.contextualDisclosure, { marginLeft: 42, backgroundColor: colors.card, borderColor: colors.border }]}>
+                    <Text style={[styles.contextualDisclosureTitle, { color: colors.foreground }]}>{item.connectedAppsPrompt.title}</Text>
+                    <Text style={[styles.contextualDisclosureText, { color: colors.mutedForeground }]}>{item.connectedAppsPrompt.description}</Text>
+                    <TouchableOpacity
+                      accessibilityRole="button"
+                      accessibilityLabel="Review Connected Apps"
+                      onPress={() => router.push({ pathname: "/kinfolk-connected-apps", params: { focus: item.connectedAppsPrompt?.appKeys.join(",") ?? "" } } as never)}
+                      style={{ alignSelf: "flex-start", marginTop: 8, borderRadius: 10, backgroundColor: colors.primary, paddingHorizontal: 12, paddingVertical: 8 }}
+                    >
+                      <Text style={{ color: colors.primaryForeground, fontSize: 12, fontWeight: "700" }}>Review Connected Apps</Text>
+                    </TouchableOpacity>
                   </View>
                 ) : null}
                 {!item.fromUser && item.companionMemoryOffer ? (

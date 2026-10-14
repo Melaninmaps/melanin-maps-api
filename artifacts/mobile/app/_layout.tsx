@@ -402,7 +402,8 @@ function DobChecker() {
 function SessionExpiryWatcher() {
   const router = useRouter();
   const pathname = usePathname();
-  const { isLoading, isAuthenticated, sessionExpired, sessionRecoveryError } = useAuth();
+  const { isLoading, isAuthenticated, sessionExpired, sessionRecoveryError } =
+    useAuth();
 
   useEffect(() => {
     if (isLoading) return;
@@ -1006,6 +1007,10 @@ function RootLayoutNav() {
       />
       <Stack.Screen
         name="kinfolk-journeys"
+        options={{ headerShown: false, presentation: "card" }}
+      />
+      <Stack.Screen
+        name="kinfolk-connected-apps"
         options={{ headerShown: false, presentation: "card" }}
       />
       <Stack.Screen
