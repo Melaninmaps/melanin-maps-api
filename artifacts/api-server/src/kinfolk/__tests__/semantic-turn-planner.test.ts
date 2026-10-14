@@ -152,6 +152,23 @@ describe("semantic turn planner", () => {
     expect(classify).not.toHaveBeenCalled();
   });
 
+  it("answers only bounded standalone arithmetic locally", () => {
+    expect(deterministicArithmeticAnswer("2 + 3 * 4")).toBe("14");
+    expect(deterministicArithmeticAnswer("What is (2 + 3) * 4?")).toBe("20");
+    expect(deterministicArithmeticAnswer("-3.5 + +1.25")).toBe("-2.25");
+    expect(deterministicArithmeticAnswer("Calculate 15% of 80")).toBe("12");
+    expect(deterministicArithmeticAnswer("6 × 7")).toBe("42");
+    expect(deterministicArithmeticAnswer("0.1 + 0.2")).toBe("0.3");
+
+    expect(deterministicArithmeticAnswer("1 +")).toBeNull();
+    expect(deterministicArithmeticAnswer("2 + (3")).toBeNull();
+    expect(deterministicArithmeticAnswer("1 / 0")).toBeNull();
+    expect(deterministicArithmeticAnswer("Here is a calculation: 2 + 2")).toBeNull();
+    expect(deterministicArithmeticAnswer("Can you calculate 2 + 2?")).toBeNull();
+    expect(deterministicArithmeticAnswer("2 + 2 apples")).toBeNull();
+    expect(deterministicArithmeticAnswer("How much is 100 USD in EUR?")).toBeNull();
+  });
+
   it.each(["What was the answer?", "What was that?", "How did you get that?"])(
     "keeps the immediate arithmetic follow-up resolved: %s",
     async (message) => {
@@ -172,8 +189,8 @@ describe("semantic turn planner", () => {
 
   it("resolves only the immediate arithmetic antecedent", () => {
     const arithmeticHistory = [
-      { role: "user" as const, content: "10 + 10" },
-      { role: "assistant" as const, content: "20" },
+      { role: "user" as const, content: "Calculate (8 + 2) * 3" },
+      { role: "assistant" as const, content: "30" },
     ];
     expect(
       hasResolvedImmediateArithmeticFollowUp(

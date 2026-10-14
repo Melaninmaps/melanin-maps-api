@@ -74,17 +74,181 @@ export function resolveConversationalResearchSubject(
   };
 }
 
+const ARITHMETIC_MAX_INPUT_LENGTH = 200;
+const ARITHMETIC_MAX_TOKENS = 80;
+const ARITHMETIC_MAX_DEPTH = 12;
+const ARITHMETIC_MAX_NUMBER_DIGITS = 15;
+
+type ArithmeticToken =
+  | { kind: "number"; value: number }
+  | { kind: "operator"; value: "+" | "-" | "*" | "/" }
+  | { kind: "open" | "close" | "percent" | "of" };
+
+/**
+ * Strips only a complete, familiar request wrapper. Anything before or after
+ * the calculation is intentionally rejected rather than treated as a fragment
+ * to extract from prose.
+ */
+function standaloneArithmeticExpression(message: string): string | null {
+  let expression = message.trim();
+  if (!expression || expression.length > ARITHMETIC_MAX_INPUT_LENGTH) return null;
+  if (expression.endsWith("?")) expression = expression.slice(0, -1).trim();
+  const wrapped = expression.match(/^(?:what(?:'s|\s+is)|calculate)\s+(.+)$/i);
+  if (wrapped) expression = wrapped[1].trim();
+  return expression || null;
+}
+
+function tokenizeArithmetic(expression: string): ArithmeticToken[] | null {
+  const tokens: ArithmeticToken[] = [];
+  const normalized = expression.replaceAll("×", "*").replaceAll("÷", "/");
+  let index = 0;
+  while (index < normalized.length) {
+    const character = normalized[index];
+    if (/\s/.test(character)) {
+      index += 1;
+      continue;
+    }
+    if (character === "+" || character === "-" || character === "*" || character === "/") {
+      tokens.push({ kind: "operator", value: character });
+      index += 1;
+    } else if (character === "(") {
+      tokens.push({ kind: "open" });
+      index += 1;
+    } else if (character === ")") {
+      tokens.push({ kind: "close" });
+      index += 1;
+    } else if (character === "%") {
+      tokens.push({ kind: "percent" });
+      index += 1;
+    } else if (character === "o" || character === "O") {
+      if (normalized.slice(index, index + 2).toLowerCase() !== "of") return null;
+      tokens.push({ kind: "of" });
+      index += 2;
+    } else if (/\d/.test(character) || (character === "." && /\d/.test(normalized[index + 1] ?? ""))) {
+      const start = index;
+      let digitCount = 0;
+      if (character === ".") {
+        index += 1;
+        while (/\d/.test(normalized[index] ?? "")) {
+          digitCount += 1;
+          index += 1;
+        }
+      } else {
+        while (/\d/.test(normalized[index] ?? "")) {
+          digitCount += 1;
+          index += 1;
+        }
+        if (normalized[index] === ".") {
+          index += 1;
+          while (/\d/.test(normalized[index] ?? "")) {
+            digitCount += 1;
+            index += 1;
+          }
+        }
+      }
+      if (digitCount > ARITHMETIC_MAX_NUMBER_DIGITS) return null;
+      const number = Number(normalized.slice(start, index));
+      if (!Number.isFinite(number)) return null;
+      tokens.push({ kind: "number", value: number });
+    } else {
+      return null;
+    }
+    if (tokens.length > ARITHMETIC_MAX_TOKENS) return null;
+  }
+  return tokens;
+}
+
+function formatArithmeticResult(value: number): string | null {
+  if (!Number.isFinite(value)) return null;
+  // Fifteen significant digits remove ordinary IEEE-754 display noise while
+  // keeping the result deterministic and compact (for example, 0.1 + 0.2).
+  const rounded = Number(value.toPrecision(15));
+  if (!Number.isFinite(rounded)) return null;
+  return Object.is(rounded, -0) ? "0" : String(rounded);
+}
+
 /** Deliberately small grammar: arithmetic is answered locally, never retrieved. */
 export function deterministicArithmeticAnswer(message: string): string | null {
-  const match = message.trim().match(/^(?:what(?:'s| is)\s+)?(-?\d+(?:\.\d+)?)\s*([+\-*/])\s*(-?\d+(?:\.\d+)?)\s*\??$/i);
-  if (!match) return null;
-  const left = Number(match[1]);
-  const right = Number(match[3]);
-  if (!Number.isFinite(left) || !Number.isFinite(right) || (match[2] === "/" && right === 0)) return null;
-  const result = match[2] === "+" ? left + right
-    : match[2] === "-" ? left - right
-    : match[2] === "*" ? left * right : left / right;
-  return Number.isFinite(result) ? String(result) : null;
+  const expression = standaloneArithmeticExpression(message);
+  if (!expression) return null;
+  const tokens = tokenizeArithmetic(expression);
+  if (!tokens?.length) return null;
+  let index = 0;
+  let depth = 0;
+
+  const peek = () => tokens[index];
+  const finite = (value: number) => Number.isFinite(value) ? value : null;
+  function parsePrimary(): number | null {
+    const token = peek();
+    if (token?.kind === "number") {
+      index += 1;
+      return token.value;
+    }
+    if (token?.kind !== "open" || depth >= ARITHMETIC_MAX_DEPTH) return null;
+    index += 1;
+    depth += 1;
+    const value = parseAdditive();
+    if (value === null || peek()?.kind !== "close") return null;
+    index += 1;
+    depth -= 1;
+    return value;
+  }
+  function parseUnary(): number | null {
+    const token = peek();
+    if (token?.kind === "operator" && (token.value === "+" || token.value === "-")) {
+      index += 1;
+      const value = parseUnary();
+      return value === null ? null : finite(token.value === "-" ? -value : value);
+    }
+    return parsePrimary();
+  }
+  function parseMultiplicative(): number | null {
+    let value = parseUnary();
+    while (value !== null) {
+      const operator = peek();
+      if (operator?.kind !== "operator" || (operator.value !== "*" && operator.value !== "/")) break;
+      index += 1;
+      const right = parseUnary();
+      if (right === null || (operator.value === "/" && right === 0)) return null;
+      value = finite(operator.value === "*" ? value * right : value / right);
+    }
+    return value;
+  }
+  function parseAdditive(): number | null {
+    let value = parseMultiplicative();
+    while (value !== null) {
+      const operator = peek();
+      if (operator?.kind !== "operator" || (operator.value !== "+" && operator.value !== "-")) break;
+      index += 1;
+      const right = parseMultiplicative();
+      if (right === null) return null;
+      value = finite(operator.value === "+" ? value + right : value - right);
+    }
+    return value;
+  }
+  const startsPercentageOf = () => {
+    let candidate = index;
+    const sign = tokens[candidate];
+    if (sign?.kind === "operator" && (sign.value === "+" || sign.value === "-")) candidate += 1;
+    return tokens[candidate]?.kind === "number"
+      && tokens[candidate + 1]?.kind === "percent"
+      && tokens[candidate + 2]?.kind === "of";
+  };
+
+  let result: number | null;
+  if (startsPercentageOf()) {
+    const sign = peek();
+    const multiplier = sign?.kind === "operator" && sign.value === "-" ? -1 : 1;
+    if (sign?.kind === "operator") index += 1;
+    const percent = peek();
+    if (percent?.kind !== "number") return null;
+    index += 3; // number, %, of
+    const base = parseAdditive();
+    result = base === null ? null : finite(multiplier * (percent.value / 100) * base);
+  } else {
+    result = parseAdditive();
+  }
+  return result === null || index !== tokens.length ? null : formatArithmeticResult(result);
 }
 
 function basePlan(input: SemanticPlannerInput): SemanticTurnPlan {
@@ -138,11 +302,12 @@ export function hasResolvedImmediateArithmeticFollowUp(
   history?: SemanticPlannerInput["history"],
 ): boolean {
   const recent = history?.slice(-2) ?? [];
-  const immediateArithmeticExchange = recent.length === 2
-    && recent[0]?.role === "user"
-    && /\b-?\d+(?:\.\d+)?\s*[+\-*/]\s*-?\d+(?:\.\d+)?\b/.test(recent[0].content)
+  const priorArithmetic = recent.length === 2 && recent[0]?.role === "user"
+    ? deterministicArithmeticAnswer(recent[0].content)
+    : null;
+  const immediateArithmeticExchange = priorArithmetic !== null
     && recent[1]?.role === "assistant"
-    && /\b-?\d+(?:\.\d+)?\b/.test(recent[1].content);
+    && recent[1].content.trim() === priorArithmetic;
   const arithmeticReferentialFollowUp = /\b(that|the answer|the result|how did you get|what was|what is)\b/i.test(message)
     && !/\b(conflict|dispute|contest|battle|case|version|person|place)\b/i.test(message);
   return immediateArithmeticExchange && arithmeticReferentialFollowUp;
