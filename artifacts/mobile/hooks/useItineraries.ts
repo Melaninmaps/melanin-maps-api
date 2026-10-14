@@ -34,6 +34,20 @@ type ApiTrip = Readonly<{
   updatedAt: string;
 }>;
 
+export type ItineraryEntry = Readonly<{
+  id: string;
+  dayLabel: string;
+  dayOrder: number;
+  startTimeLabel: string;
+  endTimeLabel: string;
+  title: string;
+  note: string;
+  createdAt: string;
+  updatedAt: string;
+}>;
+
+export type ItineraryEntryInput = Pick<ItineraryEntry, "dayLabel" | "dayOrder" | "startTimeLabel" | "endTimeLabel" | "title" | "note">;
+
 type ItineraryChanges = Partial<Pick<Itinerary, "name" | "destination" | "notes" | "stops">>;
 
 function toItinerary(trip: ApiTrip): Itinerary {
@@ -61,6 +75,63 @@ async function tripRequest(path: string, init: RequestInit = {}): Promise<Respon
 async function responseError(response: Response, fallback: string): Promise<Error> {
   const payload = await response.json().catch(() => ({})) as { error?: unknown };
   return new Error(typeof payload.error === "string" ? payload.error : fallback);
+}
+
+/**
+ * Owner-only manual day items. This hook has no AsyncStorage fallback, migration,
+ * or cross-feature side effect; ordering is persisted and confirmed on the server.
+ */
+export function useTripItinerary(tripId: string | null) {
+  const [entries, setEntries] = useState<ItineraryEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(Boolean(tripId));
+  const [error, setError] = useState<string | null>(null);
+  const path = tripId ? `/${encodeURIComponent(tripId)}/itinerary` : null;
+
+  const load = useCallback(async () => {
+    if (!path) { setEntries([]); setIsLoading(false); return; }
+    setIsLoading(true); setError(null);
+    try {
+      const response = await tripRequest(path, { cache: "no-store" });
+      if (!response.ok) throw await responseError(response, "Private itinerary could not be loaded.");
+      const payload = await response.json() as { entries?: ItineraryEntry[] };
+      setEntries(Array.isArray(payload.entries) ? payload.entries : []);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Private itinerary could not be loaded.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [path]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const mutate = useCallback(async (suffix: string, init: RequestInit, fallback: string) => {
+    if (!path) throw new Error("Private Trip not found.");
+    const response = await tripRequest(`${path}${suffix}`, { ...init, cache: "no-store" });
+    if (!response.ok) throw await responseError(response, fallback);
+    await load();
+  }, [load, path]);
+
+  const createEntry = useCallback(async (input: ItineraryEntryInput, memberConfirmed = false) => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to save a private itinerary item.");
+    await mutate("", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...input, memberConfirmed: true }) }, "Private itinerary item could not be created.");
+  }, [mutate]);
+
+  const updateEntry = useCallback(async (entryId: string, input: ItineraryEntryInput, memberConfirmed = false) => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to update a private itinerary item.");
+    await mutate(`/${encodeURIComponent(entryId)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...input, memberConfirmed: true }) }, "Private itinerary item could not be updated.");
+  }, [mutate]);
+
+  const deleteEntry = useCallback(async (entryId: string, memberConfirmed = false) => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to delete a private itinerary item.");
+    await mutate(`/${encodeURIComponent(entryId)}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ memberConfirmed: true }) }, "Private itinerary item could not be deleted.");
+  }, [mutate]);
+
+  const reorderEntries = useCallback(async (entryIds: string[], memberConfirmed = false) => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to reposition private itinerary items.");
+    await mutate("/order", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ entryIds, memberConfirmed: true }) }, "Private itinerary could not be reordered.");
+  }, [mutate]);
+
+  return { entries, isLoading, error, createEntry, updateEntry, deleteEntry, reorderEntries, refresh: load };
 }
 
 /**

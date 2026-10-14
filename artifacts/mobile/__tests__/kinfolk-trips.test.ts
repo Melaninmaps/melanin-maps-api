@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const hook = readFileSync(new URL("../hooks/useItineraries.ts", import.meta.url), "utf8");
 const screen = readFileSync(new URL("../app/my-trips.tsx", import.meta.url), "utf8");
+const organizer = readFileSync(new URL("../components/TripItineraryOrganizer.tsx", import.meta.url), "utf8");
 
 describe("native account-backed private Trips", () => {
   it("uses the authenticated API rather than AsyncStorage for the canonical lifecycle", () => {
@@ -31,5 +32,24 @@ describe("native account-backed private Trips", () => {
     for (const boundary of ["chat/memory", "profile, discovery/Map/Directory/Community/Safety", "flights, hotels, events, documents, tasks/reminders, analytics, or", "exact address, location, or coordinates"]) {
       expect(screen).toContain(boundary);
     }
+  });
+
+  it("adds a confirmed account-backed private manual itinerary with server ordering, never local persistence", () => {
+    expect(screen).toContain("TripItineraryOrganizer tripId={selected.id}");
+    for (const contract of ["useTripItinerary", "cache: \"no-store\"", "createEntry", "updateEntry", "deleteEntry", "reorderEntries", "entryIds, memberConfirmed: true"]) {
+      expect(hook).toContain(contract);
+    }
+    expect(hook).not.toContain("@react-native-async-storage/async-storage");
+    expect(organizer).toContain('accessibilityLabel="Confirm private itinerary save"');
+    expect(organizer).toContain("reorderEntries(ordered.map((current) => current.id), true)");
+    expect(organizer).toContain("deleteEntry(entry.id, true)");
+  });
+
+  it("keeps the itinerary visibly private/manual with no booking, notification, sharing, or automatic use", () => {
+    for (const boundary of ["do not schedule, book, notify, share, or automatically use any service", "Kinfolk chat or memory, profile, discovery, Map, Directory, Community, Safety", "providers, calendars, flights, hotels, events, documents, tasks, reminders, or analytics", "public share link"]) {
+      expect(organizer).toContain(boundary);
+    }
+    expect(organizer).not.toContain("api/kinfolk/chat");
+    expect(organizer).not.toContain("AsyncStorage");
   });
 });

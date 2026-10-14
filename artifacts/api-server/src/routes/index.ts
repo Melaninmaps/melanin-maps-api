@@ -31,6 +31,7 @@ import kinfolkRouter, { probeKinfolkAI } from "./kinfolk";
 import kinfolkPrivatePlacesRouter from "./kinfolk-private-places";
 import kinfolkTemporaryStaysRouter from "./kinfolk-temporary-stays";
 import kinfolkTripsRouter from "./kinfolk-trips";
+import kinfolkTripItineraryRouter from "./kinfolk-trip-itinerary";
 import kinfolkCurrentChaptersRouter from "./kinfolk-current-chapters";
 import kinfolkCuriosityListsRouter from "./kinfolk-curiosity-lists";
 import kinfolkBehavioralEvidenceRouter from "./kinfolk-behavioral-evidence";
@@ -310,6 +311,9 @@ router.use(kinfolkTemporaryStaysRouter);
 // Trips are private encrypted owner records. This mounts no sharing, chat,
 // provider, calendar, flight, hotel, reminder, or public endpoint.
 router.use(kinfolkTripsRouter);
+// Manual Trip itinerary entries are a separately encrypted, owner-scoped
+// nested lifecycle. They never schedule, book, notify, share, or auto-use services.
+router.use(kinfolkTripItineraryRouter);
 router.use(kinfolkCurrentChaptersRouter);
 router.use(kinfolkCuriosityListsRouter);
 router.use(kinfolkBehavioralEvidenceRouter);

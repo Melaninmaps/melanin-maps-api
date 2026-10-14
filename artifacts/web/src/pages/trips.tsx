@@ -1,6 +1,7 @@
 import { MapPin, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "wouter";
+import TripItineraryOrganizer from "@/components/trip-itinerary-organizer";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -162,6 +163,8 @@ export default function Trips() {
           {editing ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}{saving ? "Saving…" : editing ? "Confirm and update Trip" : "Confirm and save Trip"}
         </button>
       </section>
+
+      {selected ? <TripItineraryOrganizer tripId={selected.id} tripTitle={selected.title} /> : null}
 
       <section className="mt-7" aria-labelledby="saved-trips-title">
         <h2 id="saved-trips-title" className="font-serif text-xl font-bold text-[#2B1507]">Saved private Trips</h2>

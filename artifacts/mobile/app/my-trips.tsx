@@ -16,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useItineraries, type Itinerary } from "@/hooks/useItineraries";
+import TripItineraryOrganizer from "@/components/TripItineraryOrganizer";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -172,6 +173,8 @@ export default function MyTripsScreen() {
             </TouchableOpacity>
           </View>
         ) : null}
+
+        {selected ? <TripItineraryOrganizer tripId={selected.id} tripTitle={selected.name} /> : null}
 
         {isLoading ? <ActivityIndicator style={styles.loading} color={colors.primary} /> : null}
         {!isLoading && itineraries.length === 0 ? (
