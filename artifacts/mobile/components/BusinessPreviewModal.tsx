@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import type { Business } from "@/constants/types";
 import { RatingStars } from "./RatingStars";
+import { getBusinessCategoryIcon } from "./BusinessCategoryVisual";
 
 function getApiBase(): string {
   if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
@@ -57,16 +58,6 @@ const SOCIAL_PLATFORMS = [
   { key: "twitter", label: "X / Twitter", icon: "twitter" as const, color: "#1DA1F2", bg: "#1DA1F218", baseUrl: "https://x.com/", allowedDomains: ["x.com", "twitter.com"] },
 ];
 
-const CATEGORY_IMAGES: Record<string, any> = {
-  Food: require("@/assets/images/bento-businesses.jpg"),
-  Beauty: require("@/assets/images/bento-nightlife.jpg"),
-  Retail: require("@/assets/images/bento-nightlife.jpg"),
-  Tech: require("@/assets/images/bento-businesses.jpg"),
-  Health: require("@/assets/images/bento-culture.jpg"),
-  Legal: require("@/assets/images/bento-businesses.jpg"),
-  Finance: require("@/assets/images/bento-businesses.jpg"),
-};
-
 interface Props {
   business: Business | null;
   visible: boolean;
@@ -105,7 +96,7 @@ export function BusinessPreviewModal({ business, visible, onClose, onViewProfile
 
   const chips = getComplimentChips(business);
   const captions = (business.topCaptions ?? []).slice(0, 4);
-  const img = CATEGORY_IMAGES[business.category] ?? CATEGORY_IMAGES["Food"];
+  const categoryIcon = getBusinessCategoryIcon(business.category, business.subcategory);
   const biz = business as any;
   const activeSocials = SOCIAL_PLATFORMS.filter((s) => !!biz[s.key]);
 
@@ -128,11 +119,15 @@ export function BusinessPreviewModal({ business, visible, onClose, onViewProfile
         keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} bounces={false}>
           {/* Hero */}
           <View style={s.heroWrap}>
-            <Image
-              source={business.imageUrl ? { uri: business.imageUrl } : img}
-              style={s.heroImage}
-              contentFit="cover"
-            />
+            {business.imageUrl ? (
+              <Image source={{ uri: business.imageUrl }} style={s.heroImage} contentFit="cover" />
+            ) : (
+              <View style={s.heroCategoryVisual} accessibilityLabel={`${business.category} category visual`}>
+                <View style={s.heroCategoryIcon}>
+                  <Feather name={categoryIcon} size={50} color="#D39A2B" />
+                </View>
+              </View>
+            )}
             <View style={s.heroOverlay} />
             <View style={s.heroContent}>
               <Text style={s.heroName} numberOfLines={2}>{business.name}</Text>
@@ -266,6 +261,23 @@ const s = StyleSheet.create({
   heroImage: {
     width: "100%",
     height: "100%",
+  },
+  heroCategoryVisual: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#3A1F0E",
+  },
+  heroCategoryIcon: {
+    width: 92,
+    height: 92,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 26,
+    borderWidth: 1,
+    borderColor: "#D39A2B80",
+    backgroundColor: "#211007",
   },
   heroOverlay: {
     position: "absolute", top: 0, left: 0, right: 0, bottom: 0,

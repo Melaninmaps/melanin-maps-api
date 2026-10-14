@@ -12,6 +12,7 @@ import { RatingStars } from "./RatingStars";
 import { VerificationBadge } from "./VerificationBadge";
 import { SafetyExperienceSurvey } from "./SafetyExperienceSurvey";
 import { BusinessPreviewModal } from "./BusinessPreviewModal";
+import { getBusinessCategoryIcon } from "./BusinessCategoryVisual";
 import { getBusinessExperiencePolicy } from "@workspace/constants";
 
 function getOpenStatus(hours?: string | null): { open: boolean; label: string } | null {
@@ -78,16 +79,6 @@ function getExperienceLabel(
   return getVibeMatch(business.category);
 }
 
-const CATEGORY_IMAGES: Record<string, any> = {
-  Food: require("@/assets/images/bento-businesses.jpg"),
-  Beauty: require("@/assets/images/bento-nightlife.jpg"),
-  Retail: require("@/assets/images/bento-nightlife.jpg"),
-  Tech: require("@/assets/images/bento-businesses.jpg"),
-  Health: require("@/assets/images/bento-culture.jpg"),
-  Legal: require("@/assets/images/bento-businesses.jpg"),
-  Finance: require("@/assets/images/bento-businesses.jpg"),
-};
-
 interface Props {
   business: Business;
   onPress: () => void;
@@ -99,10 +90,7 @@ interface Props {
 
 export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizontal = false, warningCount = 0 }: Props) {
   const colors = useColors();
-  // Prefer the per-business image from the server; fall back to category stock art.
-  const img = business.imageUrl
-    ? { uri: business.imageUrl }
-    : (CATEGORY_IMAGES[business.category] ?? CATEGORY_IMAGES["Food"]);
+  const categoryIcon = getBusinessCategoryIcon(business.category, business.subcategory);
   const [showSafetySurvey, setShowSafetySurvey] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
@@ -134,7 +122,13 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
           accessibilityLabel={`${business.name}, ${business.category} in ${business.city}`}
           accessibilityHint="Double tap to view details, hold to preview"
         >
-          <Image source={img} style={styles.hImage} contentFit="cover" />
+          {business.imageUrl ? (
+            <Image source={{ uri: business.imageUrl }} style={styles.hImage} contentFit="cover" />
+          ) : (
+            <View style={[styles.hImage, styles.categoryVisual]} accessibilityLabel={`${business.category} category visual`}>
+              <Feather name={categoryIcon} size={38} color="#D39A2B" />
+            </View>
+          )}
           {business.ownershipDesignations?.includes("non-minority-owned") ? (
             <View style={styles.hBadgeOverlay}>
               <NonMinorityBadge size="sm" />
@@ -281,9 +275,15 @@ export function BusinessCard({ business, onPress, isSaved, onToggleSave, horizon
         accessibilityRole="button"
         accessibilityLabel={`${business.name}, ${business.category} in ${business.city}`}
         accessibilityHint="Double tap to view details, hold to preview"
-      >
-        <View style={styles.vImageWrap}>
-          <Image source={img} style={styles.vImage} contentFit="cover" />
+        >
+          <View style={styles.vImageWrap}>
+          {business.imageUrl ? (
+            <Image source={{ uri: business.imageUrl }} style={styles.vImage} contentFit="cover" />
+          ) : (
+            <View style={[styles.vImage, styles.categoryVisual]} accessibilityLabel={`${business.category} category visual`}>
+              <Feather name={categoryIcon} size={30} color="#D39A2B" />
+            </View>
+          )}
           {business.ownershipDesignations?.includes("non-minority-owned") ? (
             <View style={styles.vBadgeOverlay}>
               <NonMinorityBadge size="sm" />
@@ -509,6 +509,11 @@ const styles = StyleSheet.create({
   vImage: {
     width: 90,
     height: 100,
+  },
+  categoryVisual: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#3A1F0E",
   },
   vBadgeOverlay: {
     position: "absolute",
