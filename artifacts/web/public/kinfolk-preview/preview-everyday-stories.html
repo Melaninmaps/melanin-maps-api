@@ -505,6 +505,7 @@
   <script>
     (() => {
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const mobilePreview = window.matchMedia('(max-width: 860px)');
       const stories = [...document.querySelectorAll('[data-story]')];
       function activate(story, key) {
         const screens = [...story.querySelectorAll('[data-screen]')];
@@ -526,7 +527,8 @@
           const key = button.dataset.screenSelect;
           const target = story.querySelector(`[data-screen-trigger="${key}"]`);
           activate(story, key);
-          target?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
+          if (mobilePreview.matches) story.querySelector('.story-device-wrap')?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+          else target?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
         }));
         story.querySelectorAll('[data-screen-next]').forEach((button) => button.addEventListener('click', () => {
           activate(story, button.dataset.screenNext);
@@ -541,12 +543,14 @@
             if (marker && selector !== '[data-owner-caption]') marker.textContent = selected ? '✓' : '0' + ([...story.querySelectorAll(selector)].indexOf(option) + 1);
           });
         }));
-        const observer = new IntersectionObserver((entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) activate(story, entry.target.dataset.screenTrigger);
-          });
-        }, { threshold: .56, rootMargin: '-12% 0px -12% 0px' });
-        story.querySelectorAll('[data-screen-trigger]').forEach((beat) => observer.observe(beat));
+        if (!mobilePreview.matches) {
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) activate(story, entry.target.dataset.screenTrigger);
+            });
+          }, { threshold: .56, rootMargin: '-12% 0px -12% 0px' });
+          story.querySelectorAll('[data-screen-trigger]').forEach((beat) => observer.observe(beat));
+        }
       });
       document.querySelectorAll('[data-local-action]').forEach((button) => button.addEventListener('click', () => {
         const original = button.textContent;
