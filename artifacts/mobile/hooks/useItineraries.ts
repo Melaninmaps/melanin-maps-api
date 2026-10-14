@@ -198,6 +198,100 @@ export function useTripTemporaryStays(tripId: string | null) {
   return { stays, isLoading, error, linkStay, unlinkStay, refresh: load };
 }
 
+export type PrivateAvailabilityBlock = Readonly<{
+  id: string;
+  label: string;
+  startAt: string;
+  endAt: string;
+  timeZone: string;
+  planningOptIn: boolean;
+  createdAt: string;
+  updatedAt: string;
+}>;
+
+export type PrivateAvailabilityBlockInput = Omit<PrivateAvailabilityBlock, "id" | "createdAt" | "updatedAt">;
+type PrivateAvailabilityPreviewInput = Pick<PrivateAvailabilityBlockInput, "startAt" | "endAt" | "timeZone">;
+type PrivateAvailabilityPreview = Readonly<{ hasConflict: boolean; conflictCount: number }>;
+
+async function availabilityRequest(path: string, init: RequestInit = {}): Promise<Response> {
+  const headers = await getMemberApiHeaders();
+  return fetch(`${getApiBase()}/api/kinfolk/availability-blocks${path}`, {
+    ...init,
+    credentials: Platform.OS === "web" ? "include" : undefined,
+    headers: { ...headers, ...(init.headers ?? {}) },
+  });
+}
+
+/**
+ * Manual owner-only availability controls. This hook has no local persistence,
+ * provider connection, external-calendar read/sync, or automatic chat use.
+ */
+export function usePrivateAvailabilityBlocks() {
+  const [blocks, setBlocks] = useState<PrivateAvailabilityBlock[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setIsLoading(true); setError(null);
+    try {
+      const response = await availabilityRequest("", { cache: "no-store" });
+      if (!response.ok) throw await responseError(response, "Private availability blocks could not be loaded.");
+      const payload = await response.json() as { availabilityBlocks?: PrivateAvailabilityBlock[] };
+      setBlocks(Array.isArray(payload.availabilityBlocks) ? payload.availabilityBlocks : []);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Private availability blocks could not be loaded.");
+    } finally { setIsLoading(false); }
+  }, []);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const createBlock = useCallback(async (input: PrivateAvailabilityBlockInput, memberConfirmed = false) => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to save a private availability block.");
+    const response = await availabilityRequest("", {
+      method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...input, memberConfirmed: true }),
+    });
+    if (!response.ok) throw await responseError(response, "Private availability block could not be created.");
+    await load();
+  }, [load]);
+
+  const updateBlock = useCallback(async (id: string, input: PrivateAvailabilityBlockInput, memberConfirmed = false) => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to update a private availability block.");
+    const response = await availabilityRequest(`/${encodeURIComponent(id)}`, {
+      method: "PUT", cache: "no-store", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...input, memberConfirmed: true }),
+    });
+    if (!response.ok) throw await responseError(response, "Private availability block could not be updated.");
+    await load();
+  }, [load]);
+
+  const deleteBlock = useCallback(async (id: string, memberConfirmed = false) => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to delete a private availability block.");
+    const response = await availabilityRequest(`/${encodeURIComponent(id)}`, {
+      method: "DELETE", cache: "no-store", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberConfirmed: true }),
+    });
+    if (!response.ok) throw await responseError(response, "Private availability block could not be deleted.");
+    await load();
+  }, [load]);
+
+  const preview = useCallback(async (input: PrivateAvailabilityPreviewInput, memberConfirmed = false): Promise<PrivateAvailabilityPreview> => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to check private availability.");
+    const response = await availabilityRequest("/preview", {
+      method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...input, memberConfirmed: true }),
+    });
+    if (!response.ok) throw await responseError(response, "Private availability preview could not be checked.");
+    const result = await response.json() as Partial<PrivateAvailabilityPreview>;
+    if (typeof result.hasConflict !== "boolean" || typeof result.conflictCount !== "number") {
+      throw new Error("Private availability preview could not be checked.");
+    }
+    return { hasConflict: result.hasConflict, conflictCount: result.conflictCount };
+  }, []);
+
+  return { blocks, isLoading, error, createBlock, updateBlock, deleteBlock, preview, refresh: load };
+}
+
 /**
  * My Trips never reads, writes, deletes, or migrates @melanin_maps_itineraries.
  * Any old AsyncStorage entries stay untouched on that device and are labelled as

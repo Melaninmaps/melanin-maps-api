@@ -2,6 +2,7 @@ import { MapPin, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "wouter";
 import TripItineraryOrganizer from "@/components/trip-itinerary-organizer";
+import PrivateAvailabilityBlocks from "@/components/kinfolk/PrivateAvailabilityBlocks";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -249,6 +250,8 @@ export default function Trips() {
       </section>
 
       {selected ? <TripItineraryOrganizer tripId={selected.id} tripTitle={selected.title} /> : null}
+
+      <PrivateAvailabilityBlocks />
 
       {selected ? <section className="mt-5 rounded-2xl border border-[#3A1F0E]/10 bg-white p-5" aria-labelledby="trip-temporary-stays-title">
         <div className="flex items-start gap-2">

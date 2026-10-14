@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useItineraries, useTripTemporaryStays, type Itinerary, type TripTemporaryStay } from "@/hooks/useItineraries";
 import TripItineraryOrganizer from "@/components/TripItineraryOrganizer";
+import PrivateAvailabilityBlocks from "@/components/PrivateAvailabilityBlocks";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
@@ -218,6 +219,7 @@ export default function MyTripsScreen() {
           <Feather name="archive" size={14} color={colors.mutedForeground} />
           <Text style={[styles.legacyText, { color: colors.mutedForeground }]}>Older device-only Saved Trips, if any, remain in this device&apos;s local storage. They were not moved to your account or deleted.</Text>
         </View>
+        <PrivateAvailabilityBlocks />
         {error ? <Text accessibilityRole="alert" style={[styles.error, { color: "#B42318" }]}>{error}</Text> : null}
 
         {showForm ? (
