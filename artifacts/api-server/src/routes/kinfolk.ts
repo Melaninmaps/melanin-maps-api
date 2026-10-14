@@ -318,6 +318,7 @@ import {
   rankGovernedBusinessesForMember,
 } from "../kinfolk/business-personalization";
 import { buildConversationalBusinessResultView } from "../kinfolk/business-result-view";
+import { resolvePrivatePlaceConversationOrigin } from "../kinfolk/private-place-conversation-origin";
 import {
   businessDiscoveryClarification,
   effectiveBusinessAudienceBand,
@@ -7870,6 +7871,148 @@ async function tryAnswerCurrentCitySafetyBriefing(input: {
   return true;
 }
 
+/**
+ * A Saved Place can become a private search origin only when the signed-in
+ * member explicitly asks for nearby businesses using one active nickname. The
+ * address and coordinates stay inside the owner-scoped resolver; the model,
+ * chat history, telemetry, and response payload receive only public governed
+ * directory cards.
+ */
+async function tryAnswerPrivatePlaceOriginDiscovery(input: {
+  req: Request;
+  res: Response;
+  sessionId?: string;
+  message: string;
+  vibes: string[];
+  memoryEnabled: boolean;
+}): Promise<boolean> {
+  if (!input.req.user?.id) return false;
+  const evidenceDomain = classifyEvidenceRoute(input.message).domain;
+  if (
+    evidenceDomain === "medical_health" ||
+    evidenceDomain === "legal_regulated" ||
+    evidenceDomain === "financial_regulated" ||
+    evidenceDomain === "safety_emergency"
+  ) {
+    return false;
+  }
+  const origin = await resolvePrivatePlaceConversationOrigin({
+    ownerId: input.req.user.id,
+    message: input.message,
+  });
+  if (origin.state === "not_requested") return false;
+
+  const unavailable = origin.state === "securely_unavailable";
+  const consentRequired = origin.state === "consent_required";
+  const blocked = unavailable || consentRequired;
+  const businesses = blocked ? [] : origin.businesses;
+  // Do not forward the repository's private-origin radius metadata. These
+  // cards are deliberately rebuilt from public listing fields only.
+  const publicCardBusinesses = businesses.map((business) => ({
+    id: business.id,
+    recordType: "business" as const,
+    name: business.name,
+    category: business.category,
+    subcategory: business.subcategory,
+    description: business.description,
+    city: business.city,
+    stateCode: business.stateCode,
+    detailUrl: `/businesses/${encodeURIComponent(business.id)}`,
+    website: business.website,
+    phone: business.phone,
+    verified: business.verified,
+    claimed: business.claimed,
+    isOnlineOnly: business.isOnlineOnly,
+    matchReasons: ["nearby documented directory listing"],
+    ownershipEvidence: business.researchSourceUrl
+      ? {
+          sourceUrl: business.researchSourceUrl,
+          sourceLabel: business.researchSourceLabel ?? null,
+          capturedAt: business.sourceCapturedAt ?? null,
+        }
+      : null,
+    ownershipStatus: business.sourceReceipt ? "documented" as const : "not_documented" as const,
+    provenance: "mwm_public_business" as const,
+  }));
+  const resultView = blocked
+    ? null
+    : buildConversationalBusinessResultView({
+        businesses: publicCardBusinesses,
+        external: [],
+        subjectLabel: "nearby governed businesses",
+      });
+  const reply = consentRequired
+    ? "To use that Saved Place in Kinfolk chat, update it in Private Places and accept the current disclosure. I did not run a location-based search."
+    : unavailable
+    ? "I could not securely use that Saved Place for this nearby search, so I did not run a location-based search. You can try again later or use the Private Places controls to review the saved place."
+    : publicCardBusinesses.length
+      ? `I found ${publicCardBusinesses.length} documented MWM business ${publicCardBusinesses.length === 1 ? "match" : "matches"} near that Saved Place. These cards contain only public business information; your exact address and coordinates stay private.`
+      : "I did not find an eligible published MWM business near that Saved Place. I did not broaden the search or substitute an unverified location.";
+  const finalSessionId = await persistDeterministicDiscoveryTurn({
+    userId: input.req.user.id,
+    memoryEnabled: input.memoryEnabled,
+    sessionId: input.sessionId,
+    // A member may use a private nickname in their request. Keep that nickname
+    // out of persistent chat storage and do not add it to Kinfolk memory.
+    message: "[Private Saved Place nearby request]",
+    reply,
+    recommendations: null,
+    resultView: resultView as Record<string, unknown> | null,
+    followUpSuggestions: blocked
+      ? ["Try the nearby search again later", "Open Private Places"]
+      : ["Search a different Saved Place", "Refine these business results"],
+    sources: [],
+    destination: "",
+    vibes: input.vibes,
+  });
+  input.res.status(200).json({
+    sessionId: finalSessionId,
+    reply,
+    recommendations: null,
+    itinerary: null,
+    resultView,
+    followUpSuggestions: blocked
+      ? ["Try the nearby search again later", "Open Private Places"]
+      : ["Search a different Saved Place", "Refine these business results"],
+    smartPromotion: null,
+    taskAction: null,
+    libraryAction: null,
+    intentClass: "business_discovery",
+    responseMeta: {
+      schemaVersion: 1,
+      planKind: "direct_discovery",
+      answerMode: "private_saved_place_governed_discovery",
+      retrieval: "owner_scoped_private_origin",
+      allowBusinessCards: !blocked,
+      evidenceRequired: true,
+      requiresClarification: false,
+    },
+    sources: [],
+    sourceNote: "This nearby search used a Saved Place only for this explicit request. Exact address and coordinates were not sent to Kinfolk or returned in this response.",
+    educationalStatus: blocked ? "limited" : "grounded",
+    discovery: blocked
+      ? null
+      : { origin: "private_saved_place", businessCount: publicCardBusinesses.length },
+    needsClarification: false,
+    originalQuery: input.message,
+    degraded: unavailable,
+    researchStatus: {
+      usedInternal: !blocked,
+      usedLiveWeb: false,
+      degraded: unavailable,
+      web: {
+        attempted: false,
+        state: unavailable ? "degraded" : "not_needed",
+        provider: blocked ? null : "governed_directory",
+        fallbackUsed: false,
+        partial: false,
+      },
+      asOf: new Date().toISOString(),
+    },
+  });
+  return true;
+}
+
 async function tryAnswerDeterministicBusinessDiscovery(input: {
   req: Request;
   res: Response;
@@ -9618,6 +9761,21 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
   // asking about hours, availability, price, weather, or another changing
   // condition must reach the current-evidence route below; it cannot be
   // replaced by matching MWM directory cards before that route is built.
+  if (
+    !hasPrivateQuestionAttachment &&
+    !staffAuditPolicy &&
+    !requiresCurrentResearch(message) &&
+    !isTravelPlanningPrompt(message) &&
+    (await tryAnswerPrivatePlaceOriginDiscovery({
+      req,
+      res,
+      sessionId,
+      message,
+      vibes,
+      memoryEnabled,
+    }))
+  )
+    return;
   if (
     !hasPrivateQuestionAttachment &&
     !requiresCurrentResearch(message) &&

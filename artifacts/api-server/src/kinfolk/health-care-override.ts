@@ -22,6 +22,7 @@ const MEDICATION_RE =
 
 const CARE_NAVIGATION_RE =
   /\b(?:where\s+can\s+i\s+find|find\s+(?:me\s+)?|help\s+me\s+find|show\s+me|need\s+(?:a\s+)?|looking\s+for|appointment|seen\s+by|see\s+(?:a\s+)?)\b[\s\S]{0,80}\b(?:doctor|clinician|physician|specialist|hospital|clinic|primary\s+care|urgent\s+care|ob[\s/-]?gyn|gynecolog(?:ist|y)|breast\s+specialist|diagnostic\s+(?:imaging|mammogram)|oncolog(?:ist|y)|dermatolog(?:ist|y)|pharmacist|dentist|dental|pediatric\s+dentist)\b/i;
+const PHARMACY_NAVIGATION_RE = /\b(?:pharmacy|pharmacist)\b/i;
 
 const PEDIATRIC_DENTAL_NAVIGATION_RE =
   /\b(?:pediatric|paediatric)(?:\s+(?:dentist|dental))?\b|\b(?:dentist|dental)\b[\s\S]{0,40}\b(?:child|children|kid|kids|pediatric|paediatric)\b/i;
@@ -32,6 +33,20 @@ const EMPTY_OVERRIDE: HealthCareOverride = {
   promptBlock: "",
   sources: [],
 };
+
+/**
+ * A conservative current-turn guard for callers that must not route qualified
+ * care discovery through an ordinary business search before intent classification
+ * has recognized the medical domain.
+ */
+export function isHealthCareNavigationRequest(message: string): boolean {
+  return CARE_NAVIGATION_RE.test(message.trim());
+}
+
+/** Private Saved Place origins must not turn pharmacy or care queries into ordinary directory results. */
+export function isPrivateOriginCareRestrictedRequest(message: string): boolean {
+  return isHealthCareNavigationRequest(message) || PHARMACY_NAVIGATION_RE.test(message.trim());
+}
 
 function uniqueSources(
   sources: readonly HealthCareOverrideSource[],
@@ -63,7 +78,7 @@ export function buildHealthCareOverride(input: {
   const hasBreastChange = BREAST_CHANGE_RE.test(message);
   const hasMedicationQuestion = MEDICATION_RE.test(message);
   const requestsPediatricDentalCare = PEDIATRIC_DENTAL_NAVIGATION_RE.test(message);
-  const isCareNavigation = hasBreastChange || CARE_NAVIGATION_RE.test(message);
+  const isCareNavigation = hasBreastChange || isHealthCareNavigationRequest(message);
 
   if (!hasBreastChange && !hasMedicationQuestion && !isCareNavigation) {
     return EMPTY_OVERRIDE;

@@ -51,4 +51,10 @@ describe("mobile Private Places governed nearby results", () => {
     expect(nearbySearchSource).not.toContain("place.label");
     expect(privatePlacesSource).not.toContain("/api/kinfolk/chat");
   });
+
+  it("requires the current disclosure before enabling manual nearby search", () => {
+    expect(privatePlacesSource).toContain("disclosureVersion: string");
+    expect(privatePlacesSource).toContain("place.disclosureVersion === status.disclosureVersion");
+    expect(privatePlacesSource).toContain("Update and re-acknowledge before this place can be used for nearby search");
+  });
 });

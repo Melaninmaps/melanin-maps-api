@@ -50,6 +50,7 @@ describe("Private Places production fictional QA acceptance", () => {
     const staysRoute = source("../../routes/kinfolk-temporary-stays.ts");
     const kinfolkRoute = source("../../routes/kinfolk.ts");
     expect(privateRoute).toContain("isPrivatePlacesFictionalQaProvider");
+    expect(privateRoute).toContain("PRIVATE_PLACES_DISCLOSURE_REFRESH_REQUIRED");
     expect(staysRoute).toContain("isPrivatePlacesFictionalQaProvider");
     expect(staysRoute).toContain("createKinfolkTemporaryStaysRouter");
     expect(privateRoute).toContain("businesses: []");

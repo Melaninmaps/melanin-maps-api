@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildHealthCareOverride } from "../health-care-override";
+import {
+  buildHealthCareOverride,
+  isHealthCareNavigationRequest,
+  isPrivateOriginCareRestrictedRequest,
+} from "../health-care-override";
 import { extractHealthTopic, normalizeMedlinePlusText } from "../health-retrieval";
 
 describe("qualified care override", () => {
@@ -60,6 +64,12 @@ describe("qualified care override", () => {
     ]));
     expect(override.promptBlock).toContain("pediatric dentist request");
     expect(override.promptBlock).toContain("generic clinic, medical spa, or ordinary directory listing");
+  });
+
+  it("recognizes qualified-care navigation before an ordinary nearby-business route can use a private origin", () => {
+    expect(isHealthCareNavigationRequest("Find a clinic near Mom's house.")).toBe(true);
+    expect(isPrivateOriginCareRestrictedRequest("Show me a pharmacy near work.")).toBe(true);
+    expect(isHealthCareNavigationRequest("Find a coffee shop near home.")).toBe(false);
   });
 
   it("offers medication questions without turning every medication question into a directory search", () => {

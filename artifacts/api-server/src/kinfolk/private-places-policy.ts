@@ -3,6 +3,9 @@ import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
 export const PRIVATE_PLACES_DISCLOSURE_VERSION = "private-places-google-geocoding-v1";
 export const PRIVATE_PLACES_GEOCODING_DISCLOSURE =
   "Your exact address will be sent once to Google Maps only to obtain nearby-search coordinates. MWM encrypts the saved place, never sends it to Kinfolk, and never uses it for chat, model training, analytics, check-ins, or automatic recommendations.";
+export const PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION = "private-places-explicit-nearby-search-v2";
+export const PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE =
+  "Your exact address will be sent once to Google Maps only to obtain nearby-search coordinates. MWM encrypts the saved place and never sends its address or coordinates to the Kinfolk model, training, analytics, or check-ins. Coordinates are used only when you explicitly ask for a nearby search using an active Saved Place, never for automatic recommendations.";
 
 const ENCRYPTION_KEY_BYTES = 32;
 const ENVELOPE_VERSION = "v1";

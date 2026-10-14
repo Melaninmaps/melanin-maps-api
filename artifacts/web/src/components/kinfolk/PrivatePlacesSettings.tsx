@@ -9,6 +9,7 @@ type PrivatePlace = {
   label: string;
   isActive: boolean;
   geocodeProvider: string;
+  disclosureVersion: string;
 };
 
 type PrivatePlacesStatus = {
@@ -57,8 +58,9 @@ async function responseMessage(response: Response, fallback: string): Promise<st
 
 /**
  * An intentionally separate control center: it never passes an exact place to
- * Kinfolk chat. The only time the backend unseals coordinates is after a member
- * presses “Use for nearby directory search” for an active, selected place.
+ * the Kinfolk model or chat memory. The backend unseals coordinates only after
+ * an active member explicitly selects nearby search or asks Kinfolk for nearby
+ * businesses using that Saved Place nickname.
  */
 export function PrivatePlacesSettings() {
   const [status, setStatus] = useState<PrivatePlacesStatus | null>(null);
@@ -207,7 +209,7 @@ export function PrivatePlacesSettings() {
         <h4 className="text-sm font-bold text-[#2B1507]">Private Places</h4>
       </div>
       <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/55">
-        Keep a place such as Mom&apos;s house or your school separate from Kinfolk. It is never chat memory, never a check-in, and never used automatically.
+        Keep a place such as Mom&apos;s house or your school separate from Kinfolk memory. It is never a check-in or used automatically. An active place is used only when you explicitly request nearby businesses; exact address and coordinates stay private.
       </p>
       {error ? <p role="alert" className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p> : null}
       {!status ? <p className="mt-3 text-xs text-[#3A1F0E]/50">Checking Private Places…</p> : null}
@@ -223,10 +225,10 @@ export function PrivatePlacesSettings() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-bold text-[#2B1507]">{place.label}</p>
-                  <p className="mt-1 text-xs text-[#3A1F0E]/55">{place.isActive ? "Active only when you choose it" : "Paused — never used for nearby search"}</p>
+                  <p className="mt-1 text-xs text-[#3A1F0E]/55">{place.isActive ? place.disclosureVersion === status.disclosureVersion ? "Active only when you choose it" : "Update and re-acknowledge before this place can be used for nearby search" : "Paused — never used for nearby search"}</p>
                 </div>
                 <div className="flex flex-wrap gap-3 text-xs font-bold">
-                  {place.isActive ? <button type="button" onClick={() => void useForNearbySearch(place)} className="text-[#8D5C17]">Use for nearby directory search</button> : null}
+                  {place.isActive && place.disclosureVersion === status.disclosureVersion ? <button type="button" onClick={() => void useForNearbySearch(place)} className="text-[#8D5C17]">Use for nearby directory search</button> : null}
                   <button type="button" onClick={() => beginEdit(place)} className="text-[#8D5C17]">Edit</button>
                   <button type="button" onClick={() => void setActive(place, !place.isActive)} className="text-[#8D5C17]">{place.isActive ? "Pause" : "Resume"}</button>
                   <button type="button" onClick={() => void remove(place)} className="inline-flex items-center gap-1 text-red-700"><Trash2 className="h-3.5 w-3.5" />Delete</button>

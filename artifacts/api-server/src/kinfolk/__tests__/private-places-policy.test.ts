@@ -7,6 +7,7 @@ import {
   PRIVATE_PLACES_FICTIONAL_QA_ADDRESS,
 } from "../private-places-fictional-qa";
 import {
+  PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION,
   PRIVATE_PLACES_DISCLOSURE_VERSION,
   normalizePrivatePlaceLabel,
   openPrivatePlace,
@@ -54,24 +55,33 @@ describe("Kinfolk Private Places privacy policy", () => {
     expect(normalizePrivatePlaceLabel("Main Street home")).toBeNull();
   });
 
-  it("requires the selected Google geocoding disclosure and keeps private places outside chat", () => {
+  it("requires the selected Google geocoding disclosure and keeps exact locations out of Kinfolk chat", () => {
     const route = source("../../routes/kinfolk-private-places.ts");
     const chat = source("../../routes/kinfolk.ts");
+    const privateOrigin = source("../private-place-conversation-origin.ts");
     const schema = source("../../../../../lib/db/src/schema/kinfolk-private-places.ts");
     expect(route).toContain("googleMapsGeocodingConsent === true");
-    expect(route).toContain("body.disclosureVersion === PRIVATE_PLACES_DISCLOSURE_VERSION");
+    expect(route).toContain("body.disclosureVersion === PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION");
     expect(route).toContain("maps.googleapis.com/maps/api/geocode/json");
     expect(route).toContain("id = $1 AND user_id = $2");
     expect(route).toContain("is_active = true");
     expect(route).toContain("createGovernedKinfolkBusinessRepository");
+    expect(route).toContain("PRIVATE_PLACES_DISCLOSURE_REFRESH_REQUIRED");
     expect(route).not.toContain("router.post(\"/kinfolk/chat");
-    expect(chat).not.toContain("kinfolk-private-places");
+    expect(chat).toContain("tryAnswerPrivatePlaceOriginDiscovery");
+    expect(chat).toContain("[Private Saved Place nearby request]");
+    expect(privateOrigin).toContain("WHERE user_id = $1");
+    expect(privateOrigin).toContain("if (!place.is_active) return { state: \"securely_unavailable\" }");
+    expect(privateOrigin).toContain("openPrivatePlace");
+    expect(privateOrigin).toContain("resolveExplicitPrivatePlaceLabel");
+    expect(privateOrigin).not.toContain("console.log");
     expect(schema).toContain("encryptedPayload");
     expect(schema).not.toContain('varchar("address"');
     expect(schema).not.toContain('text("address"');
     expect(schema).not.toContain('doublePrecision("latitude"');
     expect(schema).not.toContain('doublePrecision("longitude"');
     expect(PRIVATE_PLACES_DISCLOSURE_VERSION).toBe("private-places-google-geocoding-v1");
+    expect(PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION).toBe("private-places-explicit-nearby-search-v2");
   });
 
   it("allows only the non-address fixture in an explicitly isolated staging runtime", () => {
