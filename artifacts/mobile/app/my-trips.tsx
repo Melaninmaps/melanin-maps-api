@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useItineraries, useTripTemporaryStays, type Itinerary, type TripTemporaryStay } from "@/hooks/useItineraries";
 import TripItineraryOrganizer from "@/components/TripItineraryOrganizer";
+import TripFlightContext from "@/components/TripFlightContext";
 import PrivateAvailabilityBlocks from "@/components/PrivateAvailabilityBlocks";
 
 function formatDate(iso: string): string {
@@ -95,8 +96,10 @@ function TripTemporaryStayManager({ tripId }: { tripId: string }) {
 /**
  * Account-backed, owner-only Trip management. It is intentionally not connected
  * to chat/memory, profile, discovery/Map/Directory/Community/Safety, providers,
- * calendar, flights, hotels, events, documents, tasks/reminders, analytics, or
- * sharing. The form never requests an exact address, location, or coordinates.
+ * calendar, hotels, events, documents, tasks/reminders, analytics, or sharing.
+ * An optional, separately confirmed flight context is shown only on a selected
+ * private Trip and never activates those integrations. The form never requests
+ * an exact address, location, or coordinates.
  */
 export default function MyTripsScreen() {
   const colors = useColors();
@@ -246,6 +249,7 @@ export default function MyTripsScreen() {
         ) : null}
 
         {selected ? <TripItineraryOrganizer tripId={selected.id} tripTitle={selected.name} /> : null}
+        {selected ? <TripFlightContext tripId={selected.id} /> : null}
         {selected ? <TripTemporaryStayManager tripId={selected.id} /> : null}
 
         {isLoading ? <ActivityIndicator style={styles.loading} color={colors.primary} /> : null}

@@ -1864,12 +1864,12 @@ const shStyles = StyleSheet.create({
 // ─── Flight Tracker ───────────────────────────────────────────────────────────
 type TrackedFlight = {
   id: string;
-  flight_number: string;
-  airline: string | null;
-  departure_date: string;
-  origin: string | null;
-  destination: string | null;
-  notes: string | null;
+  flightNumber: string;
+  airline: string;
+  departureDate: string;
+  origin: string;
+  destination: string;
+  notes: string;
   status?: string;
   statusMessage?: string;
   delay?: number;
@@ -1897,6 +1897,7 @@ function FlightTrackerModal({
   const [origin, setOrigin] = useState("");
   const [dest, setDest] = useState("");
   const [airline, setAirline] = useState("");
+  const [flightConfirmed, setFlightConfirmed] = useState(false);
 
   const loadFlights = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -1904,7 +1905,8 @@ function FlightTrackerModal({
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const base = getFlightApiBase();
-      const res = await fetch(`${base}/api/travel/flights/status`, {
+      const res = await fetch(`${base}/api/travel/flights`, {
+        cache: "no-store",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (res.ok) {
@@ -1918,8 +1920,8 @@ function FlightTrackerModal({
   useEffect(() => { if (visible) queueMicrotask(() => { void loadFlights(); }); }, [visible, loadFlights]);
 
   const handleAdd = async () => {
-    if (!flightNum.trim() || !depDate.trim()) {
-      Alert.alert("Required", "Flight number and departure date are required.");
+    if (!flightConfirmed || !flightNum.trim() || !airline.trim() || !depDate.trim() || !origin.trim() || !dest.trim()) {
+      Alert.alert("Confirmation required", "Confirm a complete private flight with airline and IATA origin/destination first.");
       return;
     }
     setAdding(true);
@@ -1934,11 +1936,14 @@ function FlightTrackerModal({
           departureDate: depDate.trim(),
           origin: origin.trim() || undefined,
           destination: dest.trim() || undefined,
-          airline: airline.trim() || undefined,
+          airline: airline.trim(),
+          notes: "",
+          memberConfirmed: true,
         }),
+        cache: "no-store",
       });
       if (res.ok) {
-        setFlightNum(""); setDepDate(""); setOrigin(""); setDest(""); setAirline("");
+        setFlightNum(""); setDepDate(""); setOrigin(""); setDest(""); setAirline(""); setFlightConfirmed(false);
         setShowAddForm(false);
         void loadFlights();
       } else {
@@ -1952,7 +1957,9 @@ function FlightTrackerModal({
     const base = getFlightApiBase();
     await fetch(`${base}/api/travel/flights/${id}`, {
       method: "DELETE",
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: token ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" },
+      cache: "no-store",
+      body: JSON.stringify({ memberConfirmed: true }),
     });
     setFlights((prev) => prev.filter((f) => f.id !== id));
   };
@@ -1987,7 +1994,7 @@ function FlightTrackerModal({
           <ScrollView
         keyboardDismissMode="on-drag" style={{ flex: 1 }} contentContainerStyle={ftStyles.scroll}>
             <Text style={[ftStyles.subtitle, { color: colors.mutedForeground }]}>
-              Save flight numbers from your travel plans. We check status and alert you to delays.
+              Save a private flight yourself. This screen does not activate status tracking, booking, or provider use.
             </Text>
 
             {!showAddForm && (
@@ -2039,16 +2046,20 @@ function FlightTrackerModal({
                 </View>
                 <TextInput
                   style={[ftStyles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
-                  placeholder="Airline (optional)"
+                  placeholder="Airline"
                   placeholderTextColor={colors.mutedForeground}
                   value={airline}
                   onChangeText={setAirline}
                 />
+                <TouchableOpacity accessibilityRole="checkbox" accessibilityState={{ checked: flightConfirmed }} accessibilityLabel="Confirm private Flight Tracker save" onPress={() => setFlightConfirmed((value) => !value)} style={ftStyles.confirmRow}>
+                  <View style={[ftStyles.checkbox, { borderColor: colors.primary, backgroundColor: flightConfirmed ? colors.primary : "transparent" }]}>{flightConfirmed ? <Ionicons name="checkmark" size={13} color="#FFFFFF" /> : null}</View>
+                  <Text style={[ftStyles.confirmText, { color: colors.mutedForeground }]}>I confirm that I want to save this private flight. It will not activate provider status tracking.</Text>
+                </TouchableOpacity>
                 <View style={ftStyles.formActions}>
                   <TouchableOpacity activeOpacity={0.85} style={[ftStyles.cancelBtn, { borderColor: colors.border }]} onPress={() => setShowAddForm(false)}>
                     <Text style={[ftStyles.cancelBtnText, { color: colors.mutedForeground }]}>Cancel</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.85} style={[ftStyles.saveFlightBtn, { backgroundColor: colors.primary }]} onPress={() => void handleAdd()} disabled={adding}>
+                  <TouchableOpacity activeOpacity={0.85} style={[ftStyles.saveFlightBtn, { backgroundColor: colors.primary }, (!flightConfirmed || adding) && { opacity: 0.5 }]} onPress={() => void handleAdd()} disabled={!flightConfirmed || adding}>
                     <Text style={[ftStyles.saveFlightBtnText, { color: colors.primaryForeground }]}>{adding ? "Saving…" : "Save Flight"}</Text>
                   </TouchableOpacity>
                 </View>
@@ -2062,7 +2073,7 @@ function FlightTrackerModal({
                 <Ionicons name="airplane-outline" size={40} color={colors.mutedForeground} />
                 <Text style={[ftStyles.emptyText, { color: colors.mutedForeground }]}>No flights tracked yet</Text>
                 <Text style={[ftStyles.emptySub, { color: colors.mutedForeground }]}>
-                  Add flight numbers from your travel plans to receive delay alerts
+                  Add a private flight when you choose
                 </Text>
               </View>
             ) : (
@@ -2073,11 +2084,11 @@ function FlightTrackerModal({
                   </View>
                   <View style={{ flex: 1 }}>
                     <View style={ftStyles.flightTop}>
-                      <Text style={[ftStyles.flightNum, { color: colors.foreground }]}>{f.flight_number}</Text>
+                      <Text style={[ftStyles.flightNum, { color: colors.foreground }]}>{f.flightNumber}</Text>
                       {f.airline && <Text style={[ftStyles.flightAirline, { color: colors.mutedForeground }]}> · {f.airline}</Text>}
                     </View>
                     <Text style={[ftStyles.flightMeta, { color: colors.mutedForeground }]}>
-                      {f.departure_date}
+                      {f.departureDate}
                       {f.origin && f.destination ? ` · ${f.origin} → ${f.destination}` : f.origin ? ` · from ${f.origin}` : f.destination ? ` · to ${f.destination}` : ""}
                     </Text>
                     {f.status && f.status !== "upcoming" && (
@@ -2116,6 +2127,9 @@ const ftStyles = StyleSheet.create({
   input: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 14 },
   row: { flexDirection: "row", gap: 10 },
   halfInput: { flex: 1 },
+  confirmRow: { flexDirection: "row", alignItems: "flex-start", gap: 8, marginTop: 2 },
+  checkbox: { width: 18, height: 18, borderRadius: 5, borderWidth: 1.5, alignItems: "center", justifyContent: "center", marginTop: 1 },
+  confirmText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
   formActions: { flexDirection: "row", gap: 10, marginTop: 2 },
   cancelBtn: { flex: 1, borderRadius: 10, borderWidth: 1, paddingVertical: 11, alignItems: "center" },
   cancelBtnText: { fontFamily: "Inter_500Medium", fontSize: 14 },

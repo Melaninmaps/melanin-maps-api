@@ -2,6 +2,7 @@ import { MapPin, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "wouter";
 import TripItineraryOrganizer from "@/components/trip-itinerary-organizer";
+import TripFlightContext from "@/components/trip-flight-context";
 import PrivateAvailabilityBlocks from "@/components/kinfolk/PrivateAvailabilityBlocks";
 
 const BASE = import.meta.env.BASE_URL;
@@ -220,7 +221,7 @@ export default function Trips() {
       </div>
 
       <section aria-label="Trip privacy boundary" className="mt-6 rounded-2xl border border-[#CA922B]/25 bg-[#FFF8EC] p-4 text-sm leading-6 text-[#3A1F0E]/70">
-        <strong className="text-[#2B1507]">Private by default.</strong> Trips are not automatically used in Kinfolk chat or memory, your profile, discovery, Map, Directory, Community, Safety, providers, analytics, tasks, reminders, or sharing. No exact address, location, or coordinates are collected. Flights, hotels, events, documents, calendars, and sharing are not part of this Trip record.
+        <strong className="text-[#2B1507]">Private by default.</strong> Trips are not automatically used in Kinfolk chat or memory, your profile, discovery, Map, Directory, Community, Safety, providers, analytics, reminders, or sharing. No exact address, location, or coordinates are collected. An optional flight may be deliberately attached to a selected private Trip, but it remains excluded from all of those automatic uses.
       </section>
 
       {error ? <p role="alert" className="mt-5 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p> : null}
@@ -250,6 +251,7 @@ export default function Trips() {
       </section>
 
       {selected ? <TripItineraryOrganizer tripId={selected.id} tripTitle={selected.title} /> : null}
+      {selected ? <TripFlightContext tripId={selected.id} /> : null}
 
       <PrivateAvailabilityBlocks />
 

@@ -137,12 +137,15 @@ export function openTrip(trip: StoredKinfolkTrip, owner: string): TripInput {
 
 /**
  * Trips are storage-only in this bounded repair. There is deliberately no prompt
- * builder or integration: no automatic Kinfolk chat/memory/profile/discovery,
- * Map/Directory/Community/Safety/provider/analytics/task/reminder/share use.
+ * builder or automatic integration: no automatic Kinfolk chat/memory/profile/
+ * discovery, Map/Directory/Community/Safety/provider/analytics/task/reminder/
+ * share use. Optional owner-confirmed flight context is separately owner-scoped
+ * and remains excluded from those automatic uses.
  */
 export const KINFOLK_TRIP_DEFAULT_NON_USE = Object.freeze([
   "No automatic Kinfolk chat or private-memory use.",
   "No profile, discovery, Map, Directory, Community, or Safety use.",
-  "No provider, calendar, flight, hotel, event, document, task, reminder, analytics, or sharing integration.",
+  "No provider, calendar, hotel, event, document, task, reminder, analytics, or sharing integration.",
+  "Optional flight context requires a separate owner-confirmed private Trip action and remains non-automatic.",
   "No exact address, location, or coordinates are collected.",
 ]);

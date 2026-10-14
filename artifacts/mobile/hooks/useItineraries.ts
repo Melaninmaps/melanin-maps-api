@@ -5,8 +5,9 @@ import { getApiBase, getMemberApiHeaders } from "@/lib/api";
 /**
  * Compatibility view for the historic My Trips screen. The canonical lifecycle is
  * now the authenticated private Trips API; `stops` remains empty because stops,
- * providers, flights, hotels, events, documents, reminders, and sharing are not
- * part of this bounded Trip aggregate.
+ * providers, hotels, events, documents, reminders, and sharing are not part of
+ * this bounded Trip aggregate. Optional flights are a separate owner-confirmed,
+ * non-automatic selected-Trip context.
  */
 export interface ItineraryStop {
   businessId: string;
@@ -196,6 +197,81 @@ export function useTripTemporaryStays(tripId: string | null) {
   }, [load, path]);
 
   return { stays, isLoading, error, linkStay, unlinkStay, refresh: load };
+}
+
+/** A private owner flight context; it is not status tracking, booking, or automatic Kinfolk context. */
+export type TripFlight = Readonly<{
+  id: string;
+  flightNumber: string;
+  airline: string;
+  departureDate: string;
+  origin: string;
+  destination: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string | null;
+}>;
+
+export type TripFlightInput = Pick<TripFlight, "flightNumber" | "airline" | "departureDate" | "origin" | "destination" | "notes">;
+
+/**
+ * Selected-Trip flight controls only. The API receives only deliberate member
+ * actions and never a PNR, booking reference, exact address, coordinates, or live location.
+ */
+export function useTripFlights(tripId: string | null) {
+  const [flights, setFlights] = useState<TripFlight[]>([]);
+  const [availableFlights, setAvailableFlights] = useState<TripFlight[]>([]);
+  const [isLoading, setIsLoading] = useState(Boolean(tripId));
+  const [error, setError] = useState<string | null>(null);
+  const path = tripId ? `/${encodeURIComponent(tripId)}/flights` : null;
+
+  const load = useCallback(async () => {
+    if (!path) { setFlights([]); setAvailableFlights([]); setIsLoading(false); return; }
+    setIsLoading(true); setError(null);
+    try {
+      const [attachedResponse, availableResponse] = await Promise.all([
+        tripRequest(path, { cache: "no-store" }),
+        tripRequest(`${path}/available`, { cache: "no-store" }),
+      ]);
+      if (!attachedResponse.ok) throw await responseError(attachedResponse, "Private flights could not be loaded for this Trip.");
+      if (!availableResponse.ok) throw await responseError(availableResponse, "Available private flights could not be loaded.");
+      const attached = await attachedResponse.json() as { flights?: TripFlight[] };
+      const available = await availableResponse.json() as { flights?: TripFlight[] };
+      setFlights(Array.isArray(attached.flights) ? attached.flights : []);
+      setAvailableFlights(Array.isArray(available.flights) ? available.flights : []);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Private flights could not be loaded for this Trip.");
+    } finally { setIsLoading(false); }
+  }, [path]);
+
+  useEffect(() => { void load(); }, [load]);
+  const mutate = useCallback(async (suffix: string, init: RequestInit, fallback: string) => {
+    if (!path) throw new Error("Private Trip not found.");
+    const response = await tripRequest(`${path}${suffix}`, { ...init, cache: "no-store" });
+    if (!response.ok) throw await responseError(response, fallback);
+    await load();
+  }, [load, path]);
+  const createFlight = useCallback(async (input: TripFlightInput, memberConfirmed = false) => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to save a private flight.");
+    await mutate("", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...input, memberConfirmed: true }) }, "Private flight could not be saved.");
+  }, [mutate]);
+  const updateFlight = useCallback(async (id: string, input: TripFlightInput, memberConfirmed = false) => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to correct a private flight.");
+    await mutate(`/${encodeURIComponent(id)}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...input, memberConfirmed: true }) }, "Private flight could not be corrected.");
+  }, [mutate]);
+  const attachFlight = useCallback(async (id: string, correction: TripFlightInput | undefined, memberConfirmed = false) => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to attach a private flight.");
+    await mutate(`/${encodeURIComponent(id)}/attach`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(correction ? { memberConfirmed: true, flight: correction } : { memberConfirmed: true }) }, "Private flight could not be attached.");
+  }, [mutate]);
+  const unlinkFlight = useCallback(async (id: string, memberConfirmed = false) => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to unlink a private flight.");
+    await mutate(`/${encodeURIComponent(id)}/attachment`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ memberConfirmed: true }) }, "Private flight could not be unlinked.");
+  }, [mutate]);
+  const deleteFlight = useCallback(async (id: string, memberConfirmed = false) => {
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to remove a private flight.");
+    await mutate(`/${encodeURIComponent(id)}`, { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ memberConfirmed: true }) }, "Private flight could not be removed.");
+  }, [mutate]);
+  return { flights, availableFlights, isLoading, error, createFlight, updateFlight, attachFlight, unlinkFlight, deleteFlight, refresh: load };
 }
 
 export type PrivateAvailabilityBlock = Readonly<{

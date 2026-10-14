@@ -33,6 +33,7 @@ import kinfolkTemporaryStaysRouter from "./kinfolk-temporary-stays";
 import kinfolkTripsRouter from "./kinfolk-trips";
 import kinfolkTripTemporaryStaysRouter from "./kinfolk-trip-temporary-stays";
 import kinfolkTripItineraryRouter from "./kinfolk-trip-itinerary";
+import kinfolkTripFlightsRouter from "./kinfolk-trip-flights";
 import kinfolkPrivateAvailabilityBlocksRouter from "./kinfolk-private-availability-blocks";
 import kinfolkCurrentChaptersRouter from "./kinfolk-current-chapters";
 import kinfolkCuriosityListsRouter from "./kinfolk-curiosity-lists";
@@ -319,6 +320,9 @@ router.use(kinfolkTripTemporaryStaysRouter);
 // Manual Trip itinerary entries are a separately encrypted, owner-scoped
 // nested lifecycle. They never schedule, book, notify, share, or auto-use services.
 router.use(kinfolkTripItineraryRouter);
+// A private Flight context is selected and confirmed per Trip. It is storage-only:
+// no status/provider activation, chat, memory, calendar, reminder, sharing, or analytics use.
+router.use(kinfolkTripFlightsRouter);
 // Private Availability Blocks are manual encrypted commitments. The explicit
 // preview reads no external calendar and never becomes automatic chat context.
 router.use(kinfolkPrivateAvailabilityBlocksRouter);
