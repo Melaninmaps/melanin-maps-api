@@ -196,7 +196,7 @@ describe("Kinfolk private-memory production control", () => {
     }
     expect((source.match(/code: "PRIVATE_MEMORY_DISABLED"/g) ?? []).length).toBeGreaterThanOrEqual(3);
     expect(source).toContain("if (memoryEnabled && sessionId && req.user?.id)");
-    expect(source).toContain("if (req.user?.id && memoryEnabled && sessionPersistenceAvailable)");
+    expect(source).toContain("if (!isPrivateDocumentTurn && req.user?.id && memoryEnabled && sessionPersistenceAvailable)");
     expect(source).toContain("const memberMemoryEnabled = resolvePrivateMemoryPersonalizationAccess({");
     expect(source).toContain("const activePrivateMemories = memberMemoryEnabled && req.user?.id");
     expect(source).toContain("const directPrivateMemoryEnabled = resolvePrivateMemoryPersonalizationAccess({");

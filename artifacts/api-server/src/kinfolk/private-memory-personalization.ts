@@ -159,6 +159,24 @@ export function isApprovedPrivateMemoryRelevant(input: {
 }
 
 /**
+ * Sensitive-use authorization is an additional gate, never a replacement for
+ * direct relevance. A caller supplies its existing purpose-specific relevance
+ * decision, while this boundary preserves the approved preference-scope policy.
+ */
+export function isAuthorizedRelevantPrivateMemoryForTurn(input: {
+  memory: PrivateMemoryCandidate;
+  currentMessage: string;
+  directRelevance: boolean;
+  sensitiveUseAllowed: boolean;
+}): boolean {
+  return input.sensitiveUseAllowed && isApprovedPrivateMemoryRelevant({
+    memory: input.memory,
+    currentMessage: input.currentMessage,
+    legacyRelevant: input.directRelevance,
+  });
+}
+
+/**
  * Converts a relevant, non-sensitive approved preference into a small controlled
  * set of *soft* directory-ranking terms. It never returns raw member text,
  * changes a governed eligibility predicate, or creates a hard service claim.

@@ -352,7 +352,7 @@ import {
 import {
   buildPrivateMemoryPersonalizationBlock,
   governedDiscoveryPreferenceTermsForMemories,
-  isApprovedPrivateMemoryRelevant,
+  isAuthorizedRelevantPrivateMemoryForTurn,
   memberFacingPrivateMemoryUseForAnswer,
   resolvePrivateMemoryUseDecision,
   type PrivateMemoryUseState,
@@ -6163,22 +6163,23 @@ function selectRelevantPrivateMemoriesForTurn(input: {
       (!memory.sensitiveRestricted || explicitlyRequestsRestrictedSensitiveMemoryUse(input.currentMessage)) &&
       isSensitiveMemoryRelevant(memory.content, input.currentMessage)
     );
-    const legacyRelevant =
+    const directRelevance =
       (memory.purpose === "preferred_name"
         ? input.explicitMemoryEnabled
         : memory.purpose === "planning_context"
           ? isConsentedPlanningMemoryRelevant(memory, input.currentMessage)
           : memory.purpose === "profile_context"
             ? isExplicitProfileMemoryRelevant(memory, input.currentMessage)
-            : ["preference", "goal", "ongoing_context"].includes(memory.purpose)
+            : ["preference", "goal", "ongoing_context", "requirement_context"].includes(memory.purpose)
               ? isOrdinaryContinuityMemoryRelevant(memory, input.currentMessage)
-              : sensitiveUseAllowed) &&
+              : false) &&
       (memory.purpose !== "companion_context" ||
         isCompanionMemoryRelevant(memory.content, input.currentMessage));
-    return isApprovedPrivateMemoryRelevant({
+    return isAuthorizedRelevantPrivateMemoryForTurn({
       memory,
       currentMessage: input.currentMessage,
-      legacyRelevant,
+      directRelevance,
+      sensitiveUseAllowed,
     });
   });
 }
