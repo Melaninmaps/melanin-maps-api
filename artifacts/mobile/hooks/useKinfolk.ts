@@ -445,6 +445,8 @@ export function useKinfolk() {
   const activeRequestRef = useRef<AbortController | null>(null);
   const requestGenerationRef = useRef(0);
   const savingTaskActionIdsRef = useRef(new Set<string>());
+  /** Device-local only. The next successful chat request consumes this style. */
+  const oneTurnDeliveryInstructionRef = useRef<string | null>(null);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -499,6 +501,7 @@ export function useKinfolk() {
       return false;
     }
     const apiBase = getApiBase();
+    const oneTurnInstruction = oneTurnDeliveryInstructionRef.current;
     const conversationContext = messagesRef.current.slice(-6).map((message) => ({
       role: message.role,
       content: message.content,
@@ -543,6 +546,7 @@ export function useKinfolk() {
           documentProcessingConsent: opts?.documentProcessingConsent === true,
           includeCommunityPerspective: opts?.includeCommunityPerspective === true,
           publicOrigin: opts?.publicOrigin?.trim() || undefined,
+          oneTurnInstruction: oneTurnInstruction ?? undefined,
           conversationContext,
           clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
@@ -551,6 +555,7 @@ export function useKinfolk() {
 
       if (requestGeneration !== requestGenerationRef.current) return false;
       if (res.ok) {
+        if (oneTurnInstruction) oneTurnDeliveryInstructionRef.current = null;
         const data = (await res.json()) as {
           sessionId?: string;
           reply: string;
@@ -987,6 +992,12 @@ export function useKinfolk() {
     setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, inlineMemoryConsent: null } : m));
   }, []);
 
+  const useOneTimeDeliveryInstruction = useCallback((instruction: string) => {
+    // This stays in process memory only; it is passed to one future request and
+    // never written to private memory, settings, analytics, or local storage.
+    oneTurnDeliveryInstructionRef.current = instruction;
+  }, []);
+
   const clearPendingRetryText = useCallback(() => setPendingRetryText(null), []);
 
   return {
@@ -1018,5 +1029,6 @@ export function useKinfolk() {
     dismissTaskAction,
     dismissSensitiveMemoryDraft,
     dismissInlineMemoryConsent,
+    useOneTimeDeliveryInstruction,
   };
 }

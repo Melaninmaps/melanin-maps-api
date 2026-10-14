@@ -212,4 +212,16 @@ describe("private memory personalization", () => {
       }),
     ).toBe(false);
   });
+
+  it("applies an explicitly saved delivery preference to future answers without turning it into discovery data", () => {
+    const delivery = ordinary("Always give me short answers.");
+    expect(
+      isApprovedPrivateMemoryRelevant({
+        memory: delivery,
+        currentMessage: "Find a restaurant in Philadelphia.",
+        legacyRelevant: false,
+      }),
+    ).toBe(true);
+    expect(governedDiscoveryPreferenceTermsForMemories([delivery])).toEqual([]);
+  });
 });

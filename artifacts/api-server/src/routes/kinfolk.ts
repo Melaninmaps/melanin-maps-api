@@ -386,6 +386,8 @@ import {
 } from "../kinfolk/consented-health-context";
 import { buildExplicitMemoryConsentPlan } from "../kinfolk/explicit-memory-consent";
 import {
+  buildOneTurnDeliveryPreferencePrompt,
+  isExplicitDeliveryPreference,
   isExplicitMemberMemoryRequirement,
   isExplicitMemberMemoryCapabilityQuestion,
   isExplicitProfileMemoryRelevant,
@@ -7342,10 +7344,12 @@ async function persistExplicitMemberMemory(input: {
     : "I heard you."
   const sensitiveSentence = sensitiveCount
     ? "You also shared personal details that stay in your control."
-    : "Choose what Kinfolk may use in future conversations."
+    : "Choose what Kinfolk may use in future conversations.";
   return {
     remembered: false,
-    reply: `${ordinarySentence} ${sensitiveSentence} Choose below what Kinfolk may use only when it is relevant.`,
+    reply: isExplicitDeliveryPreference(input.message)
+      ? "Got it. Should I use that just for this conversation or save it for future conversations? Choose below—nothing has been saved yet."
+      : `${ordinarySentence} ${sensitiveSentence} Choose below what Kinfolk may use only when it is relevant.`,
     memoryConsentPlan: plan,
   };
 }
@@ -8855,6 +8859,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     publicOrigin,
     includeCommunityPerspective,
     conversationContext,
+    oneTurnInstruction,
     staffAudit: requestedStaffAudit,
     clientTimeZone,
   } = req.body as {
@@ -8872,6 +8877,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     publicOrigin?: unknown;
     includeCommunityPerspective?: unknown;
     conversationContext?: unknown;
+    /** A client-local delivery choice that must never be persisted. */
+    oneTurnInstruction?: unknown;
     staffAudit?: unknown;
     clientTimeZone?: unknown;
   };
@@ -13016,6 +13023,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         // Never let a correction block reintroduce an intervening topic.
         history: scopedConversationMessages,
       });
+    const oneTurnDeliveryPreferencePrompt =
+      buildOneTurnDeliveryPreferencePrompt(oneTurnInstruction);
     // A remembered destination is useful only while the member is actually
     // asking a location-aware question. Do not let an earlier work trip make a
     // later email, raise, relationship, or general-chat request look local.
@@ -13203,6 +13212,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         : "") +
       (currentTurnCorrectionInstruction
         ? `\n\n${currentTurnCorrectionInstruction}`
+        : "") +
+      (oneTurnDeliveryPreferencePrompt
+        ? `\n\n${oneTurnDeliveryPreferencePrompt}`
         : "");
 
     // Build bounded history according to the selected experience policy.

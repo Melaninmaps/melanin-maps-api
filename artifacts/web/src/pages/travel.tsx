@@ -1121,6 +1121,8 @@ function TravelPage() {
   const responseStatusTimersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   const responseElapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeChatControllerRef = useRef<AbortController | null>(null);
+  /** Browser-local only; consumed by the next successful Kinfolk chat request. */
+  const oneTurnDeliveryInstructionRef = useRef<string | null>(null);
 
   const clearResponseStatusTimers = useCallback((resetStatus = true) => {
     responseStatusTimersRef.current.forEach(clearTimeout);
@@ -2055,6 +2057,7 @@ function TravelPage() {
       }));
     }
     const publicOrigin = exactRadiusOrigin.trim();
+    const oneTurnInstruction = oneTurnDeliveryInstructionRef.current;
     setInput("");
     setVoiceTranscriptReview(null);
     // An exact-radius origin is current-turn context only. Clear the browser
@@ -2095,7 +2098,7 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/chat`, {
         method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include",
-        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageAssetIds: attachedImageAssetIds, imageVisionConsent: attachedImageAssetIds.length > 0, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageAssetIds: attachedImageAssetIds, imageVisionConsent: attachedImageAssetIds.length > 0, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, oneTurnInstruction: oneTurnInstruction ?? undefined, conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
         signal: controller.signal,
       });
 
@@ -2125,6 +2128,8 @@ function TravelPage() {
         if (isBusy) return; // Input already restored — don't clear it in finally
         return;
       }
+
+      if (oneTurnInstruction) oneTurnDeliveryInstructionRef.current = null;
 
       const data = await r.json() as {
         sessionId?: string; reply?: string;
@@ -3044,6 +3049,7 @@ function TravelPage() {
                           sessionId={msg.inlineMemoryConsent.sessionId}
                           onSaved={() => { setMessages((current) => current.map((item) => item.id === msg.id ? { ...item, inlineMemoryConsent: null } : item)); void loadKinfolkContinuity(); }}
                           onDismiss={() => setMessages((current) => current.map((item) => item.id === msg.id ? { ...item, inlineMemoryConsent: null } : item))}
+                          onUseOnce={(instruction) => { oneTurnDeliveryInstructionRef.current = instruction; setMessages((current) => current.map((item) => item.id === msg.id ? { ...item, inlineMemoryConsent: null } : item)); }}
                         />
                       )}
                       {msg.role === "assistant" && msg.memoryUse?.applied === true && msg.content.trim() && (

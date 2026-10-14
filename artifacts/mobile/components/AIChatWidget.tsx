@@ -216,6 +216,8 @@ async function sendToKinfolk(
     imageVisionConsent?: boolean;
     documentAssetIds?: readonly string[];
     documentProcessingConsent?: boolean;
+    /** Device-local delivery preference consumed by this one request only. */
+    oneTurnInstruction?: string;
   }>,
 ): Promise<{
   reply: string;
@@ -266,6 +268,7 @@ async function sendToKinfolk(
         imageVisionConsent: options?.imageVisionConsent === true,
         documentAssetIds: options?.documentAssetIds ?? [],
         documentProcessingConsent: options?.documentProcessingConsent === true,
+        oneTurnInstruction: options?.oneTurnInstruction,
         clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       }),
       signal,
@@ -455,6 +458,8 @@ export function AIChatWidget() {
   const listRef = useRef<FlatList>(null);
   const activeChatRequestRef = useRef<AbortController | null>(null);
   const chatRequestGenerationRef = useRef(0);
+  /** Device-local only. Consumed by one successfully completed chat request. */
+  const oneTurnDeliveryInstructionRef = useRef<string | null>(null);
   const openRef = useRef(false);
   const appStateRef = useRef(AppState.currentState);
   const queuedPlaybackRequestRef = useRef<VoicePlaybackRequest | null>(null);
@@ -1099,6 +1104,7 @@ export function AIChatWidget() {
     const attachedImageAssetIds = kinfolkImages.map((attachment) => attachment.assetId);
     const attachedImagePreviewUris = kinfolkImages.map((attachment) => attachment.previewUri);
     const attachedDocumentAssetIds = kinfolkDocument ? [kinfolkDocument.assetId] : [];
+    const oneTurnInstruction = oneTurnDeliveryInstructionRef.current;
     activeChatRequestRef.current?.abort();
     const requestGeneration = ++chatRequestGenerationRef.current;
     const request = new AbortController();
@@ -1153,8 +1159,10 @@ export function AIChatWidget() {
         imageVisionConsent: attachedImageAssetIds.length > 0,
         documentAssetIds: attachedDocumentAssetIds,
         documentProcessingConsent: attachedDocumentAssetIds.length > 0,
+        oneTurnInstruction: oneTurnInstruction ?? undefined,
       });
       if (requestGeneration !== chatRequestGenerationRef.current) return;
+      if (oneTurnInstruction) oneTurnDeliveryInstructionRef.current = null;
       setKinfolkImages([]);
       setKinfolkDocument(null);
 
@@ -1785,6 +1793,7 @@ export function AIChatWidget() {
                     sessionId={item.inlineMemoryConsent.sessionId}
                     onSaved={() => setMessages((current) => current.map((message) => message.id === item.id ? { ...message, inlineMemoryConsent: null } : message))}
                     onDismiss={() => setMessages((current) => current.map((message) => message.id === item.id ? { ...message, inlineMemoryConsent: null } : message))}
+                    onUseOnce={(instruction) => { oneTurnDeliveryInstructionRef.current = instruction; setMessages((current) => current.map((message) => message.id === item.id ? { ...message, inlineMemoryConsent: null } : message)); }}
                   />
                 ) : null}
                 {!item.fromUser && item.sensitiveMemoryDraft ? (

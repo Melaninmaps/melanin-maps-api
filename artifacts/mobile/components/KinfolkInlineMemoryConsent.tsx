@@ -9,6 +9,7 @@ export type KinfolkInlineMemoryConsentPlan = {
   purpose: string;
   ordinary: Array<{ id: string; label: string; content: string }>;
   sensitive: Array<{ id: string; label: string; content: string }>;
+  oneTimeUseAvailable?: boolean;
 };
 
 export function KinfolkInlineMemoryConsent({
@@ -17,12 +18,15 @@ export function KinfolkInlineMemoryConsent({
   sessionId,
   onSaved,
   onDismiss,
+  onUseOnce,
 }: {
   message: string;
   plan: KinfolkInlineMemoryConsentPlan;
   sessionId?: string | null;
   onSaved: () => void;
   onDismiss: () => void;
+  /** Queues a style instruction locally for exactly the next chat request. */
+  onUseOnce?: (instruction: string) => void;
 }) {
   const colors = useColors();
   const allItems = useMemo(() => [...plan.ordinary, ...plan.sensitive], [plan]);
@@ -85,10 +89,10 @@ export function KinfolkInlineMemoryConsent({
     <View style={{ flexDirection: "row", gap: 8 }}><Feather name="lock" size={16} color={colors.primary} /><View style={{ flex: 1 }}><Text style={{ color: colors.foreground, fontFamily: "Inter_700Bold", fontSize: 12 }}>What should Kinfolk remember?</Text><Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, marginTop: 3 }}>Nothing has been saved yet. Preferences can guide relevant searches. Personal details stay private and are used only when relevant—not for promotion, advertising, or community sharing.</Text></View></View>
     {!!error && <Text style={{ color: "#B91C1C", fontFamily: "Inter_500Medium", fontSize: 10, marginTop: 8 }}>{error}</Text>}
     {!choosing ? <View style={{ gap: 8, marginTop: 10 }}>
-      <TouchableOpacity disabled={saving} onPress={saveAll} style={{ backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9, opacity: saving ? 0.6 : 1 }}><Text style={{ color: "#fff", fontFamily: "Inter_700Bold", fontSize: 11 }}>{saving ? "Saving…" : "Save all for relevant use"}</Text></TouchableOpacity>
-      {plan.ordinary.length > 0 && <TouchableOpacity disabled={saving} onPress={() => void save(plan.ordinary.map((item) => item.id))} style={{ borderWidth: 1, borderColor: colors.primary + "66", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 }}><Text style={{ color: colors.primary, fontFamily: "Inter_700Bold", fontSize: 11 }}>Save only preferences and interests</Text></TouchableOpacity>}
-      <TouchableOpacity disabled={saving} onPress={() => { setChoosing(true); setSelected([]); setSensitiveConsent(false); }}><Text style={{ color: colors.mutedForeground, fontFamily: "Inter_600SemiBold", fontSize: 11 }}>Choose individually</Text></TouchableOpacity>
-      <TouchableOpacity disabled={saving} onPress={onDismiss}><Text style={{ color: colors.mutedForeground, fontFamily: "Inter_600SemiBold", fontSize: 11 }}>Don’t save</Text></TouchableOpacity>
+      <TouchableOpacity disabled={saving} onPress={saveAll} style={{ backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9, opacity: saving ? 0.6 : 1 }}><Text style={{ color: "#fff", fontFamily: "Inter_700Bold", fontSize: 11 }}>{saving ? "Saving…" : plan.oneTimeUseAvailable ? "Save and use in future" : "Save all for relevant use"}</Text></TouchableOpacity>
+      {plan.oneTimeUseAvailable && onUseOnce ? <TouchableOpacity disabled={saving} onPress={() => { onUseOnce(message); onDismiss(); }} style={{ borderWidth: 1, borderColor: colors.primary + "66", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 }}><Text style={{ color: colors.primary, fontFamily: "Inter_700Bold", fontSize: 11 }}>Use this once</Text></TouchableOpacity> : plan.ordinary.length > 0 && <TouchableOpacity disabled={saving} onPress={() => void save(plan.ordinary.map((item) => item.id))} style={{ borderWidth: 1, borderColor: colors.primary + "66", borderRadius: 12, paddingHorizontal: 12, paddingVertical: 9 }}><Text style={{ color: colors.primary, fontFamily: "Inter_700Bold", fontSize: 11 }}>Save only preferences and interests</Text></TouchableOpacity>}
+      <TouchableOpacity disabled={saving} onPress={() => { setChoosing(true); setSelected([]); setSensitiveConsent(false); }}><Text style={{ color: colors.mutedForeground, fontFamily: "Inter_600SemiBold", fontSize: 11 }}>{plan.oneTimeUseAvailable ? "Choose different instructions" : "Choose individually"}</Text></TouchableOpacity>
+      <TouchableOpacity disabled={saving} onPress={onDismiss}><Text style={{ color: colors.mutedForeground, fontFamily: "Inter_600SemiBold", fontSize: 11 }}>{plan.oneTimeUseAvailable ? "No memory" : "Don’t save"}</Text></TouchableOpacity>
     </View> : <View style={{ gap: 8, marginTop: 10 }}>
       {plan.ordinary.map((item) => <TouchableOpacity key={item.id} accessibilityRole="checkbox" accessibilityState={{ checked: selected.includes(item.id) }} onPress={() => toggle(item.id)} style={{ flexDirection: "row", gap: 8, alignItems: "center", borderRadius: 10, backgroundColor: colors.card, padding: 9 }}><Switch value={selected.includes(item.id)} onValueChange={() => toggle(item.id)} trackColor={{ false: colors.border, true: colors.primary + "99" }} /><View style={{ flex: 1 }}><Text style={{ color: colors.foreground, fontFamily: "Inter_700Bold", fontSize: 11 }}>{item.label}</Text><Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 10, marginTop: 2 }}>{item.content}</Text></View></TouchableOpacity>)}
       {plan.sensitive.map((item) => <TouchableOpacity key={item.id} accessibilityRole="checkbox" accessibilityState={{ checked: selected.includes(item.id) }} onPress={() => toggle(item.id)} style={{ flexDirection: "row", gap: 8, alignItems: "center", borderRadius: 10, backgroundColor: colors.card, padding: 9 }}><Switch value={selected.includes(item.id)} onValueChange={() => toggle(item.id)} trackColor={{ false: colors.border, true: colors.primary + "99" }} /><View style={{ flex: 1 }}><Text style={{ color: colors.foreground, fontFamily: "Inter_700Bold", fontSize: 11 }}>{item.label}</Text><Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 10, marginTop: 2 }}>Sensitive—used only when it helps with a relevant question.</Text></View></TouchableOpacity>)}

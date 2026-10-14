@@ -196,6 +196,15 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).toContain("inlineMemoryConsent: data.memoryConsentPlan");
   });
 
+  it("keeps a one-time delivery choice browser-local until exactly one successful request", () => {
+    expect(travelPageSource).toContain("oneTurnDeliveryInstructionRef");
+    expect(travelPageSource).toContain("oneTurnInstruction: oneTurnInstruction ?? undefined");
+    expect(travelPageSource).toContain("if (oneTurnInstruction) oneTurnDeliveryInstructionRef.current = null;");
+    expect(travelPageSource).toContain("onUseOnce={(instruction) => { oneTurnDeliveryInstructionRef.current = instruction;");
+    expect(inlineMemoryConsentSource).toContain("Use this once");
+    expect(inlineMemoryConsentSource).toContain("Save and use in future");
+  });
+
   it("keeps all inline choices while requiring separate confirmation for sensitive selections", () => {
     expect(inlineMemoryConsentSource).toContain('"Save all for relevant use"');
     expect(inlineMemoryConsentSource).toContain("Save only preferences and interests");

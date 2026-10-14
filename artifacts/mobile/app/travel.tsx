@@ -2139,7 +2139,7 @@ export default function TravelScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
-  const { messages, sessionId, conversationHandoff, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, sessionError, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent } = useKinfolk();
+  const { messages, sessionId, conversationHandoff, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, sessionError, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, useOneTimeDeliveryInstruction } = useKinfolk();
   const { preferences, update: updatePreferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -2828,6 +2828,7 @@ export default function TravelScreen() {
           sessionId={item.inlineMemoryConsent.sessionId}
           onSaved={() => { dismissInlineMemoryConsent(item.id); void loadKinfolkContinuity(); }}
           onDismiss={() => dismissInlineMemoryConsent(item.id)}
+          onUseOnce={(instruction) => { useOneTimeDeliveryInstruction(instruction); dismissInlineMemoryConsent(item.id); }}
         />}
         {item.sensitiveMemoryDraft && <KinfolkSensitiveMemoryConfirmation
           content={item.sensitiveMemoryDraft.content}
@@ -2838,7 +2839,7 @@ export default function TravelScreen() {
         />}
       </View>
     );
-  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction, handleReviewTaskLists, speakManually, spokenVoiceText, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, loadKinfolkContinuity]);
+  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction, handleReviewTaskLists, speakManually, spokenVoiceText, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, loadKinfolkContinuity, useOneTimeDeliveryInstruction]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>

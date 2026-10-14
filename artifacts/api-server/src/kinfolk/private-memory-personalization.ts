@@ -2,6 +2,7 @@ import {
   buildPrivateMemoryPromptBlock,
   type PrivateMemoryForPrompt,
 } from "./private-memory";
+import { isExplicitDeliveryPreference } from "./explicit-member-memory";
 
 export type PrivateMemoryUseState =
   | "runtime_disabled"
@@ -152,6 +153,10 @@ export function isApprovedPrivateMemoryRelevant(input: {
 }): boolean {
   if (input.legacyRelevant) return true;
   if (input.memory.isSensitive) return false;
+  // A member who explicitly saved a bounded delivery preference expects it on
+  // each of their answers. This is styling only; the prompt boundary below
+  // still prevents it from changing evidence, safety, eligibility, or sources.
+  if (isExplicitDeliveryPreference(input.memory.content)) return true;
   return SCOPE_RULES.some(
     ({ memory, request }) =>
       memory.test(input.memory.content) && request.test(input.currentMessage),

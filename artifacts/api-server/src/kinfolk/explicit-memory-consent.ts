@@ -1,5 +1,6 @@
 import {
   parseExplicitMemberMemory,
+  isExplicitDeliveryPreference,
   type ExplicitMemberMemory,
 } from "./explicit-member-memory";
 import {
@@ -21,6 +22,8 @@ export type ExplicitMemoryConsentPlan = Readonly<{
   purpose: ExplicitMemberMemory["purpose"];
   ordinary: readonly ExplicitMemoryConsentItem[];
   sensitive: readonly ExplicitMemoryConsentItem[];
+  /** A one-turn delivery choice stays client-local and is never persisted. */
+  oneTimeUseAvailable: boolean;
 }>;
 
 const MEMORY_CLAUSE_BOUNDARY = /\s+(?=(?:i\s+(?:am|am\s+not|have|do\s+not\s+have|don't\s+have|prefer|enjoy|like|love)|i['’]m|my\s+(?:birthday|age|allerg(?:y|ies)|mother|father|parent|child|son|daughter|family)|as\s+a)\b)/gi;
@@ -68,6 +71,9 @@ function sensitiveLabel(topic: ConsentSensitiveTopic): string {
 }
 
 function ordinaryLabel(content: string): string {
+  if (isExplicitDeliveryPreference(content)) {
+    return "Communication preference";
+  }
   if (/\b(?:prefer|support|owned\s+business|minority[-\s]?owned)\b/i.test(content)) {
     return "Support preference";
   }
@@ -134,5 +140,10 @@ export function buildExplicitMemoryConsentPlan(value: unknown): ExplicitMemoryCo
       : { id: "o-1", kind: "ordinary", label: ordinaryLabel(parsed.content), content: parsed.content });
   }
 
-  return { purpose: parsed.purpose, ordinary, sensitive };
+  return {
+    purpose: parsed.purpose,
+    ordinary,
+    sensitive,
+    oneTimeUseAvailable: isExplicitDeliveryPreference(parsed.content),
+  };
 }

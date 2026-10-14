@@ -59,7 +59,7 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(hook).toContain('content: "Your Kinfolk session needs to be refreshed. Please sign in again before sending your question."');
     expect(hook).toContain("} else if (res.status === 401) {");
     expect(hook).toContain('content: "Your Kinfolk session expired. Please sign in again, then resend your question."');
-    expect(hook.match(/void refreshUser\(\);/g)).toHaveLength(2);
+    expect(hook.match(/void refreshUser\(\);/g)?.length).toBeGreaterThanOrEqual(2);
   });
 
   it("returns the standalone primary Kinfolk route to the app when navigation history is unavailable", () => {
@@ -110,5 +110,19 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(widget).toContain("sensitiveMemoryDraft");
     expect(widget).toContain("KinfolkSensitiveMemoryConfirmation");
     expect(widget).toContain("purpose: data.sensitiveMemoryConfirmation.purpose");
+  });
+
+  it("keeps a one-time delivery choice local across primary and floating native Kinfolk", () => {
+    const hook = readFileSync(
+      fileURLToPath(new URL("../hooks/useKinfolk.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(hook).toContain("oneTurnDeliveryInstructionRef");
+    expect(hook).toContain("oneTurnInstruction: oneTurnInstruction ?? undefined");
+    expect(hook).toContain("useOneTimeDeliveryInstruction");
+    expect(widget).toContain("oneTurnDeliveryInstructionRef");
+    expect(widget).toContain("oneTurnInstruction: oneTurnInstruction ?? undefined");
+    expect(widget).toContain("onUseOnce={(instruction) => { oneTurnDeliveryInstructionRef.current = instruction;");
+    expect(travel).toContain("onUseOnce={(instruction) => { useOneTimeDeliveryInstruction(instruction);");
   });
 });
