@@ -10,7 +10,7 @@ describe("Business Dashboard authenticated transport", () => {
   it("uses the shared bearer-and-cookie helper for every Business Dashboard API request", () => {
     expect(dashboard).toContain('import { authenticatedFetch } from "@/lib/authenticatedFetch"');
     expect(dashboard).toContain('authenticatedFetch(`${BASE}api/auth/user`, { credentials: "include", cache: "no-store" })');
-    expect(dashboard).toContain('authenticatedFetch(`${BASE}api/businesses/mine`, { credentials: "include" })');
+    expect(dashboard).toContain('authenticatedFetch(`${BASE}api/businesses/mine/managed`, { credentials: "include", cache: "no-store" })');
     expect(dashboard).toContain('authenticatedFetch(`${BASE}api/reviews?businessId=${selectedId}`');
     expect(dashboard).toContain('authenticatedFetch(`${BASE}api/businesses/${selectedId}/kinfolk-community-needs`');
     expect(dashboard).toContain('authenticatedFetch(`${BASE}api/businesses/mine/growth-tools`');

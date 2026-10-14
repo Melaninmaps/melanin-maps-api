@@ -19,6 +19,7 @@ type BusinessSummary = {
   id: string; name: string; category: string; city: string; state: string;
   verified: boolean; status: string;
   subcategory?: string | null; vibes?: string[] | null; priceRange?: string | null;
+  managementRole?: "owner" | "manager" | null;
 };
 type Review = { id: string; rating: number; text: string | null; wouldReturnAlone: boolean | null; createdAt: string };
 type PromotionType = "priority_search" | "category_featured" | "city_featured" | "cultural_spotlight" | "event_featured";
@@ -114,10 +115,11 @@ export default function BusinessDashboard() {
 
   useEffect(() => {
     authenticatedFetch(`${BASE}api/auth/user`, { credentials: "include", cache: "no-store" }).then((r) => r.json()).then((d) => setUser(d.user ?? null)).catch(() => {});
-    authenticatedFetch(`${BASE}api/businesses/mine`, { credentials: "include" }).then((r) => r.json()).then((d) => {
-      const list = d.businesses ?? (d.business ? [d.business] : []);
+    authenticatedFetch(`${BASE}api/businesses/mine/managed`, { credentials: "include", cache: "no-store" }).then((r) => r.json()).then((d) => {
+      const list = d.businesses ?? [];
+      const requestedId = params.get("businessId");
       setBusinesses(list);
-      if (list.length) setSelectedId(list[0].id);
+      if (list.length) setSelectedId(list.some((business: BusinessSummary) => business.id === requestedId) ? requestedId : list[0].id);
       setLoading(false);
     }).catch(() => setLoading(false));
   }, []);
@@ -208,6 +210,7 @@ export default function BusinessDashboard() {
   }
 
   const selected = businesses.find((b) => b.id === selectedId);
+  const selectedIsOwner = selected?.managementRole === "owner";
   const avgRating = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : "—";
   const returnRate = reviews.filter((r) => r.wouldReturnAlone).length;
 
@@ -283,8 +286,9 @@ export default function BusinessDashboard() {
                     { id: "promote", label: "✦ Promote" },
                     { id: "global", label: "🌍 Global" },
                   ] as const).map((tab) => (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id ? "bg-[#CA922B] text-white shadow-sm" : "text-[#3A1F0E]/60 hover:text-[#3A1F0E]"}`}>
+                    <button key={tab.id} onClick={() => { if (tab.id === "overview" || selectedIsOwner) setActiveTab(tab.id); }}
+                      disabled={tab.id !== "overview" && !selectedIsOwner}
+                      className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${activeTab === tab.id ? "bg-[#CA922B] text-white shadow-sm" : "text-[#3A1F0E]/60 hover:text-[#3A1F0E]"} disabled:cursor-not-allowed disabled:opacity-40`}>
                       {tab.label}
                     </button>
                   ))}
@@ -333,10 +337,15 @@ export default function BusinessDashboard() {
                             <Edit3 className="w-3 h-3 mr-1" /> Edit Profile
                           </Button>
                         </Link>
-                        <button onClick={() => setActiveTab("promote")}
+                        {selected.managementRole === "owner" ? <Link href={`/business-team?businessId=${encodeURIComponent(selected.id)}`}>
+                          <Button size="sm" variant="outline" className="rounded-full border-[#3A1F0E]/20 text-[#3A1F0E] text-xs font-bold">
+                            <Users className="w-3 h-3 mr-1" /> Manage Team
+                          </Button>
+                        </Link> : <span className="inline-flex items-center rounded-full border border-[#3A1F0E]/15 px-3 py-1.5 text-xs font-bold text-[#3A1F0E]/60">Manager access</span>}
+                        {selectedIsOwner ? <button onClick={() => setActiveTab("promote")}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#2D7A4F]/40 text-[#2D7A4F] text-xs font-bold hover:bg-[#2D7A4F]/5 transition-colors">
                           <TrendingUp className="w-3 h-3" /> Promote My Business
-                        </button>
+                        </button> : null}
                         {!selected.verified && (
                           <Link href="/verify-business">
                             <Button size="sm" className="rounded-full bg-[#2B1507] text-white text-xs font-bold">
@@ -347,9 +356,11 @@ export default function BusinessDashboard() {
                       </div>
                     </div>
 
-                    <BusinessOwnershipEditor businessId={selected.id} />
-                    <BusinessExperienceEditor business={selected} />
-                    <BusinessVoiceProfileEditor businessId={selected.id} />
+                    {selectedIsOwner ? <>
+                      <BusinessOwnershipEditor businessId={selected.id} />
+                      <BusinessExperienceEditor business={selected} />
+                      <BusinessVoiceProfileEditor businessId={selected.id} />
+                    </> : <p className="rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] px-4 py-3 text-sm text-[#3A1F0E]/65">Your approved manager access can view this private dashboard and use ordinary selected-business editing tools. Ownership, team access, promotion, verification, and eligibility controls remain with the approved owner.</p>}
 
                     <div>
                       <p className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-3">Recent Reviews</p>
@@ -388,7 +399,7 @@ export default function BusinessDashboard() {
                 )}
 
                 {/* ── Promote Tab ── */}
-                {activeTab === "promote" && (
+                {activeTab === "promote" && selectedIsOwner && (
                   <div className="space-y-5">
                     {/* Success banner */}
                     {justActivated && (
@@ -533,7 +544,7 @@ export default function BusinessDashboard() {
                 )}
 
                 {/* ── Global Tab ── */}
-                {activeTab === "global" && (
+                {activeTab === "global" && selectedIsOwner && (
                   <div className="space-y-5">
                     {/* Hero */}
                     <div className="bg-gradient-to-br from-[#1A2E22] to-[#2D7A4F] rounded-2xl p-6 text-white">

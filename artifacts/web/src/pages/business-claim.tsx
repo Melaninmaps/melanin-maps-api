@@ -20,7 +20,7 @@ export default function BusinessClaim() {
   const { data: auth, isLoading: authLoading } = useGetCurrentAuthUser();
   const [location] = useLocation();
   const businessId = location.split("/")[2];
-  const user = auth?.user as { id?: string; email?: string } | undefined;
+  const user = auth?.user as { id?: string } | undefined;
 
   const [business, setBusiness] = useState<{ name: string; city: string; category: string } | null>(null);
   const [eligibility, setEligibility] = useState<ClaimEligibility>("loading");
@@ -29,6 +29,10 @@ export default function BusinessClaim() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [claimId, setClaimId] = useState<string | null>(null);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [verificationStatus, setVerificationStatus] = useState<"idle" | "sending" | "issued" | "confirming" | "verified">("idle");
+  const [verificationError, setVerificationError] = useState<string | null>(null);
   const [form, setForm] = useState({
     ownerName: "",
     role: "owner",
@@ -40,12 +44,6 @@ export default function BusinessClaim() {
     notes: "",
     attestation: false,
   });
-
-  useEffect(() => {
-    if (user?.email && !form.businessEmail) {
-      setForm((current) => ({ ...current, businessEmail: user.email ?? "" }));
-    }
-  }, [user?.email, form.businessEmail]);
 
   useEffect(() => {
     if (!businessId) return;
@@ -108,11 +106,12 @@ export default function BusinessClaim() {
           attestation: true,
         }),
       });
-      const payload = await response.json().catch(() => ({})) as { error?: string };
+      const payload = await response.json().catch(() => ({})) as { error?: string; claimId?: string };
       if (!response.ok) {
         setError(payload.error ?? "Failed to submit the ownership claim. Please try again.");
         return;
       }
+      setClaimId(payload.claimId ?? null);
       setSuccess(true);
     } catch {
       setError("Network error. Please try again.");
@@ -121,7 +120,38 @@ export default function BusinessClaim() {
     }
   };
 
+  const requestVerificationCode = async () => {
+    if (!claimId) return;
+    setVerificationStatus("sending");
+    setVerificationError(null);
+    try {
+      const response = await fetch(`${BASE}api/me/business-claims/${claimId}/verification-code`, {
+        method: "POST", credentials: "include",
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) { setVerificationError(payload.error ?? "We could not send a verification code."); return; }
+      setVerificationStatus("issued");
+    } catch { setVerificationError("Network error. Please try again."); }
+    finally { setVerificationStatus((current) => current === "sending" ? "idle" : current); }
+  };
+
+  const confirmVerificationCode = async () => {
+    if (!claimId || !verificationCode.trim()) return;
+    setVerificationStatus("confirming");
+    setVerificationError(null);
+    try {
+      const response = await fetch(`${BASE}api/me/business-claims/${claimId}/verification-code/confirm`, {
+        method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: verificationCode.trim().toUpperCase() }),
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) { setVerificationError(payload.error ?? "That code could not be confirmed."); setVerificationStatus("issued"); return; }
+      setVerificationStatus("verified");
+    } catch { setVerificationError("Network error. Please try again."); setVerificationStatus("issued"); }
+  };
+
   if (success) {
+    const canUseEmailCode = form.verificationMethod === "domain_email" && Boolean(claimId);
     return (
       <Layout>
         <div className="flex min-h-[70vh] items-center justify-center px-4 py-16">
@@ -129,9 +159,23 @@ export default function BusinessClaim() {
             <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#CA922B]/10"><CheckCircle2 className="h-10 w-10 text-[#CA922B]" /></div>
             <div>
               <h1 className="mb-3 font-serif text-3xl font-bold text-[#3A1F0E]">Ownership claim submitted</h1>
-              <p className="leading-relaxed text-[#3A1F0E]/70">Your request is under review. Approval can grant listing-management access; it does not verify the business, ownership designation, safety, or public eligibility.</p>
+              <p className="leading-relaxed text-[#3A1F0E]/70">Your request is under private review. Approval can grant listing-management access; it does not verify the business, ownership designation, safety, or public eligibility, and it never changes ranking.</p>
             </div>
-            <Link href={`/businesses/${businessId}`}><button className="rounded-2xl bg-[#CA922B] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#B38024]">Back to listing →</button></Link>
+            {canUseEmailCode ? (
+              <section className="rounded-2xl border border-[#CA922B]/30 bg-white p-5 text-left">
+                <h2 className="font-bold text-[#2B1507]">Confirm your business contact</h2>
+                <p className="mt-1 text-sm leading-6 text-[#3A1F0E]/65">You may confirm control of the business-domain contact you supplied. This is optional review evidence only—it does not approve the claim or alter the public listing.</p>
+                {verificationStatus === "verified" ? <p className="mt-3 rounded-xl bg-emerald-50 px-3 py-2 text-sm font-semibold text-emerald-800">Business contact confirmed. Your claim is still awaiting private review.</p> : (
+                  <div className="mt-4 space-y-3">
+                    {verificationStatus !== "issued" && verificationStatus !== "confirming" ? <button type="button" onClick={requestVerificationCode} disabled={verificationStatus === "sending"} className="rounded-xl bg-[#2B1507] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{verificationStatus === "sending" ? "Sending code…" : "Send private verification code"}</button> : (
+                      <><p className="text-sm text-[#3A1F0E]/70">Check the business email address you supplied, then enter the eight-character code. It expires in 15 minutes.</p><div className="flex gap-2"><input value={verificationCode} onChange={(event) => setVerificationCode(event.target.value.replace(/[^a-zA-Z2-9]/g, "").slice(0, 8).toUpperCase())} placeholder="ABCDEFG2" className="claim-input font-mono tracking-[0.18em]" aria-label="Business verification code" /><button type="button" onClick={confirmVerificationCode} disabled={verificationStatus === "confirming" || verificationCode.length !== 8} className="shrink-0 rounded-xl bg-[#CA922B] px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{verificationStatus === "confirming" ? "Confirming…" : "Confirm"}</button></div></>
+                    )}
+                    {verificationError ? <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">{verificationError}</p> : null}
+                  </div>
+                )}
+              </section>
+            ) : null}
+            <div className="flex flex-wrap justify-center gap-3"><Link href="/business-claims"><button className="rounded-2xl border border-[#CA922B]/40 px-5 py-3 text-sm font-semibold text-[#8D5C17]">View claim status</button></Link><Link href={`/businesses/${businessId}`}><button className="rounded-2xl bg-[#CA922B] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#B38024]">Back to listing →</button></Link></div>
           </div>
         </div>
       </Layout>
@@ -156,8 +200,8 @@ export default function BusinessClaim() {
           <form onSubmit={submit} className="space-y-5">
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"><div className="flex items-start gap-3"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /><span>Only submit a claim if you are the owner or an authorized representative. A claim remains private to review staff until a separate approval decision.</span></div></div>
             <Field label="Your name" required><input value={form.ownerName} onChange={(event) => set("ownerName", event.target.value)} placeholder="Your full name" className="claim-input" required /></Field>
-            <Field label="Your role at this business"><input value={form.role} onChange={(event) => set("role", event.target.value)} placeholder="Owner, co-founder, or authorized representative" className="claim-input" /></Field>
-            <Field label="Business contact email" required><input value={form.businessEmail} onChange={(event) => set("businessEmail", event.target.value)} placeholder="name@business.com" type="email" className="claim-input" required /></Field>
+            <Field label="Your role at this business"><select value={form.role} onChange={(event) => set("role", event.target.value)} className="claim-input"><option value="owner">Owner</option><option value="authorized_representative">Authorized representative</option></select><p className="mt-1 text-xs text-[#3A1F0E]/60">Managers are invited by an approved owner after a claim is reviewed.</p></Field>
+            <Field label="Business contact email" required><input value={form.businessEmail} onChange={(event) => set("businessEmail", event.target.value)} placeholder="name@business.com" type="email" autoComplete="email" className="claim-input" required /><p className="mt-1 text-xs text-[#3A1F0E]/60">This private review contact can differ from your member-login email and is never added to the public listing.</p></Field>
             <Field label="Private review phone (optional)"><input value={form.claimantPhone} onChange={(event) => set("claimantPhone", event.target.value)} placeholder="(555) 000-0000" type="tel" className="claim-input" /><p className="mt-1 text-xs text-[#3A1F0E]/60">Used only for private claim review; it is never added to the public listing.</p></Field>
             <Field label="How should the claim be reviewed?" required><select value={form.verificationMethod} onChange={(event) => set("verificationMethod", event.target.value)} className="claim-input"><option value="manual_review">Manual review</option><option value="domain_email">Business-domain email</option><option value="social_account">Official social account</option><option value="booking_page">Official booking page</option><option value="business_document">Business document</option></select></Field>
             <Field label="Official website or public proof link"><input value={form.officialUrl} onChange={(event) => set("officialUrl", event.target.value)} placeholder="https://…" type="url" className="claim-input" /></Field>

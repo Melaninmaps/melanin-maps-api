@@ -14,10 +14,29 @@
  *
  * All admin endpoints require isAdmin() — never just req.user?.id.
  */
+import { randomUUID } from "node:crypto";
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
 import { isAdmin } from "../lib/adminAuth.js";
-import { sendClaimReceived, sendClaimApproved } from "../lib/email.js";
+import {
+  sendBusinessClaimVerificationCode,
+  sendBusinessManagerInvitation,
+  sendClaimReceived,
+  sendClaimApproved,
+} from "../lib/email.js";
+import {
+  CLAIM_VERIFICATION_MAX_ATTEMPTS,
+  CLAIM_VERIFICATION_TTL_MINUTES,
+  MANAGER_INVITATION_MAX_ATTEMPTS,
+  MANAGER_INVITATION_TTL_DAYS,
+  claimVerificationEmailDeliveryEnabled,
+  createOpaqueCode,
+  emailDomainMatchesOfficialUrl,
+  hashesMatch,
+  hashPrivateCode,
+  managerInvitationDeliveryEnabled,
+  normalizePrivateEmail,
+} from "../services/business-owner/verification.js";
 
 const router: IRouter = Router();
 
@@ -31,7 +50,7 @@ const router: IRouter = Router();
 async function releaseBusinessFromClaimPendingIfNoOpenClaims(businessId: string): Promise<void> {
   const { rows: openClaims } = await pool.query(
     `SELECT 1 FROM business_claims
-     WHERE business_id = $1 AND status IN ('pending', 'needs_info')
+     WHERE business_id = $1 AND status IN ('pending', 'needs_info', 'disputed')
      LIMIT 1`,
     [businessId],
   );
@@ -120,7 +139,7 @@ router.get("/businesses/:id/claim-eligibility", async (req: Request, res: Respon
       [businessId]
     );
     if (biz.ocs === "claimed" || ownerLinks.length > 0) {
-      res.json({ eligibility: "already_claimed", message: "This business has a verified owner. If there's an issue, use 'Ownership issue?' to contact support." });
+      res.json({ eligibility: "already_claimed", message: "This business already has an approved owner relationship. If there is an issue, contact support." });
       return;
     }
 
@@ -133,7 +152,7 @@ router.get("/businesses/:id/claim-eligibility", async (req: Request, res: Respon
     // Caller already has an open claim
     const { rows: myClaims } = await pool.query(
       `SELECT id FROM business_claims
-       WHERE business_id = $1 AND user_id = $2 AND status IN ('pending', 'needs_info')
+       WHERE business_id = $1 AND user_id = $2 AND status IN ('pending', 'needs_info', 'disputed')
        LIMIT 1`,
       [businessId, userId]
     );
@@ -145,7 +164,7 @@ router.get("/businesses/:id/claim-eligibility", async (req: Request, res: Respon
     // Different user's claim is open
     const { rows: otherClaims } = await pool.query(
       `SELECT 1 FROM business_claims
-       WHERE business_id = $1 AND user_id != $2 AND status IN ('pending', 'needs_info')
+       WHERE business_id = $1 AND user_id != $2 AND status IN ('pending', 'needs_info', 'disputed')
        LIMIT 1`,
       [businessId, userId]
     );
@@ -182,11 +201,15 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
   if (claimantPhone !== undefined && typeof claimantPhone !== "string") {
     res.status(400).json({ error: "claimantPhone must be a phone number when provided" }); return;
   }
-  // A claimant phone is private review contact information. It is never copied
+  // Private review contact information is never copied
   // into the business listing, where it could overwrite or disclose public data.
   const safeClaimantPhone = typeof claimantPhone === "string"
     ? claimantPhone.trim().replace(/[^0-9+().\-\s]/g, "").slice(0, 30) || null
     : null;
+  const allowedClaimRoles = ["owner", "authorized_representative"];
+  if (typeof role !== "string" || !allowedClaimRoles.includes(role)) {
+    res.status(400).json({ error: "role must be owner or authorized_representative; managers are invited after approval" }); return;
+  }
   const validMethods = ["domain_email", "social_account", "booking_page", "manual_review", "business_document"];
   if (!verificationMethod || typeof verificationMethod !== "string" || !validMethods.includes(verificationMethod)) {
     res.status(400).json({ error: `verificationMethod must be one of: ${validMethods.join(", ")}` }); return;
@@ -218,7 +241,7 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
 
     // One-open-claim-per-member-per-business guard
     const { rows: existing } = await pool.query(
-      `SELECT id FROM business_claims WHERE business_id = $1 AND user_id = $2 AND status IN ('pending', 'needs_info') LIMIT 1`,
+      `SELECT id FROM business_claims WHERE business_id = $1 AND user_id = $2 AND status IN ('pending', 'needs_info', 'disputed') LIMIT 1`,
       [businessId, userId]
     );
     if (existing[0]) {
@@ -230,7 +253,7 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
     // the client-side state and creating a competing pending claim.
     const { rows: competingClaims } = await pool.query(
       `SELECT id FROM business_claims
-       WHERE business_id = $1 AND user_id <> $2 AND status IN ('pending', 'needs_info')
+       WHERE business_id = $1 AND user_id <> $2 AND status IN ('pending', 'needs_info', 'disputed')
        LIMIT 1`,
       [businessId, userId],
     );
@@ -253,7 +276,7 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
         ownerName.trim().slice(0, 255),
         businessEmail.trim().slice(0, 255),
         safeClaimantPhone,
-        (typeof role === "string" ? role : "owner").slice(0, 50),
+        role,
         verificationMethod.slice(0, 40),
         typeof officialUrl === "string" ? officialUrl.slice(0, 500) : null,
         typeof socialHandle === "string" ? socialHandle.slice(0, 255) : null,
@@ -267,11 +290,12 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
       [businessId]
     );
 
-    // Fire-and-forget admin notification
+    // Transactional claimant notification uses the separately supplied private
+    // business contact. It is never copied into the public listing.
     sendClaimReceived(
-      "hello@mappingwithmelanin.com",
-      `Admin — new claim from ${ownerName}`,
-      `${biz.name ?? businessId} (${businessEmail})`
+      businessEmail.trim(),
+      ownerName.trim(),
+      String(biz.name ?? businessId),
     ).catch(() => {});
 
     res.status(201).json({
@@ -284,6 +308,163 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
   }
 });
 
+
+// ── POST /me/business-claims/:id/verification-code ───────────────────────────
+// Issues an opt-in, short-lived email code only after the delivery feature has
+// been explicitly configured. It proves control of a private business contact;
+// it cannot approve a claim or alter a public business record.
+router.post("/me/business-claims/:id/verification-code", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!claimVerificationEmailDeliveryEnabled()) {
+    res.status(503).json({ error: "Business contact verification is not enabled in this environment." });
+    return;
+  }
+  const claimId = String(req.params.id);
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, user_id, business_id, business_name, owner_name, email, verification_method, evidence_url, status
+       FROM business_claims WHERE id = $1 AND user_id = $2 LIMIT 1`,
+      [claimId, req.user.id],
+    );
+    const claim = rows[0];
+    if (!claim) { res.status(404).json({ error: "Claim not found" }); return; }
+    if (!["pending", "needs_info", "disputed"].includes(claim.status)) {
+      res.status(409).json({ error: "Only an active private review claim can verify a business contact." });
+      return;
+    }
+    if (claim.verification_method !== "domain_email") {
+      res.status(409).json({ error: "Choose business-domain email review before requesting an email code." });
+      return;
+    }
+    const target = normalizePrivateEmail(String(claim.email ?? ""));
+    if (!target || !claim.evidence_url || !emailDomainMatchesOfficialUrl(target, String(claim.evidence_url))) {
+      res.status(409).json({ error: "A business-domain email and matching official website are required for email-code review." });
+      return;
+    }
+    const { rows: recent } = await pool.query(
+      `SELECT count(*)::int AS count
+       FROM business_claim_verification_challenges
+       WHERE claim_id = $1 AND channel = 'email' AND created_at > NOW() - INTERVAL '1 hour'`,
+      [claimId],
+    );
+    if (Number(recent[0]?.count ?? 0) >= 3) {
+      res.status(429).json({ error: "Too many verification codes were requested. Please try again later." });
+      return;
+    }
+
+    const code = createOpaqueCode(8);
+    const challengeId = `bcv_${randomUUID()}`;
+    await pool.query(
+      `UPDATE business_claim_verification_challenges
+       SET status = 'expired', updated_at = NOW()
+       WHERE claim_id = $1 AND channel = 'email' AND status = 'issued'`,
+      [claimId],
+    );
+    await pool.query(
+      `INSERT INTO business_claim_verification_challenges
+       (id, claim_id, user_id, channel, target, code_hash, status, attempts, max_attempts, expires_at, created_at, updated_at)
+       VALUES ($1,$2,$3,'email',$4,$5,'issued',0,$6,NOW() + ($7 || ' minutes')::interval,NOW(),NOW())`,
+      [challengeId, claimId, req.user.id, target, hashPrivateCode(code), CLAIM_VERIFICATION_MAX_ATTEMPTS, String(CLAIM_VERIFICATION_TTL_MINUTES)],
+    );
+    try {
+      await sendBusinessClaimVerificationCode({
+        to: target,
+        ownerName: String(claim.owner_name ?? "there"),
+        businessName: String(claim.business_name ?? claim.business_id),
+        code,
+      });
+    } catch (error) {
+      await pool.query(
+        `UPDATE business_claim_verification_challenges
+         SET status = 'delivery_failed', delivery_error = $2, updated_at = NOW()
+         WHERE id = $1`,
+        [challengeId, error instanceof Error ? error.message.slice(0, 500) : "Email delivery failed"],
+      );
+      res.status(503).json({ error: "The verification code could not be delivered. No verification was recorded." });
+      return;
+    }
+    res.status(201).json({
+      ok: true,
+      status: "code_issued",
+      channel: "email",
+      expiresInSeconds: CLAIM_VERIFICATION_TTL_MINUTES * 60,
+      maxAttempts: CLAIM_VERIFICATION_MAX_ATTEMPTS,
+    });
+  } catch (error) {
+    req.log.error({ error, claimId }, "Failed to issue private business claim verification code");
+    res.status(503).json({ error: "Business contact verification is unavailable until its reviewed storage is ready." });
+  }
+});
+
+// ── POST /me/business-claims/:id/verification-code/confirm ───────────────────
+router.post("/me/business-claims/:id/verification-code/confirm", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!claimVerificationEmailDeliveryEnabled()) {
+    res.status(503).json({ error: "Business contact verification is not enabled in this environment." });
+    return;
+  }
+  const claimId = String(req.params.id);
+  const code = typeof req.body?.code === "string" ? req.body.code.trim().toUpperCase() : "";
+  if (!/^[A-Z2-9]{8}$/.test(code)) {
+    res.status(400).json({ error: "Enter the eight-character verification code." });
+    return;
+  }
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const { rows } = await client.query(
+      `SELECT id, code_hash, attempts, max_attempts, expires_at, status
+       FROM business_claim_verification_challenges
+       WHERE claim_id = $1 AND user_id = $2 AND channel = 'email'
+       ORDER BY created_at DESC LIMIT 1 FOR UPDATE`,
+      [claimId, req.user.id],
+    );
+    const challenge = rows[0];
+    if (!challenge || challenge.status !== "issued") {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "Request a new verification code before confirming." });
+      return;
+    }
+    if (new Date(challenge.expires_at).getTime() <= Date.now()) {
+      await client.query(`UPDATE business_claim_verification_challenges SET status = 'expired', updated_at = NOW() WHERE id = $1`, [challenge.id]);
+      await client.query("COMMIT");
+      res.status(410).json({ error: "This verification code expired. Request a new one." });
+      return;
+    }
+    const attempts = Number(challenge.attempts) + 1;
+    const matched = typeof challenge.code_hash === "string" && hashesMatch(challenge.code_hash, hashPrivateCode(code));
+    if (!matched) {
+      const status = attempts >= Number(challenge.max_attempts) ? "locked" : "issued";
+      await client.query(
+        `UPDATE business_claim_verification_challenges
+         SET attempts = $2, status = $3, updated_at = NOW() WHERE id = $1`,
+        [challenge.id, attempts, status],
+      );
+      await client.query("COMMIT");
+      res.status(attempts >= Number(challenge.max_attempts) ? 429 : 400).json({
+        error: attempts >= Number(challenge.max_attempts)
+          ? "Too many incorrect codes. Request a new verification code."
+          : "That verification code is not correct.",
+      });
+      return;
+    }
+    await client.query(
+      `UPDATE business_claim_verification_challenges
+       SET attempts = $2, status = 'verified', verified_at = NOW(), updated_at = NOW()
+       WHERE id = $1`,
+      [challenge.id, attempts],
+    );
+    await client.query("COMMIT");
+    res.json({ ok: true, status: "verified", message: "Business contact confirmed. Your ownership claim remains under private review." });
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    req.log.error({ error, claimId }, "Failed to confirm private business claim verification code");
+    res.status(503).json({ error: "Business contact verification is unavailable until its reviewed storage is ready." });
+  } finally {
+    client.release();
+  }
+});
+
 // ── GET /me/business-claims ───────────────────────────────────────────────────
 // Returns the caller's own claims only — no other user's data is returned.
 router.get("/me/business-claims", async (req: Request, res: Response) => {
@@ -292,7 +473,7 @@ router.get("/me/business-claims", async (req: Request, res: Response) => {
     const { rows } = await pool.query(
       `SELECT bc.id, bc.business_id, bc.status, bc.claim_type, bc.role,
               bc.attested_at, bc.withdrawn_at, bc.created_at, bc.updated_at,
-              CASE WHEN bc.status IN ('needs_info', 'rejected') THEN bc.decision_reason ELSE NULL END AS decision_reason,
+              CASE WHEN bc.status IN ('needs_info', 'rejected', 'disputed') THEN bc.decision_reason ELSE NULL END AS decision_reason,
               b.name AS business_name, b.city, b.state
        FROM business_claims bc
        LEFT JOIN businesses b ON b.id = bc.business_id
@@ -300,7 +481,27 @@ router.get("/me/business-claims", async (req: Request, res: Response) => {
        ORDER BY bc.created_at DESC`,
       [req.user.id]
     );
-    res.json({ claims: rows });
+    // The existing status endpoint remains usable before the source-only
+    // verification migration is applied. Verification detail is private and
+    // reported only if its reviewed table is available.
+    try {
+      const { rows: verificationRows } = await pool.query(
+        `SELECT claim_id,
+                CASE
+                  WHEN bool_or(status = 'verified') THEN 'verified'
+                  WHEN bool_or(status = 'issued' AND expires_at > NOW()) THEN 'code_issued'
+                  ELSE 'not_requested'
+                END AS contact_verification_status
+         FROM business_claim_verification_challenges
+         WHERE user_id = $1
+         GROUP BY claim_id`,
+        [req.user.id],
+      );
+      const verificationByClaim = new Map(verificationRows.map((row) => [row.claim_id, row.contact_verification_status]));
+      res.json({ claims: rows.map((claim) => ({ ...claim, contact_verification_status: verificationByClaim.get(claim.id) ?? "not_requested" })) });
+    } catch {
+      res.json({ claims: rows.map((claim) => ({ ...claim, contact_verification_status: "unavailable" })) });
+    }
   } catch (err) {
     req.log.error({ err }, "GET /me/business-claims failed");
     res.status(500).json({ error: "Failed to fetch your claims" });
@@ -325,7 +526,7 @@ router.patch("/me/business-claims/:id", async (req: Request, res: Response) => {
     const claim = rows[0];
 
     if (action === "withdraw") {
-      if (!["pending", "needs_info"].includes(claim.status)) {
+      if (!["pending", "needs_info", "disputed"].includes(claim.status)) {
         res.status(409).json({ error: "Only pending or needs_info claims can be withdrawn" }); return;
       }
       await pool.query(
@@ -355,7 +556,55 @@ router.patch("/me/business-claims/:id", async (req: Request, res: Response) => {
       return;
     }
 
-    res.status(400).json({ error: "action must be 'withdraw' or 'resubmit'" });
+    if (action === "dispute") {
+      if (claim.status !== "rejected") {
+        res.status(409).json({ error: "Only a rejected claim can be disputed" }); return;
+      }
+      const safeNotes = typeof notes === "string" ? notes.replace(/<[^>]*>/g, "").slice(0, 1000) : "";
+      if (safeNotes.trim().length < 3) {
+        res.status(400).json({ error: "Provide a brief private reason for the dispute" }); return;
+      }
+      const client = await pool.connect();
+      try {
+        await client.query("BEGIN");
+        const { rows: businessRows } = await client.query(
+          `SELECT COALESCE(ownership_control_status, CASE WHEN listing_status = 'live_claimed' THEN 'claimed' ELSE 'unclaimed' END) AS ownership_control_status
+           FROM businesses WHERE id = $1 FOR UPDATE`,
+          [claim.business_id],
+        );
+        if (!businessRows[0] || businessRows[0].ownership_control_status === "claimed") {
+          await client.query("ROLLBACK");
+          res.status(409).json({ error: "This listing cannot be disputed because an active owner relationship now exists." }); return;
+        }
+        const { rows: competingRows } = await client.query(
+          `SELECT 1 FROM business_claims WHERE business_id = $1 AND user_id <> $2
+           AND status IN ('pending', 'needs_info', 'disputed') LIMIT 1 FOR UPDATE`,
+          [claim.business_id, req.user.id],
+        );
+        if (competingRows[0]) {
+          await client.query("ROLLBACK");
+          res.status(409).json({ error: "Another private ownership review is already active for this listing." }); return;
+        }
+        await client.query(
+          `UPDATE business_claims SET status='disputed', additional_info=$1, updated_at=NOW() WHERE id=$2`,
+          [safeNotes, claimId],
+        );
+        await client.query(
+          `UPDATE businesses SET ownership_control_status='ownership_disputed', updated_at=NOW() WHERE id=$1`,
+          [claim.business_id],
+        );
+        await client.query("COMMIT");
+        res.json({ ok: true, message: "Claim moved to private dispute review. No ownership or public listing data changed." }); return;
+      } catch (disputeError) {
+        await client.query("ROLLBACK").catch(() => {});
+        req.log.error({ disputeError, claimId }, "Failed to dispute business claim");
+        res.status(500).json({ error: "Failed to open private dispute review" }); return;
+      } finally {
+        client.release();
+      }
+    }
+
+    res.status(400).json({ error: "action must be 'withdraw', 'resubmit', or 'dispute'" });
   } catch (err) {
     req.log.error({ err }, "PATCH /me/business-claims/:id failed");
     res.status(500).json({ error: "Failed to update claim" });
@@ -456,7 +705,7 @@ router.post("/admin/business-claims/:id/approve", async (req: Request, res: Resp
       await client.query("ROLLBACK");
       res.json({ ok: true, message: "Claim already approved", claimId }); return;
     }
-    if (!["pending", "needs_info"].includes(claim.status)) {
+    if (!["pending", "needs_info", "disputed"].includes(claim.status)) {
       await client.query("ROLLBACK");
       res.status(409).json({ error: `Claim is in status '${claim.status}' and cannot be approved` }); return;
     }
@@ -583,6 +832,198 @@ router.post("/admin/business-claims/:id/revoke", async (req: Request, res: Respo
     res.status(500).json({ error: "Revocation failed" });
   } finally {
     client.release();
+  }
+});
+
+
+async function approvedOwnerForBusiness(userId: string, businessId: string): Promise<boolean> {
+  const { rows } = await pool.query(
+    `SELECT 1 FROM business_owner_links
+     WHERE business_id = $1 AND user_id = $2 AND role = 'owner'
+       AND status = 'approved' AND revoked_at IS NULL LIMIT 1`,
+    [businessId, userId],
+  );
+  return Boolean(rows[0]);
+}
+
+// ── GET /businesses/:id/management-team ───────────────────────────────────────
+// Private owner-only view. It intentionally returns no member profile, claim
+// evidence, or public discovery data.
+router.get("/businesses/:id/management-team", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const businessId = String(req.params.id);
+  try {
+    if (!await approvedOwnerForBusiness(req.user.id, businessId)) { res.status(403).json({ error: "Only an approved owner can view this management team." }); return; }
+    const { rows } = await pool.query(
+      `SELECT bol.user_id, bol.role, bol.approved_at, bol.created_at
+       FROM business_owner_links bol
+       WHERE bol.business_id = $1 AND bol.status = 'approved' AND bol.revoked_at IS NULL
+       ORDER BY CASE bol.role WHEN 'owner' THEN 0 ELSE 1 END, bol.created_at ASC`,
+      [businessId],
+    );
+    const { rows: invitations } = await pool.query(
+      `SELECT id, invited_email, status, expires_at, created_at
+       FROM business_manager_invitations
+       WHERE business_id = $1 AND status IN ('pending', 'delivery_failed')
+       ORDER BY created_at DESC`,
+      [businessId],
+    );
+    res.json({ members: rows, invitations });
+  } catch (error) {
+    req.log.error({ error, businessId }, "Failed to load private business management team");
+    res.status(503).json({ error: "Business team management is unavailable until its reviewed storage is ready." });
+  }
+});
+
+// ── POST /businesses/:id/management-team/invitations ─────────────────────────
+router.post("/businesses/:id/management-team/invitations", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!managerInvitationDeliveryEnabled()) {
+    res.status(503).json({ error: "Business manager invitations are not enabled in this environment." });
+    return;
+  }
+  const businessId = String(req.params.id);
+  const invitedEmail = normalizePrivateEmail(typeof req.body?.email === "string" ? req.body.email : "");
+  if (!invitedEmail) { res.status(400).json({ error: "A valid manager email is required." }); return; }
+  try {
+    if (!await approvedOwnerForBusiness(req.user.id, businessId)) { res.status(403).json({ error: "Only an approved owner can invite a manager." }); return; }
+    const { rows: businessRows } = await pool.query(`SELECT id, name FROM businesses WHERE id = $1 LIMIT 1`, [businessId]);
+    const business = businessRows[0];
+    if (!business) { res.status(404).json({ error: "Business not found" }); return; }
+    const inviterEmail = normalizePrivateEmail(String((req.user as { email?: string }).email ?? ""));
+    if (inviterEmail && inviterEmail === invitedEmail) { res.status(400).json({ error: "Use your existing owner access instead of inviting yourself." }); return; }
+    const { rows: rateRows } = await pool.query(
+      `SELECT count(*)::int AS count FROM business_manager_invitations
+       WHERE business_id = $1 AND inviter_user_id = $2 AND created_at > NOW() - INTERVAL '1 hour'`,
+      [businessId, req.user.id],
+    );
+    if (Number(rateRows[0]?.count ?? 0) >= 5) { res.status(429).json({ error: "Too many team invitations were sent. Please try again later." }); return; }
+    const { rows: existingManager } = await pool.query(
+      `SELECT 1 FROM business_owner_links bol JOIN users u ON u.id = bol.user_id
+       WHERE bol.business_id = $1 AND lower(u.email) = lower($2)
+         AND bol.status = 'approved' AND bol.revoked_at IS NULL LIMIT 1`,
+      [businessId, invitedEmail],
+    );
+    if (existingManager[0]) { res.status(409).json({ error: "That member already has active access to this business." }); return; }
+    const code = createOpaqueCode(10);
+    const invitationId = `bmi_${randomUUID()}`;
+    await pool.query(
+      `INSERT INTO business_manager_invitations
+       (id, business_id, inviter_user_id, invited_email, role, code_hash, status, attempts, max_attempts, expires_at, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,'manager',$5,'pending',0,$6,NOW() + ($7 || ' days')::interval,NOW(),NOW())`,
+      [invitationId, businessId, req.user.id, invitedEmail, hashPrivateCode(code), MANAGER_INVITATION_MAX_ATTEMPTS, String(MANAGER_INVITATION_TTL_DAYS)],
+    );
+    try {
+      await sendBusinessManagerInvitation({
+        to: invitedEmail,
+        businessName: String(business.name),
+        inviterName: inviterEmail ?? "An approved business owner",
+        code,
+      });
+    } catch (error) {
+      await pool.query(
+        `UPDATE business_manager_invitations SET status = 'delivery_failed', updated_at = NOW() WHERE id = $1`,
+        [invitationId],
+      );
+      res.status(503).json({ error: "The invitation could not be delivered. No manager access was granted." });
+      return;
+    }
+    res.status(201).json({ ok: true, invitationId, status: "pending", expiresInDays: MANAGER_INVITATION_TTL_DAYS });
+  } catch (error) {
+    req.log.error({ error, businessId }, "Failed to issue private business manager invitation");
+    res.status(503).json({ error: "Business team invitations are unavailable until reviewed storage is ready." });
+  }
+});
+
+// ── POST /business-manager-invitations/accept ─────────────────────────────────
+router.post("/business-manager-invitations/accept", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!managerInvitationDeliveryEnabled()) { res.status(503).json({ error: "Business manager invitations are not enabled in this environment." }); return; }
+  const code = typeof req.body?.code === "string" ? req.body.code.trim().toUpperCase() : "";
+  const accountEmail = normalizePrivateEmail(String((req.user as { email?: string }).email ?? ""));
+  if (!/^[A-Z2-9]{10}$/.test(code) || !accountEmail) { res.status(400).json({ error: "Sign in with the invited email address and enter the ten-character invitation code." }); return; }
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const { rows } = await client.query(
+      `SELECT id, business_id, inviter_user_id, invited_email, code_hash, status, attempts, max_attempts, expires_at
+       FROM business_manager_invitations WHERE code_hash = $1 LIMIT 1 FOR UPDATE`,
+      [hashPrivateCode(code)],
+    );
+    const invitation = rows[0];
+    if (!invitation || invitation.status !== 'pending' || !hashesMatch(invitation.code_hash, hashPrivateCode(code))) {
+      await client.query("ROLLBACK");
+      res.status(404).json({ error: "Invitation not found or no longer available." }); return;
+    }
+    if (String(invitation.invited_email).toLowerCase() !== accountEmail) {
+      await client.query(`UPDATE business_manager_invitations SET attempts = attempts + 1, updated_at = NOW() WHERE id = $1`, [invitation.id]);
+      await client.query("COMMIT");
+      res.status(403).json({ error: "Use the member account that matches the invited email address." }); return;
+    }
+    if (new Date(invitation.expires_at).getTime() <= Date.now()) {
+      await client.query(`UPDATE business_manager_invitations SET status = 'expired', updated_at = NOW() WHERE id = $1`, [invitation.id]);
+      await client.query("COMMIT");
+      res.status(410).json({ error: "This manager invitation expired." }); return;
+    }
+    if (Number(invitation.attempts) >= Number(invitation.max_attempts)) {
+      await client.query(`UPDATE business_manager_invitations SET status = 'expired', updated_at = NOW() WHERE id = $1`, [invitation.id]);
+      await client.query("COMMIT");
+      res.status(429).json({ error: "Too many invitation attempts. Ask the owner for a new invitation." }); return;
+    }
+    const { rows: ownerRows } = await client.query(
+      `SELECT 1 FROM business_owner_links WHERE business_id = $1 AND user_id = $2
+       AND role = 'owner' AND status = 'approved' AND revoked_at IS NULL LIMIT 1`,
+      [invitation.business_id, invitation.inviter_user_id],
+    );
+    if (!ownerRows[0]) { await client.query("ROLLBACK"); res.status(409).json({ error: "This invitation is no longer authorized by an active owner." }); return; }
+    const { rows: linkRows } = await client.query(
+      `SELECT id FROM business_owner_links WHERE business_id = $1 AND user_id = $2
+       AND status = 'approved' AND revoked_at IS NULL LIMIT 1 FOR UPDATE`,
+      [invitation.business_id, req.user.id],
+    );
+    if (!linkRows[0]) {
+      await client.query(
+        `INSERT INTO business_owner_links
+         (id, user_id, business_id, role, status, approved_by, approved_at, created_at, updated_at)
+         VALUES ($1,$2,$3,'manager','approved',$4,NOW(),NOW(),NOW())`,
+        [`bol_${randomUUID()}`, req.user.id, invitation.business_id, invitation.inviter_user_id],
+      );
+    }
+    await client.query(
+      `UPDATE business_manager_invitations
+       SET status = 'accepted', accepted_by_user_id = $2, accepted_at = NOW(), updated_at = NOW()
+       WHERE id = $1`,
+      [invitation.id, req.user.id],
+    );
+    await client.query("COMMIT");
+    res.json({ ok: true, businessId: invitation.business_id, role: "manager", message: "Manager access was accepted. Ownership, verification, and public listing details are unchanged." });
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => {});
+    req.log.error({ error }, "Failed to accept business manager invitation");
+    res.status(503).json({ error: "Business manager invitations are unavailable until reviewed storage is ready." });
+  } finally {
+    client.release();
+  }
+});
+
+// ── DELETE /businesses/:id/management-team/:userId ───────────────────────────
+router.delete("/businesses/:id/management-team/:userId", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const businessId = String(req.params.id);
+  const managerUserId = String(req.params.userId);
+  try {
+    if (!await approvedOwnerForBusiness(req.user.id, businessId)) { res.status(403).json({ error: "Only an approved owner can remove a manager." }); return; }
+    const { rows } = await pool.query(
+      `UPDATE business_owner_links SET revoked_at = NOW(), revoked_by = $3, revocation_reason = 'Removed by approved owner', updated_at = NOW()
+       WHERE business_id = $1 AND user_id = $2 AND role = 'manager' AND status = 'approved' AND revoked_at IS NULL
+       RETURNING id`,
+      [businessId, managerUserId, req.user.id],
+    );
+    if (!rows[0]) { res.status(404).json({ error: "Active manager relationship not found." }); return; }
+    res.json({ ok: true, message: "Manager access was removed. Ownership and public business information are unchanged." });
+  } catch (error) {
+    req.log.error({ error, businessId, managerUserId }, "Failed to revoke business manager access");
+    res.status(503).json({ error: "Business team management is unavailable until reviewed storage is ready." });
   }
 });
 

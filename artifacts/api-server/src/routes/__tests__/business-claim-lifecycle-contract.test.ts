@@ -21,7 +21,7 @@ describe("business ownership claim lifecycle contract", () => {
     expect(createClaim).toContain("One-open-claim-per-member-per-business guard");
     expect(createClaim).toContain("competingClaims");
     expect(createClaim).toContain("user_id <> $2");
-    expect(createClaim).toContain("status IN ('pending', 'needs_info')");
+    expect(createClaim).toContain("status IN ('pending', 'needs_info', 'disputed')");
     expect(createClaim).toContain("Another ownership claim is already being reviewed");
   });
 
@@ -52,7 +52,7 @@ describe("business ownership claim lifecycle contract", () => {
 
   it("returns a rejected or withdrawn listing to claimable state only when no active review remains", () => {
     expect(claimsRoute).toContain("async function releaseBusinessFromClaimPendingIfNoOpenClaims");
-    expect(claimsRoute).toContain("WHERE business_id = $1 AND status IN ('pending', 'needs_info')");
+    expect(claimsRoute).toContain("WHERE business_id = $1 AND status IN ('pending', 'needs_info', 'disputed')");
     expect(claimsRoute).toContain("ownership_control_status = 'unclaimed'");
     expect(claimsRoute).toContain("ownership_control_status = 'claim_pending'");
 

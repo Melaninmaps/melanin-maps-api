@@ -2966,3 +2966,66 @@ export async function sendWaitlistUpdateEmail(to: string, firstName: string) {
     `,
   });
 }
+
+
+/**
+ * Transactional claim verification only. The value is a short-lived proof of
+ * control over the private business contact, never an ownership approval and
+ * never a public listing update. Delivery is gated by the caller before this
+ * helper is invoked.
+ */
+export async function sendBusinessClaimVerificationCode(input: {
+  to: string;
+  ownerName: string;
+  businessName: string;
+  code: string;
+}): Promise<void> {
+  const name = input.ownerName.split(" ")[0] || input.ownerName;
+  await sendEmail({
+    from: FROM,
+    to: input.to,
+    replyTo: "business@mappingwithmelanin.com",
+    subject: `Your Mapping With Melanin claim code for ${input.businessName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <h1 style="font-size:24px;color:#2B1507;margin:0 0 16px">Confirm your business contact</h1>
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6">Hi ${escapeEmailHtml(name)}, enter this code in Mapping With Melanin™ to confirm that you control this private business contact for <strong>${escapeEmailHtml(input.businessName)}</strong>.</p>
+        <div style="background:#2B1507;border-radius:14px;padding:22px;text-align:center;margin:24px 0">
+          <p style="color:#CA922B;font-size:34px;font-weight:700;letter-spacing:6px;margin:0;font-family:monospace">${escapeEmailHtml(input.code)}</p>
+        </div>
+        <p style="color:#3A1F0E;font-size:14px;line-height:1.6">This code expires in 15 minutes and is limited to five attempts. Confirming a contact does not approve your claim, verify the business, verify an ownership designation, or change any public listing detail.</p>
+        <p style="color:#3A1F0E;font-size:13px;line-height:1.6">If you did not request this code, you can ignore this email.</p>
+      </div>
+    `,
+  });
+}
+
+/**
+ * Manager invitations are private, scoped to a named business, and require the
+ * signed-in recipient to enter the separate expiring code. The email contains no
+ * customer, member, ranking, or private-business data.
+ */
+export async function sendBusinessManagerInvitation(input: {
+  to: string;
+  businessName: string;
+  inviterName: string;
+  code: string;
+}): Promise<void> {
+  await sendEmail({
+    from: FROM,
+    to: input.to,
+    replyTo: "business@mappingwithmelanin.com",
+    subject: `You were invited to help manage ${input.businessName}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;background:#FAF6EF;padding:40px 32px;border-radius:16px">
+        <h1 style="font-size:24px;color:#2B1507;margin:0 0 16px">Business manager invitation</h1>
+        <p style="color:#3A1F0E;font-size:16px;line-height:1.6"><strong>${escapeEmailHtml(input.inviterName)}</strong> invited this email address to become a limited business manager for <strong>${escapeEmailHtml(input.businessName)}</strong> on Mapping With Melanin™.</p>
+        <div style="background:#2B1507;border-radius:14px;padding:22px;text-align:center;margin:24px 0">
+          <p style="color:#CA922B;font-size:30px;font-weight:700;letter-spacing:5px;margin:0;font-family:monospace">${escapeEmailHtml(input.code)}</p>
+        </div>
+        <p style="color:#3A1F0E;font-size:14px;line-height:1.6">Sign in with this exact email address, then enter the code in the business management invitation screen. It expires in seven days. A manager may use only the business permissions the approved owner grants; this invitation does not transfer ownership, change verification, or make private account information public.</p>
+        <p style="color:#3A1F0E;font-size:13px;line-height:1.6">If this was unexpected, you can ignore this email.</p>
+      </div>
+    `,
+  });
+}

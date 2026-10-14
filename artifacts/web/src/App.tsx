@@ -89,6 +89,10 @@ import FounderBusinessSubmissions from "@/pages/founder-business-submissions";
 import FounderDirectoryImports from "@/pages/founder-directory-imports";
 import FounderBusinessesNew from "@/pages/founder-businesses-new";
 import BusinessClaim from "@/pages/business-claim";
+import BusinessClaims from "@/pages/business-claims";
+import BusinessManagerInvitation from "@/pages/business-manager-invitation";
+import BusinessTeam from "@/pages/business-team";
+import FounderBusinessClaims from "@/pages/founder-business-claims";
 import SubmitEvent from "@/pages/submit-event";
 import LocationShareView from "@/pages/location-share-view";
 import MemberProfile from "@/pages/member-profile";
@@ -297,6 +301,9 @@ function Router() {
       <Route path="/admin/business-review">
         <ProtectedRoute><AdminBusinessReview /></ProtectedRoute>
       </Route>
+      <Route path="/admin/business-claims">
+        <ProtectedRoute><FounderBusinessClaims /></ProtectedRoute>
+      </Route>
 
       <Route path="/members/:userId">
         <Layout><PreLaunchRoute><MemberProfile /></PreLaunchRoute></Layout>
@@ -411,6 +418,15 @@ function Router() {
       </Route>
       <Route path="/business-dashboard">
         <Layout><ProtectedRoute><BusinessDashboard /></ProtectedRoute></Layout>
+      </Route>
+      <Route path="/business-claims">
+        <ProtectedRoute><BusinessClaims /></ProtectedRoute>
+      </Route>
+      <Route path="/business-manager-invitations/accept">
+        <ProtectedRoute><BusinessManagerInvitation /></ProtectedRoute>
+      </Route>
+      <Route path="/business-team">
+        <ProtectedRoute><BusinessTeam /></ProtectedRoute>
       </Route>
       <Route path="/business-growth-center">
         <Layout><BusinessGrowthCenter /></Layout>

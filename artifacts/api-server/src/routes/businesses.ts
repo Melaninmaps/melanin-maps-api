@@ -545,6 +545,35 @@ function approvedOwnerPredicate(userId: string) {
   )`;
 }
 
+/**
+ * Selected-business reads and ordinary profile edits may be performed by an
+ * approved owner or invited manager. Legacy /businesses/mine routes deliberately
+ * keep owner-only semantics so no existing one-business flow widens silently.
+ */
+function approvedBusinessManagementPredicate(userId: string) {
+  return sql<boolean>`EXISTS (
+    SELECT 1 FROM business_owner_links bol
+     WHERE bol.business_id = ${businessesTable.id}
+       AND bol.user_id = ${userId}
+       AND bol.role IN ('owner', 'manager')
+       AND bol.status = 'approved'
+       AND bol.revoked_at IS NULL
+  )`;
+}
+
+function businessManagementRoleSelection(userId: string) {
+  return sql<string | null>`(
+    SELECT bol.role FROM business_owner_links bol
+     WHERE bol.business_id = ${businessesTable.id}
+       AND bol.user_id = ${userId}
+       AND bol.role IN ('owner', 'manager')
+       AND bol.status = 'approved'
+       AND bol.revoked_at IS NULL
+     ORDER BY CASE bol.role WHEN 'owner' THEN 0 ELSE 1 END
+     LIMIT 1
+  )`;
+}
+
 type LegacyManagedBusinessSelection =
   | { kind: "none" }
   | { kind: "multiple" }
@@ -1613,7 +1642,8 @@ router.get(
 
 // Owner-console discovery is intentionally separate from the legacy single
 // business read below. Existing business-specific flows still consume the
-// latter, while this read-only contract lists every active owner relationship.
+// latter, while this read-only contract lists every active owner or invited
+// manager relationship without granting legacy owner-only capabilities.
 router.get("/businesses/mine/managed", async (req: any, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -1630,9 +1660,11 @@ router.get("/businesses/mine/managed", async (req: any, res: Response) => {
         city: businessesTable.city,
         state: businessesTable.state,
         verified: businessesTable.verified,
+        status: businessesTable.status,
+        managementRole: businessManagementRoleSelection(String(userId)),
       })
       .from(businessesTable)
-      .where(approvedOwnerPredicate(String(userId)))
+      .where(approvedBusinessManagementPredicate(String(userId)))
       .orderBy(asc(businessesTable.name), asc(businessesTable.id));
 
     res.json({ businesses });
@@ -1663,7 +1695,7 @@ router.get("/businesses/mine/managed/:businessId", async (req: any, res: Respons
       .from(businessesTable)
       .where(and(
         eq(businessesTable.id, businessId),
-        approvedOwnerPredicate(String(userId)),
+        approvedBusinessManagementPredicate(String(userId)),
       ))
       .limit(1);
     if (!business) {
@@ -1727,7 +1759,7 @@ router.patch("/businesses/mine/managed/:businessId/profile", async (req: any, re
       .set(updates)
       .where(and(
         eq(businessesTable.id, businessId),
-        approvedOwnerPredicate(String(userId)),
+        approvedBusinessManagementPredicate(String(userId)),
       ))
       .returning();
     if (!updated) {

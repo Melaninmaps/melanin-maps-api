@@ -2071,9 +2071,12 @@ export default function Profile() {
                   </Button>
                 </Link>
               </div>
-              <Link href="/my-business-submissions" className="mt-4 inline-flex text-sm font-semibold text-[#9A6717] hover:text-[#6F4810]">
-                <ClipboardList className="mr-2 h-4 w-4" /> Review my business submissions and requests
-              </Link>
+              <div className="mt-4 flex flex-wrap gap-x-5 gap-y-3 text-sm font-semibold text-[#9A6717]">
+                <Link href="/my-business-submissions" className="inline-flex items-center hover:text-[#6F4810]"><ClipboardList className="mr-2 h-4 w-4" /> Review my business submissions</Link>
+                <Link href="/business-claims" className="inline-flex items-center hover:text-[#6F4810]"><Shield className="mr-2 h-4 w-4" /> Private ownership claim status</Link>
+                <Link href="/business-manager-invitations/accept" className="inline-flex items-center hover:text-[#6F4810]"><Building2 className="mr-2 h-4 w-4" /> Accept a manager invitation</Link>
+                <Link href="/business-dashboard" className="inline-flex items-center hover:text-[#6F4810]"><Store className="mr-2 h-4 w-4" /> Open business management</Link>
+              </div>
               <div className="mt-3 rounded-xl border border-[#CA922B]/20 bg-[#FAF6EF] px-4 py-3 text-xs leading-5 text-[#3A1F0E]/70">
                 A community recommendation is searchable only as a community-listed, unclaimed listing. An approved ownership-control claim is required before a member can manage a business page. Neither step verifies ownership designations.
               </div>

@@ -519,7 +519,7 @@ export default function BusinessDetail() {
         body: JSON.stringify({
           ownerName: claimName.trim(),
           businessEmail: claimEmail.trim(),
-          phone: claimPhone.trim() || null,
+          claimantPhone: claimPhone.trim() || null,
           role: claimRole,
           officialUrl: claimWebsite.trim() || null,
           socialHandle: claimInstagram.replace("@", "").trim() || null,
@@ -1772,7 +1772,7 @@ export default function BusinessDetail() {
             <div className="flex-1">
               <p className="font-semibold text-white text-sm">Is this your business?</p>
               <p className="text-white/60 text-xs">
-                {claimSubmitted ? "Claim submitted — ownership-control review is pending." : auth?.user ? "Request management access. Claim approval and MWM verification are separate." : "Sign in or join to make a claim from your community profile."}
+                {claimSubmitted ? "Claim submitted — private ownership-control review is pending. Check your profile for status." : auth?.user ? "Request management access. Claim approval and MWM verification are separate." : "Sign in or join to make a claim from your community profile."}
               </p>
             </div>
             {!claimSubmitted && (claimOpen ? <ChevronUp className="w-4 h-4 text-white/40 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-white/40 flex-shrink-0" />)}
@@ -1808,6 +1808,7 @@ export default function BusinessDetail() {
                     placeholder="owner@yourbusiness.com"
                     className="w-full border border-white/20 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-[#CA922B]/40 bg-[#241810]"
                   />
+                  <p className="mt-1 text-[11px] leading-4 text-white/50">Private review contact only. It can differ from your member-login email and is never added to the public listing.</p>
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-white mb-1.5">Phone (optional)</label>
@@ -1847,10 +1848,9 @@ export default function BusinessDetail() {
                     className="w-full border border-white/20 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#CA922B]/40 bg-[#241810]"
                   >
                     <option value="owner">Owner</option>
-                    <option value="co-owner">Co-owner</option>
-                    <option value="manager">Manager</option>
-                    <option value="authorized_rep">Authorized Representative</option>
+                    <option value="authorized_representative">Authorized representative</option>
                   </select>
+                  <p className="mt-1 text-[11px] leading-4 text-white/50">Managers are invited privately by an approved owner after a claim is reviewed.</p>
                 </div>
               </div>
 

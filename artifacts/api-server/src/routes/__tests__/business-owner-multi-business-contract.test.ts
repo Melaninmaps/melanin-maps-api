@@ -13,11 +13,12 @@ function managedBusinessRoute(): string {
 }
 
 describe("owner-scoped managed business read contract", () => {
-  it("lists every approved, unrevoked owner relationship without mutations", () => {
+  it("lists every approved, unrevoked owner or invited-manager relationship without mutations", () => {
     const route = managedBusinessRoute();
 
     expect(route).toContain('router.get("/businesses/mine/managed"');
-    expect(route).toContain(".where(approvedOwnerPredicate(String(userId)))");
+    expect(route).toContain(".where(approvedBusinessManagementPredicate(String(userId)))");
+    expect(route).toContain("managementRole: businessManagementRoleSelection(String(userId))");
     expect(route).toContain(".orderBy(asc(businessesTable.name), asc(businessesTable.id))");
     expect(route).toContain("res.json({ businesses });");
     expect(route).not.toContain(".limit(");
@@ -63,9 +64,9 @@ describe("owner-scoped managed business read contract", () => {
     );
 
     expect(selectedRead).toContain('eq(businessesTable.id, businessId)');
-    expect(selectedRead).toContain('approvedOwnerPredicate(String(userId))');
+    expect(selectedRead).toContain('approvedBusinessManagementPredicate(String(userId))');
     expect(selectedPatch).toContain('eq(businessesTable.id, businessId)');
-    expect(selectedPatch).toContain('approvedOwnerPredicate(String(userId))');
+    expect(selectedPatch).toContain('approvedBusinessManagementPredicate(String(userId))');
     expect(selectedPatch).toContain('res.status(404).json({ error: "Managed business not found." })');
     expect(selectedPatch).not.toContain("listingStatus");
     expect(selectedPatch).not.toContain("ownershipDesignations");
