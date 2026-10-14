@@ -114,6 +114,22 @@ export type TaskAction = {
   tasks: TaskActionTask[];
 };
 
+/** A confirmed list receipt lets a later retry finish its unsaved items safely. */
+export type TaskActionSaveProgress = {
+  listId: string;
+  listName: string;
+};
+
+export type TaskActionSaveFailure = {
+  /** Retryable means the server explicitly declined the write; uncertain blocks automatic repeats. */
+  kind: "retryable" | "uncertain";
+  message: string;
+};
+
+export type TaskActionSaveResult =
+  | { kind: "saved" }
+  | { kind: "retryable" | "uncertain"; message: string; progress?: TaskActionSaveProgress };
+
 export type LibraryAction = {
   type: "open_library_node";
   topicId: string;
@@ -187,6 +203,9 @@ export type ChatMessage = {
   smartPromotion?: SmartPromotion | null;
   taskAction?: TaskAction | null;
   taskActionDone?: boolean;
+  taskActionSaving?: boolean;
+  taskActionFailure?: TaskActionSaveFailure | null;
+  taskActionProgress?: TaskActionSaveProgress | null;
   libraryAction?: LibraryAction | null;
   heritageSites?: HeritageSitePin[];
   nearbyNudge?: NearbyNudge | null;
@@ -250,6 +269,159 @@ function makeId() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+type TaskActionWriteInput = {
+  action: TaskAction;
+  token: string | null;
+  apiBase: string | null;
+  progress?: TaskActionSaveProgress | null;
+  fetchImpl?: typeof fetch;
+};
+
+function retryableTaskActionFailure(message: string, progress?: TaskActionSaveProgress): TaskActionSaveResult {
+  return { kind: "retryable", message, ...(progress ? { progress } : {}) };
+}
+
+function uncertainTaskActionFailure(message: string, progress?: TaskActionSaveProgress): TaskActionSaveResult {
+  return { kind: "uncertain", message, ...(progress ? { progress } : {}) };
+}
+
+function responseTaskActionFailure(
+  response: Response,
+  retryableMessage: string,
+  uncertainMessage: string,
+  progress?: TaskActionSaveProgress,
+): TaskActionSaveResult {
+  // A received 5xx response does not prove that the write was rolled back. Do
+  // not invite a repeat POST without an idempotency key or a verified receipt.
+  return response.status >= 500
+    ? uncertainTaskActionFailure(uncertainMessage, progress)
+    : retryableTaskActionFailure(retryableMessage, progress);
+}
+
+/**
+ * Performs only the writes explicitly approved by a member's Save tap. It
+ * never treats an absent token, a non-OK response, or a transport failure as a
+ * successful save. A confirmed list receipt is retained so a known-failed bulk
+ * task request can be retried without creating a duplicate list.
+ */
+export async function saveKinfolkTaskAction(input: TaskActionWriteInput): Promise<TaskActionSaveResult> {
+  if (!input.token || !input.apiBase) {
+    return retryableTaskActionFailure(
+      "Please sign in again before saving this reminder. Your proposed action is still available to retry.",
+      input.progress ?? undefined,
+    );
+  }
+
+  const send = input.fetchImpl ?? fetch;
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${input.token}`,
+  };
+  let progress = input.progress ?? undefined;
+
+  try {
+    if (input.action.type === "create_list") {
+      if (!input.action.list) {
+        return retryableTaskActionFailure(
+          "Kinfolk could not verify the list details. Please ask it to prepare the list again.",
+        );
+      }
+
+      if (!progress) {
+        const listResponse = await send(`${input.apiBase}/api/kinfolk/lists`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            name: input.action.list.name,
+            icon: input.action.list.icon ?? "📋",
+          }),
+        });
+        if (!listResponse.ok) {
+          return responseTaskActionFailure(
+            listResponse,
+            "Kinfolk could not create that list yet. Please try again when you are ready.",
+            "Kinfolk could not confirm whether that list was created. Open My Lists to check before trying again.",
+          );
+        }
+
+        const listPayload = await listResponse.json() as { list?: { id?: unknown } };
+        if (typeof listPayload.list?.id !== "string" || listPayload.list.id.trim().length === 0) {
+          return uncertainTaskActionFailure(
+            "Kinfolk received an incomplete list receipt and cannot confirm whether the list was saved. Open My Lists to check before trying again.",
+          );
+        }
+        progress = { listId: listPayload.list.id, listName: input.action.list.name };
+      }
+
+      const tasksResponse = await send(`${input.apiBase}/api/kinfolk/tasks/bulk`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ tasks: input.action.tasks, listId: progress.listId }),
+      });
+      if (!tasksResponse.ok) {
+        return responseTaskActionFailure(
+          tasksResponse,
+          "Your list was created, but its items were not saved. You can safely try saving the items again.",
+          "Your list was created, but Kinfolk could not confirm whether its items were saved. Open My Lists to check before trying again.",
+          progress,
+        );
+      }
+      return { kind: "saved" };
+    }
+
+    if (input.action.type === "create_task") {
+      // The server prompt defines create_task as a single reminder. Refuse a
+      // malformed multi-task proposal before it can partially persist.
+      if (input.action.tasks.length !== 1) {
+        return retryableTaskActionFailure(
+          "Kinfolk needs to prepare one reminder at a time before it can be saved. Please ask it to prepare this reminder again.",
+        );
+      }
+      const task = input.action.tasks[0]!;
+      const taskResponse = await send(`${input.apiBase}/api/kinfolk/tasks`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          title: task.title,
+          notes: task.notes,
+          dueAt: task.dueAt,
+          dueTimeLabel: task.dueTimeLabel,
+          category: task.category ?? "other",
+        }),
+      });
+      if (!taskResponse.ok) {
+        return responseTaskActionFailure(
+          taskResponse,
+          "Kinfolk could not save that reminder yet. Please try again when you are ready.",
+          "Kinfolk could not confirm whether that reminder was saved. Open My Lists to check before trying again.",
+        );
+      }
+      return { kind: "saved" };
+    }
+
+    const tasksResponse = await send(`${input.apiBase}/api/kinfolk/tasks/bulk`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ tasks: input.action.tasks }),
+    });
+    if (!tasksResponse.ok) {
+      return responseTaskActionFailure(
+        tasksResponse,
+        "Kinfolk could not save those tasks yet. Please try again when you are ready.",
+        "Kinfolk could not confirm whether those tasks were saved. Open My Lists to check before trying again.",
+      );
+    }
+    return { kind: "saved" };
+  } catch {
+    return uncertainTaskActionFailure(
+      progress
+        ? "Your list was created, but Kinfolk could not confirm whether its items were saved. Open My Lists to check before trying again."
+        : "Kinfolk could not confirm whether this action was saved. Open My Lists to check before trying again.",
+      progress,
+    );
+  }
+}
+
 export function useKinfolk() {
   const { refreshUser } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -270,6 +442,7 @@ export function useKinfolk() {
   const [pendingRetryText, setPendingRetryText] = useState<string | null>(null);
   const activeRequestRef = useRef<AbortController | null>(null);
   const requestGenerationRef = useRef(0);
+  const savingTaskActionIdsRef = useRef(new Set<string>());
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -744,43 +917,54 @@ export function useKinfolk() {
     setConversationHandoff(null);
   }, []);
 
-  const confirmTaskAction = useCallback(async (messageId: string, action: TaskAction): Promise<boolean> => {
-    setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, taskActionDone: true } : m));
+  const confirmTaskAction = useCallback(async (messageId: string, action: TaskAction): Promise<TaskActionSaveResult> => {
+    const existing = messagesRef.current.find((message) => message.id === messageId);
+    if (existing?.taskActionFailure?.kind === "uncertain") {
+      return uncertainTaskActionFailure(existing.taskActionFailure.message, existing.taskActionProgress ?? undefined);
+    }
+    if (savingTaskActionIdsRef.current.has(messageId)) {
+      return retryableTaskActionFailure("Kinfolk is still saving this action. Please wait for the result before trying again.");
+    }
+
+    savingTaskActionIdsRef.current.add(messageId);
+    setMessages((prev) => prev.map((message) => message.id === messageId
+      ? { ...message, taskActionSaving: true, taskActionFailure: null }
+      : message));
     const token = await getToken();
-    const apiBase = getApiBase();
-    if (!token || !apiBase) return false;
+    let apiBase: string | null = null;
+    try { apiBase = getApiBase(); } catch { /* surfaced as a recoverable save failure below */ }
     try {
-      if (action.type === "create_list" && action.list) {
-        const listRes = await fetch(`${apiBase}/api/kinfolk/lists`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ name: action.list.name, icon: action.list.icon ?? "📋" }),
-        });
-        if (listRes.ok) {
-          const { list } = await listRes.json() as { list: { id: string } };
-          await fetch(`${apiBase}/api/kinfolk/tasks/bulk`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ tasks: action.tasks, listId: list.id }),
-          });
+      if (!token) void refreshUser();
+      const result = await saveKinfolkTaskAction({
+        action,
+        token,
+        apiBase,
+        progress: existing?.taskActionProgress,
+      });
+      setMessages((prev) => prev.map((message) => {
+        if (message.id !== messageId) return message;
+        if (result.kind === "saved") {
+          return {
+            ...message,
+            taskActionDone: true,
+            taskActionSaving: false,
+            taskActionFailure: null,
+            taskActionProgress: null,
+          };
         }
-      } else if (action.type === "create_task" && action.tasks.length > 0) {
-        const t = action.tasks[0]!;
-        await fetch(`${apiBase}/api/kinfolk/tasks`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ title: t.title, notes: t.notes, dueAt: t.dueAt, dueTimeLabel: t.dueTimeLabel, category: t.category ?? "other" }),
-        });
-      } else if (action.type === "add_tasks") {
-        await fetch(`${apiBase}/api/kinfolk/tasks/bulk`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ tasks: action.tasks }),
-        });
-      }
-      return true;
-    } catch { return false; }
-  }, []);
+        return {
+          ...message,
+          taskActionDone: false,
+          taskActionSaving: false,
+          taskActionFailure: { kind: result.kind, message: result.message },
+          taskActionProgress: result.progress ?? message.taskActionProgress ?? null,
+        };
+      }));
+      return result;
+    } finally {
+      savingTaskActionIdsRef.current.delete(messageId);
+    }
+  }, [refreshUser]);
 
   const dismissTaskAction = useCallback((messageId: string) => {
     setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, taskActionDone: true } : m));

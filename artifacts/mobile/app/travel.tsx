@@ -352,15 +352,19 @@ const evStyles = StyleSheet.create({
 
 // ─── Sub-component: Task Action Card ─────────────────────────────────────────
 function TaskActionCard({
-  action, onConfirm, onDismiss, colors,
+  action, saving, failure, onConfirm, onDismiss, onReviewLists, colors,
 }: {
   action: TaskAction;
+  saving?: boolean;
+  failure?: { kind: "retryable" | "uncertain"; message: string } | null;
   onConfirm: () => void;
   onDismiss: () => void;
+  onReviewLists: () => void;
   colors: ReturnType<typeof useColors>;
 }) {
   const listName = action.list?.name ?? (action.type === "create_task" ? "Reminder" : "My List");
   const icon = action.list?.icon ?? (action.type === "create_task" ? "⏰" : "📋");
+  const needsReview = failure?.kind === "uncertain";
   return (
     <View style={[taStyles.card, { backgroundColor: colors.card, borderColor: colors.primary + "40" }]}>
       <View style={taStyles.headerRow}>
@@ -390,13 +394,49 @@ function TaskActionCard({
           <Text style={[taStyles.more, { color: colors.mutedForeground }]}>+{action.tasks.length - 5} more items</Text>
         )}
       </View>
+      {failure ? (
+        <View
+          accessible
+          accessibilityLabel={failure.message}
+          style={[taStyles.failure, { backgroundColor: `${colors.primary}12`, borderColor: colors.border }]}
+        >
+          <Ionicons name={needsReview ? "information-circle-outline" : "alert-circle-outline"} size={15} color={colors.primary} />
+          <Text style={[taStyles.failureText, { color: colors.text }]}>{failure.message}</Text>
+        </View>
+      ) : null}
       <View style={taStyles.actions}>
-        <TouchableOpacity style={[taStyles.addBtn, { backgroundColor: colors.primary }]} onPress={onConfirm} activeOpacity={0.85}>
-          <Ionicons name="checkmark" size={14} color={colors.primaryForeground} />
-          <Text style={[taStyles.addBtnText, { color: colors.primaryForeground }]}>Add to My Lists</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[taStyles.skipBtn, { borderColor: colors.border }]} onPress={onDismiss} activeOpacity={0.7}>
-          <Text style={[taStyles.skipBtnText, { color: colors.mutedForeground }]}>Skip</Text>
+        {needsReview ? (
+          <TouchableOpacity
+            style={[taStyles.addBtn, { backgroundColor: colors.primary }]}
+            onPress={onReviewLists}
+            accessibilityLabel="Review My Lists before trying this action again"
+            activeOpacity={0.85}
+          >
+            <Ionicons name="list-outline" size={14} color={colors.primaryForeground} />
+            <Text style={[taStyles.addBtnText, { color: colors.primaryForeground }]}>Review My Lists</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[taStyles.addBtn, { backgroundColor: colors.primary }, saving && { opacity: 0.65 }]}
+            onPress={onConfirm}
+            disabled={saving}
+            accessibilityLabel={failure ? "Try saving this Kinfolk reminder again" : "Save this Kinfolk reminder"}
+            activeOpacity={0.85}
+          >
+            <Ionicons name={saving ? "hourglass-outline" : "checkmark"} size={14} color={colors.primaryForeground} />
+            <Text style={[taStyles.addBtnText, { color: colors.primaryForeground }]}>
+              {saving ? "Saving…" : failure ? "Try again" : "Add to My Lists"}
+            </Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          style={[taStyles.skipBtn, { borderColor: colors.border }, saving && { opacity: 0.65 }]}
+          onPress={onDismiss}
+          disabled={saving}
+          accessibilityLabel="Not now"
+          activeOpacity={0.7}
+        >
+          <Text style={[taStyles.skipBtnText, { color: colors.mutedForeground }]}>Not now</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -414,6 +454,8 @@ const taStyles = StyleSheet.create({
   taskTitle: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
   taskTime: { fontFamily: "Inter_400Regular", fontSize: 11 },
   more: { fontFamily: "Inter_400Regular", fontSize: 12, paddingHorizontal: 10, paddingVertical: 8 },
+  failure: { flexDirection: "row", alignItems: "flex-start", gap: 7, borderRadius: 9, borderWidth: 1, padding: 9, marginBottom: 10 },
+  failureText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
   actions: { flexDirection: "row", gap: 8 },
   addBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: 10, paddingVertical: 10 },
   addBtnText: { fontFamily: "Inter_700Bold", fontSize: 13 },
@@ -652,7 +694,7 @@ function ConversationalResultCards({ view, colors }: { view: ConversationalBusin
 function AiMessageBubble({
   msg, onFeedback, onQuickReply, onWishlist, wishlistedNames,
   compareMode, compareSelectedNames, onCompareToggle,
-  onConfirmTaskAction, onDismissTaskAction, onSpeak,
+  onConfirmTaskAction, onDismissTaskAction, onReviewTaskLists, onSpeak,
   spokenVoiceText,
   colors,
 }: {
@@ -666,6 +708,7 @@ function AiMessageBubble({
   onCompareToggle: (biz: TravelBusiness) => void;
   onConfirmTaskAction: (msgId: string, action: TaskAction) => void;
   onDismissTaskAction: (msgId: string) => void;
+  onReviewTaskLists: () => void;
   onSpeak: (messageId: string, content: string) => void;
   spokenVoiceText: { messageId: string; content: string; phase: "preparing" | "playing" | "finished" } | null;
   colors: ReturnType<typeof useColors>;
@@ -757,8 +800,11 @@ function AiMessageBubble({
         {msg.taskAction && !msg.taskActionDone && msg.taskAction.tasks.length > 0 && (
           <TaskActionCard
             action={msg.taskAction}
+            saving={msg.taskActionSaving}
+            failure={msg.taskActionFailure}
             onConfirm={() => onConfirmTaskAction(msg.id, msg.taskAction!)}
             onDismiss={() => onDismissTaskAction(msg.id)}
+            onReviewLists={onReviewTaskLists}
             colors={colors}
           />
         )}
@@ -2559,8 +2605,8 @@ export default function TravelScreen() {
   }, [submitFeedback]);
 
   const handleConfirmTaskAction = useCallback(async (msgId: string, action: TaskAction) => {
-    const ok = await confirmTaskAction(msgId, action);
-    if (ok) {
+    const result = await confirmTaskAction(msgId, action);
+    if (result.kind === "saved") {
       Alert.alert(
         "Added to My Lists",
         `"${action.list?.name ?? (action.type === "create_task" ? "Reminder" : "My List")}" is ready in your lists.`,
@@ -2569,12 +2615,24 @@ export default function TravelScreen() {
           { text: "OK", style: "cancel" },
         ],
       );
+    } else {
+      Alert.alert(
+        result.kind === "uncertain" ? "Save needs review" : "Reminder not saved",
+        result.message,
+        result.kind === "uncertain"
+          ? [{ text: "Review My Lists", onPress: () => router.push("/kinfolk-tasks" as any) }, { text: "OK", style: "cancel" }]
+          : [{ text: "OK", style: "cancel" }],
+      );
     }
   }, [confirmTaskAction]);
 
   const handleDismissTaskAction = useCallback((msgId: string) => {
     dismissTaskAction(msgId);
   }, [dismissTaskAction]);
+
+  const handleReviewTaskLists = useCallback(() => {
+    router.push("/kinfolk-tasks" as any);
+  }, []);
 
   const wishlistedNames = useMemo<Record<string, string>>(() => {
     const map: Record<string, string> = {};
@@ -2663,6 +2721,7 @@ export default function TravelScreen() {
           onCompareToggle={handleCompareToggle}
           onConfirmTaskAction={handleConfirmTaskAction}
           onDismissTaskAction={handleDismissTaskAction}
+          onReviewTaskLists={handleReviewTaskLists}
           onSpeak={speakManually}
           spokenVoiceText={spokenVoiceText}
           colors={colors}
@@ -2684,7 +2743,7 @@ export default function TravelScreen() {
         />}
       </View>
     );
-  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction, speakManually, spokenVoiceText, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, loadKinfolkContinuity]);
+  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction, handleReviewTaskLists, speakManually, spokenVoiceText, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, loadKinfolkContinuity]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
