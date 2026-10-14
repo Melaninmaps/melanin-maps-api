@@ -1061,6 +1061,13 @@ function TravelPage() {
   const [generatingImage, setGeneratingImage] = useState(false);
   const [imageCreationError, setImageCreationError] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<{ dataUrl: string; label: string } | null>(null);
+  const [showImageEdit, setShowImageEdit] = useState(false);
+  const [imageEditInstruction, setImageEditInstruction] = useState("");
+  const [imageEditConsent, setImageEditConsent] = useState(false);
+  const [editingImage, setEditingImage] = useState(false);
+  const [imageEditError, setImageEditError] = useState<string | null>(null);
+  const [editedImage, setEditedImage] = useState<{ dataUrl: string; label: string } | null>(null);
+  const [editSourceAssetId, setEditSourceAssetId] = useState<string | null>(null);
   const [includeCommunityPerspective, setIncludeCommunityPerspective] = useState(false);
   const [showMemoryManager, setShowMemoryManager] = useState(false);
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
@@ -1934,8 +1941,8 @@ function TravelPage() {
     pendingConversationScrollRef.current = null;
   }, [messages, sending]);
 
-  const uploadKinfolkImage = useCallback(async (file: File) => {
-    if (imageAttachments.length >= 2 || uploadingImage) return;
+  const uploadKinfolkImage = useCallback(async (file: File): Promise<{ assetId: string; previewUrl: string } | null> => {
+    if (imageAttachments.length >= 2 || uploadingImage) return null;
     setUploadingImage(true);
     setImageError(null);
     try {
@@ -1951,8 +1958,10 @@ function TravelPage() {
       setImageAttachments((items) => items.some((item) => item.assetId === body.assetId)
         ? items
         : [...items, { assetId: body.assetId!, previewUrl }].slice(0, 2));
+      return { assetId: body.assetId!, previewUrl };
     } catch (cause) {
       setImageError(cause instanceof Error ? cause.message : "Could not upload that image.");
+      return null;
     } finally {
       setUploadingImage(false);
     }
@@ -2011,6 +2020,23 @@ function TravelPage() {
       setGeneratingImage(false);
     }
   }, [generatingImage, imageCreationBrief, providerDisclosureAccepted, noRealPersonOrPrivateInfoConfirmed]);
+
+  const editKinfolkImage = useCallback(async () => {
+    if (!editSourceAssetId || editingImage) return;
+    setEditingImage(true); setImageEditError(null);
+    try {
+      const response = await fetch(`${BASE}api/kinfolk/images/edit`, { method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include", body: JSON.stringify({ imageAssetId: editSourceAssetId, instruction: imageEditInstruction, providerDisclosureAccepted: imageEditConsent, editConsentAccepted: imageEditConsent }) });
+      const body = await response.json().catch(() => ({})) as { imageDataUrl?: string; contentLabel?: string; error?: string };
+      if (!response.ok || !body.imageDataUrl) throw new Error(body.error ?? "Kinfolk could not edit that image right now.");
+      setEditedImage({ dataUrl: body.imageDataUrl, label: body.contentLabel ?? "AI-edited visual" }); setShowImageEdit(false); setImageEditInstruction(""); setImageEditConsent(false);
+    } catch (cause) { setImageEditError(cause instanceof Error ? cause.message : "Kinfolk could not edit that image right now."); }
+    finally { setEditingImage(false); }
+  }, [editSourceAssetId, editingImage, imageEditConsent, imageEditInstruction]);
+  const editResultAgain = useCallback(async () => {
+    if (!editedImage) return;
+    try { const blob = await (await fetch(editedImage.dataUrl)).blob(); const uploaded = await uploadKinfolkImage(new File([blob], "kinfolk-private-edit.png", { type: "image/png" })); if (!uploaded) return; setEditSourceAssetId(uploaded.assetId); setEditedImage(null); setShowImageEdit(true); }
+    catch { setImageEditError("Could not prepare the edited image for another private edit."); }
+  }, [editedImage, uploadKinfolkImage]);
 
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
@@ -3315,6 +3341,8 @@ function TravelPage() {
                   </div>
                 </div>}
 
+                {showImageEdit && <div role="dialog" aria-modal="true" aria-label="Edit a private image with Kinfolk" className="mb-3 mx-auto max-w-3xl rounded-2xl border border-[#8D5C17]/25 bg-[#FFF9ED] p-4 text-sm text-[#3A1F0E] shadow-sm"><p className="font-bold">Edit a private image</p><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/75">Only the selected private image and your instruction are sent once to Kinfolk’s configured image provider. The result stays in this session and is not saved to memory.</p><textarea value={imageEditInstruction} onChange={(event) => setImageEditInstruction(event.target.value)} maxLength={800} rows={3} placeholder="Example: Change the background to a garden." className="mt-3 w-full resize-none rounded-xl border border-[#3A1F0E]/15 bg-white p-3 text-xs" /><label className="mt-3 flex items-start gap-2 text-xs leading-5 text-[#3A1F0E]/70"><input type="checkbox" checked={imageEditConsent} onChange={(event) => setImageEditConsent(event.target.checked)} className="mt-1" />I consent to send this private image and instruction once to Kinfolk’s configured image provider. The result is session-only and not saved to Kinfolk memory.</label>{imageEditError && <p role="alert" className="mt-2 text-xs text-red-700">{imageEditError}</p>}<div className="mt-3 flex gap-2"><button type="button" onClick={() => setShowImageEdit(false)} className="rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-xs font-bold">Cancel</button><button type="button" onClick={() => void editKinfolkImage()} disabled={editingImage || !imageEditConsent || imageEditInstruction.trim().length < 4} className="rounded-xl bg-[#8D5C17] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{editingImage ? "Editing…" : "Edit image"}</button></div></div>}
+
                 {showImageCreation && <div role="dialog" aria-modal="true" aria-label="Create an original visual with Kinfolk" className="mb-3 mx-auto max-w-3xl rounded-2xl border border-[#8D5C17]/25 bg-[#FFF9ED] p-4 text-sm text-[#3A1F0E] shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -3349,6 +3377,8 @@ function TravelPage() {
                   </div>
                 </div>}
 
+                {editedImage && <div className="mb-3 mx-auto max-w-3xl overflow-hidden rounded-2xl border border-[#8D5C17]/20 bg-[#FFF9ED] p-3 shadow-sm"><div className="mb-2 flex items-center justify-between gap-3"><div><p className="text-xs font-bold text-[#3A1F0E]">{editedImage.label}</p><p className="text-[11px] text-[#3A1F0E]/65">Session-only private result. It is not posted or added to Kinfolk memory.</p></div><button type="button" onClick={() => setEditedImage(null)} aria-label="Remove edited image" className="rounded-full p-1"><X size={16} /></button></div><img src={editedImage.dataUrl} alt="AI-edited private image" className="max-h-80 w-full rounded-xl object-contain bg-white" /><button type="button" onClick={() => void editResultAgain()} className="mt-3 rounded-xl border border-[#8D5C17]/30 bg-white px-3 py-2 text-xs font-bold text-[#8D5C17]">Edit this result again</button></div>}
+
                 {generatedImage && <div className="mb-3 mx-auto max-w-3xl overflow-hidden rounded-2xl border border-[#8D5C17]/20 bg-[#FFF9ED] p-3 shadow-sm">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <div><p className="text-xs font-bold text-[#3A1F0E]">{generatedImage.label}</p><p className="text-[11px] text-[#3A1F0E]/65">Created for this session only. It is not saved, posted, or added to Kinfolk memory.</p></div>
@@ -3382,7 +3412,8 @@ function TravelPage() {
                 <div className="flex items-end gap-2 max-w-3xl mx-auto">
                   <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) { setImageError(null); setPendingImageConsent(file); } event.target.value = ""; }} />
                   {isLoggedIn && <button data-testid="kinfolk-image-create" type="button" onClick={() => { setShowImageCreation(true); setImageCreationError(null); }} disabled={sending || uploadingImage} aria-label="Create an original visual" title="Create an original visual" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-[#CA922B]/10 border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] flex items-center justify-center disabled:opacity-40 shrink-0"><Sparkles size={16} /></button>}
-                  {isLoggedIn && <button data-testid="kinfolk-image-upload" onClick={() => imageInputRef.current?.click()} disabled={uploadingImage || imageAttachments.length >= 2 || sending} aria-label="Add an image" title="Ask Kinfolk about an image" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-[#CA922B]/10 border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] flex items-center justify-center disabled:opacity-40 shrink-0">{uploadingImage ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={16} />}</button>}
+                  {isLoggedIn && <button type="button" onClick={() => { const source = imageAttachments[0]; if (!source) { setImageError("Add a private image before editing."); return; } setEditSourceAssetId(source.assetId); setImageEditError(null); setShowImageEdit(true); }} disabled={!imageAttachments.length || sending} aria-label="Edit a private image" title="Edit a private image" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] border border-[#3A1F0E]/10 text-[#3A1F0E]/50 flex items-center justify-center disabled:opacity-40 shrink-0"><Sparkles size={16} /></button>}
+                                    {isLoggedIn && <button data-testid="kinfolk-image-upload" onClick={() => imageInputRef.current?.click()} disabled={uploadingImage || imageAttachments.length >= 2 || sending} aria-label="Add an image" title="Ask Kinfolk about an image" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-[#CA922B]/10 border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] flex items-center justify-center disabled:opacity-40 shrink-0">{uploadingImage ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={16} />}</button>}
                   {/* Microphone button */}
                   {isLoggedIn && (
                     <button

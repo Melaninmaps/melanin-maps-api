@@ -2167,6 +2167,13 @@ export default function TravelScreen() {
   const [generatingImage, setGeneratingImage] = useState(false);
   const [imageCreationError, setImageCreationError] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<{ dataUrl: string; label: string } | null>(null);
+  const [showImageEdit, setShowImageEdit] = useState(false);
+  const [imageEditInstruction, setImageEditInstruction] = useState("");
+  const [imageEditConsent, setImageEditConsent] = useState(false);
+  const [editingImage, setEditingImage] = useState(false);
+  const [imageEditError, setImageEditError] = useState<string | null>(null);
+  const [editedImage, setEditedImage] = useState<{ dataUrl: string; label: string } | null>(null);
+  const [editSourceAssetId, setEditSourceAssetId] = useState<string | null>(null);
   const [includeCommunityPerspective, setIncludeCommunityPerspective] = useState(false);
   const [voiceOutput, setVoiceOutput] = useState(false);
   const [showComposerControls, setShowComposerControls] = useState(false);
@@ -2510,6 +2517,12 @@ export default function TravelScreen() {
     );
   }, [kinfolkImages.length, uploadingKinfolkImage, uploadKinfolkImage]);
 
+  const prepareEditedImageForAnotherEdit = useCallback(async () => {
+    if (!editedImage) return;
+    try { const base64 = editedImage.dataUrl.split(",", 2)[1]; if (!base64) throw new Error("missing session image"); const file = new FileSystem.File(FileSystem.Paths.cache, `kinfolk-edit-${Date.now()}.png`); file.write(base64, { encoding: FileSystem.EncodingType.Base64 }); await uploadKinfolkImage({ uri: file.uri, fileName: "kinfolk-private-edit.png", mimeType: "image/png" } as ImagePicker.ImagePickerAsset); if (file.exists) file.delete(); setEditedImage(null); Alert.alert("Private image ready", "Choose Edit image to request the next edit."); }
+    catch { Alert.alert("Could not prepare image", "Please add the result again as a private image before editing it."); }
+  }, [editedImage, uploadKinfolkImage]);
+
   const uploadKinfolkDocument = useCallback(async (asset: DocumentPicker.DocumentPickerAsset) => {
     setUploadingKinfolkDocument(true);
     try {
@@ -2608,6 +2621,14 @@ export default function TravelScreen() {
       setGeneratingImage(false);
     }
   }, [generatingImage, imageCreationBrief, isAuthenticated, noRealPersonOrPrivateInfoConfirmed, providerDisclosureAccepted]);
+
+  const editKinfolkImage = useCallback(async () => {
+    if (!editSourceAssetId || editingImage) return;
+    setEditingImage(true); setImageEditError(null);
+    try { const token = await SecureStore.getItemAsync("auth_session_token"); const response = await fetch(`${getApiBase()}/api/kinfolk/images/edit`, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ imageAssetId: editSourceAssetId, instruction: imageEditInstruction, providerDisclosureAccepted: imageEditConsent, editConsentAccepted: imageEditConsent }) }); const body = await response.json().catch(() => ({})) as { imageDataUrl?: string; contentLabel?: string; error?: string }; if (!response.ok || !body.imageDataUrl) throw new Error(body.error ?? "Kinfolk could not edit that image right now."); setEditedImage({ dataUrl: body.imageDataUrl, label: body.contentLabel ?? "AI-edited visual" }); setShowImageEdit(false); setImageEditConsent(false); setImageEditInstruction(""); }
+    catch (cause) { setImageEditError(cause instanceof Error ? cause.message : "Kinfolk could not edit that image right now."); }
+    finally { setEditingImage(false); }
+  }, [editSourceAssetId, editingImage, imageEditConsent, imageEditInstruction]);
 
   const startPrimaryVoiceSource = useCallback(async () => {
     if (authLoading) {
@@ -3141,7 +3162,8 @@ export default function TravelScreen() {
         ) : null}
 
         {/* Input row */}
-        {generatedImage ? (
+        {editedImage ? (<View style={{ backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingHorizontal: 16, paddingVertical: 10 }}><View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}><View style={{ flex: 1 }}><Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 12 }}>{editedImage.label}</Text><Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 10 }}>Session-only private result. It is not posted or added to Kinfolk memory.</Text></View><TouchableOpacity onPress={() => setEditedImage(null)} accessibilityLabel="Remove edited image"><Ionicons name="close-circle-outline" size={21} color={colors.mutedForeground} /></TouchableOpacity></View><Image source={{ uri: editedImage.dataUrl }} resizeMode="contain" accessibilityLabel="AI-edited private image" style={{ width: "100%", height: 220, borderRadius: 14, backgroundColor: colors.background }} /><TouchableOpacity onPress={() => void prepareEditedImageForAnotherEdit()} accessibilityLabel="Prepare edited image for another private edit"><Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold", fontSize: 11, marginTop: 8 }}>Edit this result again</Text></TouchableOpacity></View>) : null}
+                {generatedImage ? (
           <View style={{ backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingHorizontal: 16, paddingVertical: 10 }}>
             <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 7 }}>
               <View style={{ flex: 1 }}>
@@ -3163,7 +3185,8 @@ export default function TravelScreen() {
           >
             <Ionicons name="sparkles-outline" size={18} color={colors.mutedForeground} />
           </TouchableOpacity>
-          <TouchableOpacity
+          <TouchableOpacity style={[styles.voiceOutputBtn, { backgroundColor: colors.background, borderColor: colors.border, opacity: kinfolkImages.length ? 1 : 0.4 }]} onPress={() => { const source = kinfolkImages[0]; if (!source) { Alert.alert("Add a private image", "Choose an image before asking Kinfolk to edit it."); return; } setEditSourceAssetId(source.assetId); setImageEditError(null); setShowImageEdit(true); }} disabled={!kinfolkImages.length || isLoading} accessibilityLabel="Edit a private image"><Ionicons name="color-wand-outline" size={18} color={colors.mutedForeground} /></TouchableOpacity>
+                    <TouchableOpacity
             style={[styles.voiceOutputBtn, { backgroundColor: colors.background, borderColor: colors.border, opacity: uploadingKinfolkImage || kinfolkImages.length >= 2 ? 0.4 : 1 }]}
             onPress={() => void pickKinfolkImage()}
             disabled={uploadingKinfolkImage || kinfolkImages.length >= 2 || isLoading}
@@ -3286,7 +3309,9 @@ export default function TravelScreen() {
         colors={colors}
       />
 
-      <Modal visible={showImageCreation} transparent animationType="slide" onRequestClose={() => { setShowImageCreation(false); setImageCreationError(null); }}>
+      <Modal visible={showImageEdit} transparent animationType="slide" onRequestClose={() => setShowImageEdit(false)}><View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#00000066" }}><View style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.card, padding: 20, paddingBottom: Math.max(insets.bottom, 18) }}><Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 17 }}>Edit a private image</Text><Text style={{ color: colors.mutedForeground, fontSize: 12, lineHeight: 18, marginTop: 5 }}>Your selected private image and instruction are sent once to Kinfolk’s configured image provider. The result stays in this session and is not added to memory.</Text><TextInput value={imageEditInstruction} onChangeText={setImageEditInstruction} multiline maxLength={800} placeholder="Example: Change the background to a garden." placeholderTextColor={colors.mutedForeground} accessibilityLabel="Describe the image edit" style={{ minHeight: 92, marginTop: 16, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.background, color: colors.text, padding: 12 }} /><TouchableOpacity onPress={() => setImageEditConsent((value) => !value)} accessibilityRole="checkbox" accessibilityState={{ checked: imageEditConsent }} accessibilityLabel="Confirm image editing provider disclosure" style={{ flexDirection: "row", gap: 9, marginTop: 14 }}><Ionicons name={imageEditConsent ? "checkbox" : "square-outline"} size={20} color={imageEditConsent ? colors.primary : colors.mutedForeground} /><Text style={{ flex: 1, color: colors.mutedForeground, fontSize: 11 }}>I consent to send this private image and instruction once to Kinfolk’s configured image provider. The session-only result is not saved to memory.</Text></TouchableOpacity>{imageEditError ? <Text accessibilityRole="alert" style={{ color: "#B42318", marginTop: 8 }}>{imageEditError}</Text> : null}<View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}><TouchableOpacity onPress={() => setShowImageEdit(false)} style={{ flex: 1, minHeight: 44, borderWidth: 1, borderColor: colors.border, borderRadius: 12, alignItems: "center", justifyContent: "center" }}><Text style={{ color: colors.text }}>Cancel</Text></TouchableOpacity><TouchableOpacity onPress={() => void editKinfolkImage()} disabled={editingImage || !imageEditConsent || imageEditInstruction.trim().length < 4} style={{ flex: 1, minHeight: 44, borderRadius: 12, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", opacity: editingImage || !imageEditConsent || imageEditInstruction.trim().length < 4 ? .45 : 1 }}><Text style={{ color: colors.primaryForeground }}>{editingImage ? "Editing…" : "Edit image"}</Text></TouchableOpacity></View></View></View></Modal>
+
+            <Modal visible={showImageCreation} transparent animationType="slide" onRequestClose={() => { setShowImageCreation(false); setImageCreationError(null); }}>
         <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#00000066" }}>
           <View style={{ maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.card, paddingHorizontal: 20, paddingTop: 18, paddingBottom: Math.max(insets.bottom, 18) }}>
             <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>

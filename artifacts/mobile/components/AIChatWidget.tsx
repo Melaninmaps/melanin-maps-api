@@ -426,6 +426,13 @@ export function AIChatWidget() {
   const [input, setInput] = useState("");
   const [kinfolkImages, setKinfolkImages] = useState<KinfolkQuestionImage[]>([]);
   const [uploadingKinfolkImage, setUploadingKinfolkImage] = useState(false);
+  const [showImageEdit, setShowImageEdit] = useState(false);
+  const [imageEditInstruction, setImageEditInstruction] = useState("");
+  const [imageEditConsent, setImageEditConsent] = useState(false);
+  const [editingImage, setEditingImage] = useState(false);
+  const [imageEditError, setImageEditError] = useState<string | null>(null);
+  const [editedImage, setEditedImage] = useState<{ dataUrl: string; label: string } | null>(null);
+  const [editSourceAssetId, setEditSourceAssetId] = useState<string | null>(null);
   const [kinfolkDocument, setKinfolkDocument] = useState<KinfolkQuestionDocument | null>(null);
   const [uploadingKinfolkDocument, setUploadingKinfolkDocument] = useState(false);
   const [typing, setTyping] = useState(false);
@@ -693,6 +700,20 @@ export function AIChatWidget() {
       );
     }
   }, [refreshUser]);
+
+  const editWidgetKinfolkImage = useCallback(async () => {
+    if (!editSourceAssetId || editingImage) return;
+    setEditingImage(true); setImageEditError(null);
+    try { const token = await getToken(); const response = await fetch(`${getApiBase()}/api/kinfolk/images/edit`, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ imageAssetId: editSourceAssetId, instruction: imageEditInstruction, providerDisclosureAccepted: imageEditConsent, editConsentAccepted: imageEditConsent }) }); const body = await response.json().catch(() => ({})) as { imageDataUrl?: string; contentLabel?: string; error?: string }; if (!response.ok || !body.imageDataUrl) throw new Error(body.error ?? "Kinfolk could not edit that image right now."); setEditedImage({ dataUrl: body.imageDataUrl, label: body.contentLabel ?? "AI-edited visual" }); setShowImageEdit(false); setImageEditInstruction(""); setImageEditConsent(false); }
+    catch (cause) { setImageEditError(cause instanceof Error ? cause.message : "Kinfolk could not edit that image right now."); }
+    finally { setEditingImage(false); }
+  }, [editSourceAssetId, editingImage, imageEditConsent, imageEditInstruction]);
+
+  const prepareWidgetEditedImageForAnotherEdit = useCallback(async () => {
+    if (!editedImage) return;
+    try { const base64 = editedImage.dataUrl.split(",", 2)[1]; if (!base64) throw new Error("missing session image"); const file = new FileSystem.File(FileSystem.Paths.cache, `kinfolk-widget-edit-${Date.now()}.png`); file.write(base64, { encoding: FileSystem.EncodingType.Base64 }); await uploadWidgetKinfolkImage({ uri: file.uri, fileName: "kinfolk-private-edit.png", mimeType: "image/png" } as ImagePicker.ImagePickerAsset); if (file.exists) file.delete(); setEditedImage(null); Alert.alert("Private image ready", "Choose Edit image to request the next edit."); }
+    catch { Alert.alert("Could not prepare image", "Please add the result again as a private image before editing it."); }
+  }, [editedImage, uploadWidgetKinfolkImage]);
 
   const pickWidgetKinfolkImage = useCallback(async () => {
     if (!isAuthenticated || uploadingKinfolkImage || kinfolkImages.length >= 2) return;
@@ -1376,7 +1397,8 @@ export function AIChatWidget() {
         </Animated.View>
       )}
 
-      <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setWidgetOpen(false)}>
+      <Modal visible={showImageEdit} transparent animationType="slide" onRequestClose={() => setShowImageEdit(false)}><View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#00000066" }}><View style={{ backgroundColor: colors.card, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18 }}><Text style={{ color: colors.text, fontWeight: "700", fontSize: 16 }}>Edit a private image</Text><Text style={{ color: colors.mutedForeground, fontSize: 11, marginTop: 5 }}>Your selected private image and instruction are sent once to Kinfolk’s configured image provider. The session-only result is not added to memory.</Text><TextInput value={imageEditInstruction} onChangeText={setImageEditInstruction} multiline maxLength={800} placeholder="Example: Change the background to a garden." placeholderTextColor={colors.mutedForeground} accessibilityLabel="Describe the image edit" style={{ minHeight: 86, borderWidth: 1, borderColor: colors.border, borderRadius: 12, marginTop: 12, color: colors.text, padding: 10 }} /><TouchableOpacity onPress={() => setImageEditConsent((value) => !value)} accessibilityRole="checkbox" accessibilityState={{ checked: imageEditConsent }} accessibilityLabel="Confirm image editing provider disclosure" style={{ flexDirection: "row", gap: 8, marginTop: 12 }}><Feather name={imageEditConsent ? "check-square" : "square"} size={18} color={colors.primary} /><Text style={{ flex: 1, color: colors.mutedForeground, fontSize: 10 }}>I consent to send this image and instruction once to Kinfolk’s configured image provider. It is not saved to memory.</Text></TouchableOpacity>{imageEditError ? <Text accessibilityRole="alert" style={{ color: "#B42318", marginTop: 8 }}>{imageEditError}</Text> : null}<View style={{ flexDirection: "row", gap: 8, marginTop: 14 }}><TouchableOpacity onPress={() => setShowImageEdit(false)} style={{ flex: 1, minHeight: 42, borderWidth: 1, borderColor: colors.border, borderRadius: 10, alignItems: "center", justifyContent: "center" }}><Text style={{ color: colors.text }}>Cancel</Text></TouchableOpacity><TouchableOpacity onPress={() => void editWidgetKinfolkImage()} disabled={editingImage || !imageEditConsent || imageEditInstruction.trim().length < 4} style={{ flex: 1, minHeight: 42, backgroundColor: colors.primary, borderRadius: 10, alignItems: "center", justifyContent: "center", opacity: editingImage || !imageEditConsent || imageEditInstruction.trim().length < 4 ? .45 : 1 }}><Text style={{ color: colors.primaryForeground }}>{editingImage ? "Editing…" : "Edit image"}</Text></TouchableOpacity></View></View></View></Modal>
+            <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setWidgetOpen(false)}>
         <KeyboardAvoidingView
           style={[styles.modal, { backgroundColor: colors.background }]}
           behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -1916,7 +1938,8 @@ export function AIChatWidget() {
             </View>
           ) : null}
 
-          {(kinfolkImages.length > 0 || uploadingKinfolkImage || kinfolkDocument || uploadingKinfolkDocument) ? (
+          {editedImage ? (<View style={[styles.imageAttachmentTray, { backgroundColor: colors.background, borderTopColor: colors.border }]}><View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}><Text style={{ color: colors.text, fontSize: 12, fontWeight: "700" }}>{editedImage.label} — session-only</Text><TouchableOpacity onPress={() => setEditedImage(null)} accessibilityLabel="Remove edited image"><Feather name="x-circle" size={18} color={colors.mutedForeground} /></TouchableOpacity></View><Image source={{ uri: editedImage.dataUrl }} resizeMode="contain" accessibilityLabel="AI-edited private image" style={{ width: "100%", height: 180, borderRadius: 12, marginTop: 8 }} /><TouchableOpacity onPress={() => void prepareWidgetEditedImageForAnotherEdit()} accessibilityLabel="Prepare edited image for another private edit"><Text style={{ color: colors.primary, fontSize: 10, marginTop: 6 }}>Edit this result again</Text></TouchableOpacity></View>) : null}
+                    {(kinfolkImages.length > 0 || uploadingKinfolkImage || kinfolkDocument || uploadingKinfolkDocument) ? (
             <View style={[styles.imageAttachmentTray, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imageAttachmentRow}>
                 {kinfolkImages.map((attachment, index) => (
@@ -1973,7 +1996,8 @@ export function AIChatWidget() {
                 {widgetVoiceSource.state.phase === "requesting_permission" || widgetVoiceSource.state.phase === "starting" || widgetVoiceSource.state.phase === "stopping" || widgetVoiceSource.state.phase === "uploading" ? <ActivityIndicator size="small" color={colors.mutedForeground} /> : <Feather name={widgetVoiceSource.canStop ? "mic-off" : "mic"} size={18} color={widgetVoiceSource.canStop ? "#FFF" : colors.mutedForeground} />}
               </TouchableOpacity>
             ) : null}
-            {Platform.OS !== "web" ? (
+            {Platform.OS !== "web" ? <TouchableOpacity style={[styles.micBtn, { backgroundColor: colors.muted, opacity: kinfolkImages.length ? 1 : .5 }]} onPress={() => { const source = kinfolkImages[0]; if (!source) { Alert.alert("Add a private image", "Choose an image before asking Kinfolk to edit it."); return; } setEditSourceAssetId(source.assetId); setImageEditError(null); setShowImageEdit(true); }} disabled={!kinfolkImages.length || typing} accessibilityLabel="Edit a private image"><Feather name="edit-3" size={17} color={colors.mutedForeground} /></TouchableOpacity> : null}
+                        {Platform.OS !== "web" ? (
               <TouchableOpacity
                 style={[styles.micBtn, { backgroundColor: colors.muted, opacity: typing || authLoading || uploadingKinfolkImage || kinfolkImages.length >= 2 || widgetVoiceSource.canStop || !isAuthenticated ? 0.6 : 1 }]}
                 onPress={() => void pickWidgetKinfolkImage()}
