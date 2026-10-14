@@ -48,6 +48,17 @@ export type ItineraryEntry = Readonly<{
 
 export type ItineraryEntryInput = Pick<ItineraryEntry, "dayLabel" | "dayOrder" | "startTimeLabel" | "endTimeLabel" | "title" | "note">;
 
+/** Existing Temporary Stay lifecycle metadata only; it deliberately contains no address or provider data. */
+export type TripTemporaryStay = Readonly<{
+  id: string;
+  label: string;
+  isActive: true;
+  arrivalDate: string;
+  departureDate: string;
+  expiresAt: string;
+  linked: boolean;
+}>;
+
 type ItineraryChanges = Partial<Pick<Itinerary, "name" | "destination" | "notes" | "stops">>;
 
 function toItinerary(trip: ApiTrip): Itinerary {
@@ -132,6 +143,59 @@ export function useTripItinerary(tripId: string | null) {
   }, [mutate]);
 
   return { entries, isLoading, error, createEntry, updateEntry, deleteEntry, reorderEntries, refresh: load };
+}
+
+/**
+ * Owner-only, selected-Trip management for an already-saved active Temporary
+ * Stay. It neither creates/edits a stay nor sends any address to chat/memory,
+ * nearby search, calendar, booking, provider, reminder, sharing, or analytics.
+ */
+export function useTripTemporaryStays(tripId: string | null) {
+  const [stays, setStays] = useState<TripTemporaryStay[]>([]);
+  const [isLoading, setIsLoading] = useState(Boolean(tripId));
+  const [error, setError] = useState<string | null>(null);
+  const path = tripId ? `/${encodeURIComponent(tripId)}/temporary-stays` : null;
+
+  const load = useCallback(async () => {
+    if (!path) { setStays([]); setIsLoading(false); return; }
+    setIsLoading(true); setError(null);
+    try {
+      const response = await tripRequest(path, { cache: "no-store" });
+      if (!response.ok) throw await responseError(response, "Temporary Stays could not be loaded for this private Trip.");
+      const payload = await response.json() as { stays?: TripTemporaryStay[] };
+      setStays(Array.isArray(payload.stays) ? payload.stays : []);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Temporary Stays could not be loaded for this private Trip.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [path]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  const linkStay = useCallback(async (stayId: string, memberConfirmed = false) => {
+    if (!path) throw new Error("Private Trip not found.");
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to link a Temporary Stay.");
+    const response = await tripRequest(path, {
+      method: "POST", cache: "no-store", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ temporaryStayId: stayId, memberConfirmed: true }),
+    });
+    if (!response.ok) throw await responseError(response, "Temporary Stay could not be linked to this private Trip.");
+    await load();
+  }, [load, path]);
+
+  const unlinkStay = useCallback(async (stayId: string, memberConfirmed = false) => {
+    if (!path) throw new Error("Private Trip not found.");
+    if (!memberConfirmed) throw new Error("Explicit confirmation is required to unlink a Temporary Stay.");
+    const response = await tripRequest(`${path}/${encodeURIComponent(stayId)}`, {
+      method: "DELETE", cache: "no-store", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberConfirmed: true }),
+    });
+    if (!response.ok) throw await responseError(response, "Temporary Stay could not be unlinked from this private Trip.");
+    await load();
+  }, [load, path]);
+
+  return { stays, isLoading, error, linkStay, unlinkStay, refresh: load };
 }
 
 /**

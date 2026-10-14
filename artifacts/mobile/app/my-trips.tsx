@@ -15,11 +15,80 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
-import { useItineraries, type Itinerary } from "@/hooks/useItineraries";
+import { useItineraries, useTripTemporaryStays, type Itinerary, type TripTemporaryStay } from "@/hooks/useItineraries";
 import TripItineraryOrganizer from "@/components/TripItineraryOrganizer";
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+function TripTemporaryStayManager({ tripId }: { tripId: string }) {
+  const colors = useColors();
+  const { stays, isLoading, error, linkStay, unlinkStay } = useTripTemporaryStays(tripId);
+  const [confirmed, setConfirmed] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const link = async (stay: TripTemporaryStay) => {
+    if (!confirmed || saving) return;
+    setSaving(true);
+    try {
+      await linkStay(stay.id, true);
+      setConfirmed(false);
+      if (Platform.OS !== "web") void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch {
+      // The hook renders the owner-safe server outcome below on the next refresh.
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const requestUnlink = (stay: TripTemporaryStay) => {
+    Alert.alert("Unlink Temporary Stay?", `Remove “${stay.label}” from this private Trip? The Temporary Stay itself will not be changed.`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Unlink", style: "destructive", onPress: () => {
+          void (async () => {
+            setSaving(true);
+            try { await unlinkStay(stay.id, true); } catch { /* owner-safe hook error remains visible */ } finally { setSaving(false); }
+          })();
+        },
+      },
+    ]);
+  };
+
+  return (
+    <View style={[styles.temporaryStays, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={styles.temporaryStayHeading}>
+        <Feather name="shield" size={16} color={colors.primary} />
+        <Text style={[styles.temporaryStayTitle, { color: colors.foreground }]}>Temporary Stay (optional)</Text>
+      </View>
+      <Text style={[styles.temporaryStayBody, { color: colors.mutedForeground }]}>Choose only an existing active Temporary Stay saved in Settings. Its exact address remains encrypted; linking neither sends it to Kinfolk chat or memory nor triggers nearby search, calendar, booking, provider, reminders, sharing, Map, Directory, Community, Safety, or analytics. Creation and its Google disclosure remain in Settings.</Text>
+      {error ? <Text accessibilityRole="alert" style={[styles.temporaryStayError, { color: "#B42318" }]}>{error}</Text> : null}
+      {isLoading ? <ActivityIndicator style={styles.temporaryStayLoading} color={colors.primary} /> : null}
+      {!isLoading && stays.length === 0 ? <Text style={[styles.temporaryStayEmpty, { color: colors.mutedForeground }]}>No active Temporary Stays are available for this Trip.</Text> : null}
+      {!isLoading && stays.length > 0 ? (
+        <>
+          <TouchableOpacity accessibilityRole="checkbox" accessibilityState={{ checked: confirmed }} accessibilityLabel="Confirm Temporary Stay link" onPress={() => setConfirmed((value) => !value)} style={styles.confirmRow}>
+            <View style={[styles.checkbox, { borderColor: colors.primary, backgroundColor: confirmed ? colors.primary : "transparent" }]}>{confirmed ? <Feather name="check" size={13} color="#FFFFFF" /> : null}</View>
+            <Text style={[styles.confirmText, { color: colors.mutedForeground }]}>I confirm that I want to link one existing active Temporary Stay to this private Trip.</Text>
+          </TouchableOpacity>
+          {stays.map((stay) => (
+            <View key={stay.id} style={[styles.temporaryStayRow, { borderTopColor: colors.border }]}>
+              <View style={styles.temporaryStayCopy}>
+                <Text style={[styles.temporaryStayLabel, { color: colors.foreground }]}>{stay.label}</Text>
+                <Text style={[styles.temporaryStayDates, { color: colors.mutedForeground }]}>Arrival {formatDate(stay.arrivalDate)} · Departure {formatDate(stay.departureDate)} · Expires {formatDate(stay.expiresAt)}</Text>
+              </View>
+              {stay.linked ? (
+                <TouchableOpacity disabled={saving} onPress={() => requestUnlink(stay)} accessibilityLabel={`Unlink ${stay.label} from this Trip`} style={[styles.unlinkButton, { borderColor: colors.border }]}><Text style={[styles.unlinkText, { color: colors.primary }]}>Unlink</Text></TouchableOpacity>
+              ) : (
+                <TouchableOpacity disabled={!confirmed || saving} onPress={() => void link(stay)} accessibilityLabel={`Confirm and link ${stay.label} to this Trip`} style={[styles.linkButton, { backgroundColor: colors.primary }, (!confirmed || saving) && styles.disabled]}><Text style={styles.linkText}>{saving ? "Linking…" : "Link"}</Text></TouchableOpacity>
+              )}
+            </View>
+          ))}
+        </>
+      ) : null}
+    </View>
+  );
 }
 
 /**
@@ -175,6 +244,7 @@ export default function MyTripsScreen() {
         ) : null}
 
         {selected ? <TripItineraryOrganizer tripId={selected.id} tripTitle={selected.name} /> : null}
+        {selected ? <TripTemporaryStayManager tripId={selected.id} /> : null}
 
         {isLoading ? <ActivityIndicator style={styles.loading} color={colors.primary} /> : null}
         {!isLoading && itineraries.length === 0 ? (
@@ -206,5 +276,5 @@ export default function MyTripsScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1 }, header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingBottom: 14, borderBottomWidth: 1, gap: 12 }, backBtn: { padding: 4 }, title: { fontFamily: "Inter_700Bold", fontSize: 22, flex: 1 }, newBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20 }, newBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#FFFFFF" }, list: { padding: 16, gap: 14 }, privacy: { borderRadius: 14, borderWidth: 1, padding: 14, flexDirection: "row", gap: 10 }, privacyCopy: { flex: 1 }, privacyTitle: { fontFamily: "Inter_700Bold", fontSize: 14 }, privacyText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginTop: 3 }, legacy: { borderRadius: 12, borderWidth: 1, borderStyle: "dashed", padding: 12, flexDirection: "row", gap: 8 }, legacyText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, flex: 1 }, error: { fontFamily: "Inter_500Medium", fontSize: 13, lineHeight: 19 }, form: { borderRadius: 16, borderWidth: 1, padding: 14 }, formHeader: { flexDirection: "row", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 12 }, formTitle: { flex: 1, fontFamily: "Inter_700Bold", fontSize: 16 }, cancel: { fontFamily: "Inter_600SemiBold", fontSize: 13 }, label: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginTop: 9 }, input: { fontFamily: "Inter_400Regular", fontSize: 14, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, marginTop: 5 }, noteInput: { minHeight: 88 }, help: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 4 }, confirmRow: { flexDirection: "row", gap: 9, alignItems: "flex-start", marginTop: 14 }, checkbox: { width: 19, height: 19, borderWidth: 1.5, borderRadius: 5, alignItems: "center", justifyContent: "center", marginTop: 1 }, confirmText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, flex: 1 }, saveButton: { borderRadius: 11, paddingHorizontal: 14, paddingVertical: 12, marginTop: 14, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8 }, saveText: { color: "#FFFFFF", fontFamily: "Inter_600SemiBold", fontSize: 13 }, disabled: { opacity: 0.5 }, loading: { marginVertical: 26 }, empty: { alignItems: "center", paddingVertical: 42, paddingHorizontal: 28, gap: 12, marginTop: 6, borderRadius: 16, borderWidth: 1.5, borderStyle: "dashed" }, emptyTitle: { fontFamily: "Inter_700Bold", fontSize: 18 }, emptyBody: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 22 }, emptyBtn: { marginTop: 4, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 24 }, emptyBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14 }, card: { borderRadius: 16, borderWidth: 1, overflow: "hidden" }, cardRow: { flexDirection: "row", alignItems: "center", padding: 14, gap: 12 }, icon: { width: 42, height: 42, borderRadius: 12, alignItems: "center", justifyContent: "center" }, cardText: { flex: 1 }, name: { fontFamily: "Inter_600SemiBold", fontSize: 16 }, destination: { fontFamily: "Inter_500Medium", fontSize: 13, marginTop: 2 }, date: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 3 }, notes: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20, paddingHorizontal: 14, paddingBottom: 12, paddingTop: 10, borderTopWidth: 1 },
+  screen: { flex: 1 }, header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingBottom: 14, borderBottomWidth: 1, gap: 12 }, backBtn: { padding: 4 }, title: { fontFamily: "Inter_700Bold", fontSize: 22, flex: 1 }, newBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20 }, newBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#FFFFFF" }, list: { padding: 16, gap: 14 }, privacy: { borderRadius: 14, borderWidth: 1, padding: 14, flexDirection: "row", gap: 10 }, privacyCopy: { flex: 1 }, privacyTitle: { fontFamily: "Inter_700Bold", fontSize: 14 }, privacyText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginTop: 3 }, legacy: { borderRadius: 12, borderWidth: 1, borderStyle: "dashed", padding: 12, flexDirection: "row", gap: 8 }, legacyText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, flex: 1 }, error: { fontFamily: "Inter_500Medium", fontSize: 13, lineHeight: 19 }, form: { borderRadius: 16, borderWidth: 1, padding: 14 }, formHeader: { flexDirection: "row", justifyContent: "space-between", gap: 12, alignItems: "center", marginBottom: 12 }, formTitle: { flex: 1, fontFamily: "Inter_700Bold", fontSize: 16 }, cancel: { fontFamily: "Inter_600SemiBold", fontSize: 13 }, label: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginTop: 9 }, input: { fontFamily: "Inter_400Regular", fontSize: 14, borderWidth: 1, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, marginTop: 5 }, noteInput: { minHeight: 88 }, help: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 4 }, confirmRow: { flexDirection: "row", gap: 9, alignItems: "flex-start", marginTop: 14 }, checkbox: { width: 19, height: 19, borderWidth: 1.5, borderRadius: 5, alignItems: "center", justifyContent: "center", marginTop: 1 }, confirmText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, flex: 1 }, saveButton: { borderRadius: 11, paddingHorizontal: 14, paddingVertical: 12, marginTop: 14, flexDirection: "row", justifyContent: "center", alignItems: "center", gap: 8 }, saveText: { color: "#FFFFFF", fontFamily: "Inter_600SemiBold", fontSize: 13 }, disabled: { opacity: 0.5 }, loading: { marginVertical: 26 }, empty: { alignItems: "center", paddingVertical: 42, paddingHorizontal: 28, gap: 12, marginTop: 6, borderRadius: 16, borderWidth: 1.5, borderStyle: "dashed" }, emptyTitle: { fontFamily: "Inter_700Bold", fontSize: 18 }, emptyBody: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 22 }, emptyBtn: { marginTop: 4, paddingHorizontal: 22, paddingVertical: 12, borderRadius: 24 }, emptyBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14 }, card: { borderRadius: 16, borderWidth: 1, overflow: "hidden" }, cardRow: { flexDirection: "row", alignItems: "center", padding: 14, gap: 12 }, icon: { width: 42, height: 42, borderRadius: 12, alignItems: "center", justifyContent: "center" }, cardText: { flex: 1 }, name: { fontFamily: "Inter_600SemiBold", fontSize: 16 }, destination: { fontFamily: "Inter_500Medium", fontSize: 13, marginTop: 2 }, date: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 3 }, notes: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20, paddingHorizontal: 14, paddingBottom: 12, paddingTop: 10, borderTopWidth: 1 }, temporaryStays: { borderRadius: 16, borderWidth: 1, padding: 14 }, temporaryStayHeading: { flexDirection: "row", alignItems: "center", gap: 8 }, temporaryStayTitle: { fontFamily: "Inter_700Bold", fontSize: 15 }, temporaryStayBody: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginTop: 8 }, temporaryStayError: { fontFamily: "Inter_500Medium", fontSize: 12, lineHeight: 18, marginTop: 9 }, temporaryStayLoading: { marginVertical: 14 }, temporaryStayEmpty: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginTop: 12 }, temporaryStayRow: { flexDirection: "row", alignItems: "center", gap: 10, borderTopWidth: 1, paddingTop: 12, marginTop: 12 }, temporaryStayCopy: { flex: 1 }, temporaryStayLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13 }, temporaryStayDates: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, marginTop: 3 }, linkButton: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 9 }, linkText: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#FFFFFF" }, unlinkButton: { paddingHorizontal: 10, paddingVertical: 7, borderRadius: 9, borderWidth: 1 }, unlinkText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
 });

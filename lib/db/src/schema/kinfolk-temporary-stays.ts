@@ -20,6 +20,9 @@ export const kinfolkTemporaryStaysTable = pgTable(
   },
   (table) => [
     uniqueIndex("kinfolk_temporary_stays_owner_label_key").on(table.userId, table.label),
+    // APPROVAL REQUIRED — SOURCE ONLY: prerequisite for the owner-consistent
+    // Trip↔Temporary-Stay composite foreign key; no data change is authorized.
+    uniqueIndex("kinfolk_temporary_stays_id_owner_key").on(table.id, table.userId),
     index("kinfolk_temporary_stays_owner_active_idx").on(table.userId, table.isActive, table.updatedAt),
   ],
 );

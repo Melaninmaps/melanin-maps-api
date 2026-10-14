@@ -45,6 +45,19 @@ describe("native account-backed private Trips", () => {
     expect(organizer).toContain("deleteEntry(entry.id, true)");
   });
 
+  it("adds a selected-Trip Temporary Stay link control that uses the nested private API, safe metadata, and confirmation", () => {
+    for (const contract of ["useTripTemporaryStays", "temporary-stays", "temporaryStayId: stayId, memberConfirmed: true", "method: \"POST\"", "method: \"DELETE\"", "cache: \"no-store\""]) {
+      expect(hook).toContain(contract);
+    }
+    for (const contract of ["TripTemporaryStayManager tripId={selected.id}", "Temporary Stay (optional)", 'accessibilityLabel="Confirm Temporary Stay link"', "Alert.alert(\"Unlink Temporary Stay?\"", "Arrival {formatDate(stay.arrivalDate)}", "Departure {formatDate(stay.departureDate)}", "Expires {formatDate(stay.expiresAt)}"]) {
+      expect(screen).toContain(contract);
+    }
+    for (const boundary of ["neither sends it to Kinfolk chat or memory", "nearby search, calendar, booking, provider, reminders, sharing", "Map, Directory, Community, Safety, or analytics", "Creation and its Google disclosure remain in Settings"]) {
+      expect(screen).toContain(boundary);
+    }
+    expect(screen).not.toContain("exactAddress");
+  });
+
   it("keeps the itinerary visibly private/manual with no booking, notification, sharing, or automatic use", () => {
     for (const boundary of ["do not schedule, book, notify, share, or automatically use any service", "Kinfolk chat or memory, profile, discovery, Map, Directory, Community, Safety", "providers, calendars, flights, hotels, events, documents, tasks, reminders, or analytics", "public share link"]) {
       expect(organizer).toContain(boundary);

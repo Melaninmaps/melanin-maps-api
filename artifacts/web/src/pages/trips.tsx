@@ -15,6 +15,16 @@ type Trip = Readonly<{
   updatedAt: string;
 }>;
 
+type TripTemporaryStay = Readonly<{
+  id: string;
+  label: string;
+  isActive: true;
+  arrivalDate: string;
+  departureDate: string;
+  expiresAt: string;
+  linked: boolean;
+}>;
+
 type TripForm = { title: string; destination: string; note: string };
 const emptyForm: TripForm = { title: "", destination: "", note: "" };
 
@@ -36,6 +46,11 @@ export default function Trips() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [temporaryStays, setTemporaryStays] = useState<TripTemporaryStay[]>([]);
+  const [temporaryStaysLoading, setTemporaryStaysLoading] = useState(false);
+  const [temporaryStayConfirmed, setTemporaryStayConfirmed] = useState(false);
+  const [temporaryStaySaving, setTemporaryStaySaving] = useState(false);
+  const [temporaryStayError, setTemporaryStayError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -53,6 +68,31 @@ export default function Trips() {
   }, []);
 
   useEffect(() => { void load(); }, [load]);
+
+  const loadTemporaryStays = useCallback(async (tripId: string) => {
+    setTemporaryStaysLoading(true);
+    setTemporaryStayError(null);
+    try {
+      const response = await fetch(`${BASE}api/kinfolk/trips/${encodeURIComponent(tripId)}/temporary-stays`, { credentials: "include", cache: "no-store" });
+      if (!response.ok) throw new Error(await message(response, "Temporary Stays could not be loaded for this Trip."));
+      const payload = await response.json() as { stays?: TripTemporaryStay[] };
+      setTemporaryStays(Array.isArray(payload.stays) ? payload.stays : []);
+    } catch (cause) {
+      setTemporaryStayError(cause instanceof Error ? cause.message : "Temporary Stays could not be loaded for this Trip.");
+    } finally {
+      setTemporaryStaysLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selected) {
+      setTemporaryStays([]);
+      setTemporaryStayConfirmed(false);
+      setTemporaryStayError(null);
+      return;
+    }
+    void loadTemporaryStays(selected.id);
+  }, [loadTemporaryStays, selected]);
 
   const inspect = async (id: string) => {
     setError(null);
@@ -120,6 +160,50 @@ export default function Trips() {
     }
   };
 
+  const linkTemporaryStay = async (stay: TripTemporaryStay) => {
+    if (!selected || !temporaryStayConfirmed || temporaryStaySaving) return;
+    setTemporaryStaySaving(true);
+    setTemporaryStayError(null);
+    try {
+      const response = await fetch(`${BASE}api/kinfolk/trips/${encodeURIComponent(selected.id)}/temporary-stays`, {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ temporaryStayId: stay.id, memberConfirmed: true }),
+      });
+      if (!response.ok) throw new Error(await message(response, "Temporary Stay could not be linked to this Trip."));
+      setTemporaryStayConfirmed(false);
+      await loadTemporaryStays(selected.id);
+    } catch (cause) {
+      setTemporaryStayError(cause instanceof Error ? cause.message : "Temporary Stay could not be linked to this Trip.");
+    } finally {
+      setTemporaryStaySaving(false);
+    }
+  };
+
+  const unlinkTemporaryStay = async (stay: TripTemporaryStay) => {
+    if (!selected || temporaryStaySaving) return;
+    if (!window.confirm(`Unlink “${stay.label}” from this private Trip? The Temporary Stay itself will not be changed.`)) return;
+    setTemporaryStaySaving(true);
+    setTemporaryStayError(null);
+    try {
+      const response = await fetch(`${BASE}api/kinfolk/trips/${encodeURIComponent(selected.id)}/temporary-stays/${encodeURIComponent(stay.id)}`, {
+        method: "DELETE",
+        credentials: "include",
+        cache: "no-store",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberConfirmed: true }),
+      });
+      if (!response.ok) throw new Error(await message(response, "Temporary Stay could not be unlinked from this Trip."));
+      await loadTemporaryStays(selected.id);
+    } catch (cause) {
+      setTemporaryStayError(cause instanceof Error ? cause.message : "Temporary Stay could not be unlinked from this Trip.");
+    } finally {
+      setTemporaryStaySaving(false);
+    }
+  };
+
   const editing = selected !== null;
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6" aria-labelledby="trips-title">
@@ -165,6 +249,34 @@ export default function Trips() {
       </section>
 
       {selected ? <TripItineraryOrganizer tripId={selected.id} tripTitle={selected.title} /> : null}
+
+      {selected ? <section className="mt-5 rounded-2xl border border-[#3A1F0E]/10 bg-white p-5" aria-labelledby="trip-temporary-stays-title">
+        <div className="flex items-start gap-2">
+          <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-[#8D5C17]" />
+          <div>
+            <h2 id="trip-temporary-stays-title" className="font-serif text-xl font-bold text-[#2B1507]">Temporary Stay (optional)</h2>
+            <p className="mt-2 text-sm leading-6 text-[#3A1F0E]/65">Choose an existing active Temporary Stay saved in Settings. Its exact address remains encrypted: linking neither sends it to Kinfolk chat or memory nor triggers nearby search, calendar, booking, provider, reminders, sharing, Map, Directory, Community, Safety, or analytics. Temporary Stay creation and its Google disclosure remain only in Settings.</p>
+          </div>
+        </div>
+        {temporaryStayError ? <p role="alert" className="mt-4 rounded-xl bg-red-50 px-3 py-2 text-sm text-red-700">{temporaryStayError}</p> : null}
+        {temporaryStaysLoading ? <p className="mt-4 text-sm text-[#3A1F0E]/55">Opening available Temporary Stays…</p> : null}
+        {!temporaryStaysLoading && temporaryStays.length === 0 ? <p className="mt-4 text-sm text-[#3A1F0E]/60">No active Temporary Stays are available for this Trip.</p> : null}
+        {!temporaryStaysLoading && temporaryStays.length > 0 ? <>
+          <label className="mt-4 flex items-start gap-2 text-sm leading-5 text-[#3A1F0E]/70">
+            <input aria-label="Confirm Temporary Stay link" type="checkbox" checked={temporaryStayConfirmed} onChange={(event) => setTemporaryStayConfirmed(event.target.checked)} className="mt-1" />
+            <span>I confirm that I want to link one existing active Temporary Stay to this private Trip.</span>
+          </label>
+          <div className="mt-3 space-y-2">
+            {temporaryStays.map((stay) => <article key={stay.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#3A1F0E]/10 p-3">
+              <div>
+                <p className="text-sm font-bold text-[#2B1507]">{stay.label}</p>
+                <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">Arrival {new Date(stay.arrivalDate).toLocaleDateString()} · Departure {new Date(stay.departureDate).toLocaleDateString()} · Expires {new Date(stay.expiresAt).toLocaleDateString()}</p>
+              </div>
+              {stay.linked ? <button type="button" disabled={temporaryStaySaving} onClick={() => void unlinkTemporaryStay(stay)} aria-label={`Unlink ${stay.label} from this Trip`} className="rounded-lg border border-[#3A1F0E]/15 px-3 py-2 text-sm font-bold text-[#8D5C17] disabled:opacity-50">Unlink</button> : <button type="button" disabled={!temporaryStayConfirmed || temporaryStaySaving} onClick={() => void linkTemporaryStay(stay)} aria-label={`Confirm and link ${stay.label} to this Trip`} className="rounded-lg bg-[#2B1507] px-3 py-2 text-sm font-bold text-white disabled:opacity-50">{temporaryStaySaving ? "Linking…" : "Confirm and link"}</button>}
+            </article>)}
+          </div>
+        </> : null}
+      </section> : null}
 
       <section className="mt-7" aria-labelledby="saved-trips-title">
         <h2 id="saved-trips-title" className="font-serif text-xl font-bold text-[#2B1507]">Saved private Trips</h2>

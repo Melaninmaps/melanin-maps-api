@@ -34,6 +34,7 @@ export * from "./kinfolk-private-memories";
 export * from "./kinfolk-private-places";
 export * from "./kinfolk-temporary-stays";
 export * from "./kinfolk-trips";
+export * from "./kinfolk-trip-temporary-stays";
 export * from "./founder-product-knowledge";
 export * from "./kinfolk-feedback";
 export * from "./kinfolk-response-feedback";
