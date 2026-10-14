@@ -4755,7 +4755,7 @@ ${
       ? `
 
 MWM PLATFORM BUSINESSES${destination ? ` ${catalogSource === "radius" ? "NEAR" : "IN"} ${destination.toUpperCase()}` : ""} — ALWAYS SURFACE THESE FIRST:
-These are real businesses listed in the Mapping With Melanin™ community directory. When these are present, ALWAYS mention them by name in your reply: "Mapping With Melanin has [Name] listed in [City] — [brief description]." Do NOT require an exact category match. If the user asks for "restaurants" and MWM has food spots, cafes, or any dining-adjacent businesses listed, surface them. If the user asks for nightlife and MWM has bars, lounges, or entertainment spaces, surface them. Use every business's actual name. Unverified businesses are still real community spots — recommend them.
+These are server-governed public Mapping With Melanin listings for this response. Mention a business by name only when its supplied category, subcategory, or tags actually fit the member's requested service. Do not substitute a dining-adjacent business for a restaurant request, or a bar, lounge, or entertainment listing for another service merely because it is available. If no supplied listing fits, say that Mapping With Melanin does not currently have an eligible matching listing and use the governed no-result path; never invent or broaden a recommendation. Use every business's actual name. Do not call a listing verified, ownership-matched, promoted, safe, or personally endorsed unless the server supplies that specific evidence.
 
 ${businessCatalog
   .slice(0, 8)

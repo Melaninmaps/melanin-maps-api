@@ -49,6 +49,23 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).not.toMatch(/(?:FROM|JOIN)\s+(?:public\.)?businesses\s+b\b/i);
   });
 
+  it("does not ask the provider to broaden an eligible catalog into unverified or category-mismatched recommendations", () => {
+    expect(routeSource).toContain(
+      "These are server-governed public Mapping With Melanin listings for this response.",
+    );
+    expect(routeSource).toContain(
+      "only when its supplied category, subcategory, or tags actually fit the member's requested service",
+    );
+    expect(routeSource).toContain(
+      "does not currently have an eligible matching listing and use the governed no-result path",
+    );
+    expect(routeSource).toContain(
+      "Do not call a listing verified, ownership-matched, promoted, safe, or personally endorsed unless the server supplies that specific evidence.",
+    );
+    expect(routeSource).not.toContain("Unverified businesses are still real community spots — recommend them.");
+    expect(routeSource).not.toContain("Do NOT require an exact category match.");
+  });
+
   it("does not load a home catalog for ordinary no-location chat", () => {
     expect(routeSource).toContain("shouldLoadKinfolkHomeCatalog");
     expect(chatRoute).toContain("const homeCatalogAllowed = shouldLoadKinfolkHomeCatalog({");
