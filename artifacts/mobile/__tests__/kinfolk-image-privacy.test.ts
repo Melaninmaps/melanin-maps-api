@@ -25,9 +25,10 @@ describe("native Kinfolk image privacy controls", () => {
   });
 
   it("uses a private server asset ID for inference and a local URI for the member preview", () => {
+    const chatRequestStart = hookSource.indexOf('fetch(`${apiBase}/api/kinfolk/chat`');
     const requestPayload = hookSource.slice(
-      hookSource.indexOf("body: JSON.stringify({"),
-      hookSource.indexOf("signal: controller.signal"),
+      chatRequestStart,
+      hookSource.indexOf("signal: controller.signal", chatRequestStart),
     );
     expect(travelSource).toContain("imageAssetIds: attachedImageAssetIds");
     expect(travelSource).toContain("imageVisionConsent: attachedImageAssetIds.length > 0");

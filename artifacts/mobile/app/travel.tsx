@@ -42,6 +42,7 @@ import {
   useAudioPlayerStatus,
 } from "expo-audio";
 import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import { getApiBase } from "@/lib/api";
 import { openExternalUrl } from "@/lib/safeLinking";
 import { parseSafeSourceLink } from "@/lib/sourceLinks";
@@ -2156,6 +2157,8 @@ export default function TravelScreen() {
   const [voiceMode, setVoiceMode] = useState<"community" | "professor" | "business_manager" | "best_friend">("community");
   const [kinfolkImages, setKinfolkImages] = useState<Array<{ assetId: string; previewUri: string }>>([]);
   const [uploadingKinfolkImage, setUploadingKinfolkImage] = useState(false);
+  const [kinfolkDocument, setKinfolkDocument] = useState<{ assetId: string; displayName: string } | null>(null);
+  const [uploadingKinfolkDocument, setUploadingKinfolkDocument] = useState(false);
   const [showImageCreation, setShowImageCreation] = useState(false);
   const [imageCreationBrief, setImageCreationBrief] = useState("");
   const [providerDisclosureAccepted, setProviderDisclosureAccepted] = useState(false);
@@ -2506,6 +2509,72 @@ export default function TravelScreen() {
     );
   }, [kinfolkImages.length, uploadingKinfolkImage, uploadKinfolkImage]);
 
+  const uploadKinfolkDocument = useCallback(async (asset: DocumentPicker.DocumentPickerAsset) => {
+    setUploadingKinfolkDocument(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      if (!token) throw new Error("Please sign in again before adding a private PDF.");
+      const form = new FormData();
+      form.append("file", {
+        uri: asset.uri,
+        name: asset.name || `kinfolk-${Date.now()}.pdf`,
+        type: "application/pdf",
+      } as never);
+      form.append("kinfolkDocumentConsent", "true");
+      const response = await fetch(`${getApiBase()}/api/media/upload?purpose=kinfolk_question_document`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const body = await response.json().catch(() => ({})) as { assetId?: string; error?: string };
+      if (!response.ok || !body.assetId) throw new Error(body.error ?? "Could not prepare that private PDF.");
+      setKinfolkDocument({ assetId: body.assetId, displayName: asset.name || "Private PDF" });
+    } catch (cause) {
+      Alert.alert("PDF upload failed", cause instanceof Error ? cause.message : "Please try again.");
+    } finally {
+      setUploadingKinfolkDocument(false);
+    }
+  }, []);
+  const removeKinfolkDocument = useCallback(async (attachment: { assetId: string; displayName: string }) => {
+    setKinfolkDocument((current) => current?.assetId === attachment.assetId ? null : current);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const response = await fetch(`${getApiBase()}/api/media/kinfolk-question-document/${encodeURIComponent(attachment.assetId)}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) throw new Error("private document deletion deferred");
+    } catch {
+      Alert.alert("Private PDF removal", "The PDF was removed from this screen and will expire shortly from private processing.");
+    }
+  }, []);
+  const pickKinfolkDocument = useCallback(async () => {
+    if (uploadingKinfolkDocument || kinfolkDocument) return;
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ["application/pdf"],
+      multiple: false,
+      copyToCacheDirectory: true,
+    });
+    const asset = result.assets?.[0];
+    if (result.canceled || !asset) return;
+    if (asset.mimeType && asset.mimeType !== "application/pdf") {
+      Alert.alert("PDF required", "Kinfolk document questions currently accept PDFs only.");
+      return;
+    }
+    if (typeof asset.size === "number" && asset.size > 2 * 1024 * 1024) {
+      Alert.alert("PDF is too large", "Private Kinfolk PDFs must be under 2 MB.");
+      return;
+    }
+    Alert.alert(
+      "Use this PDF for this answer?",
+      "Kinfolk will read the PDF text only to answer your current question. It is sent to Kinfolk’s AI provider for that answer, is not used to train Kinfolk, is not saved as memory, and is deleted after the answer. If interrupted, the private upload expires within 15 minutes.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Use PDF for this answer", onPress: () => void uploadKinfolkDocument(asset) },
+      ],
+    );
+  }, [kinfolkDocument, uploadingKinfolkDocument, uploadKinfolkDocument]);
+
   const createKinfolkImage = useCallback(async () => {
     if (generatingImage) return;
     if (!isAuthenticated) {
@@ -2578,6 +2647,7 @@ export default function TravelScreen() {
     stopServerVoice("member_new_turn");
     const attachedImagePreviews = kinfolkImages.map((attachment) => attachment.previewUri);
     const attachedImageAssetIds = kinfolkImages.map((attachment) => attachment.assetId);
+    const attachedDocumentAssetIds = kinfolkDocument ? [kinfolkDocument.assetId] : [];
     const publicOrigin = exactRadiusOrigin.trim();
     onUserSend(); // scroll to bottom, suppress jump button for this send
     armAutoSpeech();
@@ -2586,6 +2656,8 @@ export default function TravelScreen() {
       imageUrls: attachedImagePreviews,
       imageAssetIds: attachedImageAssetIds,
       imageVisionConsent: attachedImageAssetIds.length > 0,
+      documentAssetIds: attachedDocumentAssetIds,
+      documentProcessingConsent: attachedDocumentAssetIds.length > 0,
       includeCommunityPerspective,
       publicOrigin: publicOrigin || undefined,
     });
@@ -2595,10 +2667,11 @@ export default function TravelScreen() {
       // conversation, attached to memory, or kept in the composer after send.
       setExactRadiusOrigin("");
       setKinfolkImages([]);
+      setKinfolkDocument(null);
       setIncludeCommunityPerspective(false);
       Keyboard.dismiss();
     }
-  }, [inputText, voiceMode, sendMessage, isAuthenticated, authLoading, onUserSend, kinfolkImages, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin]);
+  }, [inputText, voiceMode, sendMessage, isAuthenticated, authLoading, onUserSend, kinfolkImages, kinfolkDocument, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin]);
 
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);
@@ -3027,6 +3100,7 @@ export default function TravelScreen() {
             </View>
           </TouchableOpacity>
           {kinfolkImages.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>{kinfolkImages.map((attachment) => <View key={attachment.assetId} style={{ marginRight: 8 }}><Image source={{ uri: attachment.previewUri }} style={{ width: 74, height: 74, borderRadius: 12 }} accessibilityLabel="Ready to ask Kinfolk about" /><TouchableOpacity onPress={() => void removeKinfolkImage(attachment)} accessibilityLabel="Remove private image" style={{ position: "absolute", top: -4, right: -4, backgroundColor: colors.primary, borderRadius: 12, padding: 3 }}><Ionicons name="close" size={12} color={colors.primaryForeground} /></TouchableOpacity></View>)}</ScrollView>}
+          {kinfolkDocument ? <View style={{ marginTop: 8, flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 10, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 10, paddingVertical: 8 }} accessibilityLabel="Private PDF ready for this Kinfolk question"><Ionicons name="document-text-outline" size={18} color={colors.primary} /><Text numberOfLines={1} style={{ flex: 1, fontFamily: "Inter_500Medium", fontSize: 11, color: colors.text }}>{kinfolkDocument.displayName}</Text><TouchableOpacity onPress={() => void removeKinfolkDocument(kinfolkDocument)} accessibilityLabel="Remove private PDF"><Ionicons name="close-circle-outline" size={19} color={colors.mutedForeground} /></TouchableOpacity></View> : null}
         </View>
         </>}
 
@@ -3097,6 +3171,15 @@ export default function TravelScreen() {
           >
             {uploadingKinfolkImage ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="image-outline" size={18} color={colors.mutedForeground} />}
           </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.voiceOutputBtn, { backgroundColor: colors.background, borderColor: colors.border, opacity: uploadingKinfolkDocument || kinfolkDocument ? 0.4 : 1 }]}
+            onPress={() => void pickKinfolkDocument()}
+            disabled={uploadingKinfolkDocument || Boolean(kinfolkDocument) || isLoading}
+            accessibilityLabel={kinfolkDocument ? "One private PDF is ready for this Kinfolk question" : "Add a private PDF for Kinfolk"}
+            activeOpacity={0.75}
+          >
+            {uploadingKinfolkDocument ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="document-text-outline" size={18} color={colors.mutedForeground} />}
+          </TouchableOpacity>
           {Platform.OS !== "web" ? (
             <TouchableOpacity
               style={[styles.voiceOutputBtn, { backgroundColor: voiceOutput ? colors.primary : colors.background, borderColor: voiceOutput ? colors.primary : colors.border }]}
@@ -3140,7 +3223,7 @@ export default function TravelScreen() {
             submitBehavior="submit"
             onSubmitEditing={() => void handleSend()}
             onFocus={() => scrollToBottom(true)}
-            editable={!uploadingKinfolkImage}
+            editable={!uploadingKinfolkImage && !uploadingKinfolkDocument}
           />
           {(isLoading || playingVoice) ? (
             <Pressable
@@ -3154,12 +3237,12 @@ export default function TravelScreen() {
             </Pressable>
           ) : null}
           <Pressable
-            style={[styles.sendBtn, { backgroundColor: inputText.trim() && !uploadingKinfolkImage && !authLoading ? colors.primary : colors.border }]}
+            style={[styles.sendBtn, { backgroundColor: inputText.trim() && !uploadingKinfolkImage && !uploadingKinfolkDocument && !authLoading ? colors.primary : colors.border }]}
             onPress={() => void handleSend()}
-            disabled={!inputText.trim() || uploadingKinfolkImage || authLoading}
+            disabled={!inputText.trim() || uploadingKinfolkImage || uploadingKinfolkDocument || authLoading}
             accessibilityLabel="Send message to Kinfolk"
           >
-            <Ionicons name="arrow-up" size={20} color={inputText.trim() && !uploadingKinfolkImage && !authLoading ? colors.primaryForeground : "#fff"} />
+            <Ionicons name="arrow-up" size={20} color={inputText.trim() && !uploadingKinfolkImage && !uploadingKinfolkDocument && !authLoading ? colors.primaryForeground : "#fff"} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>

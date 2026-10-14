@@ -1,5 +1,6 @@
 FROM node:20-alpine
 WORKDIR /app
+RUN apk add --no-cache poppler-utils
 COPY dist/ ./dist/
 COPY web-static/ ./web-static/
 # dist/public is a tracked legacy runtime snapshot. The reviewed web-static

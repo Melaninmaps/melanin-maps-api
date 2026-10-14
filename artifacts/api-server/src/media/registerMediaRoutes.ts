@@ -13,6 +13,11 @@ import {
   normalizeKinfolkQuestionImageAssetIds,
   purgeKinfolkQuestionImages,
 } from "../kinfolk/question-image-assets";
+import {
+  MAX_KINFOLK_QUESTION_DOCUMENT_BYTES,
+  normalizeKinfolkQuestionDocumentAssetIds,
+  purgeKinfolkQuestionDocuments,
+} from "../kinfolk/question-document-assets";
 
 const IMAGE_MIMES = new Set([
   "image/jpeg",
@@ -37,13 +42,13 @@ const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 const MAX_DOC_BYTES = 10 * 1024 * 1024;
 const MAX_KINFOLK_IMAGE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_PURPOSES = new Set([
-  "general", "community_post", "community_post_private", "business_submission", "business_claim", "business_photo", "kinfolk_question",
+  "general", "community_post", "community_post_private", "business_submission", "business_claim", "business_photo", "kinfolk_question", "kinfolk_question_document",
 ]);
-
 export const MEDIA_UPLOAD_ERROR_CODES = {
   FILE_REQUIRED: "MEDIA_FILE_REQUIRED",
   PURPOSE_UNSUPPORTED: "MEDIA_PURPOSE_UNSUPPORTED",
   VISION_CONSENT_REQUIRED: "MEDIA_VISION_CONSENT_REQUIRED",
+  DOCUMENT_CONSENT_REQUIRED: "MEDIA_DOCUMENT_CONSENT_REQUIRED",
   UNSUPPORTED_TYPE: "MEDIA_UNSUPPORTED_TYPE",
   SIZE_LIMIT: "MEDIA_SIZE_LIMIT",
   STORAGE_NOT_CONFIGURED: "MEDIA_STORAGE_NOT_CONFIGURED",
@@ -263,7 +268,7 @@ export function getMediaUploadReadiness(purpose?: string): Record<string, unknow
   const delivery = getPublicDeliveryConfiguration();
   const privateBucketConfigured = Boolean(process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID?.trim());
   const kinfolkQuestionBucketConfigured = Boolean(getKinfolkQuestionImageBucketId());
-  const isPrivateKinfolkQuestion = purpose === "kinfolk_question";
+  const isPrivateKinfolkQuestion = purpose === "kinfolk_question" || purpose === "kinfolk_question_document";
   const isPrivateCommunityPost = purpose === "community_post_private";
   const isPrivatePurpose = isPrivateKinfolkQuestion || isPrivateCommunityPost;
   const storage = isPrivateKinfolkQuestion
@@ -272,7 +277,7 @@ export function getMediaUploadReadiness(purpose?: string): Record<string, unknow
   const blockers = [
     ...(storage.configured ? [] : ["Object-storage credential mode is invalid or incomplete."]),
     ...(isPrivateKinfolkQuestion
-      ? (kinfolkQuestionBucketConfigured ? [] : ["KINFOLK_MEDIA_BUCKET_ID is required for private Kinfolk image uploads."])
+      ? (kinfolkQuestionBucketConfigured ? [] : ["KINFOLK_MEDIA_BUCKET_ID is required for private Kinfolk attachment uploads."])
       : isPrivateCommunityPost
       ? (privateBucketConfigured ? [] : ["DEFAULT_OBJECT_STORAGE_BUCKET_ID is required for private Community uploads."])
       : [
@@ -309,7 +314,7 @@ export function registerMediaRoutes(app: Express, options: RegisterMediaRouteOpt
      VALUES (
        $1,$2,$3,$4,$5,$6,$7,'ready',NOW(),
        CASE WHEN $3 = 'kinfolk_question' THEN NOW() ELSE NULL END,
-       CASE WHEN $3 = 'kinfolk_question' THEN NOW() + INTERVAL '15 minutes' ELSE NULL END
+       CASE WHEN $3 IN ('kinfolk_question', 'kinfolk_question_document') THEN NOW() + INTERVAL '15 minutes' ELSE NULL END
      )
      ON CONFLICT (id) DO NOTHING`,
     [...values],
@@ -376,6 +381,30 @@ export function registerMediaRoutes(app: Express, options: RegisterMediaRouteOpt
       respondWithError(res, 503, MEDIA_UPLOAD_ERROR_CODES.STORAGE_SAVE_FAILED, "The private image could not be removed yet. Please try again.", requestId);
     });
   });
+  app.delete("/api/media/kinfolk-question-document/:assetId", (req: Request, res: Response) => {
+    const requestId = getRequestId(req, res);
+    const user = (req as Request & { user?: { id?: string } }).user;
+    if (!user?.id) {
+      res.status(401).json({ error: "Authentication required", code: "AUTH_REQUIRED", requestId });
+      return;
+    }
+    const assetIds = normalizeKinfolkQuestionDocumentAssetIds([req.params.assetId]);
+    if (assetIds.length !== 1) {
+      respondWithError(res, 400, MEDIA_UPLOAD_ERROR_CODES.PURPOSE_UNSUPPORTED, "Invalid private document reference.", requestId);
+      return;
+    }
+    void purgeKinfolkQuestionDocuments({
+      userId: user.id,
+      assetIds,
+      storageClient: kinfolkQuestionStorageClient,
+    }).then(() => {
+      // Do not disclose whether another document exists: this is an owner-only
+      // deletion request for a private question attachment.
+      res.status(204).end();
+    }).catch(() => {
+      respondWithError(res, 503, MEDIA_UPLOAD_ERROR_CODES.STORAGE_SAVE_FAILED, "The private document could not be removed yet. Please try again.", requestId);
+    });
+  });
 }
 
 async function handleMediaUpload(
@@ -401,12 +430,25 @@ async function handleMediaUpload(
     respondWithError(res, 400, MEDIA_UPLOAD_ERROR_CODES.PURPOSE_UNSUPPORTED, "Unsupported upload purpose.", requestId);
     return;
   }
-  if (purpose === "kinfolk_question" && req.body?.kinfolkVisionConsent !== "true") {
+  const isKinfolkQuestionImage = purpose === "kinfolk_question";
+  const isKinfolkQuestionDocument = purpose === "kinfolk_question_document";
+  const isPrivateKinfolkQuestion = isKinfolkQuestionImage || isKinfolkQuestionDocument;
+  if (isKinfolkQuestionImage && req.body?.kinfolkVisionConsent !== "true") {
     respondWithError(
       res,
       400,
       MEDIA_UPLOAD_ERROR_CODES.VISION_CONSENT_REQUIRED,
       "Choose whether to share the image with Kinfolk for this answer before uploading it.",
+      requestId,
+    );
+    return;
+  }
+  if (isKinfolkQuestionDocument && req.body?.kinfolkDocumentConsent !== "true") {
+    respondWithError(
+      res,
+      400,
+      MEDIA_UPLOAD_ERROR_CODES.DOCUMENT_CONSENT_REQUIRED,
+      "Choose whether to share the PDF with Kinfolk for this answer before uploading it.",
       requestId,
     );
     return;
@@ -429,25 +471,29 @@ async function handleMediaUpload(
     respondWithError(res, 413, MEDIA_UPLOAD_ERROR_CODES.SIZE_LIMIT, message, requestId);
     return;
   }
-  if (purpose === "kinfolk_question" && (!isImage || req.file.size > MAX_KINFOLK_IMAGE_BYTES)) {
+  if (isKinfolkQuestionImage && (!isImage || req.file.size > MAX_KINFOLK_IMAGE_BYTES)) {
     const status = !isImage ? 415 : 413;
     const code = !isImage ? MEDIA_UPLOAD_ERROR_CODES.UNSUPPORTED_TYPE : MEDIA_UPLOAD_ERROR_CODES.SIZE_LIMIT;
-    respondWithError(res, status, code, !isImage ? "Kinfolk questions currently accept images only." : "Kinfolk images must be under 5 MB.", requestId);
+    respondWithError(res, status, code, !isImage ? "Kinfolk image questions accept images only." : "Kinfolk images must be under 5 MB.", requestId);
     return;
   }
-
-  const isKinfolkQuestion = purpose === "kinfolk_question";
+  if (isKinfolkQuestionDocument && (!isDoc || req.file.size > MAX_KINFOLK_QUESTION_DOCUMENT_BYTES)) {
+    const status = !isDoc ? 415 : 413;
+    const code = !isDoc ? MEDIA_UPLOAD_ERROR_CODES.UNSUPPORTED_TYPE : MEDIA_UPLOAD_ERROR_CODES.SIZE_LIMIT;
+    respondWithError(res, status, code, !isDoc ? "Kinfolk document questions currently accept PDFs only." : "Private Kinfolk PDFs must be under 2 MB.", requestId);
+    return;
+  }
   const isPrivateCommunityPost = purpose === "community_post_private";
-  const isPrivate = isKinfolkQuestion || isPrivateCommunityPost || purpose === "business_submission";
+  const isPrivate = isPrivateKinfolkQuestion || isPrivateCommunityPost || purpose === "business_submission";
   const delivery = getPublicDeliveryConfiguration();
-  const activeStorageClient = isKinfolkQuestion ? kinfolkQuestionStorageClient : storageClient;
-  const storageDiagnostics = isKinfolkQuestion
+  const activeStorageClient = isPrivateKinfolkQuestion ? kinfolkQuestionStorageClient : storageClient;
+  const storageDiagnostics = isPrivateKinfolkQuestion
     ? getKinfolkQuestionImageStorageDiagnostics()
     : getObjectStorageDiagnostics();
   // Kinfolk question images are isolated from all other private media. They can
   // never fall back to the general object-storage bucket because this runtime
   // identity is intentionally scoped to the dedicated Kinfolk media bucket.
-  const bucketId = isKinfolkQuestion
+  const bucketId = isPrivateKinfolkQuestion
     ? getKinfolkQuestionImageBucketId()
     : isPrivate
     ? process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID?.trim() || null
@@ -457,8 +503,8 @@ async function handleMediaUpload(
   // configured private bucket unavailable.
   const configurationBlocker = isPrivate
     ? (!bucketId
-      ? isKinfolkQuestion
-        ? "KINFOLK_MEDIA_BUCKET_ID is required for private Kinfolk image uploads."
+      ? isPrivateKinfolkQuestion
+        ? "KINFOLK_MEDIA_BUCKET_ID is required for private Kinfolk attachment uploads."
         : "DEFAULT_OBJECT_STORAGE_BUCKET_ID is required."
       : null)
     : delivery.blocker;
@@ -482,6 +528,8 @@ async function handleMediaUpload(
       ? "media-uploads/business-submission-private"
       : isPrivateCommunityPost
       ? "media-uploads/community-post-private"
+      : isKinfolkQuestionDocument
+      ? "media-uploads/kinfolk-private-documents"
       : "media-uploads/kinfolk-private"
     : isVideo
     ? "media-uploads/videos"
@@ -497,7 +545,7 @@ async function handleMediaUpload(
     // Kinfolk question images are capped at 5 MB. Use GCS multipart upload for
     // this bounded, one-answer object rather than creating a resumable-upload
     // session; the image remains private and server-scoped either way.
-    await storageFile.save(req.file.buffer, isKinfolkQuestion
+    await storageFile.save(req.file.buffer, isPrivateKinfolkQuestion
       ? { contentType: mime, resumable: false }
       : { contentType: mime });
   } catch (error: unknown) {
@@ -519,7 +567,7 @@ async function handleMediaUpload(
 
   let url: string | null;
   try {
-    if (purpose === "kinfolk_question" || isPrivateCommunityPost) {
+    if (isPrivateKinfolkQuestion || isPrivateCommunityPost) {
       // The browser gets a local preview only. A short-lived signed URL is
       // created server-side only for the active, consented model request. Private
       // Community media is streamed by an authenticated Community route instead;
@@ -572,7 +620,7 @@ async function handleMediaUpload(
     assetId,
     type: fileType,
     requestId,
-    expiresAt: purpose === "business_submission" || purpose === "kinfolk_question"
+    expiresAt: purpose === "business_submission" || isPrivateKinfolkQuestion
       ? new Date(Date.now() + 15 * 60 * 1000).toISOString()
       : null,
   });

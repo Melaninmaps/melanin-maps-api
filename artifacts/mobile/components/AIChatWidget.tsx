@@ -2,6 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
 import * as Haptics from "expo-haptics";
 import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import * as Location from "expo-location";
 import { usePathname, useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -108,6 +109,7 @@ interface Message {
 }
 
 type KinfolkQuestionImage = Readonly<{ assetId: string; previewUri: string }>;
+type KinfolkQuestionDocument = Readonly<{ assetId: string; displayName: string }>;
 
 interface TaskActionPayload {
   type: "create_list" | "create_task" | "add_tasks";
@@ -210,6 +212,8 @@ async function sendToKinfolk(
   options?: Readonly<{
     imageAssetIds?: readonly string[];
     imageVisionConsent?: boolean;
+    documentAssetIds?: readonly string[];
+    documentProcessingConsent?: boolean;
   }>,
 ): Promise<{
   reply: string;
@@ -257,6 +261,8 @@ async function sendToKinfolk(
         // public URLs, or image bytes through the chat request.
         imageAssetIds: options?.imageAssetIds ?? [],
         imageVisionConsent: options?.imageVisionConsent === true,
+        documentAssetIds: options?.documentAssetIds ?? [],
+        documentProcessingConsent: options?.documentProcessingConsent === true,
         clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       }),
       signal,
@@ -415,6 +421,8 @@ export function AIChatWidget() {
   const [input, setInput] = useState("");
   const [kinfolkImages, setKinfolkImages] = useState<KinfolkQuestionImage[]>([]);
   const [uploadingKinfolkImage, setUploadingKinfolkImage] = useState(false);
+  const [kinfolkDocument, setKinfolkDocument] = useState<KinfolkQuestionDocument | null>(null);
+  const [uploadingKinfolkDocument, setUploadingKinfolkDocument] = useState(false);
   const [typing, setTyping] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [voiceOutputStatus, setVoiceOutputStatus] = useState<string | null>(null);
@@ -707,6 +715,43 @@ export function AIChatWidget() {
       ],
     );
   }, [isAuthenticated, kinfolkImages.length, uploadingKinfolkImage, uploadWidgetKinfolkImage]);
+
+  const uploadWidgetKinfolkDocument = useCallback(async (asset: DocumentPicker.DocumentPickerAsset) => {
+    setUploadingKinfolkDocument(true);
+    try {
+      const token = await getToken();
+      if (!token) { void refreshUser(); throw new Error("Your Kinfolk session needs to be refreshed before adding a private PDF."); }
+      const form = new FormData();
+      form.append("file", { uri: asset.uri, name: asset.name || `kinfolk-${Date.now()}.pdf`, type: "application/pdf" } as never);
+      form.append("kinfolkDocumentConsent", "true");
+      const response = await fetch(`${getApiBase()}/api/media/upload?purpose=kinfolk_question_document`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: form });
+      const body = await response.json().catch(() => ({})) as { assetId?: string; error?: string };
+      if (!response.ok || !body.assetId) throw new Error(body.error ?? "Could not prepare that private PDF.");
+      setKinfolkDocument({ assetId: body.assetId, displayName: asset.name || "Private PDF" });
+    } catch (cause) {
+      Alert.alert("PDF upload failed", cause instanceof Error ? cause.message : "Please try again.");
+    } finally { setUploadingKinfolkDocument(false); }
+  }, [refreshUser]);
+  const removeWidgetKinfolkDocument = useCallback(async (attachment: KinfolkQuestionDocument) => {
+    setKinfolkDocument((current) => current?.assetId === attachment.assetId ? null : current);
+    try {
+      const token = await getToken();
+      if (!token) { void refreshUser(); throw new Error("session needs refresh"); }
+      const response = await fetch(`${getApiBase()}/api/media/kinfolk-question-document/${encodeURIComponent(attachment.assetId)}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      if (!response.ok) throw new Error("private document deletion deferred");
+    } catch {
+      Alert.alert("Private PDF removal", "The PDF was removed from this screen and will expire shortly from private processing.");
+    }
+  }, [refreshUser]);
+  const pickWidgetKinfolkDocument = useCallback(async () => {
+    if (!isAuthenticated || uploadingKinfolkDocument || kinfolkDocument) return;
+    const result = await DocumentPicker.getDocumentAsync({ type: ["application/pdf"], multiple: false, copyToCacheDirectory: true });
+    const asset = result.assets?.[0];
+    if (result.canceled || !asset) return;
+    if (asset.mimeType && asset.mimeType !== "application/pdf") { Alert.alert("PDF required", "Kinfolk document questions currently accept PDFs only."); return; }
+    if (typeof asset.size === "number" && asset.size > 2 * 1024 * 1024) { Alert.alert("PDF is too large", "Private Kinfolk PDFs must be under 2 MB."); return; }
+    Alert.alert("Use this PDF for this answer?", "Kinfolk will read the PDF text only to answer your current question. It is sent to Kinfolk’s AI provider for that answer, is not used to train Kinfolk, is not saved as memory, and is deleted after the answer. If interrupted, the private upload expires within 15 minutes.", [{ text: "Cancel", style: "cancel" }, { text: "Use PDF for this answer", onPress: () => void uploadWidgetKinfolkDocument(asset) }]);
+  }, [isAuthenticated, kinfolkDocument, uploadingKinfolkDocument, uploadWidgetKinfolkDocument]);
 
   const stopPlayback = useCallback((reason: string) => {
     voiceGuardRef.current.invalidate(reason);
@@ -1027,6 +1072,7 @@ export function AIChatWidget() {
     }
     const attachedImageAssetIds = kinfolkImages.map((attachment) => attachment.assetId);
     const attachedImagePreviewUris = kinfolkImages.map((attachment) => attachment.previewUri);
+    const attachedDocumentAssetIds = kinfolkDocument ? [kinfolkDocument.assetId] : [];
     activeChatRequestRef.current?.abort();
     const requestGeneration = ++chatRequestGenerationRef.current;
     const request = new AbortController();
@@ -1078,9 +1124,12 @@ export function AIChatWidget() {
       } = await sendToKinfolk(text, token, voiceMode, cityHint, request.signal, {
         imageAssetIds: attachedImageAssetIds,
         imageVisionConsent: attachedImageAssetIds.length > 0,
+        documentAssetIds: attachedDocumentAssetIds,
+        documentProcessingConsent: attachedDocumentAssetIds.length > 0,
       });
       if (requestGeneration !== chatRequestGenerationRef.current) return;
       setKinfolkImages([]);
+      setKinfolkDocument(null);
 
       const aiMsg: Message = {
         id: String(Date.now() + 1),
@@ -1274,7 +1323,7 @@ export function AIChatWidget() {
     router.push("/kinfolk-tasks");
   };
 
-  const sendDisabled = !input.trim() || widgetVoiceSource.canStop || authLoading || uploadingKinfolkImage;
+  const sendDisabled = !input.trim() || widgetVoiceSource.canStop || authLoading || uploadingKinfolkImage || uploadingKinfolkDocument;
 
   return (
     <>
@@ -1859,7 +1908,7 @@ export function AIChatWidget() {
             </View>
           ) : null}
 
-          {(kinfolkImages.length > 0 || uploadingKinfolkImage) ? (
+          {(kinfolkImages.length > 0 || uploadingKinfolkImage || kinfolkDocument || uploadingKinfolkDocument) ? (
             <View style={[styles.imageAttachmentTray, { backgroundColor: colors.background, borderTopColor: colors.border }]}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imageAttachmentRow}>
                 {kinfolkImages.map((attachment, index) => (
@@ -1879,8 +1928,15 @@ export function AIChatWidget() {
                     </TouchableOpacity>
                   </View>
                 ))}
-                {uploadingKinfolkImage ? (
-                  <View style={[styles.imageAttachmentUploading, { borderColor: colors.border, backgroundColor: colors.muted }]} accessibilityLabel="Preparing private image">
+                {kinfolkDocument ? (
+                  <View style={[styles.imageAttachmentUploading, { borderColor: colors.border, backgroundColor: colors.muted, minWidth: 150 }]} accessibilityLabel="Private PDF ready for this Kinfolk question">
+                    <Feather name="file-text" size={16} color={colors.primary} />
+                    <Text numberOfLines={1} style={[styles.imageAttachmentStatus, { color: colors.foreground, flex: 1 }]}>{kinfolkDocument.displayName}</Text>
+                    <TouchableOpacity onPress={() => void removeWidgetKinfolkDocument(kinfolkDocument)} accessibilityLabel="Remove private PDF"><Feather name="x" size={14} color={colors.mutedForeground} /></TouchableOpacity>
+                  </View>
+                ) : null}
+                {uploadingKinfolkImage || uploadingKinfolkDocument ? (
+                  <View style={[styles.imageAttachmentUploading, { borderColor: colors.border, backgroundColor: colors.muted }]} accessibilityLabel={uploadingKinfolkDocument ? "Preparing private PDF" : "Preparing private image"}>
                     <ActivityIndicator size="small" color={colors.primary} />
                     <Text style={[styles.imageAttachmentStatus, { color: colors.mutedForeground }]}>Preparing…</Text>
                   </View>
@@ -1919,6 +1975,18 @@ export function AIChatWidget() {
                 activeOpacity={0.8}
               >
                 {uploadingKinfolkImage ? <ActivityIndicator size="small" color={colors.mutedForeground} /> : <Feather name="image" size={18} color={colors.mutedForeground} />}
+              </TouchableOpacity>
+            ) : null}
+            {Platform.OS !== "web" ? (
+              <TouchableOpacity
+                style={[styles.micBtn, { backgroundColor: colors.muted, opacity: typing || authLoading || uploadingKinfolkDocument || kinfolkDocument || widgetVoiceSource.canStop || !isAuthenticated ? 0.6 : 1 }]}
+                onPress={() => void pickWidgetKinfolkDocument()}
+                disabled={typing || authLoading || uploadingKinfolkDocument || Boolean(kinfolkDocument) || widgetVoiceSource.canStop || !isAuthenticated}
+                accessibilityLabel={kinfolkDocument ? "One private PDF is ready for this Kinfolk question" : "Add a private PDF to this Kinfolk question"}
+                accessibilityState={{ disabled: typing || authLoading || uploadingKinfolkDocument || Boolean(kinfolkDocument) || widgetVoiceSource.canStop || !isAuthenticated, busy: uploadingKinfolkDocument }}
+                activeOpacity={0.8}
+              >
+                {uploadingKinfolkDocument ? <ActivityIndicator size="small" color={colors.mutedForeground} /> : <Feather name="file-text" size={18} color={colors.mutedForeground} />}
               </TouchableOpacity>
             ) : null}
             <TextInput

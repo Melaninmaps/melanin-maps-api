@@ -469,6 +469,9 @@ export function useKinfolk() {
       /** Private server asset references for one consented visual answer. */
       imageAssetIds?: string[];
       imageVisionConsent?: boolean;
+      /** One private server PDF reference for this answer only. */
+      documentAssetIds?: string[];
+      documentProcessingConsent?: boolean;
       includeCommunityPerspective?: boolean;
       publicOrigin?: string;
     },
@@ -534,6 +537,8 @@ export function useKinfolk() {
           voiceMode: opts?.voiceMode ?? "community",
           imageAssetIds: opts?.imageAssetIds ?? [],
           imageVisionConsent: opts?.imageVisionConsent === true,
+          documentAssetIds: opts?.documentAssetIds ?? [],
+          documentProcessingConsent: opts?.documentProcessingConsent === true,
           includeCommunityPerspective: opts?.includeCommunityPerspective === true,
           publicOrigin: opts?.publicOrigin?.trim() || undefined,
           conversationContext,
