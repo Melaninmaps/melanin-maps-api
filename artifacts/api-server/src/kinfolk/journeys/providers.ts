@@ -1,5 +1,9 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
-import { JourneyActionError, type JourneyProvider } from "./domain";
+import {
+  JourneyActionError,
+  journeyFeatureEnabled,
+  type JourneyProvider,
+} from "./domain";
 
 export type JourneyProviderAccessMode =
   | "free_busy"
@@ -199,6 +203,13 @@ export function startJourneyAuthorization(input: {
   memberId: string;
   requestedAccessMode: JourneyProviderAccessMode;
 }): { transaction: JourneyAuthorizationTransaction; authorizationUrl: string } {
+  if (!journeyFeatureEnabled()) {
+    throw new JourneyActionError(
+      "Kinfolk Journeys is not enabled for this environment yet.",
+      503,
+      "JOURNEYS_DISABLED",
+    );
+  }
   const readiness = getJourneyProviderReadiness(input.provider);
   if (readiness.status !== "available")
     throw new JourneyActionError(
@@ -283,7 +294,7 @@ export function assertJourneyAuthorizationCallback(input: {
 
 /** Explicitly opt in before any live provider request; OAuth credentials alone never activate network sync. */
 export function providerNetworkCallsAllowed(): boolean {
-  return process.env.KINFOLK_JOURNEYS_PROVIDER_NETWORK_ENABLED === "true";
+  return journeyFeatureEnabled() && process.env.KINFOLK_JOURNEYS_PROVIDER_NETWORK_ENABLED === "true";
 }
 
 export async function exchangeJourneyAuthorizationCode(input: {
@@ -291,6 +302,13 @@ export async function exchangeJourneyAuthorizationCode(input: {
   code: string;
   codeVerifier: string;
 }): Promise<JourneyProviderTokenSet> {
+  if (!journeyFeatureEnabled()) {
+    throw new JourneyActionError(
+      "Kinfolk Journeys is not enabled for this environment yet.",
+      503,
+      "JOURNEYS_DISABLED",
+    );
+  }
   const readiness = getJourneyProviderReadiness(input.provider);
   const config = PROVIDER_CONFIGURATION[input.provider];
   if (

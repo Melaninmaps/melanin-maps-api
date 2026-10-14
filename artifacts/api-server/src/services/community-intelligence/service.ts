@@ -22,58 +22,44 @@ export type CommunityIntelligenceGap = Readonly<{
   explanation: string;
 }>;
 
-let schemaReady: Promise<void> | null = null;
-
 export function communityIntelligenceCollectionEnabled(): boolean {
   return process.env.COMMUNITY_INTELLIGENCE_COLLECTION_ENABLED === "true";
 }
 
 /**
- * The schema intentionally has no question text, notes, message IDs, location,
- * profile, memory, document, calendar, or sensitive-category fields.
+ * Community Intelligence remains source-disabled until its reviewed additive
+ * migration has been explicitly applied. Runtime requests must never create or
+ * alter production tables: that would bypass the required migration approval.
  */
-export async function ensureCommunityIntelligenceSchema(): Promise<void> {
-  if (!schemaReady) {
-    schemaReady = pool
-      .query(`
-        CREATE TABLE IF NOT EXISTS kinfolk_community_intelligence_preferences (
-          user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-          participation_enabled BOOLEAN NOT NULL DEFAULT false,
-          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          revoked_at TIMESTAMPTZ
-        );
-        CREATE TABLE IF NOT EXISTS kinfolk_community_intelligence_events (
-          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-          user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-          journey_type VARCHAR(24) NOT NULL CHECK (journey_type IN ('wedding', 'birthday')),
-          journey_stage VARCHAR(24) NOT NULL CHECK (journey_stage IN ('inspiration')),
-          intent VARCHAR(24) NOT NULL CHECK (intent IN ('planning')),
-          category_key VARCHAR(80) NOT NULL,
-          action VARCHAR(24) NOT NULL CHECK (action IN ('helpful', 'not_relevant', 'already_handled')),
-          collection_version VARCHAR(24) NOT NULL DEFAULT 'v1',
-          created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-          expires_at TIMESTAMPTZ NOT NULL DEFAULT (NOW() + INTERVAL '${COMMUNITY_INTELLIGENCE_RETENTION_DAYS} days'),
-          revoked_at TIMESTAMPTZ
-        );
-        CREATE INDEX IF NOT EXISTS kinfolk_ci_events_active_aggregate_idx
-          ON kinfolk_community_intelligence_events (journey_type, journey_stage, category_key, action, created_at DESC)
-          WHERE revoked_at IS NULL;
-        CREATE INDEX IF NOT EXISTS kinfolk_ci_events_user_active_idx
-          ON kinfolk_community_intelligence_events (user_id, created_at DESC)
-          WHERE revoked_at IS NULL;
-      `)
-      .then(() => undefined)
-      .catch((error) => {
-        schemaReady = null;
-        throw error;
-      });
-  }
-  await schemaReady;
+export async function communityIntelligenceSchemaAvailable(): Promise<boolean> {
+  const result = await pool.query<{
+    preferences_table: string | null;
+    events_table: string | null;
+  }>(`
+    SELECT
+      to_regclass('public.kinfolk_community_intelligence_preferences') AS preferences_table,
+      to_regclass('public.kinfolk_community_intelligence_events') AS events_table
+  `);
+  const schema = result.rows[0];
+  return Boolean(schema?.preferences_table && schema.events_table);
 }
 
-export async function getCommunityIntelligencePreference(userId: string): Promise<CommunityIntelligencePreference> {
-  await ensureCommunityIntelligenceSchema();
+export class CommunityIntelligenceStorageUnavailable extends Error {
+  constructor(message = "Community Intelligence storage is unavailable until its approved migration is applied.") {
+    super(message);
+    this.name = "CommunityIntelligenceStorageUnavailable";
+  }
+}
+
+async function requireCommunityIntelligenceSchema(): Promise<void> {
+  if (!(await communityIntelligenceSchemaAvailable())) {
+    throw new CommunityIntelligenceStorageUnavailable();
+  }
+}
+
+async function readCommunityIntelligencePreference(
+  userId: string,
+): Promise<CommunityIntelligencePreference> {
   const result = await pool.query<{ participation_enabled: boolean }>(
     `SELECT participation_enabled
        FROM kinfolk_community_intelligence_preferences
@@ -86,11 +72,28 @@ export async function getCommunityIntelligencePreference(userId: string): Promis
   };
 }
 
+export async function getCommunityIntelligencePreference(
+  userId: string,
+): Promise<CommunityIntelligencePreference> {
+  if (!communityIntelligenceCollectionEnabled()) {
+    return { participationEnabled: false, collectionEnabled: false };
+  }
+  if (!(await communityIntelligenceSchemaAvailable())) {
+    return { participationEnabled: false, collectionEnabled: false };
+  }
+  return readCommunityIntelligencePreference(userId);
+}
+
 export async function setCommunityIntelligenceParticipation(
   userId: string,
   participationEnabled: boolean,
 ): Promise<CommunityIntelligencePreference> {
-  await ensureCommunityIntelligenceSchema();
+  if (!communityIntelligenceCollectionEnabled()) {
+    throw new CommunityIntelligenceStorageUnavailable(
+      "Community Intelligence collection is not enabled in this environment.",
+    );
+  }
+  await requireCommunityIntelligenceSchema();
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -130,11 +133,13 @@ export async function recordCommunityIntelligenceFeedback(input: Readonly<{
   categoryKey: string;
   action: CommunitySuggestionAction;
 }>): Promise<Readonly<{ recorded: boolean; reason?: "collection_disabled" | "participation_required" }>> {
-  await ensureCommunityIntelligenceSchema();
   if (!communityIntelligenceCollectionEnabled()) {
     return { recorded: false, reason: "collection_disabled" };
   }
-  const preference = await getCommunityIntelligencePreference(input.userId);
+  if (!(await communityIntelligenceSchemaAvailable())) {
+    return { recorded: false, reason: "collection_disabled" };
+  }
+  const preference = await readCommunityIntelligencePreference(input.userId);
   if (!preference.participationEnabled) {
     return { recorded: false, reason: "participation_required" };
   }
@@ -152,7 +157,7 @@ export async function getSuppressedSafeCategoryKeys(
   journeyType: "wedding" | "birthday",
 ): Promise<string[]> {
   if (!communityIntelligenceCollectionEnabled()) return [];
-  await ensureCommunityIntelligenceSchema();
+  await requireCommunityIntelligenceSchema();
   const result = await pool.query<{ category_key: string }>(
     `SELECT category_key
        FROM kinfolk_community_intelligence_events
@@ -185,7 +190,7 @@ export async function rankSuggestionsWithCommunitySignals(
 
 export async function getCommunityIntelligenceGaps(): Promise<CommunityIntelligenceGap[]> {
   if (!communityIntelligenceCollectionEnabled()) return [];
-  await ensureCommunityIntelligenceSchema();
+  await requireCommunityIntelligenceSchema();
   const result = await pool.query<{
     journey_type: "wedding" | "birthday";
     journey_stage: "inspiration";

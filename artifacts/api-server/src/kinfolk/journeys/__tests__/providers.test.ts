@@ -27,7 +27,29 @@ describe("Journey provider adapters", () => {
     expect(providerNetworkCallsAllowed()).toBe(false);
   });
 
+  it("does not activate provider network calls when only a provider flag is set", () => {
+    vi.stubEnv("KINFOLK_JOURNEYS_PROVIDER_NETWORK_ENABLED", "true");
+    expect(providerNetworkCallsAllowed()).toBe(false);
+  });
+
+  it("does not start a provider authorization until the Journey feature is enabled", () => {
+    vi.stubEnv("GOOGLE_JOURNEYS_OAUTH_CLIENT_ID", "test-client");
+    vi.stubEnv("GOOGLE_JOURNEYS_OAUTH_CLIENT_SECRET", "test-secret");
+    vi.stubEnv(
+      "KINFOLK_JOURNEYS_OAUTH_REDIRECT_BASE",
+      "https://www.mappingwithmelanin.com",
+    );
+    expect(() =>
+      startJourneyAuthorization({
+        provider: "google_calendar",
+        memberId: "member-1",
+        requestedAccessMode: "free_busy",
+      }),
+    ).toThrow("not enabled");
+  });
+
   it("uses PKCE, state, nonce, and a short-lived server transaction when configured", () => {
+    vi.stubEnv("KINFOLK_JOURNEYS_ENABLED", "true");
     vi.stubEnv("GOOGLE_JOURNEYS_OAUTH_CLIENT_ID", "test-client");
     vi.stubEnv("GOOGLE_JOURNEYS_OAUTH_CLIENT_SECRET", "test-secret");
     vi.stubEnv(

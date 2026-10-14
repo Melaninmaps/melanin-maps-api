@@ -1,0 +1,15 @@
+# Community Intelligence Completion and Integration Checklist
+
+**Branch:** `feature/community-intelligence-complete-integration-20261014`
+**Authoritative base:** `staging/kinfolk-full-candidate-20261014` at `f46d87edbcd1c1dd81e00e27c80558827846b947`
+
+- [x] **Preflight:** Identify the authoritative Kinfolk candidate, the live-production reference, Community Intelligence source commit, private Kinfolk Journeys source commit, and the absence of a verified Connected Apps artifact. Record the feature-preservation and conflict matrix.
+- [x] **Community Intelligence integration:** Cherry-pick `4d4f27c6` as `0275c0f8`; retain explicit member consent, disabled-by-default collection, revocation, expiry, structured feedback, transparent suggestions, and the privacy-suppressed Admin aggregate view.
+- [x] **Runtime-schema safety repair:** Remove runtime `CREATE TABLE`/index behavior. Add the reviewed source-only Community Intelligence migration, make storage fail closed when it is absent, and add tests proving collection-disabled paths issue no schema or event write.
+- [x] **Private Journeys integration:** Cherry-pick `3fd1851955bcc1754ca54736d4d6ef339432102f` as `d07caa0a` without replacing existing Life Journeys. Preserve separate `/journeys` and `/kinfolk-journeys` contracts, source-only migration behavior, and default-off feature gates.
+- [x] **Provider/Connected Apps isolation:** Keep provider network activity disabled unless both the private Journey feature and a separate provider-network gate are explicitly enabled. Mask provider readiness while the Journey feature is off; no provider credential, account-link, or connection was activated.
+- [x] **Focused validation:** API Community Intelligence/Journey policy, service, route-contract, parser, domain, provider, retention, and token-vault suite passes (**36 tests**). Web typecheck and production build pass; web private-Journey contract passes (**4 tests**). Mobile private-Journey contract passes (**5 tests**).
+- [x] **Scope audit:** Compare against `f46d87ed`; retain only Community Intelligence, private Journey, narrow adapter, source-only migration, test, and documentation changes. Remove the duplicate root checklist imported by the Journey source commit.
+- [ ] **Blocked baseline validation:** Full API and mobile typechecks remain blocked by pre-existing workspace dependency declarations/imports outside this integration. See the completion report for the precise files and separation from integration results.
+- [ ] **Visual/device evidence:** No authenticated web fixture session or native build/device runtime was created. Do not claim device acceptance.
+- [x] **Completion handoff:** Create the integration report, conflict/feature-preservation matrix, and implementation record. Stop before PR creation, merge, deployment, migration application, data backfill, feature activation, mobile build, TestFlight, or Play action.

@@ -154,6 +154,19 @@ function respondError(res: Response, error: unknown): void {
   });
 }
 
+function capabilityProviderReadiness() {
+  const readiness = listJourneyProviderReadiness();
+  if (journeyFeatureEnabled()) return readiness;
+  return readiness.map((provider) => ({
+    ...provider,
+    status: "disabled" as const,
+    blockers: [
+      ...provider.blockers,
+      "Kinfolk Journeys is not enabled in this environment yet.",
+    ],
+  }));
+}
+
 function safeJourney(row: JourneyRow) {
   return {
     id: row.id,
@@ -324,11 +337,12 @@ function parseItemPayload(value: unknown): JourneyItemInput {
 }
 
 router.get("/kinfolk-journeys/capabilities", (_req, res) => {
+  const enabled = journeyFeatureEnabled();
   res.json({
-    enabled: journeyFeatureEnabled(),
+    enabled,
     visibility: "private",
-    providers: listJourneyProviderReadiness(),
-    message: journeyFeatureEnabled()
+    providers: capabilityProviderReadiness(),
+    message: enabled
       ? null
       : "Kinfolk Journeys is being prepared and is not enabled in this environment yet.",
   });
