@@ -185,3 +185,64 @@ export function buildGovernedTravelPlannerResponse(input: {
     ],
   };
 }
+
+export type GovernedTravelRecommendations = Readonly<{
+  destination: string;
+  summary: string;
+  businesses: Array<{
+    name: string;
+    category: string;
+    description: string;
+    neighborhood: string;
+    mustTry: string;
+  }>;
+  neighborhoods: Array<{
+    name: string;
+    vibe: string;
+    highlights: string[];
+    safetyNote: string;
+  }>;
+  events: Array<{
+    name: string;
+    type: string;
+    description: string;
+    timing: string;
+  }>;
+  safetyTips: string[];
+  localInsights: string[];
+}>;
+
+/**
+ * Preserve the legacy Travel screen's response contract without allowing a
+ * model to manufacture businesses, neighborhood descriptions, events, or
+ * current safety assertions. Named businesses are exact governed records;
+ * everything else is intentionally empty until there is documented evidence.
+ */
+export function buildGovernedTravelRecommendations(input: {
+  destination: string;
+  catalog: readonly GovernedKinfolkBusiness[];
+}): GovernedTravelRecommendations {
+  const catalog = [...input.catalog];
+  const hasCatalog = catalog.length > 0;
+  return {
+    destination: input.destination,
+    summary: hasCatalog
+      ? `These recommendations use eligible Mapping With Melanin listings documented for ${input.destination}. Confirm current hours, availability, and travel details directly before you go.`
+      : `Mapping With Melanin does not currently have eligible documented listings for the exact destination ${input.destination}. No businesses, neighborhood details, events, or current local conditions are asserted.`,
+    businesses: catalog.slice(0, 12).map((business) => ({
+      name: business.name,
+      category: business.category,
+      description: business.description?.trim() || "No public description is currently documented for this eligible listing.",
+      neighborhood: `${business.city}, ${business.stateCode}`,
+      mustTry: "Review the current business profile before visiting.",
+    })),
+    neighborhoods: [],
+    events: [],
+    safetyTips: [
+      "This response does not provide a current safety assessment. Confirm local public guidance, transit, hours, and availability before you go.",
+    ],
+    localInsights: hasCatalog
+      ? ["Named businesses come only from the eligible Mapping With Melanin catalog for this exact destination."]
+      : [],
+  };
+}

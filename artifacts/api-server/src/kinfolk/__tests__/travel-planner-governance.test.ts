@@ -4,12 +4,17 @@ import { describe, expect, it } from "vitest";
 import type { GovernedKinfolkBusiness } from "../governedBusinessRepository";
 import {
   buildGovernedTravelPlannerResponse,
+  buildGovernedTravelRecommendations,
   parseGovernedTravelPlannerRequest,
   parseTravelPlannerCityScope,
 } from "../travel-planner-governance";
 
 const routeSource = readFileSync(
   fileURLToPath(new URL("../../routes/travel-planner.ts", import.meta.url)),
+  "utf8",
+);
+const recommendationsRouteSource = readFileSync(
+  fileURLToPath(new URL("../../routes/travel.ts", import.meta.url)),
   "utf8",
 );
 
@@ -140,5 +145,35 @@ describe("governed Travel Planner", () => {
     expect(routeSource).not.toContain("openai.chat.completions.create");
     expect(routeSource).not.toContain("businessesTable");
     expect(routeSource).not.toContain("ilike(");
+  });
+
+  it("preserves the legacy Travel recommendations shape without inventing local evidence", () => {
+    const response = buildGovernedTravelRecommendations({
+      destination: "Atlanta, GA",
+      catalog: [GOVERNED_BUSINESS],
+    });
+
+    expect(response.businesses).toEqual([
+      expect.objectContaining({
+        name: "Governed Table",
+        category: "Food & Drink",
+        neighborhood: "Atlanta, GA",
+      }),
+    ]);
+    expect(response.neighborhoods).toEqual([]);
+    expect(response.events).toEqual([]);
+    expect(response.safetyTips[0]).toContain("does not provide a current safety assessment");
+    expect(response.localInsights[0]).toContain("eligible Mapping With Melanin catalog");
+  });
+
+  it("makes the legacy Travel route authenticated and catalog-only", () => {
+    expect(recommendationsRouteSource).toContain("requireMemberId(req, res)");
+    expect(recommendationsRouteSource).toContain("getMemberAgeBand(memberId)");
+    expect(recommendationsRouteSource).toContain("governedBusinessRepository.findDestinationCatalog");
+    expect(recommendationsRouteSource).toContain("rankTravelCatalogForMember");
+    expect(recommendationsRouteSource).toContain("buildGovernedTravelRecommendations");
+    expect(recommendationsRouteSource).not.toContain("openai.chat.completions.create");
+    expect(recommendationsRouteSource).not.toContain("CITY_VOICES");
+    expect(recommendationsRouteSource).not.toContain("getCityVoice(");
   });
 });
