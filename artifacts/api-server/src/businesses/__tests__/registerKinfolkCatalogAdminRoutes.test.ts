@@ -71,7 +71,8 @@ describe("Kinfolk Catalog cohort routes", () => {
     expect(database.connect).not.toHaveBeenCalled();
   });
 
-  it("requires one of the bounded cohort states and an audit reason", () => {
+  it("requires one of the bounded cohort states and supplies an automatic audit note when no note is entered", () => {
+    expect(parseKinfolkCatalogStateChange({ state: "review" })).toEqual({ state: "review", reason: "Administrator catalog decision" });
     expect(parseKinfolkCatalogStateChange({ state: "review", reason: "Source needs a human review." })).toEqual({ state: "review", reason: "Source needs a human review." });
     expect(() => parseKinfolkCatalogStateChange({ state: "published", reason: "No" })).toThrow("state must be");
   });

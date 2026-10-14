@@ -160,14 +160,17 @@ export function validateAdminBusinessProfilePatch(input: unknown, existing: Exis
   const raw = input as Record<string, unknown>;
   for (const blocked of ADMIN_PROFILE_BLOCKED_FIELDS) if (own(raw, blocked)) throw new Error(`${blocked} is governed by a separate reviewed workflow and cannot be changed here`);
   for (const field of ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS) if (own(raw, field)) throw new Error(`${field} is community member information and cannot be changed by an official profile save`);
-  const changeNote = cleanText(raw.changeNote, "change note", 1000) ?? "Administrator direct profile update";
+  const changeNote = own(raw, "changeNote")
+    ? cleanText(raw.changeNote, "change note", 1000) ?? "Administrator direct profile update"
+    : "Administrator direct profile update";
   const patch: Record<string, string | string[] | null> = {};
   if (own(raw, "name")) patch.name = cleanText(raw.name, "name", 255, false) as string;
   if (own(raw, "website")) patch.website = cleanOfficialWebsite(raw.website);
   for (const [field, config] of Object.entries(OPTIONAL_TEXT_FIELDS)) {
     if (!own(raw, field)) continue;
-    const requiredStoredField = ["description", "city", "category", "subcategory"].includes(field);
-    patch[config.column] = ["instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest"].includes(field) ? cleanSocial(raw[field], field) : cleanText(raw[field], field, config.max, !requiredStoredField);
+    patch[config.column] = ["instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest"].includes(field)
+      ? cleanSocial(raw[field], field)
+      : cleanText(raw[field], field, config.max);
   }
   if (own(raw, "priceRange") && patch.price_range && !["$", "$$", "$$$", "$$$$"].includes(String(patch.price_range))) throw new Error("priceRange must be one of $, $$, $$$, or $$$$");
   if (own(raw, "tags")) patch.tags = cleanStringList(raw.tags, "tags");
@@ -187,9 +190,6 @@ export function validateAdminBusinessProfilePatch(input: unknown, existing: Exis
   const existingValue: Record<string, unknown> = { ...existing, price_range: existing.priceRange ?? null, ownership_designations: existing.ownershipDesignations ?? [] };
   const changedColumns = Object.entries(patch).filter(([column, next]) => !sameProfileColumnValue(column, existingValue[column], next)).map(([column]) => column);
   const requiredReceiptFields = [...new Set(changedColumns.map(receiptFieldForColumn).filter((field): field is ProfileFieldReceiptName => Boolean(field)))];
-  if (changedColumns.includes("ownership_designations") && !ownershipReceipt) {
-    throw new Error("A source receipt is required for ownership designations");
-  }
   const unboundReceiptFields = fieldReceipts.map((receipt) => receipt.field).filter((field) => !requiredReceiptFields.includes(field));
   if (unboundReceiptFields.length) throw new Error(`A source receipt may only support a changed public fact: ${[...new Set(unboundReceiptFields)].join(", ")}`);
   const receiptObservedValues: Partial<Record<ProfileFieldReceiptName, ReceiptObservedValue>> = {};

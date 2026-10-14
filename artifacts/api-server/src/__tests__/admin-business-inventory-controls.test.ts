@@ -183,7 +183,8 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Duplicates &amp; review");
     expect(adminScreen).toContain("Permanently delete selected");
     expect(adminScreen).toContain("Outreach unavailable for retained duplicates");
-    expect(adminScreen).toContain('tab !== "reviews" && tab !== "biz-review"');
+    expect(adminScreen).toContain('tab === "businesses" || tab === "kinfolk-catalog"');
+    expect(adminScreen).toContain('tab === "reports"');
     expect(adminScreen).toContain("<AdminBusinessReview embedded />");
     expect(adminRoute).toContain('router.delete("/admin/businesses/permanent"');
     expect(adminRoute).toContain("permanentDeletionConfirmation");
@@ -312,13 +313,16 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(businessRoutes).toContain("business_admin_profile_edit_audit_events");
     expect(businessRoutes).toContain("sendDynamicJson(res, {");
     expect(businessRoutes).toContain("attachDocumentedOwnership(");
-    expect(adminEditBusiness).toContain("Profile saved. Administrator action recorded.");
+    expect(adminEditBusiness).toContain("Profile saved.");
+    expect(adminEditBusiness).toContain("Administrator-controlled designation. Save this field directly.");
+    expect(adminEditBusiness).not.toContain("Ownership source / provenance");
+    expect(adminEditBusiness).not.toContain("Optional profile edit note");
     expect(publicBusinessDetail).toContain("refetchOnWindowFocus: true");
     expect(mobileBusinessHook).toContain("useFocusEffect");
     expect(mobileBusinessHook).toContain("/api/businesses/${id}");
   });
 
-  it("keeps ordinary bulk removal reversible while allowing typed-confirmation permanent deletion", () => {
+  it("keeps ordinary bulk removal reversible while using one typed confirmation for permanent deletion", () => {
     expect(adminRoute).toContain("Select between 1 and 500 businesses.");
     expect(adminRoute).toContain("business_listing_status_audit_events");
     expect(adminRoute).toContain("remove_public_discovery");
@@ -327,6 +331,8 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).toContain("Administrator-confirmed permanent deletion");
     expect(adminScreen).toContain("Permanently delete this business after typed confirmation");
     expect(adminScreen).toContain("This permanently deletes ${ids.length} selected business record");
+    expect(adminScreen).not.toContain("if (!window.confirm(`Permanently delete ${ids.length} selected business record");
+    expect(adminScreen).not.toContain("Or use Duplicates &amp; review for the audited restore action.");
     expect(adminRoute).not.toContain("DELETE FROM businesses CASCADE");
     expect(serverStartup).not.toContain("startBusinessDeletionHoldWorker");
   });

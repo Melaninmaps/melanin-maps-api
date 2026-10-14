@@ -3018,7 +3018,6 @@ export default function Admin() {
 
 Selected: ${summary}`);
     if (confirmation !== requiredConfirmation) return;
-    if (!window.confirm(`Permanently delete ${ids.length} selected business record${ids.length === 1 ? "" : "s"} now? This cannot be undone.`)) return;
     setBulkBusinessUpdating(true);
     try {
       const response = await fetch(`${BASE}api/admin/businesses/permanent`, {
@@ -6027,21 +6026,12 @@ Selected: ${summary}`);
                                 </button>
                                 {biz.isDuplicate ? (
                               bizStatusFilter === "duplicates" ? (
-                                <>
-                                <button
-                                  type="button"
-                                  onClick={() => void permanentlyDeleteBusinesses([biz.id], [biz.name])}
-                                  className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-800 border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" /> Permanently delete
-                                </button>
                                 <span className="max-w-48 text-xs leading-5 text-[#3A1F0E]/55">
-                                  Or use Duplicates &amp; review for the audited restore action.
+                                  Use Duplicates &amp; review for a retained-duplicate review action.
                                 </span>
-                                </>
                               ) : (
                                 <span className="max-w-48 text-xs leading-5 text-[#3A1F0E]/55">
-                                  Retained duplicate — open Duplicate vault only when you are ready for an audited review action.
+                                  Retained duplicate — open Duplicate vault when you are ready for a review action.
                                 </span>
                               )
                                 ) : biz.listingStatus !== "archived" ? (
@@ -6053,22 +6043,13 @@ Selected: ${summary}`);
                                 Archive from public discovery
                               </button>
                                 ) : (
-                              <>
-                                <button
+                              <button
                                 onClick={() => void updateSingleBusinessListingStatus(biz, "live_unclaimed")}
                                 className="flex items-center gap-1 text-xs font-bold text-green-600 hover:text-green-800 border border-green-200 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                               >
                                 <RotateCcw className="h-3.5 w-3.5" />
                                 Unhide / restore public listing
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => void permanentlyDeleteBusinesses([biz.id], [biz.name])}
-                                className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-800 border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" /> Permanently delete
-                              </button>
-                              </>
                                 )}
                             </>
                           </div>

@@ -4404,8 +4404,8 @@ router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response
       business: toAdminBusinessProfile(updated),
       mapPinInvalidated: validated.locationChanged,
       message: validated.locationChanged
-        ? "Profile saved. The prior map pin was cleared and remains unavailable until an audited geocode is approved."
-        : "Profile saved. This edit did not change listing publication, verified ownership, or discovery eligibility.",
+        ? "Profile saved. Its prior map pin was cleared after the address change."
+        : "Profile saved.",
     });
   } catch (error) {
     await client.query("ROLLBACK").catch(() => undefined);

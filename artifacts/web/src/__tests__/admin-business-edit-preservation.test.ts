@@ -23,11 +23,15 @@ describe("audited admin business editor", () => {
     const editor = source();
     expect(editor).toContain("const hasLegacyCategory");
     expect(editor).toContain("(current)");
-    expect(editor).toContain("ownershipReceipt");
     expect(editor).toContain("sourceReceipts");
-    expect(editor).toContain("changeNote");
     expect(editor).toContain("Field-level source receipts (optional)");
-    expect(editor).toContain("Optional profile edit note");
+    expect(editor).toContain('helperText="Administrator-controlled designation. Save this field directly."');
+    expect(editor).not.toContain("setOwnershipReceipt");
+    expect(editor).not.toContain("setChangeNote");
+    expect(editor).not.toContain("Ownership source / provenance");
+    expect(editor).not.toContain("Optional profile edit note");
+    expect(editor).toContain("body: JSON.stringify({ state: catalogState })");
+    expect(editor).toContain("body: JSON.stringify({ listingStatus })");
   });
 
   it("requires an explicit, clickable identity-match signal for official presence receipts", () => {
@@ -42,7 +46,7 @@ describe("audited admin business editor", () => {
   it("keeps ownership verification, map pins, and lifecycle separate from generic edits", () => {
     const editor = source();
     expect(editor).not.toContain("blackOwned:");
-    expect(editor).toContain("A new pin requires separate, audited geocode evidence");
+    expect(editor).toContain("Add a pin after confirming the new physical location");
     expect(editor).toContain("Save listing lifecycle");
     expect(editor).toContain("Kinfolk Current administrator control");
   });
