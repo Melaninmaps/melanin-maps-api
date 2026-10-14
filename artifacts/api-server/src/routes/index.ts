@@ -90,6 +90,7 @@ import trustRouter from "./trust";
 import journeysRouter from "./journeys";
 import entityConnectionsRouter from "./entity-connections";
 import passportRouter from "./passport";
+import culturalJourneysRouter from "./cultural-journeys";
 import safetyHeatmapRouter from "./safety-heatmap";
 import canonicalCulturalSitesRouter from "./canonical-cultural-sites";
 import culturalSitesRouter from "./cultural-sites";
@@ -436,6 +437,7 @@ router.use(tourCulturalSitesRouter);
 router.use(culturalPhrasesRouter);
 router.use(communityLanguageRouter);
 router.use(passportRouter);
+router.use(culturalJourneysRouter);
 router.use(safetyHeatmapRouter);
 // Canonical GET routes must come before the legacy culturalSitesRouter so map
 // cards and deep links receive the stable response contract. They remain below

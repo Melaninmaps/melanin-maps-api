@@ -506,6 +506,15 @@ type SupportLink = {
   category: string;
 };
 
+type CulturalJourneyEntry = {
+  id: string;
+  culturalSiteId: string;
+  siteName: string;
+  sourceLabel: string;
+  libraryQuestion: string;
+  reflection: string | null;
+};
+
 type HbcuProfileContext = {
   identity: string;
   knownFor: string[];
@@ -702,6 +711,10 @@ function DetailModal({
   const [showSubmitStory, setShowSubmitStory] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [activeStoryCategory, setActiveStoryCategory] = useState<HeritageContentCategory | null>(null);
+  const [journeyConsent, setJourneyConsent] = useState(false);
+  const [journeyEntry, setJourneyEntry] = useState<CulturalJourneyEntry | null>(null);
+  const [journeyState, setJourneyState] = useState<"idle" | "saving" | "error">("idle");
+  const [journeyError, setJourneyError] = useState("");
 
   useEffect(() => {
     if (!site) return;
@@ -730,12 +743,60 @@ function DetailModal({
     }
   }, [site, activeStoryCategory]);
 
+  useEffect(() => {
+    setJourneyConsent(false);
+    setJourneyEntry(null);
+    setJourneyState("idle");
+    setJourneyError("");
+  }, [site?.id]);
+
   if (!site) return null;
   const meta = getHeritageMeta(site.heritageCategory);
   const relationshipTypes = getRelationshipTypes(site.heritageCategory);
   const storyTagGroups = getStoryTags(site.heritageCategory);
   const contentCategories = getContentCategories(site.heritageCategory);
   const respectGuidance = getRespectGuidance(site.heritageCategory);
+
+  async function saveToCulturalJourney() {
+    if (!journeyConsent || journeyState === "saving") return;
+    const siteId = site?.id;
+    if (!siteId) return;
+    setJourneyState("saving");
+    setJourneyError("");
+    try {
+      const response = await fetch(`${getApiBase()}/api/cultural-journeys/cultural-sites/${encodeURIComponent(siteId)}`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", ...(await getMemberApiHeaders()) },
+        body: JSON.stringify({ memberConfirmed: true }),
+      });
+      const payload = await response.json() as { entry?: CulturalJourneyEntry; error?: string };
+      if (!response.ok || !payload.entry) {
+        setJourneyError(payload.error ?? "Kinfolk could not save this Cultural Journey entry. Nothing was added.");
+        setJourneyState("error");
+        return;
+      }
+      setJourneyEntry(payload.entry);
+      setJourneyState("idle");
+    } catch {
+      setJourneyState("error");
+      setJourneyError("Network error — your Cultural Journey was not changed. Try again when you are connected.");
+    }
+  }
+
+  function openCulturalLibraryJourney() {
+    if (!journeyEntry) return;
+    onClose();
+    router.push({
+      pathname: "/library-research",
+      params: {
+        question: journeyEntry.libraryQuestion,
+        research: "false",
+        culturalJourneyId: journeyEntry.id,
+        culturalJourneyTitle: journeyEntry.siteName,
+      },
+    } as never);
+  }
 
   return (
     <View style={[dStyles.container, { backgroundColor: colors.background, paddingBottom: insets.bottom + 24 }]}>
@@ -808,6 +869,45 @@ function DetailModal({
         <View style={[dStyles.section, { borderTopColor: colors.border }]}>
           <Text style={[dStyles.sectionLabel, { color: colors.mutedForeground }]}>About</Text>
           <Text style={[dStyles.bodyText, { color: colors.foreground }]}>{site.description}</Text>
+        </View>
+
+        <View style={[dStyles.section, { borderTopColor: colors.border }]}>
+          <View style={dStyles.sectionTitleRow}>
+            <Feather name="bookmark" size={15} color={meta.color} />
+            <Text style={[dStyles.sectionTitle, { color: colors.foreground }]}>My Cultural Journey</Text>
+          </View>
+          <Text style={[dStyles.sectionSub, { color: colors.mutedForeground }]}>Save this public cultural site only if you want it in your private Journey. Kinfolk does not add it automatically or use it as a score.</Text>
+          {journeyEntry ? (
+            <View style={[dStyles.sigBox, { backgroundColor: meta.color + "10", borderColor: meta.color + "30", marginTop: 12 }]}>
+              <Text style={[dStyles.sigText, { color: colors.foreground }]}>Saved privately to your Cultural Journey.</Text>
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Continue this Cultural Journey in the Library" onPress={openCulturalLibraryJourney} style={{ marginTop: 10 }}>
+                <Text style={{ color: meta.color, fontWeight: "700", fontSize: 13 }}>Continue with Kinfolk in the Library →</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={{ gap: 10, marginTop: 12 }}>
+              <TouchableOpacity
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: journeyConsent }}
+                onPress={() => setJourneyConsent((value) => !value)}
+                style={[dStyles.relChip, { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: journeyConsent ? meta.color + "10" : colors.card, borderColor: journeyConsent ? meta.color : colors.border }]}
+              >
+                <Feather name={journeyConsent ? "check-square" : "square"} size={18} color={journeyConsent ? meta.color : colors.mutedForeground} />
+                <Text style={[dStyles.relChipText, { color: colors.foreground, flex: 1 }]}>I choose to save this site to My Cultural Journey.</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityLabel="Save to My Cultural Journey"
+                disabled={!journeyConsent || journeyState === "saving"}
+                onPress={() => { void saveToCulturalJourney(); }}
+                style={[dStyles.websiteBtn, { backgroundColor: meta.color, opacity: journeyConsent ? 1 : 0.55 }]}
+              >
+                {journeyState === "saving" ? <ActivityIndicator color="#fff" /> : <Feather name="bookmark" size={16} color="#fff" />}
+                <Text style={dStyles.websiteBtnText}>{journeyState === "saving" ? "Saving…" : "Save to My Journey"}</Text>
+              </TouchableOpacity>
+              {journeyError ? <Text style={{ color: "#8A2424", fontSize: 12, lineHeight: 17 }}>{journeyError}</Text> : null}
+            </View>
+          )}
         </View>
 
         {/* Historical significance */}

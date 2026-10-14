@@ -199,13 +199,27 @@ export default function LibraryResearchScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { question: suggestedQuestion, research: researchOnOpen } = useLocalSearchParams<{ question?: string; research?: string }>();
+  const {
+    question: suggestedQuestion,
+    research: researchOnOpen,
+    culturalJourneyId,
+    culturalJourneyTitle,
+  } = useLocalSearchParams<{
+    question?: string;
+    research?: string;
+    culturalJourneyId?: string;
+    culturalJourneyTitle?: string;
+  }>();
   const [question, setQuestion] = useState("");
   const [searchedQuestion, setSearchedQuestion] = useState("");
   const [search, setSearch] = useState<LibrarySearch | null>(null);
   const [research, setResearch] = useState<ResearchResponse | null>(null);
   const [state, setState] = useState<"idle" | "searching" | "researching" | "ready" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [journeyReflection, setJourneyReflection] = useState("");
+  const [journeyReflectionConfirmed, setJourneyReflectionConfirmed] = useState(false);
+  const [journeyReflectionState, setJourneyReflectionState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [journeyReflectionError, setJourneyReflectionError] = useState("");
   const [lensPickerOpen, setLensPickerOpen] = useState(false);
   const [selectedResearchTags, setSelectedResearchTags] = useState<string[]>([]);
   const [filterKeywords, setFilterKeywords] = useState("");
@@ -343,6 +357,27 @@ export default function LibraryResearchScreen() {
     void searchLibrary(visibleQuestion, true, routedTags);
   }
 
+  async function saveJourneyReflection() {
+    if (!culturalJourneyId || !journeyReflectionConfirmed || journeyReflectionState === "saving") return;
+    setJourneyReflectionState("saving");
+    setJourneyReflectionError("");
+    try {
+      const headers = await authHeaders();
+      const response = await fetch(`${getApiBase()}/api/cultural-journeys/entries/${encodeURIComponent(culturalJourneyId)}/reflection`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { ...headers, "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ memberConfirmed: true, reflection: journeyReflection }),
+      });
+      const payload = await response.json() as { error?: string };
+      if (!response.ok) throw new Error(payload.error ?? "Kinfolk could not save that reflection. Your Journey is unchanged.");
+      setJourneyReflectionState("saved");
+    } catch (error) {
+      setJourneyReflectionState("error");
+      setJourneyReflectionError(error instanceof Error ? error.message : "Your Journey is unchanged. Try again when you are connected.");
+    }
+  }
+
   return (
     <View style={[styles.root, { backgroundColor: colors.background, paddingTop: Math.max(insets.top, 20) }]}>
       <View style={[styles.header, { borderBottomColor: colors.border, backgroundColor: colors.card }]}>
@@ -360,6 +395,40 @@ export default function LibraryResearchScreen() {
           <Text style={styles.heroTitle}>Research that starts with reputable sources.</Text>
           <Text style={styles.heroCopy}>Every search begins with current, reputable information for anyone. You can add optional community context for a separately labeled evidence packet. It is a research instruction, not an assumption about you.</Text>
         </View>
+        {culturalJourneyId ? (
+          <View style={[styles.journeyReflectionCard, { backgroundColor: "#CA922B10", borderColor: "#CA922B45" }]}>
+            <Text style={[styles.journeyReflectionTitle, { color: colors.foreground }]}>My Cultural Journey{culturalJourneyTitle ? ` · ${culturalJourneyTitle}` : ""}</Text>
+            <Text style={[styles.journeyReflectionCopy, { color: colors.mutedForeground }]}>Write only what you choose to keep. This private reflection is not added to Kinfolk memory or used to change Library research.</Text>
+            <TextInput
+              value={journeyReflection}
+              onChangeText={(value) => { setJourneyReflection(value); if (journeyReflectionState !== "idle") setJourneyReflectionState("idle"); }}
+              placeholder="What do you want to remember or explore next?"
+              placeholderTextColor={colors.mutedForeground}
+              multiline
+              maxLength={1200}
+              style={[styles.journeyReflectionInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+            />
+            <TouchableOpacity
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: journeyReflectionConfirmed }}
+              onPress={() => setJourneyReflectionConfirmed((value) => !value)}
+              style={styles.journeyReflectionConsent}
+            >
+              <Feather name={journeyReflectionConfirmed ? "check-square" : "square"} size={19} color={journeyReflectionConfirmed ? "#936719" : colors.mutedForeground} />
+              <Text style={[styles.journeyReflectionCopy, { color: colors.foreground, flex: 1 }]}>I choose to save this private reflection in My Cultural Journey.</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel="Save Cultural Journey reflection"
+              disabled={!journeyReflection.trim() || !journeyReflectionConfirmed || journeyReflectionState === "saving"}
+              onPress={() => { void saveJourneyReflection(); }}
+              style={[styles.journeyReflectionButton, { backgroundColor: "#70480F", opacity: journeyReflection.trim() && journeyReflectionConfirmed ? 1 : 0.55 }]}
+            >
+              {journeyReflectionState === "saving" ? <ActivityIndicator color="#fff" /> : <Text style={styles.journeyReflectionButtonText}>{journeyReflectionState === "saved" ? "Reflection saved" : "Save reflection"}</Text>}
+            </TouchableOpacity>
+            {journeyReflectionError ? <Text style={styles.journeyReflectionError}>{journeyReflectionError}</Text> : null}
+          </View>
+        ) : null}
         <View style={[styles.searchCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
           <Text style={[styles.label, { color: colors.foreground }]}>What would you like to understand?</Text>
           <TextInput
@@ -574,6 +643,14 @@ const styles = StyleSheet.create({
   heroEyebrow: { color: "#F0CF63", fontSize: 10, letterSpacing: 1.4, fontWeight: "800" },
   heroTitle: { color: "#FFFDF7", fontSize: 25, lineHeight: 31, fontWeight: "800" },
   heroCopy: { color: "#F1DFCC", fontSize: 13, lineHeight: 20 },
+  journeyReflectionCard: { borderWidth: 1, borderRadius: 16, padding: 15, gap: 9 },
+  journeyReflectionTitle: { fontSize: 15, fontWeight: "800" },
+  journeyReflectionCopy: { fontSize: 12, lineHeight: 17 },
+  journeyReflectionInput: { minHeight: 80, borderWidth: 1, borderRadius: 11, paddingHorizontal: 11, paddingVertical: 10, fontSize: 13, lineHeight: 19, textAlignVertical: "top" },
+  journeyReflectionConsent: { flexDirection: "row", alignItems: "flex-start", gap: 8, paddingVertical: 2 },
+  journeyReflectionButton: { minHeight: 42, borderRadius: 10, justifyContent: "center", alignItems: "center" },
+  journeyReflectionButtonText: { color: "#fff", fontSize: 13, fontWeight: "800" },
+  journeyReflectionError: { color: "#8A2424", fontSize: 11, lineHeight: 16 },
   searchCard: { borderWidth: 1, borderRadius: 16, padding: 16, gap: 10 },
   label: { fontSize: 15, fontWeight: "800" },
   input: { minHeight: 96, borderWidth: 1, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 11, fontSize: 14, lineHeight: 20, textAlignVertical: "top" },
