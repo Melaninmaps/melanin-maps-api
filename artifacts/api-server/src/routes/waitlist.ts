@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, waitlistTable, usersTable, businessRecommendationsTable, pointsLedgerTable, businessesTable, businessSuggestionsTable, waitlistSafetyReportsTable } from "@workspace/db";
-import { and, asc, count, desc, eq, gte, ilike, isNotNull, lt, ne, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, isNotNull, lt, ne, or, sql } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
 import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite, sendFriendInvitation, sendBusinessWaitlistInvitation, sendReferralMilestoneUpdate, sendReferralNudge, sendAppLaunchBlast, sendBetaAnnouncementBlast, sendWaitlistInvitation, sendWaitlistFounderRegistrationAlert } from "../lib/email";
 import { runWeeklyNudge } from "../lib/nudgeScheduler";
@@ -623,6 +623,8 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
     const syntheticFilter = String(req.query.synthetic ?? "people");
     const showingSynthetic = syntheticFilter === "only";
     const cityFilter = String(req.query.city ?? "").trim().slice(0, 120);
+    const search = String(req.query.search ?? "").trim().slice(0, 160);
+    const searchPattern = `%${search.replace(/[\\%_]/g, "\\$&")}%`;
     const whereClause = and(
       showingArchived
         ? eq(waitlistTable.status, "archived")
@@ -635,6 +637,21 @@ router.get("/admin/waitlist", async (req: Request, res: Response) => {
         : eq(waitlistTable.isSyntheticTest, false),
       cityFilter
         ? sql`lower(trim(${waitlistTable.city})) = lower(trim(${cityFilter}))`
+        : undefined,
+      search
+        ? or(
+            ilike(waitlistTable.email, searchPattern),
+            ilike(waitlistTable.firstName, searchPattern),
+            ilike(waitlistTable.lastName, searchPattern),
+            ilike(waitlistTable.city, searchPattern),
+            ilike(waitlistTable.state, searchPattern),
+            ilike(waitlistTable.referralCode, searchPattern),
+            ilike(waitlistTable.referredBy, searchPattern),
+            ilike(waitlistTable.websiteUrl, searchPattern),
+            ilike(waitlistTable.signupSources, searchPattern),
+            ilike(waitlistTable.notes, searchPattern),
+            ilike(waitlistTable.cityNomination, searchPattern),
+          )
         : undefined,
     );
     const offset = (page - 1) * pageSize;
@@ -788,10 +805,43 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
     return;
   }
   const id = String(req.params.id);
-  const { status, notes } = req.body as { status?: string; notes?: string };
+  const { status, notes, email, firstName, lastName, city, state, websiteUrl, isBusinessOwner } = req.body as {
+    status?: string;
+    notes?: string;
+    email?: string;
+    firstName?: string | null;
+    lastName?: string | null;
+    city?: string | null;
+    state?: string | null;
+    websiteUrl?: string | null;
+    isBusinessOwner?: boolean;
+  };
   const allowed = ["pending", "approved", "rejected", "archived"];
   if (status && !allowed.includes(status)) {
     res.status(400).json({ error: "Invalid status" });
+    return;
+  }
+  const normalizeOptionalText = (value: string | null | undefined, max: number) => {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    if (typeof value !== "string" || value.trim().length > max) return false;
+    return value.trim() || null;
+  };
+  const editableFields = {
+    email: normalizeOptionalText(email, 255),
+    firstName: normalizeOptionalText(firstName, 100),
+    lastName: normalizeOptionalText(lastName, 100),
+    city: normalizeOptionalText(city, 100),
+    state: normalizeOptionalText(state, 50),
+    websiteUrl: normalizeOptionalText(websiteUrl, 500),
+  };
+  const editedEmail = typeof editableFields.email === "string" ? editableFields.email : null;
+  if (Object.values(editableFields).some((value) => value === false) || (email !== undefined && (!editedEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editedEmail))) || (isBusinessOwner !== undefined && typeof isBusinessOwner !== "boolean")) {
+    res.status(400).json({ error: "One or more editable fields are invalid or too long." });
+    return;
+  }
+  if (status === undefined && notes === undefined && email === undefined && firstName === undefined && lastName === undefined && city === undefined && state === undefined && websiteUrl === undefined && isBusinessOwner === undefined) {
+    res.status(400).json({ error: "Provide a waitlist field to update." });
     return;
   }
   try {
@@ -801,6 +851,13 @@ router.patch("/admin/waitlist/:id", async (req: Request, res: Response) => {
       updates.approvedAt = status === "approved" ? new Date() : null;
     }
     if (notes !== undefined) updates.notes = notes;
+    if (editedEmail) updates.email = editedEmail.toLowerCase();
+    if (editableFields.firstName !== undefined) updates.firstName = editableFields.firstName;
+    if (editableFields.lastName !== undefined) updates.lastName = editableFields.lastName;
+    if (editableFields.city !== undefined) updates.city = editableFields.city;
+    if (editableFields.state !== undefined) updates.state = editableFields.state;
+    if (editableFields.websiteUrl !== undefined) updates.websiteUrl = editableFields.websiteUrl;
+    if (isBusinessOwner !== undefined) updates.isBusinessOwner = isBusinessOwner;
     const [updated] = await db
       .update(waitlistTable)
       .set(updates)
@@ -903,6 +960,57 @@ router.delete("/admin/waitlist/:id", async (req: Request, res: Response) => {
   } catch (err) {
     req.log.error({ err }, "Failed to remove standalone waitlist entry");
     res.status(500).json({ error: "Failed to remove waitlist entry." });
+  }
+});
+
+// A permanent cleanup is available for standalone signups only. Records with a
+// member account or a submitted contribution remain reviewable instead of being
+// silently detached from their dependent data.
+router.post("/admin/waitlist/bulk-delete", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  const rawIds: unknown[] = Array.isArray(req.body?.ids) ? req.body.ids : [];
+  const ids: string[] = [...new Set(rawIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0))].slice(0, 500);
+  if (ids.length === 0) {
+    res.status(400).json({ error: "Select at least one waitlist record to permanently delete." });
+    return;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const entries = await client.query<{ id: string; email: string }>(
+      `SELECT id, email FROM waitlist_signups WHERE id = ANY($1::varchar[]) FOR UPDATE`,
+      [ids],
+    );
+    const existingIds = new Set(entries.rows.map((entry) => entry.id));
+    const missing = ids.filter((id) => !existingIds.has(id));
+    const eligibility = await client.query<{ id: string; removable: boolean }>(
+      `SELECT w.id,
+              NOT EXISTS (SELECT 1 FROM users u WHERE LOWER(TRIM(u.email)) = LOWER(TRIM(w.email)))
+              AND NOT EXISTS (SELECT 1 FROM business_suggestions bs WHERE bs.waitlist_id = w.id)
+              AND NOT EXISTS (SELECT 1 FROM waitlist_safety_reports sr WHERE sr.waitlist_id = w.id)
+                AS removable
+         FROM waitlist_signups w
+        WHERE w.id = ANY($1::varchar[])`,
+      [ids],
+    );
+    const removableIds = eligibility.rows.filter((entry) => entry.removable).map((entry) => entry.id);
+    const heldIds = eligibility.rows.filter((entry) => !entry.removable).map((entry) => entry.id);
+    const deleted = removableIds.length > 0
+      ? await client.query<{ id: string }>(`DELETE FROM waitlist_signups WHERE id = ANY($1::varchar[]) RETURNING id`, [removableIds])
+      : { rows: [] as { id: string }[] };
+    await client.query("COMMIT");
+    req.log.info({ event: "ADMIN_WAITLIST_BULK_PERMANENT_DELETE", deleted: deleted.rows.length, held: heldIds.length, by: req.user?.id }, "admin cleaned standalone waitlist records");
+    res.json({ ok: true, deletedIds: deleted.rows.map((entry) => entry.id), heldIds, missingIds: missing });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    req.log.error({ err }, "Failed permanent waitlist cleanup");
+    res.status(500).json({ error: "The permanent waitlist cleanup was not saved." });
+  } finally {
+    client.release();
   }
 });
 

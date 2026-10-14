@@ -139,6 +139,193 @@ router.patch("/admin/users/:id/lifecycle", async (req: Request, res: Response) =
   }
 });
 
+// Administrator bulk controls deliberately share individual lifecycle limits:
+// they cannot change administrators, protected identities, or the acting user.
+router.post("/admin/users/bulk", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const ids = Array.isArray(req.body?.ids)
+    ? [...new Set(req.body.ids.filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0))].slice(0, 500)
+    : [];
+  const action = String(req.body?.action ?? "");
+  const allowedActions = ["approve", "revoke", "make_tester", "make_user", "hide", "suspend", "restore"] as const;
+  if (ids.length === 0) {
+    res.status(400).json({ error: "Select at least one account." });
+    return;
+  }
+  if (!allowedActions.includes(action as (typeof allowedActions)[number])) {
+    res.status(400).json({ error: "Invalid bulk account action." });
+    return;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const selected = await client.query<{
+      id: string;
+      email: string | null;
+      role: string;
+      account_status: "active" | "hidden" | "suspended";
+    }>(
+      `SELECT id, email, role, account_status
+         FROM users
+        WHERE id = ANY($1::varchar[])
+        FOR UPDATE`,
+      [ids],
+    );
+    if (selected.rows.length !== ids.length) {
+      await client.query("ROLLBACK");
+      res.status(404).json({ error: "One or more selected accounts no longer exist. Refresh and try again." });
+      return;
+    }
+    if (selected.rows.some((user) => user.id === req.user?.id || user.role === "admin" || isProtectedAdminEmail(user.email))) {
+      await client.query("ROLLBACK");
+      res.status(409).json({
+        error: "Bulk actions cannot change your own or administrator accounts. Use the founder-controlled administrator action for a protected administrator.",
+      });
+      return;
+    }
+
+    const actorId = req.user?.id ?? null;
+    const actionLabel: Record<(typeof allowedActions)[number], string> = {
+      approve: "Administrator bulk approval",
+      revoke: "Administrator bulk access revocation",
+      make_tester: "Administrator bulk tester assignment",
+      make_user: "Administrator bulk tester removal",
+      hide: "Administrator bulk presentation cleanup",
+      suspend: "Administrator bulk suspension",
+      restore: "Administrator bulk restoration",
+    };
+    if (action === "approve" || action === "revoke") {
+      await client.query(
+        `UPDATE users SET approved = $2, updated_at = NOW() WHERE id = ANY($1::varchar[])`,
+        [ids, action === "approve"],
+      );
+    } else if (action === "make_tester" || action === "make_user") {
+      await client.query(
+        `UPDATE users SET role = $2, updated_at = NOW() WHERE id = ANY($1::varchar[])`,
+        [ids, action === "make_tester" ? "tester" : "user"],
+      );
+    } else {
+      const nextStatus = action === "hide" ? "hidden" : action === "suspend" ? "suspended" : "active";
+      await client.query(
+        `UPDATE users
+            SET account_status = $2,
+                approved = CASE WHEN $3 = 'suspend' THEN FALSE ELSE approved END,
+                lifecycle_updated_at = NOW(),
+                lifecycle_updated_by = $4,
+                lifecycle_reason = $5,
+                updated_at = NOW()
+          WHERE id = ANY($1::varchar[])`,
+        [ids, nextStatus, action, actorId, actionLabel[action as (typeof allowedActions)[number]]],
+      );
+      for (const user of selected.rows) {
+        await client.query(
+          `INSERT INTO admin_account_lifecycle_events
+             (user_id, actor_user_id, prior_status, next_status, reason)
+           VALUES ($1, $2, $3, $4, $5)`,
+          [user.id, actorId, user.account_status, nextStatus, actionLabel[action as (typeof allowedActions)[number]]],
+        );
+      }
+      if (action === "suspend") {
+        await client.query(`DELETE FROM sessions WHERE sess->'user'->>'id' = ANY($1::varchar[])`, [ids]);
+      }
+    }
+    await client.query("COMMIT");
+    res.json({ ok: true, updated: ids.length, action });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    req.log.error({ err }, "Failed bulk account administration update");
+    res.status(500).json({ error: "The bulk account update was not saved." });
+  } finally {
+    client.release();
+  }
+});
+
+// Permanent account cleanup is intentionally separate from lifecycle updates so
+// an administrator must explicitly choose deletion rather than accidentally
+// applying it with approval, role, or access actions.
+router.post("/admin/users/bulk-delete", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const rawIds: unknown[] = Array.isArray(req.body?.ids) ? req.body.ids : [];
+  const ids: string[] = [...new Set(rawIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0))].slice(0, 500);
+  if (ids.length === 0) {
+    res.status(400).json({ error: "Select at least one account to permanently delete." });
+    return;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const selected = await client.query<{ id: string; email: string | null; role: string }>(
+      `SELECT id, email, role
+         FROM users
+        WHERE id = ANY($1::varchar[])
+        FOR UPDATE`,
+      [ids],
+    );
+    if (selected.rows.length !== ids.length) {
+      await client.query("ROLLBACK");
+      res.status(404).json({ error: "One or more selected accounts no longer exist. Refresh and try again." });
+      return;
+    }
+    if (selected.rows.some((user) => user.id === req.user?.id || user.role === "admin" || isProtectedAdminEmail(user.email))) {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "Bulk deletion cannot remove your own or administrator accounts." });
+      return;
+    }
+
+    const dependencyResult = await client.query<{ id: string }>(
+      `SELECT u.id
+         FROM users u
+        WHERE u.id = ANY($1::varchar[])
+          AND (
+            EXISTS (SELECT 1 FROM business_kinfolk_voice_profiles WHERE owner_user_id = u.id)
+            OR EXISTS (
+              SELECT 1
+                FROM canonical_mwm_owner_attachment_audit
+               WHERE target_user_id = u.id OR actor_user_id = u.id
+            )
+          )`,
+      [ids],
+    );
+    const heldIds = dependencyResult.rows.map((row) => row.id);
+    const removableIds = ids.filter((id) => !heldIds.includes(id));
+    if (removableIds.length > 0) {
+      const removableEmails = selected.rows
+        .filter((user) => removableIds.includes(user.id))
+        .map((user) => user.email)
+        .filter((email): email is string => Boolean(email));
+      await client.query(`DELETE FROM sessions WHERE sess->'user'->>'id' = ANY($1::varchar[])`, [removableIds]);
+      await client.query(`DELETE FROM admin_account_lifecycle_events WHERE user_id = ANY($1::varchar[])`, [removableIds]);
+      await client.query(`DELETE FROM access_entitlement_events WHERE user_id = ANY($1::varchar[])`, [removableIds]);
+      if (removableEmails.length > 0) {
+        await client.query(`DELETE FROM pending_tester_emails WHERE LOWER(TRIM(email)) = ANY($1::text[])`, [removableEmails.map((email) => email.trim().toLowerCase())]);
+      }
+      await client.query(`DELETE FROM users WHERE id = ANY($1::varchar[])`, [removableIds]);
+    }
+    await client.query("COMMIT");
+    req.log.info(
+      { event: "ADMIN_USERS_BULK_PERMANENT_DELETE", deleted: removableIds.length, held: heldIds.length, by: req.user?.id },
+      "admin permanently deleted selected accounts",
+    );
+    res.json({ ok: true, deletedIds: removableIds, heldIds });
+  } catch (err) {
+    await client.query("ROLLBACK").catch(() => {});
+    req.log.error({ err }, "Failed bulk permanent account deletion");
+    res.status(409).json({ error: "The selected accounts were not deleted because retained dependent data still references one or more accounts." });
+  } finally {
+    client.release();
+  }
+});
+
 // Founder-only access control for the two explicitly protected administrator
 // accounts. Generic Admin lifecycle, approval, role, and tester controls may
 // not change these records. A founder owner can revoke or restore their full
@@ -264,7 +451,7 @@ router.patch("/admin/users/:id", async (req: Request, res: Response) => {
     return;
   }
   const id = String(req.params.id);
-  const { approved, role } = req.body;
+  const { approved, role, firstName, lastName } = req.body;
 
   if (approved !== undefined && typeof approved !== "boolean") {
     res.status(400).json({ error: "approved must be a boolean" });
@@ -274,8 +461,16 @@ router.patch("/admin/users/:id", async (req: Request, res: Response) => {
     res.status(400).json({ error: "role must be one of: user, tester, admin" });
     return;
   }
-  if (approved === undefined && role === undefined) {
-    res.status(400).json({ error: "Must provide approved or role" });
+  if (firstName !== undefined && (typeof firstName !== "string" || firstName.trim().length > 100)) {
+    res.status(400).json({ error: "firstName must be 100 characters or fewer" });
+    return;
+  }
+  if (lastName !== undefined && (typeof lastName !== "string" || lastName.trim().length > 100)) {
+    res.status(400).json({ error: "lastName must be 100 characters or fewer" });
+    return;
+  }
+  if (approved === undefined && role === undefined && firstName === undefined && lastName === undefined) {
+    res.status(400).json({ error: "Provide an account field to update" });
     return;
   }
 
@@ -304,6 +499,8 @@ router.patch("/admin/users/:id", async (req: Request, res: Response) => {
   const updateData: Record<string, unknown> = { updatedAt: new Date() };
   if (approved !== undefined) updateData.approved = approved;
   if (role !== undefined) updateData.role = role;
+  if (firstName !== undefined) updateData.firstName = firstName.trim() || null;
+  if (lastName !== undefined) updateData.lastName = lastName.trim() || null;
 
   try {
     const [updated] = await db
@@ -416,31 +613,66 @@ router.delete("/admin/users/:id", async (req: Request, res: Response) => {
     res.status(403).json({ error: "Forbidden" });
     return;
   }
-  res.status(405).json({
-    error: "Account deletion is disabled. Use the reversible lifecycle controls to hide or suspend this account.",
-    code: "REVERSIBLE_LIFECYCLE_REQUIRED",
-  });
-  return;
   const id = String(req.params.id);
   const selfId = (req as any).user?.id;
   if (id === selfId) {
     res.status(400).json({ error: "Cannot delete your own account" });
     return;
   }
+  const client = await pool.connect();
   try {
-    const [deleted] = await db
-      .delete(usersTable)
-      .where(eq(usersTable.id, id))
-      .returning({ id: usersTable.id, email: usersTable.email });
-    if (!deleted) {
+    await client.query("BEGIN");
+    const targetResult = await client.query<{ id: string; email: string | null; role: string }>(
+      `SELECT id, email, role FROM users WHERE id = $1 FOR UPDATE`,
+      [id],
+    );
+    const target = targetResult.rows[0];
+    if (!target) {
+      await client.query("ROLLBACK");
       res.status(404).json({ error: "User not found" });
       return;
     }
-    req.log.info({ deletedUserId: deleted.id, deletedEmail: deleted.email, by: selfId }, "Admin deleted user account");
-    res.json({ ok: true, deleted });
+    if (target.role === "admin" || isProtectedAdminEmail(target.email)) {
+      await client.query("ROLLBACK");
+      res.status(409).json({ error: "Administrator accounts cannot be deleted from this screen." });
+      return;
+    }
+    const ownerDependencies = await client.query<{ blocked: boolean }>(
+      `SELECT EXISTS (
+         SELECT 1 FROM business_kinfolk_voice_profiles WHERE owner_user_id = $1
+         UNION ALL
+         SELECT 1 FROM canonical_mwm_owner_attachment_audit WHERE target_user_id = $1 OR actor_user_id = $1
+       ) AS blocked`,
+      [id],
+    );
+    if (ownerDependencies.rows[0]?.blocked) {
+      await client.query("ROLLBACK");
+      res.status(409).json({
+        error: "This account has retained business-owner history. Reassign or clear that owner relationship before permanently deleting the account.",
+        code: "ACCOUNT_HAS_OWNER_DEPENDENCIES",
+      });
+      return;
+    }
+
+    await client.query(`DELETE FROM sessions WHERE sess->'user'->>'id' = $1`, [id]);
+    await client.query(`DELETE FROM admin_account_lifecycle_events WHERE user_id = $1`, [id]);
+    await client.query(`DELETE FROM access_entitlement_events WHERE user_id = $1`, [id]);
+    if (target.email) {
+      await client.query(`DELETE FROM pending_tester_emails WHERE LOWER(TRIM(email)) = LOWER(TRIM($1))`, [target.email]);
+    }
+    const deleted = await client.query<{ id: string; email: string | null }>(
+      `DELETE FROM users WHERE id = $1 RETURNING id, email`,
+      [id],
+    );
+    await client.query("COMMIT");
+    req.log.info({ deletedUserId: id, deletedEmail: target.email, by: selfId }, "Admin permanently deleted user account");
+    res.json({ ok: true, deleted: deleted.rows[0] });
   } catch (err) {
-    req.log.error({ err }, "Failed to delete user");
-    res.status(500).json({ error: "Failed to delete user" });
+    await client.query("ROLLBACK").catch(() => {});
+    req.log.error({ err }, "Failed to permanently delete user");
+    res.status(409).json({ error: "The account was not deleted because retained dependent data still references it." });
+  } finally {
+    client.release();
   }
 });
 

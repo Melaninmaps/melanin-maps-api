@@ -73,14 +73,17 @@ describe("admin dashboard section selector", () => {
       "Archive vault",
       "updateUserLifecycle",
       '"hide" | "suspend" | "restore"',
-      "View hidden accounts",
-      "Hide keeps the account and activity for records",
+      "All including hidden",
+      "Search all retained account fields",
       "Administrator suspended account during controlled rollout",
-      "Archive from view",
+      "permanentlyDeleteUser",
+      "permanentlyDeleteSelectedUsers",
+      "api/admin/users/bulk-delete",
+      "Search name, email, ID",
+      'bulkUpdateUsers("approve")',
     ]) {
       expect(admin).toContain(marker);
     }
-    expect(admin).not.toContain("Permanently delete user");
   });
 
   it("lets an administrator recover saved city answers without inventing locations", () => {

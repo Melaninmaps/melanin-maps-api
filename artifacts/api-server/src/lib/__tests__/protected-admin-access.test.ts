@@ -84,4 +84,19 @@ describe("founder-protected administrator access", () => {
     expect(app).not.toContain("kaylacardwell3@gmail.com");
     expect(app).not.toContain("bigdot6017@gmail.com");
   });
+
+  it("offers direct administrator cleanup while retaining protected administrator and owner-history safeguards", () => {
+    expect(adminUsers).toContain('router.delete("/admin/users/:id"');
+    expect(adminUsers).toContain("Cannot delete your own account");
+    expect(adminUsers).toContain("Administrator accounts cannot be deleted from this screen.");
+    expect(adminUsers).toContain("business_kinfolk_voice_profiles");
+    expect(adminUsers).toContain("canonical_mwm_owner_attachment_audit");
+    expect(adminUsers).toContain("DELETE FROM users WHERE id = $1 RETURNING id, email");
+    expect(adminUsers).toContain('router.post("/admin/users/bulk-delete"');
+    expect(adminUsers).toContain("ADMIN_USERS_BULK_PERMANENT_DELETE");
+    expect(adminUsers).toContain("Bulk deletion cannot remove your own or administrator accounts.");
+    expect(webAdmin).toContain("permanentlyDeleteUser");
+    expect(webAdmin).toContain("permanentlyDeleteSelectedUsers");
+    expect(webAdmin).toContain("bulkUpdateUsers");
+  });
 });

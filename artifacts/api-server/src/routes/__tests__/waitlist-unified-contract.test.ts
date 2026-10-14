@@ -47,6 +47,9 @@ describe("unified waitlist and recovery contract", () => {
 
   it("filters, exports, and bulk-approves the same selected city", () => {
     expect(waitlistRoute).toContain('const cityFilter = String(req.query.city ?? "").trim().slice(0, 120)');
+    expect(waitlistRoute).toContain('const search = String(req.query.search ?? "").trim().slice(0, 160)');
+    expect(waitlistRoute).toContain("ilike(waitlistTable.websiteUrl, searchPattern)");
+    expect(waitlistRoute).toContain("ilike(waitlistTable.notes, searchPattern)");
     expect(waitlistRoute).toContain("cityOptions:");
     expect(waitlistRoute).toContain("cityParam = String(req.query.city ?? \"\").trim().toLowerCase()");
     expect(waitlistRoute).toContain("filter?: { status?: string; city?: string; synthetic?: \"people\" | \"only\" }");
@@ -62,14 +65,18 @@ describe("unified waitlist and recovery contract", () => {
     expect(accessLedger).toContain("Bulk tester access — paste or upload emails");
   });
 
-  it("keeps App Store registrations in the same source-labelled waitlist and archives rather than deletes entries", () => {
+  it("keeps App Store registrations in the same source-labelled waitlist and allows only dependency-safe permanent cleanup", () => {
     expect(waitlistRoute).toContain('"/admin/waitlist/reconcile-ios-registrations"');
     expect(waitlistRoute).toContain('signupSources: "ios"');
     expect(waitlistRoute).toContain("ADMIN_WAITLIST_IOS_RECONCILED");
     expect(waitlistRoute).toContain('status: "pending"');
     expect(waitlistRoute).toContain("status = 'archived'");
     expect(waitlistRoute).toContain('"archived"');
-    expect(waitlistRoute).not.toContain("DELETE FROM waitlist_signups WHERE id = $1");
+    expect(waitlistRoute).toContain('"/admin/waitlist/bulk-delete"');
+    expect(waitlistRoute).toContain("NOT EXISTS (SELECT 1 FROM users");
+    expect(waitlistRoute).toContain("NOT EXISTS (SELECT 1 FROM business_suggestions");
+    expect(waitlistRoute).toContain("NOT EXISTS (SELECT 1 FROM waitlist_safety_reports");
+    expect(waitlistRoute).toContain("DELETE FROM waitlist_signups WHERE id = ANY");
     expect(waitlistRoute).toContain('showingArchived');
     expect(waitlistRoute).toContain('retainedTotal');
     expect(waitlistRoute).toContain('archivedCount');
