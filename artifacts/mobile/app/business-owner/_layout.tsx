@@ -6,6 +6,7 @@ export default function BusinessOwnerLayout() {
       <Stack.Screen name="index" />
       <Stack.Screen name="edit-profile" options={{ presentation: "card" }} />
       <Stack.Screen name="kinfolk-voice" options={{ presentation: "card" }} />
+      <Stack.Screen name="cultural-teaching" options={{ presentation: "card" }} />
       <Stack.Screen name="pinned-highlights" options={{ presentation: "card" }} />
     </Stack>
   );

@@ -54,6 +54,7 @@ import FeaturedVideoCard from "@/components/FeaturedVideoCard";
 import CommunityCommentsSection from "@/components/CommunityCommentsSection";
 import { detectSocialVideoPlatform } from "@workspace/constants";
 import { useSocialVideoPreferences } from "@/hooks/useSocialVideoPreferences";
+import { BusinessCulturalTeachingCard } from "@/components/BusinessCulturalTeachingCard";
 
 const SOCIAL_PROFILE_HOSTS: Record<string, readonly string[]> = {
   tiktok: ["tiktok.com"],
@@ -836,6 +837,7 @@ export default function BusinessDetailScreen() {
               ) : null}
             </View>
           ) : null}
+          <BusinessCulturalTeachingCard businessId={business.id} isAuthenticated={Boolean(user)} />
           <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
               {safeOfficialWebsite(business.website ?? ((business as any).isReferenceOnly ? business.sourceUrl : null)) && (
                 <TouchableOpacity

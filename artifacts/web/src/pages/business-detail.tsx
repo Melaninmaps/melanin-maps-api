@@ -21,6 +21,7 @@ import { canDisplayBusinessCover, getBusinessHeroIcon, type BusinessHeroRecord }
 import { detectSocialVideoPlatform, type SocialVideoPlatform } from "@workspace/constants";
 import { useSocialVideoPreferences } from "@/hooks/useSocialVideoPreferences";
 import { normalizeBusinessSocialProfileUrl } from "@/lib/businessProfileSocialUrl";
+import { BusinessCulturalTeachingCard } from "@/features/businesses/BusinessCulturalTeachingCard";
 
 function safeExternalProfileUrl(value: unknown, expectedPlatform: SocialVideoPlatform): string | null {
   if (typeof value !== "string" || !value.trim()) return null;
@@ -954,6 +955,7 @@ export default function BusinessDetail() {
                   ) : null}
                 </div>
               ) : null}
+              <BusinessCulturalTeachingCard businessId={id} isAuthenticated={Boolean(auth?.user)} />
               <div className="mt-5 flex flex-wrap gap-2">
                 {officialWebsite ? (
                   <a href={officialWebsite} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 rounded-full border border-[#CA922B]/60 bg-black/25 px-4 py-2 text-sm font-bold text-white transition hover:bg-[#CA922B]">

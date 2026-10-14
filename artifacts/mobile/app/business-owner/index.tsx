@@ -181,6 +181,14 @@ export default function BusinessOwnerHome() {
       route: "/business-owner/kinfolk-voice",
     },
     {
+      id: "cultural-teaching",
+      icon: "book-open",
+      label: "Optional Cultural Teaching",
+      sub: "Share one short, voluntary teaching on your business detail page",
+      color: "#2D7A4F",
+      route: "/business-owner/cultural-teaching",
+    },
+    {
       id: "broadcasts",
       icon: "send",
       label: "Send Broadcast",
