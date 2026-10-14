@@ -18,6 +18,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDisclosure";
+import { CommunityIntelligencePreferenceRow } from "@/components/CommunityIntelligencePreferenceRow";
 import { SupportLensDropdowns } from "@/components/SupportLensDropdowns";
 import { useColors } from "@/hooks/useColors";
 import { useUnsavedKinfolkExitGuard } from "@/hooks/useUnsavedKinfolkExitGuard";
@@ -384,8 +385,10 @@ export default function KinfolkSettingsControlCenter() {
       </View>
 
       <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>SUPPORT & PRIVATE CONTROLS</Text>
-      <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <View style={styles.support}><Text style={[styles.rowTitle, { color: colors.foreground }]}>Support preference</Text><Text style={[styles.rowSub, { color: colors.mutedForeground }]}>Choose documented designations you intentionally want Kinfolk to prioritize. This never states who you are.</Text><SupportLensDropdowns selected={draft.supportLens} disabled={saving} onChange={(supportLens) => replaceDraft({ ...draft, supportLens })} /><TouchableOpacity disabled={saving || draft.supportLens.length === 0} onPress={() => replaceDraft({ ...draft, supportLens: [] })}><Text style={[styles.linkText, { color: colors.primary, opacity: saving || draft.supportLens.length === 0 ? 0.45 : 1 }]}>Clear Support Lens</Text></TouchableOpacity></View>
+        <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <View style={styles.support}><Text style={[styles.rowTitle, { color: colors.foreground }]}>Support preference</Text><Text style={[styles.rowSub, { color: colors.mutedForeground }]}>Choose documented designations you intentionally want Kinfolk to prioritize. This never states who you are.</Text><SupportLensDropdowns selected={draft.supportLens} disabled={saving} onChange={(supportLens) => replaceDraft({ ...draft, supportLens })} /><TouchableOpacity disabled={saving || draft.supportLens.length === 0} onPress={() => replaceDraft({ ...draft, supportLens: [] })}><Text style={[styles.linkText, { color: colors.primary, opacity: saving || draft.supportLens.length === 0 ? 0.45 : 1 }]}>Clear Support Lens</Text></TouchableOpacity></View>
+        <Line colors={colors} />
+        <CommunityIntelligencePreferenceRow />
         <Line colors={colors} />
         <Toggle colors={colors} icon="database" title="Continue private context" value={draft.continuityEnabled} disabled={saving} detail={draft.continuityEnabled ? "Active — Kinfolk may use approved private context." : "Paused — Kinfolk will not use or retain new continuity context."} onChange={requestContinuity} />
         <Line colors={colors} />

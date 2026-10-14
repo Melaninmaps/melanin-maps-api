@@ -53,6 +53,7 @@ import { KinfolkCatalogCohort } from "@/components/KinfolkCatalogCohort";
 import { AdminFeedbackTab } from "@/components/AdminFeedbackTab";
 import { AdminAccessLedger } from "@/components/AdminAccessLedger";
 import { AdminBusinessVideoContributions } from "@/components/AdminBusinessVideoContributions";
+import { CommunityIntelligenceGaps } from "@/components/admin/CommunityIntelligenceGaps";
 import AdminBusinessReview from "@/pages/admin-business-review";
 import FounderDirectoryImports from "@/pages/founder-directory-imports";
 import {
@@ -502,6 +503,7 @@ type Tab =
   | "library-growth"
   | "biz-review"
   | "business-videos"
+  | "community-intelligence"
   | "directory-imports";
 
 type ChecklistSection = {
@@ -2962,6 +2964,11 @@ Selected: ${summary}`,
       id: "business-videos",
       label: "Community Videos",
       icon: <MessageSquarePlus className="w-4 h-4" />,
+    },
+    {
+      id: "community-intelligence",
+      label: "Community Intelligence",
+      icon: <TrendingUp className="w-4 h-4" />,
     },
   ];
   if (import.meta.env.VITE_DIRECTORY_IMPORT_REVIEW_ENABLED === "true") {
@@ -8216,6 +8223,12 @@ Selected: ${summary}`,
       {tab === "business-videos" && (
         <div className="p-6">
           <AdminBusinessVideoContributions base={BASE} />
+        </div>
+      )}
+
+      {tab === "community-intelligence" && (
+        <div className="p-6">
+          <CommunityIntelligenceGaps />
         </div>
       )}
 

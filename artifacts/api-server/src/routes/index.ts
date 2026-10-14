@@ -147,6 +147,7 @@ import librarySuggestRouter from "./library-suggest";
 import identityContextRouter from "./identity-context";
 import alliedPartnersRouter from "./allied-partners";
 import resourcesRouter from "./resources";
+import communityIntelligenceRouter from "./community-intelligence";
 import marketplaceRouter from "./marketplace";
 import wellnessTrackerRouter from "./wellness-tracker";
 import financialHubRouter from "./financial-hub";
@@ -256,6 +257,11 @@ router.get("/kinfolk/health", async (_req, res) => {
 router.use(requireAuth);
 
 // ── Everything below requires authentication ────────────────────────────────
+
+// Consent-gated Community Intelligence preferences, structured feedback, and
+// founder-only privacy-suppressed category gaps. This router never creates a
+// public path or exposes individual member activity.
+router.use(communityIntelligenceRouter);
 
 // Normalizes cultural sites, recurring markets/events, and curated resources
 // without changing the existing cultural-site route ordering or legacy detail

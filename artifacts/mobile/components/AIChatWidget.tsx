@@ -63,6 +63,10 @@ import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiv
 import { KinfolkInlineMemoryConsent, type KinfolkInlineMemoryConsentPlan } from "@/components/KinfolkInlineMemoryConsent";
 import { KinfolkMemoryUseNotice, type KinfolkMemoryUse } from "@/components/KinfolkMemoryUseNotice";
 import {
+  CommunityIntelligenceSuggestionCards,
+  type CommunityIntelligenceSuggestion,
+} from "@/components/CommunityIntelligenceSuggestionCards";
+import {
   KinfolkContextualPresentation,
   type KinfolkContextualVisual,
   type KinfolkMediaLink,
@@ -110,6 +114,7 @@ interface Message {
   researchStatus?: KinfolkResearchStatus | null;
   contextualVisuals?: KinfolkContextualVisual[];
   resourceCards?: KinfolkResourceCard[];
+  communityIntelligenceSuggestions?: CommunityIntelligenceSuggestion[];
   /** Device-local only; never included in the Kinfolk chat payload. */
   imagePreviewUris?: string[];
 }
@@ -248,6 +253,7 @@ async function sendToKinfolk(
   researchStatus?: KinfolkResearchStatus | null;
   contextualVisuals?: KinfolkContextualVisual[];
   resourceCards?: KinfolkResourceCard[];
+  communityIntelligenceSuggestions?: CommunityIntelligenceSuggestion[];
 }> {
   const base = getApiBase();
   const requestSessionId = getKinfolkConversation(accountId)?.sessionId;
@@ -320,6 +326,7 @@ async function sendToKinfolk(
     researchStatus?: KinfolkResearchStatus | null;
     contextualVisuals?: KinfolkContextualVisual[] | null;
     resourceCards?: KinfolkResourceCard[] | null;
+    communityIntelligenceSuggestions?: CommunityIntelligenceSuggestion[] | null;
   };
   const resolvedSessionId = data.sessionId ?? requestSessionId;
   if (data.sessionId) recordKinfolkConversation(accountId, data.sessionId, "floating");
@@ -354,6 +361,9 @@ async function sendToKinfolk(
         ? [{ ...card, title: safe.title, url: safe.url }]
         : [];
     }).slice(0, 3),
+    communityIntelligenceSuggestions: Array.isArray(data.communityIntelligenceSuggestions)
+      ? data.communityIntelligenceSuggestions.slice(0, 3)
+      : [],
     clarificationSteps: Array.isArray(data.clarificationSteps) ? data.clarificationSteps.slice(0, 3) : [],
     inlineMemoryConsent: data.memoryConsentPlan ? { message, plan: data.memoryConsentPlan, sessionId: resolvedSessionId } : null,
     sensitiveMemoryDraft:
@@ -1161,6 +1171,7 @@ export function AIChatWidget() {
         relatedConnections,
         researchStatus,
         contextualVisuals,
+        communityIntelligenceSuggestions,
       } = await sendToKinfolk(text, user.id, token, voiceMode, cityHint, request.signal, {
         imageAssetIds: attachedImageAssetIds,
         imageVisionConsent: attachedImageAssetIds.length > 0,
@@ -1202,6 +1213,7 @@ export function AIChatWidget() {
         relatedConnections,
         researchStatus,
         contextualVisuals,
+        communityIntelligenceSuggestions,
       };
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
@@ -1566,6 +1578,9 @@ export function AIChatWidget() {
                     </Text>
                   </View>
                 )}
+                {!item.fromUser && item.communityIntelligenceSuggestions?.length ? (
+                  <CommunityIntelligenceSuggestionCards suggestions={item.communityIntelligenceSuggestions} />
+                ) : null}
                 {!item.fromUser && Platform.OS !== "web" && (
                   <TouchableOpacity
                     onPress={() => void speakMessage(item.id, item.text)}

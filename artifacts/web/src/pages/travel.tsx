@@ -17,6 +17,10 @@ import { getWebToken } from "@/lib/webAuth";
 import KinfolkHairLossCarePaths from "@/components/kinfolk/KinfolkHairLossCarePaths";
 import { KinfolkMemoryManager } from "@/components/kinfolk/KinfolkMemoryManager";
 import { KinfolkContinuityDisclosure } from "@/components/kinfolk/KinfolkContinuityDisclosure";
+import {
+  CommunityIntelligenceSuggestions,
+  type CommunityIntelligenceSuggestion,
+} from "@/components/kinfolk/CommunityIntelligenceSuggestions";
 import { KinfolkSensitiveMemoryConfirmation } from "@/components/kinfolk/KinfolkSensitiveMemoryConfirmation";
 import { KinfolkInlineMemoryConsent, type KinfolkInlineMemoryConsentPlan } from "@/components/kinfolk/KinfolkInlineMemoryConsent";
 import {
@@ -236,6 +240,8 @@ interface Message {
   memoryUse?: KinfolkMemoryUse | null;
   /** Server decision metadata; the client fails closed for unauthorized cards. */
   responseMeta?: KinfolkResponseMeta | null;
+  /** Bounded current-turn planning considerations; never a business listing. */
+  communityIntelligenceSuggestions?: CommunityIntelligenceSuggestion[];
 }
 type ConversationHandoffStatus = {
   state: "saved" | "resumed";
@@ -2176,6 +2182,7 @@ function TravelPage() {
         contextualVisuals?: KinfolkContextualVisual[] | null;
         resourceCards?: KinfolkResourceCard[] | null;
         responseMeta?: KinfolkResponseMeta | null;
+        communityIntelligenceSuggestions?: CommunityIntelligenceSuggestion[];
         sensitiveMemoryConfirmation?: {
           confirmationRequired?: boolean;
           purpose?: string;
@@ -2249,6 +2256,9 @@ function TravelPage() {
         inlineMemoryConsent: data.memoryConsentPlan ? { message: trimmed, plan: data.memoryConsentPlan, sessionId: data.sessionId ?? sessionId } : null,
         memoryUse: data.memoryUse?.applied === true ? data.memoryUse : null,
         responseMeta,
+        communityIntelligenceSuggestions: Array.isArray(data.communityIntelligenceSuggestions)
+          ? data.communityIntelligenceSuggestions.slice(0, 3)
+          : [],
       }]);
       if (shouldAutoSpeakNewReply({
         autoSpeak: prefs.autoSpeak,
@@ -3026,6 +3036,9 @@ function TravelPage() {
                           </p>
                         </div>
                       )}
+                      {msg.role === "assistant" && msg.communityIntelligenceSuggestions?.length ? (
+                        <CommunityIntelligenceSuggestions suggestions={msg.communityIntelligenceSuggestions} />
+                      ) : null}
                       {msg.resultView && <ConversationalBusinessCards view={msg.resultView} />}
                       {msg.recommendations && !msg.resultView && !hasItineraryDays(msg.itinerary) && (
                         <RecommendationCards recs={msg.recommendations} onFeedback={handleFeedback} feedback={feedback} onCopy={copyTrip} onShare={isLoggedIn && sessionId ? shareTrip : undefined} />

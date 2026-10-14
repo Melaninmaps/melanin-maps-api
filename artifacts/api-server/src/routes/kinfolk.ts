@@ -235,6 +235,8 @@ import {
   type KinfolkItinerary,
 } from "../kinfolk/itinerary-response";
 import { inspectProactiveTravelSuggestion } from "../kinfolk/proactive-travel-suggestions";
+import { communityIntelligenceSuggestionsForMessage } from "../services/community-intelligence/policy";
+import { rankSuggestionsWithCommunitySignals } from "../services/community-intelligence/service";
 
 // ── Living Library lazy singleton instances ────────────────────────────────────
 // Created once on first research request; degrade gracefully when Tavily key is absent.
@@ -14231,6 +14233,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           }
         : null
     );
+    // This is bounded, message-derived planning context rather than private
+    // memory. Aggregate ordering is attempted only through the consent-gated,
+    // privacy-suppressed Community Intelligence service. A read failure keeps
+    // safe foundational suggestions intact without claiming community evidence.
+    const communityIntelligenceSuggestions =
+      !isPrivateQuestionAttachment && intentPolicy.consequence === "low"
+        ? await rankSuggestionsWithCommunitySignals(
+            communityIntelligenceSuggestionsForMessage(message),
+          )
+        : [];
     res.json({
       sessionId: finalSessionId,
       reply: memberFacingReply,
@@ -14243,6 +14255,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // Generic only: confirms relevant approved preference use without exposing
       // a private note, the selection reason, or a memory record identifier.
       memoryUse: memberFacingMemoryUse,
+      // At most three safe, current-turn planning considerations. These never
+      // represent a business listing, other-member activity, or private memory.
+      communityIntelligenceSuggestions,
       recommendations,
       itinerary,
       followUpSuggestions,
