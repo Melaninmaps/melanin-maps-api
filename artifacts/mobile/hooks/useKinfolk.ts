@@ -14,6 +14,7 @@ import {
 } from "@workspace/constants";
 import type { KinfolkMemoryUse } from "@/components/KinfolkMemoryUseNotice";
 import type {
+  KinfolkContextualVisual,
   KinfolkMediaLink,
   KinfolkRelatedConnection,
   KinfolkResearchStatus,
@@ -246,6 +247,7 @@ export type ChatMessage = {
   mediaLinks?: KinfolkMediaLink[];
   relatedConnections?: KinfolkRelatedConnection[];
   researchStatus?: KinfolkResearchStatus | null;
+  contextualVisuals?: KinfolkContextualVisual[];
   /** Reviewed educational resources, sanitized before primary-chat rendering. */
   resourceCards?: KinfolkResourceCard[];
 };
@@ -580,6 +582,7 @@ export function useKinfolk() {
           mediaLinks?: KinfolkMediaLink[] | null;
           relatedConnections?: KinfolkRelatedConnection[] | null;
           researchStatus?: KinfolkResearchStatus | null;
+          contextualVisuals?: KinfolkContextualVisual[] | null;
           resourceCards?: KinfolkResourceCard[] | null;
           conversationHandoff?: ConversationHandoffStatus | null;
           sensitiveMemoryConfirmation?: {
@@ -644,6 +647,7 @@ export function useKinfolk() {
           mediaLinks: Array.isArray(data.mediaLinks) ? data.mediaLinks.slice(0, 5) : [],
           relatedConnections: Array.isArray(data.relatedConnections) ? data.relatedConnections.slice(0, 5) : [],
           researchStatus: data.researchStatus ?? null,
+          contextualVisuals: Array.isArray(data.contextualVisuals) ? data.contextualVisuals.slice(0, 3) : [],
           resourceCards: (data.resourceCards ?? []).flatMap((card) => {
             const safe = parseSafeSourceLink({ title: card.title, url: card.url });
             return safe

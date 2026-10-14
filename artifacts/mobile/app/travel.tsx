@@ -1052,6 +1052,7 @@ function AiMessageBubble({
           mediaLinks={msg.mediaLinks}
           relatedConnections={msg.relatedConnections}
           researchStatus={msg.researchStatus}
+          contextualVisuals={msg.contextualVisuals}
           color={colors.text}
           mutedColor={colors.mutedForeground}
           borderColor={colors.border}

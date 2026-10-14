@@ -60,6 +60,7 @@ import { KinfolkInlineMemoryConsent, type KinfolkInlineMemoryConsentPlan } from 
 import { KinfolkMemoryUseNotice, type KinfolkMemoryUse } from "@/components/KinfolkMemoryUseNotice";
 import {
   KinfolkContextualPresentation,
+  type KinfolkContextualVisual,
   type KinfolkMediaLink,
   type KinfolkRelatedConnection,
   type KinfolkResearchStatus,
@@ -103,6 +104,7 @@ interface Message {
   mediaLinks?: KinfolkMediaLink[];
   relatedConnections?: KinfolkRelatedConnection[];
   researchStatus?: KinfolkResearchStatus | null;
+  contextualVisuals?: KinfolkContextualVisual[];
   resourceCards?: KinfolkResourceCard[];
   /** Device-local only; never included in the Kinfolk chat payload. */
   imagePreviewUris?: string[];
@@ -238,6 +240,7 @@ async function sendToKinfolk(
   mediaLinks?: KinfolkMediaLink[];
   relatedConnections?: KinfolkRelatedConnection[];
   researchStatus?: KinfolkResearchStatus | null;
+  contextualVisuals?: KinfolkContextualVisual[];
   resourceCards?: KinfolkResourceCard[];
 }> {
   const base = getApiBase();
@@ -307,6 +310,7 @@ async function sendToKinfolk(
     mediaLinks?: KinfolkMediaLink[] | null;
     relatedConnections?: KinfolkRelatedConnection[] | null;
     researchStatus?: KinfolkResearchStatus | null;
+    contextualVisuals?: KinfolkContextualVisual[] | null;
     resourceCards?: KinfolkResourceCard[] | null;
   };
   if (data.sessionId) sessionId = data.sessionId;
@@ -333,6 +337,7 @@ async function sendToKinfolk(
     mediaLinks: Array.isArray(data.mediaLinks) ? data.mediaLinks.slice(0, 5) : [],
     relatedConnections: Array.isArray(data.relatedConnections) ? data.relatedConnections.slice(0, 5) : [],
     researchStatus: data.researchStatus ?? null,
+    contextualVisuals: Array.isArray(data.contextualVisuals) ? data.contextualVisuals.slice(0, 3) : [],
     resourceCards: (data.resourceCards ?? []).flatMap((card) => {
       const safe = parseSafeSourceLink({ title: card.title, url: card.url });
       return safe && card.id && card.description
@@ -1121,6 +1126,7 @@ export function AIChatWidget() {
         mediaLinks,
         relatedConnections,
         researchStatus,
+        contextualVisuals,
       } = await sendToKinfolk(text, token, voiceMode, cityHint, request.signal, {
         imageAssetIds: attachedImageAssetIds,
         imageVisionConsent: attachedImageAssetIds.length > 0,
@@ -1159,6 +1165,7 @@ export function AIChatWidget() {
         mediaLinks,
         relatedConnections,
         researchStatus,
+        contextualVisuals,
       };
       setMessages((m) => [...m, aiMsg]);
       setSuggestions(followUpSuggestions);
@@ -1713,6 +1720,7 @@ export function AIChatWidget() {
                       mediaLinks={item.mediaLinks}
                       relatedConnections={item.relatedConnections}
                       researchStatus={item.researchStatus}
+                      contextualVisuals={item.contextualVisuals}
                       color={colors.foreground}
                       mutedColor={colors.mutedForeground}
                       borderColor={colors.border}

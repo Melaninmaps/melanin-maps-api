@@ -43,6 +43,7 @@ import {
   KINFOLK_RESPONSE_STATUS_DELAYS_MS,
   KINFOLK_RESPONSE_STATUS_STAGES,
   type KinfolkItinerary as KinfolkItineraryResponse,
+  type KinfolkContextualVisual,
   type KinfolkMediaLink,
   type KinfolkRelatedConnection,
   type KinfolkResearchStatus,
@@ -191,6 +192,7 @@ interface Message {
   mediaLinks?: KinfolkMediaLink[];
   relatedConnections?: KinfolkRelatedConnection[];
   researchStatus?: KinfolkResearchStatus | null;
+  contextualVisuals?: KinfolkContextualVisual[];
   resourceCards?: KinfolkResourceCard[];
   followUpSuggestions?: string[]; timestamp: string;
   cultureAction?: CultureAction | null;
@@ -2140,6 +2142,7 @@ function TravelPage() {
         degradedReason?: string | null;
         companionMemoryOffer?: CompanionMemoryOffer | null;
         memoryUse?: KinfolkMemoryUse | null;
+        contextualVisuals?: KinfolkContextualVisual[] | null;
         resourceCards?: KinfolkResourceCard[] | null;
         responseMeta?: KinfolkResponseMeta | null;
         sensitiveMemoryConfirmation?: {
@@ -2181,6 +2184,7 @@ function TravelPage() {
         mediaLinks: data.mediaLinks ?? [],
         relatedConnections: data.relatedConnections ?? [],
         researchStatus: data.researchStatus ?? null,
+        contextualVisuals: Array.isArray(data.contextualVisuals) ? data.contextualVisuals.slice(0, 3) : [],
         resourceCards: (data.resourceCards ?? []).flatMap((resource) => {
           const href = safeExternalSourceHref(resource.url);
           return href && resource.id && resource.title && resource.description
@@ -2966,6 +2970,7 @@ function TravelPage() {
                           mediaLinks={msg.mediaLinks}
                           relatedConnections={msg.relatedConnections}
                           researchStatus={msg.researchStatus}
+                          contextualVisuals={msg.contextualVisuals}
                         />
                       )}
                       {msg.role === "assistant" && msg.resourceCards?.length ? (

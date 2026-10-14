@@ -1,6 +1,6 @@
 import { Feather } from "@expo/vector-icons";
-import React from "react";
-import { Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import React, { useState } from "react";
+import { Image, Linking, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { parseSafeSourceLink } from "@/lib/sourceLinks";
 
 export type KinfolkStructuredContent =
@@ -33,11 +33,40 @@ export type KinfolkResearchStatus = {
   asOf: string;
 };
 
+/**
+ * Additive response metadata selected only by the API's reviewed visual
+ * registry. The client still validates the remote image host before rendering.
+ */
+export type KinfolkContextualVisual =
+  | {
+      kind: "image";
+      id: string;
+      title: string;
+      imageUrl: string;
+      alt: string;
+      sourceUrl: string;
+      sourceLabel: string;
+      attribution: string;
+      licenseLabel: string;
+      licenseUrl: string;
+      classification: "illustrative_photo";
+    }
+  | {
+      kind: "external_gallery";
+      id: string;
+      title: string;
+      description: string;
+      sourceUrl: string;
+      sourceLabel: string;
+      safetyNote: string;
+    };
+
 type Props = {
   structuredContent?: KinfolkStructuredContent | null;
   mediaLinks?: KinfolkMediaLink[] | null;
   relatedConnections?: KinfolkRelatedConnection[] | null;
   researchStatus?: KinfolkResearchStatus | null;
+  contextualVisuals?: KinfolkContextualVisual[] | null;
   color: string;
   mutedColor: string;
   borderColor: string;
@@ -72,6 +101,88 @@ function SafeExternalLink({ title, url, color }: { title: string; url: string; c
       <Feather name="external-link" size={12} color={color} />
       <Text style={[styles.linkText, { color }]} numberOfLines={2}>{safe.title}</Text>
     </TouchableOpacity>
+  );
+}
+
+function approvedContextualImageUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:"
+      && url.hostname === "thumb.wikimedia.org"
+      && url.pathname.startsWith("/wikipedia/commons/thumb/")
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function safeContextualVisuals(
+  visuals: KinfolkContextualVisual[] | null | undefined,
+): KinfolkContextualVisual[] {
+  const safeVisuals: KinfolkContextualVisual[] = [];
+  for (const visual of visuals ?? []) {
+    const source = parseSafeSourceLink({ title: visual?.sourceLabel, url: visual?.sourceUrl });
+    if (!source || typeof visual?.id !== "string" || typeof visual?.title !== "string") continue;
+    if (visual.kind === "external_gallery") {
+      if (typeof visual.description === "string" && typeof visual.safetyNote === "string") {
+        safeVisuals.push({ ...visual, sourceUrl: source.url, sourceLabel: source.title });
+      }
+      continue;
+    }
+    const imageUrl = approvedContextualImageUrl(visual.imageUrl);
+    const license = parseSafeSourceLink({ title: visual.licenseLabel, url: visual.licenseUrl });
+    if (imageUrl && license && typeof visual.alt === "string" && typeof visual.attribution === "string"
+      && visual.classification === "illustrative_photo") {
+      safeVisuals.push({ ...visual, imageUrl, sourceUrl: source.url, sourceLabel: source.title, licenseUrl: license.url, licenseLabel: license.title });
+    }
+  }
+  return safeVisuals.slice(0, 3);
+}
+
+function ContextualVisualCard({
+  visual,
+  color,
+  mutedColor,
+  accentColor,
+}: {
+  visual: KinfolkContextualVisual;
+  color: string;
+  mutedColor: string;
+  accentColor: string;
+}) {
+  const [imageUnavailable, setImageUnavailable] = useState(false);
+  if (visual.kind === "external_gallery") {
+    return (
+      <View testID="kinfolk-contextual-visual-gallery" style={styles.visualCard}>
+        <Text style={[styles.detailTitle, { color }]}>{visual.title}</Text>
+        <Text style={[styles.detailText, { color: mutedColor }]}>{visual.description}</Text>
+        <SafeExternalLink title={visual.sourceLabel} url={visual.sourceUrl} color={accentColor} />
+        <Text style={[styles.safetyText, { color: mutedColor }]}>{visual.safetyNote}</Text>
+      </View>
+    );
+  }
+  return (
+    <View testID="kinfolk-contextual-visual-image" style={styles.visualCard}>
+      <Text style={[styles.detailTitle, { color }]}>{visual.title}</Text>
+      {imageUnavailable ? (
+        <View testID="kinfolk-contextual-visual-fallback" style={styles.visualFallback}>
+          <Text style={[styles.detailText, { color: mutedColor }]}>This educational image could not load. Its attributed source remains available below.</Text>
+        </View>
+      ) : (
+        <Image
+          source={{ uri: visual.imageUrl }}
+          accessibilityLabel={visual.alt}
+          style={styles.visualImage}
+          resizeMode="cover"
+          onError={() => setImageUnavailable(true)}
+        />
+      )}
+      <Text style={[styles.detailText, { color: mutedColor }]}>{visual.attribution} · {visual.licenseLabel}</Text>
+      <SafeExternalLink title={visual.sourceLabel} url={visual.sourceUrl} color={accentColor} />
+      <SafeExternalLink title={`License: ${visual.licenseLabel}`} url={visual.licenseUrl} color={accentColor} />
+    </View>
   );
 }
 
@@ -164,6 +275,7 @@ export function KinfolkContextualPresentation({
   mediaLinks,
   relatedConnections,
   researchStatus,
+  contextualVisuals,
   color,
   mutedColor,
   borderColor,
@@ -172,7 +284,8 @@ export function KinfolkContextualPresentation({
 }: Props) {
   const safeMedia = (mediaLinks ?? []).filter((link) => Boolean(parseSafeSourceLink({ title: link.title, url: link.url }))).slice(0, 5);
   const safeConnections = (relatedConnections ?? []).slice(0, 5);
-  if (!structuredContent && safeMedia.length === 0 && safeConnections.length === 0 && !researchStatus) return null;
+  const safeVisuals = safeContextualVisuals(contextualVisuals);
+  if (!structuredContent && safeMedia.length === 0 && safeConnections.length === 0 && safeVisuals.length === 0 && !researchStatus) return null;
 
   return (
     <View testID="kinfolk-contextual-presentation" style={[styles.container, { borderColor }]}>
@@ -220,6 +333,20 @@ export function KinfolkContextualPresentation({
           })}
         </View>
       ) : null}
+      {safeVisuals.length > 0 ? (
+        <View testID="kinfolk-contextual-visuals" style={styles.section}>
+          <Text style={[styles.heading, { color }]}>Relevant visual references</Text>
+          {safeVisuals.map((visual) => (
+            <ContextualVisualCard
+              key={visual.id}
+              visual={visual}
+              color={color}
+              mutedColor={mutedColor}
+              accentColor={accentColor}
+            />
+          ))}
+        </View>
+      ) : null}
       {researchStatus ? (
         <Text testID="kinfolk-research-status" style={[styles.researchStatus, { color: mutedColor }]}>
           {kinfolkResearchStatusLabel(researchStatus)}
@@ -236,6 +363,9 @@ const styles = StyleSheet.create({
   heading: { fontFamily: "Inter_700Bold", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5 },
   stack: { gap: 5 },
   detailBlock: { gap: 2 },
+  visualCard: { gap: 6, borderRadius: 10, borderWidth: 1, borderColor: "#3A1F0E1A", backgroundColor: "#FFFFFF", padding: 8 },
+  visualImage: { width: "100%", height: 176, borderRadius: 8, backgroundColor: "#FAF6EF" },
+  visualFallback: { minHeight: 88, justifyContent: "center", borderRadius: 8, backgroundColor: "#FAF6EF", padding: 8 },
   detailTitle: { fontFamily: "Inter_700Bold", fontSize: 12, lineHeight: 17 },
   detailText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
   safetyText: { fontFamily: "Inter_600SemiBold", fontSize: 11, lineHeight: 16 },

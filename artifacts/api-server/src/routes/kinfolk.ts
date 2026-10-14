@@ -331,6 +331,10 @@ import {
   type ResourceCard,
   type EntityCandidate,
 } from "../kinfolk/resource-library";
+import {
+  selectKinfolkContextualVisuals,
+  type KinfolkContextualVisual,
+} from "../kinfolk/contextual-visuals";
 import { prepareKinfolkResearchPlan } from "../kinfolk/prepareResearchPlan";
 import { applySavedMemberResearchContext } from "../kinfolk/saved-member-research-context";
 import {
@@ -11642,6 +11646,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     // The member lens is applied BEFORE any call to the LLM — never as a post-filter.
     let webSearchBlock = "";
     let webResourceCards: ResourceCard[] = [];
+    let webContextualVisuals: KinfolkContextualVisual[] = [];
     let webEntityCandidates: EntityCandidate[] | undefined;
     let webResearchSourceNote: string | null =
       liveWebOutcome?.state === "degraded"
@@ -11719,6 +11724,13 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         ].filter(
           (card, idx, arr) => arr.findIndex((c) => c.id === card.id) === idx,
         );
+
+        // Visual cards are selected exclusively from a server-owned reviewed
+        // registry. They never come from model output or a live image search.
+        webContextualVisuals = selectKinfolkContextualVisuals({
+          message,
+          reviewedResources: webResourceCards,
+        });
 
         // Current-information search uses Responses web_search; optional Tavily
         // fallback is selected inside the adapter only after a provider failure.
@@ -14222,6 +14234,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       // urgentSafetyMessage: immediate care instruction for pregnancy/danger language.
       ...(kinfolkLensDisclosure && { lensDisclosure: kinfolkLensDisclosure }),
       ...(webResourceCards.length > 0 && { resourceCards: webResourceCards }),
+      ...(webContextualVisuals.length > 0 && {
+        contextualVisuals: webContextualVisuals,
+      }),
       ...(webEntityCandidates?.length && {
         entityCandidates: webEntityCandidates,
       }),
