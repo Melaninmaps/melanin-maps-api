@@ -12,7 +12,8 @@ describe("governed no-result route contract", () => {
     expect(route).toContain("resolveGovernedNoResultFollowUp");
     expect(route).toContain("decodeGovernedNoResultAction");
     expect(route).toContain("offeredActions: priorAssistant?.followUpSuggestions");
-    expect(route).toContain("const discoveryMessage = noResultFollowUp?.priorQuestion ?? input.message");
+    expect(route).toContain("noResultFollowUp?.priorQuestion ??");
+    expect(route).toContain("locationClarificationFollowUp?.priorQuestion ??");
     expect(route).toContain("readEphemeralKinfolkSession(input.req.user!.id, input.sessionId)");
   });
 
@@ -22,5 +23,11 @@ describe("governed no-result route contract", () => {
     expect(route).toContain("ownershipDocumentationScope");
     expect(route).toContain("allowAllPublicPlaces: explicitAllPlacesExpansion");
     expect(route).not.toContain("updatePreferences({ preferredOwnershipTypes: []");
+  });
+
+  it("does not claim a saved preference was applied when the governed query has no actionable card", () => {
+    expect(route).toContain("const governedDiscoveryHasUsableRecommendation =");
+    expect(route).toContain("resultView.cards.length > 0");
+    expect(route).toContain("memoryUse: directPrivateMemoryUseDecision.memberFacingUse");
   });
 });

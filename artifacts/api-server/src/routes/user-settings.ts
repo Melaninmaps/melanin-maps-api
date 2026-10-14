@@ -1,5 +1,5 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, userSettingsTable } from "@workspace/db";
+import { db, pool, userSettingsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { isKinfolkPrivateMemoryEnabled } from "../kinfolk/private-memory";
 
@@ -42,9 +42,13 @@ const DEFAULT_SETTINGS = {
   kinfolkMemoryEnabled: isKinfolkPrivateMemoryEnabled(),
   profileViewTrackingEnabled: true,
   postNudgesEnabled: true,
-  safetyAlertPolice: true,
-  safetyAlertIce: true,
+  // Police/ICE alerts are an affirmative, separate choice. A missing settings
+  // row must never be treated as consent to receive sensitive safety alerts.
+  safetyAlertPolice: false,
+  safetyAlertIce: false,
   safetyAlertRadiusMiles: 5,
+  safetyAlertAreaCity: null,
+  safetyAlertAreaState: null,
 };
 
 // ─── GET /api/users/settings ─────────────────────────────────────────────────
@@ -81,6 +85,7 @@ type SettingsPatch = Partial<{
   activityStatus: boolean; usageAnalytics: boolean; personalisedSuggestions: boolean;
   kinfolkMemoryEnabled: boolean; profileViewTrackingEnabled: boolean; postNudgesEnabled: boolean;
   safetyAlertPolice: boolean; safetyAlertIce: boolean; safetyAlertRadiusMiles: number;
+  safetyAlertAreaCity: string | null; safetyAlertAreaState: string | null;
 }>;
 
 function parseSettingsPatch(body: unknown): { ok: true; data: SettingsPatch } | { ok: false } {
@@ -108,6 +113,25 @@ function parseSettingsPatch(body: unknown): { ok: true; data: SettingsPatch } | 
     if (!Number.isInteger(r) || r < 1 || r > 10) return { ok: false };
     data.safetyAlertRadiusMiles = r;
   }
+  const hasAreaCity = "safetyAlertAreaCity" in b;
+  const hasAreaState = "safetyAlertAreaState" in b;
+  if (hasAreaCity !== hasAreaState) return { ok: false };
+  if (hasAreaCity && hasAreaState) {
+    const rawCity = b.safetyAlertAreaCity;
+    const rawState = b.safetyAlertAreaState;
+    const city = typeof rawCity === "string" ? rawCity.trim().replace(/\s+/g, " ") : null;
+    const state = typeof rawState === "string" ? rawState.trim().toUpperCase() : null;
+    const clearingArea = (rawCity === null || city === "") && (rawState === null || state === "");
+    if (clearingArea) {
+      data.safetyAlertAreaCity = null;
+      data.safetyAlertAreaState = null;
+    } else if (!city || city.length > 100 || !state || !/^[A-Z]{2}$/.test(state)) {
+      return { ok: false };
+    } else {
+      data.safetyAlertAreaCity = city;
+      data.safetyAlertAreaState = state;
+    }
+  }
   if ("profileVisibility" in b) {
     if (!["public", "community", "private"].includes(b.profileVisibility as string)) return { ok: false };
     data.profileVisibility = b.profileVisibility as "public" | "community" | "private";
@@ -117,6 +141,30 @@ function parseSettingsPatch(body: unknown): { ok: true; data: SettingsPatch } | 
     data.locationPrecision = b.locationPrecision as "neighborhood" | "exact";
   }
   return { ok: true, data };
+}
+
+async function canonicalizeSafetyAlertArea(patch: SettingsPatch): Promise<SettingsPatch | null> {
+  if (!("safetyAlertAreaCity" in patch) || !("safetyAlertAreaState" in patch)) return patch;
+  if (patch.safetyAlertAreaCity === null && patch.safetyAlertAreaState === null) return patch;
+
+  const area = await pool.query<{ city_name: string; state_code: string }>(
+    `SELECT city_name, state_code
+     FROM community_locations
+     WHERE LOWER(city_name) = LOWER($1)
+       AND UPPER(state_code) = UPPER($2)
+       AND neighborhood_name IS NULL
+       AND latitude IS NOT NULL
+       AND longitude IS NOT NULL
+     LIMIT 1`,
+    [patch.safetyAlertAreaCity, patch.safetyAlertAreaState],
+  );
+  const canonical = area.rows[0];
+  if (!canonical) return null;
+  return {
+    ...patch,
+    safetyAlertAreaCity: canonical.city_name,
+    safetyAlertAreaState: canonical.state_code.toUpperCase(),
+  };
 }
 
 // ─── PUT /api/users/settings ──────────────────────────────────────────────────
@@ -138,23 +186,47 @@ router.put("/users/settings", async (req: Request, res: Response) => {
   }
 
   try {
+    const settingsPatch = await canonicalizeSafetyAlertArea(parsed.data);
+    if (!settingsPatch) {
+      res.status(400).json({ error: "Choose a supported city and two-letter state for Safety Alerts." });
+      return;
+    }
     const [existing] = await db
-      .select({ userId: userSettingsTable.userId })
+      .select({
+        userId: userSettingsTable.userId,
+        safetyAlertPolice: userSettingsTable.safetyAlertPolice,
+        safetyAlertIce: userSettingsTable.safetyAlertIce,
+        safetyAlertAreaCity: userSettingsTable.safetyAlertAreaCity,
+        safetyAlertAreaState: userSettingsTable.safetyAlertAreaState,
+      })
       .from(userSettingsTable)
       .where(eq(userSettingsTable.userId, userId))
       .limit(1);
 
+    const enabledPolice = settingsPatch.safetyAlertPolice ?? existing?.safetyAlertPolice ?? false;
+    const enabledIce = settingsPatch.safetyAlertIce ?? existing?.safetyAlertIce ?? false;
+    const areaCity = "safetyAlertAreaCity" in settingsPatch
+      ? settingsPatch.safetyAlertAreaCity
+      : existing?.safetyAlertAreaCity ?? null;
+    const areaState = "safetyAlertAreaState" in settingsPatch
+      ? settingsPatch.safetyAlertAreaState
+      : existing?.safetyAlertAreaState ?? null;
+    if ((enabledPolice || enabledIce) && (!areaCity || !areaState)) {
+      res.status(400).json({ error: "Choose and save a Safety Alert city and state before turning on Police or ICE alerts." });
+      return;
+    }
+
     if (existing) {
       const [updated] = await db
         .update(userSettingsTable)
-        .set({ ...parsed.data, updatedAt: new Date() })
+        .set({ ...settingsPatch, updatedAt: new Date() })
         .where(eq(userSettingsTable.userId, userId))
         .returning();
       res.json(updated);
     } else {
       const [inserted] = await db
         .insert(userSettingsTable)
-        .values({ userId, ...DEFAULT_SETTINGS, ...parsed.data })
+        .values({ userId, ...DEFAULT_SETTINGS, ...settingsPatch })
         .returning();
       res.json(inserted);
     }

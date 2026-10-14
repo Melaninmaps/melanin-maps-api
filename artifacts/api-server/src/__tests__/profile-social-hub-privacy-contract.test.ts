@@ -9,13 +9,14 @@ function source(relativePath: string): string {
 describe("social profile privacy contract", () => {
   const users = source("../routes/users.ts");
 
-  it("keeps profile activity behind the existing follow/privacy gate and returns follow totals only to the owner", () => {
+  it("keeps profile activity and social counts behind the existing follow/privacy gate", () => {
     expect(users).toContain("const canSeeContent = callerId === targetId || (!user.isPrivate || isFollowing)");
     expect(users).toContain("reviews: canSeeContent ? reviews : []");
     expect(users).toContain("tags: canSeeContent ? tags : []");
     expect(users).toContain("canReceiveDirectMessages: Boolean(callerId && callerId !== targetId && allowDm)");
     expect(users).toContain("followersCount: usersTable.followersCount");
     expect(users).toContain("followingCount: usersTable.followingCount");
-    expect(users).toContain("...(callerId === targetId ? { followersCount, followingCount } : {})");
+    expect(users).toContain("...(canSeeContent ? { followersCount, followingCount } : {})");
+    expect(users).toContain("public profiles and accepted followers may see them");
   });
 });

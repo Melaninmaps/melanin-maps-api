@@ -1,26 +1,13 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, conversations as conversationsTable, messages as messagesTable, userBlocksTable, usersTable } from "@workspace/db";
+import { db, conversations as conversationsTable, messages as messagesTable, usersTable } from "@workspace/db";
 import { scanForFamily } from "../lib/familyFilter";
 import { eq, and, asc, desc, sql, or, ilike } from "drizzle-orm";
+import { filterBlockedRelationships, usersAreBlocked } from "../social/profileRelationshipAccess";
 
 const router: IRouter = Router();
 
 function conversationHasParticipant(conversation: { participantIds: unknown }, userId: string): boolean {
   return Array.isArray(conversation.participantIds) && conversation.participantIds.includes(userId);
-}
-
-async function usersAreBlocked(firstUserId: string, secondUserId: string): Promise<boolean> {
-  const blocks = await db
-    .select({ id: userBlocksTable.id })
-    .from(userBlocksTable)
-    .where(
-      or(
-        and(eq(userBlocksTable.blockerId, firstUserId), eq(userBlocksTable.blockedId, secondUserId)),
-        and(eq(userBlocksTable.blockerId, secondUserId), eq(userBlocksTable.blockedId, firstUserId)),
-      ),
-    )
-    .limit(1);
-  return blocks.length > 0;
 }
 
 async function dmConversationIsBlocked(conversation: { type: string; participantIds: unknown }, userId: string): Promise<boolean> {
@@ -53,7 +40,10 @@ router.get("/users/search", async (req: Request, res: Response) => {
         )
       )
       .limit(20);
-    res.json({ users: rows.filter((u) => u.id !== req.user!.id) });
+    // This handler is mounted before the canonical member search route. Keep
+    // direct-message search subject to the same bidirectional block boundary.
+    const candidates = rows.filter((user) => user.id !== req.user!.id);
+    res.json({ users: await filterBlockedRelationships(req.user.id, candidates) });
   } catch (err) {
     req.log.error({ err }, "users/search failed");
     res.status(500).json({ error: "Search failed" });

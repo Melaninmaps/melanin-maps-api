@@ -29,7 +29,29 @@ describe("buildExplicitMemoryConsentPlan", () => {
     expect(plan?.ordinary).toHaveLength(2);
   });
 
+  it("keeps a family location statement separate from an adjacent food preference", () => {
+    const plan = buildExplicitMemoryConsentPlan(
+      "Kinfolk, this is what I want you to remember about me: I have locs, I prefer Caribbean food, and my mother lives in Philadelphia.",
+    );
+    expect(plan?.ordinary.map((item) => item.content)).toEqual(expect.arrayContaining([
+      "I have locs",
+      "I prefer Caribbean food",
+      "my mother lives in Philadelphia",
+    ]));
+  });
+
   it("returns null when the member did not explicitly ask Kinfolk to remember", () => {
     expect(buildExplicitMemoryConsentPlan("I enjoy food and travel.")).toBeNull();
+  });
+
+  it("offers a separate one-turn choice for an explicit delivery preference", () => {
+    const plan = buildExplicitMemoryConsentPlan("Always give me short answers.");
+    expect(plan).toMatchObject({
+      purpose: "profile_context",
+      oneTimeUseAvailable: true,
+    });
+    expect(plan?.ordinary).toEqual([
+      expect.objectContaining({ label: "Communication preference" }),
+    ]);
   });
 });

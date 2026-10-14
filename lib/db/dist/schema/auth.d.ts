@@ -214,6 +214,23 @@ export declare const usersTable: import("drizzle-orm/pg-core").PgTableWithColumn
         }, {}, {
             length: number | undefined;
         }>;
+        isLoadTest: import("drizzle-orm/pg-core").PgColumn<{
+            name: "is_load_test";
+            tableName: "users";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         approved: import("drizzle-orm/pg-core").PgColumn<{
             name: "approved";
             tableName: "users";

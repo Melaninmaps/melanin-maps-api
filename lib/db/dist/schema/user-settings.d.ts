@@ -158,6 +158,40 @@ export declare const userSettingsTable: import("drizzle-orm/pg-core").PgTableWit
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        notifReminders: import("drizzle-orm/pg-core").PgColumn<{
+            name: "notif_reminders";
+            tableName: "user_settings";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        arrivalAwarenessEnabled: import("drizzle-orm/pg-core").PgColumn<{
+            name: "arrival_awareness_enabled";
+            tableName: "user_settings";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         notifPostNudges: import("drizzle-orm/pg-core").PgColumn<{
             name: "notif_post_nudges";
             tableName: "user_settings";
@@ -269,7 +303,7 @@ export declare const userSettingsTable: import("drizzle-orm/pg-core").PgTableWit
             tableName: "user_settings";
             dataType: "string";
             columnType: "PgVarchar";
-            data: "public" | "community" | "private";
+            data: "private" | "community" | "public";
             driverParam: string;
             notNull: true;
             hasDefault: true;
@@ -561,6 +595,44 @@ export declare const userSettingsTable: import("drizzle-orm/pg-core").PgTableWit
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        safetyAlertAreaCity: import("drizzle-orm/pg-core").PgColumn<{
+            name: "safety_alert_area_city";
+            tableName: "user_settings";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 100;
+        }>;
+        safetyAlertAreaState: import("drizzle-orm/pg-core").PgColumn<{
+            name: "safety_alert_area_state";
+            tableName: "user_settings";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 2;
+        }>;
         updatedAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "updated_at";
             tableName: "user_settings";
@@ -737,6 +809,40 @@ export declare const insertUserSettingsSchema: import("drizzle-zod").BuildSchema
         identity: undefined;
         generated: undefined;
     }, {}, {}>;
+    notifReminders: import("drizzle-orm/pg-core").PgColumn<{
+        name: "notif_reminders";
+        tableName: "user_settings";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    arrivalAwarenessEnabled: import("drizzle-orm/pg-core").PgColumn<{
+        name: "arrival_awareness_enabled";
+        tableName: "user_settings";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     notifPostNudges: import("drizzle-orm/pg-core").PgColumn<{
         name: "notif_post_nudges";
         tableName: "user_settings";
@@ -848,7 +954,7 @@ export declare const insertUserSettingsSchema: import("drizzle-zod").BuildSchema
         tableName: "user_settings";
         dataType: "string";
         columnType: "PgVarchar";
-        data: "public" | "community" | "private";
+        data: "private" | "community" | "public";
         driverParam: string;
         notNull: true;
         hasDefault: true;
@@ -1140,6 +1246,44 @@ export declare const insertUserSettingsSchema: import("drizzle-zod").BuildSchema
         identity: undefined;
         generated: undefined;
     }, {}, {}>;
+    safetyAlertAreaCity: import("drizzle-orm/pg-core").PgColumn<{
+        name: "safety_alert_area_city";
+        tableName: "user_settings";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 100;
+    }>;
+    safetyAlertAreaState: import("drizzle-orm/pg-core").PgColumn<{
+        name: "safety_alert_area_state";
+        tableName: "user_settings";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 2;
+    }>;
     updatedAt: import("drizzle-orm/pg-core").PgColumn<{
         name: "updated_at";
         tableName: "user_settings";
@@ -1314,6 +1458,40 @@ export declare const selectUserSettingsSchema: import("drizzle-zod").BuildSchema
         identity: undefined;
         generated: undefined;
     }, {}, {}>;
+    notifReminders: import("drizzle-orm/pg-core").PgColumn<{
+        name: "notif_reminders";
+        tableName: "user_settings";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
+    arrivalAwarenessEnabled: import("drizzle-orm/pg-core").PgColumn<{
+        name: "arrival_awareness_enabled";
+        tableName: "user_settings";
+        dataType: "boolean";
+        columnType: "PgBoolean";
+        data: boolean;
+        driverParam: boolean;
+        notNull: true;
+        hasDefault: true;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: undefined;
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {}>;
     notifPostNudges: import("drizzle-orm/pg-core").PgColumn<{
         name: "notif_post_nudges";
         tableName: "user_settings";
@@ -1425,7 +1603,7 @@ export declare const selectUserSettingsSchema: import("drizzle-zod").BuildSchema
         tableName: "user_settings";
         dataType: "string";
         columnType: "PgVarchar";
-        data: "public" | "community" | "private";
+        data: "private" | "community" | "public";
         driverParam: string;
         notNull: true;
         hasDefault: true;
@@ -1717,6 +1895,44 @@ export declare const selectUserSettingsSchema: import("drizzle-zod").BuildSchema
         identity: undefined;
         generated: undefined;
     }, {}, {}>;
+    safetyAlertAreaCity: import("drizzle-orm/pg-core").PgColumn<{
+        name: "safety_alert_area_city";
+        tableName: "user_settings";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 100;
+    }>;
+    safetyAlertAreaState: import("drizzle-orm/pg-core").PgColumn<{
+        name: "safety_alert_area_state";
+        tableName: "user_settings";
+        dataType: "string";
+        columnType: "PgVarchar";
+        data: string;
+        driverParam: string;
+        notNull: false;
+        hasDefault: false;
+        isPrimaryKey: false;
+        isAutoincrement: false;
+        hasRuntimeDefault: false;
+        enumValues: [string, ...string[]];
+        baseColumn: never;
+        identity: undefined;
+        generated: undefined;
+    }, {}, {
+        length: 2;
+    }>;
     updatedAt: import("drizzle-orm/pg-core").PgColumn<{
         name: "updated_at";
         tableName: "user_settings";

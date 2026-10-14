@@ -12,6 +12,8 @@ export type ConversationContextScope = {
   handoff: KinfolkConversationHandoff | null;
   /** Marks a clear request to return later in the existing private session. */
   handoffRequested: boolean;
+  /** A return reference was clear but did not identify one safe prior subject. */
+  requiresReferenceClarification: boolean;
 };
 
 /** A member-owned, active session considered only after an explicit resume. */
@@ -60,6 +62,82 @@ export function isDirectConversationFollowUp(message: string): boolean {
   const value = message.trim().toLowerCase();
   return /^(?:and\s+)?(?:what\s+about|how\s+about|can\s+you\s+(?:expand|explain|revise)|the\s+next\s+step|that|this|those|them|it)\b/.test(value)
     || /\b(?:based\s+on\s+that|from\s+the\s+last\s+(?:answer|message)|earlier\s+in\s+this\s+(?:chat|conversation))\b/.test(value);
+}
+
+const CURRENT_THREAD_REFERENCE_RE = /\b(?:which|what|how|why|when|where|who|can|could|should|would|is|are|do|does|did|will)\b[\s\S]{0,72}\b(?:one|option|choice|approach|plan|draft|version|idea|recommendation|alternative|them|those|it|that|this)\b/i;
+const COMPARISON_THREAD_RE = /\b(?:compare|comparison|evaluate|evaluat(?:e|ing|ion)|weigh|trade[ -]?off|pros?\s*(?:and|&)\s*cons?|offer|options?|choices?|alternatives?)\b/i;
+const COMPARATIVE_FOLLOW_UP_RE = /\b(?:which|better|best|worse|less|more|safer|risk(?:y|ier)?|stronger|weaker|prefer|recommend)\b/i;
+const DRAFT_REQUEST_RE = /\b(?:draft|write|compose|revise|rewrite|edit)\b[\s\S]{0,100}\b(?:email|letter|message|note|proposal)\b/i;
+const PRIOR_DRAFT_REFERENCE_RE = /\b(?:go\s+back|return|back\s+to|earlier)\b[\s\S]{0,80}\b(?:email|letter|message|draft|paragraph|tone|version)\b/i;
+const SENSITIVE_DRAFT_CONTENT = /\b(?:address|home\s+address|medical|medication|diagnos(?:is|ed)|doctor|therap(?:y|ist)|suicid|self[- ]?harm|abuse|assault|trauma|pregnan|credit|debt|income|salary|bank|race|religion|muslim|christian|jewish|sexual(?:ity)?|gender|phone)\b|\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b/i;
+const PRIOR_SUBJECT_REFERENCE_RE = /\b(?:go\s+back|return|back\s+to|earlier)\b[\s\S]{0,60}\b(?:that|the)\s+([a-z][a-z-]{2,40})(?=\s+(?:and|but|please|make|can|could|to)\b|[,.!?]|$)/i;
+const IMMEDIATE_REVISION_RE = /^(?:please\s+)?(?:make|rewrite|reword|rephrase|edit|proofread|polish|shorten|expand|tighten|change|adjust)\b[\s\S]{0,100}\b(?:it|that|this|the|more|less)\b/i;
+
+/**
+ * An explicit return-to-writing request may recover only the most recent earlier
+ * drafting pair in this same session. It excludes intervening topics entirely,
+ * especially health or other sensitive turns, and never becomes cross-session
+ * memory or generic conversation context.
+ */
+function resolvePriorDraftScope(messages: readonly SessionMessage[], currentMessage: string): SessionMessage[] {
+  if (!PRIOR_DRAFT_REFERENCE_RE.test(currentMessage) || SENSITIVE_DRAFT_CONTENT.test(currentMessage)) return [];
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const candidate = messages[index];
+    if (candidate?.role !== "user" || !DRAFT_REQUEST_RE.test(candidate.content) || SENSITIVE_DRAFT_CONTENT.test(candidate.content)) continue;
+    const reply = messages[index + 1];
+    return reply?.role === "assistant" && !SENSITIVE_DRAFT_CONTENT.test(reply.content)
+      ? [candidate, reply]
+      : [candidate];
+  }
+  return [];
+}
+
+/**
+ * A member may explicitly return to one non-sensitive subject in the current
+ * session. This stays narrower than generic semantic recall: the member has to
+ * name the subject, exactly one safe pair must match, and intervening turns are
+ * never supplied to the model.
+ */
+function resolvePriorSubjectScope(messages: readonly SessionMessage[], currentMessage: string): SessionMessage[] | null {
+  if (SENSITIVE_HANDOFF_TOPIC.test(currentMessage)) return [];
+  const subject = PRIOR_SUBJECT_REFERENCE_RE.exec(currentMessage)?.[1]?.trim().toLowerCase();
+  if (!subject) return [];
+  const matches = messages.flatMap((candidate, index) => {
+    if (candidate.role !== "user" || SENSITIVE_HANDOFF_TOPIC.test(candidate.content)) return [];
+    const subjectPattern = new RegExp(`\\b${subject.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+    if (!subjectPattern.test(candidate.content)) return [];
+    const reply = messages[index + 1];
+    return reply?.role === "assistant" && !SENSITIVE_HANDOFF_TOPIC.test(reply.content)
+      ? [[candidate, reply] as SessionMessage[]]
+      : [];
+  });
+  return matches.length === 1 ? matches[0] : null;
+}
+
+function isImmediateRevisionRequest(message: string): boolean {
+  return !SENSITIVE_HANDOFF_TOPIC.test(message) && IMMEDIATE_REVISION_RE.test(message);
+}
+
+/**
+ * Resolves a clear reference to the immediately preceding private session
+ * thread without treating every new question in that session as a continuation.
+ * This is deliberately bounded to recent, non-sensitive same-session turns;
+ * cross-session context still requires the explicit handoff path below.
+ */
+export function isBoundedSameSessionContinuation(input: {
+  messages: readonly SessionMessage[];
+  currentMessage: string;
+}): boolean {
+  const current = input.currentMessage.trim();
+  if (!current || SENSITIVE_HANDOFF_TOPIC.test(current)) return false;
+  const recent = input.messages.slice(-4);
+  const priorText = recent.map((message) => message.content).join(" ");
+  if (!priorText || SENSITIVE_HANDOFF_TOPIC.test(priorText)) return false;
+
+  if (CURRENT_THREAD_REFERENCE_RE.test(current)) return true;
+  return COMPARISON_THREAD_RE.test(priorText)
+    && COMPARATIVE_FOLLOW_UP_RE.test(current)
+    && /\b(?:one|option|choice|alternative|risk|safer|better|worse|less|more)\b/i.test(current);
 }
 
 function latestHandoffIndex(messages: readonly SessionMessage[]): number {
@@ -133,11 +211,24 @@ export function resolveConversationContextScope(input: {
   const savedResume = buildConversationResumePreview(input.messages);
   const resumeRequested = savedResume !== null
     && isExplicitConversationResumeRequest(input.currentMessage);
-  const directFollowUp = !resumeRequested && isDirectConversationFollowUp(input.currentMessage);
+  const priorDraftScope = !resumeRequested ? resolvePriorDraftScope(input.messages, input.currentMessage) : [];
+  const priorSubjectScope = !resumeRequested && priorDraftScope.length === 0
+    ? resolvePriorSubjectScope(input.messages, input.currentMessage)
+    : [];
+  const directFollowUp = !resumeRequested && priorDraftScope.length === 0 && priorSubjectScope?.length === 0 && (
+    isImmediateRevisionRequest(input.currentMessage)
+    || isDirectConversationFollowUp(input.currentMessage)
+    || isBoundedSameSessionContinuation(input)
+  );
+  const requiresReferenceClarification = !resumeRequested && priorDraftScope.length === 0 && priorSubjectScope === null;
 
   return {
     messages: resumeRequested
       ? input.messages.slice(-6)
+      : priorDraftScope.length > 0
+        ? priorDraftScope
+      : priorSubjectScope && priorSubjectScope.length > 0
+        ? priorSubjectScope
       : directFollowUp
         ? input.messages.slice(-4)
         : [],
@@ -147,5 +238,6 @@ export function resolveConversationContextScope(input: {
         ? savedResume
         : null,
     handoffRequested,
+    requiresReferenceClarification,
   };
 }

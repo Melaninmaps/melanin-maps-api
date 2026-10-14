@@ -29,20 +29,29 @@ describe("private social-space authorization", () => {
     expect(circles).toMatch(/router\.get\("\/circles\/:id\/plans",[\s\S]*?Not a member/);
   });
 
-  it("accepts location updates only from the sharer while the share is active", () => {
+  it("keeps trusted live location separate from private Safety Check-Ins", () => {
     const shares = source("../routes/location-shares.ts");
-    expect(shares).toMatch(/router\.patch\("\/safety\/location-shares\/:token\/update",[\s\S]*?requireAuth/);
-    expect(shares).toContain("eq(locationSharesTable.sharerId, userId)");
-    expect(shares).toContain("gt(locationSharesTable.expiresAt, new Date())");
-    expect(shares).toContain("lat < -90 || lat > 90 || lng < -180 || lng > 180");
+    const checkins = source("../routes/safety-checkins.ts");
+    expect(shares).toContain('router.patch("/safety/location-shares/:token/update"');
+    expect(shares).toContain('router.get("/safety/location-shares/:token/view"');
+    expect(shares).toContain("liveLocationConsent !== true");
+    expect(shares).toContain("minimizeLocationCoordinate");
+    expect(shares).toContain("tss.contact_accepted = true");
+    expect(shares).toContain("owner_blocks.id IS NULL");
+    expect(shares).not.toContain("retireLocationSharesForMember");
+    const alerts = source("../routes/community-alerts.ts");
+    expect(alerts).toContain("Legacy community safety alerts have been retired");
+    expect(alerts).not.toContain("pool.query");
+    expect(checkins).toContain("Safety Check-Ins do not collect, store, or share location");
+    expect(checkins).not.toContain("minimizeLocationCoordinate");
   });
 
   it("keeps Safety-tip submitter identifiers out of client responses", () => {
     const safetyTips = source("../routes/safety-tips.ts");
     expect(safetyTips).toContain("function publicSafetyTip");
     expect(safetyTips).toContain("tip: publicSafetyTip(tip)");
-    expect(safetyTips).toContain("tips: nearby.map(publicSafetyTip)");
-    expect(safetyTips).toContain("tips: tips.map(publicSafetyTip)");
+    expect(safetyTips).toContain("Individual Safety Tip listings are unavailable");
+    expect(safetyTips).toContain("Nearby Safety Tips have been retired");
   });
 
   it("makes anonymous reports unlinkable and keeps reporter fields out of public responses", () => {
@@ -50,7 +59,7 @@ describe("private social-space authorization", () => {
     expect(reports).toContain("reporterId: isAnon ? null");
     expect(reports).toContain("function publicSafetyReport");
     expect(reports).toContain("report: publicSafetyReport(report)");
-    expect(reports).toContain("reports: reports.map(publicSafetyReport)");
+    expect(reports).toContain("Individual Safety report listings are unavailable");
     const publicProjection = reports.slice(reports.indexOf("function publicSafetyReport"), reports.indexOf('router.post("/reports"'));
     expect(publicProjection).not.toContain("reporterId");
     expect(publicProjection).not.toContain("moderatorNotes");

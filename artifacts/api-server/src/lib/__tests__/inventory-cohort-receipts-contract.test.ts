@@ -41,15 +41,16 @@ describe("inventory cohort receipts", () => {
     expect(applySource).toContain("receipt_table_upsert_only");
   });
 
-  it("uses explicit source evidence rather than identity proxies in preflight", () => {
-    expect(preflightSource).toContain("explicit_black_or_latino_hispanic_designation_required");
-    expect(preflightSource).toContain("mwm-core-black-latino-source-evidence-v2");
-    expect(preflightSource).toContain("Generic \"minority-owned\", BIPOC, diaspora, Indigenous");
+  it("uses explicit designation fields rather than identity proxies in preflight", () => {
+    expect(preflightSource).toContain("QUALIFYING_OWNERSHIP_PATTERNS");
+    expect(preflightSource).toContain("ownership/designation field from");
+    expect(preflightSource).toContain("recognized diaspora ownership designation");
     expect(preflightSource).not.toContain("/\\bindigenous\\b/");
     expect(preflightSource).not.toContain("/\\bcaribbean\\b/");
     expect(preflightSource).not.toContain("/\\bbipoc\\b/");
     expect(preflightSource).toContain("traceable_source_directory_required");
     expect(preflightSource).toContain("No identity is inferred from a");
-    expect(preflightSource).toContain("mwm_source_backed_candidate");
+    expect(preflightSource).toContain("sourceBackedMwmCore");
+    expect(preflightSource).toContain("source_reported_mwm_designation");
   });
 });

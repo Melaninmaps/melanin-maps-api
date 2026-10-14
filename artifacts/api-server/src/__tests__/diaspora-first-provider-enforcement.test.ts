@@ -34,6 +34,9 @@ describe("enforceDiasporaFirstProviderQuery", () => {
 describe("Tavily provider boundaries", () => {
   it("normalizes direct Kinfolk web-search request bodies", async () => {
     vi.stubEnv("TAVILY_API_KEY", "test-key");
+    vi.stubEnv("AI_INTEGRATIONS_OPENAI_API_KEY", "");
+    vi.stubEnv("AI_INTEGRATIONS_OPENAI_BASE_URL", "");
+    vi.stubEnv("OPENAI_API_KEY", "");
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ results: [] }), { status: 200 }),
     );

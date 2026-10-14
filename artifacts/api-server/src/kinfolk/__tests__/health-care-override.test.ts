@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { buildHealthCareOverride } from "../health-care-override";
+import {
+  buildHealthCareOverride,
+  isHealthCareNavigationRequest,
+  isPrivateOriginCareRestrictedRequest,
+} from "../health-care-override";
 import { extractHealthTopic, normalizeMedlinePlusText } from "../health-retrieval";
 
 describe("qualified care override", () => {
@@ -45,6 +49,29 @@ describe("qualified care override", () => {
     expect(override.promptBlock).toContain("Do not infer a race");
   });
 
+  it("routes pediatric-dentist requests to the qualified pediatric dental finder and never the ordinary catalog", () => {
+    const override = buildHealthCareOverride({
+      message: "Find me a pediatric dentist in Philadelphia for my child.",
+      intentClass: "medical_health",
+    });
+
+    expect(override).toMatchObject({
+      applies: true,
+      suppressesGeneralBusinessCatalog: true,
+    });
+    expect(override.sources).toEqual(expect.arrayContaining([
+      expect.objectContaining({ source: "AAPD" }),
+    ]));
+    expect(override.promptBlock).toContain("pediatric dentist request");
+    expect(override.promptBlock).toContain("generic clinic, medical spa, or ordinary directory listing");
+  });
+
+  it("recognizes qualified-care navigation before an ordinary nearby-business route can use a private origin", () => {
+    expect(isHealthCareNavigationRequest("Find a clinic near Mom's house.")).toBe(true);
+    expect(isPrivateOriginCareRestrictedRequest("Show me a pharmacy near work.")).toBe(true);
+    expect(isHealthCareNavigationRequest("Find a coffee shop near home.")).toBe(false);
+  });
+
   it("offers medication questions without turning every medication question into a directory search", () => {
     const override = buildHealthCareOverride({
       message: "What should I ask my pharmacist about a new prescription and side effects?",
@@ -65,10 +92,11 @@ describe("qualified care override", () => {
     expect(override.promptBlock).toContain("summarize only the retrieved authoritative material");
   });
 
-  it("uses condition-first authoritative searches for common Black-women's health questions", () => {
-    expect(extractHealthTopic("I am a Black woman. What should I ask my doctor about anemia?")).toBe("anemia iron deficiency Black woman");
+  it("keeps the authoritative primary query condition-first while group context remains supplemental", () => {
+    expect(extractHealthTopic("I am a Black woman. What should I ask my doctor about anemia?")).toBe("anemia iron deficiency");
     expect(extractHealthTopic("What should I know about menopause?")).toBe("menopause");
     expect(extractHealthTopic("Could I have uterine fibroids?")).toBe("uterine fibroids");
+    expect(extractHealthTopic("I think I have eczema; show me educational images.")).toBe("eczema atopic dermatitis");
   });
 
   it("does not alter ordinary non-health discovery or general conversation", () => {

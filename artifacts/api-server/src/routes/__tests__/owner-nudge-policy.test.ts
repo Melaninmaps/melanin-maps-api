@@ -32,7 +32,11 @@ describe("minority-owner nudge policy", () => {
 
   it("keeps community-submitted listings unclaimed and never promotion eligible", () => {
     expect(submissionRoute).toContain("unclaimed_community_submission");
-    expect(submissionRoute).toContain("false,false,false,'active','live_unclaimed'");
+    expect(submissionRoute).toContain("featured, promotion_eligible, feedback_opt_in");
+    expect(submissionRoute).toContain("false,false,false,'active',$27");
+    expect(submissionRoute).toContain('"live_unclaimed"');
+    expect(submissionRoute).toContain('"community_listed"');
+    expect(submissionRoute).toContain('"unclaimed"');
   });
 
   it("records an idempotent evidence snapshot for review without creating an automated sender", () => {

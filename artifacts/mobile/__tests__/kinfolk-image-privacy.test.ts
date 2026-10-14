@@ -10,6 +10,10 @@ const hookSource = readFileSync(
   fileURLToPath(new URL("../hooks/useKinfolk.ts", import.meta.url)),
   "utf8",
 );
+const widgetSource = readFileSync(
+  fileURLToPath(new URL("../components/AIChatWidget.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("native Kinfolk image privacy controls", () => {
   it("shows an explicit member confirmation before uploading an image", () => {
@@ -21,9 +25,10 @@ describe("native Kinfolk image privacy controls", () => {
   });
 
   it("uses a private server asset ID for inference and a local URI for the member preview", () => {
+    const chatRequestStart = hookSource.indexOf('fetch(`${apiBase}/api/kinfolk/chat`');
     const requestPayload = hookSource.slice(
-      hookSource.indexOf("body: JSON.stringify({"),
-      hookSource.indexOf("signal: controller.signal"),
+      chatRequestStart,
+      hookSource.indexOf("signal: controller.signal", chatRequestStart),
     );
     expect(travelSource).toContain("imageAssetIds: attachedImageAssetIds");
     expect(travelSource).toContain("imageVisionConsent: attachedImageAssetIds.length > 0");
@@ -36,5 +41,14 @@ describe("native Kinfolk image privacy controls", () => {
   it("offers immediate private-image removal before the expiry backstop", () => {
     expect(travelSource).toContain("/api/media/kinfolk-question/${encodeURIComponent(attachment.assetId)}");
     expect(travelSource).toContain("will expire shortly from private processing");
+  });
+
+  it("keeps floating Kinfolk on the same private image boundary as primary Kinfolk", () => {
+    expect(widgetSource).toContain("Use this image for this answer?");
+    expect(widgetSource).toContain("is not used to train Kinfolk");
+    expect(widgetSource).toContain("is not saved as memory");
+    expect(widgetSource).toContain("expires within 15 minutes");
+    expect(widgetSource).toContain('form.append("kinfolkVisionConsent", "true")');
+    expect(widgetSource).toContain("/api/media/kinfolk-question/${encodeURIComponent(attachment.assetId)}");
   });
 });

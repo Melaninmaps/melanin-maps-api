@@ -1,65 +1,167 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { db, meetupVerificationsTable, usersTable } from "@workspace/db";
-import { and, desc, eq, isNull, or } from "drizzle-orm";
+import { db, meetupVerificationsTable as baseMeetupVerificationsTable, usersTable } from "@workspace/db";
+import { memberConnections } from "@workspace/db/schema";
+import { and, desc, eq, gt, isNotNull, isNull, lt, or } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
-import { sendMeetupSafetyWatcherEmail } from "../lib/email";
+import {
+  assertActiveMeetup,
+  assertVerifiedParticipant,
+  MeetupPolicyError,
+  normalizeVerifiedMeetupRequest,
+  toPrivacyMinimizedMeetup,
+} from "./meetup-verification-policy";
+import { MeetupPrivateDetailsUnavailableError, openMeetupVenue, sealMeetupVenue } from "./meetup-private-details";
+import { blockMemberAndCleanupRelationships, usersAreBlocked } from "../social/profileRelationshipAccess";
 
 const router: IRouter = Router();
 
+// The API project reference uses checked-in declaration output. Keep this
+// bridge local until the normal, separately approved schema declaration build
+// is run; at runtime the workspace source model supplies these columns.
+const meetupVerificationsTable = baseMeetupVerificationsTable as typeof baseMeetupVerificationsTable & {
+  scheduledAt: typeof baseMeetupVerificationsTable.expiresAt;
+  organizerApprovedAt: typeof baseMeetupVerificationsTable.confirmedAt;
+  partnerApprovedAt: typeof baseMeetupVerificationsTable.confirmedAt;
+  correctedAt: typeof baseMeetupVerificationsTable.confirmedAt;
+  cancelledAt: typeof baseMeetupVerificationsTable.confirmedAt;
+  cancelledById: typeof baseMeetupVerificationsTable.safetyWatcherId;
+  cancellationReason: typeof baseMeetupVerificationsTable.clearCode;
+};
+
 function requireAuth(req: Request, res: Response): string | null {
-  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return null; }
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return null;
+  }
   return req.user.id;
+}
+
+function parseId(value: string, res: Response): number | null {
+  const id = Number.parseInt(value, 10);
+  if (!Number.isSafeInteger(id) || id < 1) {
+    res.status(400).json({ error: "Invalid meetup ID", code: "INVALID_MEETUP_ID" });
+    return null;
+  }
+  return id;
+}
+
+function policyError(res: Response, error: unknown): boolean {
+  if (error instanceof MeetupPolicyError) {
+    res.status(error.status).json({ error: error.message, code: error.code });
+    return true;
+  }
+  if (error instanceof MeetupPrivateDetailsUnavailableError) {
+    res.status(503).json({ error: "Private meetup details are unavailable right now.", code: "MEETUP_PRIVATE_DETAILS_UNAVAILABLE" });
+    return true;
+  }
+  return false;
+}
+
+function redactedMeetupDetails() {
+  return {
+    location: null,
+    note: null,
+    clearCode: null,
+    safetyWatcherId: null,
+    safetyWatcherEmail: null,
+    arrivalCheckAt: null,
+    arrivalCheckedAt: null,
+    arrivalCheckStatus: null,
+    arrivalAlertSentAt: null,
+    homeCheckAt: null,
+    homeCheckedAt: null,
+    homeCheckStatus: null,
+    homeAlertSentAt: null,
+    safetyFriendName: null,
+    safetyFriendEmail: null,
+  };
+}
+
+async function requireAcceptedUnblockedConnection(userId: string, partnerId: string): Promise<number> {
+  if (await usersAreBlocked(userId, partnerId)) {
+    throw new MeetupPolicyError("MEETUP_PARTNER_UNAVAILABLE", "This member is unavailable for meetup verification", 404);
+  }
+  const [connection] = await db
+    .select({ id: memberConnections.id })
+    .from(memberConnections)
+    .where(and(
+      eq(memberConnections.status, "accepted"),
+      or(
+        and(eq(memberConnections.requesterId, userId), eq(memberConnections.recipientId, partnerId)),
+        and(eq(memberConnections.requesterId, partnerId), eq(memberConnections.recipientId, userId)),
+      ),
+    ))
+    .limit(1);
+  if (!connection) {
+    throw new MeetupPolicyError("MEETUP_CONNECTION_REQUIRED", "An accepted connection is required for meetup verification", 403);
+  }
+  return connection.id;
+}
+
+function responseFor(
+  verification: Parameters<typeof toPrivacyMinimizedMeetup>[0],
+  userId: string,
+) {
+  // Stored values are encrypted and are only opened for a participant response.
+  // Invalid, legacy plaintext, or unavailable key data stays redacted.
+  return toPrivacyMinimizedMeetup({
+    ...verification,
+    location: openMeetupVenue(verification.location),
+  }, userId);
 }
 
 const initiatorUser = alias(usersTable, "initiator_user");
 const partnerUser = alias(usersTable, "partner_user");
-const watcherUser = alias(usersTable, "watcher_user");
 
-// GET /meetups — list all non-cleared meetup verifications for the current user
+// GET /meetups — participants receive only their own current, private venue and time window.
 router.get("/meetups", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res); if (!userId) return;
   try {
+    const now = new Date();
+    // Retention boundary: expiry clears all private meetup data while retaining
+    // only the non-sensitive audit lifecycle record internally.
+    await db
+      .update(meetupVerificationsTable)
+      .set({ ...redactedMeetupDetails(), clearedAt: now })
+      .where(and(
+        or(eq(meetupVerificationsTable.initiatorId, userId), eq(meetupVerificationsTable.partnerId, userId)),
+        isNull(meetupVerificationsTable.clearedAt),
+        lt(meetupVerificationsTable.expiresAt, now),
+        or(
+          isNotNull(meetupVerificationsTable.location),
+          isNotNull(meetupVerificationsTable.note),
+          isNotNull(meetupVerificationsTable.safetyWatcherId),
+          isNotNull(meetupVerificationsTable.safetyWatcherEmail),
+          isNotNull(meetupVerificationsTable.arrivalCheckAt),
+          isNotNull(meetupVerificationsTable.homeCheckAt),
+          isNotNull(meetupVerificationsTable.safetyFriendEmail),
+        ),
+      ));
+
     const verifications = await db
       .select({
         id: meetupVerificationsTable.id,
         initiatorId: meetupVerificationsTable.initiatorId,
         partnerId: meetupVerificationsTable.partnerId,
-        connectionId: meetupVerificationsTable.connectionId,
         location: meetupVerificationsTable.location,
-        note: meetupVerificationsTable.note,
         status: meetupVerificationsTable.status,
         initiatedAt: meetupVerificationsTable.initiatedAt,
-        confirmedAt: meetupVerificationsTable.confirmedAt,
+        scheduledAt: meetupVerificationsTable.scheduledAt,
         expiresAt: meetupVerificationsTable.expiresAt,
-        safetyWatcherEmail: meetupVerificationsTable.safetyWatcherEmail,
-        safetyWatcherId: meetupVerificationsTable.safetyWatcherId,
-        hasClearCode: meetupVerificationsTable.clearCode,
-        // Check-in fields
-        arrivalCheckAt: meetupVerificationsTable.arrivalCheckAt,
-        arrivalCheckedAt: meetupVerificationsTable.arrivalCheckedAt,
-        arrivalCheckStatus: meetupVerificationsTable.arrivalCheckStatus,
-        homeCheckAt: meetupVerificationsTable.homeCheckAt,
-        homeCheckedAt: meetupVerificationsTable.homeCheckedAt,
-        homeCheckStatus: meetupVerificationsTable.homeCheckStatus,
-        safetyFriendName: meetupVerificationsTable.safetyFriendName,
-        safetyFriendEmail: meetupVerificationsTable.safetyFriendEmail,
-        // Initiator identity
+        organizerApprovedAt: meetupVerificationsTable.organizerApprovedAt,
+        partnerApprovedAt: meetupVerificationsTable.partnerApprovedAt,
+        correctedAt: meetupVerificationsTable.correctedAt,
+        cancelledAt: meetupVerificationsTable.cancelledAt,
         initiatorFirstName: initiatorUser.firstName,
         initiatorLastName: initiatorUser.lastName,
         initiatorUsername: initiatorUser.username,
-        // Partner identity
         partnerFirstName: partnerUser.firstName,
         partnerLastName: partnerUser.lastName,
         partnerUsername: partnerUser.username,
-        // Watcher identity (in-app)
-        watcherFirstName: watcherUser.firstName,
-        watcherLastName: watcherUser.lastName,
-        watcherUsername: watcherUser.username,
       })
       .from(meetupVerificationsTable)
       .leftJoin(initiatorUser, eq(initiatorUser.id, meetupVerificationsTable.initiatorId))
       .leftJoin(partnerUser, eq(partnerUser.id, meetupVerificationsTable.partnerId))
-      .leftJoin(watcherUser, eq(watcherUser.id, meetupVerificationsTable.safetyWatcherId))
       .where(and(
         or(
           eq(meetupVerificationsTable.initiatorId, userId),
@@ -70,332 +172,331 @@ router.get("/meetups", async (req: Request, res: Response) => {
       .orderBy(desc(meetupVerificationsTable.initiatedAt))
       .limit(50);
 
-    // Mask clearCode: only expose whether one is set, not the value itself
-    const sanitized = verifications.map((v) => ({
-      ...v,
-      hasClearCode: !!v.hasClearCode,
+    const visible = await Promise.all(verifications.map(async (verification) => {
+      const counterpartId = verification.initiatorId === userId ? verification.partnerId : verification.initiatorId;
+      if (await usersAreBlocked(userId, counterpartId)) return null;
+      return responseFor(verification, userId);
     }));
 
-    res.json({ verifications: sanitized });
+    res.set("Cache-Control", "no-store").json({
+      verifications: visible.filter((verification): verification is NonNullable<typeof verification> => verification !== null),
+    });
   } catch (err) {
     req.log.error({ err }, "GET /meetups error");
     res.status(500).json({ error: "Failed to load meetups" });
   }
 });
 
-// GET /meetups/partner-check — check if a partner is identity-verified before creating a meetup
+// GET /meetups/partner-check — eligibility only; it neither exposes an unconnected member nor makes a safety assessment.
 router.get("/meetups/partner-check", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res); if (!userId) return;
   const { partnerId } = req.query;
-  if (!partnerId || typeof partnerId !== "string") { res.status(400).json({ error: "partnerId required" }); return; }
+  if (!partnerId || typeof partnerId !== "string") {
+    res.status(400).json({ error: "partnerId required" });
+    return;
+  }
   try {
-    const [user] = await db
-      .select({
-        id: usersTable.id,
-        firstName: usersTable.firstName,
-        lastName: usersTable.lastName,
-        username: usersTable.username,
-        identityVerified: usersTable.identityVerified,
-        trustLevel: usersTable.trustLevel,
-        isInfluencer: usersTable.isInfluencer,
-      })
+    await requireAcceptedUnblockedConnection(userId, partnerId);
+    const [partner] = await db
+      .select({ id: usersTable.id, identityVerified: usersTable.identityVerified })
       .from(usersTable)
       .where(eq(usersTable.id, partnerId))
       .limit(1);
-    if (!user) { res.status(404).json({ error: "User not found" }); return; }
-    res.json({
-      identityVerified: user.identityVerified,
-      trustLevel: user.trustLevel,
-      isInfluencer: user.isInfluencer,
-      displayName: [user.firstName, user.lastName].filter(Boolean).join(" ") || user.username || "Community Member",
+    if (!partner) {
+      res.status(404).json({ error: "User not found" });
+      return;
+    }
+    res.set("Cache-Control", "no-store").json({
+      eligible: partner.identityVerified,
+      identityVerified: partner.identityVerified,
+      disclaimer: "Identity verification confirms only the account verification state; it does not assess a person or guarantee an outcome.",
     });
   } catch (err) {
+    if (policyError(res, err)) return;
     req.log.error({ err }, "GET /meetups/partner-check error");
-    res.status(500).json({ error: "Failed to check partner" });
+    res.status(500).json({ error: "Failed to check meetup eligibility" });
   }
 });
 
-// POST /meetups — create a meetup verification request
+// POST /meetups — a verified organizer explicitly approves sharing a private planned venue with one accepted connection.
 router.post("/meetups", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res); if (!userId) return;
   try {
-    const {
-      partnerId,
-      connectionId,
-      location,
-      note,
-      clearCode,
-      safetyWatcherId,
-      safetyWatcherEmail,
-      arrivalCheckAt,
-      homeCheckAt,
-      safetyFriendName,
-      safetyFriendEmail,
-    } = req.body as {
-      partnerId?: string;
-      connectionId?: number;
-      location?: string;
-      note?: string;
-      clearCode?: string;
-      safetyWatcherId?: string;
-      safetyWatcherEmail?: string;
-      arrivalCheckAt?: string;
-      homeCheckAt?: string;
-      safetyFriendName?: string;
-      safetyFriendEmail?: string;
-    };
+    const request = normalizeVerifiedMeetupRequest(req.body as Record<string, unknown>);
+    if (request.partnerId === userId) {
+      res.status(400).json({ error: "Cannot create a meetup with yourself", code: "INVALID_PARTNER" });
+      return;
+    }
+    const connectionId = await requireAcceptedUnblockedConnection(userId, request.partnerId);
 
-    if (!partnerId) { res.status(400).json({ error: "partnerId is required" }); return; }
-    if (partnerId === userId) { res.status(400).json({ error: "Cannot verify meetup with yourself" }); return; }
-    if (safetyWatcherId && safetyWatcherId === userId) { res.status(400).json({ error: "You cannot be your own safety watcher" }); return; }
-    if (safetyWatcherId && safetyWatcherId === partnerId) { res.status(400).json({ error: "Your meetup partner cannot also be your safety watcher" }); return; }
+    const participants = await db
+      .select({ id: usersTable.id, identityVerified: usersTable.identityVerified })
+      .from(usersTable)
+      .where(or(eq(usersTable.id, userId), eq(usersTable.id, request.partnerId)));
+    const organizer = participants.find((participant) => participant.id === userId);
+    const partner = participants.find((participant) => participant.id === request.partnerId);
+    assertVerifiedParticipant(organizer, "organizer");
+    assertVerifiedParticipant(partner, "partner");
 
-    const cleanClearCode = clearCode?.trim() || null;
-    const cleanWatcherEmail = safetyWatcherEmail?.trim().toLowerCase() || null;
-    const cleanWatcherId = safetyWatcherId?.trim() || null;
-    const cleanFriendEmail = safetyFriendEmail?.trim().toLowerCase() || null;
-    const cleanFriendName = safetyFriendName?.trim() || null;
-    const cleanArrivalCheckAt = arrivalCheckAt ? new Date(arrivalCheckAt) : null;
-    const cleanHomeCheckAt = homeCheckAt ? new Date(homeCheckAt) : null;
-
-    // Set expiry far in the future — records persist until manually cleared
-    const expiresAt = new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000);
-
-    const [v] = await db.insert(meetupVerificationsTable).values({
+    const approvedAt = new Date();
+    const [verification] = await db.insert(meetupVerificationsTable).values({
       initiatorId: userId,
-      partnerId,
-      connectionId: connectionId ?? null,
-      location: location?.trim() ?? null,
-      note: note?.trim() ?? null,
-      status: "pending",
-      expiresAt,
-      clearCode: cleanClearCode,
-      safetyWatcherId: cleanWatcherId,
-      safetyWatcherEmail: cleanWatcherEmail,
-      arrivalCheckAt: cleanArrivalCheckAt,
-      arrivalCheckStatus: cleanArrivalCheckAt ? "pending" : null,
-      homeCheckAt: cleanHomeCheckAt,
-      homeCheckStatus: cleanHomeCheckAt ? "pending" : null,
-      safetyFriendName: cleanFriendName,
-      safetyFriendEmail: cleanFriendEmail,
+      partnerId: request.partnerId,
+      connectionId,
+      location: sealMeetupVenue(request.venue),
+      status: "awaiting_partner",
+      initiatedAt: approvedAt,
+      scheduledAt: request.scheduledAt,
+      expiresAt: request.expiresAt,
+      organizerApprovedAt: approvedAt,
+      // No notes, coordinates, watcher/contact details, or automatic arrival/home check-ins are accepted or persisted.
     }).returning();
 
-    // Notify the safety watcher via email if provided
-    if (cleanWatcherEmail) {
-      const [initiator] = await db.select({ username: usersTable.username, firstName: usersTable.firstName })
-        .from(usersTable).where(eq(usersTable.id, userId)).limit(1);
-      const [partner] = await db.select({ username: usersTable.username, firstName: usersTable.firstName })
-        .from(usersTable).where(eq(usersTable.id, partnerId)).limit(1);
-
-      sendMeetupSafetyWatcherEmail(
-        cleanWatcherEmail,
-        null,
-        initiator?.username ?? initiator?.firstName ?? "Someone",
-        partner?.username ?? partner?.firstName ?? "someone",
-        location?.trim() ?? null,
-        note?.trim() ?? null,
-        v.id,
-      ).catch(() => {/* fire-and-forget */});
-    }
-
-    res.status(201).json({ verification: { ...v, hasClearCode: !!v.clearCode, clearCode: undefined } });
+    res.status(201).set("Cache-Control", "no-store").json({
+      verification: responseFor({
+        ...verification,
+        initiatorFirstName: null,
+        initiatorLastName: null,
+        initiatorUsername: null,
+        partnerFirstName: null,
+        partnerLastName: null,
+        partnerUsername: null,
+      }, userId),
+    });
   } catch (err) {
+    if (policyError(res, err)) return;
     req.log.error({ err }, "POST /meetups error");
-    res.status(500).json({ error: "Failed to create meetup verification" });
+    res.status(500).json({ error: "Failed to create meetup request" });
   }
 });
 
-// PATCH /meetups/:id/confirm — partner confirms the meetup
+// PATCH /meetups/:id — organizer corrections renew venue/time consent and reset partner approval.
+router.patch("/meetups/:id", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res); if (!userId) return;
+  const id = parseId(req.params["id"] as string, res); if (!id) return;
+  try {
+    const [verification] = await db.select().from(meetupVerificationsTable)
+      .where(and(
+        eq(meetupVerificationsTable.id, id),
+        eq(meetupVerificationsTable.initiatorId, userId),
+        isNull(meetupVerificationsTable.clearedAt),
+      ))
+      .limit(1);
+    if (!verification) {
+      res.status(404).json({ error: "Meetup request not found" });
+      return;
+    }
+    assertActiveMeetup(verification);
+    const connectionId = await requireAcceptedUnblockedConnection(userId, verification.partnerId);
+    const corrected = normalizeVerifiedMeetupRequest({
+      ...(req.body as Record<string, unknown>),
+      partnerId: verification.partnerId,
+    });
+    const correctedAt = new Date();
+    const [updated] = await db.update(meetupVerificationsTable)
+      .set({
+        ...redactedMeetupDetails(),
+        connectionId,
+        location: sealMeetupVenue(corrected.venue),
+        scheduledAt: corrected.scheduledAt,
+        expiresAt: corrected.expiresAt,
+        status: "awaiting_partner",
+        organizerApprovedAt: correctedAt,
+        partnerApprovedAt: null,
+        confirmedAt: null,
+        correctedAt,
+      })
+      .where(and(eq(meetupVerificationsTable.id, id), gt(meetupVerificationsTable.expiresAt, correctedAt)))
+      .returning();
+    if (!updated) {
+      res.status(409).json({ error: "Meetup request has expired", code: "MEETUP_EXPIRED" });
+      return;
+    }
+    res.set("Cache-Control", "no-store").json({
+      verification: responseFor({
+        ...updated,
+        initiatorFirstName: null,
+        initiatorLastName: null,
+        initiatorUsername: null,
+        partnerFirstName: null,
+        partnerLastName: null,
+        partnerUsername: null,
+      }, userId),
+    });
+  } catch (err) {
+    if (policyError(res, err)) return;
+    req.log.error({ err }, "PATCH /meetups/:id error");
+    res.status(500).json({ error: "Failed to correct meetup request" });
+  }
+});
+
+// PATCH /meetups/:id/confirm — the partner independently approves the planned private venue and time window.
 router.patch("/meetups/:id/confirm", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res); if (!userId) return;
+  const id = parseId(req.params["id"] as string, res); if (!id) return;
   try {
-    const id = parseInt(req.params["id"] as string, 10);
-    if (isNaN(id)) { res.status(400).json({ error: "Invalid verification ID" }); return; }
-
-    const [v] = await db.select().from(meetupVerificationsTable)
+    if ((req.body as { partnerApproval?: unknown }).partnerApproval !== true) {
+      res.status(403).json({
+        error: "The partner must explicitly approve this meetup request",
+        code: "PARTNER_APPROVAL_REQUIRED",
+      });
+      return;
+    }
+    const [verification] = await db.select().from(meetupVerificationsTable)
       .where(and(
         eq(meetupVerificationsTable.id, id),
         eq(meetupVerificationsTable.partnerId, userId),
         isNull(meetupVerificationsTable.clearedAt),
       ))
       .limit(1);
-
-    if (!v) { res.status(404).json({ error: "Verification not found or already cleared" }); return; }
-    if (v.status === "confirmed") { res.status(409).json({ error: "Already confirmed" }); return; }
-    if (v.status === "cleared") { res.status(409).json({ error: "This meetup record has been cleared" }); return; }
-
-    const [updated] = await db.update(meetupVerificationsTable)
-      .set({ status: "confirmed", confirmedAt: new Date() })
-      .where(eq(meetupVerificationsTable.id, id))
-      .returning();
-
-    res.json({ verification: { ...updated, hasClearCode: !!updated.clearCode, clearCode: undefined } });
-  } catch (err) {
-    req.log.error({ err }, "PATCH /meetups/:id/confirm error");
-    res.status(500).json({ error: "Failed to confirm meetup" });
-  }
-});
-
-// PATCH /meetups/:id/arrival-checkin — initiator confirms they arrived safely at the meetup location
-router.patch("/meetups/:id/arrival-checkin", async (req: Request, res: Response) => {
-  const userId = requireAuth(req, res); if (!userId) return;
-  try {
-    const id = parseInt(req.params["id"] as string, 10);
-    if (isNaN(id)) { res.status(400).json({ error: "Invalid verification ID" }); return; }
-
-    const [v] = await db.select().from(meetupVerificationsTable)
-      .where(and(
-        eq(meetupVerificationsTable.id, id),
-        eq(meetupVerificationsTable.initiatorId, userId),
-        isNull(meetupVerificationsTable.clearedAt),
-      ))
-      .limit(1);
-
-    if (!v) { res.status(404).json({ error: "Meetup record not found" }); return; }
-    if (!v.arrivalCheckAt) { res.status(400).json({ error: "No arrival check-in was set for this meetup" }); return; }
-    if (v.arrivalCheckStatus === "confirmed") { res.status(409).json({ error: "Arrival already confirmed" }); return; }
-
-    const [updated] = await db.update(meetupVerificationsTable)
-      .set({ arrivalCheckedAt: new Date(), arrivalCheckStatus: "confirmed" })
-      .where(eq(meetupVerificationsTable.id, id))
-      .returning();
-
-    req.log.info({ meetupId: id, userId }, "Arrival check-in confirmed");
-    res.json({ verification: { ...updated, hasClearCode: !!updated.clearCode, clearCode: undefined } });
-  } catch (err) {
-    req.log.error({ err }, "PATCH /meetups/:id/arrival-checkin error");
-    res.status(500).json({ error: "Failed to confirm arrival" });
-  }
-});
-
-// PATCH /meetups/:id/home-checkin — initiator confirms they got home safely
-router.patch("/meetups/:id/home-checkin", async (req: Request, res: Response) => {
-  const userId = requireAuth(req, res); if (!userId) return;
-  try {
-    const id = parseInt(req.params["id"] as string, 10);
-    if (isNaN(id)) { res.status(400).json({ error: "Invalid verification ID" }); return; }
-
-    const [v] = await db.select().from(meetupVerificationsTable)
-      .where(and(
-        eq(meetupVerificationsTable.id, id),
-        eq(meetupVerificationsTable.initiatorId, userId),
-        isNull(meetupVerificationsTable.clearedAt),
-      ))
-      .limit(1);
-
-    if (!v) { res.status(404).json({ error: "Meetup record not found" }); return; }
-    if (!v.homeCheckAt) { res.status(400).json({ error: "No home check-in was set for this meetup" }); return; }
-    if (v.homeCheckStatus === "confirmed") { res.status(409).json({ error: "Home check-in already confirmed" }); return; }
-
-    const [updated] = await db.update(meetupVerificationsTable)
-      .set({ homeCheckedAt: new Date(), homeCheckStatus: "confirmed" })
-      .where(eq(meetupVerificationsTable.id, id))
-      .returning();
-
-    req.log.info({ meetupId: id, userId }, "Home check-in confirmed");
-    res.json({ verification: { ...updated, hasClearCode: !!updated.clearCode, clearCode: undefined } });
-  } catch (err) {
-    req.log.error({ err }, "PATCH /meetups/:id/home-checkin error");
-    res.status(500).json({ error: "Failed to confirm home check-in" });
-  }
-});
-
-// DELETE /meetups/:id — clear a meetup record (requires clearCode if one was set)
-router.delete("/meetups/:id", async (req: Request, res: Response) => {
-  const userId = requireAuth(req, res); if (!userId) return;
-  try {
-    const id = parseInt(req.params["id"] as string, 10);
-    if (isNaN(id)) { res.status(400).json({ error: "Invalid verification ID" }); return; }
-
-    const { clearCode } = req.body as { clearCode?: string };
-
-    const [v] = await db.select().from(meetupVerificationsTable)
-      .where(and(
-        eq(meetupVerificationsTable.id, id),
-        isNull(meetupVerificationsTable.clearedAt),
-      ))
-      .limit(1);
-
-    if (!v) { res.status(404).json({ error: "Meetup record not found or already cleared" }); return; }
-
-    // Only the initiator can clear a meetup record
-    if (v.initiatorId !== userId) {
-      res.status(403).json({ error: "Only the person who created this meetup verification can clear it" });
+    if (!verification) {
+      res.status(404).json({ error: "Meetup request not found" });
       return;
     }
-
-    // If a clearCode was set, verify it
-    if (v.clearCode) {
-      if (!clearCode?.trim()) {
-        res.status(400).json({ error: "A clear code is required to remove this meetup record" });
-        return;
-      }
-      if (clearCode.trim() !== v.clearCode) {
-        res.status(401).json({ error: "Incorrect clear code" });
-        return;
-      }
+    assertActiveMeetup(verification);
+    if (verification.status !== "awaiting_partner" || !verification.organizerApprovedAt) {
+      res.status(409).json({ error: "Meetup request is not awaiting partner approval", code: "INVALID_MEETUP_STATE" });
+      return;
     }
+    await requireAcceptedUnblockedConnection(userId, verification.initiatorId);
 
-    await db.update(meetupVerificationsTable)
-      .set({ clearedAt: new Date(), status: "cleared" })
-      .where(eq(meetupVerificationsTable.id, id));
+    const participants = await db
+      .select({ id: usersTable.id, identityVerified: usersTable.identityVerified })
+      .from(usersTable)
+      .where(or(eq(usersTable.id, verification.initiatorId), eq(usersTable.id, userId)));
+    assertVerifiedParticipant(participants.find((participant) => participant.id === verification.initiatorId), "organizer");
+    assertVerifiedParticipant(participants.find((participant) => participant.id === userId), "partner");
 
-    res.json({ success: true });
+    const approvedAt = new Date();
+    const [updated] = await db.update(meetupVerificationsTable)
+      .set({ status: "approved", partnerApprovedAt: approvedAt, confirmedAt: approvedAt })
+      .where(and(
+        eq(meetupVerificationsTable.id, id),
+        eq(meetupVerificationsTable.status, "awaiting_partner"),
+        gt(meetupVerificationsTable.expiresAt, approvedAt),
+      ))
+      .returning();
+    if (!updated) {
+      res.status(409).json({ error: "Meetup request is no longer available for approval", code: "INVALID_MEETUP_STATE" });
+      return;
+    }
+    res.set("Cache-Control", "no-store").json({
+      verification: responseFor({
+        ...updated,
+        initiatorFirstName: null,
+        initiatorLastName: null,
+        initiatorUsername: null,
+        partnerFirstName: null,
+        partnerLastName: null,
+        partnerUsername: null,
+      }, userId),
+    });
   } catch (err) {
-    req.log.error({ err }, "DELETE /meetups/:id error");
-    res.status(500).json({ error: "Failed to clear meetup record" });
+    if (policyError(res, err)) return;
+    req.log.error({ err }, "PATCH /meetups/:id/confirm error");
+    res.status(500).json({ error: "Failed to approve meetup request" });
   }
 });
 
-// POST /meetups/:id/share — re-send safety watcher notification
-router.post("/meetups/:id/share", async (req: Request, res: Response) => {
+// POST /meetups/:id/cancel — either participant may end the request. Venue data is immediately redacted.
+router.post("/meetups/:id/cancel", async (req: Request, res: Response) => {
   const userId = requireAuth(req, res); if (!userId) return;
+  const id = parseId(req.params["id"] as string, res); if (!id) return;
   try {
-    const id = parseInt(req.params["id"] as string, 10);
-    if (isNaN(id)) { res.status(400).json({ error: "Invalid verification ID" }); return; }
-
-    const { email } = req.body as { email?: string };
-
-    const [v] = await db.select().from(meetupVerificationsTable)
+    const reason = typeof (req.body as { reason?: unknown }).reason === "string"
+      ? (req.body as { reason: string }).reason.trim().slice(0, 240) || null
+      : null;
+    const [verification] = await db.select().from(meetupVerificationsTable)
       .where(and(
         eq(meetupVerificationsTable.id, id),
-        eq(meetupVerificationsTable.initiatorId, userId),
+        or(eq(meetupVerificationsTable.initiatorId, userId), eq(meetupVerificationsTable.partnerId, userId)),
         isNull(meetupVerificationsTable.clearedAt),
       ))
       .limit(1);
-
-    if (!v) { res.status(404).json({ error: "Meetup record not found" }); return; }
-
-    const targetEmail = email?.trim().toLowerCase() || v.safetyWatcherEmail;
-    if (!targetEmail) { res.status(400).json({ error: "No email address to share with" }); return; }
-
-    const [initiator] = await db.select({ username: usersTable.username, firstName: usersTable.firstName })
-      .from(usersTable).where(eq(usersTable.id, userId)).limit(1);
-    const [partner] = await db.select({ username: usersTable.username, firstName: usersTable.firstName })
-      .from(usersTable).where(eq(usersTable.id, v.partnerId)).limit(1);
-
-    await sendMeetupSafetyWatcherEmail(
-      targetEmail,
-      null,
-      initiator?.username ?? initiator?.firstName ?? "Someone",
-      partner?.username ?? partner?.firstName ?? "someone",
-      v.location,
-      v.note,
-      v.id,
-    );
-
-    // Update safetyWatcherEmail if a new one was provided
-    if (email?.trim().toLowerCase() && email.trim().toLowerCase() !== v.safetyWatcherEmail) {
-      await db.update(meetupVerificationsTable)
-        .set({ safetyWatcherEmail: email.trim().toLowerCase() })
-        .where(eq(meetupVerificationsTable.id, id));
+    if (!verification) {
+      res.status(404).json({ error: "Meetup request not found" });
+      return;
     }
-
-    res.json({ success: true });
+    assertActiveMeetup(verification);
+    const cancelledAt = new Date();
+    const [updated] = await db.update(meetupVerificationsTable)
+      .set({
+        ...redactedMeetupDetails(),
+        status: "cancelled",
+        cancelledAt,
+        cancelledById: userId,
+        cancellationReason: reason,
+      })
+      .where(and(eq(meetupVerificationsTable.id, id), gt(meetupVerificationsTable.expiresAt, cancelledAt)))
+      .returning();
+    if (!updated) {
+      res.status(409).json({ error: "Meetup request has expired", code: "MEETUP_EXPIRED" });
+      return;
+    }
+    res.set("Cache-Control", "no-store").json({
+      verification: responseFor({
+        ...updated,
+        initiatorFirstName: null,
+        initiatorLastName: null,
+        initiatorUsername: null,
+        partnerFirstName: null,
+        partnerLastName: null,
+        partnerUsername: null,
+      }, userId),
+    });
   } catch (err) {
-    req.log.error({ err }, "POST /meetups/:id/share error");
-    res.status(500).json({ error: "Failed to share meetup details" });
+    if (policyError(res, err)) return;
+    req.log.error({ err }, "POST /meetups/:id/cancel error");
+    res.status(500).json({ error: "Failed to cancel meetup request" });
   }
+});
+
+// POST /meetups/:id/block — a block immediately cancels participant access, redacts private details, and removes the connection.
+router.post("/meetups/:id/block", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res); if (!userId) return;
+  const id = parseId(req.params["id"] as string, res); if (!id) return;
+  try {
+    const [verification] = await db.select({
+      initiatorId: meetupVerificationsTable.initiatorId,
+      partnerId: meetupVerificationsTable.partnerId,
+    }).from(meetupVerificationsTable)
+      .where(and(
+        eq(meetupVerificationsTable.id, id),
+        or(eq(meetupVerificationsTable.initiatorId, userId), eq(meetupVerificationsTable.partnerId, userId)),
+        isNull(meetupVerificationsTable.clearedAt),
+      ))
+      .limit(1);
+    if (!verification) {
+      res.status(404).json({ error: "Meetup request not found" });
+      return;
+    }
+    const counterpartId = verification.initiatorId === userId ? verification.partnerId : verification.initiatorId;
+    const result = await blockMemberAndCleanupRelationships(userId, counterpartId);
+    if (!result.targetFound) {
+      res.status(404).json({ error: "Member not found" });
+      return;
+    }
+    res.set("Cache-Control", "no-store").json({ blocked: true });
+  } catch (err) {
+    req.log.error({ err }, "POST /meetups/:id/block error");
+    res.status(500).json({ error: "Failed to block member" });
+  }
+});
+
+// The former destructive clear endpoint remains retired: cancellation preserves a non-sensitive audit lifecycle.
+router.delete("/meetups/:id", async (_req: Request, res: Response) => {
+  res.status(405).json({ error: "Use POST /meetups/:id/cancel to cancel a meetup request", code: "CANCELLATION_REQUIRED" });
+});
+
+// Automatic meetup arrival/home tracking and third-party detail sharing remain retired. Members may choose a separate Safety Check-In with accepted trusted contacts.
+router.patch("/meetups/:id/arrival-checkin", async (_req: Request, res: Response) => {
+  res.status(410).json({ error: "Arrival check-ins are not part of the verified meetup workflow", code: "MEETUP_CHECKIN_RETIRED" });
+});
+router.patch("/meetups/:id/home-checkin", async (_req: Request, res: Response) => {
+  res.status(410).json({ error: "Home check-ins are not part of the verified meetup workflow", code: "MEETUP_CHECKIN_RETIRED" });
+});
+router.post("/meetups/:id/share", async (_req: Request, res: Response) => {
+  res.status(410).json({ error: "Third-party meetup sharing is not part of the verified meetup workflow", code: "MEETUP_SHARING_RETIRED" });
 });
 
 export default router;

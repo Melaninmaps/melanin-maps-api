@@ -19,31 +19,70 @@ type CheckinRecipient = {
   recipientUserId: string;
   recipientName: string;
   profileImageUrl: string | null;
-  deliveryStatus: "pending" | "delivered" | "skipped";
+  deliveryStatus:
+    | "pending"
+    | "in_app_created"
+    | "in_app_failed"
+    | "push_pending"
+    | "push_attempting"
+    | "push_failed"
+    | "push_submitted"
+    | "skipped";
   notifiedAt: Date | null;
+  inAppCreatedAt: Date | null;
+  pushAttemptedAt: Date | null;
+  pushSubmittedAt: Date | null;
+  pushFailedAt: Date | null;
+  nextRetryAt: Date | null;
 };
 
 export function checkinDeliverySummary(recipients: CheckinRecipient[]) {
-  const delivered = recipients.filter((recipient) => recipient.deliveryStatus === "delivered").length;
+  const inAppCreated = recipients.filter((recipient) => (
+    recipient.deliveryStatus === "in_app_created"
+    || recipient.deliveryStatus === "push_pending"
+    || recipient.deliveryStatus === "push_attempting"
+    || recipient.deliveryStatus === "push_failed"
+    || recipient.deliveryStatus === "push_submitted"
+  )).length;
+  const pushSubmitted = recipients.filter((recipient) => recipient.deliveryStatus === "push_submitted").length;
+  const retryScheduled = recipients.filter((recipient) => (
+    (recipient.deliveryStatus === "in_app_failed" || recipient.deliveryStatus === "push_failed")
+    && recipient.nextRetryAt !== null
+  )).length;
+  const pushAttempting = recipients.filter((recipient) => (
+    recipient.deliveryStatus === "push_attempting"
+  )).length;
+  const failed = recipients.filter((recipient) => (
+    (recipient.deliveryStatus === "in_app_failed" || recipient.deliveryStatus === "push_failed")
+    && recipient.nextRetryAt === null
+  )).length;
   const skipped = recipients.filter((recipient) => recipient.deliveryStatus === "skipped").length;
-  const pending = recipients.length - delivered - skipped;
+  const pending = recipients.filter((recipient) => recipient.deliveryStatus === "pending").length;
   return {
-    channel: "in_app_notification",
+    channel: "in_app_and_push",
     total: recipients.length,
     pending,
-    delivered,
+    inAppCreated,
+    pushSubmitted,
+    retryScheduled,
+    pushAttempting,
+    failed,
     skipped,
     state: recipients.length === 0
       ? "legacy_email_unobserved"
       : pending === recipients.length
         ? "scheduled_not_sent"
-        : delivered === recipients.length
-          ? "delivered"
-          : pending > 0
-            ? "partially_processed"
-            : delivered > 0
-              ? "partially_delivered"
-              : "skipped",
+        : pushAttempting > 0
+          ? "push_attempt_in_progress"
+          : retryScheduled > 0
+          ? "retry_scheduled"
+            : failed > 0
+              ? "retry_exhausted"
+              : pushSubmitted > 0
+                ? "push_submitted_unconfirmed"
+                : inAppCreated > 0
+                  ? "in_app_created"
+                  : "skipped",
   } as const;
 }
 
@@ -127,8 +166,13 @@ async function loadCheckinRecipients(checkinIds: number[]): Promise<Map<number, 
       recipient_user_id: string;
       recipient_name: string;
       profile_image_url: string | null;
-      delivery_status: "pending" | "delivered" | "skipped";
+      delivery_status: CheckinRecipient["deliveryStatus"];
       notified_at: Date | null;
+      in_app_created_at: Date | null;
+      push_attempted_at: Date | null;
+      push_submitted_at: Date | null;
+      push_failed_at: Date | null;
+      next_retry_at: Date | null;
     }>(
       `SELECT scr.checkin_id,
               scr.trusted_share_id::text,
@@ -136,7 +180,12 @@ async function loadCheckinRecipients(checkinIds: number[]): Promise<Map<number, 
               scr.recipient_name,
               u.profile_image_url,
               scr.delivery_status,
-              scr.notified_at
+              scr.notified_at,
+              scr.in_app_created_at,
+              scr.push_attempted_at,
+              scr.push_submitted_at,
+              scr.push_failed_at,
+              scr.next_retry_at
          FROM safety_checkin_recipients scr
          LEFT JOIN users u ON u.id = scr.recipient_user_id
         WHERE scr.checkin_id = ANY($1::integer[])
@@ -152,6 +201,11 @@ async function loadCheckinRecipients(checkinIds: number[]): Promise<Map<number, 
         profileImageUrl: row.profile_image_url,
         deliveryStatus: row.delivery_status,
         notifiedAt: row.notified_at,
+        inAppCreatedAt: row.in_app_created_at,
+        pushAttemptedAt: row.push_attempted_at,
+        pushSubmittedAt: row.push_submitted_at,
+        pushFailedAt: row.push_failed_at,
+        nextRetryAt: row.next_retry_at,
       });
       grouped.set(row.checkin_id, recipients);
     }
@@ -189,6 +243,8 @@ router.get("/safety/checkins", async (req: Request, res: Response) => {
         const recipients = recipientsByCheckin.get(checkin.id) ?? [];
         return {
           ...checkin,
+          location: null,
+          city: null,
           recipients,
           deliverySummary: checkinDeliverySummary(recipients),
         };
@@ -197,6 +253,83 @@ router.get("/safety/checkins", async (req: Request, res: Response) => {
   } catch (error) {
     req.log.error({ error }, "GET /safety/checkins error");
     res.status(500).json({ error: "Failed to load check-ins" });
+  }
+});
+
+/**
+ * A recipient may read only the Check-In alert durably addressed to their own
+ * account. The query intentionally selects no location, note, contact address,
+ * visit history, or map data. It re-checks the accepted active share and both
+ * block directions, failing closed if consent changed after scheduling.
+ */
+router.get("/safety/checkins/received/:notificationId", async (req: Request, res: Response) => {
+  const userId = requireAuth(req, res);
+  if (!userId) return;
+  const notificationId = String(req.params["notificationId"] ?? "").trim();
+  if (!notificationId || notificationId.length > 100) {
+    res.status(404).json({ error: "Safety Check-In alert not available" });
+    return;
+  }
+  try {
+    const result = await pool.query<{
+      notification_id: string;
+      title: string;
+      body: string;
+      status: "overdue" | "resolved";
+    }>(
+      `SELECT n.id::text AS notification_id,
+              n.title,
+              n.body,
+              CASE
+                WHEN c.status = 'overdue' AND c.confirmed_at IS NULL THEN 'overdue'
+                ELSE 'resolved'
+              END AS status
+         FROM notifications n
+         JOIN safety_checkin_recipients scr
+           ON scr.notification_id::text = n.id::text
+          AND scr.recipient_user_id::text = $1::text
+         JOIN safety_checkins c ON c.id::text = scr.checkin_id::text
+         JOIN trusted_safety_shares tss
+           ON tss.id::text = scr.trusted_share_id::text
+          AND tss.owner_id::text = c.user_id::text
+          AND tss.contact_user_id::text = $1::text
+          AND tss.contact_type = 'mwm_user'
+          AND tss.status = 'active'
+          AND COALESCE(lower(tss.owner_enabled::text) IN ('true', 't', '1'), false)
+          AND COALESCE(lower(tss.contact_accepted::text) IN ('true', 't', '1'), false)
+         JOIN users recipient ON recipient.id::text = $1::text
+         LEFT JOIN user_blocks owner_blocks
+           ON owner_blocks.blocker_id::text = c.user_id::text
+          AND owner_blocks.blocked_id::text = $1::text
+         LEFT JOIN user_blocks recipient_blocks
+           ON recipient_blocks.blocker_id::text = $1::text
+          AND recipient_blocks.blocked_id::text = c.user_id::text
+        WHERE n.id::text = $2::text
+          AND n.user_id::text = $1::text
+          AND n.entity_type = 'safety_checkin'
+          AND COALESCE(lower(recipient.approved::text) IN ('true', 't', '1'), false)
+          AND owner_blocks.id IS NULL
+          AND recipient_blocks.id IS NULL
+        LIMIT 1`,
+      [userId, notificationId],
+    );
+    const alert = result.rows[0];
+    if (!alert) {
+      res.status(404).json({ error: "Safety Check-In alert not available" });
+      return;
+    }
+    res.json({
+      alert: {
+        notificationId: alert.notification_id,
+        title: alert.title,
+        body: alert.body,
+        status: alert.status,
+        privacy: "This alert does not include live or recent location, maps, visit history, or the member's private Check-In note.",
+      },
+    });
+  } catch (error) {
+    req.log.error({ error }, "GET /safety/checkins/received/:notificationId error");
+    res.status(500).json({ error: "Safety Check-In alert could not be loaded" });
   }
 });
 
@@ -236,13 +369,16 @@ router.post("/safety/checkins", requireFamilySafety, async (req: Request, res: R
       return;
     }
 
-    const hasLegacyEmailRecipient = Boolean(trustedContactName?.trim() && trustedContactEmail?.includes("@"));
-    if (selectedShareIds.length > 0 && hasLegacyEmailRecipient) {
-      res.status(400).json({ error: "Choose either trusted profiles or one legacy email contact, not both" });
+    if (trustedContactName?.trim() || trustedContactEmail?.trim()) {
+      res.status(400).json({ error: "Email recipients are not supported for Safety Check-Ins. Choose accepted trusted Kinfolk profiles." });
       return;
     }
-    if (selectedShareIds.length === 0 && !hasLegacyEmailRecipient) {
-      res.status(400).json({ error: "Choose an accepted trusted profile or provide a trusted contact name and email" });
+    if (location?.trim() || city?.trim()) {
+      res.status(400).json({ error: "Safety Check-Ins do not collect, store, or share location. Remove the location fields and try again." });
+      return;
+    }
+    if (selectedShareIds.length === 0) {
+      res.status(400).json({ error: "Choose at least one accepted trusted Kinfolk profile" });
       return;
     }
 
@@ -264,12 +400,12 @@ router.post("/safety/checkins", requireFamilySafety, async (req: Request, res: R
          RETURNING *`,
         [
           userId,
-          selectedRecipients.length > 0 ? displayName(selectedRecipients.map((recipient) => recipient.recipientName)) : trustedContactName!.trim(),
-          selectedRecipients.length > 0 ? null : trustedContactEmail!.toLowerCase().trim(),
+          displayName(selectedRecipients.map((recipient) => recipient.recipientName)),
+          null,
           scheduledDate,
           note?.trim() || null,
-          location?.trim() || null,
-          city?.trim() || null,
+          null,
+          null,
         ],
       );
       const checkin = result.rows[0];
@@ -287,6 +423,11 @@ router.post("/safety/checkins", requireFamilySafety, async (req: Request, res: R
         ...recipient,
         deliveryStatus: "pending" as const,
         notifiedAt: null,
+        inAppCreatedAt: null,
+        pushAttemptedAt: null,
+        pushSubmittedAt: null,
+        pushFailedAt: null,
+        nextRetryAt: null,
       }));
       res.status(201).json({
         checkin: {

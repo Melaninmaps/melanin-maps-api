@@ -36,6 +36,16 @@ export type ParsedKinfolkModelPayload = {
   value: Record<string, unknown> | null;
 };
 
+export type ParseKinfolkModelPayloadOptions = Readonly<{
+  /**
+   * The ordinary, no-tool general-chat path may render a bounded plain-text
+   * answer from a compatible provider. Governed, evidence-backed, and action
+   * paths stay envelope-only so unstructured output cannot populate cards,
+   * sources, recommendations, or actions.
+   */
+  allowPlainTextReply?: boolean;
+}>;
+
 export type KinfolkTravelProfile = Readonly<{
   ageBand: BusinessAudienceBand;
   favoriteCategories?: readonly string[] | null;
@@ -68,11 +78,21 @@ const NUMBER_WORDS: Readonly<Record<string, number>> = {
   fourteen: 14,
 };
 
-const ITINERARY_SIGNAL = /\b(itinerary|day[- ]by[- ]day|trip plan|travel plan|plan (?:me |my |our |a )?(?:trip|visit|getaway|weekend|vacation)|what (?:should|can) (?:i|we) do each day)\b/i;
+const EXPLICIT_CURRENT_ITINERARY_REQUEST = /^\s*(?:(?:can|could|would)\s+you\s+|please\s+|help\s+(?:me|us)\s+)?(?:plan|build|make|create)\b[\s\S]{0,160}\b(?:itinerary|day(?:[- ]by[- ]day)?|trip|visit|getaway|weekend|vacation)\b/i;
 const FENCED_CONTENT = /^\s*```(?:json)?\s*[\s\S]*```\s*$/i;
+const MAX_PLAIN_TEXT_REPLY_LENGTH = 12_000;
 
+/**
+ * Catalog itineraries are an explicit current-turn action, never an inference
+ * from a hypothetical travel question or a destination retained in context.
+ */
+export function isExplicitCurrentItineraryRequest(message: string): boolean {
+  return EXPLICIT_CURRENT_ITINERARY_REQUEST.test(message.trim());
+}
+
+/** @deprecated Prefer isExplicitCurrentItineraryRequest for new callers. */
 export function isTravelPlanningPrompt(message: string): boolean {
-  return ITINERARY_SIGNAL.test(message);
+  return isExplicitCurrentItineraryRequest(message);
 }
 
 /** Deterministically returns an itinerary length from 1 through 14. */
@@ -125,11 +145,16 @@ function nonempty(value: unknown): string | null {
 }
 
 /**
- * Parse a model envelope strictly. Fenced, malformed, non-object, or reply-less
- * content is never reflected to a member as raw provider text.
+ * Parse a model envelope strictly. The optional plain-text branch is deliberately
+ * reserved for an ordinary no-tool general answer; every governed response stays
+ * envelope-only so model text cannot populate structured member-facing features.
  */
-export function parseKinfolkModelPayload(rawContent: string): ParsedKinfolkModelPayload {
-  if (!rawContent.trim() || FENCED_CONTENT.test(rawContent)) {
+export function parseKinfolkModelPayload(
+  rawContent: string,
+  options: ParseKinfolkModelPayloadOptions = {},
+): ParsedKinfolkModelPayload {
+  const trimmed = rawContent.trim();
+  if (!trimmed || FENCED_CONTENT.test(rawContent)) {
     return { valid: false, reply: SAFE_MODEL_RESPONSE_FALLBACK, value: null };
   }
   try {
@@ -142,6 +167,17 @@ export function parseKinfolkModelPayload(rawContent: string): ParsedKinfolkModel
     if (!reply) return { valid: false, reply: SAFE_MODEL_RESPONSE_FALLBACK, value: null };
     return { valid: true, reply, value };
   } catch {
+    // A provider that is compatible for ordinary chat may return plain text even
+    // when asked for an envelope. Do not turn that harmless, bounded answer into
+    // a dead end, but never accept a malformed structured payload as text.
+    const looksLikeStructuredPayload = /^[{[]/.test(trimmed);
+    if (
+      options.allowPlainTextReply === true &&
+      !looksLikeStructuredPayload &&
+      trimmed.length <= MAX_PLAIN_TEXT_REPLY_LENGTH
+    ) {
+      return { valid: true, reply: trimmed, value: { reply: trimmed } };
+    }
     return { valid: false, reply: SAFE_MODEL_RESPONSE_FALLBACK, value: null };
   }
 }
@@ -201,7 +237,14 @@ export function buildRankedCatalogItinerary(input: {
       day: index + 1,
       theme: index === 0 ? "Arrival and local highlights" : `Day ${index + 1} highlights`,
       activities: input.catalog.length > 0
-        ? [governedActivity(input.catalog[index % input.catalog.length]!)]
+        ? [...new Map(
+            [
+              input.catalog[index % input.catalog.length]!,
+              ...(input.catalog.length > 1
+                ? [input.catalog[(index + 1) % input.catalog.length]!]
+                : []),
+            ].map((business) => [business.id, governedActivity(business)]),
+          ).values()]
         : [genericActivity(index + 1)],
     })),
   };

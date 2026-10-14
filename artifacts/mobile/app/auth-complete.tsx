@@ -1,9 +1,8 @@
 import { useLocalSearchParams, useRouter } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import { useEffect } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { useColors } from "@/hooks/useColors";
-import { useAuth } from "@/lib/auth";
+import { persistAuthSession, useAuth } from "@/lib/auth";
 
 export default function AuthComplete() {
   const { token } = useLocalSearchParams<{ token?: string }>();
@@ -14,13 +13,18 @@ export default function AuthComplete() {
   useEffect(() => {
     async function finish() {
       try {
-        if (token && typeof token === "string") {
-          await SecureStore.setItemAsync("auth_session_token", token);
-          await SecureStore.setItemAsync("@melanin_maps_fresh_login", "1");
-          await refreshUser();
+        if (!token || typeof token !== "string") {
+          router.replace("/login?recovery=secure_storage");
+          return;
         }
-      } catch {}
-      router.replace("/(tabs)");
+        await persistAuthSession(token);
+        const loaded = await refreshUser();
+        router.replace(loaded ? "/(tabs)" : "/login?recovery=connection");
+      } catch {
+        // A deep-link credential write must not leave this spinner visible if
+        // native secure storage rejects or never settles.
+        router.replace("/login?recovery=secure_storage");
+      }
     }
     void finish();
   }, [token, router, refreshUser]);

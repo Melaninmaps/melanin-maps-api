@@ -129,6 +129,60 @@ export function getProtectedAdminAccessRecoveryStatus():
 
 const MIGRATIONS: { name: string; sql: string }[] = [
   {
+    // Separate member-controlled presentation from account records. All optional
+    // personal fields default to hidden; this migration never copies profile,
+    // location, birthday, badge, or account data into public storage.
+    name: "member_profile_social_presentation_v1",
+    sql: `CREATE TABLE IF NOT EXISTS member_profile_presentations_v1 (
+      user_id VARCHAR(255) PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      cover_object_key TEXT,
+      show_age BOOLEAN NOT NULL DEFAULT false,
+      show_birthday BOOLEAN NOT NULL DEFAULT false,
+      show_location BOOLEAN NOT NULL DEFAULT false,
+      show_professional_details BOOLEAN NOT NULL DEFAULT false,
+      show_badges BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE TABLE IF NOT EXISTS community_post_member_tags_v1 (
+      post_id VARCHAR(255) NOT NULL REFERENCES community_posts(id) ON DELETE CASCADE,
+      tagged_user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      tagged_by_user_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (post_id, tagged_user_id)
+    );
+    CREATE INDEX IF NOT EXISTS community_post_member_tags_profile_idx
+      ON community_post_member_tags_v1 (tagged_user_id, created_at DESC);`,
+  },
+  {
+    // Approval is distinct from activation. This table stores only an
+    // email-bound token hash and minimized lifecycle state; it never backfills
+    // an account, alters an existing password, or stores a plaintext token.
+    name: "member_activation_invitations_v1",
+    sql: `CREATE TABLE IF NOT EXISTS member_activation_invitations (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      email VARCHAR(255) NOT NULL,
+      token_hash CHAR(64) NOT NULL UNIQUE,
+      status VARCHAR(24) NOT NULL DEFAULT 'pending_delivery'
+        CHECK (status IN ('pending_delivery', 'sent', 'failed_delivery', 'activated', 'revoked', 'expired')),
+      provider VARCHAR(32),
+      provider_receipt_fingerprint CHAR(64),
+      delivery_failure_code VARCHAR(80),
+      delivery_attempted_at TIMESTAMPTZ,
+      delivery_accepted_at TIMESTAMPTZ,
+      expires_at TIMESTAMPTZ NOT NULL,
+      used_at TIMESTAMPTZ,
+      revoked_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CHECK ((status <> 'activated') OR used_at IS NOT NULL),
+      CHECK ((status <> 'revoked') OR revoked_at IS NOT NULL)
+    );
+    CREATE INDEX IF NOT EXISTS member_activation_invitations_email_active_idx
+      ON member_activation_invitations (email, expires_at DESC)
+      WHERE used_at IS NULL AND revoked_at IS NULL;`,
+  },
+  {
     // Owner-confirmed inputs for future business-facing Kinfolk drafts. This is
     // additive schema only: no member, directory, language, or profile data is
     // copied into the table at deploy time.
@@ -1844,6 +1898,38 @@ ON CONFLICT (city_slug) DO UPDATE SET
     )`,
   },
   {
+    // Invitation handoffs are audit-first. This stores lifecycle evidence only:
+    // no recipient address, invite token, push token, message content, or raw
+    // provider receipt can be persisted in this table.
+    name: "trusted_safety_invitation_delivery_audit_v1",
+    sql: `CREATE TABLE IF NOT EXISTS trusted_safety_invitation_delivery_attempts (
+      id                           UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      share_id                     UUID        NOT NULL REFERENCES trusted_safety_shares(id) ON DELETE CASCADE,
+      delivery_channel             VARCHAR(20) NOT NULL
+        CHECK (delivery_channel IN ('in_app', 'push', 'sms', 'email')),
+      provider                     VARCHAR(20) NOT NULL
+        CHECK (provider IN ('in_app', 'expo', 'twilio', 'resend')),
+      state                        VARCHAR(20) NOT NULL DEFAULT 'attempted'
+        CHECK (state IN ('attempted', 'accepted', 'failed')),
+      provider_receipt_fingerprint CHAR(64),
+      attempted_at                 TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      completed_at                 TIMESTAMPTZ,
+      created_at                   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at                   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CHECK (
+        (state = 'attempted' AND completed_at IS NULL AND provider_receipt_fingerprint IS NULL)
+        OR (
+          state = 'accepted'
+          AND completed_at IS NOT NULL
+          AND (provider = 'in_app' OR provider_receipt_fingerprint IS NOT NULL)
+        )
+        OR (state = 'failed' AND completed_at IS NOT NULL AND provider_receipt_fingerprint IS NULL)
+      )
+    );
+    CREATE INDEX IF NOT EXISTS trusted_safety_invitation_delivery_attempts_share_created_idx
+      ON trusted_safety_invitation_delivery_attempts (share_id, created_at DESC);`,
+  },
+  {
     // New Check-Ins can alert an already accepted Kinfolk profile without
     // collecting an email address. Existing email Check-Ins retain every value
     // and the email column becomes nullable only for these new records.
@@ -1868,6 +1954,66 @@ ON CONFLICT (city_slug) DO UPDATE SET
 
       CREATE INDEX IF NOT EXISTS safety_checkin_recipients_pending_idx
         ON safety_checkin_recipients(checkin_id, delivery_status, notified_at);
+    `,
+  },
+  {
+    // A durable in-app record and a provider-accepted push submission are not
+    // device-receipt evidence. Retry only the attempted channel, with bounded
+    // metadata, and re-evaluate recipient authorization before every retry.
+    name: "safety_checkin_recipient_delivery_attempts_v1",
+    sql: `
+      ALTER TABLE safety_checkin_recipients
+        ADD COLUMN IF NOT EXISTS in_app_attempt_count INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS push_attempt_count INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS in_app_attempted_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS in_app_created_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS in_app_failed_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS push_attempted_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS push_attempt_id UUID,
+        ADD COLUMN IF NOT EXISTS push_submitted_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS push_failed_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS next_retry_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS last_error_code VARCHAR(80);
+
+      DO $$
+      DECLARE delivery_status_constraint TEXT;
+      BEGIN
+        SELECT c.conname INTO delivery_status_constraint
+          FROM pg_constraint AS c
+         WHERE c.conrelid = 'safety_checkin_recipients'::regclass
+           AND c.contype = 'c'
+           AND pg_get_constraintdef(c.oid) LIKE '%delivery_status%'
+         LIMIT 1;
+        IF delivery_status_constraint IS NOT NULL THEN
+          EXECUTE format(
+            'ALTER TABLE safety_checkin_recipients DROP CONSTRAINT %I',
+            delivery_status_constraint
+          );
+        END IF;
+      END $$;
+
+      -- Older code used delivered when the in-app row was inserted. Preserve
+      -- that durable fact but remove the unsupported device-delivery claim.
+      UPDATE safety_checkin_recipients
+         SET delivery_status = 'in_app_created',
+             in_app_created_at = COALESCE(in_app_created_at, notified_at)
+       WHERE delivery_status = 'delivered';
+
+      ALTER TABLE safety_checkin_recipients
+        ADD CONSTRAINT safety_checkin_recipients_delivery_status_check
+        CHECK (delivery_status IN (
+          'pending',
+          'in_app_created',
+          'in_app_failed',
+          'push_pending',
+          'push_attempting',
+          'push_failed',
+          'push_submitted',
+          'skipped'
+        ));
+
+      CREATE INDEX IF NOT EXISTS safety_checkin_recipients_retry_idx
+        ON safety_checkin_recipients(checkin_id, delivery_status, next_retry_at);
     `,
   },
   {
@@ -3857,7 +4003,19 @@ ON CONFLICT (city_slug) DO UPDATE SET
       ADD COLUMN IF NOT EXISTS approved_at timestamptz,
       ADD COLUMN IF NOT EXISTS revoked_by varchar(255),
       ADD COLUMN IF NOT EXISTS revoked_at timestamptz,
-      ADD COLUMN IF NOT EXISTS revocation_reason text`,
+      ADD COLUMN IF NOT EXISTS revocation_reason text,
+      ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT NOW()`,
+  },
+  // Claim eligibility and owner control share these business lifecycle fields.
+  // Keep the additions data-neutral: existing listings retain their current
+  // publication/profile state, while a missing control state defaults safely to
+  // unclaimed. Explicit feature-release mode otherwise skips the broad runner.
+  {
+    name: "community_business_claims_v3_business_lifecycle_cols",
+    sql: `ALTER TABLE businesses
+      ADD COLUMN IF NOT EXISTS ownership_control_status varchar(50) NOT NULL DEFAULT 'unclaimed',
+      ADD COLUMN IF NOT EXISTS publication_status varchar(50),
+      ADD COLUMN IF NOT EXISTS profile_status varchar(50)`,
   },
   // Review queue index for admin claim dashboard.
   {
@@ -4815,9 +4973,13 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
           ALTER TABLE community_post_comments
             ADD COLUMN IF NOT EXISTS status varchar(20) NOT NULL DEFAULT 'active',
             ADD COLUMN IF NOT EXISTS edited_at timestamptz,
-            ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
+            ADD COLUMN IF NOT EXISTS deleted_at timestamptz,
+            ADD COLUMN IF NOT EXISTS parent_comment_id varchar;
           CREATE INDEX IF NOT EXISTS community_post_comments_active_idx
             ON community_post_comments (post_id, created_at DESC)
+            WHERE status = 'active';
+          CREATE INDEX IF NOT EXISTS community_post_comments_parent_active_idx
+            ON community_post_comments (post_id, parent_comment_id, created_at ASC)
             WHERE status = 'active';
         END IF;
 
@@ -4915,6 +5077,24 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
     name: "kinfolk_private_memories_sensitive_confirmation_v2",
     sql: `ALTER TABLE kinfolk_private_memories
       ADD COLUMN IF NOT EXISTS sensitive_consent_granted_at timestamptz`,
+  },
+  {
+    // A sensitive value is vault-only by default. This additive field changes
+    // no existing content, ownership, consent, or lifecycle state; it merely
+    // prevents sensitive records from being applied proactively until the
+    // member deliberately changes the restricted-use setting after reauth.
+    name: "kinfolk_private_memories_sensitive_vault_v3",
+    sql: `ALTER TABLE kinfolk_private_memories
+      ADD COLUMN IF NOT EXISTS sensitive_restricted boolean NOT NULL DEFAULT true`,
+  },
+  {
+    // New sensitive content is ciphertext only. This additive migration never
+    // rewrites legacy member content or invents a key; legacy sensitive rows
+    // remain locked until an explicit member correction is saved under a key.
+    name: "kinfolk_private_memories_sensitive_encryption_v4",
+    sql: `ALTER TABLE kinfolk_private_memories
+      ADD COLUMN IF NOT EXISTS sensitive_encrypted_content text,
+      ADD COLUMN IF NOT EXISTS sensitive_encryption_key_id varchar(64)`,
   },
   {
     // Personal Memory V1 adds only control metadata. It does not change, pause,
@@ -5784,13 +5964,32 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
       ADD COLUMN IF NOT EXISTS mapping_status text NOT NULL DEFAULT 'active',
       ADD COLUMN IF NOT EXISTS mapping_hold_reason text,
       ADD COLUMN IF NOT EXISTS mapping_reviewed_at timestamptz;
-      ALTER TABLE business_source_directory_receipts
-      ADD CONSTRAINT business_source_directory_receipts_mapping_status_check
-      CHECK (mapping_status IN ('active', 'review_hold', 'superseded')) NOT VALID;
+      -- This migration runs at every isolated-staging boot. The first boot may
+      -- have already created the named check constraint before a later health
+      -- check restarts the process, so preserve the existing constraint rather
+      -- than attempting to add it again.
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1
+          FROM pg_constraint
+          WHERE conrelid = 'business_source_directory_receipts'::regclass
+            AND conname = 'business_source_directory_receipts_mapping_status_check'
+        ) THEN
+          BEGIN
+            ALTER TABLE business_source_directory_receipts
+            ADD CONSTRAINT business_source_directory_receipts_mapping_status_check
+            CHECK (mapping_status IN ('active', 'review_hold', 'superseded')) NOT VALID;
+          EXCEPTION WHEN duplicate_object THEN
+            -- A concurrent startup installed the same named constraint.
+            NULL;
+          END;
+        END IF;
+      END $$;
       ALTER TABLE business_source_directory_receipts
       VALIDATE CONSTRAINT business_source_directory_receipts_mapping_status_check;
       CREATE INDEX IF NOT EXISTS business_source_directory_receipts_mapping_status_idx
-        ON business_source_directory_receipts (mapping_status, source_record_key);
+      ON business_source_directory_receipts (mapping_status, source_record_key);
 
       CREATE TABLE IF NOT EXISTS founder_source_identity_review_queue (
         id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -6126,6 +6325,192 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
     ALTER TABLE business_profile_field_receipts
       VALIDATE CONSTRAINT business_profile_field_receipts_field_name_check;`,
   },
+  {
+    // This is additive and deliberately leaves every historical survey consent
+    // value null. Only a new explicit member choice can enable an aggregate.
+    name: "community_intelligence_explicit_consent_v1",
+    sql: `
+      ALTER TABLE IF EXISTS neighborhood_surveys
+        ADD COLUMN IF NOT EXISTS community_intelligence_consent_at TIMESTAMPTZ;
+      CREATE INDEX IF NOT EXISTS neighborhood_surveys_city_consented_approved_idx
+        ON neighborhood_surveys (city, created_at DESC)
+        WHERE status = 'approved' AND community_intelligence_consent_at IS NOT NULL;
+    `,
+  },
+  {
+    // A member selects a city/state awareness area. No device coordinate is
+    // written or read, no location history is removed, and existing members
+    // remain opted out until they choose sensitive Safety alerts themselves.
+    name: "police_ice_coarse_awareness_area_v1",
+    sql: `
+      ALTER TABLE IF EXISTS user_settings
+        ADD COLUMN IF NOT EXISTS safety_alert_area_city VARCHAR(100),
+        ADD COLUMN IF NOT EXISTS safety_alert_area_state VARCHAR(2);
+      ALTER TABLE IF EXISTS user_settings
+        ALTER COLUMN safety_alert_police SET DEFAULT FALSE,
+        ALTER COLUMN safety_alert_ice SET DEFAULT FALSE;
+    `,
+  },
+  {
+    // Additive, default-off family impact intelligence. This does not ingest an
+    // alert, collect a location, enable a provider, or change existing contacts.
+    name: "trusted_safety_durable_delivery_v2",
+    sql: `
+      ALTER TABLE IF EXISTS trusted_safety_alert_log
+        ADD COLUMN IF NOT EXISTS event_fingerprint CHAR(64),
+        ADD COLUMN IF NOT EXISTS in_app_notification_id VARCHAR,
+        ADD COLUMN IF NOT EXISTS attempt_count INTEGER NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS attempted_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS next_retry_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS acknowledged_at TIMESTAMPTZ,
+        ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW();
+      CREATE UNIQUE INDEX IF NOT EXISTS trusted_safety_alert_event_share_dedupe_idx
+        ON trusted_safety_alert_log (event_fingerprint, share_id)
+        WHERE event_fingerprint IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS trusted_safety_alert_retry_idx
+        ON trusted_safety_alert_log (next_retry_at)
+        WHERE delivery_status = 'retry_scheduled';
+    `,
+  },
+  {
+    // Family-impact consent is relationship-specific. It never stores a member
+    // coordinate; current temporary location sessions remain the only location
+    // input, and a separate explicit member choice is required to evaluate them.
+    name: "family_impact_intelligence_v1",
+    sql: `
+      CREATE TABLE IF NOT EXISTS family_impact_consents (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        owner_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        trusted_share_id UUID NOT NULL REFERENCES trusted_safety_shares(id) ON DELETE CASCADE,
+        location_scope VARCHAR(64) NOT NULL CHECK (location_scope = 'active_temporary_location_only'),
+        consent_version VARCHAR(64) NOT NULL,
+        consented_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        expires_at TIMESTAMPTZ NOT NULL,
+        revoked_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (owner_id, trusted_share_id)
+      );
+      CREATE INDEX IF NOT EXISTS family_impact_consents_active_idx
+        ON family_impact_consents (owner_id, trusted_share_id, expires_at)
+        WHERE revoked_at IS NULL;
+      CREATE TABLE IF NOT EXISTS family_impact_events (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        source VARCHAR(32) NOT NULL CHECK (source IN ('nws', 'fema_ipaws', 'local_emergency', 'reviewed_violence')),
+        source_event_id VARCHAR(160) NOT NULL,
+        event_type VARCHAR(32) NOT NULL CHECK (event_type IN ('severe_weather', 'natural_disaster', 'serious_violent_threat')),
+        status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'cancelled', 'expired', 'withdrawn', 'corrected')),
+        boundary JSONB NOT NULL,
+        general_area VARCHAR(160) NOT NULL,
+        starts_at TIMESTAMPTZ,
+        expires_at TIMESTAMPTZ NOT NULL,
+        reviewer_approved_at TIMESTAMPTZ,
+        reviewer_id VARCHAR REFERENCES users(id) ON DELETE SET NULL,
+        correction_note VARCHAR(500),
+        withdrawn_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (source, source_event_id)
+      );
+      CREATE INDEX IF NOT EXISTS family_impact_events_current_idx
+        ON family_impact_events (status, expires_at);
+      CREATE TABLE IF NOT EXISTS family_impact_violence_reports (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        incident_id UUID NOT NULL REFERENCES family_impact_events(id) ON DELETE CASCADE,
+        reporter_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        abuse_state VARCHAR(24) NOT NULL DEFAULT 'accepted' CHECK (abuse_state IN ('accepted', 'rate_limited', 'rejected')),
+        UNIQUE (incident_id, reporter_id)
+      );
+      CREATE TABLE IF NOT EXISTS family_impact_delivery_attempts (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        event_id UUID NOT NULL REFERENCES family_impact_events(id) ON DELETE CASCADE,
+        trusted_share_id UUID NOT NULL REFERENCES trusted_safety_shares(id) ON DELETE CASCADE,
+        owner_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        contact_user_id VARCHAR REFERENCES users(id) ON DELETE SET NULL,
+        impact_status VARCHAR(32) NOT NULL CHECK (impact_status IN ('potentially_affected','outside_reported_area','location_unknown','member_confirmed_safety')),
+        delivery_state VARCHAR(32) NOT NULL DEFAULT 'queued' CHECK (delivery_state IN ('queued','provider_accepted','provider_rejected','retry_scheduled','acknowledged','cancelled','disabled','failed')),
+        attempt_count INTEGER NOT NULL DEFAULT 0,
+        next_retry_at TIMESTAMPTZ,
+        in_app_notification_id VARCHAR,
+        acknowledged_at TIMESTAMPTZ,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (event_id, trusted_share_id)
+      );
+      CREATE INDEX IF NOT EXISTS family_impact_delivery_retry_idx
+        ON family_impact_delivery_attempts (next_retry_at)
+        WHERE delivery_state = 'retry_scheduled';
+      CREATE TABLE IF NOT EXISTS family_impact_checkin_requests (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        event_id UUID NOT NULL REFERENCES family_impact_events(id) ON DELETE CASCADE,
+        trusted_share_id UUID NOT NULL REFERENCES trusted_safety_shares(id) ON DELETE CASCADE,
+        owner_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        contact_user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        state VARCHAR(24) NOT NULL DEFAULT 'requested' CHECK (state IN ('requested','safe','need_assistance','cancelled','expired')),
+        requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        responded_at TIMESTAMPTZ,
+        expires_at TIMESTAMPTZ NOT NULL,
+        UNIQUE (event_id, trusted_share_id)
+      );
+    `,
+  },
+  {
+    // Persistent Safety Location is a separate member-to-MWM authorization.
+    // It stores one encrypted current fix only; it never creates contact map
+    // access, location history, a retention worker, or an automatic enrollment.
+    name: "mwm_persistent_safety_location_v1",
+    sql: `
+      CREATE TABLE IF NOT EXISTS mwm_persistent_safety_location_authorizations (
+        owner_id VARCHAR PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        consent_version VARCHAR(64) NOT NULL,
+        consented_at TIMESTAMPTZ NOT NULL,
+        background_opt_in BOOLEAN NOT NULL DEFAULT FALSE,
+        foreground_permission VARCHAR(20) NOT NULL DEFAULT 'unknown'
+          CHECK (foreground_permission IN ('granted','denied','restricted','not_requested','unknown')),
+        background_permission VARCHAR(20) NOT NULL DEFAULT 'unknown'
+          CHECK (background_permission IN ('granted','denied','restricted','not_requested','unknown')),
+        paused_at TIMESTAMPTZ,
+        revoked_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE TABLE IF NOT EXISTS mwm_persistent_safety_locations (
+        owner_id VARCHAR PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        encrypted_payload TEXT NOT NULL,
+        encryption_key_version VARCHAR(64) NOT NULL,
+        captured_at TIMESTAMPTZ NOT NULL,
+        accuracy_meters DOUBLE PRECISION NOT NULL CHECK (accuracy_meters >= 0 AND accuracy_meters <= 50000),
+        source_platform VARCHAR(16) NOT NULL CHECK (source_platform IN ('ios','android')),
+        received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS mwm_persistent_safety_locations_current_idx
+        ON mwm_persistent_safety_locations (captured_at DESC);
+      CREATE TABLE IF NOT EXISTS mwm_persistent_safety_location_contact_consents (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        owner_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        trusted_share_id UUID NOT NULL REFERENCES trusted_safety_shares(id) ON DELETE CASCADE,
+        consent_version VARCHAR(64) NOT NULL,
+        consented_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        revoked_at TIMESTAMPTZ,
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (owner_id, trusted_share_id)
+      );
+      CREATE INDEX IF NOT EXISTS mwm_persistent_safety_location_contact_consents_active_idx
+        ON mwm_persistent_safety_location_contact_consents (owner_id, trusted_share_id)
+        WHERE revoked_at IS NULL;
+      CREATE TABLE IF NOT EXISTS mwm_persistent_safety_location_audit (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        owner_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        trusted_share_id UUID REFERENCES trusted_safety_shares(id) ON DELETE SET NULL,
+        event_id UUID REFERENCES family_impact_events(id) ON DELETE SET NULL,
+        action VARCHAR(80) NOT NULL,
+        metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS mwm_persistent_safety_location_audit_owner_idx
+        ON mwm_persistent_safety_location_audit (owner_id, created_at DESC);
+    `,
+  },
 ];
 
 /**
@@ -6152,6 +6537,252 @@ export async function ensureAdminBusinessProfileReceiptsAndCatalogSchema(
     pool.query("SELECT business_id, action, after_state FROM business_catalog_cohort_audit_events LIMIT 0"),
   ]);
   logger?.info("Admin profile receipt and Kinfolk Catalog schemas ready before traffic acceptance");
+}
+
+/**
+ * Trusted contacts and profile-only Safety Check-Ins are request-path controls,
+ * not optional publishing or seed work. Explicit feature-release mode therefore
+ * must provision their additive schema before serving the authenticated Safety
+ * Hub, while continuing to leave every worker, notification, and data writer
+ * disabled.
+ */
+const SAFETY_OPERATIONAL_SCHEMA_MIGRATIONS = [
+  "create_trusted_safety_shares",
+  "create_trusted_safety_alert_log",
+  "trusted_safety_invitation_delivery_audit_v1",
+  "safety_checkin_profile_recipients_v1",
+  "safety_checkin_recipient_delivery_attempts_v1",
+  "police_ice_coarse_awareness_area_v1",
+] as const;
+
+export async function ensureSafetyOperationalSchema(logger?: Logger): Promise<void> {
+  for (const name of SAFETY_OPERATIONAL_SCHEMA_MIGRATIONS) {
+    const migration = MIGRATIONS.find((candidate) => candidate.name === name);
+    if (!migration) {
+      throw new Error(`Safety operational schema migration is unavailable: ${name}`);
+    }
+    await pool.query(migration.sql);
+  }
+
+  await Promise.all([
+    pool.query("SELECT id, status, contact_accepted FROM trusted_safety_shares LIMIT 0"),
+    pool.query("SELECT id, share_id, state FROM trusted_safety_invitation_delivery_attempts LIMIT 0"),
+    pool.query("SELECT checkin_id, trusted_share_id, delivery_status FROM safety_checkin_recipients LIMIT 0"),
+  ]);
+  logger?.info("Safety Hub trusted-contact and Check-In schemas ready before traffic acceptance");
+}
+
+/**
+ * Safety Reliability reconciliation needs the same additive migration entries
+ * that application startup uses for durable trusted-contact alert auditing and
+ * Family Impact intelligence, without invoking unrelated directory, seed, or
+ * member-mutation work. This remains schema-only: it creates no relationship,
+ * location session, event, notification, provider request, or background worker.
+ */
+const SAFETY_RELIABILITY_SCHEMA_MIGRATIONS = [
+  ...SAFETY_OPERATIONAL_SCHEMA_MIGRATIONS,
+  "trusted_safety_durable_delivery_v2",
+  "family_impact_intelligence_v1",
+  "mwm_persistent_safety_location_v1",
+] as const;
+
+export async function ensureSafetyReliabilitySchema(logger?: Logger): Promise<void> {
+  for (const name of SAFETY_RELIABILITY_SCHEMA_MIGRATIONS) {
+    const migration = MIGRATIONS.find((candidate) => candidate.name === name);
+    if (!migration) {
+      throw new Error(`Safety reliability schema migration is unavailable: ${name}`);
+    }
+    await pool.query(migration.sql);
+  }
+
+  await Promise.all([
+    pool.query("SELECT id, status, contact_accepted FROM trusted_safety_shares LIMIT 0"),
+    pool.query("SELECT id, event_fingerprint, attempt_count FROM trusted_safety_alert_log LIMIT 0"),
+    pool.query("SELECT id, owner_id, trusted_share_id FROM family_impact_consents LIMIT 0"),
+    pool.query("SELECT id, source_event_id, status FROM family_impact_events LIMIT 0"),
+    pool.query("SELECT id, delivery_state, next_retry_at FROM family_impact_delivery_attempts LIMIT 0"),
+    pool.query("SELECT owner_id, consent_version, paused_at, revoked_at FROM mwm_persistent_safety_location_authorizations LIMIT 0"),
+    pool.query("SELECT owner_id, encrypted_payload, captured_at FROM mwm_persistent_safety_locations LIMIT 0"),
+    pool.query("SELECT id, owner_id, trusted_share_id FROM mwm_persistent_safety_location_contact_consents LIMIT 0"),
+  ]);
+  logger?.info("Safety reliability trusted-contact and Family Impact schemas ready before traffic acceptance");
+}
+
+// The authenticated Kinfolk staging proof must read the exact same catalog
+// schema as the isolated API. Keep this gate scoped to the disposable staging
+// environment; it is additive, creates no business data, and starts no worker.
+/**
+ * An isolated-only, deliberately private review handoff for synthetic serious
+ * credible-threat validation. The double opt-in prevents a production process
+ * from creating a new retention surface, and this gate creates no notice,
+ * provider delivery, public alert, public member projection, or background worker.
+ */
+export async function ensureIsolatedSeriousThreatPrivateReviewSchema(
+  logger?: Logger,
+): Promise<void> {
+  if (
+    process.env.KINFOLK_MEMORY_STAGING_ISOLATION !== "true"
+    || process.env.KINFOLK_SERIOUS_THREAT_PRIVATE_REVIEW_STAGING_ENABLED !== "true"
+  ) {
+    return;
+  }
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS safety_serious_credible_threat_private_reviews (
+      report_id TEXT PRIMARY KEY CHECK (char_length(report_id) BETWEEN 1 AND 160),
+      reporter_user_id TEXT NOT NULL CHECK (char_length(reporter_user_id) BETWEEN 1 AND 160),
+      received_at TIMESTAMPTZ NOT NULL,
+      review_state TEXT NOT NULL CHECK (review_state IN (
+        'pending_private_review',
+        'approved_private_review',
+        'rejected_private_review'
+      )),
+      candidate_submission JSONB NOT NULL CHECK (jsonb_typeof(candidate_submission) = 'object'),
+      private_decision JSONB NULL CHECK (
+        private_decision IS NULL OR jsonb_typeof(private_decision) = 'object'
+      ),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS safety_serious_threat_private_pending_idx
+      ON safety_serious_credible_threat_private_reviews (received_at ASC, report_id ASC)
+      WHERE review_state = 'pending_private_review';
+    CREATE TABLE IF NOT EXISTS safety_serious_credible_threat_fixture_reviewers (
+      user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      scope TEXT NOT NULL CHECK (scope = 'isolated_staging_validation'),
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS safety_serious_threat_fixture_reviewer_expiry_idx
+      ON safety_serious_credible_threat_fixture_reviewers (expires_at ASC);
+  `);
+  await pool.query(
+    "SELECT report_id, review_state, candidate_submission FROM safety_serious_credible_threat_private_reviews LIMIT 0",
+  );
+  logger?.info("Isolated serious-threat private-review schema ready before traffic acceptance");
+}
+
+/**
+ * A narrowly bounded, default-off staging test entitlement for the three
+ * ownership-claim decision routes. It never changes a user role, ADMIN_EMAILS,
+ * ownership data, or production authorization. Account deletion cascades the
+ * row, and every query ignores rows after their short expiry.
+ */
+export async function ensureIsolatedOwnerClaimReviewerFixtureSchema(
+  logger?: Logger,
+): Promise<void> {
+  if (
+    process.env.RAILWAY_ENVIRONMENT_NAME !== "staging"
+    || process.env.KINFOLK_MEMORY_STAGING_ISOLATION !== "true"
+    || process.env.KINFOLK_OWNER_CLAIM_REVIEWER_FIXTURE_ENABLED !== "true"
+  ) {
+    return;
+  }
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS owner_claim_reviewer_fixture_entitlements (
+      user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      bound_email TEXT NOT NULL CHECK (
+        bound_email ~* '^kinfolk-safety-contact-[a-z0-9-]+@example\\.test$'
+      ),
+      scope TEXT NOT NULL CHECK (scope = 'isolated_staging_validation'),
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CHECK (expires_at > created_at)
+    );
+    CREATE INDEX IF NOT EXISTS owner_claim_reviewer_fixture_expiry_idx
+      ON owner_claim_reviewer_fixture_entitlements (expires_at ASC);
+  `);
+  await pool.query(
+    "SELECT user_id, bound_email, scope, expires_at FROM owner_claim_reviewer_fixture_entitlements LIMIT 0",
+  );
+  logger?.info("Isolated owner-claim reviewer fixture schema checked before traffic acceptance");
+}
+
+/**
+ * A separate, delivery-only staging entitlement for the existing activation
+ * approval, resend, and revoke routes. It is default-off and only permits a
+ * configured disposable reviewer to operate on the one synthetic Resend test
+ * mailbox; it never changes users.role, ADMIN_EMAILS, real waitlist entries,
+ * or ordinary email recipients.
+ */
+export async function ensureIsolatedActivationInvitationReviewerFixtureSchema(
+  logger?: Logger,
+): Promise<void> {
+  if (
+    process.env.RAILWAY_ENVIRONMENT_NAME !== "staging"
+    || process.env.KINFOLK_MEMORY_STAGING_ISOLATION !== "true"
+    || process.env.KINFOLK_ACTIVATION_INVITATION_REVIEWER_FIXTURE_ENABLED !== "true"
+  ) {
+    return;
+  }
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS activation_invitation_reviewer_fixture_entitlements (
+      user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+      bound_email TEXT NOT NULL CHECK (
+        bound_email ~* '^kinfolk-safety-contact-[a-z0-9-]+@example\\.test$'
+      ),
+      scope TEXT NOT NULL CHECK (scope = 'isolated_staging_activation_invitation_validation'),
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CHECK (expires_at > created_at)
+    );
+    CREATE INDEX IF NOT EXISTS activation_invitation_reviewer_fixture_expiry_idx
+      ON activation_invitation_reviewer_fixture_entitlements (expires_at ASC);
+  `);
+  await pool.query(
+    "SELECT user_id, bound_email, scope, expires_at FROM activation_invitation_reviewer_fixture_entitlements LIMIT 0",
+  );
+  logger?.info("Isolated activation-invitation reviewer fixture schema checked before traffic acceptance");
+}
+
+const ISOLATED_GOVERNED_DISCOVERY_SCHEMA_MIGRATIONS = [
+  // Explore's approved Community Experience search condition references this
+  // aggregate-only relation whenever a recognized service signal is searched.
+  // Explicit release mode bypasses the broad migration runner, so the empty,
+  // additive table and index must exist before a public directory read.
+  "business_member_feedback_table_v1",
+  "business_member_feedback_index_v1",
+  "business_profile_evidence_receipts_v1",
+  "business_discovery_eligibility_v1",
+  "business_discovery_eligibility_audit_events_v1",
+  // Public directory reads use the source-presence relation through the
+  // documented eligibility predicate. Explicit release mode bypasses the
+  // broad runner, so this additive migration is required before the route can
+  // truthfully return an empty result instead of a missing-relation 500.
+  "founder_source_presence_publication_v1",
+  // The canonical public predicate excludes held or superseded source receipts.
+  // Keep its additive status column available in the same isolated-only bootstrap
+  // so staging reads do not fail after the relation itself has been created.
+  "founder_source_receipt_integrity_review_v1",
+] as const;
+
+export async function ensureIsolatedGovernedDiscoverySchema(
+  logger?: Logger,
+): Promise<void> {
+  if (
+    process.env.RAILWAY_ENVIRONMENT_NAME !== "staging"
+    || process.env.KINFOLK_MEMORY_STAGING_ISOLATION !== "true"
+  ) {
+    return;
+  }
+
+  for (const name of ISOLATED_GOVERNED_DISCOVERY_SCHEMA_MIGRATIONS) {
+    const migration = MIGRATIONS.find((candidate) => candidate.name === name);
+    if (!migration) {
+      throw new Error(`Governed discovery schema migration is unavailable: ${name}`);
+    }
+    await pool.query(migration.sql);
+  }
+
+  await Promise.all([
+    pool.query("SELECT business_id, member_id, kind, key, status FROM business_member_feedback LIMIT 0"),
+    pool.query("SELECT id, business_id, field_name FROM business_profile_evidence_receipts LIMIT 0"),
+    pool.query("SELECT business_id, eligibility_status FROM business_discovery_eligibility LIMIT 0"),
+    pool.query("SELECT id, business_id, action FROM business_discovery_eligibility_audit_events LIMIT 0"),
+    pool.query("SELECT business_id, source_record_key FROM business_source_directory_receipts LIMIT 0"),
+  ]);
+  logger?.info("Isolated governed discovery schemas ready before traffic acceptance");
 }
 
 export const COMMUNITY_PUBLICATION_REQUIRED_COLUMNS: Readonly<
@@ -6511,6 +7142,7 @@ export async function ensureCommunityFeedReadSchema(logger?: Logger): Promise<vo
     CREATE TABLE IF NOT EXISTS community_post_comments (
       id VARCHAR PRIMARY KEY DEFAULT gen_random_uuid(),
       post_id VARCHAR NOT NULL,
+      parent_comment_id VARCHAR,
       author_id VARCHAR,
       author_name VARCHAR(100) NOT NULL DEFAULT 'Community member',
       author_initials VARCHAR(4) NOT NULL DEFAULT 'MWM',
@@ -6550,6 +7182,10 @@ export async function ensureCommunityFeedReadSchema(logger?: Logger): Promise<vo
       ON community_posts (created_at DESC);
     CREATE INDEX IF NOT EXISTS community_post_comments_post_created_idx
       ON community_post_comments (post_id, created_at DESC);
+    ALTER TABLE community_post_comments
+      ADD COLUMN IF NOT EXISTS parent_comment_id VARCHAR;
+    CREATE INDEX IF NOT EXISTS community_post_comments_parent_created_idx
+      ON community_post_comments (post_id, parent_comment_id, created_at ASC);
     CREATE INDEX IF NOT EXISTS community_post_reactions_post_created_idx
       ON community_post_reactions (post_id, created_at DESC);
     CREATE UNIQUE INDEX IF NOT EXISTS user_blocks_unique_idx
@@ -6562,7 +7198,7 @@ export async function ensureCommunityFeedReadSchema(logger?: Logger): Promise<vo
 
   const required = [
     ["community_posts", ["id", "author_id", "author_name", "author_initials", "author_color", "content", "category", "upvotes", "downvotes", "created_at"]],
-    ["community_post_comments", ["post_id", "created_at"]],
+    ["community_post_comments", ["post_id", "parent_comment_id", "created_at"]],
     ["community_post_reactions", ["post_id", "user_id", "created_at"]],
     ["user_blocks", ["blocker_id", "blocked_id"]],
     ["user_follows", ["follower_id", "following_id", "status"]],
@@ -6972,6 +7608,42 @@ export async function ensureCanonicalMwmOwnerAttachmentAuditSchema(logger?: Logg
 }
 
 /**
+ * Kinfolk Settings and adaptive answer delivery read this small, member-owned
+ * preference table on authenticated requests. Feature-release mode skips the
+ * broad migration runner, so establish only this additive request-path schema
+ * before traffic rather than returning a generic settings or chat failure.
+ *
+ * The gate never inserts, updates, deletes, or backfills a member preference.
+ */
+const KINFOLK_DELIVERY_PROFILE_SCHEMA_MIGRATIONS = new Set([
+  "kinfolk_delivery_profiles_v1",
+  "kinfolk_delivery_profiles_adaptive_depth_cols",
+]);
+
+export async function ensureKinfolkDeliveryProfileSchema(logger?: Logger): Promise<void> {
+  const log = (msg: string) =>
+    logger ? logger.info(msg) : console.log(`[kinfolk-delivery-profile-schema] ${msg}`);
+  const migrations = MIGRATIONS.filter((migration) =>
+    KINFOLK_DELIVERY_PROFILE_SCHEMA_MIGRATIONS.has(migration.name),
+  );
+
+  if (migrations.length !== KINFOLK_DELIVERY_PROFILE_SCHEMA_MIGRATIONS.size) {
+    throw new Error("Kinfolk delivery-profile schema migration definition is incomplete.");
+  }
+
+  for (const migration of migrations) {
+    await pool.query(migration.sql);
+  }
+
+  // Structural-only assertion after idempotent DDL. Keep it aligned with both
+  // the settings response and the adaptive-delivery query shape.
+  await pool.query(
+    "SELECT user_id, detail_level, tone_preference, learning_mode, notification_cadence, age_band, regional_language_opt_in, regional_reference, allow_related_branches, allow_non_sensitive_recommendations, allow_civic_safety_updates, adaptive_depth_enabled, adaptive_depth_prompt_dismissed_until, depth_updated_from, created_at, updated_at FROM kinfolk_delivery_profiles LIMIT 0",
+  );
+  log("Kinfolk delivery-profile schema is ready before traffic acceptance");
+}
+
+/**
  * Preferred-name save, pause, resume, revoke, and delete are authenticated
  * request paths. Explicit feature-release mode intentionally bypasses the
  * broad migration runner, so this schema-only gate must complete before the
@@ -7005,6 +7677,9 @@ export async function ensureKinfolkPreferredNameSchema(logger?: Logger): Promise
     ALTER TABLE kinfolk_private_memories
       ADD COLUMN IF NOT EXISTS consent_granted_at timestamptz NOT NULL DEFAULT now(),
       ADD COLUMN IF NOT EXISTS sensitive_consent_granted_at timestamptz,
+      ADD COLUMN IF NOT EXISTS sensitive_encrypted_content text,
+      ADD COLUMN IF NOT EXISTS sensitive_encryption_key_id varchar(64),
+      ADD COLUMN IF NOT EXISTS sensitive_restricted boolean NOT NULL DEFAULT true,
       ADD COLUMN IF NOT EXISTS paused_at timestamptz;
     CREATE INDEX IF NOT EXISTS kinfolk_private_memories_preferred_name_lookup_idx
       ON kinfolk_private_memories (user_id, updated_at DESC)
@@ -7014,7 +7689,7 @@ export async function ensureKinfolkPreferredNameSchema(logger?: Logger): Promise
   // Structural read only: fail before traffic if an older production baseline
   // cannot satisfy the active lifecycle query shape.
   await pool.query(
-    "SELECT id, user_id, content, purpose, expires_at, paused_at, revoked_at, created_at, updated_at FROM kinfolk_private_memories LIMIT 0",
+    "SELECT id, user_id, content, purpose, sensitive_encrypted_content, sensitive_encryption_key_id, sensitive_restricted, expires_at, paused_at, revoked_at, created_at, updated_at FROM kinfolk_private_memories LIMIT 0",
   );
   log("Kinfolk preferred-name schema is ready before traffic acceptance");
 }
@@ -7094,6 +7769,203 @@ export async function ensureLegacyMapLocationAttestationSchema(logger?: Logger):
     throw new Error("Legacy map location attestation schema verification failed.");
   }
   logger?.info("Legacy map location attestation schema is ready before traffic acceptance");
+}
+
+/**
+ * Owner-scoped profile routes must never infer one business when a member has
+ * multiple relationships. Their approval and revocation predicate is only
+ * safe when every lifecycle column exists, including in explicit feature
+ * release mode where the broad migration loop is intentionally skipped.
+ */
+export async function ensureBusinessOwnerLinkLifecycleSchema(logger?: Logger): Promise<void> {
+  const requiredMigrationNames = [
+    "community_business_claims_v2_claims_cols",
+    "community_business_claims_v2_owner_links_cols",
+    "community_business_claims_v3_business_lifecycle_cols",
+  ] as const;
+  const migrations = requiredMigrationNames.map((name) => {
+    const migration = MIGRATIONS.find((entry) => entry.name === name);
+    if (!migration) {
+      throw new Error(`Business owner-claim lifecycle migration definition is missing: ${name}.`);
+    }
+    return migration;
+  });
+  for (const migration of migrations) {
+    await pool.query(migration.sql);
+  }
+  await pool.query(
+    "SELECT claim_id, approved_by, approved_at, revoked_by, revoked_at, revocation_reason, updated_at FROM business_owner_links LIMIT 0",
+  );
+  await pool.query(
+    "SELECT claim_type, verification_method, evidence_url, evidence_summary, attested_at, reviewed_by, reviewed_at, decision_reason, withdrawn_at FROM business_claims LIMIT 0",
+  );
+  await pool.query(
+    "SELECT ownership_control_status, publication_status, profile_status FROM businesses LIMIT 0",
+  );
+  logger?.info("Business owner-link lifecycle schema is ready before traffic acceptance");
+}
+
+/**
+ * Public business detail reads use the canonical duplicate-resolution relation
+ * to expose supersession context. In explicit feature-release mode the broad
+ * visibility hardening writer is skipped, so establish this empty additive
+ * relation before accepting a detail request rather than returning a 500.
+ */
+export async function ensureBusinessPublicDetailSchema(logger?: Logger): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS public.business_duplicate_resolutions (
+      job_id uuid NOT NULL,
+      canonical_business_id varchar(255) NOT NULL REFERENCES public.businesses(id),
+      superseded_business_id varchar(255) PRIMARY KEY REFERENCES public.businesses(id),
+      identity_evidence jsonb NOT NULL,
+      policy_version varchar(80) NOT NULL,
+      scoring jsonb NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )
+  `);
+  await pool.query(
+    "SELECT canonical_business_id, superseded_business_id, identity_evidence, policy_version, scoring FROM public.business_duplicate_resolutions LIMIT 0",
+  );
+  logger?.info("Business public-detail duplicate-resolution schema is ready before traffic acceptance");
+}
+
+/**
+ * Member approval may issue an account-activation capability during an explicit
+ * feature release, where the broad migration runner is intentionally skipped.
+ * This narrow prerequisite creates only an empty additive table/index and then
+ * probes its request-path shape before any approval or registration route can
+ * accept traffic.
+ */
+export async function ensureMemberActivationInvitationSchema(logger?: Logger): Promise<void> {
+  const migration = MIGRATIONS.find(
+    (entry) => entry.name === "member_activation_invitations_v1",
+  );
+  if (!migration) {
+    throw new Error("Member activation invitation schema migration definition is missing.");
+  }
+  await pool.query(migration.sql);
+  await pool.query(
+    "SELECT email, token_hash, status, expires_at, used_at, revoked_at FROM member_activation_invitations LIMIT 0",
+  );
+  logger?.info("Member activation invitation schema is ready before traffic acceptance");
+}
+
+/**
+ * Tour cultural-site details and contribution routes read this relation on every
+ * request. Explicit feature-release mode intentionally skips broad legacy
+ * startup writers, including the historical mural seed that first created this
+ * table. Keep this request-path prerequisite narrowly additive: it creates no
+ * site, contribution, media asset, or public content.
+ */
+export async function ensureTourCulturalSiteContributionSchema(logger?: Logger): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS site_contributions (
+      id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+      site_id       UUID        NOT NULL,
+      user_id       TEXT        NOT NULL,
+      author_name   TEXT,
+      comment_text  TEXT        NOT NULL,
+      image_url     TEXT,
+      video_url     TEXT,
+      status        TEXT        NOT NULL DEFAULT 'pending',
+      helpful_count INTEGER     NOT NULL DEFAULT 0,
+      created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_site_contrib_site
+      ON site_contributions(site_id) WHERE status = 'approved'
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_site_contrib_user
+      ON site_contributions(user_id)
+  `);
+  await pool.query(
+    "SELECT id, site_id, user_id, author_name, comment_text, image_url, video_url, status, helpful_count, created_at FROM site_contributions LIMIT 0",
+  );
+  logger?.info("Tour cultural-site contribution schema is ready before traffic acceptance");
+}
+
+/**
+ * The Explore HBCU lens queries the canonical cultural-site catalogue directly.
+ * Feature-release mode intentionally postpones broad migrations, so a legacy
+ * staging database can otherwise have the table but not its publication column
+ * and turn a valid, empty HBCU lens into a 500. This is schema-only: it creates
+ * no cultural-site records and does not publish, seed, or alter existing content.
+ */
+export async function ensureHbcuExplorePublicationSchema(logger?: Logger): Promise<void> {
+  const culturalSitesTable = MIGRATIONS.find(
+    (entry) => entry.name === "create_cultural_sites_table",
+  );
+  if (!culturalSitesTable) {
+    throw new Error("Cultural-site schema migration definition is missing.");
+  }
+
+  await pool.query(culturalSitesTable.sql);
+  await pool.query(`
+    ALTER TABLE public.cultural_sites
+      ADD COLUMN IF NOT EXISTS is_published BOOLEAN DEFAULT TRUE
+  `);
+  await pool.query(
+    "SELECT id, name, category, heritage_category, city, state, latitude, longitude, is_published FROM public.cultural_sites LIMIT 0",
+  );
+  logger?.info("Explore HBCU publication schema is ready before traffic acceptance");
+}
+
+/**
+ * Kinfolk's ordinary conversational route may check the published Living Library
+ * before asking the configured model. Explicit feature-release mode correctly
+ * skips the broad migration runner, but a missing legacy Library relation must
+ * not turn a safe model answer into a generic fallback. This gate is additive
+ * schema only: it creates no topics, entries, sources, facets, links, or
+ * publication state, and therefore cannot manufacture a Library answer.
+ */
+export async function ensureKinfolkLivingLibraryReadSchema(logger?: Logger): Promise<void> {
+  const requiredMigrationNames = [
+    "living_library_topics_table_v1",
+    "living_library_entries_table_v1",
+    "living_library_entries_idx_topic_refreshed_v1",
+    "living_library_entries_idx_norm_question_v1",
+    "living_library_entry_sources_table_v1",
+    "living_library_topic_follows_table_v1",
+    "living_library_research_candidates_v2",
+    "living_library_coverage_aggregates_v1",
+    "living_library_foundation_columns_v1",
+    "library_entry_topic_links_v1",
+    "library_entry_topic_links_topic_idx_v1",
+    "library_entry_source_relevance_notes_v1",
+    "library_entry_facets_v1",
+  ] as const;
+
+  const migrations = requiredMigrationNames.map((name) => {
+    const migration = MIGRATIONS.find((entry) => entry.name === name);
+    if (!migration) {
+      throw new Error(`Living Library read schema migration is unavailable: ${name}`);
+    }
+    return migration;
+  });
+
+  for (const migration of migrations) {
+    await pool.query(migration.sql);
+  }
+
+  // The historical publication-status migration also backfills rows. Do not run
+  // that writer in the narrow pre-traffic path: a fresh default makes any
+  // existing legacy entry non-public until a governed publication workflow has
+  // explicitly approved it.
+  await pool.query(`
+    ALTER TABLE library_entries
+      ADD COLUMN IF NOT EXISTS publication_status TEXT NOT NULL DEFAULT 'pending'
+  `);
+
+  await Promise.all([
+    pool.query("SELECT id, slug, title, domain, summary, icon_key, active, is_foundational FROM library_topics LIMIT 0"),
+    pool.query("SELECT id, topic_id, normalized_question, publication_status, refreshed_at FROM library_entries LIMIT 0"),
+    pool.query("SELECT id, entry_id, why_it_matters FROM library_entry_sources LIMIT 0"),
+    pool.query("SELECT entry_id, facet_key FROM library_entry_facets LIMIT 0"),
+    pool.query("SELECT entry_id, topic_id, relevance FROM library_entry_topic_links LIMIT 0"),
+  ]);
+  logger?.info("Kinfolk Living Library read schema is ready before traffic acceptance");
 }
 
 export async function runStartupMigrations(logger?: Logger): Promise<void> {
@@ -7494,6 +8366,25 @@ export async function runStartupMigrations(logger?: Logger): Promise<void> {
       );
     }
   }
+}
+
+/**
+ * Initializes only the source-backed cultural registry required by the
+ * disposable release-database gate. It is deliberately separate from normal
+ * application startup: release startup remains schema-only and must never
+ * populate content or directory data implicitly. The gate runner invokes this
+ * only with RUN_RELEASE_DB_GATE=1 against a disposable database.
+ */
+export async function ensureKinfolkReleaseGateCulturalContext(
+  logger?: Logger,
+): Promise<void> {
+  const log = (msg: string) =>
+    logger ? logger.info(msg) : console.log(`[startup-migrations] ${msg}`);
+  const warn = (msg: string) =>
+    logger ? logger.warn(msg) : console.warn(`[startup-migrations] ${msg}`);
+
+  await ensureKinfolkEntityRegistry(log, warn);
+  await ensureKinfolkCulturalContextV1(log, warn);
 }
 
 // ── Helper: bulk dedup key set from cultural_sites (name|state) ──────────────
@@ -15213,9 +16104,11 @@ async function ensureKinfolkCulturalContextV1(
     // ── 5. education_institutions — add optional tracking columns ─────────────
     await pool.query(`
       DO $$ BEGIN
-        ALTER TABLE education_institutions ADD COLUMN IF NOT EXISTS source_id text;
-        ALTER TABLE education_institutions ADD COLUMN IF NOT EXISTS source_status text;
-        ALTER TABLE education_institutions ADD COLUMN IF NOT EXISTS last_verified_at timestamptz;
+        IF to_regclass('public.education_institutions') IS NOT NULL THEN
+          ALTER TABLE education_institutions ADD COLUMN IF NOT EXISTS source_id text;
+          ALTER TABLE education_institutions ADD COLUMN IF NOT EXISTS source_status text;
+          ALTER TABLE education_institutions ADD COLUMN IF NOT EXISTS last_verified_at timestamptz;
+        END IF;
       END $$
     `);
 
@@ -18557,6 +19450,51 @@ async function ensureMediaAndClaimsSchema(
       `ensureMediaAndClaimsSchema failed: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
+}
+
+/**
+ * Community posts may reference a member-owned completed upload. In explicit
+ * feature-release mode the broad migration runner is deliberately skipped, so
+ * this narrow additive gate keeps the ownership lookup from becoming a 500.
+ * It never inserts media rows, changes business claims, or starts a worker.
+ */
+export async function ensureCommunityMediaSchemaOnly(): Promise<void> {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS media_assets (
+      id           UUID PRIMARY KEY,
+      uploader_id  TEXT NOT NULL,
+      purpose      TEXT NOT NULL DEFAULT 'general',
+      mime_type    TEXT NOT NULL,
+      byte_size    BIGINT,
+      object_key   TEXT NOT NULL,
+      public_url   TEXT,
+      status       TEXT NOT NULL DEFAULT 'ready'
+                   CHECK (status IN ('ready','processing','deleted')),
+      created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`ALTER TABLE media_assets ALTER COLUMN public_url DROP NOT NULL`);
+  const requiredColumns = [
+    "id", "uploader_id", "purpose", "mime_type", "byte_size",
+    "object_key", "public_url", "status", "created_at",
+  ];
+  const result = await pool.query<{ column_name: string }>(`
+    SELECT column_name
+      FROM information_schema.columns
+     WHERE table_schema = 'public'
+       AND table_name = 'media_assets'
+       AND column_name = ANY($1::text[])
+  `, [requiredColumns]);
+  const present = new Set(result.rows.map((row) => row.column_name));
+  const missing = requiredColumns.filter((column) => !present.has(column));
+  if (missing.length > 0) {
+    throw new Error(`media_assets missing required Community media columns: ${missing.join(", ")}`);
+  }
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS media_assets_owned_ready_lookup_idx
+      ON media_assets (uploader_id, public_url)
+     WHERE status = 'ready' AND public_url IS NOT NULL
+  `);
 }
 
 /**

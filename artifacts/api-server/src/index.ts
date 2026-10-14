@@ -8,16 +8,29 @@ import { startNudgeCronScheduler } from "./lib/nudgeScheduler";
 import { startCityHealthAlertScheduler } from "./lib/cityHealthAlertScheduler";
 import {
   ensureAdminBusinessProfileReceiptsAndCatalogSchema,
+  ensureBusinessOwnerLinkLifecycleSchema,
+  ensureBusinessPublicDetailSchema,
   ensureBusinessWebsiteCleanupAuditSchema,
+  ensureCommunityMediaSchemaOnly,
   ensureDirectoryReconciliationLedgerSchema,
   ensureFounderMapRestorationSchema,
   ensureLegacyMapLocationAttestationSchema,
   ensureCommunityFeedReadSchema,
+  ensureHbcuExplorePublicationSchema,
+  ensureKinfolkDeliveryProfileSchema,
   ensureKinfolkQuestionImageSchemaOnly,
+  ensureKinfolkLivingLibraryReadSchema,
   ensureKinfolkPrivatePlacesSchema,
   ensureKinfolkPreferredNameSchema,
   ensureKinfolkTemporaryStaysSchema,
+  ensureIsolatedGovernedDiscoverySchema,
+  ensureIsolatedActivationInvitationReviewerFixtureSchema,
+  ensureIsolatedOwnerClaimReviewerFixtureSchema,
+  ensureIsolatedSeriousThreatPrivateReviewSchema,
+  ensureMemberActivationInvitationSchema,
   ensureRequiredPublicationSchema,
+  ensureSafetyReliabilitySchema,
+  ensureTourCulturalSiteContributionSchema,
   publicationSchemaFailureLogLines,
   runStartupMigrations,
 } from "./lib/startup-migrations";
@@ -138,8 +151,19 @@ try {
   // when their data-neutral structure exists. Explicit feature-release mode
   // skips broad migrations, so verify this exact request-path schema before
   // accepting traffic rather than returning a misleading save/read 500.
+  await ensureKinfolkDeliveryProfileSchema(logger);
+  logger.info("Kinfolk delivery-profile schema ready before traffic acceptance");
   await ensureKinfolkPreferredNameSchema(logger);
   logger.info("Kinfolk preferred-name schema ready before traffic acceptance");
+  // Approval issuance and self-registration share this narrow, additive table.
+  // Keep it outside the broad runner so explicit feature-release mode cannot
+  // expose a route that would fail closed only after an administrator acts.
+  await ensureMemberActivationInvitationSchema(logger);
+  logger.info("Member activation invitation schema ready before traffic acceptance");
+  await ensureBusinessOwnerLinkLifecycleSchema(logger);
+  logger.info("Business owner-link lifecycle schema ready before traffic acceptance");
+  await ensureBusinessPublicDetailSchema(logger);
+  logger.info("Business public-detail schema ready before traffic acceptance");
   if (process.env.KINFOLK_MEDIA_BUCKET_ID?.trim()) {
     // This is the only D18 schema bootstrap allowed in explicit feature-release
     // mode: idempotent columns plus a cleanup index, with no row mutation.
@@ -183,6 +207,58 @@ try {
   // feature-release mode correctly skips unrelated startup migration writers.
   await ensureAdminBusinessProfileReceiptsAndCatalogSchema(logger);
   logger.info("Admin profile receipt and Kinfolk Catalog schemas ready before traffic acceptance");
+  // Trusted contacts, temporary live-location sessions, durable alert auditing,
+  // and Family Impact intelligence have authenticated request paths even during
+  // a narrow feature release. Their canonical migrations are additive and do
+  // not start workers, seed data, publish content, or send notifications, so
+  // explicit release mode can safely enforce them before traffic acceptance.
+  await ensureSafetyReliabilitySchema(logger);
+  logger.info("Safety reliability schemas ready before traffic acceptance");
+  // No startup Safety data cleanup runs here. Live-location retention is enforced
+  // only at a member-controlled share's expiry, revocation, block, or consent
+  // withdrawal boundary; startup must never erase Safety records implicitly.
+  // The serious-threat review store is a two-flag, isolated-staging-only
+  // validation control. It is deliberately absent in every other environment
+  // and does not create public notices or notification delivery work.
+  await ensureIsolatedSeriousThreatPrivateReviewSchema(logger);
+  logger.info("Isolated serious-threat private-review schema gate checked before traffic acceptance");
+  // Ownership-claim reviewer access is a separate default-off isolated test
+  // entitlement. It creates no role, allowlist entry, or business data and is
+  // considered only by three canonical claim-decision routes.
+  await ensureIsolatedOwnerClaimReviewerFixtureSchema(logger);
+  logger.info("Isolated owner-claim reviewer fixture schema gate checked before traffic acceptance");
+  // Activation-delivery validation is separately default-off and accepts only
+  // one synthetic Resend test mailbox; it cannot become general waitlist admin.
+  await ensureIsolatedActivationInvitationReviewerFixtureSchema(logger);
+  logger.info("Isolated activation-invitation reviewer fixture schema gate checked before traffic acceptance");
+  // The protected Community feed reads reactions and block/follow boundaries on
+  // every authenticated request. These additive relations must exist even when
+  // narrow release mode skips broad publication migrations and background work.
+  await ensureCommunityFeedReadSchema(logger);
+  logger.info("Community feed read schema ready before traffic acceptance");
+  // Community media validation always checks whether a supplied URL belongs to
+  // the current member's completed upload. Keep that minimal relation ready in
+  // explicit release mode so a valid post gets a policy response, never a DB 500.
+  await ensureCommunityMediaSchemaOnly();
+  logger.info("Community media schema ready before traffic acceptance");
+  // Cultural-site detail and contribution views are authenticated request paths.
+  // The additive gate prevents a missing legacy seed table from turning a valid
+  // Explore deep link into a 500 while leaving site and contribution data untouched.
+  await ensureTourCulturalSiteContributionSchema(logger);
+  logger.info("Tour cultural-site contribution schema ready before traffic acceptance");
+  // The Explore HBCU lens reads the canonical cultural-site catalogue directly.
+  // Verify its additive publication column before traffic so feature-release
+  // mode cannot convert a valid empty result into a generic server failure.
+  await ensureHbcuExplorePublicationSchema(logger);
+  logger.info("Explore HBCU publication schema ready before traffic acceptance");
+  // Ordinary Kinfolk questions consult only published, cited Living Library
+  // content before the model. Establish its empty additive read structure here
+  // so explicit feature-release mode cannot convert an absent legacy table into
+  // a generic model fallback or an invented Library answer.
+  await ensureKinfolkLivingLibraryReadSchema(logger);
+  logger.info("Kinfolk Living Library read schema ready before traffic acceptance");
+  await ensureIsolatedGovernedDiscoverySchema(logger);
+  logger.info("Isolated governed discovery schema ready before traffic acceptance");
   if (explicitFeatureReleaseMode) {
     logger.info("Explicit feature release mode: skipping boot-time schema and publication writers");
   } else {
@@ -214,7 +290,6 @@ try {
       logger,
     );
     logger.info("Required publication schema ready before traffic acceptance");
-    await ensureCommunityFeedReadSchema(logger);
   }
 } catch (error) {
   for (const detail of publicationSchemaFailureLogLines(error)) {

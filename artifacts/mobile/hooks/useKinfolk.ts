@@ -1,10 +1,30 @@
 import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getApiBase } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import {
+  createKinfolkClientTrace,
+  KINFOLK_CLIENT_TRACE_HEADER,
+  kinfolkTraceReference,
+} from "@/lib/kinfolkRequestTrace";
+import { parseSafeSourceLink } from "@/lib/sourceLinks";
+import {
+  clearKinfolkConversation,
+  getKinfolkConversation,
+  recordKinfolkConversation,
+} from "@/lib/kinfolkConversationHandoff";
 import {
   canRenderKinfolkBusinessCards,
   type KinfolkResponseMeta,
 } from "@workspace/constants";
+import type { KinfolkMemoryUse } from "@/components/KinfolkMemoryUseNotice";
+import type {
+  KinfolkContextualVisual,
+  KinfolkMediaLink,
+  KinfolkRelatedConnection,
+  KinfolkResearchStatus,
+  KinfolkStructuredContent,
+} from "@/components/KinfolkContextualPresentation";
 
 const AUTH_TOKEN_KEY = "auth_session_token";
 
@@ -100,6 +120,22 @@ export type TaskAction = {
   tasks: TaskActionTask[];
 };
 
+/** A confirmed list receipt lets a later retry finish its unsaved items safely. */
+export type TaskActionSaveProgress = {
+  listId: string;
+  listName: string;
+};
+
+export type TaskActionSaveFailure = {
+  /** Retryable means the server explicitly declined the write; uncertain blocks automatic repeats. */
+  kind: "retryable" | "uncertain";
+  message: string;
+};
+
+export type TaskActionSaveResult =
+  | { kind: "saved" }
+  | { kind: "retryable" | "uncertain"; message: string; progress?: TaskActionSaveProgress };
+
 export type LibraryAction = {
   type: "open_library_node";
   topicId: string;
@@ -140,6 +176,23 @@ export type KinfolkCompanionMemoryOffer = {
   prompt: string;
 };
 
+/** Server-reviewed external education only; unreviewed links fail closed. */
+export type KinfolkResourceCard = {
+  id: string;
+  title: string;
+  url: string;
+  description: string;
+  type: "image_gallery" | "health_source" | "community_source" | "entity_source";
+  safetyNote?: string;
+};
+
+function isKinfolkResourceCardType(value: unknown): value is KinfolkResourceCard["type"] {
+  return value === "image_gallery"
+    || value === "health_source"
+    || value === "community_source"
+    || value === "entity_source";
+}
+
 export type InlineMemoryConsentPlan = {
   purpose: string;
   ordinary: Array<{ id: string; label: string; content: string }>;
@@ -156,6 +209,9 @@ export type ChatMessage = {
   smartPromotion?: SmartPromotion | null;
   taskAction?: TaskAction | null;
   taskActionDone?: boolean;
+  taskActionSaving?: boolean;
+  taskActionFailure?: TaskActionSaveFailure | null;
+  taskActionProgress?: TaskActionSaveProgress | null;
   libraryAction?: LibraryAction | null;
   heritageSites?: HeritageSitePin[];
   nearbyNudge?: NearbyNudge | null;
@@ -187,8 +243,18 @@ export type ChatMessage = {
   sensitiveMemoryDraft?: { content: string; purpose: string; sessionId?: string | null } | null;
   /** Direct memory choices remain local until the member explicitly saves selected items. */
   inlineMemoryConsent?: { message: string; plan: InlineMemoryConsentPlan; sessionId?: string | null } | null;
+  /** Generic acknowledgement only; never includes a saved private note. */
+  memoryUse?: KinfolkMemoryUse | null;
   /** Server decision metadata; clients fail closed when cards are not authorized. */
   responseMeta?: KinfolkResponseMeta | null;
+  /** Evidence-bound optional presentation data from the server. */
+  structuredContent?: KinfolkStructuredContent | null;
+  mediaLinks?: KinfolkMediaLink[];
+  relatedConnections?: KinfolkRelatedConnection[];
+  researchStatus?: KinfolkResearchStatus | null;
+  contextualVisuals?: KinfolkContextualVisual[];
+  /** Reviewed educational resources, sanitized before primary-chat rendering. */
+  resourceCards?: KinfolkResourceCard[];
 };
 type ConversationHandoffStatus = {
   state: "saved" | "resumed";
@@ -210,15 +276,171 @@ function makeId() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
+type TaskActionWriteInput = {
+  action: TaskAction;
+  token: string | null;
+  apiBase: string | null;
+  progress?: TaskActionSaveProgress | null;
+  fetchImpl?: typeof fetch;
+};
+
+function retryableTaskActionFailure(message: string, progress?: TaskActionSaveProgress): TaskActionSaveResult {
+  return { kind: "retryable", message, ...(progress ? { progress } : {}) };
+}
+
+function uncertainTaskActionFailure(message: string, progress?: TaskActionSaveProgress): TaskActionSaveResult {
+  return { kind: "uncertain", message, ...(progress ? { progress } : {}) };
+}
+
+function responseTaskActionFailure(
+  response: Response,
+  retryableMessage: string,
+  uncertainMessage: string,
+  progress?: TaskActionSaveProgress,
+): TaskActionSaveResult {
+  // A received 5xx response does not prove that the write was rolled back. Do
+  // not invite a repeat POST without an idempotency key or a verified receipt.
+  return response.status >= 500
+    ? uncertainTaskActionFailure(uncertainMessage, progress)
+    : retryableTaskActionFailure(retryableMessage, progress);
+}
+
+/**
+ * Performs only the writes explicitly approved by a member's Save tap. It
+ * never treats an absent token, a non-OK response, or a transport failure as a
+ * successful save. A confirmed list receipt is retained so a known-failed bulk
+ * task request can be retried without creating a duplicate list.
+ */
+export async function saveKinfolkTaskAction(input: TaskActionWriteInput): Promise<TaskActionSaveResult> {
+  if (!input.token || !input.apiBase) {
+    return retryableTaskActionFailure(
+      "Please sign in again before saving this reminder. Your proposed action is still available to retry.",
+      input.progress ?? undefined,
+    );
+  }
+
+  const send = input.fetchImpl ?? fetch;
+  const headers = {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${input.token}`,
+  };
+  let progress = input.progress ?? undefined;
+
+  try {
+    if (input.action.type === "create_list") {
+      if (!input.action.list) {
+        return retryableTaskActionFailure(
+          "Kinfolk could not verify the list details. Please ask it to prepare the list again.",
+        );
+      }
+
+      if (!progress) {
+        const listResponse = await send(`${input.apiBase}/api/kinfolk/lists`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            name: input.action.list.name,
+            icon: input.action.list.icon ?? "📋",
+          }),
+        });
+        if (!listResponse.ok) {
+          return responseTaskActionFailure(
+            listResponse,
+            "Kinfolk could not create that list yet. Please try again when you are ready.",
+            "Kinfolk could not confirm whether that list was created. Open My Lists to check before trying again.",
+          );
+        }
+
+        const listPayload = await listResponse.json() as { list?: { id?: unknown } };
+        if (typeof listPayload.list?.id !== "string" || listPayload.list.id.trim().length === 0) {
+          return uncertainTaskActionFailure(
+            "Kinfolk received an incomplete list receipt and cannot confirm whether the list was saved. Open My Lists to check before trying again.",
+          );
+        }
+        progress = { listId: listPayload.list.id, listName: input.action.list.name };
+      }
+
+      const tasksResponse = await send(`${input.apiBase}/api/kinfolk/tasks/bulk`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ tasks: input.action.tasks, listId: progress.listId }),
+      });
+      if (!tasksResponse.ok) {
+        return responseTaskActionFailure(
+          tasksResponse,
+          "Your list was created, but its items were not saved. You can safely try saving the items again.",
+          "Your list was created, but Kinfolk could not confirm whether its items were saved. Open My Lists to check before trying again.",
+          progress,
+        );
+      }
+      return { kind: "saved" };
+    }
+
+    if (input.action.type === "create_task") {
+      // The server prompt defines create_task as a single reminder. Refuse a
+      // malformed multi-task proposal before it can partially persist.
+      if (input.action.tasks.length !== 1) {
+        return retryableTaskActionFailure(
+          "Kinfolk needs to prepare one reminder at a time before it can be saved. Please ask it to prepare this reminder again.",
+        );
+      }
+      const task = input.action.tasks[0]!;
+      const taskResponse = await send(`${input.apiBase}/api/kinfolk/tasks`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          title: task.title,
+          notes: task.notes,
+          dueAt: task.dueAt,
+          dueTimeLabel: task.dueTimeLabel,
+          category: task.category ?? "other",
+        }),
+      });
+      if (!taskResponse.ok) {
+        return responseTaskActionFailure(
+          taskResponse,
+          "Kinfolk could not save that reminder yet. Please try again when you are ready.",
+          "Kinfolk could not confirm whether that reminder was saved. Open My Lists to check before trying again.",
+        );
+      }
+      return { kind: "saved" };
+    }
+
+    const tasksResponse = await send(`${input.apiBase}/api/kinfolk/tasks/bulk`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ tasks: input.action.tasks }),
+    });
+    if (!tasksResponse.ok) {
+      return responseTaskActionFailure(
+        tasksResponse,
+        "Kinfolk could not save those tasks yet. Please try again when you are ready.",
+        "Kinfolk could not confirm whether those tasks were saved. Open My Lists to check before trying again.",
+      );
+    }
+    return { kind: "saved" };
+  } catch {
+    return uncertainTaskActionFailure(
+      progress
+        ? "Your list was created, but Kinfolk could not confirm whether its items were saved. Open My Lists to check before trying again."
+        : "Kinfolk could not confirm whether this action was saved. Open My Lists to check before trying again.",
+      progress,
+    );
+  }
+}
+
 export function useKinfolk() {
+  const { refreshUser, user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const messagesRef = useRef<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [handoffSessionToLoad, setHandoffSessionToLoad] = useState<string | null>(null);
   const [conversationHandoff, setConversationHandoff] = useState<ConversationHandoffStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   /** Client-request timing only; never a claim about server-side research. */
   const [requestStartedAt, setRequestStartedAt] = useState<number | null>(null);
   const [sessions, setSessions] = useState<SessionSummary[]>([]);
+  const [sessionError, setSessionError] = useState<string | null>(null);
   const [kinfolkContinuityEnabled, setKinfolkContinuityEnabled] = useState(false);
   const [kinfolkContinuityDisclosureRequired, setKinfolkContinuityDisclosureRequired] = useState(false);
   const [kinfolkContinuityDecision, setKinfolkContinuityDecision] = useState<"accepted" | "declined" | null>(null);
@@ -228,6 +450,31 @@ export function useKinfolk() {
   const [pendingRetryText, setPendingRetryText] = useState<string | null>(null);
   const activeRequestRef = useRef<AbortController | null>(null);
   const requestGenerationRef = useRef(0);
+  const savingTaskActionIdsRef = useRef(new Set<string>());
+  /** Device-local only. The next successful chat request consumes this style. */
+  const oneTurnDeliveryInstructionRef = useRef<string | null>(null);
+  const handoffAccountRef = useRef<string | null>(null);
+
+  // A floating Kinfolk turn may already have an authenticated server session.
+  // Adopt only the opaque session ID for this same account; no transcript,
+  // attachment, prompt, or account credential crosses the surface boundary.
+  useEffect(() => {
+    const accountId = user?.id ?? null;
+    if (!accountId) {
+      handoffAccountRef.current = null;
+      return;
+    }
+    if (handoffAccountRef.current === accountId) return;
+    handoffAccountRef.current = accountId;
+    const handoff = getKinfolkConversation(accountId);
+    if (!handoff || handoff.surface !== "floating") return;
+    setSessionId(handoff.sessionId);
+    setHandoffSessionToLoad(handoff.sessionId);
+    setConversationHandoff({
+      state: "resumed",
+      summary: "Conversation resumed from Kinfolk’s floating assistant on this device.",
+    });
+  }, [user?.id]);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -254,6 +501,9 @@ export function useKinfolk() {
       /** Private server asset references for one consented visual answer. */
       imageAssetIds?: string[];
       imageVisionConsent?: boolean;
+      /** One private server PDF reference for this answer only. */
+      documentAssetIds?: string[];
+      documentProcessingConsent?: boolean;
       includeCommunityPerspective?: boolean;
       publicOrigin?: string;
     },
@@ -265,7 +515,24 @@ export function useKinfolk() {
     const controller = new AbortController();
     activeRequestRef.current = controller;
     const token = await getToken();
+    if (!token) {
+      // Reconcile an in-memory authenticated state with SecureStore before the
+      // member is asked to sign in again. This mirrors the widget boundary.
+      void refreshUser();
+      const aiMsg: ChatMessage = {
+        id: makeId(),
+        role: "assistant",
+        content: "Your Kinfolk session needs to be refreshed. Please sign in again before sending your question.",
+        timestamp: new Date(),
+      };
+      setMessages((prev) => [...prev, aiMsg]);
+      return false;
+    }
     const apiBase = getApiBase();
+    const oneTurnInstruction = oneTurnDeliveryInstructionRef.current;
+    const sharedConversation = getKinfolkConversation(user?.id);
+    const effectiveSessionId = sharedConversation?.sessionId ?? sessionId;
+    if (effectiveSessionId && effectiveSessionId !== sessionId) setSessionId(effectiveSessionId);
     const conversationContext = messagesRef.current.slice(-6).map((message) => ({
       role: message.role,
       content: message.content,
@@ -282,10 +549,14 @@ export function useKinfolk() {
     setMessages((prev) => [...prev, userMsg]);
     setRequestStartedAt(Date.now());
     setIsLoading(true);
+    const clientTrace = createKinfolkClientTrace();
     let timedOut = false;
 
     try {
-      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        [KINFOLK_CLIENT_TRACE_HEADER]: clientTrace,
+      };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
       const chatTimeout = setTimeout(() => {
@@ -296,14 +567,17 @@ export function useKinfolk() {
         method: "POST",
         headers,
         body: JSON.stringify({
-          sessionId,
+          sessionId: effectiveSessionId,
           message: text,
           vibes: opts?.vibes ?? [],
           voiceMode: opts?.voiceMode ?? "community",
           imageAssetIds: opts?.imageAssetIds ?? [],
           imageVisionConsent: opts?.imageVisionConsent === true,
+          documentAssetIds: opts?.documentAssetIds ?? [],
+          documentProcessingConsent: opts?.documentProcessingConsent === true,
           includeCommunityPerspective: opts?.includeCommunityPerspective === true,
           publicOrigin: opts?.publicOrigin?.trim() || undefined,
+          oneTurnInstruction: oneTurnInstruction ?? undefined,
           conversationContext,
           clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
@@ -312,6 +586,7 @@ export function useKinfolk() {
 
       if (requestGeneration !== requestGenerationRef.current) return false;
       if (res.ok) {
+        if (oneTurnInstruction) oneTurnDeliveryInstructionRef.current = null;
         const data = (await res.json()) as {
           sessionId?: string;
           reply: string;
@@ -337,7 +612,14 @@ export function useKinfolk() {
           location?: { city: string; state: string | null; source: string } | null;
           locationSource?: string | null;
           companionMemoryOffer?: KinfolkCompanionMemoryOffer | null;
+          memoryUse?: KinfolkMemoryUse | null;
           responseMeta?: KinfolkResponseMeta | null;
+          structuredContent?: KinfolkStructuredContent | null;
+          mediaLinks?: KinfolkMediaLink[] | null;
+          relatedConnections?: KinfolkRelatedConnection[] | null;
+          researchStatus?: KinfolkResearchStatus | null;
+          contextualVisuals?: KinfolkContextualVisual[] | null;
+          resourceCards?: KinfolkResourceCard[] | null;
           conversationHandoff?: ConversationHandoffStatus | null;
           sensitiveMemoryConfirmation?: {
             confirmationRequired?: boolean;
@@ -346,17 +628,20 @@ export function useKinfolk() {
           memoryConsentPlan?: InlineMemoryConsentPlan | null;
         };
 
-        if (data.sessionId) setSessionId(data.sessionId);
+        if (data.sessionId) {
+          setSessionId(data.sessionId);
+          recordKinfolkConversation(user?.id, data.sessionId, "primary");
+        }
         setConversationHandoff(data.conversationHandoff ?? null);
         const inlineMemoryConsent: ChatMessage["inlineMemoryConsent"] = data.memoryConsentPlan
-          ? { message: text, plan: data.memoryConsentPlan, sessionId: data.sessionId ?? sessionId }
+          ? { message: text, plan: data.memoryConsentPlan, sessionId: data.sessionId ?? effectiveSessionId }
           : null;
         let sensitiveMemoryDraft: ChatMessage["sensitiveMemoryDraft"] =
           data.sensitiveMemoryConfirmation?.confirmationRequired === true
             ? {
                 content: text,
                 purpose: data.sensitiveMemoryConfirmation.purpose ?? "ongoing_context",
-                sessionId: data.sessionId ?? sessionId,
+                sessionId: data.sessionId ?? effectiveSessionId,
               }
             : null;
         if (typeof data.queriesUsed === "number") setQueriesUsed(data.queriesUsed);
@@ -383,7 +668,10 @@ export function useKinfolk() {
           sourceNote: data.sourceNote ?? null,
           sourceContext: data.sourceContext ?? null,
           communityPerspective: data.communityPerspective ?? null,
-          sources: data.sources ?? null,
+          sources: (data.sources ?? []).flatMap((source) => {
+            const safe = parseSafeSourceLink(source);
+            return safe ? [safe] : [];
+          }).slice(0, 5),
           clarificationSteps: data.clarificationSteps ?? undefined,
           needsClarification: data.needsClarification === true,
           originalQuery: data.originalQuery ?? text,
@@ -392,11 +680,48 @@ export function useKinfolk() {
           companionMemoryOffer: data.companionMemoryOffer ?? null,
           sensitiveMemoryDraft,
           inlineMemoryConsent,
+          memoryUse: data.memoryUse ?? null,
           responseMeta,
+          structuredContent: data.structuredContent ?? null,
+          mediaLinks: Array.isArray(data.mediaLinks) ? data.mediaLinks.slice(0, 5) : [],
+          relatedConnections: Array.isArray(data.relatedConnections) ? data.relatedConnections.slice(0, 5) : [],
+          researchStatus: data.researchStatus ?? null,
+          contextualVisuals: Array.isArray(data.contextualVisuals) ? data.contextualVisuals.slice(0, 3) : [],
+          resourceCards: (data.resourceCards ?? []).flatMap((card) => {
+            const safe = parseSafeSourceLink({ title: card.title, url: card.url });
+            return safe
+              && typeof card.id === "string"
+              && card.id
+              && typeof card.description === "string"
+              && card.description
+              && isKinfolkResourceCardType(card.type)
+              ? [{
+                  id: card.id,
+                  title: safe.title,
+                  url: safe.url,
+                  description: card.description,
+                  type: card.type,
+                  ...(typeof card.safetyNote === "string" && card.safetyNote ? { safetyNote: card.safetyNote } : {}),
+                }]
+              : [];
+          }).slice(0, 3),
         };
         setPendingRetryText(null); // clear retry on success
         setMessages((prev) => [...prev, aiMsg]);
         return true;
+      } else if (res.status === 401) {
+        // A definitive API 401 means this saved token is no longer usable.
+        // Let AuthProvider clear it and route through the normal sign-in state
+        // instead of leaving the primary Kinfolk screen semi-authenticated.
+        void refreshUser();
+        const aiMsg: ChatMessage = {
+          id: makeId(),
+          role: "assistant",
+          content: "Your Kinfolk session expired. Please sign in again, then resend your question.",
+          timestamp: new Date(),
+        };
+        setMessages((prev) => [...prev, aiMsg]);
+        return false;
       } else if (res.status === 503) {
         // KINFOLK_BUSY or KINFOLK_RATE_LIMITED — temporary, user question preserved for retry
         const errData = await res.json().catch(() => ({})) as { code?: string };
@@ -432,7 +757,7 @@ export function useKinfolk() {
         const aiMsg: ChatMessage = {
           id: makeId(),
           role: "assistant",
-          content: "My signal dropped for a sec — try again in a moment.",
+          content: `My signal dropped for a sec — try again in a moment. ${kinfolkTraceReference(clientTrace)}`,
           timestamp: new Date(),
         };
         setMessages((prev) => [...prev, aiMsg]);
@@ -446,8 +771,8 @@ export function useKinfolk() {
         id: makeId(),
         role: "assistant",
         content: isTimeout
-          ? "KinfolkAI didn't respond in time. Make sure you're connected, then tap Send to try your message again."
-          : "Something went sideways on my end. Tap Send to try again.",
+          ? `KinfolkAI didn't respond in time. Make sure you're connected, then tap Send to try your message again. ${kinfolkTraceReference(clientTrace)}`
+          : `Something went sideways on my end. Tap Send to try again. ${kinfolkTraceReference(clientTrace)}`,
         timestamp: new Date(),
       };
       setMessages((prev) => [...prev, aiMsg]);
@@ -459,7 +784,7 @@ export function useKinfolk() {
         setRequestStartedAt(null);
       }
     }
-  }, [sessionId]);
+  }, [refreshUser, sessionId, user?.id]);
 
   const submitFeedback = useCallback(async (
     messageId: string,
@@ -492,19 +817,26 @@ export function useKinfolk() {
     } catch {}
   }, [sessionId]);
 
-  const loadSessions = useCallback(async (view: "active" | "archived" = "active") => {
+  const loadSessions = useCallback(async (view: "active" | "archived" = "active"): Promise<boolean> => {
     const token = await getToken();
     const apiBase = getApiBase();
-    if (!token || !apiBase) return;
+    if (!token || !apiBase) {
+      setSessionError("Sign in to load Kinfolk conversation history.");
+      return false;
+    }
+    setSessionError(null);
     try {
       const res = await fetch(`${apiBase}/api/kinfolk/sessions?view=${view}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        const data = (await res.json()) as { sessions: SessionSummary[] };
-        setSessions(data.sessions);
-      }
-    } catch {}
+      if (!res.ok) throw new Error("Kinfolk conversation history could not be loaded.");
+      const data = (await res.json()) as { sessions: SessionSummary[] };
+      setSessions(data.sessions);
+      return true;
+    } catch (cause) {
+      setSessionError(cause instanceof Error ? cause.message : "Kinfolk conversation history could not be loaded.");
+      return false;
+    }
   }, []);
 
   const loadKinfolkContinuity = useCallback(async () => {
@@ -573,23 +905,28 @@ export function useKinfolk() {
     } catch { return false; }
   }, [loadSessions]);
 
-  const loadSession = useCallback(async (id: string) => {
+  const loadSession = useCallback(async (id: string): Promise<boolean> => {
     const token = await getToken();
     const apiBase = getApiBase();
-    if (!token || !apiBase) return;
+    if (!token || !apiBase) {
+      setSessionError("Sign in to open this conversation.");
+      return false;
+    }
+    setSessionError(null);
     setIsLoading(true);
     try {
       const res = await fetch(`${apiBase}/api/kinfolk/sessions/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) {
-        const data = (await res.json()) as {
-          session: { id: string; messages: { role: string; content: string; recommendations?: unknown; resultView?: unknown; followUpSuggestions?: string[]; companionMemoryOffer?: KinfolkCompanionMemoryOffer | null; timestamp: string }[] };
+      if (!res.ok) throw new Error("Kinfolk could not open this conversation. Try again.");
+      const data = (await res.json()) as {
+          session: { id: string; messages: { role: string; content: string; recommendations?: unknown; resultView?: unknown; followUpSuggestions?: string[]; companionMemoryOffer?: KinfolkCompanionMemoryOffer | null; sourceContext?: string | null; sources?: Array<{ title?: unknown; url?: unknown }>; resourceCards?: KinfolkResourceCard[]; timestamp: string }[] };
           resumePreview?: ConversationHandoffStatus | null;
         };
-        setSessionId(id);
-        setConversationHandoff(data.resumePreview ?? null);
-        setMessages(
+      setSessionId(id);
+      recordKinfolkConversation(user?.id, id, "primary");
+      setConversationHandoff(data.resumePreview ?? null);
+      setMessages(
           data.session.messages.map((m) => ({
             id: makeId(),
             role: m.role as "user" | "assistant",
@@ -598,58 +935,95 @@ export function useKinfolk() {
             resultView: (m.resultView as ConversationalBusinessResultView | null) ?? null,
             followUpSuggestions: m.followUpSuggestions ?? [],
             companionMemoryOffer: m.companionMemoryOffer ?? null,
+            sourceContext: typeof m.sourceContext === "string" ? m.sourceContext : null,
+            sources: (m.sources ?? []).flatMap((source) => {
+              const safe = parseSafeSourceLink(source);
+              return safe ? [safe] : [];
+            }).slice(0, 5),
+            resourceCards: (m.resourceCards ?? []).flatMap((card) => {
+              const safe = parseSafeSourceLink(card);
+              return safe && typeof card.id === "string" && card.id
+                && typeof card.description === "string" && card.description
+                && isKinfolkResourceCardType(card.type)
+                ? [{ id: card.id, title: safe.title, url: safe.url, description: card.description, type: card.type, ...(typeof card.safetyNote === "string" && card.safetyNote ? { safetyNote: card.safetyNote } : {}) }]
+                : [];
+            }).slice(0, 3),
             timestamp: new Date(m.timestamp),
             feedback: {},
           })),
-        );
-      }
-    } catch {}
+      );
+      return true;
+    } catch (cause) {
+      setSessionError(cause instanceof Error ? cause.message : "Kinfolk could not open this conversation. Try again.");
+      return false;
+    }
     finally { setIsLoading(false); }
-  }, []);
+  }, [user?.id]);
+
+  // The opaque handoff ID is resolved through the existing authenticated
+  // history route. That gives the member their server-authorized conversation
+  // view without copying a local widget transcript between surfaces.
+  useEffect(() => {
+    if (!handoffSessionToLoad) return;
+    setHandoffSessionToLoad(null);
+    void loadSession(handoffSessionToLoad);
+  }, [handoffSessionToLoad, loadSession]);
 
   const startNewSession = useCallback(() => {
     setMessages([]);
     setSessionId(null);
+    clearKinfolkConversation(user?.id);
     setConversationHandoff(null);
-  }, []);
+  }, [user?.id]);
 
-  const confirmTaskAction = useCallback(async (messageId: string, action: TaskAction): Promise<boolean> => {
-    setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, taskActionDone: true } : m));
+  const confirmTaskAction = useCallback(async (messageId: string, action: TaskAction): Promise<TaskActionSaveResult> => {
+    const existing = messagesRef.current.find((message) => message.id === messageId);
+    if (existing?.taskActionFailure?.kind === "uncertain") {
+      return uncertainTaskActionFailure(existing.taskActionFailure.message, existing.taskActionProgress ?? undefined);
+    }
+    if (savingTaskActionIdsRef.current.has(messageId)) {
+      return retryableTaskActionFailure("Kinfolk is still saving this action. Please wait for the result before trying again.");
+    }
+
+    savingTaskActionIdsRef.current.add(messageId);
+    setMessages((prev) => prev.map((message) => message.id === messageId
+      ? { ...message, taskActionSaving: true, taskActionFailure: null }
+      : message));
     const token = await getToken();
-    const apiBase = getApiBase();
-    if (!token || !apiBase) return false;
+    let apiBase: string | null = null;
+    try { apiBase = getApiBase(); } catch { /* surfaced as a recoverable save failure below */ }
     try {
-      if (action.type === "create_list" && action.list) {
-        const listRes = await fetch(`${apiBase}/api/kinfolk/lists`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ name: action.list.name, icon: action.list.icon ?? "📋" }),
-        });
-        if (listRes.ok) {
-          const { list } = await listRes.json() as { list: { id: string } };
-          await fetch(`${apiBase}/api/kinfolk/tasks/bulk`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ tasks: action.tasks, listId: list.id }),
-          });
+      if (!token) void refreshUser();
+      const result = await saveKinfolkTaskAction({
+        action,
+        token,
+        apiBase,
+        progress: existing?.taskActionProgress,
+      });
+      setMessages((prev) => prev.map((message) => {
+        if (message.id !== messageId) return message;
+        if (result.kind === "saved") {
+          return {
+            ...message,
+            taskActionDone: true,
+            taskActionSaving: false,
+            taskActionFailure: null,
+            taskActionProgress: null,
+          };
         }
-      } else if (action.type === "create_task" && action.tasks.length > 0) {
-        const t = action.tasks[0]!;
-        await fetch(`${apiBase}/api/kinfolk/tasks`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ title: t.title, notes: t.notes, dueAt: t.dueAt, dueTimeLabel: t.dueTimeLabel, category: t.category ?? "other" }),
-        });
-      } else if (action.type === "add_tasks") {
-        await fetch(`${apiBase}/api/kinfolk/tasks/bulk`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ tasks: action.tasks }),
-        });
-      }
-      return true;
-    } catch { return false; }
-  }, []);
+        return {
+          ...message,
+          taskActionDone: false,
+          taskActionSaving: false,
+          taskActionFailure: { kind: result.kind, message: result.message },
+          taskActionProgress: result.progress ?? message.taskActionProgress ?? null,
+        };
+      }));
+      return result;
+    } finally {
+      savingTaskActionIdsRef.current.delete(messageId);
+    }
+  }, [refreshUser]);
 
   const dismissTaskAction = useCallback((messageId: string) => {
     setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, taskActionDone: true } : m));
@@ -663,6 +1037,12 @@ export function useKinfolk() {
     setMessages((prev) => prev.map((m) => m.id === messageId ? { ...m, inlineMemoryConsent: null } : m));
   }, []);
 
+  const useOneTimeDeliveryInstruction = useCallback((instruction: string) => {
+    // This stays in process memory only; it is passed to one future request and
+    // never written to private memory, settings, analytics, or local storage.
+    oneTurnDeliveryInstructionRef.current = instruction;
+  }, []);
+
   const clearPendingRetryText = useCallback(() => setPendingRetryText(null), []);
 
   return {
@@ -672,6 +1052,7 @@ export function useKinfolk() {
     isLoading,
     requestStartedAt,
     sessions,
+    sessionError,
     kinfolkContinuityEnabled,
     kinfolkContinuityDisclosureRequired,
     kinfolkContinuityDecision,
@@ -693,5 +1074,6 @@ export function useKinfolk() {
     dismissTaskAction,
     dismissSensitiveMemoryDraft,
     dismissInlineMemoryConsent,
+    useOneTimeDeliveryInstruction,
   };
 }

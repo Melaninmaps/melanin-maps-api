@@ -44,6 +44,7 @@ import { SavedSpotsShare } from "@/components/SavedSpotsShare";
 import { CommunityImpactCard } from "@/components/CommunityImpactCard";
 import { useShowLoveReceived } from "@/hooks/useShowLove";
 import { ShowLoveCard } from "@/components/ShowLoveCard";
+import { MemberSocialProfileRecap } from "@/components/MemberSocialProfileRecap";
 
 const SOCIAL_PROFILE_ACTIONS = [
   { icon: "users" as const, label: "Connections", detail: "Followers, following & requests", route: "/connections" as const },
@@ -137,11 +138,14 @@ const privStyles = StyleSheet.create({
 const RADIUS_OPTIONS = [1, 2, 3, 5, 10] as const;
 
 function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors> }) {
-  const [alertPolice, setAlertPolice] = useState(true);
-  const [alertIce, setAlertIce] = useState(true);
+  const [alertPolice, setAlertPolice] = useState(false);
+  const [alertIce, setAlertIce] = useState(false);
   const [radiusMiles, setRadiusMiles] = useState(5);
+  const [awarenessCity, setAwarenessCity] = useState("");
+  const [awarenessState, setAwarenessState] = useState("");
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -156,44 +160,79 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
           if (d.safetyAlertPolice !== undefined) setAlertPolice(d.safetyAlertPolice);
           if (d.safetyAlertIce !== undefined) setAlertIce(d.safetyAlertIce);
           if (d.safetyAlertRadiusMiles !== undefined) setRadiusMiles(d.safetyAlertRadiusMiles);
+          if (typeof d.safetyAlertAreaCity === "string") setAwarenessCity(d.safetyAlertAreaCity);
+          if (typeof d.safetyAlertAreaState === "string") setAwarenessState(d.safetyAlertAreaState);
         }
       } catch { /* silent */ }
       setLoaded(true);
     })();
   }, []);
 
-  const save = async (patch: Record<string, boolean | number>) => {
+  const save = async (patch: Record<string, boolean | number | string | null>): Promise<Record<string, unknown> | null> => {
     setSaving(true);
+    setSaveError(null);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
       const apiBase = getApiBase();
-      await fetch(`${apiBase}/api/users/settings`, {
+      const response = await fetch(`${apiBase}/api/users/settings`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify(patch),
       });
-    } catch { /* silent */ }
-    finally { setSaving(false); }
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? "Safety alert preference was not saved");
+      }
+      return await response.json() as Record<string, unknown>;
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : "Your Safety Alert setting did not change. Check your connection and try again.");
+      return null;
+    } finally { setSaving(false); }
   };
 
-  const togglePolice = () => {
+  const togglePolice = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const next = !alertPolice;
-    setAlertPolice(next);
-    void save({ safetyAlertPolice: next });
+    if (next && (!awarenessCity.trim() || !/^[A-Z]{2}$/.test(awarenessState.trim().toUpperCase()))) {
+      setSaveError("Choose and save a Safety Alert city and state before turning on Police or ICE alerts.");
+      return;
+    }
+    const saved = await save({ safetyAlertPolice: next });
+    if (saved) setAlertPolice(saved.safetyAlertPolice === true);
   };
 
-  const toggleIce = () => {
+  const toggleIce = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     const next = !alertIce;
-    setAlertIce(next);
-    void save({ safetyAlertIce: next });
+    if (next && (!awarenessCity.trim() || !/^[A-Z]{2}$/.test(awarenessState.trim().toUpperCase()))) {
+      setSaveError("Choose and save a Safety Alert city and state before turning on Police or ICE alerts.");
+      return;
+    }
+    const saved = await save({ safetyAlertIce: next });
+    if (saved) setAlertIce(saved.safetyAlertIce === true);
   };
 
-  const pickRadius = (r: number) => {
+  const pickRadius = async (r: number) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setRadiusMiles(r);
-    void save({ safetyAlertRadiusMiles: r });
+    const saved = await save({ safetyAlertRadiusMiles: r });
+    if (typeof saved?.safetyAlertRadiusMiles === "number") setRadiusMiles(saved.safetyAlertRadiusMiles);
+  };
+
+  const saveAwarenessArea = async () => {
+    const city = awarenessCity.trim().replace(/\s+/g, " ");
+    const state = awarenessState.trim().toUpperCase();
+    if ((!city && state) || (city && !/^[A-Z]{2}$/.test(state))) {
+      setSaveError("Enter a city and a two-letter state, or clear both fields.");
+      return;
+    }
+    const saved = await save({
+      safetyAlertAreaCity: city || null,
+      safetyAlertAreaState: state || null,
+    });
+    if (typeof saved?.safetyAlertAreaCity === "string") setAwarenessCity(saved.safetyAlertAreaCity);
+    else if (saved) setAwarenessCity("");
+    if (typeof saved?.safetyAlertAreaState === "string") setAwarenessState(saved.safetyAlertAreaState);
+    else if (saved) setAwarenessState("");
   };
 
   if (!loaded) return null;
@@ -206,7 +245,7 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[safetyStyles.title, { color: colors.foreground }]}>Safety Alerts</Text>
-          <Text style={[safetyStyles.sub, { color: colors.mutedForeground }]}>Get notified when community activity is reported near you</Text>
+          <Text style={[safetyStyles.sub, { color: colors.mutedForeground }]}>Opt in to moderated, corroborated alerts for an awareness area you choose</Text>
         </View>
         {saving && <ActivityIndicator size="small" color={colors.primary} />}
       </View>
@@ -216,28 +255,67 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
       <View style={safetyStyles.row}>
         <View style={{ flex: 1 }}>
           <Text style={[safetyStyles.rowLabel, { color: colors.foreground }]}>Police activity</Text>
-          <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Traffic stops, checkpoints & police presence</Text>
+          <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Corroborated community reports only — not official confirmation</Text>
         </View>
-        <Switch value={alertPolice} onValueChange={togglePolice} trackColor={{ true: colors.primary, false: colors.border }} thumbColor="#FFF" />
+        <Switch value={alertPolice} onValueChange={() => { void togglePolice(); }} disabled={saving} trackColor={{ true: colors.primary, false: colors.border }} thumbColor="#FFF" />
       </View>
 
       <View style={safetyStyles.row}>
         <View style={{ flex: 1 }}>
           <Text style={[safetyStyles.rowLabel, { color: colors.foreground }]}>ICE / immigration activity</Text>
-          <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Enforcement activity reported by community</Text>
+          <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Corroborated community reports only — not official confirmation</Text>
         </View>
-        <Switch value={alertIce} onValueChange={toggleIce} trackColor={{ true: colors.primary, false: colors.border }} thumbColor="#FFF" />
+        <Switch value={alertIce} onValueChange={() => { void toggleIce(); }} disabled={saving} trackColor={{ true: colors.primary, false: colors.border }} thumbColor="#FFF" />
       </View>
 
       <View style={[safetyStyles.divider, { backgroundColor: colors.border }]} />
 
+      <View style={safetyStyles.areaSection}>
+        <Text style={[safetyStyles.rowLabel, { color: colors.foreground }]}>Awareness area</Text>
+        <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Choose a supported city and state. This is not device location and can be changed or cleared anytime.</Text>
+        <View style={safetyStyles.areaInputs}>
+          <TextInput
+            value={awarenessCity}
+            onChangeText={setAwarenessCity}
+            editable={!saving}
+            maxLength={100}
+            placeholder="City"
+            placeholderTextColor={colors.mutedForeground}
+            autoCapitalize="words"
+            style={[safetyStyles.areaInput, safetyStyles.cityInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]}
+          />
+          <TextInput
+            value={awarenessState}
+            onChangeText={(value) => setAwarenessState(value.toUpperCase())}
+            editable={!saving}
+            maxLength={2}
+            placeholder="ST"
+            placeholderTextColor={colors.mutedForeground}
+            autoCapitalize="characters"
+            style={[safetyStyles.areaInput, safetyStyles.stateInput, { color: colors.foreground, backgroundColor: colors.background, borderColor: colors.border }]}
+          />
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Save Safety Alert awareness area"
+            onPress={() => { void saveAwarenessArea(); }}
+            disabled={saving}
+            activeOpacity={0.85}
+            style={[safetyStyles.areaSave, { backgroundColor: saving ? colors.muted : colors.primary }]}
+          >
+            <Text style={safetyStyles.areaSaveText}>Save area</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
       <View style={safetyStyles.radiusSection}>
         <Text style={[safetyStyles.rowLabel, { color: colors.foreground }]}>Alert radius</Text>
+        <Text style={[safetyStyles.rowSub, { color: colors.mutedForeground }]}>Applied around the selected city’s public center. Alerts name only a general city area and expire.</Text>
         <View style={safetyStyles.pillRow}>
           {RADIUS_OPTIONS.map((r) => (
             <TouchableOpacity activeOpacity={0.85}
               key={r}
-              onPress={() => pickRadius(r)}
+              onPress={() => { void pickRadius(r); }}
+              disabled={saving}
               style={[
                 safetyStyles.pill,
                 { borderColor: colors.border, backgroundColor: r === radiusMiles ? colors.primary : "transparent" },
@@ -250,6 +328,9 @@ function SafetyAlertPrefsCard({ colors }: { colors: ReturnType<typeof useColors>
           ))}
         </View>
       </View>
+
+      <Text style={[safetyStyles.privacyNote, { color: colors.mutedForeground }]}>This Safety setting never reads or retains your device location. Alerts never disclose your coordinates, a reporter, a street, or a visit history.</Text>
+      {saveError ? <Text accessibilityRole="alert" style={[safetyStyles.error, { color: "#B42318" }]}>{saveError}</Text> : null}
     </View>
   );
 }
@@ -264,10 +345,19 @@ const safetyStyles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 10 },
   rowLabel: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   rowSub: { fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 2 },
+  areaSection: { gap: 8 },
+  areaInputs: { flexDirection: "row", gap: 8, alignItems: "center" },
+  areaInput: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 9, fontFamily: "Inter_400Regular", fontSize: 13 },
+  cityInput: { flex: 1 },
+  stateInput: { width: 48, textAlign: "center" },
+  areaSave: { borderRadius: 10, paddingHorizontal: 11, paddingVertical: 10 },
+  areaSaveText: { color: "#FFF", fontFamily: "Inter_600SemiBold", fontSize: 12 },
   radiusSection: { gap: 8 },
   pillRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   pill: { paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, borderWidth: 1.5 },
   pillText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
+  privacyNote: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, marginTop: 12 },
+  error: { fontFamily: "Inter_500Medium", fontSize: 12, lineHeight: 16, marginTop: 8 },
 });
 
 type RecSpot = {
@@ -516,6 +606,51 @@ function RecommendedSpotsSection() {
   );
 }
 
+type ProfileSurfaceBoundaryProps = {
+  children: React.ReactNode;
+  colors: ReturnType<typeof useColors>;
+  onRetry: () => void;
+  onRecoverSession: () => void;
+};
+
+class ProfileSurfaceBoundary extends React.Component<
+  ProfileSurfaceBoundaryProps,
+  { failed: boolean }
+> {
+  state = { failed: false };
+
+  static getDerivedStateFromError(): { failed: boolean } {
+    return { failed: true };
+  }
+
+  private retry = () => {
+    this.setState({ failed: false });
+    this.props.onRetry();
+  };
+
+  render() {
+    if (!this.state.failed) return this.props.children;
+    const { colors } = this.props;
+    return (
+      <View style={[styles.profileRecoveryCard, { backgroundColor: colors.card, borderColor: colors.border }]} accessibilityRole="alert">
+        <Feather name="alert-circle" size={20} color={colors.primary} />
+        <View style={styles.profileRecoveryCopy}>
+          <Text style={[styles.profileRecoveryTitle, { color: colors.foreground }]}>Your profile could not open right now.</Text>
+          <Text style={[styles.profileRecoveryDetail, { color: colors.mutedForeground }]}>Try again without leaving the app.</Text>
+        </View>
+        <View style={styles.profileRecoveryActions}>
+          <TouchableOpacity onPress={this.retry} accessibilityRole="button" accessibilityLabel="Try loading profile again" style={[styles.profileRecoveryRetry, { borderColor: colors.primary }]}>
+            <Text style={[styles.profileRecoveryRetryText, { color: colors.primary }]}>Try again</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={this.props.onRecoverSession} accessibilityRole="button" accessibilityLabel="Sign out and return to sign in" style={[styles.profileRecoveryRetry, { borderColor: colors.border }]}>
+            <Text style={[styles.profileRecoveryRetryText, { color: colors.mutedForeground }]}>Sign out</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+}
+
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
@@ -527,6 +662,7 @@ export default function ProfileScreen() {
   const [localAvatarUri, setLocalAvatarUri] = useState<string | null>(null);
   const [uploadedAvatarUrl, setUploadedAvatarUrl] = useState<string | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [profileSurfaceRetryKey, setProfileSurfaceRetryKey] = useState(0);
   const [showRedemption, setShowRedemption] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showIndustryPicker, setShowIndustryPicker] = useState(false);
@@ -574,6 +710,12 @@ export default function ProfileScreen() {
     setShowIndustryPicker(false);
     setShowEditModal(true);
   };
+
+  const recoverProfileSession = useCallback(() => {
+    void logout().finally(() => {
+      router.replace("/login?recovery=1" as never);
+    });
+  }, [logout, router]);
 
   const checkUsername = (raw: string) => {
     const val = raw.toLowerCase().replace(/[^a-z0-9_]/g, "");
@@ -864,7 +1006,18 @@ export default function ProfileScreen() {
         </View>
       ) : (
         <>
-          <View style={[styles.profileCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
+          {user ? (
+            <ProfileSurfaceBoundary colors={colors} onRetry={() => setProfileSurfaceRetryKey((current) => current + 1)} onRecoverSession={recoverProfileSession}>
+              <MemberSocialProfileRecap
+                key={`member-social-profile-${profileSurfaceRetryKey}`}
+                userId={user.id}
+                fallbackName={{ firstName: user.firstName, lastName: user.lastName, username: (user as any)?.username ?? null }}
+                onEditProfile={openEditModal}
+                onEditAvatar={pickProfileImage}
+              />
+            </ProfileSurfaceBoundary>
+          ) : null}
+          {false && <View style={[styles.profileCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
             <TouchableOpacity onPress={pickProfileImage} activeOpacity={0.8} style={styles.avatarWrap} disabled={uploadingAvatar}>
               {localAvatarUri || user?.profileImageUrl ? (
                 <Image
@@ -889,7 +1042,7 @@ export default function ProfileScreen() {
               ) : null}
               {user?.jobTitle || user?.industry ? (
                 <Text style={[styles.industryLine, { color: colors.mutedForeground }]}>
-                  {[user.jobTitle, user.industry].filter(Boolean).join(" · ")}
+                  {[user?.jobTitle, user?.industry].filter(Boolean).join(" · ")}
                 </Text>
               ) : null}
               {(user as any)?.bio ? (
@@ -907,16 +1060,20 @@ export default function ProfileScreen() {
             <TouchableOpacity activeOpacity={0.85} style={[styles.editBtn, { borderColor: colors.border }]} onPress={openEditModal}>
               <Feather name="edit-2" size={15} color={colors.primary} />
             </TouchableOpacity>
-          </View>
+          </View>}
 
-          {isAuthenticated && (
-            <StatusComposer
-              authorName={(user as any)?.username ? `@${(user as any).username}` : "You"}
-              authorInitials={((user as any)?.username ?? "YO").slice(0, 2).toUpperCase()}
-              authorColor="#CA922B"
-            />
-          )}
+          {isAuthenticated ? (
+            <ProfileSurfaceBoundary colors={colors} onRetry={() => setProfileSurfaceRetryKey((current) => current + 1)} onRecoverSession={recoverProfileSession}>
+              <StatusComposer
+                key={`profile-status-composer-${profileSurfaceRetryKey}`}
+                authorName={(user as any)?.username ? `@${(user as any).username}` : "You"}
+                authorInitials={((user as any)?.username ?? "YO").slice(0, 2).toUpperCase()}
+                authorColor="#CA922B"
+              />
+            </ProfileSurfaceBoundary>
+          ) : null}
 
+          {false && <>
           {/* Business management remains reachable from Settings, not the social Profile. */}
           {false && <TouchableOpacity
             style={[styles.listBizBanner, { backgroundColor: colors.primary }]}
@@ -943,7 +1100,7 @@ export default function ProfileScreen() {
             <View style={[styles.profActionsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={[styles.profActionsHeader]}>
                 <Feather name="briefcase" size={16} color="#1D4ED8" />
-                <Text style={[styles.profActionsTitle, { color: colors.foreground }]}>{user.industry}</Text>
+                <Text style={[styles.profActionsTitle, { color: colors.foreground }]}>{user?.industry}</Text>
               </View>
               <View style={styles.profActionsRow}>
                 <TouchableOpacity
@@ -1032,9 +1189,11 @@ export default function ProfileScreen() {
               <BrandQuoteBanner category="community" variant="strip" style={{ marginTop: 4 }} />
             </View>
           )}
+          </>}
         </>
       )}
 
+{false && <>
       {isAuthenticated && (
         <BadgeSection savedCount={savedIds.length} isEarlyTester={false} />
       )}
@@ -1042,7 +1201,7 @@ export default function ProfileScreen() {
       {isAuthenticated && user?.id && (
         <View style={{ paddingHorizontal: 16, marginBottom: 4 }}>
           <CommunityImpactCard
-            userId={user.id}
+            userId={user?.id ?? ""}
             displayName={[user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Community Member"}
             showOwnedBusinesses
           />
@@ -1068,10 +1227,10 @@ export default function ProfileScreen() {
       {isAuthenticated && trustData && (
         <View style={{ paddingHorizontal: 16, marginBottom: 4 }}>
           <TrustLevelCard
-            trustLevel={trustData.trustLevel}
-            reputationScore={trustData.reputationScore}
-            helpfulReviewsCount={trustData.helpfulReviewsCount}
-            progress={trustData.progress}
+            trustLevel={trustData?.trustLevel ?? 1}
+            reputationScore={trustData?.reputationScore ?? 0}
+            helpfulReviewsCount={trustData?.helpfulReviewsCount ?? 0}
+            progress={trustData?.progress ?? { current: { label: "Member", description: "", badge: "" }, next: null, requirements: [] }}
             onVerifyPress={() => router.push("/trust-verification" as any)}
           />
         </View>
@@ -1181,6 +1340,7 @@ export default function ProfileScreen() {
           <Feather name="chevron-right" size={18} color="rgba(255,255,255,0.4)" />
         </TouchableOpacity>
       )}
+      </>}
 
       <Modal visible={showEditModal} animationType="slide" transparent presentationStyle="overFullScreen" onRequestClose={closeEditModal}>
         <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.modalOverlay}>
@@ -1308,6 +1468,7 @@ export default function ProfileScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
+{false && <>
       {isAuthenticated && reviewCount === 0 && savedIds.length === 0 && pointsTotal === 0 && (
         <View style={[styles.gettingStartedCard, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: colors.foreground }]}>
           <Text style={[styles.gettingStartedTitle, { color: colors.foreground }]}>Get Connected</Text>
@@ -1348,6 +1509,7 @@ export default function ProfileScreen() {
           authorColor="#CA922B"
         />
       )}
+      </>}
 
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -1579,6 +1741,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 60,
   },
+  profileRecoveryCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderRadius: 14,
+  },
+  profileRecoveryCopy: { flex: 1, gap: 2 },
+  profileRecoveryTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14, lineHeight: 19 },
+  profileRecoveryDetail: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  profileRecoveryActions: { flexDirection: "row", gap: 8, alignItems: "center" },
+  profileRecoveryRetry: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 9, paddingVertical: 7 },
+  profileRecoveryRetryText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   signInCard: {
     marginHorizontal: 20,
     marginBottom: 24,

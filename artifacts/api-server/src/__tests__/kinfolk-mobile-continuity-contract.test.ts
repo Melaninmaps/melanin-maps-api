@@ -17,8 +17,10 @@ describe("Kinfolk mobile continuity contract", () => {
     expect(source).toContain("value.slice(-6)");
     expect(source).toContain("conversationContext?: unknown;");
     expect(source).toContain("conversationContext,");
-    expect(source).toContain("const conversationMessages = currentSession?.messages?.length");
-    expect(source).toContain("ephemeralDiscoverySession?.messages ?? boundedEphemeralConversation(input.conversationContext);");
+    expect(source).toContain("const serverConversationMessages = currentSession?.messages?.length");
+    expect(source).toMatch(
+      /const conversationMessages = serverConversationMessages\.length\s*\? serverConversationMessages\s*:\s*boundedEphemeralConversation\(input\.conversationContext\);/,
+    );
   });
 
   it("does not stop a broad salon request before governed inventory is searched", () => {

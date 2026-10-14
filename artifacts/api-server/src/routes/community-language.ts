@@ -60,7 +60,12 @@ router.post("/community-language/proposals", async (req: Request, res: Response)
       [userId, term, meaning, city, usageExample],
     );
     req.log?.info({ proposalId: result.rows[0]?.id, userId }, "Community language proposal submitted");
-    return void res.status(201).json({ proposal: result.rows[0] });
+    return void res.status(201).json({
+      proposal: result.rows[0],
+      reviewRequired: true,
+      savesToKinfolkMemory: false,
+      changesKinfolkAutomatically: false,
+    });
   } catch (error) {
     req.log?.error({ error, userId }, "Failed to submit community language proposal");
     return void res.status(500).json({ error: "Could not submit the community-language proposal." });

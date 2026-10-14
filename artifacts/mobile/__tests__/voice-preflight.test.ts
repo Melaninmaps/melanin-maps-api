@@ -64,6 +64,19 @@ describe("Kinfolk Voice Preflight", () => {
     expect(preflight).toContain("Standard Kinfolk Voice and Female Voice");
   });
 
+  it("fails closed on background or unmount during preflight transcription work", () => {
+    const preflight = source("app/kinfolk-voice-preflight.tsx");
+    expect(preflight).toContain("const transcriptionOperationRef = useRef(0);");
+    expect(preflight).toContain("const transcriptionAbortControllerRef = useRef<AbortController | null>(null);");
+    expect(preflight).toContain("transcriptionAbortControllerRef.current?.abort()");
+    expect(preflight).toContain("await discardTemporaryRecording();");
+    expect(preflight).toContain("if (operation !== transcriptionOperationRef.current) return;");
+    expect(preflight).toContain("signal: controller.signal");
+    expect(preflight).toContain("Voice Preflight was canceled because the app left the foreground");
+    expect(preflight).toContain("mountedRef.current = false;");
+    expect(preflight).toContain("void interruptPreflightTranscription();");
+  });
+
   it("keeps the screen reachable from Kinfolk settings and registered in native navigation", () => {
     const settings = source("components/KinfolkSettingsControlCenter.tsx");
     const layout = source("app/_layout.tsx");

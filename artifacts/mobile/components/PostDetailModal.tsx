@@ -32,6 +32,8 @@ interface Comment {
   authorColor: string;
   authorImageUrl?: string | null;
   content: string;
+  parentCommentId?: string | null;
+  editedAt?: string | null;
   createdAt: string;
 }
 
@@ -94,6 +96,8 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentCount
   const [submitting, setSubmitting] = useState(false);
   const [commentError, setCommentError] = useState("");
   const [commentLoadError, setCommentLoadError] = useState("");
+  const [replyTarget, setReplyTarget] = useState<Comment | null>(null);
+  const [editingComment, setEditingComment] = useState<Comment | null>(null);
   const [commentAccess, setCommentAccess] = useState<{ canComment: boolean; restrictionReason?: string | null; commentPolicy: "everyone" | "followers" | "off" }>({ canComment: true, commentPolicy: "everyone" });
   const [localLiked, setLocalLiked] = useState(false);
   const [localLikes, setLocalLikes] = useState(0);
@@ -148,6 +152,8 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentCount
         commentCountRef.current = 0;
         setComments([]);
         setCommentText("");
+        setReplyTarget(null);
+        setEditingComment(null);
       }
     });
   }, [visible, post?.id, loadComments]);
@@ -183,35 +189,63 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentCount
     onLike?.();
   };
 
+  const orderedComments = (items: Comment[]) => {
+    const repliesByParent = new Map<string, Comment[]>();
+    const roots: Comment[] = [];
+    for (const item of items) {
+      if (item.parentCommentId) {
+        repliesByParent.set(item.parentCommentId, [...(repliesByParent.get(item.parentCommentId) ?? []), item]);
+      } else {
+        roots.push(item);
+      }
+    }
+    return roots.flatMap((root) => [root, ...(repliesByParent.get(root.id) ?? [])]);
+  };
+
   const handleSubmitComment = async () => {
     if (!commentText.trim() || !post || !commentAccess.canComment) return;
     setCommentError("");
     setSubmitting(true);
     if (Platform.OS !== "web") Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    const activeEdit = editingComment;
+    const activeReply = replyTarget;
     try {
       const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
-      const res = await fetch(`${getApiBase()}/api/community/posts/${post.id}/comments`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      const response = await fetch(
+        activeEdit
+          ? `${getApiBase()}/api/community/posts/${post.id}/comments/${activeEdit.id}`
+          : `${getApiBase()}/api/community/posts/${post.id}/comments`,
+        {
+          method: activeEdit ? "PATCH" : "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(activeEdit
+            ? { content: commentText.trim() }
+            : { content: commentText.trim(), ...(activeReply ? { parentCommentId: activeReply.id } : {}) }),
         },
-        body: JSON.stringify({ content: commentText.trim() }),
-      });
-      if (res.ok) {
-        const data = await res.json() as { comment: Comment; commentsCount?: number };
-        const nextCount = data.commentsCount ?? commentCountRef.current + 1;
+      );
+      if (response.ok) {
+        const data = await response.json() as { comment: Comment; commentsCount?: number };
+        const nextCount = activeEdit ? commentCountRef.current : data.commentsCount ?? commentCountRef.current + 1;
         commentCountRef.current = nextCount;
-        setComments((prev) => [data.comment, ...prev]);
+        setComments((previous) => orderedComments(
+          activeEdit
+            ? previous.map((item) => item.id === data.comment.id ? { ...item, ...data.comment } : item)
+            : [...previous, data.comment],
+        ));
         setCommentText("");
+        setReplyTarget(null);
+        setEditingComment(null);
         onCommentCountChangedRef.current?.(nextCount);
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       } else {
-        const data = await res.json() as { error?: string };
-        if (res.status === 401) {
+        const data = await response.json().catch(() => ({})) as { error?: string };
+        if (response.status === 401) {
           setCommentError("Please sign in again to post a comment.");
         } else {
-          setCommentError(data.error ?? "Couldn't send your comment. Please try again.");
+          setCommentError(data.error ?? "Couldn't save your comment. Please try again.");
         }
         if (Platform.OS !== "web") Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
@@ -220,29 +254,59 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentCount
     } finally { setSubmitting(false); }
   };
 
+  const deleteComment = async (comment: Comment) => {
+    if (!post) return;
+    const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
+    const response = await fetch(`${getApiBase()}/api/community/posts/${post.id}/comments/${comment.id}`, {
+      method: "DELETE",
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (response.ok) {
+      const body = await response.json().catch(() => ({})) as { commentsCount?: number };
+      const nextCount = body.commentsCount ?? Math.max(0, commentCountRef.current - 1);
+      commentCountRef.current = nextCount;
+      setComments((items) => items.filter((item) => item.id !== comment.id && item.parentCommentId !== comment.id));
+      if (replyTarget?.id === comment.id) setReplyTarget(null);
+      if (editingComment?.id === comment.id) { setEditingComment(null); setCommentText(""); }
+      onCommentCountChangedRef.current?.(nextCount);
+      Alert.alert("Comment deleted");
+      return;
+    }
+    Alert.alert("Couldn’t delete comment", "Please try again.");
+  };
+
   const handleCommentAction = (comment: Comment) => {
     const isOwn = comment.authorId === user?.id;
-    Alert.alert(isOwn ? "Manage comment" : "Report comment?", isOwn ? "You can delete your comment permanently." : "The moderation team will review this comment.", [
+    if (isOwn) {
+      Alert.alert("Manage comment", "You can edit or delete your comment.", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Edit",
+          onPress: () => {
+            setReplyTarget(null);
+            setEditingComment(comment);
+            setCommentText(comment.content);
+            setTimeout(() => inputRef.current?.focus(), 0);
+          },
+        },
+        { text: "Delete", style: "destructive", onPress: () => { void deleteComment(comment); } },
+      ]);
+      return;
+    }
+    Alert.alert("Report comment?", "The moderation team will review this comment.", [
       { text: "Cancel", style: "cancel" },
       {
-        text: isOwn ? "Delete" : "Report",
+        text: "Report",
         style: "destructive",
         onPress: async () => {
           if (!post) return;
           const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
-          const response = await fetch(`${getApiBase()}/api/community/posts/${post.id}/comments/${comment.id}${isOwn ? "" : "/report"}`, {
-            method: isOwn ? "DELETE" : "POST",
-            headers: { ...(isOwn ? {} : { "Content-Type": "application/json" }), ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-            ...(isOwn ? {} : { body: JSON.stringify({ reason: "inappropriate" }) }),
+          const response = await fetch(`${getApiBase()}/api/community/posts/${post.id}/comments/${comment.id}/report`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+            body: JSON.stringify({ reason: "inappropriate" }),
           });
-          if (response.ok && isOwn) {
-            const body = await response.json().catch(() => ({})) as { commentsCount?: number };
-            const nextCount = body.commentsCount ?? Math.max(0, commentCountRef.current - 1);
-            commentCountRef.current = nextCount;
-            setComments((items) => items.filter((item) => item.id !== comment.id));
-            onCommentCountChangedRef.current?.(nextCount);
-          }
-          Alert.alert(response.ok ? (isOwn ? "Comment deleted" : "Report received") : "Couldn’t complete that action", response.ok && !isOwn ? "Thank you for helping keep the community safe." : undefined);
+          Alert.alert(response.ok ? "Report received" : "Couldn’t complete that action", response.ok ? "Thank you for helping keep the community safe." : undefined);
         },
       },
     ]);
@@ -367,6 +431,20 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentCount
                   </TouchableOpacity>
                 </View>
                 <Text style={[m.commentContent, { color: colors.foreground }]}>{c.content}</Text>
+                {c.editedAt ? <Text style={[m.commentEdited, { color: colors.mutedForeground }]}>Edited</Text> : null}
+                {!c.parentCommentId ? (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setEditingComment(null);
+                      setReplyTarget(c);
+                      setTimeout(() => inputRef.current?.focus(), 0);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Reply to ${c.authorName}`}
+                  >
+                    <Text style={[m.replyButton, { color: colors.primary }]}>Reply</Text>
+                  </TouchableOpacity>
+                ) : null}
               </View>
             </View>
           )}
@@ -386,6 +464,16 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentCount
         <View style={[m.inputBar, { backgroundColor: colors.background, borderTopColor: colors.border, paddingBottom: bottomPad + 8 }]}>
           {isAuthenticated && commentAccess.canComment ? (
             <>
+              {(replyTarget || editingComment) ? (
+                <View style={[m.replyContext, { backgroundColor: colors.secondary }]}>
+                  <Text style={[m.replyContextText, { color: colors.mutedForeground }]}>
+                    {editingComment ? `Editing your comment` : `Replying to ${replyTarget?.authorName ?? "member"}`}
+                  </Text>
+                  <TouchableOpacity onPress={() => { setReplyTarget(null); setEditingComment(null); setCommentText(""); }} accessibilityLabel="Cancel comment action">
+                    <Feather name="x" size={15} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                </View>
+              ) : null}
               {commentError && comments.length > 0 ? (
                 <View style={[m.commentErrorBanner, { backgroundColor: "#FEF2F2" }]}>
                   <Text style={m.commentErrorTxt}>{commentError}</Text>
@@ -401,7 +489,7 @@ export function PostDetailModal({ visible, post, onClose, onLike, onCommentCount
                     style={[m.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.foreground }]}
                     value={commentText}
                     onChangeText={setCommentText}
-                    placeholder="Add a comment…"
+                    placeholder={editingComment ? "Edit your comment…" : replyTarget ? `Reply to ${replyTarget.authorName}…` : "Add a comment…"}
                     placeholderTextColor={colors.mutedForeground}
                     multiline
                     maxLength={maxCommentLength}
@@ -465,6 +553,10 @@ const m = StyleSheet.create({
   commentAuthor: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   commentTime: { fontFamily: "Inter_400Regular", fontSize: 11 },
   commentContent: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 20 },
+  commentEdited: { fontFamily: "Inter_400Regular", fontSize: 10 },
+  replyButton: { fontFamily: "Inter_700Bold", fontSize: 12, marginTop: 3 },
+  replyContext: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 7, marginBottom: 7 },
+  replyContextText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   emptyComments: { alignItems: "center", gap: 10, paddingVertical: 28 },
   emptyText: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 21, maxWidth: 260 },
   commentErrorBanner: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, marginBottom: 6, width: "100%" },

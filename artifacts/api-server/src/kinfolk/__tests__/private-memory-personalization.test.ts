@@ -1,0 +1,227 @@
+import { describe, expect, it } from "vitest";
+import {
+  buildPrivateMemoryPersonalizationBlock,
+  governedDiscoveryPreferenceTermsForMemories,
+  isApprovedPrivateMemoryRelevant,
+  memberFacingPrivateMemoryUseForAnswer,
+  preferenceScopesForMemory,
+  resolvePrivateMemoryUseDecision,
+} from "../private-memory-personalization";
+
+const ordinary = (content: string, purpose = "profile_context") => ({
+  content,
+  purpose,
+  isSensitive: false,
+});
+
+describe("private memory personalization", () => {
+  it("matches explicitly approved preference scopes without making an ownership or safety claim", () => {
+    const cases = [
+      [
+        "I prefer vegan, quiet restaurants",
+        "Where can I eat dinner in Philadelphia?",
+        "dining",
+      ],
+      [
+        "I need wheelchair-accessible entrances",
+        "Find an accessible cafe near me",
+        "accessibility",
+      ],
+      [
+        "I rely on transit and do not drive",
+        "Which places are easy by train?",
+        "transportation",
+      ],
+      ["My budget is tight", "What is an affordable lunch option?", "budget"],
+      [
+        "I am looking for a loctician",
+        "Can you find a loctician in Houston?",
+        "service_specialty",
+      ],
+      [
+        "I travel with my children",
+        "Plan a family outing this weekend",
+        "family",
+      ],
+      [
+        "I travel often for work",
+        "What should I know before my Philadelphia trip?",
+        "travel",
+      ],
+    ] as const;
+
+    for (const [content, request, expectedScope] of cases) {
+      const memory = ordinary(content);
+      expect(preferenceScopesForMemory(memory)).toContain(expectedScope);
+      expect(
+        isApprovedPrivateMemoryRelevant({
+          memory,
+          currentMessage: request,
+          legacyRelevant: false,
+        }),
+      ).toBe(true);
+    }
+  });
+
+  it("keeps sensitive and unrelated details out of a later answer", () => {
+    const sensitive = {
+      ...ordinary("I have a private diagnosis"),
+      isSensitive: true,
+    };
+    expect(
+      isApprovedPrivateMemoryRelevant({
+        memory: sensitive,
+        currentMessage: "Where should I have dinner?",
+        legacyRelevant: false,
+      }),
+    ).toBe(false);
+    expect(
+      isApprovedPrivateMemoryRelevant({
+        memory: ordinary("I prefer vegan restaurants"),
+        currentMessage: "Help me draft a work email",
+        legacyRelevant: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("reports every safe observability outcome without logging private content", () => {
+    const base = {
+      runtimeEnabled: true,
+      memberEnabled: true,
+      storageUnavailable: false,
+      activeMemoryCount: 1,
+      relevantMemoryCount: 1,
+      allowPersonalization: true,
+    };
+    expect(
+      resolvePrivateMemoryUseDecision({ ...base, runtimeEnabled: false }).state,
+    ).toBe("runtime_disabled");
+    expect(
+      resolvePrivateMemoryUseDecision({ ...base, memberEnabled: false }).state,
+    ).toBe("member_not_opted_in");
+    expect(
+      resolvePrivateMemoryUseDecision({ ...base, storageUnavailable: true })
+        .state,
+    ).toBe("storage_unavailable");
+    expect(
+      resolvePrivateMemoryUseDecision({ ...base, activeMemoryCount: 0 }).state,
+    ).toBe("no_active_memory");
+    expect(
+      resolvePrivateMemoryUseDecision({ ...base, relevantMemoryCount: 0 })
+        .state,
+    ).toBe("no_relevant_memory");
+    expect(
+      resolvePrivateMemoryUseDecision({ ...base, allowPersonalization: false })
+        .state,
+    ).toBe("suppressed_for_contextual_evidence");
+    const applied = resolvePrivateMemoryUseDecision(base);
+    expect(applied).toMatchObject({ state: "applied", shouldApply: true });
+    expect(applied.memberFacingUse?.message).not.toContain("vegan");
+  });
+
+  it("shows a generic notice only after a usable personalized answer", () => {
+    const decision = resolvePrivateMemoryUseDecision({
+      runtimeEnabled: true,
+      memberEnabled: true,
+      storageUnavailable: false,
+      activeMemoryCount: 1,
+      relevantMemoryCount: 1,
+      allowPersonalization: true,
+    });
+    expect(
+      memberFacingPrivateMemoryUseForAnswer({
+        decision,
+        answerUsedPersonalization: false,
+      }),
+    ).toBeNull();
+    expect(
+      memberFacingPrivateMemoryUseForAnswer({
+        decision,
+        answerUsedPersonalization: true,
+      }),
+    ).toEqual({
+      applied: true,
+      message: "Your saved preference helped tailor this answer.",
+    });
+  });
+
+  it("marks private preference content as separate from evidence and promotion", () => {
+    const block = buildPrivateMemoryPersonalizationBlock([
+      { content: "I prefer vegan restaurants", purpose: "profile_context" },
+    ]);
+    expect(block).toContain(
+      "PRIVATE PERSONALIZATION BOUNDARY — AFTER EVIDENCE",
+    );
+    expect(block).toContain("cannot be changed by a private preference");
+    expect(block).toContain("business promotion");
+    expect(block).toContain("vegan restaurants");
+  });
+
+  it("uses only controlled soft ranking terms for relevant non-sensitive discovery preferences", () => {
+    const terms = governedDiscoveryPreferenceTermsForMemories([
+      ordinary("I prefer vegan restaurants with step-free entrances and transit access."),
+      ordinary("My budget is tight and I travel with my children."),
+      { ...ordinary("My private diagnosis is sensitive."), isSensitive: true },
+    ]);
+
+    expect(terms).toEqual(
+      expect.arrayContaining([
+        "vegan",
+        "plant based",
+        "wheelchair accessible",
+        "accessible",
+        "transit",
+        "public transportation",
+        "affordable",
+        "budget",
+        "family",
+        "children",
+      ]),
+    );
+    expect(terms.join(" ")).not.toContain("private diagnosis");
+    expect(terms.join(" ")).not.toContain("sensitive");
+  });
+
+  it("keeps saved requirements out of soft ranking and tells the answer layer not to relax them", () => {
+    const requirement = ordinary(
+      "I must have a wheelchair-accessible restaurant.",
+      "requirement_context",
+    );
+    expect(governedDiscoveryPreferenceTermsForMemories([requirement])).toEqual([]);
+    const block = buildPrivateMemoryPersonalizationBlock([requirement]);
+    expect(block).toContain("MEMBER-APPROVED REQUIREMENTS");
+    expect(block).toContain("Do not silently broaden, substitute, or relax it.");
+    expect(block).toContain("cannot change citations, verified facts, ownership, eligibility, safety claims, or promotion rules");
+  });
+
+  it("recognizes an approved communication preference only for a matching writing task", () => {
+    const memory = ordinary("Please use a concise and direct communication style.");
+    expect(preferenceScopesForMemory(memory)).toContain("communication");
+    expect(
+      isApprovedPrivateMemoryRelevant({
+        memory,
+        currentMessage: "Draft a concise email to my landlord.",
+        legacyRelevant: false,
+      }),
+    ).toBe(true);
+    expect(
+      isApprovedPrivateMemoryRelevant({
+        memory,
+        currentMessage: "Find a restaurant in Philadelphia.",
+        legacyRelevant: false,
+      }),
+    ).toBe(false);
+  });
+
+  it("applies an explicitly saved delivery preference to future answers without turning it into discovery data", () => {
+    const delivery = ordinary("Always give me short answers.");
+    expect(
+      isApprovedPrivateMemoryRelevant({
+        memory: delivery,
+        currentMessage: "Find a restaurant in Philadelphia.",
+        legacyRelevant: false,
+      }),
+    ).toBe(true);
+    expect(governedDiscoveryPreferenceTermsForMemories([delivery])).toEqual([]);
+  });
+});

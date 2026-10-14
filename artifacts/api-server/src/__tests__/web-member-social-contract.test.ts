@@ -19,7 +19,9 @@ describe("website member social experience", () => {
     expect(app).toContain('path="/messages"');
     expect(app).toContain("<PreLaunchRoute><MemberProfile /></PreLaunchRoute>");
     expect(app).toContain("<PreLaunchRoute><Messages /></PreLaunchRoute>");
-    expect(community).toContain('href={`/members/${encodeURIComponent(post.authorId)}`}');
+    expect(community).toContain("function memberProfilePath(userId: string): string {");
+    expect(community).toContain("return `/members/${encodeURIComponent(userId)}`;");
+    expect(community).toContain("href={memberProfilePath(post.authorId)}");
   });
 
   it("starts and displays messages only through server-authorized conversation endpoints", () => {
@@ -35,7 +37,18 @@ describe("website member social experience", () => {
 
   it("returns only a message availability hint while retaining API enforcement", () => {
     expect(users).toContain("canReceiveDirectMessages: Boolean(callerId && callerId !== targetId && allowDm)");
-    expect(users).toContain("const { isPrivate, allowDm, ...profile } = user;");
+    expect(users).toContain("const { followersCount, followingCount, allowDm } = user;");
+    expect(users).toContain("const visibleProfile = canSeeContent ? contentProfile : identityProfile;");
     expect(conversations).toContain("if (!recipient.allowDm)");
+  });
+
+  it("uses the same guarded profile for owner controls, visitor activity, follow state, and tag removal", () => {
+    expect(memberProfile).toContain('api/community/posts?authorId=${encodeURIComponent(userId)}&limit=20');
+    expect(memberProfile).toContain("if (!profileResponse.canSeeContent)");
+    expect(memberProfile).toContain('api/users/${encodeURIComponent(profile.id)}/follow');
+    expect(memberProfile).toContain('href="/profile"');
+    expect(memberProfile).toContain("Edit my profile");
+    expect(memberProfile).toContain('api/profile-tags/${encodeURIComponent(tagId)}');
+    expect(memberProfile).toContain("canManageProfileTag(tag)");
   });
 });

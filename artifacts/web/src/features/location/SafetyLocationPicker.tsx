@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { LocateFixed, MapPin, Search } from "lucide-react";
+import { MapPin, Search } from "lucide-react";
 import { type ResolvedArea, useLocationResolver } from "./useLocationResolver";
 import { createLatestLocationResolutionGate } from "./latestLocationResolution";
 
-export type SafetyLocationSource = "manual_area" | "current_device" | "selected_place";
+export type SafetyLocationSource = "manual_area" | "selected_place";
 
 interface SafetyLocationPickerProps {
   label: string;
@@ -25,7 +25,7 @@ export function SafetyLocationPicker({
   const [areaText, setAreaText] = useState(value?.label ?? "");
   const internalClear = useRef(false);
   const resolutionGate = useRef(createLatestLocationResolutionGate());
-  const { state, error, resolveAreaText, useBrowserLocation } = useLocationResolver();
+  const { state, error, resolveAreaText } = useLocationResolver();
   const isBusy = state === "locating" || state === "resolving";
 
   useEffect(() => {
@@ -47,14 +47,6 @@ export function SafetyLocationPicker({
     onResolved(area, "selected_place");
   }
 
-  async function resolveCurrentArea() {
-    const requestId = resolutionGate.current.begin();
-    const area = await useBrowserLocation();
-    if (!area || !resolutionGate.current.isCurrent(requestId)) return;
-    setAreaText(area.label);
-    onResolved(area, "current_device");
-  }
-
   return (
     <div className="space-y-3">
       <div>
@@ -64,7 +56,7 @@ export function SafetyLocationPicker({
         </label>
         <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">{helpText}</p>
       </div>
-      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
+      <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
         <input
           aria-label={label}
           autoComplete="postal-code"
@@ -77,7 +69,7 @@ export function SafetyLocationPicker({
               onCleared();
             }
           }}
-          placeholder="City, neighborhood, address, or ZIP"
+          placeholder="City or general neighborhood"
           type="search"
           value={areaText}
         />
@@ -90,15 +82,6 @@ export function SafetyLocationPicker({
           <Search className="h-4 w-4" aria-hidden="true" />
           {state === "resolving" ? "Finding…" : "Use this area"}
         </button>
-        <button
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#3A1F0E] px-4 text-sm font-bold text-white hover:bg-[#5C3417] disabled:opacity-60"
-          disabled={isBusy}
-          onClick={() => void resolveCurrentArea()}
-          type="button"
-        >
-          <LocateFixed className="h-4 w-4" aria-hidden="true" />
-          {state === "locating" ? "Locating…" : "Use my location"}
-        </button>
       </div>
       <div aria-live="polite" className="min-h-5 text-xs">
         {error ? (
@@ -106,7 +89,7 @@ export function SafetyLocationPicker({
         ) : value ? (
           <p className="font-medium text-green-800">Location selected: {value.label}</p>
         ) : (
-          <p className="text-[#3A1F0E]/50">No location selected yet.</p>
+          <p className="text-[#3A1F0E]/50">Use only a city or general neighborhood. Device, street-address, and ZIP location collection is disabled.</p>
         )}
       </div>
     </div>

@@ -402,6 +402,27 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
   };
 }
 
+// Public discovery must never normalize a business profile that carries an
+// explicit hate symbol or hate-group promotion in its member-facing name,
+// listing copy, or published service taxonomy. This is an output hold only:
+// it does not rewrite the source record, decide an ownership claim, or expose
+// the flag to a member. Moderation and administrator review remain the path to
+// correct a false positive or resolve the underlying content.
+const UNSAFE_DISCOVERY_LISTING_RE =
+  /\b(?:swastika|nazi(?:\s+party)?|kkk|ku\s+klux\s+klan|white\s+supremac(?:ist|y)|hate\s+group|racial(?:ly)?\s+hostile)\b/i;
+
+function maySurfaceInGovernedDiscovery(business: GovernedKinfolkBusiness): boolean {
+  const visibleContent = [
+    business.name,
+    business.category,
+    business.subcategory,
+    business.description,
+    ...business.tags,
+    ...business.specialties,
+  ].filter((value): value is string => typeof value === "string").join(" ");
+  return !UNSAFE_DISCOVERY_LISTING_RE.test(visibleContent);
+}
+
 function mapPlace(row: MapPlaceRow): GovernedKinfolkMapPlace {
   return {
     id: text(row.id),
@@ -617,7 +638,9 @@ async function queryCityCatalog(
   `,
     [location.city, location.stateCode, resultLimit],
   );
-  return suppressProbableDuplicateBusinesses(rows.map(mapBusiness)).businesses;
+  return suppressProbableDuplicateBusinesses(
+    rows.map(mapBusiness).filter(maySurfaceInGovernedDiscovery),
+  ).businesses;
 }
 
 export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
@@ -788,7 +811,8 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
                 b.address,
                 b.city,
                 b.state,
-                COALESCE(b.tags, '[]'::jsonb)::text
+                COALESCE(b.tags, '[]'::jsonb)::text,
+                COALESCE(bi.accessibility_features, '[]'::jsonb)::text
               )) ~ contextual.pattern
             )
           )
@@ -851,7 +875,10 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
             ),
           }))
           // Defense in depth if a legacy DB collation differs from JS/regex.
-          .filter((business) => business.matchReasons.length > 0),
+          .filter((business) =>
+            business.matchReasons.length > 0 &&
+            maySurfaceInGovernedDiscovery(business),
+          ),
       ).businesses;
     },
 
@@ -925,8 +952,9 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
           ...designationValueGroups,
         ],
       );
-      return suppressProbableDuplicateBusinesses(rows.map(mapBusiness))
-        .businesses;
+      return suppressProbableDuplicateBusinesses(
+        rows.map(mapBusiness).filter(maySurfaceInGovernedDiscovery),
+      ).businesses;
     },
 
     async findPublishedMapEntities(
@@ -992,7 +1020,11 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       return suppressProbableDuplicateBusinesses(
         rows
           .map(mapBusiness)
-          .filter((business) => business.latitude !== null && business.longitude !== null),
+          .filter((business) =>
+            business.latitude !== null &&
+            business.longitude !== null &&
+            maySurfaceInGovernedDiscovery(business),
+          ),
       ).businesses;
     },
 
@@ -1022,7 +1054,8 @@ export function createGovernedKinfolkBusinessRepository(pool: QueryPool) {
       `,
         [normalizedName, location.city, location.stateCode],
       );
-      return rows[0] ? mapBusiness(rows[0]) : null;
+      const business = rows[0] ? mapBusiness(rows[0]) : null;
+      return business && maySurfaceInGovernedDiscovery(business) ? business : null;
     },
   };
 }

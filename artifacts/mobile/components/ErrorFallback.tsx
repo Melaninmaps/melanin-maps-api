@@ -13,6 +13,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useColors } from "@/hooks/useColors";
+import { clearStoredAuthSession } from "@/lib/auth";
 
 export type ErrorFallbackProps = {
   error: Error;
@@ -24,6 +25,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
   const insets = useSafeAreaInsets();
 
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isRecoveringSession, setIsRecoveringSession] = useState(false);
 
   const handleTryAgain = () => {
     // A render failure can be transient (for example, a screen mounting while
@@ -39,6 +41,22 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
     } catch (restartError) {
       console.error("Failed to restart app:", restartError);
       resetError();
+    }
+  };
+
+  const handleResetSignIn = async () => {
+    if (isRecoveringSession) return;
+    setIsRecoveringSession(true);
+    try {
+      // This is deliberately local-only. It gives a member trapped behind a
+      // root render failure a way back to Login without deleting server data.
+      await clearStoredAuthSession();
+      await reloadAppAsync();
+    } catch (restartError) {
+      console.error("Failed to reset application sign-in:", restartError);
+      resetError();
+    } finally {
+      setIsRecoveringSession(false);
     }
   };
 
@@ -103,6 +121,23 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             ]}
           >
             Try Again
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={() => void handleResetSignIn()}
+          disabled={isRecoveringSession}
+          accessibilityRole="button"
+          accessibilityLabel="Reset app sign-in and return to sign in"
+          style={({ pressed }) => [
+            styles.recoveryLink,
+            { opacity: pressed || isRecoveringSession ? 0.65 : 1 },
+          ]}
+        >
+          <Text style={[styles.recoveryLinkText, { color: colors.primary }]}>
+            {isRecoveringSession ? "Resetting secure sign-in…" : "Reset app sign-in"}
+          </Text>
+          <Text style={[styles.recoveryDetail, { color: colors.mutedForeground }]}>
+            Clears this device’s session only. Your account and saved data stay intact.
           </Text>
         </Pressable>
         <Pressable
@@ -256,6 +291,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     textDecorationLine: "underline",
+  },
+  recoveryLink: {
+    alignItems: "center",
+    gap: 4,
+    minHeight: 44,
+    justifyContent: "center",
+    paddingHorizontal: 12,
+  },
+  recoveryLinkText: {
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  recoveryDetail: {
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: "center",
   },
   modalOverlay: {
     flex: 1,

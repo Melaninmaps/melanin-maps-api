@@ -71,7 +71,8 @@ describe("bounded cross-platform website repairs", () => {
 
   it("simplifies Community posting and removes the duplicate What’s Happening tab", () => {
     const community = source("../pages/community.tsx");
-    expect(community).toContain('const TABS = ["Feed", "Events", "Groups"]');
+    expect(community).toContain('const TABS = ["Community Feed", "My Groups"]');
+    expect(community).toContain("Events\n// retain their dedicated route");
     expect(community).not.toContain("<HappeningPanel");
     expect(community).not.toContain("setPostType");
     expect(community).toContain('placeholder="Tag a place"');
@@ -93,10 +94,12 @@ describe("bounded cross-platform website repairs", () => {
 
   it("moves the map to selected cultural layers and always exposes recenter", () => {
     const map = source("../pages/map.tsx");
-    expect(map).toContain("function selectLegendLayer");
+    expect(map).toContain("const LEGEND_TILES = [");
+    expect(map).toContain("function siteMatchesFilter");
+    expect(map).toContain("const [legendFilter, setLegendFilter]");
     expect(map).toContain("map.fitBounds(bounds");
     expect(map).toContain("Recenter");
-    expect(map).toContain("userCoords ?? { lat: 39.9526, lng: -75.1652 }");
+    expect(map).toContain("DEFAULT_MAP_VIEWPORT.center");
   });
 
   it("keeps community business publication authenticated, field-complete, immediate when eligible, and honestly labeled", () => {

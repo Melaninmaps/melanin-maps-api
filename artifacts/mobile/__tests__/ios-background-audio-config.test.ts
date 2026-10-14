@@ -36,19 +36,19 @@ const eas = JSON.parse(fs.readFileSync(path.join(projectRoot, "eas.json"), "utf8
 
 describe("iOS App Review background-audio configuration", () => {
   it("uses identifiers above every recorded submitted or reserved artifact", () => {
-    // The build record is historical evidence, not the EAS source of truth.
-    // It deliberately remains conservative when a newer identifier was reserved
-    // by EAS after the record was written. The release gate enforces this
-    // reviewed source's exact 134/100 identifiers before a build is allowed.
-    expect(Number(appJson.expo.ios.buildNumber)).toBeGreaterThan(
-      Math.max(buildRecord.lastIosSubmitted, buildRecord.lastIosReserved ?? 0),
-    );
-    expect(appJson.expo.android.versionCode).toBeGreaterThan(
-      Math.max(buildRecord.lastAndroidSubmitted, buildRecord.lastAndroidReserved ?? 0),
-    );
-    expect(appJson.expo.ios.buildNumber).toBe("134");
-    expect(appJson.expo.android.versionCode).toBe(100);
-    expect(appJson.expo.version).toBe("1.1.10");
+   // The build record is historical evidence, not the EAS source of truth.
+   // It deliberately remains conservative when a newer identifier was reserved
+   // by EAS after the record was written. The release gate enforces this
+    // reviewed source's next available 140/104 identifiers before a build is allowed.
+   expect(Number(appJson.expo.ios.buildNumber)).toBeGreaterThan(
+     Math.max(buildRecord.lastIosSubmitted, buildRecord.lastIosReserved ?? 0),
+   );
+   expect(appJson.expo.android.versionCode).toBeGreaterThan(
+     Math.max(buildRecord.lastAndroidSubmitted, buildRecord.lastAndroidReserved ?? 0),
+   );
+    expect(appJson.expo.ios.buildNumber).toBe("140");
+   expect(appJson.expo.android.versionCode).toBe(104);
+   expect(appJson.expo.version).toBe("1.1.10");
     expect(appJson.expo.android.version).toBe("1.1.10");
     expect(appJson.expo.runtimeVersion).toBe("1.1.9-native.1");
     expect(appJson.expo.android.runtimeVersion).toBe("1.1.7-native.1");

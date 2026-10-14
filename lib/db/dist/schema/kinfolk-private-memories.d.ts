@@ -146,6 +146,59 @@ export declare const kinfolkPrivateMemoriesTable: import("drizzle-orm/pg-core").
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        sensitiveEncryptedContent: import("drizzle-orm/pg-core").PgColumn<{
+            name: "sensitive_encrypted_content";
+            tableName: "kinfolk_private_memories";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        sensitiveEncryptionKeyId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "sensitive_encryption_key_id";
+            tableName: "kinfolk_private_memories";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 64;
+        }>;
+        sensitiveRestricted: import("drizzle-orm/pg-core").PgColumn<{
+            name: "sensitive_restricted";
+            tableName: "kinfolk_private_memories";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         expiresAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "expires_at";
             tableName: "kinfolk_private_memories";

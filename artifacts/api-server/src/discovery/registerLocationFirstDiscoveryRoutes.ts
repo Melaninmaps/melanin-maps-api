@@ -6,6 +6,19 @@ import type { LocationFirstQuery } from "../shared/discoveryContracts";
 const RECORD_TYPES = new Set(["business", "cultural_site", "event", "community_place", "resource"]);
 const LOCATION_MODES = new Set(["exact", "expanded_radius", "nearest_city", "all_locations"]);
 
+function missingLocationInventoryRelation(error: unknown): boolean {
+  const candidate = error as { code?: unknown; message?: unknown };
+  const message = typeof candidate?.message === "string" ? candidate.message : "";
+  if (candidate?.code === "42P01") {
+    return /canonical_record_locations|tour_cultural_sites|recurring_events|community_organizations|cultural_sites/i.test(message);
+  }
+  // HBCU Explore reads the canonical cultural-site catalogue and must never
+  // translate a legacy missing publication column into a misleading member 500.
+  // The pre-traffic schema gate supplies this column; this fallback still
+  // returns an empty coverage gap if a partially provisioned catalogue races it.
+  return candidate?.code === "42703" && /column "is_published" does not exist/i.test(message);
+}
+
 function isValidQuery(value: unknown): value is LocationFirstQuery {
   const query = value as Partial<LocationFirstQuery>;
   return Boolean(
@@ -56,6 +69,32 @@ export function registerLocationFirstDiscoveryRoutes(
       response.setHeader("Vary", "Authorization, Cookie, X-Community-Location");
       response.json(result);
     } catch (err: unknown) {
+      // A partially provisioned catalogue must not produce a member 500 or
+      // silently fall back beyond the requested public area.
+      if (missingLocationInventoryRelation(err)) {
+        response.setHeader("Cache-Control", "private, no-store, max-age=0");
+        response.setHeader("Vary", "Authorization, Cookie, X-Community-Location");
+        response.json({
+          query,
+          requiresLocation: false,
+          records: [],
+          coverageGap: {
+            city: query.location.city,
+            stateCode: query.location.stateCode,
+            recordType: query.filters.recordTypes.length === 1
+              ? query.filters.recordTypes[0]
+              : "business",
+            category: query.filters.category,
+            specialty: query.filters.specialty,
+            observedAt: new Date().toISOString(),
+          },
+          suggestedActions: query.filters.recordTypes.includes("event")
+            ? ["expand_radius", "show_nearest_city", "submit_event"]
+            : ["expand_radius", "show_nearest_city", "submit_listing"],
+          nearestAvailableLocation: null,
+        });
+        return;
+      }
       (request as any).log?.error({ err }, "POST /api/discovery/query failed");
       response.status(500).json({ error: "Discovery query failed" });
     }

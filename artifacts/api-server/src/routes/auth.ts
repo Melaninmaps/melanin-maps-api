@@ -54,6 +54,11 @@ import {
   ISSUER_URL,
   type SessionData,
 } from "../lib/auth";
+import {
+  consumeMemberActivationInvitation,
+  hasMemberActivationInvitationHistory,
+  validateMemberActivationInvitation,
+} from "../auth/memberActivationInvitation";
 import jwt from "jsonwebtoken";
 import {
   encryptToken,
@@ -696,6 +701,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
     username,
     dateOfBirth,
     agreeToTerms,
+    activationToken: rawActivationToken,
   } = req.body as {
     firstName?: string;
     lastName?: string;
@@ -704,6 +710,7 @@ router.post("/auth/register", async (req: Request, res: Response) => {
     username?: string;
     dateOfBirth?: string;
     agreeToTerms?: boolean;
+    activationToken?: string;
   };
 
   if (
@@ -890,6 +897,34 @@ router.post("/auth/register", async (req: Request, res: Response) => {
           });
           return;
         }
+        const activationToken = typeof rawActivationToken === "string"
+          ? rawActivationToken.trim()
+          : "";
+        if (waitlistEntry?.approvedAt) {
+          // Preserve pre-invitation legacy approvals, but never let an expired,
+          // revoked, or failed-delivery activation capability fall back to an
+          // unprotected approved-waitlist registration path.
+          const invitationRequired = await hasMemberActivationInvitationHistory(cleanEmail);
+          if (invitationRequired && !activationToken) {
+            res.status(403).json({
+              error: "Use the secure activation link from your approval email, or ask an administrator to resend it.",
+              code: "ACTIVATION_INVITATION_REQUIRED",
+            });
+            return;
+          }
+          if (activationToken) {
+            const invitation = await validateMemberActivationInvitation(cleanEmail, activationToken);
+            if (!invitation.valid) {
+              res.status(403).json({
+                error: invitation.code === "ACTIVATION_INVITATION_EXPIRED"
+                  ? "This activation link has expired. Ask an administrator to resend your invitation."
+                  : "This activation link is no longer valid. Ask an administrator to resend your invitation.",
+                code: invitation.code,
+              });
+              return;
+            }
+          }
+        }
         // ── End authorization gate ────────────────────────────────────────────────
 
         const referralCode = crypto
@@ -912,6 +947,21 @@ router.post("/auth/register", async (req: Request, res: Response) => {
             referralCode,
           })
           .returning();
+
+        if (activationToken) {
+          // A concurrent admin revocation can happen after validation. Do not
+          // issue a usable account if the final single-use consumption loses
+          // that race; no agreement, email, entitlement, or session exists yet.
+          const consumed = await consumeMemberActivationInvitation(cleanEmail, activationToken);
+          if (!consumed) {
+            await db.delete(usersTable).where(eq(usersTable.id, user.id));
+            res.status(403).json({
+              error: "This activation link is no longer valid. Ask an administrator to resend your invitation.",
+              code: "ACTIVATION_INVITATION_REVOKED",
+            });
+            return;
+          }
+        }
 
         req.log.info(
           {

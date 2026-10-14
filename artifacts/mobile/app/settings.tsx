@@ -24,6 +24,14 @@ type Row = {
   value?: string;
 };
 
+const kinfolkSettingsEntry: Row = {
+  id: "kinfolk",
+  icon: "message-circle",
+  label: "KinfolkAI Settings",
+  sub: "Memory, privacy, preferences, voice, and saved memories",
+  route: "/kinfolk-settings",
+};
+
 type SectionId = "account" | "app";
 
 type Section = {
@@ -47,12 +55,18 @@ export default function SettingsScreen() {
     {
       id: "account",
       title: "Account",
-      summary: "Profile, identity, password, and connected accounts",
+      summary: "Profile, identity, accounts, and business submission tools",
       rows: [
         { id: "profile", icon: "user", label: "Edit Profile", sub: "Name, photo, bio", route: "/(tabs)/profile" },
+        { id: "profile-display", icon: "layout", label: "Profile Display & Badges", sub: "Cover, social profile privacy, and earned badges", route: "/profile-presentation-settings" },
         { id: "identity", icon: "heart", label: "Gender & Pronouns", sub: "Private — used only by Kinfolk", route: "/identity-context" },
         { id: "password", icon: "lock", label: "Change Password", sub: "Managed through your account provider", route: null },
         { id: "connected", icon: "link", label: "Connected Accounts", sub: "Managed through your account provider", route: null },
+        { id: "add-my-business", icon: "briefcase", label: "Add My Business", sub: "Submit a private owner request; listing and ownership are reviewed separately", route: "/list-business?intent=owner" },
+        { id: "share-another-business", icon: "share-2", label: "Share Another Business", sub: "Recommend a business without claiming ownership", route: "/list-business" },
+        { id: "my-business-submissions", icon: "clock", label: "My Business Submissions", sub: "Private review status, duplicate matches, and information requests", route: "/my-business-submissions" },
+        { id: "my-business-claims", icon: "shield", label: "My Business Claims", sub: "Private claim status, review notes, and resubmission controls", route: "/my-business-claims" },
+        { id: "my-businesses", icon: "briefcase", label: "My Businesses", sub: "Open approved business access and management tools", route: "/business-owner" },
       ],
     },
     {
@@ -60,9 +74,9 @@ export default function SettingsScreen() {
       title: "App Settings",
       summary: "Kinfolk, notifications, privacy, safety, and appearance",
       rows: [
-        { id: "kinfolk", icon: "message-circle", label: "KinfolkAI™", sub: "Conversation mode, voice, memories, and explicit preferences", route: "/kinfolk-settings" },
         { id: "notifications", icon: "bell", label: "Notifications", sub: "Alerts and reminders", route: "/notifications-settings" },
         { id: "video-sources", icon: "play-circle", label: "Video Sources", sub: "Choose YouTube, TikTok, Twitch, Snapchat & more", route: "/social-video-preferences" },
+        { id: "my-circles", icon: "users", label: "My Circles", sub: "Private group spaces and conversations", route: "/circles" },
         { id: "privacy", icon: "shield", label: "Privacy & Safety", sub: "Visibility and data", route: "/privacy" },
         { id: "safetyhub", icon: "shield", label: "Safety Hub", sub: "Check-ins, location sharing & meetup verification", route: "/safety-hub" },
         { id: "trusted-safety", icon: "users", label: "Trusted Safety Share", sub: "Share safety alerts with family — nothing else", route: "/trusted-safety-share" },
@@ -114,6 +128,22 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <Text style={[styles.intro, { color: colors.mutedForeground }]}>Choose a section to manage your account or app controls.</Text>
+        <TouchableOpacity
+          style={[styles.kinfolkShortcut, { backgroundColor: colors.card, borderColor: colors.primary + "44" }]}
+          activeOpacity={0.82}
+          accessibilityRole="button"
+          accessibilityLabel="Open KinfolkAI Settings"
+          onPress={() => handleRow(kinfolkSettingsEntry)}
+        >
+          <View style={[styles.kinfolkShortcutIcon, { backgroundColor: colors.primary + "18" }]}>
+            <Feather name="message-circle" size={21} color={colors.primary} />
+          </View>
+          <View style={styles.kinfolkShortcutContent}>
+            <Text style={[styles.kinfolkShortcutTitle, { color: colors.foreground }]}>KinfolkAI Settings</Text>
+            <Text style={[styles.kinfolkShortcutSub, { color: colors.mutedForeground }]}>Memory, privacy, preferences, voice, and saved memories</Text>
+          </View>
+          <Feather name="chevron-right" size={20} color={colors.primary} />
+        </TouchableOpacity>
         {sections.map((section) => {
           const expanded = expandedSection === section.id;
           return (
@@ -183,6 +213,11 @@ const styles = StyleSheet.create({
   title: { fontSize: 18, fontFamily: "Inter_700Bold" },
   scroll: { paddingHorizontal: 20, gap: 14 },
   intro: { fontSize: 13, fontFamily: "Inter_400Regular", lineHeight: 19, marginBottom: 2 },
+  kinfolkShortcut: { minHeight: 78, flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 18, borderWidth: 1, paddingHorizontal: 16, paddingVertical: 14 },
+  kinfolkShortcutIcon: { width: 42, height: 42, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  kinfolkShortcutContent: { flex: 1 },
+  kinfolkShortcutTitle: { fontSize: 15, fontFamily: "Inter_700Bold" },
+  kinfolkShortcutSub: { fontSize: 12, fontFamily: "Inter_400Regular", lineHeight: 17, marginTop: 3 },
   accordion: { borderWidth: 1, borderRadius: 18, overflow: "hidden" },
   accordionHeader: { minHeight: 84, paddingHorizontal: 16, paddingVertical: 14, flexDirection: "row", alignItems: "center", gap: 12 },
   accordionIcon: { width: 38, height: 38, borderRadius: 11, alignItems: "center", justifyContent: "center" },

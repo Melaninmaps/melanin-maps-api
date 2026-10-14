@@ -34,6 +34,29 @@ export function fictionalPrivatePlacesQaGeocode(address: string): PrivatePlacesG
   };
 }
 
+/**
+ * A tightly scoped staging-only switch permits an authenticated disposable
+ * lifecycle proof without sending any address to Google. It never accepts a
+ * real address, produces a neutral non-place coordinate pair, and its provider
+ * is always excluded from governed directory lookup.
+ */
+export function mayUsePrivatePlacesStagingFixture(
+  environment: NodeJS.ProcessEnv = process.env,
+): boolean {
+  return environment.RAILWAY_ENVIRONMENT_NAME === "staging"
+    && environment.KINFOLK_MEMORY_STAGING_ISOLATION === "true"
+    && environment.KINFOLK_PRIVATE_PLACES_STAGING_FIXTURE_ENABLED === "true";
+}
+
+export function fictionalPrivatePlacesStagingGeocode(
+  address: string,
+  environment: NodeJS.ProcessEnv = process.env,
+): PrivatePlacesGeocode | null {
+  return mayUsePrivatePlacesStagingFixture(environment)
+    ? fictionalPrivatePlacesQaGeocode(address)
+    : null;
+}
+
 export function isPrivatePlacesFictionalQaProvider(value: string): boolean {
   return value === PRIVATE_PLACES_FICTIONAL_QA_PROVIDER;
 }

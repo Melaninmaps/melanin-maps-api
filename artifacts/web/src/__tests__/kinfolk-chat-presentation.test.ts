@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import {
   hasItineraryDays,
   isSerializedItineraryContent,
+  kinfolkAnswerBlocks,
   KinfolkAssistantText,
   KinfolkItinerary,
   KinfolkSpokenText,
@@ -17,6 +18,7 @@ import {
   safeExternalSourceHref,
   safeLibraryHref,
 } from "../components/kinfolk/KinfolkChatPresentation";
+import { KinfolkMemoryUseNotice } from "../components/kinfolk/KinfolkMemoryUseNotice";
 import { businessClarificationContinuation } from "../features/kinfolk/businessClarificationContinuation";
 import { createVoicePlaybackGuard } from "../lib/voicePlaybackGuard";
 
@@ -32,6 +34,10 @@ const disclosureSource = readFileSync(
   fileURLToPath(new URL("../components/kinfolk/KinfolkContinuityDisclosure.tsx", import.meta.url)),
   "utf8",
 );
+const inlineMemoryConsentSource = readFileSync(
+  fileURLToPath(new URL("../components/kinfolk/KinfolkInlineMemoryConsent.tsx", import.meta.url)),
+  "utf8",
+);
 
 describe("Kinfolk chat presentation", () => {
   it("continues the original local search for both a clarification answer and Skip", () => {
@@ -44,14 +50,35 @@ describe("Kinfolk chat presentation", () => {
     );
   });
 
-  it("preserves assistant paragraph and list line breaks as safe plain text", () => {
-    const content = "A first paragraph.\n\n- First detail\n- Second detail";
+  it("presents ordinary assistant text as safe semantic paragraphs and lists", () => {
+    const content = "A first paragraph.\n\n- First detail\n- Second detail\n\n1. A first step\n2. A second step";
     const markup = renderToStaticMarkup(React.createElement(KinfolkAssistantText, { content }));
 
-    expect(markup).toContain("whitespace-pre-wrap");
+    expect(kinfolkAnswerBlocks(content)).toEqual([
+      { kind: "paragraph", text: "A first paragraph." },
+      { kind: "bullets", items: ["First detail", "Second detail"] },
+      { kind: "steps", items: ["A first step", "A second step"] },
+    ]);
+    expect(markup).toContain("<p");
+    expect(markup).toContain("<ul");
+    expect(markup).toContain("<ol");
+    expect(markup).toContain("First detail");
+    expect(markup).toContain("A second step");
     expect(markup).toContain("break-words");
-    expect(markup).toContain(content);
     expect(markup).not.toContain("dangerouslySetInnerHTML");
+  });
+
+  it("keeps code blocks as text and never executes model-supplied markup", () => {
+    const content = "```ts\nconst unsafe = '<img src=x onerror=alert(1)>';\n```";
+    const markup = renderToStaticMarkup(React.createElement(KinfolkAssistantText, { content }));
+
+    expect(kinfolkAnswerBlocks(content)).toEqual([{
+      kind: "code",
+      text: "const unsafe = '<img src=x onerror=alert(1)>';",
+    }]);
+    expect(markup).toContain("<pre");
+    expect(markup).toContain("&lt;img");
+    expect(markup).not.toContain("<img src=x");
   });
 
   it("keeps the exact full audio text visibly available during and after playback", () => {
@@ -167,6 +194,53 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).toContain("KinfolkInlineMemoryConsent");
     expect(travelPageSource).toContain("memoryConsentPlan?: KinfolkInlineMemoryConsentPlan | null");
     expect(travelPageSource).toContain("inlineMemoryConsent: data.memoryConsentPlan");
+  });
+
+  it("keeps a one-time delivery choice browser-local until exactly one successful request", () => {
+    expect(travelPageSource).toContain("oneTurnDeliveryInstructionRef");
+    expect(travelPageSource).toContain("oneTurnInstruction: oneTurnInstruction ?? undefined");
+    expect(travelPageSource).toContain("if (oneTurnInstruction) oneTurnDeliveryInstructionRef.current = null;");
+    expect(travelPageSource).toContain("onUseOnce={(instruction) => { oneTurnDeliveryInstructionRef.current = instruction;");
+    expect(inlineMemoryConsentSource).toContain("Use this once");
+    expect(inlineMemoryConsentSource).toContain("Save and use in future");
+  });
+
+  it("keeps all inline choices while requiring separate confirmation for sensitive selections", () => {
+    expect(inlineMemoryConsentSource).toContain('"Save all for relevant use"');
+    expect(inlineMemoryConsentSource).toContain("Save only preferences and interests");
+    expect(inlineMemoryConsentSource).toContain("Choose individually");
+    expect(inlineMemoryConsentSource).toContain("Don’t save");
+    expect(inlineMemoryConsentSource).toContain("const saveAll = () => {");
+    expect(inlineMemoryConsentSource).toContain("if (plan.sensitive.length > 0)");
+    expect(inlineMemoryConsentSource).toContain("setSelected(allItems.map((item) => item.id));");
+    expect(inlineMemoryConsentSource).toContain("I agree to save the selected sensitive details for relevant use.");
+    expect(inlineMemoryConsentSource).toContain("selectedSensitive && (!sensitiveConsent || !sensitivePassword)");
+    expect(inlineMemoryConsentSource).toContain("sensitive-memory-vault/reauth");
+    expect(inlineMemoryConsentSource).toContain("Confirm your password before saving a sensitive detail.");
+    expect(inlineMemoryConsentSource).toContain("sensitiveConsent: true");
+    expect(inlineMemoryConsentSource).not.toContain(
+      "onClick={() => void save(allItems.map((item) => item.id))}",
+    );
+  });
+
+  it("renders only a generic acknowledgement when an approved memory influenced a usable answer", () => {
+    const markup = renderToStaticMarkup(React.createElement(KinfolkMemoryUseNotice, {
+      memoryUse: { applied: true, message: "private preference must not render" },
+    }));
+
+    expect(markup).toContain('data-testid="kinfolk-memory-use-notice"');
+    expect(markup).toContain("Saved Kinfolk preference used");
+    expect(markup).toContain("Your saved preference helped tailor this answer.");
+    expect(markup).not.toContain("private preference must not render");
+    expect(travelPageSource).toContain("memoryUse: data.memoryUse?.applied === true ? data.memoryUse : null");
+    expect(travelPageSource).toContain("<KinfolkMemoryUseNotice memoryUse={msg.memoryUse} />");
+  });
+
+  it("renders sanitized reviewed image and health resources returned by Kinfolk", () => {
+    expect(travelPageSource).toContain("resourceCards?: KinfolkResourceCard[] | null");
+    expect(travelPageSource).toContain("safeExternalSourceHref(resource.url)");
+    expect(travelPageSource).toContain('data-testid="kinfolk-reviewed-resource-cards"');
+    expect(travelPageSource).toContain('resource.type === "image_gallery" ? "Educational image library: " : ""');
   });
 
   it("renders deterministic business recommendations with active detail and website links", () => {

@@ -307,7 +307,7 @@ describe("neutral research and health planning", () => {
     expect(plan.persistIdentityContext).toBe(false);
   });
 
-  it("builds generic health search authority-first and ignores stored lens values", () => {
+  it("builds generic health search authority-first with a non-identifying diaspora-first representation track", () => {
     const profile = buildMemberProfile({
       userId: "member-1",
       diasporaCountries: ["Black woman"],
@@ -318,10 +318,16 @@ describe("neutral research and health planning", () => {
 
     expect(profile.active).toBe(false);
     expect(profile.lenses).toEqual([]);
-    expect(plan.activeLenses).toEqual([]);
+    expect(plan.activeLenses).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "diaspora-first-representation-default" }),
+    ]));
     expect(plan.queries[0]).toMatchObject({ role: "evidence" });
     expect(plan.queries[0].text).toMatch(/^blood pressure official clinical guidance$/i);
-    expect(plan.queries.map((query) => query.text).join(" ")).not.toMatch(/Black|African American/i);
+    expect(plan.representationMode).toBe("diaspora_first_default");
+    expect(plan.queries[1]).toMatchObject({
+      role: "community_primary",
+      text: expect.stringMatching(/Black and Brown health equity/i),
+    });
   });
 
   it("adds explicit Black woman population evidence only after the authoritative health track", () => {
@@ -341,12 +347,12 @@ describe("neutral research and health planning", () => {
     expect(plan.queries[1].reason).toMatch(/group-level and non-diagnostic/i);
   });
 
-  it("extracts generic BP condition-first without a demographic default", () => {
+  it("keeps the primary NIH health query condition-first even with an explicit identity", () => {
     expect(extractHealthTopic("What should I know about blood pressure?")).toBe(
       "hypertension high blood pressure",
     );
     expect(extractHealthTopic("I'm a Black woman. What about blood pressure?")).toBe(
-      "hypertension high blood pressure Black woman",
+      "hypertension high blood pressure",
     );
   });
 

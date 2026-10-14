@@ -10,6 +10,14 @@ const mobileSource = readFileSync(
   fileURLToPath(new URL("../../../mobile/components/AIChatWidget.tsx", import.meta.url)),
   "utf8",
 );
+const mobileVoiceSource = readFileSync(
+  fileURLToPath(new URL("../../../mobile/hooks/useKinfolkVoiceSource.ts", import.meta.url)),
+  "utf8",
+);
+const mobileVoiceControls = readFileSync(
+  fileURLToPath(new URL("../../../mobile/components/KinfolkVoiceSourceControls.tsx", import.meta.url)),
+  "utf8",
+);
 const webSource = readFileSync(
   fileURLToPath(new URL("../../../web/src/pages/travel.tsx", import.meta.url)),
   "utf8",
@@ -59,12 +67,14 @@ describe("Kinfolk server-owned voice cross-client contract", () => {
       expect(route).toContain("resolveAudioOpenAIConfiguration()");
       expect(route).not.toContain('process.env["AI_INTEGRATIONS_OPENAI_API_KEY"]');
     }
-    expect(transcribeRoute).toContain("audioOpenai.audio.transcriptions.create(");
+    expect(transcribeRoute).toContain("speechToText(");
   });
 
   it("keeps a visible mobile cancellation path that discards a recording before transcription", () => {
-    expect(mobileSource).toContain("discardVoiceRecording");
-    expect(mobileSource).toContain("file.delete()");
-    expect(mobileSource).toContain("Cancel and discard Kinfolk Voice recording");
+    expect(mobileVoiceSource).toContain("const cancel = useCallback");
+    expect(mobileVoiceSource).toContain("operationRef.current += 1");
+    expect(mobileVoiceSource).toContain("abortControllerRef.current?.abort()");
+    expect(mobileVoiceSource).toContain("clearTemporaryFile(recorder.uri)");
+    expect(mobileVoiceControls).toContain("Cancel recording and discard local audio");
   });
 });

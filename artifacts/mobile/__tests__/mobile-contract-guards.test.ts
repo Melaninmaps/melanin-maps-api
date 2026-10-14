@@ -16,8 +16,8 @@ describe("Expo config plugin imports", () => {
       "utf8",
     );
 
-    expect(pluginSource).toContain('require("@expo/config-plugins")');
-    expect(pluginSource).not.toContain('require("expo/config-plugins")');
+    expect(pluginSource).toContain('require("expo/config-plugins")');
+    expect(pluginSource).not.toContain('require("@expo/config-plugins")');
   });
 });
 
@@ -127,11 +127,68 @@ describe("community-fed business publication governance", () => {
     expect(listBusiness).toContain('submissionIntent: isOwnerIntent ? "owner" : "community"');
     expect(listBusiness).toContain('ownerAttestation: form.ownerAttestation');
     expect(listBusiness).toContain('This is a community recommendation. It will not be connected to your profile as an owner.');
-    expect(listBusiness).toContain('This creates a business page tied to your profile.');
-    expect(listBusiness).toContain('Your claim is reviewed separately from the public listing and does not create a verification badge.');
+    expect(listBusiness).toContain('This saves a private owner and profile request.');
+    expect(listBusiness).toContain('does not publish a page, verify the business, or grant management access automatically');
+    expect(listBusiness).toContain('Send ownership request for review');
+    expect(listBusiness).toContain('skipDuplicatePreflight');
     expect(profile).toContain('params: { intent: "owner" }');
     expect(settings).toContain('label: "Add My Business"');
     expect(settings).toContain('label: "Share Another Business"');
+  });
+
+  it("keeps owner review status private and reachable from direct account tools", () => {
+    const listBusiness = source("../app/list-business.tsx");
+    const status = source("../app/my-business-submissions.tsx");
+    const settings = source("../app/settings.tsx");
+
+    expect(listBusiness).toContain('Owner Request Saved');
+    expect(listBusiness).toContain('Private owner review in progress');
+    expect(listBusiness).toContain('Ownership control not granted yet');
+    expect(listBusiness).not.toContain('Manage My Business');
+    expect(status).toContain('Owner request under review');
+    expect(status).toContain('Existing listing under review');
+    expect(status).toContain('Existing listing unchanged');
+    expect(settings).toContain('listing and ownership are reviewed separately');
+    expect(settings).toContain('duplicate matches, and information requests');
+  });
+
+  it("does not represent an owner-console read failure as an empty business profile", () => {
+    const ownerConsole = source("../app/business-owner/index.tsx");
+
+    expect(ownerConsole).toContain("const [loadError, setLoadError]");
+    expect(ownerConsole).toContain("const [businesses, setBusinesses]");
+    expect(ownerConsole).toContain("/api/businesses/mine/managed");
+    expect(ownerConsole).toContain("if (!Array.isArray(data.businesses))");
+    expect(ownerConsole).toContain("Business Admin is unavailable");
+    expect(ownerConsole).toContain("Business Admin could not load right now. Please try again.");
+    expect(ownerConsole).toContain("onPress={() => { void load(); }}");
+    expect(ownerConsole.indexOf("loadError ?")).toBeLessThan(ownerConsole.indexOf("businesses.length === 0"));
+  });
+
+  it("requires an explicit business selection for multi-business management", () => {
+    const ownerConsole = source("../app/business-owner/index.tsx");
+    const editProfile = source("../app/business-owner/edit-profile.tsx");
+
+    expect(ownerConsole).toContain("businesses.length > 1");
+    expect(ownerConsole).toContain('testID="managed-businesses-list"');
+    expect(ownerConsole).toContain("Edit permitted profile fields for");
+    expect(ownerConsole).toContain('pathname: "/business-owner/edit-profile", params: { businessId: managedBusiness.id }');
+    expect(ownerConsole).toContain("View public page for");
+    expect(ownerConsole).toContain("if (data.businesses.length === 1)");
+    expect(editProfile).toContain("const { businessId: selectedBusinessId } = useLocalSearchParams");
+    expect(editProfile).toContain("/api/businesses/mine/managed/${encodeURIComponent(managedBusinessId)}");
+    expect(editProfile).toContain("Address change needs review");
+  });
+
+  it("keeps approved owner access discoverable and never reports an address failure as a completed save", () => {
+    const settings = source("../app/settings.tsx");
+    const editProfile = source("../app/business-owner/edit-profile.tsx");
+
+    expect(settings).toContain('label: "My Businesses"');
+    expect(settings).toContain('route: "/business-owner"');
+    expect(editProfile).toContain("const addressResponse = await fetch");
+    expect(editProfile).toContain("if (!addressResponse.ok)");
+    expect(editProfile).toContain('"Profile saved; address not changed"');
   });
 
   it("uses the canonical protected claim endpoint and never equates a claim with verification", () => {
@@ -139,13 +196,21 @@ describe("community-fed business publication governance", () => {
     const businessDetail = source("../app/business/[id].tsx");
 
     expect(claimModal).toContain('from "@/lib/api"');
+    expect(claimModal).toContain('/api/businesses/${businessId}/claim-eligibility');
     expect(claimModal).toContain('/api/businesses/${businessId}/claims');
     expect(claimModal).toContain('getMemberApiHeaders()');
+    expect(claimModal).toContain('eligibility?.eligibility !== "claimable"');
+    expect(claimModal).toContain('"pending_for_you"');
+    expect(claimModal).toContain('"pending_for_other_user"');
+    expect(claimModal).toContain('"already_claimed"');
+    expect(claimModal).toContain('claim-eligibility-unavailable');
     expect(claimModal).toContain('businessEmail: email.trim()');
+    expect(claimModal).toContain('claimantPhone: phone.trim() || null');
     expect(claimModal).toContain('verificationMethod');
     expect(claimModal).toContain('attestation: true');
     expect(claimModal).not.toContain('/api/businesses/${businessId}/claim`');
     expect(claimModal).toContain('does not verify this business or its ownership designations');
+    expect(claimModal).toContain('Private to claim review; never added to the public listing.');
     expect(businessDetail).toContain('ownership and verification are reviewed separately');
   });
 });
@@ -164,15 +229,16 @@ describe("safety report incident-location contract", () => {
     expect(payload).not.toContain("longitude");
   });
 
-  it("requests current location only after the member chooses the incident-location button", () => {
+  it("uses member-entered city or area only and never collects device location for an incident", () => {
     const reportSource = source("../app/report-safety.tsx");
-    expect(reportSource).toContain("handleUseCurrentLocation");
-    expect(reportSource).toContain("Use current location for this incident");
-    expect(reportSource).toContain('locationSource: "current_device"');
-    expect(reportSource).not.toContain("Auto-detect city from GPS on mount");
-    expect(reportSource).not.toContain("useEffect(() =>");
-    expect(reportSource).not.toContain("place.streetNumber");
-    expect(reportSource).not.toContain("place.street");
+    expect(reportSource).toContain('locationSource: "manual_area"');
+    expect(reportSource).toContain("Incident City / Area");
+    expect(reportSource).toContain("Device location collection is disabled.");
+    expect(reportSource).not.toContain("expo-location");
+    expect(reportSource).not.toContain("requestForegroundPermissionsAsync");
+    expect(reportSource).not.toContain("current_device");
+    expect(reportSource).not.toContain("latitude");
+    expect(reportSource).not.toContain("longitude");
   });
 });
 
@@ -189,25 +255,24 @@ describe("Kinfolk verified-radius contract", () => {
   });
 });
 
-describe("Build 106 protected-read and Kinfolk response contracts", () => {
-  it("authenticates nearby safety reads and never substitutes fabricated all-clear alerts", () => {
-    const activityAlerts = source("../hooks/useActivityAlerts.ts");
-    const alerts = source("../hooks/useAlerts.ts");
+describe("privacy-first protected-read and Kinfolk response contracts", () => {
+  it("keeps protected Safety records authenticated and does not fabricate nearby activity", () => {
     const safetyHub = source("../app/(tabs)/safety-hub.tsx");
     const home = source("../app/(tabs)/index.tsx");
 
-    expect(activityAlerts).toContain("Authorization: `Bearer ${token}`");
-    expect(activityAlerts).toContain("setError(cause instanceof Error");
-    expect(alerts).toContain("Authorization: `Bearer ${token}`");
-    expect(alerts).not.toContain('import { ALERTS } from "@/constants/data"');
-    // Discovery no longer renders safety status. Its absence is safer than a
-    // fabricated all-clear state; Safety Hub owns the protected read below.
+    // Discovery never renders a fabricated all-clear state. Safety Hub retains
+    // only authenticated private Check-In and meetup reads; Community
+    // Intelligence is an explicit, suppressed city aggregate rather than a
+    // nearby member-activity or location-derived feed.
     expect(home).not.toContain('import { ALERTS } from "@/constants/data"');
     expect(home).not.toContain('useAlerts("GA")');
     expect(safetyHub).toContain("Authorization: `Bearer ${token}`");
-    expect(safetyHub).toContain("Could not verify nearby conditions");
-    expect(safetyHub).toContain("!intelLoading && !intelError && intelChecked && intelAlerts.length === 0");
-    expect(safetyHub).toContain("!intelLoading && !intelError && !intelChecked");
+    expect(safetyHub).toContain("Community Intelligence never requests or uses your location.");
+    expect(safetyHub).toContain("Small samples are suppressed");
+    expect(safetyHub).toContain('router.push("/report-intelligence"');
+    expect(safetyHub).not.toContain("community-alerts/");
+    expect(safetyHub).not.toContain("distanceMeters");
+    expect(safetyHub).not.toContain("No nearby safety alerts");
     expect(safetyHub).toContain("if (!token) throw new Error");
     expect(safetyHub).toContain("setProtectedDataError");
     expect(safetyHub).toContain("Protected safety records unavailable");
@@ -239,13 +304,16 @@ describe("Build 106 protected-read and Kinfolk response contracts", () => {
 
   it("uploads native Kinfolk voice as bounded multipart audio with duration metadata", () => {
     const widget = source("../components/AIChatWidget.tsx");
-    expect(widget).toContain('form.append("audio"');
-    expect(widget).toContain('form.append("durationMs", String(durationMs))');
-    expect(widget).toContain('form.append("mimeType", mimeType)');
-    expect(widget).toContain('webm: "audio/webm"');
-    expect(widget).toContain('m4a: "audio/mp4"');
-    expect(widget).toContain("if (errBody.message) serverMessage = errBody.message");
-    expect(widget).not.toContain('"Content-Type": "multipart/form-data"');
+    const voiceSource = source("../hooks/useKinfolkVoiceSource.ts");
+    const voiceContract = source("../lib/kinfolkVoiceSourceContract.ts");
+    expect(widget).toContain("useKinfolkVoiceSource({ isAuthenticated })");
+    expect(voiceSource).toContain('form.append("audio"');
+    expect(voiceSource).toContain('form.append("durationMs", String(durationMs))');
+    expect(voiceSource).toContain('form.append("mimeType", inspection.mimeType)');
+    expect(voiceContract).toContain('webm: "audio/webm"');
+    expect(voiceContract).toContain('m4a: "audio/mp4"');
+    expect(voiceSource).toContain("classifyKinfolkVoiceUploadFailure");
+    expect(voiceSource).not.toContain('"Content-Type": "multipart/form-data"');
   });
 
   it("uses the configured API host for native business, profile, reference, and preview requests", () => {
@@ -254,6 +322,7 @@ describe("Build 106 protected-read and Kinfolk response contracts", () => {
       "../app/(tabs)/index.tsx",
       "../app/(tabs)/profile.tsx",
       "../app/(tabs)/safety-hub.tsx",
+      "../app/report-safety.tsx",
       "../app/community-reference.tsx",
       "../app/preview.tsx",
       "../components/AIChatWidget.tsx",

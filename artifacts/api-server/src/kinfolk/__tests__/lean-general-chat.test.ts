@@ -34,11 +34,11 @@ describe("lean general Kinfolk chat", () => {
 
   it("preserves Kinfolk's specific product identity without fabricated local results", () => {
     const prompt = buildLeanGeneralChatPrompt();
-    expect(prompt).toContain("Mapping With Melanin's conversation companion");
-    expect(prompt).toContain("not a generic chatbot");
-    expect(prompt).toContain("KIN FOLK'S DISTINCT ROLE");
-    expect(prompt).toContain("connected plan");
-    expect(prompt).toContain("right fit, not simply any result");
+    expect(prompt).toContain("open-domain, general-purpose conversational assistant");
+    expect(prompt).toContain("OPEN-DOMAIN CAPABILITY ROUTING");
+    expect(prompt).toContain("match a predetermined subject, keyword, workflow, or example");
+    expect(prompt).toContain("general conversational reasoning as the default");
+    expect(prompt).toContain("never a gate on ordinary conversation");
     expect(prompt).toContain("WHEN THE MEMBER ASKS HOW KINFOLK IS DIFFERENT");
     expect(prompt).toContain("find the right fit, not simply any result");
     expect(prompt).toContain("one concrete example, such as planning a move or finding a birthday spot");
@@ -52,41 +52,35 @@ describe("lean general Kinfolk chat", () => {
     expect(prompt).toContain("distinguish consensus, criticism, popularity, and your synthesis from objective fact");
     expect(prompt).toContain('"recommendations": null');
     expect(prompt).toContain('"followUpSuggestions": []');
+    expect(prompt).toContain("reply field is member-facing prose only");
+    expect(prompt).toContain("Never place JSON keys, field names, envelope syntax");
+    expect(prompt).toContain("Default to the shortest complete answer");
     expect(prompt).toContain("Do not infer the member's identity");
+    expect(prompt).not.toContain("SOLAR-SCIENCE ACCEPTANCE CASE");
   });
 
   it("honors each selected conversation mode without identity imitation", () => {
     expect(buildLeanGeneralChatPrompt("professor")).toContain("Professor mode");
     expect(buildLeanGeneralChatPrompt("business_manager")).toContain("Business Manager mode");
     expect(buildLeanGeneralChatPrompt("best_friend")).toContain("Best Friend mode");
+    expect(buildLeanGeneralChatPrompt("big_cousin")).toContain("Big Cousin mode");
+    expect(buildLeanGeneralChatPrompt("community")).toContain("Big Cousin mode");
     expect(buildLeanGeneralChatPrompt("professional")).toContain("Big Cousin mode");
   });
 
   it("keeps current evidence, safety, memory, and speaker boundaries invariant across every lean mode", () => {
-    for (const mode of ["community", "professor", "business_manager", "best_friend"] as const) {
+    for (const mode of ["big_cousin", "professor", "business_manager", "best_friend"] as const) {
       const prompt = buildLeanGeneralChatPrompt(mode);
       expect(prompt).toContain("MODE ISOLATION — NON-NEGOTIABLE");
       expect(prompt).toContain("must not change the factual answer");
       expect(prompt).toContain("current-information routing");
       expect(prompt).toContain("must not create, pause, resume, revoke, delete");
       expect(prompt).toContain("selected TTS speaker identity");
-      expect(prompt).toContain("hydrogen fusion in the sun's core");
     }
-  });
-
-  it("keeps the solar-science core factual across all four conversational voices", () => {
-    for (const mode of ["community", "best_friend", "professor", "business_manager"]) {
-      const prompt = buildLeanGeneralChatPrompt(mode);
-      expect(prompt).toContain("hydrogen fusion in the sun's core releases energy");
-      expect(prompt).toContain("gravity compresses the core");
-      expect(prompt).toContain("light and heat");
-      expect(prompt).toContain("roughly five billion years");
-    }
-    expect(buildLeanGeneralChatPrompt("business_manager")).toContain("never promotional or sales-oriented");
   });
 
   it("keeps emotional check-ins supportive and free of discovery output", () => {
-    for (const mode of ["community", "best_friend", "professor", "business_manager"]) {
+    for (const mode of ["big_cousin", "best_friend", "professor", "business_manager"]) {
       const prompt = buildLeanGeneralChatPrompt(mode);
       expect(prompt).toContain("EMOTIONAL CHECK-INS");
       expect(prompt).toContain("Do not turn a check-in into a business recommendation");

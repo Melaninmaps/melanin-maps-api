@@ -9,6 +9,7 @@ import {
   mergeActivePreferredNameForPrompt,
   resolveExplicitMemberMemoryAccess,
   resolveKinfolkMemoryAccess,
+  resolvePrivateMemoryPersonalizationAccess,
   resolvePublicSharedKinfolkSession,
 } from "../private-memory";
 
@@ -46,6 +47,21 @@ describe("Kinfolk private-memory production control", () => {
       NODE_ENV: "production",
       KINFOLK_EXPLICIT_MEMBER_MEMORY_ENABLED: "false",
     })).toBe(false);
+  });
+
+  it("allows explicitly selected memory without enabling retained chat continuity", () => {
+    expect(resolvePrivateMemoryPersonalizationAccess({
+      continuityEnabled: false,
+      explicitMemberMemoryEnabled: true,
+    })).toBe(true);
+    expect(resolvePrivateMemoryPersonalizationAccess({
+      continuityEnabled: false,
+      explicitMemberMemoryEnabled: false,
+    })).toBe(false);
+    expect(resolvePrivateMemoryPersonalizationAccess({
+      continuityEnabled: true,
+      explicitMemberMemoryEnabled: false,
+    })).toBe(true);
   });
 
   it("cannot inject private content into a prompt when disabled", () => {
@@ -180,9 +196,11 @@ describe("Kinfolk private-memory production control", () => {
     }
     expect((source.match(/code: "PRIVATE_MEMORY_DISABLED"/g) ?? []).length).toBeGreaterThanOrEqual(3);
     expect(source).toContain("if (memoryEnabled && sessionId && req.user?.id)");
-    expect(source).toContain("if (req.user?.id && memoryEnabled && sessionPersistenceAvailable)");
-    expect(source).toContain("const memberMemoryEnabled = memoryEnabled");
+    expect(source).toContain("if (!isPrivateDocumentTurn && req.user?.id && memoryEnabled && sessionPersistenceAvailable)");
+    expect(source).toContain("const memberMemoryEnabled = resolvePrivateMemoryPersonalizationAccess({");
     expect(source).toContain("const activePrivateMemories = memberMemoryEnabled && req.user?.id");
+    expect(source).toContain("const directPrivateMemoryEnabled = resolvePrivateMemoryPersonalizationAccess({");
+    expect(source).toContain("directPrivateMemoryEnabled && directPrivateMemoryRuntimeEnabled");
     expect(source).toContain("const ephemeralSession = !memoryEnabled");
     expect(source).toContain("writeEphemeralKinfolkSession(");
     expect(source).toContain("persistExplicitMemberMemory({");
@@ -218,10 +236,19 @@ describe("Kinfolk private-memory production control", () => {
     expect(chatRoute).toContain("isPreferredNameRecallRequest(message)");
     expect(chatRoute).toContain("buildPreferredNameRecallReply({");
     expect(chatRoute).toContain("buildLeanGeneralChatPrompt(conversationVoiceMode)");
-    expect(chatRoute).toContain("${privateMemoryBlock}");
+    expect(chatRoute).toContain("privateMemoryPersonalizationBlock");
+    expect(chatRoute).toContain("privateMemoryState: privateMemoryUseDecision.state");
+    expect(chatRoute).toContain("const memberFacingMemoryUse = memberFacingPrivateMemoryUseForAnswer({");
+    expect(chatRoute).toContain("answerUsedPersonalization:");
+    expect(chatRoute).toContain("modelPayload.valid");
+    expect(chatRoute).toContain("memoryUse: memberFacingMemoryUse");
+    expect(chatRoute).toContain("privateMemoryUseDecision.shouldApply");
     expect(chatRoute).toContain("applyPreferredNameAddress({ name: activePreferredName, reply })");
     expect(chatRoute).toContain('generalAnswerRoute.strategy === "stable_knowledge"');
-    expect(chatRoute).toContain("memory.purpose === \"preferred_name\"\n          ? explicitMemberMemoryEnabled");
+    expect(chatRoute).toContain("selectRelevantPrivateMemoriesForTurn({");
+    expect(source).toContain("function selectRelevantPrivateMemoriesForTurn(input:");
+    expect(source).toContain("memory.purpose === \"preferred_name\"");
+    expect(source).toContain("? input.explicitMemoryEnabled");
   });
 
   it("keeps revoke and delete scoped to the selected active preferred-name row", () => {

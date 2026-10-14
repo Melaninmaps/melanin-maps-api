@@ -73,6 +73,9 @@ export const communityPostsTable = pgTable("community_posts", {
 export const communityPostCommentsTable = pgTable("community_post_comments", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   postId: varchar("post_id").notNull(),
+  // A reply always remains within its own post. This preserves one readable
+  // conversation level without exposing another post's comment identifier.
+  parentCommentId: varchar("parent_comment_id"),
   authorId: varchar("author_id"),
   authorName: varchar("author_name", { length: 100 }).notNull(),
   authorInitials: varchar("author_initials", { length: 4 }).notNull(),

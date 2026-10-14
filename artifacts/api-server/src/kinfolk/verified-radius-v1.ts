@@ -62,10 +62,10 @@ function boundedPublicOrigin(value: unknown): string | null {
 }
 
 /**
- * Finds an explicitly named public lodging/venue origin in the current request.
- * This is deliberately narrow: a city by itself, a private address, or an
- * ambiguous "my place" never becomes an exact-radius origin. The caller uses the
- * returned public venue only for the one response and redacts it before any
+ * Finds an explicitly named public lodging, venue, transit, or landmark origin
+ * in the current request. This is deliberately narrow: a city by itself, a
+ * private address, or an ambiguous "my place" never becomes an exact-radius
+ * origin. The caller uses the returned public origin only for one response and redacts it before any
  * conversation persistence.
  */
 export function extractCurrentTurnPublicOrigin(message: unknown): string | null {
@@ -73,7 +73,7 @@ export function extractCurrentTurnPublicOrigin(message: unknown): string | null 
   const patterns = [
     /\b(?:within|under|inside|less than|no more than|up to)\s+\d{1,3}\s*(?:mi|miles?)\s+(?:of|from)\s+(?<origin>[^,.!?;]{3,160}?)(?=\s*(?:,|\.|!|\?|;|\b(?:in|for|and|but|so|with)\b|$))/i,
     /\b(?:i(?:'m| am)|we(?:'re| are))?\s*(?:staying|stay|booked)\s+(?:at\s+)?(?<origin>[^,.!?;]{3,160}?)(?=\s*(?:,|\.|!|\?|;|\b(?:in|for|and|but|so|with|within)\b|$))/i,
-    /\b(?:my|our)\s+(?:hotel|venue|station)\s+(?:is|will be)\s+(?<origin>[^,.!?;]{3,160}?)(?=\s*(?:,|\.|!|\?|;|\b(?:in|for|and|but|so|with|within)\b|$))/i,
+    /\b(?:my|our)\s+(?:hotel|venue|station|landmark)\s+(?:is|will be)\s+(?<origin>[^,.!?;]{3,160}?)(?=\s*(?:,|\.|!|\?|;|\b(?:in|for|and|but|so|with|within)\b|$))/i,
   ];
   const match = patterns
     .map((pattern) => pattern.exec(message)?.groups?.origin)
@@ -81,8 +81,8 @@ export function extractCurrentTurnPublicOrigin(message: unknown): string | null 
   const candidate = boundedPublicOrigin(match);
   if (!candidate) return null;
   const normalizedCandidate = normalized(candidate.replace(/^the\s+/i, ""));
-  const hasPublicVenueSignal = /\b(?:hotel|inn|suites|resort|sonesta|marriott|hilton|hyatt|sheraton|westin|radisson|loews|doubletree|holiday\s+inn|motel|hostel|station|venue)\b/i.test(candidate);
-  if (!hasPublicVenueSignal || /^(?:my|our|a|an|the)?\s*(?:hotel|place|home|house|address)$/i.test(normalizedCandidate)) {
+  const hasPublicOriginSignal = /\b(?:hotel|inn|suites|resort|sonesta|marriott|hilton|hyatt|sheraton|westin|radisson|loews|doubletree|holiday\s+inn|motel|hostel|station|venue|landmark|monument|memorial|museum|park|stadium|arena|convention\s+cent(?:er|re))\b/i.test(candidate);
+  if (!hasPublicOriginSignal || /^(?:my|our|a|an|the)?\s*(?:hotel|place|home|house|address)$/i.test(normalizedCandidate)) {
     return null;
   }
   return candidate;
@@ -93,7 +93,10 @@ export function redactCurrentTurnPublicOrigin(message: string, publicOrigin: str
   if (!publicOrigin) return message;
   const originStart = message.toLocaleLowerCase("en-US").indexOf(publicOrigin.toLocaleLowerCase("en-US"));
   if (originStart < 0) return message;
-  return `${message.slice(0, originStart)}your hotel${message.slice(originStart + publicOrigin.length)}`;
+  const redaction = /\b(?:hotel|inn|suites|resort|sonesta|marriott|hilton|hyatt|sheraton|westin|radisson|loews|doubletree|holiday\s+inn|motel|hostel)\b/i.test(publicOrigin)
+    ? "your hotel"
+    : "your public origin";
+  return `${message.slice(0, originStart)}${redaction}${message.slice(originStart + publicOrigin.length)}`;
 }
 
 export function requestedRadiusMiles(message: string): number | null {
@@ -211,4 +214,4 @@ export function clearVerifiedRadiusOriginCacheForTest(): void {
 }
 
 export const VERIFIED_RADIUS_ORIGIN_REQUIRED_REPLY =
-  "I can apply the requested exact radius when you enter a geocodable public starting point—such as a hotel, venue, or transit station—in the Exact-radius origin field. I will use it only for this response, not save it to your Kinfolk memory, and show only listings with verified coordinates inside the requested straight-line distance.";
+  "I can apply the requested exact radius when you enter a geocodable public starting point—such as a hotel, landmark, venue, or transit station—in the Exact-radius origin field. I will use it only for this response, not save it to your Kinfolk memory, and show only listings with verified coordinates inside the requested straight-line distance.";

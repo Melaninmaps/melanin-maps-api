@@ -26,7 +26,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useColors } from "@/hooks/useColors";
-import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion, type TaskAction, type LibraryAction, type HeritageSitePin, type NearbyNudge, type ConversationalBusinessResultView } from "@/hooks/useKinfolk";
+import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion, type TaskAction, type LibraryAction, type HeritageSitePin, type NearbyNudge, type ConversationalBusinessResultView, type KinfolkResourceCard } from "@/hooks/useKinfolk";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useWishlist } from "@/hooks/useWishlist";
 import { KinfolkOnboarding, shouldShowKinfolkOnboarding, resetKinfolkOnboarding } from "@/components/KinfolkOnboarding";
@@ -37,17 +37,15 @@ import * as SecureStore from "expo-secure-store";
 import * as FileSystem from "expo-file-system";
 import * as Clipboard from "expo-clipboard";
 import {
-  RecordingPresets,
-  requestRecordingPermissionsAsync,
   setAudioModeAsync,
   useAudioPlayer,
   useAudioPlayerStatus,
-  useAudioRecorder,
-  useAudioRecorderState,
 } from "expo-audio";
 import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
 import { getApiBase } from "@/lib/api";
 import { openExternalUrl } from "@/lib/safeLinking";
+import { parseSafeSourceLink } from "@/lib/sourceLinks";
 import { businessClarificationContinuation } from "@/lib/businessClarificationContinuation";
 import { kinfolkWorkingElapsedSeconds, kinfolkWorkingElapsedLabel } from "@/lib/kinfolkWorkingIndicator";
 import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
@@ -55,9 +53,13 @@ import { KinfolkCompanionMemoryOfferCard } from "@/components/KinfolkCompanionMe
 import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDisclosure";
 import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiveMemoryConfirmation";
 import { KinfolkInlineMemoryConsent } from "@/components/KinfolkInlineMemoryConsent";
+import { KinfolkMemoryUseNotice } from "@/components/KinfolkMemoryUseNotice";
+import { KinfolkContextualPresentation } from "@/components/KinfolkContextualPresentation";
+import { KinfolkAnswerText } from "@/components/KinfolkAnswerText";
+import { KinfolkVoiceSourceControls } from "@/components/KinfolkVoiceSourceControls";
+import { useKinfolkVoiceSource } from "@/hooks/useKinfolkVoiceSource";
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
-const NATIVE_VOICE_MAX_DURATION_MS = 60_000;
 
 const ALL_CATEGORIES = [
   "Food & Drink", "Nightlife", "Culture & Art", "Music & Live Events",
@@ -187,7 +189,7 @@ function BusinessCard({
     >
       {compareMode && (
         <View style={[bizStyles.compareCheck, { borderColor: isSelected ? colors.primary : colors.border, backgroundColor: isSelected ? colors.primary : colors.background }]}>
-          {isSelected && <Ionicons name="checkmark" size={11} color="#fff" />}
+          {isSelected && <Ionicons name="checkmark" size={11} color={colors.primaryForeground} />}
         </View>
       )}
       <View style={bizStyles.cardTop}>
@@ -230,8 +232,8 @@ function BusinessCard({
               style={[bizStyles.actionBtn, { backgroundColor: colors.primary }]}
               onPress={() => router.push({ pathname: "/business/[id]", params: { id: biz.id! } })}
             >
-              <Text style={bizStyles.actionPrimaryText}>View details</Text>
-              <Ionicons name="chevron-forward" size={13} color="#fff" />
+              <Text style={[bizStyles.actionPrimaryText, { color: colors.primaryForeground }]}>View details</Text>
+              <Ionicons name="chevron-forward" size={13} color={colors.primaryForeground} />
             </TouchableOpacity>
           )}
           {biz.website && (
@@ -283,7 +285,7 @@ const bizStyles = StyleSheet.create({
   mustTryText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
   actionRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 8 },
   actionBtn: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 18, paddingHorizontal: 11, paddingVertical: 7 },
-  actionPrimaryText: { color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  actionPrimaryText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   actionSecondaryText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   feedbackRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 },
   feedbackLabel: { fontFamily: "Inter_400Regular", fontSize: 11, flex: 1 },
@@ -351,15 +353,19 @@ const evStyles = StyleSheet.create({
 
 // ─── Sub-component: Task Action Card ─────────────────────────────────────────
 function TaskActionCard({
-  action, onConfirm, onDismiss, colors,
+  action, saving, failure, onConfirm, onDismiss, onReviewLists, colors,
 }: {
   action: TaskAction;
+  saving?: boolean;
+  failure?: { kind: "retryable" | "uncertain"; message: string } | null;
   onConfirm: () => void;
   onDismiss: () => void;
+  onReviewLists: () => void;
   colors: ReturnType<typeof useColors>;
 }) {
   const listName = action.list?.name ?? (action.type === "create_task" ? "Reminder" : "My List");
   const icon = action.list?.icon ?? (action.type === "create_task" ? "⏰" : "📋");
+  const needsReview = failure?.kind === "uncertain";
   return (
     <View style={[taStyles.card, { backgroundColor: colors.card, borderColor: colors.primary + "40" }]}>
       <View style={taStyles.headerRow}>
@@ -389,13 +395,49 @@ function TaskActionCard({
           <Text style={[taStyles.more, { color: colors.mutedForeground }]}>+{action.tasks.length - 5} more items</Text>
         )}
       </View>
+      {failure ? (
+        <View
+          accessible
+          accessibilityLabel={failure.message}
+          style={[taStyles.failure, { backgroundColor: `${colors.primary}12`, borderColor: colors.border }]}
+        >
+          <Ionicons name={needsReview ? "information-circle-outline" : "alert-circle-outline"} size={15} color={colors.primary} />
+          <Text style={[taStyles.failureText, { color: colors.text }]}>{failure.message}</Text>
+        </View>
+      ) : null}
       <View style={taStyles.actions}>
-        <TouchableOpacity style={[taStyles.addBtn, { backgroundColor: colors.primary }]} onPress={onConfirm} activeOpacity={0.85}>
-          <Ionicons name="checkmark" size={14} color="#fff" />
-          <Text style={taStyles.addBtnText}>Add to My Lists</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[taStyles.skipBtn, { borderColor: colors.border }]} onPress={onDismiss} activeOpacity={0.7}>
-          <Text style={[taStyles.skipBtnText, { color: colors.mutedForeground }]}>Skip</Text>
+        {needsReview ? (
+          <TouchableOpacity
+            style={[taStyles.addBtn, { backgroundColor: colors.primary }]}
+            onPress={onReviewLists}
+            accessibilityLabel="Review My Lists before trying this action again"
+            activeOpacity={0.85}
+          >
+            <Ionicons name="list-outline" size={14} color={colors.primaryForeground} />
+            <Text style={[taStyles.addBtnText, { color: colors.primaryForeground }]}>Review My Lists</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[taStyles.addBtn, { backgroundColor: colors.primary }, saving && { opacity: 0.65 }]}
+            onPress={onConfirm}
+            disabled={saving}
+            accessibilityLabel={failure ? "Try saving this Kinfolk reminder again" : "Save this Kinfolk reminder"}
+            activeOpacity={0.85}
+          >
+            <Ionicons name={saving ? "hourglass-outline" : "checkmark"} size={14} color={colors.primaryForeground} />
+            <Text style={[taStyles.addBtnText, { color: colors.primaryForeground }]}>
+              {saving ? "Saving…" : failure ? "Try again" : "Add to My Lists"}
+            </Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity
+          style={[taStyles.skipBtn, { borderColor: colors.border }, saving && { opacity: 0.65 }]}
+          onPress={onDismiss}
+          disabled={saving}
+          accessibilityLabel="Not now"
+          activeOpacity={0.7}
+        >
+          <Text style={[taStyles.skipBtnText, { color: colors.mutedForeground }]}>Not now</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -413,9 +455,11 @@ const taStyles = StyleSheet.create({
   taskTitle: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
   taskTime: { fontFamily: "Inter_400Regular", fontSize: 11 },
   more: { fontFamily: "Inter_400Regular", fontSize: 12, paddingHorizontal: 10, paddingVertical: 8 },
+  failure: { flexDirection: "row", alignItems: "flex-start", gap: 7, borderRadius: 9, borderWidth: 1, padding: 9, marginBottom: 10 },
+  failureText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
   actions: { flexDirection: "row", gap: 8 },
   addBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: 10, paddingVertical: 10 },
-  addBtnText: { fontFamily: "Inter_700Bold", fontSize: 13, color: "#fff" },
+  addBtnText: { fontFamily: "Inter_700Bold", fontSize: 13 },
   skipBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, borderWidth: 1, alignItems: "center", justifyContent: "center" },
   skipBtnText: { fontFamily: "Inter_400Regular", fontSize: 13 },
 });
@@ -473,8 +517,8 @@ function HeritageSiteStrip({
                   })
                 }
               >
-                <Ionicons name="map-outline" size={11} color="#fff" />
-                <Text style={[hsStyles.btnTxt, { color: "#fff" }]}>Show on Map</Text>
+                <Ionicons name="map-outline" size={11} color={colors.primaryForeground} />
+                <Text style={[hsStyles.btnTxt, { color: colors.primaryForeground }]}>Show on Map</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[hsStyles.btn, { backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.border }]}
@@ -619,7 +663,7 @@ function ConversationalResultCards({ view, colors }: { view: ConversationalBusin
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 9 }}>
               {hasDetails && (
                 <TouchableOpacity onPress={() => router.push({ pathname: "/business/[id]", params: { id: card.id } })} style={{ backgroundColor: colors.primary, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 7 }}>
-                  <Text style={{ color: "#fff", fontFamily: "Inter_600SemiBold", fontSize: 11 }}>View details</Text>
+                  <Text style={{ color: colors.primaryForeground, fontFamily: "Inter_600SemiBold", fontSize: 11 }}>View details</Text>
                 </TouchableOpacity>
               )}
               {website && (
@@ -651,7 +695,7 @@ function ConversationalResultCards({ view, colors }: { view: ConversationalBusin
 function AiMessageBubble({
   msg, onFeedback, onQuickReply, onWishlist, wishlistedNames,
   compareMode, compareSelectedNames, onCompareToggle,
-  onConfirmTaskAction, onDismissTaskAction, onSpeak,
+  onConfirmTaskAction, onDismissTaskAction, onReviewTaskLists, onSpeak,
   spokenVoiceText,
   colors,
 }: {
@@ -665,6 +709,7 @@ function AiMessageBubble({
   onCompareToggle: (biz: TravelBusiness) => void;
   onConfirmTaskAction: (msgId: string, action: TaskAction) => void;
   onDismissTaskAction: (msgId: string) => void;
+  onReviewTaskLists: () => void;
   onSpeak: (messageId: string, content: string) => void;
   spokenVoiceText: { messageId: string; content: string; phase: "preparing" | "playing" | "finished" } | null;
   colors: ReturnType<typeof useColors>;
@@ -675,6 +720,12 @@ function AiMessageBubble({
   const [dismissedPromo, setDismissedPromo] = useState(false);
   const [clarificationAnswered, setClarificationAnswered] = useState(false);
   const visibleSpokenText = spokenVoiceText?.messageId === msg.id ? spokenVoiceText : null;
+  const reviewedResources = (msg.resourceCards ?? []).flatMap((resource) => {
+    const safe = parseSafeSourceLink({ title: resource.title, url: resource.url });
+    return safe && resource.id && resource.description
+      ? [{ ...resource, title: safe.title, url: safe.url }]
+      : [];
+  });
 
   const toggleSection = (s: string) => setExpandedSection((p) => (p === s ? null : s));
 
@@ -688,7 +739,12 @@ function AiMessageBubble({
       <View style={aiStyles.contentCol}>
         {/* Reply text */}
         <View style={[aiStyles.bubble, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          <Text selectable style={[aiStyles.bubbleText, { color: colors.text }]}>{msg.content}</Text>
+          <KinfolkAnswerText
+            content={msg.content}
+            color={colors.text}
+            linkColor={GOLD}
+            textStyle={aiStyles.bubbleText}
+          />
           {visibleSpokenText ? (
             <View
               testID="kinfolk-visible-spoken-text"
@@ -745,8 +801,11 @@ function AiMessageBubble({
         {msg.taskAction && !msg.taskActionDone && msg.taskAction.tasks.length > 0 && (
           <TaskActionCard
             action={msg.taskAction}
+            saving={msg.taskActionSaving}
+            failure={msg.taskActionFailure}
             onConfirm={() => onConfirmTaskAction(msg.id, msg.taskAction!)}
             onDismiss={() => onDismissTaskAction(msg.id)}
+            onReviewLists={onReviewTaskLists}
             colors={colors}
           />
         )}
@@ -965,7 +1024,42 @@ function AiMessageBubble({
           </ScrollView>
         )}
 
+        {reviewedResources.length > 0 ? (
+          <View testID="kinfolk-primary-reviewed-resource-cards" style={[aiStyles.reviewedResourcesBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Text style={[aiStyles.reviewedResourcesTitle, { color: colors.text }]}>Reviewed resources</Text>
+            {reviewedResources.map((resource: KinfolkResourceCard) => (
+              <TouchableOpacity
+                key={resource.id}
+                accessibilityRole="link"
+                accessibilityLabel={`Open reviewed resource: ${resource.title}`}
+                accessibilityHint="Opens this reviewed educational source in your browser"
+                onPress={() => void openExternalUrl(resource.url, { kind: "web" })}
+                style={aiStyles.reviewedResourceCard}
+              >
+                <Text style={[aiStyles.reviewedResourceLink, { color: GOLD }]}>
+                  {resource.type === "image_gallery" ? "Educational image library: " : ""}{resource.title}
+                </Text>
+                <Text style={[aiStyles.reviewedResourceDescription, { color: colors.mutedForeground }]}>{resource.description}</Text>
+                {resource.safetyNote ? <Text style={[aiStyles.reviewedResourceSafety, { color: colors.mutedForeground }]}>{resource.safetyNote}</Text> : null}
+              </TouchableOpacity>
+            ))}
+          </View>
+        ) : null}
+
         {/* Provenance disclaimer — shown for medical, legal, financial, and emergency intents */}
+        <KinfolkContextualPresentation
+          structuredContent={msg.structuredContent}
+          mediaLinks={msg.mediaLinks}
+          relatedConnections={msg.relatedConnections}
+          researchStatus={msg.researchStatus}
+          contextualVisuals={msg.contextualVisuals}
+          color={colors.text}
+          mutedColor={colors.mutedForeground}
+          borderColor={colors.border}
+          accentColor={GOLD}
+          onOpenLibrary={(href) => router.push(href as never)}
+        />
+
         {msg.provenanceNote ? (
           <View style={[aiStyles.provenanceBox, { backgroundColor: "#FFF8EC", borderColor: "#CA922B33" }]}>
             <Ionicons name="information-circle-outline" size={12} color="#CA922B" style={{ marginTop: 1 }} />
@@ -1077,11 +1171,17 @@ const aiStyles = StyleSheet.create({
   communityPerspectiveText: { fontFamily: "Inter_400Regular", fontSize: 10, lineHeight: 14, marginTop: 2 },
   sourcesBox: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 8, paddingTop: 8, gap: 6 },
   sourcesTitle: { fontFamily: "Inter_700Bold", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8 },
-  sourceActionRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  sourceRow: { flexDirection: "row", alignItems: "flex-start", gap: 6 },
-  sourceLink: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 11, lineHeight: 15 },
+  sourceActionRow: { flexDirection: "row", alignItems: "center", gap: 8, minWidth: 0 },
+  sourceRow: { flexDirection: "row", alignItems: "flex-start", gap: 6, minWidth: 0 },
+  sourceLink: { flex: 1, flexShrink: 1, fontFamily: "Inter_600SemiBold", fontSize: 11, lineHeight: 15 },
   sourceSummaryButton: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 5 },
   sourceSummaryText: { fontFamily: "Inter_600SemiBold", fontSize: 10 },
+  reviewedResourcesBox: { borderRadius: 12, borderWidth: 1, padding: 10, marginTop: 8, gap: 8, minWidth: 0 },
+  reviewedResourcesTitle: { fontFamily: "Inter_700Bold", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5 },
+  reviewedResourceCard: { gap: 3, paddingVertical: 2, minWidth: 0 },
+  reviewedResourceLink: { fontFamily: "Inter_600SemiBold", fontSize: 12, lineHeight: 17, textDecorationLine: "underline", flexShrink: 1 },
+  reviewedResourceDescription: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, flexShrink: 1 },
+  reviewedResourceSafety: { fontFamily: "Inter_500Medium", fontSize: 10, lineHeight: 15, flexShrink: 1 },
   timestamp: { fontFamily: "Inter_400Regular", fontSize: 10 },
 });
 
@@ -1418,7 +1518,7 @@ function TasteProfileSheet({
               const sel = favCats.includes(c);
               return (
                 <TouchableOpacity activeOpacity={0.85} key={c} style={[tpStyles.chip, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(favCats, c, setFavCats)}>
-                  <Text style={[tpStyles.chipText, { color: sel ? "#fff" : colors.text }]}>{c}</Text>
+                  <Text style={[tpStyles.chipText, { color: sel ? colors.primaryForeground : colors.text }]}>{c}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -1440,7 +1540,7 @@ function TasteProfileSheet({
                 accessibilityLabel={`Remove ${category}`}
                 style={[tpStyles.chip, { backgroundColor: colors.primary, borderColor: colors.primary }]}
                 onPress={() => setFavCats(current => current.filter(value => value !== category))}>
-                <Text style={[tpStyles.chipText, { color: "#fff" }]}>{category} ×</Text>
+                <Text style={[tpStyles.chipText, { color: colors.primaryForeground }]}>{category} ×</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -1454,7 +1554,7 @@ function TasteProfileSheet({
                 accessibilityState={{ selected: recommendationLifeStage === option.id }}
                 style={[tpStyles.optionBtn, { backgroundColor: recommendationLifeStage === option.id ? colors.primary : colors.card, borderColor: recommendationLifeStage === option.id ? colors.primary : colors.border }]}
                 onPress={() => setRecommendationLifeStage(option.id)}>
-                <Text style={[tpStyles.optionText, { color: recommendationLifeStage === option.id ? "#fff" : colors.text }]}>{option.label}</Text>
+                <Text style={[tpStyles.optionText, { color: recommendationLifeStage === option.id ? colors.primaryForeground : colors.text }]}>{option.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -1477,7 +1577,7 @@ function TasteProfileSheet({
           <View style={tpStyles.optionRow}>
             {BUDGET_OPTIONS.map((b) => (
               <TouchableOpacity activeOpacity={0.85} key={b.id} style={[tpStyles.optionBtn, { backgroundColor: budget === b.id ? colors.primary : colors.card, borderColor: budget === b.id ? colors.primary : colors.border }]} onPress={() => setBudget(b.id)}>
-                <Text style={[tpStyles.optionText, { color: budget === b.id ? "#fff" : colors.text }]}>{b.label}</Text>
+                <Text style={[tpStyles.optionText, { color: budget === b.id ? colors.primaryForeground : colors.text }]}>{b.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -1489,7 +1589,7 @@ function TasteProfileSheet({
               const sel = tripStyles.includes(s.id);
               return (
                 <TouchableOpacity accessibilityRole="checkbox" accessibilityState={{ checked: sel }} activeOpacity={0.85} key={s.id} style={[tpStyles.optionBtn, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(tripStyles, s.id, setTripStyles)}>
-                  <Text style={[tpStyles.optionText, { color: sel ? "#fff" : colors.text }]}>{s.label}</Text>
+                  <Text style={[tpStyles.optionText, { color: sel ? colors.primaryForeground : colors.text }]}>{s.label}</Text>
                 </TouchableOpacity>
               );
             })}
@@ -1499,7 +1599,7 @@ function TasteProfileSheet({
           <View style={tpStyles.optionRow}>
             {COMPANION_OPTIONS.map((c) => (
               <TouchableOpacity activeOpacity={0.85} key={c.id} style={[tpStyles.optionBtn, { backgroundColor: companion === c.id ? colors.primary : colors.card, borderColor: companion === c.id ? colors.primary : colors.border }]} onPress={() => setCompanion(c.id)}>
-                <Text style={[tpStyles.optionText, { color: companion === c.id ? "#fff" : colors.text }]}>{c.label}</Text>
+                <Text style={[tpStyles.optionText, { color: companion === c.id ? colors.primaryForeground : colors.text }]}>{c.label}</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -1545,7 +1645,7 @@ function TasteProfileSheet({
               <View style={tpStyles.optionRow}>
                 {EMOJI_LEVELS.map((e) => (
                   <TouchableOpacity activeOpacity={0.85} key={e.id} style={[tpStyles.optionBtn, { backgroundColor: emojiLvl === e.id ? colors.primary : colors.card, borderColor: emojiLvl === e.id ? colors.primary : colors.border }]} onPress={() => setEmojiLvl(e.id)}>
-                    <Text style={[tpStyles.optionText, { color: emojiLvl === e.id ? "#fff" : colors.text }]}>{e.label}</Text>
+                    <Text style={[tpStyles.optionText, { color: emojiLvl === e.id ? colors.primaryForeground : colors.text }]}>{e.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -1554,7 +1654,7 @@ function TasteProfileSheet({
               <View style={tpStyles.optionRow}>
                 {HUMOR_LEVELS.map((h) => (
                   <TouchableOpacity activeOpacity={0.85} key={h.id} style={[tpStyles.optionBtn, { backgroundColor: humor === h.id ? colors.primary : colors.card, borderColor: humor === h.id ? colors.primary : colors.border }]} onPress={() => setHumor(h.id)}>
-                    <Text style={[tpStyles.optionText, { color: humor === h.id ? "#fff" : colors.text }]}>{h.label}</Text>
+                    <Text style={[tpStyles.optionText, { color: humor === h.id ? colors.primaryForeground : colors.text }]}>{h.label}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -1609,8 +1709,8 @@ function TasteProfileSheet({
         )}
         <View style={[tpStyles.footer, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
           <TouchableOpacity activeOpacity={0.85} style={[tpStyles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving}>
-            <Ionicons name="checkmark-circle" size={18} color="#fff" />
-            <Text style={tpStyles.saveBtnText}>{saving ? "Saving…" : "Save My Profile"}</Text>
+            <Ionicons name="checkmark-circle" size={18} color={colors.primaryForeground} />
+            <Text style={[tpStyles.saveBtnText, { color: colors.primaryForeground }]}>{saving ? "Saving…" : "Save My Profile"}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -1651,23 +1751,25 @@ const tpStyles = StyleSheet.create({
   retakeBtnText: { fontFamily: "Inter_400Regular", fontSize: 13 },
   footer: { padding: 16, borderTopWidth: 1 },
   saveBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, padding: 16 },
-  saveBtnText: { fontFamily: "Inter_700Bold", fontSize: 16, color: "#fff" },
+  saveBtnText: { fontFamily: "Inter_700Bold", fontSize: 16 },
 });
 
 // ─── Sub-component: Session History Drawer ───────────────────────────────────
 function SessionHistoryDrawer({
   visible, sessions, onClose, onSelect, onNew, continuityEnabled, onToggleContinuity,
-  onLoadView, onOrganize, colors,
+  onLoadView, onOrganize, error, onRetry, colors,
 }: {
   visible: boolean;
   sessions: { id: string; title: string | null; destination: string | null; createdAt: string; isPinned?: boolean }[];
   onClose: () => void;
-  onSelect: (id: string) => void;
+  onSelect: (id: string) => Promise<void>;
   onNew: () => void;
   continuityEnabled: boolean;
   onToggleContinuity: (enabled: boolean) => void;
   onLoadView: (view: "active" | "archived") => void;
   onOrganize: (id: string, action: "archive" | "restore" | "pin" | "unpin") => void;
+  error: string | null;
+  onRetry: () => void;
   colors: ReturnType<typeof useColors>;
 }) {
   const [historyView, setHistoryView] = useState<"active" | "archived">("active");
@@ -1697,7 +1799,7 @@ function SessionHistoryDrawer({
           <Text style={[shStyles.continuityTitle, { color: colors.text }]}>{continuityEnabled ? "Kinfolk continuity is on" : "Kinfolk continuity is paused"}</Text>
           <Text style={[shStyles.continuityText, { color: colors.mutedForeground }]}>{continuityEnabled ? "Your saved conversations and approved memories may be used only for your future Kinfolk chats." : "Past chats are stored but not shown to or used by Kinfolk until you turn continuity on."}</Text>
           <TouchableOpacity activeOpacity={0.82} style={[shStyles.continuityButton, { backgroundColor: continuityEnabled ? colors.card : colors.primary, borderColor: colors.primary }]} onPress={() => onToggleContinuity(!continuityEnabled)}>
-            <Text style={[shStyles.continuityButtonText, { color: continuityEnabled ? colors.primary : "#fff" }]}>{continuityEnabled ? "Pause continuity" : "Turn on continuity"}</Text>
+            <Text style={[shStyles.continuityButtonText, { color: continuityEnabled ? colors.primary : colors.primaryForeground }]}>{continuityEnabled ? "Pause continuity" : "Turn on continuity"}</Text>
           </TouchableOpacity>
         </View>
         {continuityEnabled && <View style={[shStyles.viewToggle, { backgroundColor: colors.secondary }]}>
@@ -1707,12 +1809,14 @@ function SessionHistoryDrawer({
         keyboardDismissMode="on-drag" style={{ flex: 1 }}>
           {!continuityEnabled ? (
             <Text style={[shStyles.empty, { color: colors.mutedForeground }]}>Turn on continuity to see or use saved conversations.</Text>
+          ) : error ? (
+            <View style={{ alignItems: "center", paddingTop: 40, paddingHorizontal: 24 }}><Text style={[shStyles.empty, { color: "#B42318", paddingTop: 0 }]}>{error}</Text><TouchableOpacity onPress={onRetry} style={[shStyles.continuityButton, { backgroundColor: colors.primary, borderColor: colors.primary, marginTop: 12 }]}><Text style={[shStyles.continuityButtonText, { color: colors.primaryForeground }]}>Retry</Text></TouchableOpacity></View>
           ) : sessions.length === 0 ? (
             <Text style={[shStyles.empty, { color: colors.mutedForeground }]}>{historyView === "archived" ? "Nothing archived yet" : "No past conversations yet"}</Text>
           ) : (
             sessions.map((s) => (
               <View key={s.id} style={[shStyles.item, { borderBottomColor: colors.border }]}>
-                <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }} onPress={() => { onSelect(s.id); onClose(); }} activeOpacity={0.7}>
+                <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }} onPress={() => { void onSelect(s.id); }} activeOpacity={0.7}>
                   <Ionicons name={s.isPinned ? "pin" : "chatbubble-outline"} size={16} color={s.isPinned ? colors.primary : colors.mutedForeground} />
                   <View style={{ flex: 1 }}>
                     <Text style={[shStyles.itemTitle, { color: colors.text }]} numberOfLines={1}>{s.title ?? s.destination ?? "Conversation"}</Text>
@@ -1938,7 +2042,7 @@ function FlightTrackerModal({
                     <Text style={[ftStyles.cancelBtnText, { color: colors.mutedForeground }]}>Cancel</Text>
                   </TouchableOpacity>
                   <TouchableOpacity activeOpacity={0.85} style={[ftStyles.saveFlightBtn, { backgroundColor: colors.primary }]} onPress={() => void handleAdd()} disabled={adding}>
-                    <Text style={ftStyles.saveFlightBtnText}>{adding ? "Saving…" : "Save Flight"}</Text>
+                    <Text style={[ftStyles.saveFlightBtnText, { color: colors.primaryForeground }]}>{adding ? "Saving…" : "Save Flight"}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -2009,7 +2113,7 @@ const ftStyles = StyleSheet.create({
   cancelBtn: { flex: 1, borderRadius: 10, borderWidth: 1, paddingVertical: 11, alignItems: "center" },
   cancelBtnText: { fontFamily: "Inter_500Medium", fontSize: 14 },
   saveFlightBtn: { flex: 2, borderRadius: 10, paddingVertical: 11, alignItems: "center" },
-  saveFlightBtnText: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#fff" },
+  saveFlightBtnText: { fontFamily: "Inter_700Bold", fontSize: 14 },
   emptyWrap: { alignItems: "center", gap: 10, paddingVertical: 32 },
   emptyText: { fontFamily: "Inter_500Medium", fontSize: 15 },
   emptySub: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center", paddingHorizontal: 20 },
@@ -2035,19 +2139,27 @@ export default function TravelScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
-  const { messages, sessionId, conversationHandoff, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent } = useKinfolk();
+  const { messages, sessionId, conversationHandoff, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, sessionError, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, useOneTimeDeliveryInstruction } = useKinfolk();
   const { preferences, update: updatePreferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { subscription } = useMembership();
 
   const { q: searchHandoff } = useLocalSearchParams<{ q?: string }>();
   const [inputText, setInputText] = useState(searchHandoff?.trim() ?? "");
+  const primaryVoiceSource = useKinfolkVoiceSource({
+    isAuthenticated,
+    regionalFlavor: typeof preferences?.regionalFlavor === "string"
+      ? preferences.regionalFlavor
+      : "off",
+  });
   const [exactRadiusOrigin, setExactRadiusOrigin] = useState("");
   const [kinfolkWorkingSeconds, setKinfolkWorkingSeconds] = useState(0);
   const [voiceMode, setVoiceMode] = useState<"community" | "professor" | "business_manager" | "best_friend">("community");
   const [kinfolkImages, setKinfolkImages] = useState<Array<{ assetId: string; previewUri: string }>>([]);
   const [uploadingKinfolkImage, setUploadingKinfolkImage] = useState(false);
+  const [kinfolkDocument, setKinfolkDocument] = useState<{ assetId: string; displayName: string } | null>(null);
+  const [uploadingKinfolkDocument, setUploadingKinfolkDocument] = useState(false);
   const [showImageCreation, setShowImageCreation] = useState(false);
   const [imageCreationBrief, setImageCreationBrief] = useState("");
   const [providerDisclosureAccepted, setProviderDisclosureAccepted] = useState(false);
@@ -2055,6 +2167,13 @@ export default function TravelScreen() {
   const [generatingImage, setGeneratingImage] = useState(false);
   const [imageCreationError, setImageCreationError] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<{ dataUrl: string; label: string } | null>(null);
+  const [showImageEdit, setShowImageEdit] = useState(false);
+  const [imageEditInstruction, setImageEditInstruction] = useState("");
+  const [imageEditConsent, setImageEditConsent] = useState(false);
+  const [editingImage, setEditingImage] = useState(false);
+  const [imageEditError, setImageEditError] = useState<string | null>(null);
+  const [editedImage, setEditedImage] = useState<{ dataUrl: string; label: string } | null>(null);
+  const [editSourceAssetId, setEditSourceAssetId] = useState<string | null>(null);
   const [includeCommunityPerspective, setIncludeCommunityPerspective] = useState(false);
   const [voiceOutput, setVoiceOutput] = useState(false);
   const [showComposerControls, setShowComposerControls] = useState(false);
@@ -2073,21 +2192,6 @@ export default function TravelScreen() {
     content: string;
     phase: "preparing" | "playing" | "finished";
   } | null>(null);
-  const [isRecordingVoice, setIsRecordingVoice] = useState(false);
-  const [isTranscribingVoice, setIsTranscribingVoice] = useState(false);
-  const [voiceInputStatus, setVoiceInputStatus] = useState<string | null>(null);
-  const [voiceTranscriptReview, setVoiceTranscriptReview] = useState<{
-    originalText: string;
-    suggestedText: string;
-    clarification: string | null;
-  } | null>(null);
-  const [voiceRecordingElapsedSeconds, setVoiceRecordingElapsedSeconds] = useState(0);
-  const primaryRecorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  // Native recorder state is authoritative. A pressed mic must not show a
-  // recording state unless the operating system actually began capturing.
-  const primaryRecorderState = useAudioRecorderState(primaryRecorder, 250);
-  const primaryRecordingStartedAtRef = useRef<number | null>(null);
-  const primaryRecordingDraftRef = useRef("");
   const serverVoicePlayer = useAudioPlayer(voiceAudioUri);
   const serverVoicePlayerStatus = useAudioPlayerStatus(serverVoicePlayer);
   const autoSpeechGuardRef = useRef(createVoicePlaybackGuard(
@@ -2361,9 +2465,8 @@ export default function TravelScreen() {
   }, [playServerVoice, playingVoice, stopServerVoice]);
 
   const interruptKinfolk = useCallback(() => {
-    const stoppedReply = interruptCurrentReply();
+    interruptCurrentReply();
     stopServerVoice("member_interrupt");
-    if (stoppedReply) setVoiceInputStatus("Kinfolk stopped. Finish your thought and send it when you’re ready.");
   }, [interruptCurrentReply, stopServerVoice]);
 
   const uploadKinfolkImage = useCallback(async (asset: ImagePicker.ImagePickerAsset) => {
@@ -2414,6 +2517,78 @@ export default function TravelScreen() {
     );
   }, [kinfolkImages.length, uploadingKinfolkImage, uploadKinfolkImage]);
 
+  const prepareEditedImageForAnotherEdit = useCallback(async () => {
+    if (!editedImage) return;
+    try { const base64 = editedImage.dataUrl.split(",", 2)[1]; if (!base64) throw new Error("missing session image"); const file = new FileSystem.File(FileSystem.Paths.cache, `kinfolk-edit-${Date.now()}.png`); file.write(base64, { encoding: FileSystem.EncodingType.Base64 }); await uploadKinfolkImage({ uri: file.uri, fileName: "kinfolk-private-edit.png", mimeType: "image/png" } as ImagePicker.ImagePickerAsset); if (file.exists) file.delete(); setEditedImage(null); Alert.alert("Private image ready", "Choose Edit image to request the next edit."); }
+    catch { Alert.alert("Could not prepare image", "Please add the result again as a private image before editing it."); }
+  }, [editedImage, uploadKinfolkImage]);
+
+  const uploadKinfolkDocument = useCallback(async (asset: DocumentPicker.DocumentPickerAsset) => {
+    setUploadingKinfolkDocument(true);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      if (!token) throw new Error("Please sign in again before adding a private PDF.");
+      const form = new FormData();
+      form.append("file", {
+        uri: asset.uri,
+        name: asset.name || `kinfolk-${Date.now()}.pdf`,
+        type: "application/pdf",
+      } as never);
+      form.append("kinfolkDocumentConsent", "true");
+      const response = await fetch(`${getApiBase()}/api/media/upload?purpose=kinfolk_question_document`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: form,
+      });
+      const body = await response.json().catch(() => ({})) as { assetId?: string; error?: string };
+      if (!response.ok || !body.assetId) throw new Error(body.error ?? "Could not prepare that private PDF.");
+      setKinfolkDocument({ assetId: body.assetId, displayName: asset.name || "Private PDF" });
+    } catch (cause) {
+      Alert.alert("PDF upload failed", cause instanceof Error ? cause.message : "Please try again.");
+    } finally {
+      setUploadingKinfolkDocument(false);
+    }
+  }, []);
+  const removeKinfolkDocument = useCallback(async (attachment: { assetId: string; displayName: string }) => {
+    setKinfolkDocument((current) => current?.assetId === attachment.assetId ? null : current);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const response = await fetch(`${getApiBase()}/api/media/kinfolk-question-document/${encodeURIComponent(attachment.assetId)}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) throw new Error("private document deletion deferred");
+    } catch {
+      Alert.alert("Private PDF removal", "The PDF was removed from this screen and will expire shortly from private processing.");
+    }
+  }, []);
+  const pickKinfolkDocument = useCallback(async () => {
+    if (uploadingKinfolkDocument || kinfolkDocument) return;
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ["application/pdf"],
+      multiple: false,
+      copyToCacheDirectory: true,
+    });
+    const asset = result.assets?.[0];
+    if (result.canceled || !asset) return;
+    if (asset.mimeType && asset.mimeType !== "application/pdf") {
+      Alert.alert("PDF required", "Kinfolk document questions currently accept PDFs only.");
+      return;
+    }
+    if (typeof asset.size === "number" && asset.size > 2 * 1024 * 1024) {
+      Alert.alert("PDF is too large", "Private Kinfolk PDFs must be under 2 MB.");
+      return;
+    }
+    Alert.alert(
+      "Use this PDF for this answer?",
+      "Kinfolk will read the PDF text only to answer your current question. It is sent to Kinfolk’s AI provider for that answer, is not used to train Kinfolk, is not saved as memory, and is deleted after the answer. If interrupted, the private upload expires within 15 minutes.",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Use PDF for this answer", onPress: () => void uploadKinfolkDocument(asset) },
+      ],
+    );
+  }, [kinfolkDocument, uploadingKinfolkDocument, uploadKinfolkDocument]);
+
   const createKinfolkImage = useCallback(async () => {
     if (generatingImage) return;
     if (!isAuthenticated) {
@@ -2447,67 +2622,37 @@ export default function TravelScreen() {
     }
   }, [generatingImage, imageCreationBrief, isAuthenticated, noRealPersonOrPrivateInfoConfirmed, providerDisclosureAccepted]);
 
-  const startPrimaryVoiceRecording = useCallback(async () => {
-    if (Platform.OS === "web" || primaryRecorder.isRecording || isTranscribingVoice) return;
-    if (!isAuthenticated) {
-      Alert.alert("Sign in to use Kinfolk Voice", "Create or sign in to a free account to record a question. You can still type your question.");
+  const editKinfolkImage = useCallback(async () => {
+    if (!editSourceAssetId || editingImage) return;
+    setEditingImage(true); setImageEditError(null);
+    try { const token = await SecureStore.getItemAsync("auth_session_token"); const response = await fetch(`${getApiBase()}/api/kinfolk/images/edit`, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ imageAssetId: editSourceAssetId, instruction: imageEditInstruction, providerDisclosureAccepted: imageEditConsent, editConsentAccepted: imageEditConsent }) }); const body = await response.json().catch(() => ({})) as { imageDataUrl?: string; contentLabel?: string; error?: string }; if (!response.ok || !body.imageDataUrl) throw new Error(body.error ?? "Kinfolk could not edit that image right now."); setEditedImage({ dataUrl: body.imageDataUrl, label: body.contentLabel ?? "AI-edited visual" }); setShowImageEdit(false); setImageEditConsent(false); setImageEditInstruction(""); }
+    catch (cause) { setImageEditError(cause instanceof Error ? cause.message : "Kinfolk could not edit that image right now."); }
+    finally { setEditingImage(false); }
+  }, [editSourceAssetId, editingImage, imageEditConsent, imageEditInstruction]);
+
+  const startPrimaryVoiceSource = useCallback(async () => {
+    if (authLoading) {
+      Alert.alert("Restoring secure sign-in", "Please wait a moment before recording a Kinfolk question.");
       return;
     }
-    try {
-      const permission = await requestRecordingPermissionsAsync();
-      if (!permission.granted) {
-        Alert.alert(
-          "Microphone access is off",
-          permission.canAskAgain
-            ? "Allow microphone access, then tap the microphone again."
-            : "Allow microphone access for Mapping With Melanin in your phone Settings, then try again.",
-          permission.canAskAgain
-            ? [{ text: "Not now", style: "cancel" }]
-            : [
-                { text: "Not now", style: "cancel" },
-                { text: "Open Settings", onPress: () => void Linking.openSettings() },
-              ],
-        );
-        return;
-      }
-      // An active reply player can keep the audio session from handing the
-      // microphone to the recorder without surfacing a useful native error.
-      stopServerVoice("voice_input_start");
-      await setAudioModeAsync({
-        allowsRecording: true,
-        playsInSilentMode: true,
-        interruptionMode: "doNotMix",
-        shouldPlayInBackground: false,
-        shouldRouteThroughEarpiece: false,
-      });
-      await primaryRecorder.prepareToRecordAsync();
-      if (!primaryRecorder.getStatus().canRecord) {
-        throw new Error("Your phone could not prepare its microphone. Try again, or check microphone access in Settings.");
-      }
-      primaryRecorder.record();
-      // Recorder startup is asynchronous on physical devices. Verify it before
-      // switching the control into its red Stop state.
-      await new Promise<void>((resolve) => setTimeout(resolve, 80));
-      if (!primaryRecorder.getStatus().isRecording) {
-        throw new Error("Your phone did not begin recording. Check microphone access and try again.");
-      }
-      primaryRecordingStartedAtRef.current = Date.now();
-      primaryRecordingDraftRef.current = inputText;
-      setVoiceRecordingElapsedSeconds(0);
-      setIsRecordingVoice(true);
-      setVoiceInputStatus("Recording… 60-second maximum. Tap stop when you’re finished.");
-    } catch (cause) {
-      primaryRecordingStartedAtRef.current = null;
-      setIsRecordingVoice(false);
-      setVoiceInputStatus(null);
-      Alert.alert("Kinfolk Voice could not start", cause instanceof Error ? cause.message : "Check microphone permission and try again, or type your question.");
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
-    }
-  }, [inputText, isAuthenticated, isTranscribingVoice, primaryRecorder, stopServerVoice]);
-
+    // The server-owned reply player can hold the native audio session. Stop it
+    // before requesting the microphone; the source hook then owns recording,
+    // cancellation, transcription, temporary-file cleanup, and draft review.
+    stopServerVoice("voice_input_start");
+    await primaryVoiceSource.start();
+  }, [authLoading, primaryVoiceSource, stopServerVoice]);
+  const addPrimaryVoiceTranscriptToDraft = useCallback((transcript: string) => {
+    // This intentionally edits only the member's composer. It never creates a
+    // chat turn—the member must still review and explicitly press Send.
+    setInputText(transcript);
+  }, []);
   const handleSend = useCallback(async (text?: string) => {
     const msg = (text ?? inputText).trim();
     if (!msg) return;
+    if (authLoading) {
+      Alert.alert("Restoring secure sign-in", "Please wait a moment before sending Kinfolk a message.");
+      return;
+    }
     if (!isAuthenticated) {
       Alert.alert(
         "Sign in to ask Kinfolk",
@@ -2524,6 +2669,7 @@ export default function TravelScreen() {
     stopServerVoice("member_new_turn");
     const attachedImagePreviews = kinfolkImages.map((attachment) => attachment.previewUri);
     const attachedImageAssetIds = kinfolkImages.map((attachment) => attachment.assetId);
+    const attachedDocumentAssetIds = kinfolkDocument ? [kinfolkDocument.assetId] : [];
     const publicOrigin = exactRadiusOrigin.trim();
     onUserSend(); // scroll to bottom, suppress jump button for this send
     armAutoSpeech();
@@ -2532,177 +2678,30 @@ export default function TravelScreen() {
       imageUrls: attachedImagePreviews,
       imageAssetIds: attachedImageAssetIds,
       imageVisionConsent: attachedImageAssetIds.length > 0,
+      documentAssetIds: attachedDocumentAssetIds,
+      documentProcessingConsent: attachedDocumentAssetIds.length > 0,
       includeCommunityPerspective,
       publicOrigin: publicOrigin || undefined,
     });
     if (accepted) {
       setInputText("");
-      setVoiceTranscriptReview(null);
       // The origin is one-turn public context only. It is never shown in the
       // conversation, attached to memory, or kept in the composer after send.
       setExactRadiusOrigin("");
       setKinfolkImages([]);
+      setKinfolkDocument(null);
       setIncludeCommunityPerspective(false);
       Keyboard.dismiss();
     }
-  }, [inputText, voiceMode, sendMessage, isAuthenticated, onUserSend, kinfolkImages, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin]);
-
-  const stopPrimaryVoiceRecording = useCallback(async () => {
-    const recordingWasActive = primaryRecorder.isRecording || isRecordingVoice;
-    if (!recordingWasActive) return;
-    setIsRecordingVoice(false);
-    setIsTranscribingVoice(true);
-    setVoiceInputStatus("Turning your words into text…");
-    try {
-      const durationMs = primaryRecordingStartedAtRef.current === null
-        ? 0
-        : Math.max(0, Date.now() - primaryRecordingStartedAtRef.current);
-      primaryRecordingStartedAtRef.current = null;
-      if (primaryRecorder.isRecording) await primaryRecorder.stop();
-      const uri = primaryRecorder.uri;
-      if (!uri) throw new Error("No recording was captured. Please try again or type your question.");
-      const ext = (uri.split(".").pop() ?? "m4a").toLowerCase();
-      const mimeType = ({
-        m4a: "audio/mp4",
-        mp4: "audio/mp4",
-        mp3: "audio/mpeg",
-        wav: "audio/wav",
-        webm: "audio/webm",
-      } as const)[ext as "m4a" | "mp4" | "mp3" | "wav" | "webm"];
-      if (!mimeType) throw new Error("This recording format is not supported. Please try again or type your question.");
-      const token = await SecureStore.getItemAsync("auth_session_token");
-      const form = new FormData();
-      // Use Expo's Blob-compatible File rather than the legacy React Native
-      // multipart object. The latter produces "Unsupported FormDataPart" on
-      // current native runtimes before transcription is even requested.
-      form.append("audio", new FileSystem.File(uri));
-      form.append("durationMs", String(durationMs));
-      form.append("mimeType", mimeType);
-      form.append(
-        "regionalFlavor",
-        typeof preferences?.regionalFlavor === "string"
-          ? preferences.regionalFlavor
-          : "off",
-      );
-      const response = await fetch(`${getApiBase()}/api/kinfolk/transcribe`, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: form,
-      });
-      const payload = await response.json().catch(() => ({})) as {
-        text?: string;
-        message?: string;
-        error?: string;
-        meaningReview?: {
-          originalText?: string;
-          suggestedText?: string | null;
-          clarification?: string | null;
-          requiresConfirmation?: boolean;
-        };
-      };
-      if (!response.ok) {
-        const recovery = payload.error === "AUDIO_UNREADABLE" || payload.error === "AUDIO_MIME_MISMATCH"
-          ? "Kinfolk could not read that recording. Please try recording again; if it repeats, type your message and keep the conversation going."
-          : payload.error === "VOICE_INPUT_RATE_LIMITED"
-            ? "Voice input is taking a short break. You can type your message and try recording again after the displayed wait."
-            : payload.message ?? "Voice transcription failed. Please try again or type your question.";
-        throw new Error(recovery);
-      }
-      if (!payload.text?.trim()) throw new Error("Kinfolk could not hear that clearly. Please try again or type your question.");
-      // The exact transcript remains the draft. A provider suggestion is shown
-      // separately and can only be used by a deliberate member tap; neither
-      // original nor suggestion is sent automatically.
-      const originalText = payload.meaningReview?.originalText?.trim() || payload.text.trim();
-      setInputText(originalText);
-      const suggestedText = payload.meaningReview?.suggestedText?.trim();
-      if (payload.meaningReview?.requiresConfirmation && suggestedText && suggestedText !== originalText) {
-        setVoiceTranscriptReview({
-          originalText,
-          suggestedText,
-          clarification: payload.meaningReview.clarification?.trim() || null,
-        });
-        setVoiceInputStatus("Review your original transcript. You can use Kinfolk’s optional wording or edit it before Send.");
-      } else {
-        setVoiceTranscriptReview(null);
-        setVoiceInputStatus("Review your transcription, then tap Send when you’re ready.");
-      }
-    } catch (cause) {
-      setVoiceInputStatus(null);
-      Alert.alert("Voice Input", cause instanceof Error ? cause.message : "Recording error. Please try again or type your question.");
-    } finally {
-      primaryRecordingStartedAtRef.current = null;
-      setVoiceRecordingElapsedSeconds(0);
-      setIsTranscribingVoice(false);
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
-    }
-  }, [isRecordingVoice, preferences?.regionalFlavor, primaryRecorder]);
-
-  const cancelPrimaryVoiceRecording = useCallback(async () => {
-    if (!primaryRecorder.isRecording) return;
-    setIsRecordingVoice(false);
-    setInputText(primaryRecordingDraftRef.current);
-    setVoiceInputStatus(primaryRecordingDraftRef.current
-      ? "Recording canceled. Your draft was restored."
-      : "Recording canceled. Nothing was uploaded.");
-    try {
-      await primaryRecorder.stop();
-      const uri = primaryRecorder.uri;
-      if (uri) {
-        const temporaryFile = new FileSystem.File(uri);
-        try { temporaryFile.delete(); } catch { /* cache cleanup is best effort */ }
-      }
-    } catch { /* cancellation must never trigger an upload */ }
-    finally {
-      primaryRecordingStartedAtRef.current = null;
-      setVoiceRecordingElapsedSeconds(0);
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true }).catch(() => undefined);
-    }
-  }, [primaryRecorder]);
-
-  useEffect(() => {
-    if (!isRecordingVoice || primaryRecordingStartedAtRef.current === null) return;
-    const updateElapsed = () => {
-      const elapsedMs = Math.max(0, Date.now() - (primaryRecordingStartedAtRef.current ?? Date.now()));
-      setVoiceRecordingElapsedSeconds(Math.min(60, Math.floor(elapsedMs / 1000)));
-    };
-    updateElapsed();
-    const ticker = setInterval(updateElapsed, 250);
-    const remainingMs = Math.max(0, NATIVE_VOICE_MAX_DURATION_MS - (Date.now() - primaryRecordingStartedAtRef.current));
-    const limit = setTimeout(() => {
-      setVoiceInputStatus("60-second limit reached. Turning your words into text…");
-      void stopPrimaryVoiceRecording();
-    }, remainingMs);
-    return () => {
-      clearInterval(ticker);
-      clearTimeout(limit);
-    };
-  }, [isRecordingVoice, stopPrimaryVoiceRecording]);
-
-  // Calls, route changes, and media-service resets can stop native recording
-  // behind React's back. Recover to the same transcription/retry path instead
-  // of leaving the microphone control visually active but inert.
-  useEffect(() => {
-    if (!isRecordingVoice || primaryRecorderState.isRecording) return;
-    if (primaryRecordingStartedAtRef.current === null) return;
-    const timeout = setTimeout(() => {
-      if (!primaryRecorder.getStatus().isRecording) {
-        void stopPrimaryVoiceRecording();
-      }
-    }, 350);
-    return () => clearTimeout(timeout);
-  }, [isRecordingVoice, primaryRecorder, primaryRecorderState.isRecording, stopPrimaryVoiceRecording]);
-
-  useEffect(() => () => {
-    if (primaryRecorder.isRecording) void primaryRecorder.stop();
-  }, [primaryRecorder]);
+  }, [inputText, voiceMode, sendMessage, isAuthenticated, authLoading, onUserSend, kinfolkImages, kinfolkDocument, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin]);
 
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);
   }, [submitFeedback]);
 
   const handleConfirmTaskAction = useCallback(async (msgId: string, action: TaskAction) => {
-    const ok = await confirmTaskAction(msgId, action);
-    if (ok) {
+    const result = await confirmTaskAction(msgId, action);
+    if (result.kind === "saved") {
       Alert.alert(
         "Added to My Lists",
         `"${action.list?.name ?? (action.type === "create_task" ? "Reminder" : "My List")}" is ready in your lists.`,
@@ -2711,12 +2710,24 @@ export default function TravelScreen() {
           { text: "OK", style: "cancel" },
         ],
       );
+    } else {
+      Alert.alert(
+        result.kind === "uncertain" ? "Save needs review" : "Reminder not saved",
+        result.message,
+        result.kind === "uncertain"
+          ? [{ text: "Review My Lists", onPress: () => router.push("/kinfolk-tasks" as any) }, { text: "OK", style: "cancel" }]
+          : [{ text: "OK", style: "cancel" }],
+      );
     }
   }, [confirmTaskAction]);
 
   const handleDismissTaskAction = useCallback((msgId: string) => {
     dismissTaskAction(msgId);
   }, [dismissTaskAction]);
+
+  const handleReviewTaskLists = useCallback(() => {
+    router.push("/kinfolk-tasks" as any);
+  }, []);
 
   const wishlistedNames = useMemo<Record<string, string>>(() => {
     const map: Record<string, string> = {};
@@ -2749,8 +2760,11 @@ export default function TravelScreen() {
   }, [addItem, removeItem, sessionId, isAuthenticated]);
 
   const handleHistorySelect = useCallback(async (id: string) => {
-    await loadSession(id);
-    void loadSessions();
+    const loaded = await loadSession(id);
+    if (loaded) {
+      setShowHistory(false);
+      void loadSessions();
+    }
   }, [loadSession, loadSessions]);
 
   const handleNewSession = useCallback(() => {
@@ -2802,16 +2816,19 @@ export default function TravelScreen() {
           onCompareToggle={handleCompareToggle}
           onConfirmTaskAction={handleConfirmTaskAction}
           onDismissTaskAction={handleDismissTaskAction}
+          onReviewTaskLists={handleReviewTaskLists}
           onSpeak={speakManually}
           spokenVoiceText={spokenVoiceText}
           colors={colors}
         />
+        {item.memoryUse && <KinfolkMemoryUseNotice memoryUse={item.memoryUse} />}
         {item.inlineMemoryConsent && <KinfolkInlineMemoryConsent
           message={item.inlineMemoryConsent.message}
           plan={item.inlineMemoryConsent.plan}
           sessionId={item.inlineMemoryConsent.sessionId}
           onSaved={() => { dismissInlineMemoryConsent(item.id); void loadKinfolkContinuity(); }}
           onDismiss={() => dismissInlineMemoryConsent(item.id)}
+          onUseOnce={(instruction) => { useOneTimeDeliveryInstruction(instruction); dismissInlineMemoryConsent(item.id); }}
         />}
         {item.sensitiveMemoryDraft && <KinfolkSensitiveMemoryConfirmation
           content={item.sensitiveMemoryDraft.content}
@@ -2822,7 +2839,7 @@ export default function TravelScreen() {
         />}
       </View>
     );
-  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction, speakManually, spokenVoiceText, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, loadKinfolkContinuity]);
+  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction, handleReviewTaskLists, speakManually, spokenVoiceText, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, loadKinfolkContinuity, useOneTimeDeliveryInstruction]);
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -2855,8 +2872,8 @@ export default function TravelScreen() {
 
       {/* Header */}
         <View style={[styles.header, { paddingTop: topPad + 10, backgroundColor: colors.primary }]}>
-          <TouchableOpacity activeOpacity={0.85} style={styles.headerBtn} onPress={() => router.back()} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="arrow-back" size={22} color="#fff" />
+          <TouchableOpacity activeOpacity={0.85} style={styles.headerBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)} accessibilityRole="button" accessibilityLabel="Return to the app" hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="arrow-back" size={22} color={colors.primaryForeground} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
           <Text style={styles.headerTitle} numberOfLines={1}>KinfolkAI™</Text>
@@ -2871,7 +2888,7 @@ export default function TravelScreen() {
             accessibilityLabel="Open Kinfolk conversation actions"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name={showHeaderActions ? "close" : "ellipsis-horizontal"} size={22} color="#fff" />
+            <Ionicons name={showHeaderActions ? "close" : "ellipsis-horizontal"} size={22} color={colors.primaryForeground} />
           </TouchableOpacity>
         </View>
       </View>
@@ -2879,29 +2896,29 @@ export default function TravelScreen() {
       {showHeaderActions && (
         <View style={[styles.headerActionRail, { backgroundColor: colors.primary, borderTopColor: "#ffffff22" }]}>
           <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); setShowProfile(true); }} accessibilityLabel="Open Kinfolk profile">
-            <Ionicons name="person-circle-outline" size={15} color="#fff" />
-            <Text style={styles.headerActionText}>Profile</Text>
+            <Ionicons name="person-circle-outline" size={15} color={colors.primaryForeground} />
+            <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>Profile</Text>
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); router.push("/wishlist" as any); }} accessibilityLabel="Open saved places">
-            <Ionicons name={wishlistItems.length > 0 ? "bookmark" : "bookmark-outline"} size={15} color="#fff" />
-            <Text style={styles.headerActionText}>Saved</Text>
+            <Ionicons name={wishlistItems.length > 0 ? "bookmark" : "bookmark-outline"} size={15} color={colors.primaryForeground} />
+            <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>Saved</Text>
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); setCompareMode((value) => !value); setCompareSelected([]); }} accessibilityLabel="Toggle comparison mode">
-            <Ionicons name="scale-outline" size={15} color="#fff" />
-            <Text style={styles.headerActionText}>{compareMode ? "Stop compare" : "Compare"}</Text>
+            <Ionicons name="scale-outline" size={15} color={colors.primaryForeground} />
+            <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>{compareMode ? "Stop compare" : "Compare"}</Text>
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); setShowFlights(true); }} accessibilityLabel="Open flight tracker">
-            <Ionicons name="airplane-outline" size={15} color="#fff" />
-            <Text style={styles.headerActionText}>Flights</Text>
+            <Ionicons name="airplane-outline" size={15} color={colors.primaryForeground} />
+            <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>Flights</Text>
           </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); void loadSessions(); setShowHistory(true); }} accessibilityLabel="Open conversation history">
-            <Ionicons name="time-outline" size={15} color="#fff" />
-            <Text style={styles.headerActionText}>History</Text>
+            <Ionicons name="time-outline" size={15} color={colors.primaryForeground} />
+            <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>History</Text>
           </TouchableOpacity>
           {messages.length > 0 && (
             <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); handleNewSession(); }} accessibilityLabel="Start a new Kinfolk conversation">
-              <Ionicons name="add" size={15} color="#fff" />
-              <Text style={styles.headerActionText}>New</Text>
+              <Ionicons name="add" size={15} color={colors.primaryForeground} />
+              <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>New</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -3028,8 +3045,8 @@ export default function TravelScreen() {
             onPress={() => scrollToBottom(true)}
             activeOpacity={0.85}
           >
-            <Ionicons name="chevron-down" size={14} color="#fff" />
-            <Text style={jumpStyles.label}>Jump to latest</Text>
+            <Ionicons name="chevron-down" size={14} color={colors.primaryForeground} />
+            <Text style={[jumpStyles.label, { color: colors.primaryForeground }]}>Jump to latest</Text>
           </TouchableOpacity>
         )}
 
@@ -3049,30 +3066,42 @@ export default function TravelScreen() {
               onPress={() => void handleCompare()}
               disabled={compareSelected.length < 2}
             >
-              <Text style={[styles.compareGoBtnText, { color: compareSelected.length >= 2 ? "#fff" : colors.mutedForeground }]}>
+              <Text style={[styles.compareGoBtnText, { color: compareSelected.length >= 2 ? colors.primaryForeground : colors.mutedForeground }]}>
                 Compare →
               </Text>
             </TouchableOpacity>
           </View>
         )}
 
-        <TouchableOpacity
-          activeOpacity={0.82}
-          onPress={() => setShowComposerControls((visible) => !visible)}
-          style={[styles.composerSettingsRow, { backgroundColor: colors.card, borderTopColor: colors.border }]}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: showComposerControls }}
-          accessibilityLabel="Open Kinfolk memory and privacy controls"
-        >
-          <View style={styles.composerSettingsLeading}>
-            <Ionicons name="options-outline" size={16} color={colors.primary} />
-            <Text style={[styles.composerSettingsTitle, { color: colors.foreground }]}>Memory & privacy</Text>
-            <Text style={[styles.composerSettingsSummary, { color: colors.mutedForeground }]}>
-              Review or turn off memory anytime
-            </Text>
-          </View>
-          <Ionicons name={showComposerControls ? "chevron-up" : "chevron-down"} size={17} color={colors.mutedForeground} />
-        </TouchableOpacity>
+        <View style={[styles.composerSettingsRow, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+          <TouchableOpacity
+            activeOpacity={0.82}
+            onPress={() => setShowComposerControls((visible) => !visible)}
+            style={styles.composerSettingsToggle}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: showComposerControls }}
+            accessibilityLabel="Open Kinfolk memory and privacy controls"
+          >
+            <View style={styles.composerSettingsLeading}>
+              <Ionicons name="options-outline" size={16} color={colors.primary} />
+              <Text style={[styles.composerSettingsTitle, { color: colors.foreground }]}>Memory & privacy</Text>
+              <Text style={[styles.composerSettingsSummary, { color: colors.mutedForeground }]}>
+                Review or turn off memory anytime
+              </Text>
+            </View>
+            <Ionicons name={showComposerControls ? "chevron-up" : "chevron-down"} size={17} color={colors.mutedForeground} />
+          </TouchableOpacity>
+          <TouchableOpacity
+            activeOpacity={0.82}
+            onPress={() => router.push("/kinfolk-settings" as any)}
+            style={[styles.composerSettingsLink, { borderColor: colors.border }]}
+            accessibilityRole="button"
+            accessibilityLabel="Open KinfolkAI Settings"
+          >
+            <Text style={[styles.composerSettingsLinkText, { color: colors.primary }]}>Settings</Text>
+            <Ionicons name="settings-outline" size={15} color={colors.primary} />
+          </TouchableOpacity>
+        </View>
 
         {showComposerControls && <>
         <View style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, gap: 7 }}>
@@ -3093,69 +3122,26 @@ export default function TravelScreen() {
               <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, color: colors.mutedForeground, marginTop: 1 }}>This does not share your chat. Community content is perspective, never evidence or a recommendation.</Text>
             </View>
           </TouchableOpacity>
-          {kinfolkImages.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>{kinfolkImages.map((attachment) => <View key={attachment.assetId} style={{ marginRight: 8 }}><Image source={{ uri: attachment.previewUri }} style={{ width: 74, height: 74, borderRadius: 12 }} accessibilityLabel="Ready to ask Kinfolk about" /><TouchableOpacity onPress={() => void removeKinfolkImage(attachment)} accessibilityLabel="Remove private image" style={{ position: "absolute", top: -4, right: -4, backgroundColor: colors.primary, borderRadius: 12, padding: 3 }}><Ionicons name="close" size={12} color="#FFF" /></TouchableOpacity></View>)}</ScrollView>}
+          {kinfolkImages.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>{kinfolkImages.map((attachment) => <View key={attachment.assetId} style={{ marginRight: 8 }}><Image source={{ uri: attachment.previewUri }} style={{ width: 74, height: 74, borderRadius: 12 }} accessibilityLabel="Ready to ask Kinfolk about" /><TouchableOpacity onPress={() => void removeKinfolkImage(attachment)} accessibilityLabel="Remove private image" style={{ position: "absolute", top: -4, right: -4, backgroundColor: colors.primary, borderRadius: 12, padding: 3 }}><Ionicons name="close" size={12} color={colors.primaryForeground} /></TouchableOpacity></View>)}</ScrollView>}
+          {kinfolkDocument ? <View style={{ marginTop: 8, flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 10, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 10, paddingVertical: 8 }} accessibilityLabel="Private PDF ready for this Kinfolk question"><Ionicons name="document-text-outline" size={18} color={colors.primary} /><Text numberOfLines={1} style={{ flex: 1, fontFamily: "Inter_500Medium", fontSize: 11, color: colors.text }}>{kinfolkDocument.displayName}</Text><TouchableOpacity onPress={() => void removeKinfolkDocument(kinfolkDocument)} accessibilityLabel="Remove private PDF"><Ionicons name="close-circle-outline" size={19} color={colors.mutedForeground} /></TouchableOpacity></View> : null}
         </View>
         </>}
 
+        {Platform.OS !== "web" && (showComposerControls || primaryVoiceSource.state.phase !== "idle") ? (
+          <View style={{ backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingHorizontal: 14, paddingTop: 10 }}>
+            <KinfolkVoiceSourceControls
+              source={primaryVoiceSource}
+              onUseTranscript={addPrimaryVoiceTranscriptToDraft}
+              disabled={authLoading}
+            />
+          </View>
+        ) : null}
         {voiceOutputStatus ? (
           <View style={[styles.voiceInputStatus, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
             <Ionicons name={playingVoice ? "volume-high-outline" : "volume-medium-outline"} size={15} color={colors.primary} />
             <Text style={[styles.voiceInputStatusText, { color: colors.mutedForeground }]}>{voiceOutputStatus}</Text>
           </View>
         ) : null}
-        {voiceTranscriptReview ? (
-          <View style={[styles.voiceMeaningReview, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-            <Text style={[styles.voiceInputStatusText, { color: colors.text }]}>Kinfolk’s optional interpretation is ready for your review. It will not be sent unless you choose it and tap Send.</Text>
-            <Text style={[styles.voiceMeaningSuggestion, { color: colors.text }]}>Suggested wording: {voiceTranscriptReview.suggestedText}</Text>
-            {voiceTranscriptReview.clarification ? <Text style={[styles.voiceMeaningClarification, { color: colors.mutedForeground }]}>{voiceTranscriptReview.clarification}</Text> : null}
-            <View style={styles.voiceMeaningActions}>
-              <TouchableOpacity
-                onPress={() => {
-                  setInputText(voiceTranscriptReview.suggestedText);
-                  setVoiceTranscriptReview(null);
-                  setVoiceInputStatus("Suggestion added to your draft. Review or edit it, then tap Send when you’re ready.");
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Use Kinfolk's optional transcript interpretation"
-                style={[styles.voiceMeaningButton, { backgroundColor: colors.primary }]}
-              >
-                <Text style={styles.voiceMeaningButtonText}>Use suggestion</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => {
-                  setInputText(voiceTranscriptReview.originalText);
-                  setVoiceTranscriptReview(null);
-                  setVoiceInputStatus("Your original transcript is ready to review or edit before Send.");
-                }}
-                accessibilityRole="button"
-                accessibilityLabel="Keep my original transcript"
-                style={[styles.voiceMeaningButton, { borderColor: colors.border, borderWidth: 1 }]}
-              >
-                <Text style={[styles.voiceMeaningKeepText, { color: colors.text }]}>Keep original</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ) : null}
-        {voiceInputStatus ? (
-          <View style={[styles.voiceInputStatus, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-            {isRecordingVoice || isTranscribingVoice ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="mic-outline" size={15} color={colors.primary} />}
-            <Text style={[styles.voiceInputStatusText, { color: colors.mutedForeground }]}>
-              {isRecordingVoice ? `${voiceInputStatus} ${voiceRecordingElapsedSeconds}s / 60s` : voiceInputStatus}
-            </Text>
-            {isRecordingVoice ? (
-              <TouchableOpacity
-                onPress={() => void cancelPrimaryVoiceRecording()}
-                accessibilityRole="button"
-                accessibilityLabel="Cancel recording and restore my draft"
-                style={styles.voiceCancelButton}
-                activeOpacity={0.75}
-              >
-                <Text style={styles.voiceCancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-            ) : null}
-          </View>
-        ) : null}
-
         {/\b(?:within|under|inside|less than|no more than|up to)\s+\d{1,3}\s*(?:mi|miles?)\b|\b\d{1,3}[ -]?mile\s+radius\b/i.test(inputText) ? (
           <View style={{ backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingHorizontal: 16, paddingTop: 10 }}>
             <Text style={{ color: colors.text, fontFamily: "Inter_600SemiBold", fontSize: 12, marginBottom: 5 }}>
@@ -3177,7 +3163,8 @@ export default function TravelScreen() {
         ) : null}
 
         {/* Input row */}
-        {generatedImage ? (
+        {editedImage ? (<View style={{ backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingHorizontal: 16, paddingVertical: 10 }}><View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}><View style={{ flex: 1 }}><Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 12 }}>{editedImage.label}</Text><Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 10 }}>Session-only private result. It is not posted or added to Kinfolk memory.</Text></View><TouchableOpacity onPress={() => setEditedImage(null)} accessibilityLabel="Remove edited image"><Ionicons name="close-circle-outline" size={21} color={colors.mutedForeground} /></TouchableOpacity></View><Image source={{ uri: editedImage.dataUrl }} resizeMode="contain" accessibilityLabel="AI-edited private image" style={{ width: "100%", height: 220, borderRadius: 14, backgroundColor: colors.background }} /><TouchableOpacity onPress={() => void prepareEditedImageForAnotherEdit()} accessibilityLabel="Prepare edited image for another private edit"><Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold", fontSize: 11, marginTop: 8 }}>Edit this result again</Text></TouchableOpacity></View>) : null}
+                {generatedImage ? (
           <View style={{ backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingHorizontal: 16, paddingVertical: 10 }}>
             <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 7 }}>
               <View style={{ flex: 1 }}>
@@ -3199,7 +3186,8 @@ export default function TravelScreen() {
           >
             <Ionicons name="sparkles-outline" size={18} color={colors.mutedForeground} />
           </TouchableOpacity>
-          <TouchableOpacity
+          <TouchableOpacity style={[styles.voiceOutputBtn, { backgroundColor: colors.background, borderColor: colors.border, opacity: kinfolkImages.length ? 1 : 0.4 }]} onPress={() => { const source = kinfolkImages[0]; if (!source) { Alert.alert("Add a private image", "Choose an image before asking Kinfolk to edit it."); return; } setEditSourceAssetId(source.assetId); setImageEditError(null); setShowImageEdit(true); }} disabled={!kinfolkImages.length || isLoading} accessibilityLabel="Edit a private image"><Ionicons name="color-wand-outline" size={18} color={colors.mutedForeground} /></TouchableOpacity>
+                    <TouchableOpacity
             style={[styles.voiceOutputBtn, { backgroundColor: colors.background, borderColor: colors.border, opacity: uploadingKinfolkImage || kinfolkImages.length >= 2 ? 0.4 : 1 }]}
             onPress={() => void pickKinfolkImage()}
             disabled={uploadingKinfolkImage || kinfolkImages.length >= 2 || isLoading}
@@ -3207,6 +3195,15 @@ export default function TravelScreen() {
             activeOpacity={0.75}
           >
             {uploadingKinfolkImage ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="image-outline" size={18} color={colors.mutedForeground} />}
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.voiceOutputBtn, { backgroundColor: colors.background, borderColor: colors.border, opacity: uploadingKinfolkDocument || kinfolkDocument ? 0.4 : 1 }]}
+            onPress={() => void pickKinfolkDocument()}
+            disabled={uploadingKinfolkDocument || Boolean(kinfolkDocument) || isLoading}
+            accessibilityLabel={kinfolkDocument ? "One private PDF is ready for this Kinfolk question" : "Add a private PDF for Kinfolk"}
+            activeOpacity={0.75}
+          >
+            {uploadingKinfolkDocument ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="document-text-outline" size={18} color={colors.mutedForeground} />}
           </TouchableOpacity>
           {Platform.OS !== "web" ? (
             <TouchableOpacity
@@ -3224,20 +3221,20 @@ export default function TravelScreen() {
               accessibilityLabel={voiceOutput ? "Turn off automatic Kinfolk spoken replies" : "Turn on automatic Kinfolk spoken replies"}
               activeOpacity={0.75}
             >
-              <Ionicons name={voiceOutput ? "volume-high" : "volume-mute-outline"} size={18} color={voiceOutput ? "#fff" : colors.mutedForeground} />
+              <Ionicons name={voiceOutput ? "volume-high" : "volume-mute-outline"} size={18} color={voiceOutput ? colors.primaryForeground : colors.mutedForeground} />
             </TouchableOpacity>
           ) : null}
           {Platform.OS !== "web" ? (
             <TouchableOpacity
-              style={[styles.voiceOutputBtn, { backgroundColor: isRecordingVoice ? "#B42318" : colors.background, borderColor: isRecordingVoice ? "#B42318" : colors.border, opacity: isTranscribingVoice || isLoading ? 0.55 : 1 }]}
-              onPress={() => void (isRecordingVoice ? stopPrimaryVoiceRecording() : startPrimaryVoiceRecording())}
-              disabled={isTranscribingVoice || isLoading}
+              style={[styles.voiceOutputBtn, { backgroundColor: primaryVoiceSource.state.phase === "recording" ? "#B42318" : colors.background, borderColor: primaryVoiceSource.state.phase === "recording" ? "#B42318" : colors.border, opacity: isLoading || authLoading || (!primaryVoiceSource.canStart && !primaryVoiceSource.canStop) ? 0.55 : 1 }]}
+              onPress={() => void (primaryVoiceSource.canStop ? primaryVoiceSource.stop() : startPrimaryVoiceSource())}
+              disabled={isLoading || authLoading || (!primaryVoiceSource.canStart && !primaryVoiceSource.canStop)}
               accessibilityRole="button"
-              accessibilityLabel={isRecordingVoice ? "Stop recording for Kinfolk" : "Record a voice question for Kinfolk, 60 second maximum"}
-              accessibilityState={{ busy: isTranscribingVoice, selected: isRecordingVoice }}
+              accessibilityLabel={primaryVoiceSource.canStop ? "Stop recording for Kinfolk" : "Record a voice question for Kinfolk, 60 second maximum"}
+              accessibilityState={{ busy: primaryVoiceSource.state.phase === "uploading" || primaryVoiceSource.state.phase === "stopping", selected: primaryVoiceSource.state.phase === "recording" }}
               activeOpacity={0.75}
             >
-              {isTranscribingVoice ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name={isRecordingVoice ? "stop" : "mic-outline"} size={18} color={isRecordingVoice ? "#fff" : colors.mutedForeground} />}
+              {primaryVoiceSource.state.phase === "uploading" || primaryVoiceSource.state.phase === "stopping" ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name={primaryVoiceSource.canStop ? "stop" : "mic-outline"} size={18} color={primaryVoiceSource.canStop ? "#fff" : colors.mutedForeground} />}
             </TouchableOpacity>
           ) : null}
           <TextInput
@@ -3245,16 +3242,13 @@ export default function TravelScreen() {
             placeholder="Or tell me anything…"
             placeholderTextColor={colors.mutedForeground}
             value={inputText}
-            onChangeText={(value) => {
-              setInputText(value);
-              if (voiceTranscriptReview) setVoiceTranscriptReview(null);
-            }}
+            onChangeText={setInputText}
             multiline
             returnKeyType="send"
             submitBehavior="submit"
             onSubmitEditing={() => void handleSend()}
             onFocus={() => scrollToBottom(true)}
-            editable={!uploadingKinfolkImage}
+            editable={!uploadingKinfolkImage && !uploadingKinfolkDocument}
           />
           {(isLoading || playingVoice) ? (
             <Pressable
@@ -3268,12 +3262,12 @@ export default function TravelScreen() {
             </Pressable>
           ) : null}
           <Pressable
-            style={[styles.sendBtn, { backgroundColor: inputText.trim() && !uploadingKinfolkImage ? colors.primary : colors.border }]}
+            style={[styles.sendBtn, { backgroundColor: inputText.trim() && !uploadingKinfolkImage && !uploadingKinfolkDocument && !authLoading ? colors.primary : colors.border }]}
             onPress={() => void handleSend()}
-            disabled={!inputText.trim() || uploadingKinfolkImage}
+            disabled={!inputText.trim() || uploadingKinfolkImage || uploadingKinfolkDocument || authLoading}
             accessibilityLabel="Send message to Kinfolk"
           >
-            <Ionicons name="arrow-up" size={20} color="#fff" />
+            <Ionicons name="arrow-up" size={20} color={inputText.trim() && !uploadingKinfolkImage && !uploadingKinfolkDocument && !authLoading ? colors.primaryForeground : "#fff"} />
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -3297,6 +3291,8 @@ export default function TravelScreen() {
         onToggleContinuity={(enabled) => { void setKinfolkContinuity(enabled); }}
         onLoadView={(view) => { void loadSessions(view); }}
         onOrganize={(id, action) => { void organizeSession(id, action); }}
+        error={sessionError}
+        onRetry={() => { void loadSessions(); }}
         colors={colors}
       />
 
@@ -3314,7 +3310,9 @@ export default function TravelScreen() {
         colors={colors}
       />
 
-      <Modal visible={showImageCreation} transparent animationType="slide" onRequestClose={() => { setShowImageCreation(false); setImageCreationError(null); }}>
+      <Modal visible={showImageEdit} transparent animationType="slide" onRequestClose={() => setShowImageEdit(false)}><View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#00000066" }}><View style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.card, padding: 20, paddingBottom: Math.max(insets.bottom, 18) }}><Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 17 }}>Edit a private image</Text><Text style={{ color: colors.mutedForeground, fontSize: 12, lineHeight: 18, marginTop: 5 }}>Your selected private image and instruction are sent once to Kinfolk’s configured image provider. The result stays in this session and is not added to memory.</Text><TextInput value={imageEditInstruction} onChangeText={setImageEditInstruction} multiline maxLength={800} placeholder="Example: Change the background to a garden." placeholderTextColor={colors.mutedForeground} accessibilityLabel="Describe the image edit" style={{ minHeight: 92, marginTop: 16, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.background, color: colors.text, padding: 12 }} /><TouchableOpacity onPress={() => setImageEditConsent((value) => !value)} accessibilityRole="checkbox" accessibilityState={{ checked: imageEditConsent }} accessibilityLabel="Confirm image editing provider disclosure" style={{ flexDirection: "row", gap: 9, marginTop: 14 }}><Ionicons name={imageEditConsent ? "checkbox" : "square-outline"} size={20} color={imageEditConsent ? colors.primary : colors.mutedForeground} /><Text style={{ flex: 1, color: colors.mutedForeground, fontSize: 11 }}>I consent to send this private image and instruction once to Kinfolk’s configured image provider. The session-only result is not saved to memory.</Text></TouchableOpacity>{imageEditError ? <Text accessibilityRole="alert" style={{ color: "#B42318", marginTop: 8 }}>{imageEditError}</Text> : null}<View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}><TouchableOpacity onPress={() => setShowImageEdit(false)} style={{ flex: 1, minHeight: 44, borderWidth: 1, borderColor: colors.border, borderRadius: 12, alignItems: "center", justifyContent: "center" }}><Text style={{ color: colors.text }}>Cancel</Text></TouchableOpacity><TouchableOpacity onPress={() => void editKinfolkImage()} disabled={editingImage || !imageEditConsent || imageEditInstruction.trim().length < 4} style={{ flex: 1, minHeight: 44, borderRadius: 12, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", opacity: editingImage || !imageEditConsent || imageEditInstruction.trim().length < 4 ? .45 : 1 }}><Text style={{ color: colors.primaryForeground }}>{editingImage ? "Editing…" : "Edit image"}</Text></TouchableOpacity></View></View></View></Modal>
+
+            <Modal visible={showImageCreation} transparent animationType="slide" onRequestClose={() => { setShowImageCreation(false); setImageCreationError(null); }}>
         <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#00000066" }}>
           <View style={{ maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.card, paddingHorizontal: 20, paddingTop: 18, paddingBottom: Math.max(insets.bottom, 18) }}>
             <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
@@ -3358,7 +3356,7 @@ export default function TravelScreen() {
             <View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}>
               <TouchableOpacity onPress={() => { setShowImageCreation(false); setImageCreationError(null); }} style={{ flex: 1, minHeight: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: "center", justifyContent: "center" }}><Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 13 }}>Cancel</Text></TouchableOpacity>
               <TouchableOpacity onPress={() => void createKinfolkImage()} disabled={generatingImage || imageCreationBrief.trim().length < 12 || !providerDisclosureAccepted || !noRealPersonOrPrivateInfoConfirmed} style={{ flex: 1, minHeight: 44, borderRadius: 12, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", opacity: generatingImage || imageCreationBrief.trim().length < 12 || !providerDisclosureAccepted || !noRealPersonOrPrivateInfoConfirmed ? 0.45 : 1 }}>
-                {generatingImage ? <ActivityIndicator size="small" color="#fff" /> : <Text style={{ color: "#fff", fontFamily: "Inter_700Bold", fontSize: 13 }}>Create visual</Text>}
+                {generatingImage ? <ActivityIndicator size="small" color={colors.primaryForeground} /> : <Text style={{ color: colors.primaryForeground, fontFamily: "Inter_700Bold", fontSize: 13 }}>Create visual</Text>}
               </TouchableOpacity>
             </View>
           </View>
@@ -3388,7 +3386,7 @@ const styles = StyleSheet.create({
   headerIconBtn: { padding: 6, borderRadius: 20 },
   headerActionRail: { flexDirection: "row", flexWrap: "wrap", gap: 7, paddingHorizontal: 16, paddingBottom: 11, paddingTop: 1, borderTopWidth: StyleSheet.hairlineWidth },
   headerAction: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 16, backgroundColor: "#ffffff18", paddingHorizontal: 9, paddingVertical: 6 },
-  headerActionText: { color: "#FFFFFF", fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  headerActionText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   premiumBanner: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: "#C9922B18", borderBottomWidth: 1, borderBottomColor: "#C9922B40" },
   premiumBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, color: "#C9922B", flex: 1 },
   personalBanner: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
@@ -3402,10 +3400,13 @@ const styles = StyleSheet.create({
   compareBarText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 13 },
   compareGoBtn: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8 },
   compareGoBtnText: { fontFamily: "Inter_700Bold", fontSize: 13 },
-  composerSettingsRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 14, paddingVertical: 8, borderTopWidth: 1 },
+  composerSettingsRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, paddingVertical: 8, borderTopWidth: 1 },
+  composerSettingsToggle: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
   composerSettingsLeading: { flexDirection: "row", alignItems: "center", gap: 7, flex: 1 },
   composerSettingsTitle: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   composerSettingsSummary: { fontFamily: "Inter_400Regular", fontSize: 11 },
+  composerSettingsLink: { flexDirection: "row", alignItems: "center", gap: 4, borderWidth: 1, borderRadius: 14, paddingHorizontal: 9, paddingVertical: 6 },
+  composerSettingsLinkText: { fontFamily: "Inter_700Bold", fontSize: 11 },
   voicesBar: { flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 14, paddingRight: 8, paddingVertical: 8, borderTopWidth: 1 },
   voicesBarLabel: { fontFamily: "Inter_600SemiBold", fontSize: 10, letterSpacing: 0.4, textTransform: "uppercase" },
   voicesPills: { flexDirection: "row", gap: 6, paddingVertical: 2 },
@@ -3432,5 +3433,5 @@ const styles = StyleSheet.create({
 
 const jumpStyles = StyleSheet.create({
   btn: { flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "center", borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7, marginBottom: 6, marginTop: 2 },
-  label: { fontFamily: "Inter_600SemiBold", fontSize: 12, color: "#fff" },
+  label: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
 });

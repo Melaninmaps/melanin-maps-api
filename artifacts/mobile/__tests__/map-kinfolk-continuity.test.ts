@@ -29,7 +29,8 @@ describe("native map, business, and Kinfolk continuity", () => {
   });
 
   it("keeps an explicitly selected city separate from an around-me GPS radius", () => {
-    expect(map).toContain("const hasExplicitMapLocality = Boolean(searchedLocality || routeSearchLocality);");
+    expect(map).toContain("const explicitMapLocality = searchedLocality ?? routeSearchLocality;");
+    expect(map).toContain("const hasExplicitMapLocality = Boolean(explicitMapLocality);");
     expect(map).toContain("resolveMapBusinessProximity");
     expect(map).toContain("latitude: deliberateMapNameSearch ? null : proximityMapLocation?.latitude ?? null,");
     expect(map).toContain("longitude: deliberateMapNameSearch ? null : proximityMapLocation?.longitude ?? null,");

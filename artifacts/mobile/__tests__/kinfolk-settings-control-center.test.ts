@@ -9,15 +9,19 @@ const privatePlaces = readFileSync(new URL("../app/kinfolk-private-places.tsx", 
 const temporaryStays = readFileSync(new URL("../app/kinfolk-temporary-stays.tsx", import.meta.url), "utf8");
 const exitGuard = readFileSync(new URL("../hooks/useUnsavedKinfolkExitGuard.ts", import.meta.url), "utf8");
 const widget = readFileSync(new URL("../components/AIChatWidget.tsx", import.meta.url), "utf8");
+const primaryKinfolk = readFileSync(new URL("../app/travel.tsx", import.meta.url), "utf8");
 
 describe("Build 135 native Kinfolk Settings", () => {
-  it("starts Settings with only two collapsed, mutually exclusive accordions", () => {
+  it("keeps the two collapsed settings accordions and exposes the existing Kinfolk control center before them", () => {
     expect(settings).toContain('useState<SectionId | null>(null)');
     expect(settings).toContain('id: "account"');
     expect(settings).toContain('id: "app"');
     expect(settings).toContain('current === id ? null : id');
     expect(settings).toContain('accessibilityState={{ expanded }}');
-    expect(settings).toContain('label: "KinfolkAI™"');
+    expect(settings).toContain('label: "KinfolkAI Settings"');
+    expect(settings).toContain('route: "/kinfolk-settings"');
+    expect(settings).toContain('accessibilityLabel="Open KinfolkAI Settings"');
+    expect(settings).not.toContain('label: "KinfolkAI™"');
     expect(settings).toContain('label: "Edit Profile"');
     expect(settings).toContain('label: "Gender & Pronouns"');
     expect(settings).toContain('label: "Change Password"');
@@ -40,6 +44,15 @@ describe("Build 135 native Kinfolk Settings", () => {
     expect(controlCenter).toContain("Accessibility and regional-language preferences are not inferred");
     expect(controlCenter).toContain('router.push("/kinfolk-private-places" as never)');
     expect(controlCenter).toContain("Private Places");
+  });
+
+  it("uses the canonical API resolver for every private-origin surface", () => {
+    for (const source of [controlCenter, privatePlaces, temporaryStays]) {
+      expect(source).toContain('import { getApiBase } from "@/lib/api";');
+      expect(source).toContain("getApiBase()");
+      expect(source).not.toContain("EXPO_PUBLIC_DOMAIN");
+      expect(source).not.toMatch(/function apiBase|const apiBase|function getApiBase|const getApiBase/);
+    }
   });
 
   it("persists settings only through one explicit save transaction and retains a failed draft", () => {
@@ -71,6 +84,13 @@ describe("Build 135 native Kinfolk Settings", () => {
   it("prevents the global chat pill from overlapping Settings content", () => {
     expect(widget).toContain('const onSettingsRoute = ["/settings", "/kinfolk-settings", "/kinfolk-memory", "/kinfolk-private-places", "/kinfolk-temporary-stays"]');
     expect(widget).toContain("|| onSettingsRoute");
+  });
+
+  it("keeps every native Kinfolk entry point linked to the same control center", () => {
+    expect(settings).toContain("handleRow(kinfolkSettingsEntry)");
+    expect(primaryKinfolk).toContain('router.push("/kinfolk-settings" as any)');
+    expect(primaryKinfolk).toContain('accessibilityLabel="Open KinfolkAI Settings"');
+    expect(widget).toContain('router.push("/kinfolk-settings" as never)');
   });
 
   it("keeps native Private Places explicit, encrypted, and outside Kinfolk chat", () => {

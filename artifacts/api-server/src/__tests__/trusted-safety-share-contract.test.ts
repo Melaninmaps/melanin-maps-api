@@ -2,11 +2,18 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
+  expoPushProviderReceipt,
+  expoPushRequestState as invitePushRequestState,
+  isDurableTrustedSafetyRelationship,
   normalizeTrustedContactEmail,
   normalizeTrustedContactPhone,
+  providerReceiptFingerprint,
 } from "../routes/trusted-safety-share";
-import { trustedSafetyInAppNotification } from "../lib/trustedSafetyShareAlerts";
-import { publicLocationShare } from "../routes/location-shares";
+import {
+  expoPushRequestState,
+  isTrustedSafetyAlertPayload,
+  trustedSafetyInAppNotification,
+} from "../lib/trustedSafetyShareAlerts";
 
 describe("Trusted Safety Share contact and delivery privacy", () => {
   it("normalizes cosmetic email and phone differences before deduplication", () => {
@@ -23,22 +30,87 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
       type: "safety",
       title: "Safety Alert — Amina",
       body: "Amina is currently in Atlanta, Georgia.",
-      data: { alertType: "weather", locationCity: "Atlanta", locationRegion: "Georgia", shareId: "share-1" },
+      data: { type: "trusted_safety_alert", alertType: "weather", locationCity: "Atlanta", locationRegion: "Georgia", shareId: "share-1" },
     });
     expect(JSON.stringify(notification)).not.toMatch(/ownerId|latitude|longitude|token|search|checkin/i);
   });
 
-  it("keeps the bearer location-view payload free of account identity", () => {
-    const view = publicLocationShare({
-      label: "Safe arrival",
-      currentLat: 33.749,
-      currentLng: -84.388,
-      lastUpdatedAt: new Date("2026-01-02T03:04:05.000Z"),
-      expiresAt: new Date("2026-01-02T04:04:05.000Z"),
+  it("keeps durable trusted-contact consent separate from temporary location sessions and rejects GPS or behavioral dispatch input", () => {
+    expect(isDurableTrustedSafetyRelationship(true, true, "active")).toBe(true);
+    expect(isDurableTrustedSafetyRelationship(false, true, "active")).toBe(false);
+    expect(isDurableTrustedSafetyRelationship(true, false, "paused_manual")).toBe(false);
+
+    const alert = {
+      eventId: "event-1",
+      ownerId: "owner-1",
+      ownerFirstName: "Amina",
+      locationCity: "Atlanta",
+      locationRegion: "Georgia",
+      alertTitle: "Tornado warning",
+      alertDescription: "Seek shelter now.",
+      alertType: "weather" as const,
+    };
+    expect(isTrustedSafetyAlertPayload(alert)).toBe(true);
+    expect(isTrustedSafetyAlertPayload({ ...alert, latitude: 33.749 })).toBe(false);
+    expect(isTrustedSafetyAlertPayload({ ...alert, activity: "searched restaurants" })).toBe(false);
+    expect(isTrustedSafetyAlertPayload({ ...alert, nearbyAddress: "123 Main St" })).toBe(false);
+  });
+
+  it("records provider acknowledgement rather than claiming device delivery", async () => {
+    const accepted = { ok: true, json: async () => ({ data: { status: "ok", id: "expo-ticket-123" } }) } as never;
+    const rejected = { ok: true, json: async () => ({ data: { status: "error" } }) } as never;
+    const missingReceipt = { ok: true, json: async () => ({ data: { status: "ok" } }) } as never;
+    await expect(expoPushRequestState(accepted)).resolves.toBe("provider_accepted");
+    await expect(expoPushRequestState(rejected)).resolves.toBe("provider_rejected");
+    await expect(invitePushRequestState(accepted)).resolves.toBe("provider_accepted");
+    await expect(expoPushProviderReceipt(accepted)).resolves.toEqual({
+      state: "provider_accepted",
+      receipt: "expo-ticket-123",
     });
-    expect(view).not.toHaveProperty("sharerId");
-    expect(view).not.toHaveProperty("recipientEmail");
-    expect(view).not.toHaveProperty("shareToken");
+    await expect(expoPushProviderReceipt(missingReceipt)).resolves.toEqual({
+      state: "provider_rejected",
+      receipt: null,
+    });
+    const fingerprint = providerReceiptFingerprint("expo-ticket-123");
+    expect(fingerprint).toMatch(/^[a-f0-9]{64}$/);
+    expect(fingerprint).not.toContain("expo-ticket-123");
+  });
+
+  it("persists invitation attempts as audit-only accepted or failed evidence", () => {
+    const route = readFileSync(
+      fileURLToPath(new URL("../routes/trusted-safety-share.ts", import.meta.url)),
+      "utf8",
+    );
+    const migrations = readFileSync(
+      fileURLToPath(new URL("../lib/startup-migrations.ts", import.meta.url)),
+      "utf8",
+    );
+    const auditMigration = migrations.slice(
+      migrations.indexOf('name: "trusted_safety_invitation_delivery_audit_v1"'),
+      migrations.indexOf('name: "safety_checkin_profile_recipients_v1"'),
+    );
+
+    expect(route).toContain("beginInviteDeliveryAttempt(shareId, channel, provider)");
+    expect(route).toContain("finishInviteDeliveryAttempt");
+    expect(route).toContain("providerReceiptFingerprint");
+    expect(route).toContain('push.state === "provider_accepted" ? "accepted" : "failed"');
+    expect(auditMigration).toContain("trusted_safety_invitation_delivery_attempts");
+    expect(auditMigration).toContain("CHECK (state IN ('attempted', 'accepted', 'failed'))");
+    expect(auditMigration).toContain("provider_receipt_fingerprint CHAR(64)");
+    expect(auditMigration).toContain("provider = 'in_app' OR provider_receipt_fingerprint IS NOT NULL");
+    expect(auditMigration).not.toMatch(/contact_phone|contact_email|invite_token|push_token|provider_receipt_id/);
+  });
+
+  it("keeps trusted-contact alerts separate from a member-controlled live location session", () => {
+    const locationRoute = readFileSync(
+      fileURLToPath(new URL("../routes/location-shares.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(locationRoute).toContain("recipientTrustedShareId");
+    expect(locationRoute).toContain("liveLocationConsent !== true");
+    expect(locationRoute).toContain("tss.contact_accepted = true");
+    expect(locationRoute).toContain("publicLocationShare");
+    expect(locationRoute).not.toContain("trustedSafetyShareAlerts");
   });
 
   it("cannot resume a pending or declined contact without acceptance", () => {
@@ -47,24 +119,101 @@ describe("Trusted Safety Share contact and delivery privacy", () => {
       "utf8",
     );
     expect(route).toContain('current.status !== "paused_manual" || current.contact_accepted !== true');
-    expect(route).toContain("AND ($1 != 'active' OR contact_accepted = true)");
+    expect(route).toContain("AND ($1 != 'active' OR (contact_accepted = true AND owner_enabled = true))");
     expect(route.match(/AND status = 'pending'/g)).toHaveLength(2);
     expect(route.match(/AND contact_accepted = false/g)).toHaveLength(2);
     expect(route.match(/AND invite_expires_at > NOW\(\)/g)).toHaveLength(2);
-    expect(route).toContain("AND contact_user_id = $4");
+    expect(route).toContain("AND trusted_safety_shares.contact_user_id = $3");
     const delivery = readFileSync(
       fileURLToPath(new URL("../lib/trustedSafetyShareAlerts.ts", import.meta.url)),
       "utf8",
     );
-    expect(delivery).toContain("AND contact_accepted = true");
+    expect(delivery).toContain("AND tss.contact_accepted = true");
   });
 
-  it("copies the public browser viewer rather than raw API JSON", () => {
+  it("enforces mutual blocks, preferences, durable contact consent, and private lifecycle responses", () => {
+    const route = readFileSync(
+      fileURLToPath(new URL("../routes/trusted-safety-share.ts", import.meta.url)),
+      "utf8",
+    );
+    const delivery = readFileSync(
+      fileURLToPath(new URL("../lib/trustedSafetyShareAlerts.ts", import.meta.url)),
+      "utf8",
+    );
+    const lifecycle = readFileSync(
+      fileURLToPath(new URL("../lib/trustedSafetyShareLifecycle.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(route).toContain('router.patch("/safety/trusted-shares/:id/enabled"');
+    expect(route).toContain('router.patch("/safety/trusted-shares/consent"');
+    expect(route).toContain("expireTrustedLocationSessions(ownerId)");
+    expect(route).toContain("deactivateTrustedLocationShares");
+    expect(route).toContain("invite_token = NULL");
+    expect(lifecycle).toContain("UPDATE location_shares");
+    expect(lifecycle).toContain("current_lat = NULL");
+    expect(lifecycle).toContain("current_lng = NULL");
+    expect(lifecycle).not.toContain("owner_enabled = false");
+    expect(route).toContain("owner_blocks.id IS NULL");
+    expect(route).toContain("contact_blocks.id IS NULL");
+    expect(route).toContain("ownerShareResponse");
+    expect(route).toContain("receivedShareResponse");
+    expect(delivery).toContain("notification_preferences");
+    expect(delivery).toContain("np.topics::text AS topics_text");
+    expect(delivery).toContain("allowsSafetyCheckinNotification(share.topics_text)");
+    expect(delivery).toContain("lower(contact.approved::text) IN ('true', 't', '1')");
+    expect(delivery).not.toContain("np.topics @> ARRAY['safety']::text[]");
+    expect(delivery).toContain("await expireTrustedLocationSessions(payload.ownerId)");
+    expect(delivery).toContain("tss.status = 'active' AND tss.owner_enabled = true AND tss.contact_accepted = true");
+    expect(delivery).toContain("provider_accepted");
+    expect(delivery).toContain("in_app_created");
+    expect(delivery).not.toContain('deliveryStatus = "sent"');
+    expect(delivery).not.toContain('deliveryStatus = "delivered"');
+  });
+
+  it("uses the transaction advisory lock without applying a row lock to an outer join", () => {
+    const route = readFileSync(
+      fileURLToPath(new URL("../routes/trusted-safety-share.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(route).toContain("SELECT pg_advisory_xact_lock(hashtext($1))");
+    expect(route).not.toContain("FOR KEY SHARE");
+  });
+
+  it("minimizes and expires trusted live location coordinates", () => {
+    const locationRoute = readFileSync(
+      fileURLToPath(new URL("../routes/location-shares.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(locationRoute).toContain("minimizeLocationCoordinate");
+    expect(locationRoute).toContain("isFreshLocationCoordinate");
+    expect(locationRoute).toContain("MAX_COORDINATE_AGE_MS");
+    expect(locationRoute).toContain("current_lat = NULL");
+    expect(locationRoute).toContain("current_lng = NULL");
+  });
+
+  it("uses a native foreground-only consent flow without exposing a bearer link", () => {
     const mobile = readFileSync(
       fileURLToPath(new URL("../../../mobile/app/location-share.tsx", import.meta.url)),
       "utf8",
     );
-    expect(mobile).toContain("/safety/location/${encodeURIComponent(");
-    expect(mobile).not.toContain("/api/safety/location-shares/${token}/view");
+    expect(mobile).toContain("expo-location");
+    expect(mobile).toContain("Location.requestForegroundPermissionsAsync()");
+    expect(mobile).toContain("liveLocationConsent");
+    expect(mobile).toContain("location-shares");
+    expect(mobile).not.toContain("startLocationUpdatesAsync");
+    expect(mobile).not.toContain("Copy Share Link");
+    expect(mobile).not.toContain("Copy Pending Link");
+    expect(mobile).not.toContain("expo-clipboard");
+  });
+
+  it("persists the mobile owner consent control and never renders external contact addresses", () => {
+    const mobile = readFileSync(
+      fileURLToPath(new URL("../../../mobile/app/trusted-safety-share.tsx", import.meta.url)),
+      "utf8",
+    );
+    expect(mobile).toContain("/api/safety/trusted-shares/consent");
+    expect(mobile).toContain("The server did not confirm this change");
+    expect(mobile).not.toContain("contact_phone");
+    expect(mobile).not.toContain("contact_email");
   });
 });

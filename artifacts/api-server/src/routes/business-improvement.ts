@@ -2,9 +2,51 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { db, usersTable, businessesTable, businessImprovementPlansTable } from "@workspace/db";
 import { pool } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { and, eq, desc } from "drizzle-orm";
 
 const router: IRouter = Router();
+
+type ApprovedBusinessOwner = { id: string };
+
+/**
+ * Improvement plans may contain private owner-provided business context and
+ * generated advice. Authentication alone is insufficient: the requester must
+ * hold an approved, unrevoked owner link for the selected business.
+ */
+async function requireApprovedBusinessOwner(
+  req: Request,
+  res: Response,
+  businessId: string,
+): Promise<ApprovedBusinessOwner | null> {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return null;
+  }
+
+  const result = await pool.query<ApprovedBusinessOwner>(
+    `SELECT b.id
+       FROM businesses b
+      WHERE b.id = $1
+        AND EXISTS (
+          SELECT 1
+            FROM business_owner_links bol
+           WHERE bol.business_id = b.id
+             AND bol.user_id = $2
+             AND bol.role = 'owner'
+             AND bol.status = 'approved'
+             AND bol.revoked_at IS NULL
+        )
+      LIMIT 1`,
+    [businessId, req.user.id],
+  );
+
+  const business = result.rows[0] ?? null;
+  if (!business) {
+    res.status(403).json({ error: "An approved business owner link is required" });
+    return null;
+  }
+  return business;
+}
 
 // ─── Ownership preference → DB designation mapping ───────────────────────────
 const PREF_TO_DESIGNATIONS: Record<string, string[]> = {
@@ -85,6 +127,13 @@ router.post("/business-improvement", async (req: Request, res: Response) => {
     res.status(400).json({ error: "businessId, issueType, and serviceTypes are required" });
     return;
   }
+
+  const authorizedBusiness = await requireApprovedBusinessOwner(
+    req,
+    res,
+    String(businessId).trim(),
+  );
+  if (!authorizedBusiness) return;
 
   try {
     // ── Find providers matching service types ────────────────────────────────
@@ -278,7 +327,7 @@ IMPORTANT: Return ONLY valid JSON, no markdown, no extra text.`;
     // Store in DB
     try {
       await db.insert(businessImprovementPlansTable).values({
-        businessId,
+        businessId: authorizedBusiness.id,
         userId: req.user.id,
         issueType,
         issueDescription: issueDescription ?? null,
@@ -301,10 +350,20 @@ IMPORTANT: Return ONLY valid JSON, no markdown, no extra text.`;
 router.get("/business-improvement/:businessId", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   try {
+    const authorizedBusiness = await requireApprovedBusinessOwner(
+      req,
+      res,
+      String(req.params.businessId).trim(),
+    );
+    if (!authorizedBusiness) return;
+
     const plans = await db
       .select()
       .from(businessImprovementPlansTable)
-      .where(eq(businessImprovementPlansTable.businessId, String(req.params.businessId)))
+      .where(and(
+        eq(businessImprovementPlansTable.businessId, authorizedBusiness.id),
+        eq(businessImprovementPlansTable.userId, req.user.id),
+      ))
       .orderBy(desc(businessImprovementPlansTable.createdAt))
       .limit(5);
     res.json({ plans });

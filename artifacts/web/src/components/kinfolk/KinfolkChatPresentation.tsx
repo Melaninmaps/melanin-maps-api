@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { safePublicExternalHref } from "@/lib/publicExternalUrl";
 
 /**
@@ -27,6 +27,17 @@ export type KinfolkStructuredContent =
 export interface KinfolkMediaLink { title: string; creator: string | null; platform: string; url: string; reason: string }
 export interface KinfolkRelatedConnection { title: string; relationship: string; reason: string; href: string | null; evidenceUrl: string | null }
 export interface KinfolkResearchStatus { usedInternal: boolean; usedLiveWeb: boolean; degraded: boolean; asOf: string }
+export type KinfolkContextualVisual =
+  | { kind: "image"; id: string; title: string; imageUrl: string; alt: string; sourceUrl: string; sourceLabel: string; attribution: string; licenseLabel: string; licenseUrl: string; classification: "illustrative_photo" }
+  | { kind: "external_gallery"; id: string; title: string; description: string; sourceUrl: string; sourceLabel: string; safetyNote: string };
+
+/** Never infer a research source: this label mirrors only server-returned status. */
+export function kinfolkResearchStatusLabel(status: KinfolkResearchStatus): string {
+  if (status.usedInternal && status.usedLiveWeb) return "Research: Library + current sources";
+  if (status.usedInternal) return "Research: Library sources";
+  if (status.usedLiveWeb) return "Research: current sources";
+  return "Research: no linked sources used";
+}
 
 /**
  * Additive chat contract for structured itinerary responses. The API keeps its
@@ -95,14 +106,72 @@ export function safeLibraryHref(url: string): string | null {
   return /^\/library\/topics\/[A-Za-z0-9._~%-]+(?:#[A-Za-z0-9._~%-]+)?$/.test(url) ? url : null;
 }
 
+export type KinfolkAnswerBlock =
+  | { kind: "paragraph"; text: string }
+  | { kind: "bullets"; items: string[] }
+  | { kind: "steps"; items: string[] }
+  | { kind: "code"; text: string };
+
+/**
+ * Formats ordinary model text into a small, safe semantic surface without
+ * interpreting markdown as HTML. Structured API payloads still use their
+ * dedicated renderers below; this is the universal fallback for every other
+ * useful answer, including draft, explanation, and link-summary replies.
+ */
+export function kinfolkAnswerBlocks(content: string): KinfolkAnswerBlock[] {
+  const normalized = content.replace(/\r\n?/g, "\n").trim();
+  if (!normalized) return [];
+
+  const blocks: KinfolkAnswerBlock[] = [];
+  for (const group of normalized.split(/\n\s*\n/)) {
+    const lines = group.split("\n").map((line) => line.trim()).filter(Boolean);
+    if (lines.length === 0) continue;
+
+    const codeFence = lines[0]!.match(/^```(?:[A-Za-z0-9_-]+)?$/);
+    if (codeFence && lines.at(-1) === "```") {
+      const text = lines.slice(1, -1).join("\n").trim();
+      if (text) blocks.push({ kind: "code", text });
+      continue;
+    }
+
+    const bullets = lines.map((line) => line.match(/^[-*•]\s+(.+)$/)?.[1]?.trim() ?? null);
+    if (bullets.every((item): item is string => Boolean(item))) {
+      blocks.push({ kind: "bullets", items: bullets });
+      continue;
+    }
+
+    const steps = lines.map((line) => line.match(/^\d+[.)]\s+(.+)$/)?.[1]?.trim() ?? null);
+    if (steps.every((item): item is string => Boolean(item))) {
+      blocks.push({ kind: "steps", items: steps });
+      continue;
+    }
+
+    blocks.push({ kind: "paragraph", text: lines.join("\n") });
+  }
+  return blocks;
+}
+
 export function KinfolkAssistantText({ content }: { content: string }) {
+  const blocks = kinfolkAnswerBlocks(content);
+  if (blocks.length === 0) return null;
   return (
-    <p
+    <div
       data-testid="kinfolk-assistant-text"
-      className="whitespace-pre-wrap break-words [overflow-wrap:anywhere] text-[15px] leading-7"
+      className="space-y-3 break-words [overflow-wrap:anywhere] text-[15px] leading-7"
     >
-      {content}
-    </p>
+      {blocks.map((block, index) => {
+        if (block.kind === "bullets") {
+          return <ul key={`bullets-${index}`} className="list-disc space-y-1 pl-5">{block.items.map((item, itemIndex) => <li key={`${item}-${itemIndex}`}>{item}</li>)}</ul>;
+        }
+        if (block.kind === "steps") {
+          return <ol key={`steps-${index}`} className="list-decimal space-y-1 pl-5">{block.items.map((item, itemIndex) => <li key={`${item}-${itemIndex}`}>{item}</li>)}</ol>;
+        }
+        if (block.kind === "code") {
+          return <pre key={`code-${index}`} className="overflow-x-auto rounded-lg bg-[#2B1507] p-3 text-xs leading-5 text-[#F5EBD8]"><code>{block.text}</code></pre>;
+        }
+        return <p key={`paragraph-${index}`} className="whitespace-pre-wrap">{block.text}</p>;
+      })}
+    </div>
   );
 }
 
@@ -214,13 +283,74 @@ function CompactList({ items }: { items: string[] }) {
   return <ul className="mt-1 space-y-1 text-xs leading-5 text-[#3A1F0E]/70">{items.map((item, index) => <li key={`${item}-${index}`}>• {item}</li>)}</ul>;
 }
 
+function approvedContextualImageHref(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:"
+      && url.hostname === "thumb.wikimedia.org"
+      && url.pathname.startsWith("/wikipedia/commons/thumb/")
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function safeContextualVisuals(
+  visuals: KinfolkContextualVisual[] | null | undefined,
+): KinfolkContextualVisual[] {
+  const safeVisuals: KinfolkContextualVisual[] = [];
+  for (const visual of visuals ?? []) {
+    const sourceUrl = safeExternalSourceHref(visual?.sourceUrl);
+    if (!sourceUrl || typeof visual?.id !== "string" || typeof visual?.title !== "string" || typeof visual?.sourceLabel !== "string") continue;
+    if (visual.kind === "external_gallery") {
+      if (typeof visual.description === "string" && typeof visual.safetyNote === "string") {
+        safeVisuals.push({ ...visual, sourceUrl });
+      }
+      continue;
+    }
+    const imageUrl = approvedContextualImageHref(visual.imageUrl);
+    const licenseUrl = safeExternalSourceHref(visual.licenseUrl);
+    if (imageUrl && licenseUrl && typeof visual.alt === "string" && typeof visual.attribution === "string"
+      && typeof visual.licenseLabel === "string" && visual.classification === "illustrative_photo") {
+      safeVisuals.push({ ...visual, imageUrl, sourceUrl, licenseUrl });
+    }
+  }
+  return safeVisuals.slice(0, 3);
+}
+
+function KinfolkContextualVisualCard({ visual }: { visual: KinfolkContextualVisual }) {
+  const [imageUnavailable, setImageUnavailable] = useState(false);
+  if (visual.kind === "external_gallery") {
+    return <article data-testid="kinfolk-contextual-visual-gallery" className="rounded-xl border border-[#3A1F0E]/10 bg-white p-3 text-xs">
+      <h3 className="font-bold text-[#2B1507]">{visual.title}</h3>
+      <p className="mt-1 leading-5 text-[#3A1F0E]/70">{visual.description}</p>
+      <a href={visual.sourceUrl} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block font-semibold text-[#8D5C17] underline">Open {visual.sourceLabel}</a>
+      <p className="mt-2 leading-5 text-[#3A1F0E]/60">{visual.safetyNote}</p>
+    </article>;
+  }
+  return <article data-testid="kinfolk-contextual-visual-image" className="overflow-hidden rounded-xl border border-[#3A1F0E]/10 bg-white text-xs">
+    {imageUnavailable ? <div data-testid="kinfolk-contextual-visual-fallback" className="flex min-h-40 items-center bg-[#FAF6EF] p-3 text-[#3A1F0E]/70">This educational image could not load. Its attributed source remains available below.</div> : <img src={visual.imageUrl} alt={visual.alt} className="h-44 w-full bg-[#FAF6EF] object-cover" onError={() => setImageUnavailable(true)} />}
+    <div className="p-3">
+      <h3 className="font-bold text-[#2B1507]">{visual.title}</h3>
+      <p className="mt-1 leading-5 text-[#3A1F0E]/60">{visual.attribution} · {visual.licenseLabel}</p>
+      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1">
+        <a href={visual.sourceUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#8D5C17] underline">Open source</a>
+        <a href={visual.licenseUrl} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#8D5C17] underline">{visual.licenseLabel}</a>
+      </div>
+    </div>
+  </article>;
+}
+
 /** Additive structured details. The complete conversational reply always remains the primary answer. */
-export function KinfolkContextualContent({ structuredContent, mediaLinks = [], relatedConnections = [], researchStatus }: {
-  structuredContent?: KinfolkStructuredContent | null; mediaLinks?: KinfolkMediaLink[]; relatedConnections?: KinfolkRelatedConnection[]; researchStatus?: KinfolkResearchStatus | null;
+export function KinfolkContextualContent({ structuredContent, mediaLinks = [], relatedConnections = [], researchStatus, contextualVisuals = [] }: {
+  structuredContent?: KinfolkStructuredContent | null; mediaLinks?: KinfolkMediaLink[]; relatedConnections?: KinfolkRelatedConnection[]; researchStatus?: KinfolkResearchStatus | null; contextualVisuals?: KinfolkContextualVisual[];
 }) {
   const safeMedia = mediaLinks.flatMap((media) => { const href = safeExternalSourceHref(media.url); return href ? [{ ...media, href }] : []; });
   const safeConnections = relatedConnections.map((connection) => ({ ...connection, href: connection.href ? safeLibraryHref(connection.href) : null, evidenceHref: connection.evidenceUrl ? safeExternalSourceHref(connection.evidenceUrl) : null }));
-  if (!structuredContent && safeMedia.length === 0 && safeConnections.length === 0 && !researchStatus) return null;
+  const safeVisuals = safeContextualVisuals(contextualVisuals);
+  if (!structuredContent && safeMedia.length === 0 && safeConnections.length === 0 && safeVisuals.length === 0 && !researchStatus) return null;
   return <section data-testid="kinfolk-contextual-content" aria-label="Kinfolk details" className="mt-3 space-y-3">
     {structuredContent?.kind === "recipe_options" && <div data-testid="kinfolk-recipe-options" className="grid gap-2 sm:grid-cols-2">{structuredContent.options.map((option, index) => <article key={`${option.title}-${index}`} className="rounded-xl border border-[#CA922B]/20 bg-[#FFF8EC] p-3"><div className="flex items-start justify-between gap-2"><h3 className="text-sm font-bold text-[#2B1507]">{option.title}</h3>{option.timeLabel && <span className="shrink-0 text-[10px] font-semibold text-[#8D5C17]">{option.timeLabel}</span>}</div><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/70">{option.description}</p><CompactList items={option.keyIngredients} /></article>)}</div>}
     {structuredContent?.kind === "recipe_instructions" && <article data-testid="kinfolk-recipe-instructions" className="rounded-xl border border-[#CA922B]/20 bg-[#FFF8EC] p-3"><h3 className="text-sm font-bold text-[#2B1507]">{structuredContent.title}</h3><div className="mt-2 grid gap-3 sm:grid-cols-2"><div><h4 className="text-[10px] font-bold uppercase tracking-wider text-[#8D5C17]">Ingredients</h4><CompactList items={structuredContent.ingredients} /></div><div><h4 className="text-[10px] font-bold uppercase tracking-wider text-[#8D5C17]">Steps</h4><CompactList items={structuredContent.steps} /></div></div>{structuredContent.foodSafety.length > 0 && <div className="mt-3 border-t border-[#CA922B]/20 pt-2"><h4 className="text-[10px] font-bold uppercase tracking-wider text-[#8D5C17]">Food safety</h4><CompactList items={structuredContent.foodSafety} /></div>}</article>}
@@ -229,7 +359,8 @@ export function KinfolkContextualContent({ structuredContent, mediaLinks = [], r
     {structuredContent?.kind === "entity_explorer" && <article data-testid="kinfolk-entity-explorer" className="rounded-xl border border-[#3A1F0E]/10 bg-[#FAF6EF] p-3"><h3 className="text-sm font-bold text-[#2B1507]">{structuredContent.canonicalName}</h3><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/70">{structuredContent.overview}</p><div className="mt-3 space-y-2">{structuredContent.pathways.map((pathway, index) => { const href = pathway.libraryHref ? safeLibraryHref(pathway.libraryHref) : null; return <div key={`${pathway.label}-${index}`} className="rounded-lg bg-white px-3 py-2 text-xs"><p className="font-bold text-[#2B1507]">{pathway.label}</p><p className="mt-0.5 text-[#3A1F0E]/70">{pathway.description}</p>{href && <a href={href} className="mt-1 inline-block font-semibold text-[#8D5C17] underline">Open in Library</a>}</div>; })}</div></article>}
     {safeMedia.length > 0 && <section data-testid="kinfolk-media-links" aria-label="Verified media"><h3 className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60">Verified media</h3><div className="mt-2 space-y-2">{safeMedia.map((media) => <a key={media.url} href={media.href} target="_blank" rel="noopener noreferrer" className="block rounded-xl border border-[#3A1F0E]/8 bg-white p-3 text-xs"><span className="font-bold text-[#8D5C17]">{media.title}</span><span className="text-[#3A1F0E]/60"> · {media.creator ?? media.platform}</span><p className="mt-1 text-[#3A1F0E]/70">{media.reason}</p></a>)}</div></section>}
     {safeConnections.length > 0 && <section data-testid="kinfolk-related-connections" aria-label="Related connections"><h3 className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60">Related connections</h3><div className="mt-2 space-y-2">{safeConnections.map((connection, index) => <article key={`${connection.title}-${index}`} className="rounded-xl border border-[#3A1F0E]/8 bg-white p-3 text-xs"><p className="font-bold text-[#2B1507]">{connection.title} <span className="font-normal text-[#3A1F0E]/60">· {connection.relationship}</span></p><p className="mt-1 text-[#3A1F0E]/70">{connection.reason}</p><div className="mt-1 flex gap-3">{connection.href && <a href={connection.href} className="font-semibold text-[#8D5C17] underline">Open in Library</a>}{connection.evidenceHref && <a href={connection.evidenceHref} target="_blank" rel="noopener noreferrer" className="font-semibold text-[#8D5C17] underline">Supporting source</a>}</div></article>)}</div></section>}
-    {researchStatus && <p data-testid="kinfolk-research-status" className="text-[10px] text-[#3A1F0E]/50">Updated {researchStatus.asOf ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(researchStatus.asOf)) : "recently"}{researchStatus.degraded ? " · some current details may need a fresh check" : ""}</p>}
+    {safeVisuals.length > 0 && <section data-testid="kinfolk-contextual-visuals" aria-label="Relevant visual references"><h3 className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60">Relevant visual references</h3><div className="mt-2 grid gap-2 sm:grid-cols-2">{safeVisuals.map((visual) => <KinfolkContextualVisualCard key={visual.id} visual={visual} />)}</div></section>}
+    {researchStatus && <p data-testid="kinfolk-research-status" className="text-[10px] text-[#3A1F0E]/50">{kinfolkResearchStatusLabel(researchStatus)} · Updated {researchStatus.asOf ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(new Date(researchStatus.asOf)) : "recently"}{researchStatus.degraded ? " · some current details may need a fresh check" : ""}</p>}
   </section>;
 }
 

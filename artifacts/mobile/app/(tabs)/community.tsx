@@ -107,6 +107,20 @@ function formatTimeAgo(iso: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+function parsePrivateCommunityMedia(value: unknown): CommunityPost["privateMedia"] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const media = item as Record<string, unknown>;
+    return typeof media.assetId === "string"
+      && (media.type === "image" || media.type === "video")
+      && typeof media.url === "string"
+      && media.url.startsWith("/api/community/posts/")
+      ? [{ assetId: media.assetId, type: media.type as "image" | "video", url: media.url }]
+      : [];
+  }).slice(0, 5);
+}
+
 function toPostCard(raw: Record<string, unknown>): CommunityPost {
   const mediaUrls = parseMediaUrls(raw.mediaUrls);
   return {
@@ -132,6 +146,7 @@ function toPostCard(raw: Record<string, unknown>): CommunityPost {
     businessName: (raw.businessName as string) ?? undefined,
     businessLink: (raw.businessLink as string) ?? undefined,
     mediaUrls,
+    privateMedia: parsePrivateCommunityMedia(raw.privateMedia),
     savedPlaceId: (raw.savedPlaceId as string) ?? undefined,
     locationTag: (raw.locationTag as string) ?? undefined,
     locationVenueName: (raw.locationVenueName as string) ?? undefined,
@@ -216,7 +231,7 @@ export default function CommunityScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const params = useLocalSearchParams<{ compose?: string; caption?: string; groupId?: string; groupName?: string }>();
+  const params = useLocalSearchParams<{ compose?: string; caption?: string; groupId?: string; groupName?: string; postId?: string }>();
   const parsedGroupId = typeof params.groupId === "string" ? Number.parseInt(params.groupId, 10) : NaN;
   const activeGroupId = Number.isInteger(parsedGroupId) && parsedGroupId > 0 ? parsedGroupId : null;
   const activeGroupName = typeof params.groupName === "string" ? params.groupName : "This Group";
@@ -250,9 +265,9 @@ export default function CommunityScreen() {
   // A private, explicit view choice. The server receives no display value on
   // Community feed reads, so it cannot change which posts are eligible or how
   // they rank the same permitted posts.
-  const [communityFeedDisplay, setCommunityFeedDisplay] = useState<CommunityFeedDisplay>("mixed");
+  const [communityFeedDisplay, setCommunityFeedDisplay] = useState<CommunityFeedDisplay>("text_first");
   const [showFeedControls, setShowFeedControls] = useState(false);
-  const [mediaAttachments, setMediaAttachments] = useState<{ uri: string; type: "image" | "video"; uploaded?: string; isGraphic?: boolean; warningType?: string }[]>([]);
+  const [mediaAttachments, setMediaAttachments] = useState<{ uri: string; type: "image" | "video"; uploaded?: string; assetId?: string; isGraphic?: boolean; warningType?: string }[]>([]);
   const [uploadingMedia, setUploadingMedia] = useState(false);
   const [newPostLocationTag, setNewPostLocationTag] = useState("");
   const [newPostLocationVenueName, setNewPostLocationVenueName] = useState<string | undefined>();
@@ -386,7 +401,7 @@ export default function CommunityScreen() {
           setCommunityFeedDisplay(body.communityFeedDisplay as CommunityFeedDisplay);
         }
       } catch {
-        // The local balanced view remains available if the private preference
+        // The local conversation-first view remains available if the private preference
         // cannot be fetched; existing Community posts are unaffected.
       }
     })();
@@ -396,7 +411,7 @@ export default function CommunityScreen() {
   const selectCommunityFeedDisplay = useCallback(async (next: CommunityFeedDisplay) => {
     const previous = communityFeedDisplay;
     setCommunityFeedDisplay(next);
-    setActiveTab("Feed");
+    setActiveTab("Community Feed");
     setShowFeedControls(false);
     requestAnimationFrame(() => {
       feedListRef.current?.scrollToOffset({ offset: 0, animated: false });
@@ -516,6 +531,29 @@ export default function CommunityScreen() {
   }, [isAuthenticated]);
 
   useEffect(() => {
+    const postId = typeof params.postId === "string" ? params.postId.trim() : "";
+    if (!postId || !isAuthenticated) return;
+    let active = true;
+    void (async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const response = await fetch(`${getApiBase()}/api/community/posts/${encodeURIComponent(postId)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        const body = await response.json().catch(() => ({})) as { post?: Record<string, unknown> };
+        if (active && response.ok && body.post) {
+          setActiveTab("Community Feed");
+          setSelectedPost(toPostCard(body.post));
+        }
+      } catch {
+        // A notification may refer to a deleted, private, or blocked post. Do not
+        // surface its existence or disrupt the member's current Community feed.
+      }
+    })();
+    return () => { active = false; };
+  }, [isAuthenticated, params.postId]);
+
+  useEffect(() => {
     if (params.compose === "true") {
       const caption = params.caption;
       if (caption) queueMicrotask(() => { setNewPostText(decodeURIComponent(caption)); });
@@ -602,26 +640,29 @@ export default function CommunityScreen() {
           type: mime,
           name: asset.fileName ?? `${kind}.${ext}`,
         } as unknown as Blob);
-        const res = await fetch(`${getApiBase()}/api/media/upload?purpose=community_post`, {
+        const privateAudience = newPostVisibility === "followers_only" || newPostIsPrivateTopic || activeGroupId !== null;
+        const purpose = privateAudience ? "community_post_private" : "community_post";
+        const res = await fetch(`${getApiBase()}/api/media/upload?purpose=${purpose}`, {
           method: "POST",
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           body: formData,
         });
         if (res.ok) {
-          const data = await res.json() as { url: string; isGraphic?: boolean; warningType?: string };
-          if (!data.url) {
-            Alert.alert("Upload failed", "The server did not return a media URL. Please try again.");
+          const data = await res.json() as { url?: string; assetId?: string; isGraphic?: boolean; warningType?: string };
+          if (privateAudience ? !data.assetId : !data.url) {
+            Alert.alert("Upload failed", "The server did not return a secure attachment reference. Please try again.");
             return;
           }
           const attachment = {
             uri: asset.uri,
             type: kind,
             uploaded: data.url,
+            assetId: data.assetId,
             isGraphic: data.isGraphic,
             warningType: data.warningType,
           };
           setMediaAttachments((current) => {
-            if (current.some((item) => item.uploaded === attachment.uploaded)) return current;
+            if (current.some((item) => item.uploaded === attachment.uploaded || item.assetId === attachment.assetId)) return current;
             return [...current, attachment].slice(0, 5);
           });
         } else {
@@ -644,6 +685,7 @@ export default function CommunityScreen() {
 
   const submitPost = async () => {
     if (!newPostText.trim()) return;
+    const privateAudience = newPostVisibility === "followers_only" || newPostIsPrivateTopic || activeGroupId !== null;
     if (uploadingMedia) {
       Alert.alert("Upload in progress", "Wait for your attachments to finish uploading before posting.");
       return;
@@ -652,13 +694,20 @@ export default function CommunityScreen() {
     const completedMediaUrls = mediaAttachments
       .map((attachment) => attachment.uploaded)
       .filter((url): url is string => typeof url === "string" && url.trim().length > 0);
+    const privateMediaAssetIds = mediaAttachments
+      .map((attachment) => attachment.assetId)
+      .filter((assetId): assetId is string => typeof assetId === "string" && assetId.trim().length > 0);
     const taggedSocialVideoUrl = newPostTagUrlIsSocialVideo ? newPostTagUrl.trim() : "";
+    if (privateAudience && taggedSocialVideoUrl) {
+      Alert.alert("Private media must stay in Community", "A public social-media link cannot be attached to a restricted post.");
+      return;
+    }
     const postMediaUrls = Array.from(new Set([
       ...completedMediaUrls,
       ...(taggedSocialVideoUrl ? [taggedSocialVideoUrl] : []),
     ])).slice(0, 5);
 
-    if (completedMediaUrls.length !== mediaAttachments.length) {
+    if ((privateAudience ? privateMediaAssetIds.length : completedMediaUrls.length) !== mediaAttachments.length) {
       Alert.alert("Attachment not ready", "Remove the failed attachment or retry its upload before posting.");
       return;
     }
@@ -685,7 +734,8 @@ export default function CommunityScreen() {
               : undefined,
           visibility: newPostVisibility,
           commentPolicy: newPostCommentPolicy,
-          mediaUrls: postMediaUrls,
+          mediaUrls: privateAudience ? undefined : postMediaUrls,
+          privateMediaAssetIds: privateAudience && privateMediaAssetIds.length ? privateMediaAssetIds : undefined,
           hasContentWarning: mediaAttachments.some((m) => m.isGraphic),
           contentWarningType: mediaAttachments.find((m) => m.isGraphic)?.warningType ?? undefined,
           locationTag: newPostLocationTag.trim() || undefined,
@@ -825,6 +875,15 @@ export default function CommunityScreen() {
             {activeGroupId ? <Text style={[styles.groupFeedLabel, { color: colors.mutedForeground }]}>Group posts</Text> : null}
           </View>
         </View>
+        {!activeGroupId && isAuthenticated && <TouchableOpacity
+          activeOpacity={0.85}
+          style={[styles.settingsBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+          onPress={() => router.push("/community-opportunities" as never)}
+          accessibilityLabel="Open Community opportunities"
+        >
+          <Feather name="briefcase" size={16} color={colors.foreground} />
+          <Text style={[styles.settingsBtnText, { color: colors.foreground }]}>Opportunities</Text>
+        </TouchableOpacity>}
         <TouchableOpacity
           activeOpacity={0.85}
           style={[styles.settingsBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
@@ -2037,6 +2096,20 @@ export default function CommunityScreen() {
                 <TouchableOpacity activeOpacity={0.85}
                   key={v}
                   onPress={() => {
+                    if (v === "followers_only" && mediaAttachments.some((attachment) => attachment.uploaded)) {
+                      Alert.alert(
+                        "Reattach media for a private audience",
+                        "Remove the current public attachment, choose Friends Only, then attach it again so Community stores it privately.",
+                      );
+                      return;
+                    }
+                    if (v === "public" && mediaAttachments.some((attachment) => attachment.assetId)) {
+                      Alert.alert(
+                        "Reattach media for a public audience",
+                        "Private Community attachments cannot be moved to a public post. Remove them, choose Public, then attach them again.",
+                      );
+                      return;
+                    }
                     setNewPostVisibility(v);
                     if (v === "followers_only" && newPostCommentPolicy === "everyone") setNewPostCommentPolicy("followers");
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -2119,7 +2192,23 @@ export default function CommunityScreen() {
                   </View>
                   <TouchableOpacity
                     style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-                    onPress={() => setNewPostIsPrivateTopic((v) => !v)}
+                    onPress={() => {
+                      if (!newPostIsPrivateTopic && mediaAttachments.some((attachment) => attachment.uploaded)) {
+                        Alert.alert(
+                          "Reattach media for a private topic",
+                          "Remove the current public attachment, turn on Private topic, then attach it again so Community stores it privately.",
+                        );
+                        return;
+                      }
+                      if (newPostIsPrivateTopic && newPostVisibility === "public" && mediaAttachments.some((attachment) => attachment.assetId)) {
+                        Alert.alert(
+                          "Private media needs a restricted audience",
+                          "Keep Friends Only selected, or remove the private attachment before turning off Private topic.",
+                        );
+                        return;
+                      }
+                      setNewPostIsPrivateTopic((v) => !v);
+                    }}
                     activeOpacity={0.8}
                   >
                     <View style={[{ width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, alignItems: "center", justifyContent: "center" }, newPostIsPrivateTopic ? { backgroundColor: "#7B2D8B", borderColor: "#7B2D8B" } : { borderColor: "#D1D5DB" }]}>

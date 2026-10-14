@@ -2985,9 +2985,11 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
     profile_view_tracking_enabled boolean DEFAULT true NOT NULL,
     post_nudges_enabled boolean DEFAULT true NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
-    safety_alert_police boolean DEFAULT true NOT NULL,
-    safety_alert_ice boolean DEFAULT true NOT NULL,
-    safety_alert_radius_miles integer DEFAULT 5 NOT NULL
+    safety_alert_police boolean DEFAULT false NOT NULL,
+    safety_alert_ice boolean DEFAULT false NOT NULL,
+    safety_alert_radius_miles integer DEFAULT 5 NOT NULL,
+    safety_alert_area_city character varying(100),
+    safety_alert_area_state character varying(2)
 );
 
 CREATE TABLE IF NOT EXISTS public.user_topic_follows (
@@ -11006,6 +11008,13 @@ BEGIN
   END IF;
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'neighborhood_surveys' AND column_name = 'community_intelligence_consent_at'
+  ) THEN
+    -- Historical surveys remain excluded until a member makes a new explicit choice.
+    ALTER TABLE IF EXISTS public.neighborhood_surveys ADD COLUMN community_intelligence_consent_at timestamp with time zone;
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'notification_preferences' AND column_name = 'user_id'
   ) THEN
     ALTER TABLE IF EXISTS public.notification_preferences ADD COLUMN user_id character varying NOT NULL;
@@ -14130,6 +14139,21 @@ BEGIN
   ) THEN
     ALTER TABLE IF EXISTS public.user_settings ADD COLUMN safety_alert_radius_miles integer DEFAULT 5 NOT NULL;
   END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'user_settings' AND column_name = 'safety_alert_area_city'
+  ) THEN
+    ALTER TABLE IF EXISTS public.user_settings ADD COLUMN safety_alert_area_city character varying(100);
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'user_settings' AND column_name = 'safety_alert_area_state'
+  ) THEN
+    ALTER TABLE IF EXISTS public.user_settings ADD COLUMN safety_alert_area_state character varying(2);
+  END IF;
+  ALTER TABLE IF EXISTS public.user_settings
+    ALTER COLUMN safety_alert_police SET DEFAULT false,
+    ALTER COLUMN safety_alert_ice SET DEFAULT false;
   IF NOT EXISTS (
     SELECT 1 FROM information_schema.columns
     WHERE table_schema = 'public' AND table_name = 'user_topic_follows' AND column_name = 'user_id'

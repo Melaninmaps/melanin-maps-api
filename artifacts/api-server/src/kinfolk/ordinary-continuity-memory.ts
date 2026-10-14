@@ -12,6 +12,7 @@ export function isOrdinaryContinuityMemoryRelevant(
     "goal",
     "ongoing_context",
     "planning_context",
+    "requirement_context",
   ].includes(memory.purpose)) {
     return false;
   }

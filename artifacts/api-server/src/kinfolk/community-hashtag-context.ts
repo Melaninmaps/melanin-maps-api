@@ -11,13 +11,21 @@ const MAX_CONTEXT_CHARACTERS = 720;
 const STOP_WORDS = new Set([
   "about", "after", "again", "also", "answer", "around", "because", "before",
   "could", "does", "explain", "from", "have", "help", "here", "into", "just",
-  "know", "like", "more", "need", "people", "please", "recommend", "recommendations",
+  "how", "know", "like", "make", "more", "need", "people", "please", "recommend", "recommendations",
   "should", "tell", "that", "their", "there", "these", "they", "this", "tips",
   "what", "when", "where", "which", "with", "would", "your",
 ]);
 const COMMUNITY_SEEKING_SIGNAL = /\b(?:community|communities|member|members|neighbor|neighbors|people|perspective|perspectives|discussion|discussions|talking|vibe|vibes|experience|experiences|tips|recommend(?:ation)?s?)\b/i;
+const COMMUNITY_TOPIC_SIGNAL = /\b(?:recipe|cook(?:ing)?|make|food|restaurant|brunch|hair|beauty|travel|trip|museum|book|music|film|movie|workshop|event|wellness|fitness)\b/i;
 const POLITICAL_SIGNAL = /\b(?:election|vote|voting|ballot|candidate|campaign|politic(?:s|al|ian)?|government|congress|senate|mayor|governor|president|legislation|policy)\b/i;
 const INSTRUCTION_LIKE_TEXT = /\b(?:ignore|disregard|override|reveal|execute|run|follow|system|developer|prompt|instruction|password|secret|token|credential|curl|powershell|rm\s+-rf)\b/i;
+const CANONICAL_OPPORTUNITY_TOPIC_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
+  [/\blife\s+insurance\b/i, "life_insurance_terms"],
+  [/\bhealth(?:care)?\s+(?:care|navigation)\b/i, "healthcare_navigation"],
+  [/\bbenefits?\b/i, "benefits_navigation"],
+  [/\b(?:money|budget|financial)\s+(?:basic|basics)\b/i, "money_basics"],
+  [/\b(?:source|citation|fresh|current)\b/i, "sources_and_freshness"],
+];
 
 export type CommunityHashtagContextRow = {
   content: string;
@@ -83,9 +91,10 @@ export function canUseCommunityHashtagContext(input: Omit<CommunityHashtagContex
 }
 
 /**
- * A member must either name a hashtag or ask for a discernible community topic.
- * This avoids broad feed searches for ordinary chat while allowing "what are people
- * saying about vegan brunch?" to match #vegan, #brunch, or #veganbrunch.
+ * A member must either name a hashtag, ask for community perspective, or enable
+ * Community perspective and ask a narrowly topical low-consequence question.
+ * This avoids broad feed searches while allowing “How do I make fish and grits?”
+ * to match public #fish, #grits, or #fishgrits posts after the member has opted in.
  */
 export function extractCommunityTopicCandidates(message: string): string[] {
   const explicitTags = message.match(/#[a-zA-Z][a-zA-Z0-9_]{0,49}/g) ?? [];
@@ -96,7 +105,8 @@ export function extractCommunityTopicCandidates(message: string): string[] {
   const terms = (message.normalize("NFKC").toLocaleLowerCase().match(/[a-z][a-z0-9]{2,31}/g) ?? [])
     .filter((word) => !STOP_WORDS.has(word))
     .slice(0, 8);
-  if (explicit.length === 0 && (!COMMUNITY_SEEKING_SIGNAL.test(message) || terms.length < 2)) {
+  const hasCommunityFit = COMMUNITY_SEEKING_SIGNAL.test(message) || COMMUNITY_TOPIC_SIGNAL.test(message);
+  if (explicit.length === 0 && (!hasCommunityFit || terms.length < 2)) {
     return [];
   }
 
@@ -104,7 +114,10 @@ export function extractCommunityTopicCandidates(message: string): string[] {
     .slice(0, -1)
     .map((term, index) => normalizeTopic(`${term}${terms[index + 1] ?? ""}`))
     .filter((tag): tag is string => Boolean(tag));
-  return [...new Set([...explicit, ...terms.map(normalizeTopic).filter((tag): tag is string => Boolean(tag)), ...compounds])]
+  const canonicalOpportunityTopics = CANONICAL_OPPORTUNITY_TOPIC_PATTERNS
+    .filter(([pattern]) => pattern.test(message))
+    .map(([, topic]) => topic);
+  return [...new Set([...explicit, ...canonicalOpportunityTopics, ...terms.map(normalizeTopic).filter((tag): tag is string => Boolean(tag)), ...compounds])]
     .slice(0, MAX_TOPIC_CANDIDATES);
 }
 
@@ -127,6 +140,14 @@ export function buildCommunityHashtagContextQuery(input: {
         SELECT lower(tag)
         FROM unnest(COALESCE(cp.hashtags, ARRAY[]::text[])) AS tag
         WHERE lower(tag) = ANY($2::text[])
+      ) || ARRAY(
+        SELECT opportunity.topic_key
+        FROM community_opportunity_fulfillments fulfillment
+        JOIN community_opportunities opportunity ON opportunity.id = fulfillment.opportunity_id
+        WHERE fulfillment.community_post_id::text = cp.id::text
+          AND fulfillment.status = 'published'
+          AND opportunity.status = 'fulfilled'
+          AND opportunity.topic_key = ANY($2::text[])
       ) AS matched_hashtags
     FROM community_posts cp
     LEFT JOIN users u ON u.id = cp.author_id
@@ -147,10 +168,21 @@ export function buildCommunityHashtagContextQuery(input: {
         FROM content_reports cr
         WHERE cr.target_type = 'post' AND cr.target_id = cp.id
       )
-      AND EXISTS (
-        SELECT 1
-        FROM unnest(COALESCE(cp.hashtags, ARRAY[]::text[])) AS tag
-        WHERE lower(tag) = ANY($2::text[])
+      AND (
+        EXISTS (
+          SELECT 1
+          FROM unnest(COALESCE(cp.hashtags, ARRAY[]::text[])) AS tag
+          WHERE lower(tag) = ANY($2::text[])
+        )
+        OR EXISTS (
+          SELECT 1
+          FROM community_opportunity_fulfillments fulfillment
+          JOIN community_opportunities opportunity ON opportunity.id = fulfillment.opportunity_id
+          WHERE fulfillment.community_post_id::text = cp.id::text
+            AND fulfillment.status = 'published'
+            AND opportunity.status = 'fulfilled'
+            AND opportunity.topic_key = ANY($2::text[])
+        )
       )
       AND COALESCE(to_jsonb(cp)->>'internal_test_content', 'false') <> 'true'
       AND COALESCE(to_jsonb(u)->>'is_load_test', 'false') <> 'true'

@@ -30,6 +30,7 @@ interface MemberSubmission {
   status: SubmissionStatus;
   review_note: string | null;
   matched_business_id: string | null;
+  submission_intent: "community" | "owner";
 }
 
 const STATUS: Record<SubmissionStatus, { label: string; detail: string; icon: keyof typeof Feather.glyphMap; color: string }> = {
@@ -38,6 +39,23 @@ const STATUS: Record<SubmissionStatus, { label: string; detail: string; icon: ke
   declined: { label: "Not published", detail: "Not public", icon: "x-circle", color: "#DC2626" },
   published: { label: "Published", detail: "Community-listed · Unclaimed · Not verified", icon: "check-circle", color: "#16803A" },
 };
+
+function statusForSubmission(item: MemberSubmission) {
+  if (item.submission_intent !== "owner") return STATUS[item.status] ?? STATUS.pending_review;
+  if (item.matched_business_id && item.status !== "published") {
+    return { label: "Existing listing under review", detail: "Private ownership request · Existing listing unchanged", icon: "copy" as const, color: "#B7791F" };
+  }
+  if (item.status === "published") {
+    return { label: "Listing published", detail: "Ownership control remains a separate review · Not verified", icon: "check-circle" as const, color: "#16803A" };
+  }
+  if (item.status === "needs_info") {
+    return { label: "More owner information needed", detail: "Private · Not public or managed yet", icon: "alert-circle" as const, color: "#2563EB" };
+  }
+  if (item.status === "declined") {
+    return { label: "Owner request not approved", detail: "No public page or management access was created", icon: "x-circle" as const, color: "#DC2626" };
+  }
+  return { label: "Owner request under review", detail: "Private · Not public, verified, or managed yet", icon: "clock" as const, color: "#B7791F" };
+}
 
 export default function MyBusinessSubmissionsScreen() {
   const colors = useColors();
@@ -80,7 +98,7 @@ export default function MyBusinessSubmissionsScreen() {
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>My Business Submissions</Text>
-        <TouchableOpacity onPress={() => router.push("/list-business" as never)} accessibilityLabel="Share another business">
+        <TouchableOpacity onPress={() => router.push({ pathname: "/list-business", params: { intent: "owner" } } as never)} accessibilityLabel="Add another business">
           <Feather name="plus" size={22} color={colors.primary} />
         </TouchableOpacity>
       </View>
@@ -92,7 +110,7 @@ export default function MyBusinessSubmissionsScreen() {
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 36 }]}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void load(true)} tintColor={colors.primary} />}
         >
-          <Text style={[styles.intro, { color: colors.mutedForeground }]}>Complete ordinary businesses publish immediately. Only records needing location, evidence, duplicate, regulated-service, or resource-routing checks stay private.</Text>
+          <Text style={[styles.intro, { color: colors.mutedForeground }]}>Owner requests stay private until review. Duplicate matches, evidence checks, information requests, and any later listing decision are shown here without changing an existing public listing automatically.</Text>
           {error ? (
             <View style={[styles.notice, { borderColor: "#DC262655", backgroundColor: "#DC262610" }]}>
               <Text style={{ color: "#DC2626", flex: 1 }}>{error}</Text>
@@ -104,15 +122,15 @@ export default function MyBusinessSubmissionsScreen() {
             <View style={styles.center}>
               <Feather name="briefcase" size={42} color={colors.primary} />
               <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No submissions yet</Text>
-              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Businesses you share will appear here with their review status.</Text>
-              <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.primary }]} onPress={() => router.push("/list-business" as never)}>
-                <Text style={[styles.primaryButtonText, { color: colors.primaryForeground }]}>Share a Business</Text>
+              <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>Your business-owner requests will appear here with their private review status.</Text>
+              <TouchableOpacity style={[styles.primaryButton, { backgroundColor: colors.primary }]} onPress={() => router.push({ pathname: "/list-business", params: { intent: "owner" } } as never)}>
+                <Text style={[styles.primaryButtonText, { color: colors.primaryForeground }]}>Add My Business</Text>
               </TouchableOpacity>
             </View>
           ) : null}
 
           {submissions.map((item) => {
-            const status = STATUS[item.status] ?? STATUS.pending_review;
+            const status = statusForSubmission(item);
             return (
               <View key={item.id} style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <View style={styles.cardTop}>
@@ -131,11 +149,11 @@ export default function MyBusinessSubmissionsScreen() {
                   </View>
                 ) : null}
                 {item.status === "needs_info" ? (
-                  <Text style={[styles.helpText, { color: colors.mutedForeground }]}>Update this submission from the Mapping With Melanin website. Your existing record and review history will be preserved.</Text>
+                  <Text style={[styles.helpText, { color: colors.mutedForeground }]}>{item.submission_intent === "owner" ? "A reviewer needs more information. Updating the request keeps the existing record and review history; it does not publish or grant management access automatically." : "Update this submission from the Mapping With Melanin website. Your existing record and review history will be preserved."}</Text>
                 ) : null}
                 {item.matched_business_id ? (
                   <TouchableOpacity style={[styles.outlineButton, { borderColor: colors.primary }]} onPress={() => router.push({ pathname: "/business/[id]", params: { id: item.matched_business_id! } } as never)}>
-                    <Text style={{ color: colors.primary, fontWeight: "700" }}>{item.status === "published" ? "View Community Listing" : "View Existing Listing"}</Text>
+                    <Text style={{ color: colors.primary, fontWeight: "700" }}>{item.status === "published" ? "View Community Listing" : item.submission_intent === "owner" ? "View Matched Listing" : "View Existing Listing"}</Text>
                   </TouchableOpacity>
                 ) : null}
                 <Text selectable style={[styles.id, { color: colors.mutedForeground }]}>Submission ID: {item.id}</Text>

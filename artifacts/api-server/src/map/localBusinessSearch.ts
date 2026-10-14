@@ -1,5 +1,6 @@
 import type { Pool } from "pg";
 import { PROVEN_DEMO_BUSINESS_SQL_PREDICATE } from "../businesses/businessDemoContainment";
+import { documentedDiscoveryEligibilitySqlPredicate } from "../businesses/documentedDiscoveryEligibility";
 import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 import {
   businessSubjectSearchPatterns,
@@ -98,6 +99,7 @@ export class LocalBusinessSearch {
     const patterns = subject
       ? businessSubjectSearchPatterns(subject)
       : [genericSearchPattern(q)];
+    const mapEligibility = documentedDiscoveryEligibilitySqlPredicate("b.id", "map");
 
     // Classification, business name, and governed specialties are the only
     // service-match sources. General tags, descriptions, and other prose are
@@ -126,18 +128,21 @@ export class LocalBusinessSearch {
             AND b.latitude::numeric BETWEEN -90 AND 90
             AND b.longitude::numeric BETWEEN -180 AND 180
             AND (b.latitude::numeric <> 0 OR b.longitude::numeric <> 0)
+            AND ${mapEligibility}
           THEN b.latitude::double precision END AS latitude,
           CASE WHEN
             b.latitude IS NOT NULL AND b.longitude IS NOT NULL
             AND b.latitude::numeric BETWEEN -90 AND 90
             AND b.longitude::numeric BETWEEN -180 AND 180
             AND (b.latitude::numeric <> 0 OR b.longitude::numeric <> 0)
+            AND ${mapEligibility}
           THEN b.longitude::double precision END AS longitude,
           CASE WHEN
             b.latitude IS NOT NULL AND b.longitude IS NOT NULL
             AND b.latitude::numeric BETWEEN -90 AND 90
             AND b.longitude::numeric BETWEEN -180 AND 180
             AND (b.latitude::numeric <> 0 OR b.longitude::numeric <> 0)
+            AND ${mapEligibility}
           THEN (3958.7613 * acos(least(1, greatest(-1,
             cos(radians($1)) * cos(radians(b.latitude::double precision))
               * cos(radians(b.longitude::double precision) - radians($2))

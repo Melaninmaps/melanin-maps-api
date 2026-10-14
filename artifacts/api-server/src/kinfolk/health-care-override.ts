@@ -4,7 +4,7 @@ import type { KinfolkIntent } from "./intent-router";
 export type HealthCareOverrideSource = Readonly<{
   title: string;
   url: string;
-  source: "NCI" | "CDC" | "NIH MedlinePlus" | "HRSA" | "CMS Medicare";
+  source: "NCI" | "CDC" | "NIH MedlinePlus" | "HRSA" | "CMS Medicare" | "AAPD";
 }>;
 
 export type HealthCareOverride = Readonly<{
@@ -21,7 +21,11 @@ const MEDICATION_RE =
   /\b(?:medication|medicine|prescription|dose|dosage|side effect|drug interaction|interact(?:ion|s)?|missed dose|pharmacist)\b/i;
 
 const CARE_NAVIGATION_RE =
-  /\b(?:where\s+can\s+i\s+find|find\s+(?:me\s+)?|help\s+me\s+find|show\s+me|need\s+(?:a\s+)?|looking\s+for|appointment|seen\s+by|see\s+(?:a\s+)?)\b[\s\S]{0,80}\b(?:doctor|clinician|physician|specialist|hospital|clinic|primary\s+care|urgent\s+care|ob[\s/-]?gyn|gynecolog(?:ist|y)|breast\s+specialist|diagnostic\s+(?:imaging|mammogram)|oncolog(?:ist|y)|dermatolog(?:ist|y)|pharmacist)\b/i;
+  /\b(?:where\s+can\s+i\s+find|find\s+(?:me\s+)?|help\s+me\s+find|show\s+me|need\s+(?:a\s+)?|looking\s+for|appointment|seen\s+by|see\s+(?:a\s+)?)\b[\s\S]{0,80}\b(?:doctor|clinician|physician|specialist|hospital|clinic|primary\s+care|urgent\s+care|ob[\s/-]?gyn|gynecolog(?:ist|y)|breast\s+specialist|diagnostic\s+(?:imaging|mammogram)|oncolog(?:ist|y)|dermatolog(?:ist|y)|pharmacist|dentist|dental|pediatric\s+dentist)\b/i;
+const PHARMACY_NAVIGATION_RE = /\b(?:pharmacy|pharmacist)\b/i;
+
+const PEDIATRIC_DENTAL_NAVIGATION_RE =
+  /\b(?:pediatric|paediatric)(?:\s+(?:dentist|dental))?\b|\b(?:dentist|dental)\b[\s\S]{0,40}\b(?:child|children|kid|kids|pediatric|paediatric)\b/i;
 
 const EMPTY_OVERRIDE: HealthCareOverride = {
   applies: false,
@@ -29,6 +33,20 @@ const EMPTY_OVERRIDE: HealthCareOverride = {
   promptBlock: "",
   sources: [],
 };
+
+/**
+ * A conservative current-turn guard for callers that must not route qualified
+ * care discovery through an ordinary business search before intent classification
+ * has recognized the medical domain.
+ */
+export function isHealthCareNavigationRequest(message: string): boolean {
+  return CARE_NAVIGATION_RE.test(message.trim());
+}
+
+/** Private Saved Place origins must not turn pharmacy or care queries into ordinary directory results. */
+export function isPrivateOriginCareRestrictedRequest(message: string): boolean {
+  return isHealthCareNavigationRequest(message) || PHARMACY_NAVIGATION_RE.test(message.trim());
+}
 
 function uniqueSources(
   sources: readonly HealthCareOverrideSource[],
@@ -59,7 +77,8 @@ export function buildHealthCareOverride(input: {
   const message = input.message.trim();
   const hasBreastChange = BREAST_CHANGE_RE.test(message);
   const hasMedicationQuestion = MEDICATION_RE.test(message);
-  const isCareNavigation = hasBreastChange || CARE_NAVIGATION_RE.test(message);
+  const requestsPediatricDentalCare = PEDIATRIC_DENTAL_NAVIGATION_RE.test(message);
+  const isCareNavigation = hasBreastChange || isHealthCareNavigationRequest(message);
 
   if (!hasBreastChange && !hasMedicationQuestion && !isCareNavigation) {
     return EMPTY_OVERRIDE;
@@ -81,6 +100,14 @@ export function buildHealthCareOverride(input: {
       source: "CMS Medicare",
     },
   ];
+
+  if (requestsPediatricDentalCare) {
+    sources.unshift({
+      title: "American Academy of Pediatric Dentistry: Find a Pediatric Dentist",
+      url: "https://www.aapd.org/resources/member/",
+      source: "AAPD",
+    });
+  }
 
   if (hasBreastChange) {
     sources.unshift({
@@ -129,6 +156,7 @@ CARE-NAVIGATION RULE:
 - Health care is a care-override category for this turn. Never withhold or delay a qualified-care pathway because an ownership designation is absent from MWM.
 - Do not use MWM ownership badges, a saved Support Lens, vibe tags, community popularity, reviews, or general business-directory status to determine clinical qualification, appointment speed, insurance coverage, price, safety, or patient respect.
 - Do not output an ordinary MWM business card as a medical referral. The current general directory does not verify real-time appointment availability, insurance, price, or broad clinical credentials.
+- For a pediatric dentist request, use the returned American Academy of Pediatric Dentistry finder as the qualified-care pathway. Do not substitute a generic clinic, medical spa, or ordinary directory listing, and do not claim that an individual provider accepts new patients, insurance, or a particular age group without direct confirmation.
 - Offer the official care-navigation links returned with this response. If location is needed, ask only for the city or ZIP necessary to help the member use a qualified official finder. Make clear that the member must confirm availability, network coverage, credentials, and fit directly with the practice.
 - If the member explicitly asks for cultural context, present it as a preference or separately sourced group-level information; never treat it as a substitute for timely qualified care.`
     : "";

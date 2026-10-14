@@ -77,6 +77,19 @@ function formatPostTimeAgo(iso: unknown): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+function privateMediaFromRaw(value: unknown): CommunityPost["privateMedia"] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return [];
+    const media = item as Record<string, unknown>;
+    return typeof media.assetId === "string" && typeof media.url === "string"
+      && (media.type === "image" || media.type === "video")
+      && media.url.startsWith("/api/community/posts/")
+      ? [{ assetId: media.assetId, type: media.type as "image" | "video", url: media.url }]
+      : [];
+  }).slice(0, 5);
+}
+
 function toMemberGroupPost(raw: Record<string, unknown>): CommunityPost {
   const category = raw.category === "recommendation" || raw.category === "alert" || raw.category === "question"
     ? raw.category
@@ -104,6 +117,7 @@ function toMemberGroupPost(raw: Record<string, unknown>): CommunityPost {
     groupId: typeof raw.groupId === "number" ? raw.groupId : undefined,
     liked: raw.liked === true,
     mediaUrls: parseMediaUrls(raw.mediaUrls),
+    privateMedia: privateMediaFromRaw(raw.privateMedia),
     hasContentWarning: raw.hasContentWarning === true,
     contentWarningType: typeof raw.contentWarningType === "string" ? raw.contentWarningType : undefined,
     threadId: typeof raw.threadId === "string" ? raw.threadId : undefined,
@@ -168,6 +182,7 @@ export default function GroupDetailScreen() {
   const [showAdminSettings, setShowAdminSettings] = useState(false);
   const [ageRestricted, setAgeRestricted] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
+  const [memberActionId, setMemberActionId] = useState<string | null>(null);
 
   const topPad = Platform.OS === "web" ? 67 : insets.top;
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
@@ -358,6 +373,51 @@ export default function GroupDetailScreen() {
       });
       if (!res.ok) { setAgeRestricted(!value); Alert.alert("Error", "Failed to update group settings."); }
     } finally { setSavingSettings(false); }
+  };
+
+  const handleMemberRole = async (memberId: string, role: "admin" | "member") => {
+    if (!group || memberActionId) return;
+    setMemberActionId(`role:${memberId}`);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const response = await fetch(`${getApiBase()}/api/groups/${group.id}/members/${encodeURIComponent(memberId)}/role`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(payload.error ?? "Could not update this member");
+      setMembers((current) => current.map((member) => member.userId === memberId ? { ...member, role } : member));
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      Alert.alert("Couldn’t update member", error instanceof Error ? error.message : "Please try again.");
+    } finally { setMemberActionId(null); }
+  };
+
+  const removeMember = async (memberId: string) => {
+    if (!group || memberActionId) return;
+    setMemberActionId(`remove:${memberId}`);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const response = await fetch(`${getApiBase()}/api/groups/${group.id}/members/${encodeURIComponent(memberId)}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(payload.error ?? "Could not remove this member");
+      setMembers((current) => current.filter((member) => member.userId !== memberId));
+      setGroup((current) => current ? { ...current, memberCount: Math.max(0, current.memberCount - 1) } : current);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } catch (error) {
+      Alert.alert("Couldn’t remove member", error instanceof Error ? error.message : "Please try again.");
+    } finally { setMemberActionId(null); }
+  };
+
+  const confirmRemoveMember = (memberId: string) => {
+    Alert.alert("Remove this member?", "They will lose access to this Group’s posts, media, members, and plans.", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Remove", style: "destructive", onPress: () => { void removeMember(memberId); } },
+    ]);
   };
 
   const handleJoinLeave = async () => {
@@ -591,6 +651,26 @@ export default function GroupDetailScreen() {
                       <Text style={[styles.memberName, { color: colors.foreground }]}>{memberName}</Text>
                       <Text style={[styles.memberRole, { color: colors.mutedForeground }]}>{m.role === "admin" ? "Admin" : "Member"}</Text>
                     </View>
+                    {group.isAdmin && (
+                      <View style={styles.memberAdminActions}>
+                        <TouchableOpacity
+                          style={[styles.memberManageBtn, { borderColor: catColor, backgroundColor: catColor + "12" }]}
+                          onPress={() => void handleMemberRole(m.userId, m.role === "admin" ? "member" : "admin")}
+                          disabled={memberActionId !== null}
+                          activeOpacity={0.7}
+                        >
+                          {memberActionId === `role:${m.userId}` ? <ActivityIndicator size="small" color={catColor} /> : <><Feather name="shield" size={12} color={catColor} /><Text style={[styles.memberManageBtnText, { color: catColor }]}>{m.role === "admin" ? "Make member" : "Make moderator"}</Text></>}
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.memberManageBtn, { borderColor: "#DC2626", backgroundColor: "#DC262612" }]}
+                          onPress={() => confirmRemoveMember(m.userId)}
+                          disabled={memberActionId !== null}
+                          activeOpacity={0.7}
+                        >
+                          {memberActionId === `remove:${m.userId}` ? <ActivityIndicator size="small" color="#DC2626" /> : <><Feather name="user-minus" size={12} color="#DC2626" /><Text style={[styles.memberManageBtnText, { color: "#DC2626" }]}>Remove</Text></>}
+                        </TouchableOpacity>
+                      </View>
+                    )}
                     {!connStatus && (
                       <TouchableOpacity
                         style={[styles.connectBtn, { borderColor: catColor, backgroundColor: catColor + "12" }]}
@@ -1090,6 +1170,9 @@ const styles = StyleSheet.create({
   memberAvatar: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center", flexShrink: 0 },
   memberName: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   memberRole: { fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 },
+  memberAdminActions: { alignItems: "flex-end", gap: 5 },
+  memberManageBtn: { flexDirection: "row", alignItems: "center", gap: 4, borderWidth: 1, borderRadius: 8, paddingHorizontal: 7, paddingVertical: 5 },
+  memberManageBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 10 },
   connectBtn: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 10, borderWidth: 1.5 },
   connectBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   connStatusPill: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, borderWidth: 1 },

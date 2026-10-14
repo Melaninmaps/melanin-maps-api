@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  KINFOLK_APPROVED_PERSONAS,
   buildKinfolkConversationModeInstruction,
   buildKinfolkConversationModePrompt,
   buildKinfolkEmotionalCheckInContract,
@@ -12,7 +13,7 @@ import {
 
 describe("Kinfolk conversation modes", () => {
   it.each([
-    ["community", "Big Cousin"],
+    ["big_cousin", "Big Cousin"],
     ["professor", "Professor"],
     ["business_manager", "Business Manager"],
     ["best_friend", "Best Friend"],
@@ -22,10 +23,20 @@ describe("Kinfolk conversation modes", () => {
     expect(buildKinfolkConversationModeInstruction(value)).not.toMatch(/imitate an identity|accent|dialect/i);
   });
 
-  it("safely maps legacy or invalid values to Big Cousin", () => {
-    expect(normalizeKinfolkConversationMode("neighborhood_guide")).toBe("community");
-    expect(normalizeKinfolkConversationMode("professional")).toBe("community");
-    expect(normalizeKinfolkConversationMode(undefined)).toBe("community");
+  it("allows only four canonical personas and safely routes aliases or invalid values to Big Cousin", () => {
+    expect(KINFOLK_APPROVED_PERSONAS).toEqual([
+      "big_cousin",
+      "professor",
+      "business_manager",
+      "best_friend",
+    ]);
+    expect(normalizeKinfolkConversationMode("Big Cousin")).toBe("big_cousin");
+    expect(normalizeKinfolkConversationMode("community")).toBe("big_cousin");
+    expect(normalizeKinfolkConversationMode("neighborhood_guide")).toBe("big_cousin");
+    expect(normalizeKinfolkConversationMode("professional")).toBe("big_cousin");
+    expect(normalizeKinfolkConversationMode(undefined)).toBe("big_cousin");
+    expect(buildKinfolkConversationModePrompt("community" as never)).toContain("BIG COUSIN MODE");
+    expect(buildKinfolkEmotionalCheckInContract("community" as never)).toContain("do not have to make it sound pretty");
   });
 
   it("uses document formatting only for an explicit formal authoring request", () => {
@@ -41,11 +52,11 @@ describe("Kinfolk conversation modes", () => {
   });
 
   it("keeps hard-day and good-day support specific to each selected voice", () => {
-    expect(buildKinfolkEmotionalCheckInContract("community")).toContain("do not have to make it sound pretty");
+    expect(buildKinfolkEmotionalCheckInContract("big_cousin")).toContain("do not have to make it sound pretty");
     expect(buildKinfolkEmotionalCheckInContract("professor")).toContain("hardest part");
     expect(buildKinfolkEmotionalCheckInContract("business_manager")).toContain("handle, postpone, or release");
     expect(buildKinfolkEmotionalCheckInContract("best_friend")).toContain("listen, distract, or sit with it");
-    for (const mode of ["community", "professor", "business_manager", "best_friend"] as const) {
+    for (const mode of ["big_cousin", "professor", "business_manager", "best_friend"] as const) {
       const contract = buildKinfolkEmotionalCheckInContract(mode);
       expect(contract).toContain("Do not turn a check-in into a business recommendation");
       expect(contract).toContain("Ask at most one gentle follow-up question");
@@ -53,10 +64,11 @@ describe("Kinfolk conversation modes", () => {
   });
 
   it("provides materially distinct ordinary-advice framing for all four voices", () => {
-    expect(buildKinfolkConversationModeInstruction("community")).toContain("here is how to go about it");
+    expect(buildKinfolkConversationModeInstruction("big_cousin")).toContain("here is how to go about it");
     expect(buildKinfolkConversationModeInstruction("best_friend")).toContain("here is the move");
     expect(buildKinfolkConversationModeInstruction("professor")).toContain("Answer, Why it matters, and Practice line");
     expect(buildKinfolkConversationModeInstruction("business_manager")).toContain("Priority, Decision, and Next action");
+    expect(new Set(KINFOLK_APPROVED_PERSONAS.map(buildKinfolkConversationModeInstruction)).size).toBe(4);
   });
 
   it("makes the same delivery-only isolation boundary mandatory for every mode", () => {
@@ -67,7 +79,7 @@ describe("Kinfolk conversation modes", () => {
     expect(boundary).toContain("must not create, pause, resume, revoke, delete");
     expect(boundary).toContain("selected TTS speaker identity");
 
-    for (const mode of ["community", "professor", "business_manager", "best_friend"] as const) {
+    for (const mode of ["big_cousin", "professor", "business_manager", "best_friend"] as const) {
       expect(buildKinfolkConversationModePrompt(mode)).toContain(boundary);
     }
   });

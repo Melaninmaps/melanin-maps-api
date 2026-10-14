@@ -3,11 +3,12 @@
  * Roles are allowlisted here; no call site reads a model environment variable
  * directly. Deployments can pin an approved provider model per role.
  */
-export type KinfolkModelRole = "staffDemo" | "fallback" | "webSearch" | "libraryResearch" | "transcription" | "transcriptReview" | "embedding";
+export type KinfolkModelRole = "staffDemo" | "fallback" | "webSearch" | "libraryResearch" | "transcription" | "transcriptReview" | "speech" | "embedding";
 
 const CHAT_MODELS = new Set(["gpt-5", "gpt-5-mini", "gpt-4.1", "gpt-4.1-mini", "gpt-4o", "gpt-4o-mini"]);
 const RESEARCH_MODELS = new Set(["gpt-5", "gpt-5-mini", "gpt-4o", "gpt-4o-mini"]);
 const TRANSCRIPTION_MODELS = new Set(["gpt-transcribe", "gpt-4o-transcribe", "gpt-4o-mini-transcribe", "whisper-1"]);
+const SPEECH_MODELS = new Set(["gpt-4o-mini-tts"]);
 const EMBEDDING_MODELS = new Set(["text-embedding-3-small"]);
 export const KINFOLK_EMBEDDING_DIMENSIONS = 1536;
 
@@ -28,6 +29,9 @@ const SETTINGS: Record<KinfolkModelRole, { env: string | null; fallback: string;
   // A bounded review-only suggestion follows transcription. It may improve
   // readability but can never submit, persist, or replace the raw transcript.
   transcriptReview: { env: null, fallback: "gpt-4o-mini", allowed: CHAT_MODELS },
+  // Speech uses the dedicated provider endpoint and one reviewed model. The
+  // member may select only an approved synthetic speaker, never a model.
+  speech: { env: "KINFOLK_TTS_MODEL", fallback: "gpt-4o-mini-tts", allowed: SPEECH_MODELS },
   // Semantic retrieval is an existing optional internal path, not a configurable
   // provider-readiness role. Keep its model centralized without inventing an
   // additional environment role beyond the five approved by this assignment.

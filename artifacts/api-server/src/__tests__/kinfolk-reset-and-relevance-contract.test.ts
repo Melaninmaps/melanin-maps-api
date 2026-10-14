@@ -6,8 +6,8 @@ const webMemoryManagerSource = readFileSync(
   new URL("../../../web/src/components/kinfolk/KinfolkMemoryManager.tsx", import.meta.url),
   "utf8",
 );
-const mobileSettingsSource = readFileSync(
-  new URL("../../../mobile/app/kinfolk-settings.tsx", import.meta.url),
+const mobileMemoryManagerSource = readFileSync(
+  new URL("../../../mobile/app/kinfolk-memory.tsx", import.meta.url),
   "utf8",
 );
 
@@ -48,9 +48,9 @@ describe("Kinfolk practical relevance and member reset contract", () => {
     expect(webMemoryManagerSource).toContain('data-testid="reset-kinfolk"');
     expect(webMemoryManagerSource).toContain("Start Kinfolk fresh?");
     expect(webMemoryManagerSource).toContain("api/kinfolk/reset");
-    expect(mobileSettingsSource).toContain('accessibilityLabel="Reset Kinfolk"');
-    expect(mobileSettingsSource).toContain("Start Kinfolk fresh?");
-    expect(mobileSettingsSource).toContain("api/kinfolk/reset");
+    expect(mobileMemoryManagerSource).toContain('accessibilityLabel="Reset Kinfolk"');
+    expect(mobileMemoryManagerSource).toContain("Start Kinfolk fresh?");
+    expect(mobileMemoryManagerSource).toContain("api/kinfolk/reset");
   });
 
   it("honors the member's saved Kinfolk Voice when a chat entry point has no turn override", () => {

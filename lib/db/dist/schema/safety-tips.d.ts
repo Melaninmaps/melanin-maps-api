@@ -312,40 +312,6 @@ export declare const safetyTipConfirmationsTable: import("drizzle-orm/pg-core").
         }, {}, {
             length: number | undefined;
         }>;
-        userLat: import("drizzle-orm/pg-core").PgColumn<{
-            name: "user_lat";
-            tableName: "safety_tip_confirmations";
-            dataType: "number";
-            columnType: "PgReal";
-            data: number;
-            driverParam: string | number;
-            notNull: false;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        userLng: import("drizzle-orm/pg-core").PgColumn<{
-            name: "user_lng";
-            tableName: "safety_tip_confirmations";
-            dataType: "number";
-            columnType: "PgReal";
-            data: number;
-            driverParam: string | number;
-            notNull: false;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
         createdAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "created_at";
             tableName: "safety_tip_confirmations";

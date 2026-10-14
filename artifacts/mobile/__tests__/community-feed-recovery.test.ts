@@ -32,7 +32,8 @@ describe("mobile Community feed recovery", () => {
     expect(source).toContain('accessibilityLabel="Hide Community keyboard"');
     expect(source).toContain("onRequestClose={closeCompose}");
     expect(source).toContain("const feedListRef = useRef<FlatList<CommunityPost> | null>(null)");
-    expect(source).toContain("setActiveTab(\"Feed\")");
+    expect(source).toContain("setActiveTab(\"Community Feed\")");
+    expect(source).not.toContain("setActiveTab(\"Feed\")");
     expect(source).toContain("feedListRef.current?.scrollToOffset({ offset: 0, animated: false })");
   });
 
@@ -43,7 +44,8 @@ describe("mobile Community feed recovery", () => {
     );
     expect(modal).toContain('method: "POST"');
     expect(modal).toContain("/api/community/posts/${post.id}/comments");
-    expect(modal).toContain("setComments((prev) => [data.comment, ...prev])");
+    expect(modal).toContain("setComments((previous) => orderedComments(");
+    expect(modal).toContain(": [...previous, data.comment]");
     expect(modal).toContain("data.commentsCount ?? commentCountRef.current + 1");
     expect(modal).toContain("body.commentsCount ?? Math.max(0, commentCountRef.current - 1)");
     expect(modal).toContain('accessibilityLabel="Retry loading comments"');

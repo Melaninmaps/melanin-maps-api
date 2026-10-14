@@ -29,6 +29,15 @@ export type LocationResolution =
   | { kind: "ambiguous"; candidates: ResolvedArea[] }
   | { kind: "not_found" };
 
+function isMissingRelation(error: unknown): boolean {
+  return Boolean(
+    error
+    && typeof error === "object"
+    && "code" in error
+    && (error as { code?: string }).code === "42P01",
+  );
+}
+
 const PHILADELPHIA_AREA: ResolvedArea = Object.freeze({
   id: "89f14ab4-0f8d-4f52-97be-f12617191919",
   label: "Philadelphia, PA",
@@ -159,7 +168,13 @@ export async function resolveLocationText(
        END
      LIMIT 25`,
     [parsed.cityOrNeighborhood, parsed.stateCode],
-  );
+  ).catch((error): { rows: ResolvedArea[] } => {
+    // An isolated release-mode environment can intentionally omit optional
+    // resolver tables. Do not turn an approved canonical city into a 500.
+    // Other database failures remain visible and do not receive a fallback.
+    if (isMissingRelation(error)) return { rows: [] };
+    throw error;
+  });
 
   const candidates = uniqueAreas(rows);
   if (candidates.length === 1) {
@@ -219,7 +234,12 @@ export async function resolveLocationText(
      ORDER BY UPPER(COALESCE(l.state_code, ''))
      LIMIT 25`,
     [parsed.cityOrNeighborhood, parsed.stateCode],
-  );
+  ).catch((error): { rows: ResolvedArea[] } => {
+    // A missing optional inventory relation means this area is unsupported in
+    // the isolated environment, not that a broad substitute may be invented.
+    if (isMissingRelation(error)) return { rows: [] };
+    throw error;
+  });
   const inventoryCandidates = uniqueAreas(inventoryResult.rows);
   if (inventoryCandidates.length === 1) {
     return { kind: "resolved", area: inventoryCandidates[0], source: "published_inventory" };

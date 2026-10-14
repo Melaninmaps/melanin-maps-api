@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
 import { SafetyLocationPicker, type SafetyLocationSource } from "@/features/location/SafetyLocationPicker";
 import type { ResolvedArea } from "@/features/location/useLocationResolver";
 import {
-  Shield, AlertTriangle, Radio, Users, MapPin, Phone, ChevronRight,
+  Shield, AlertTriangle, Radio, Users, Phone, ChevronRight,
   X, CheckCircle, Loader2, Eye, EyeOff, Flag, Building2,
   Heart, BookOpen, AlertCircle, Star, Clock
 } from "lucide-react";
@@ -580,32 +580,6 @@ type FeatureCard = { icon: React.ElementType; label: string; color: string; bg: 
 // ── Main Safety Hub ────────────────────────────────────────────────────────
 export default function Safety() {
   const [activeSheet, setActiveSheet] = useState<ReportSheet>("none");
-  const [safetyArea, setSafetyArea] = useState<ResolvedArea | null>(null);
-  const [alerts, setAlerts] = useState<Array<{id:string; type:string; description?:string; createdAt:string; confirmCount:number; distanceKm:number}>>([]);
-  const [alertsState, setAlertsState] = useState<"idle" | "loading" | "ready" | "error">("idle");
-
-  useEffect(() => {
-    if (safetyArea?.latitude == null || safetyArea?.longitude == null) {
-      setAlerts([]);
-      setAlertsState("idle");
-      return;
-    }
-    const controller = new AbortController();
-    setAlertsState("loading");
-    authenticatedFetch(`${BASE}api/community-alerts/nearby?lat=${encodeURIComponent(safetyArea.latitude)}&lng=${encodeURIComponent(safetyArea.longitude)}&radius=16.09`, { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) throw new Error(String(response.status));
-        return response.json() as Promise<{ alerts?: Array<{id:string; type:string; description?:string; createdAt:string; confirmCount:number; distanceKm:number}> }>;
-      })
-      .then((data) => {
-        setAlerts((data.alerts ?? []).slice(0, 5));
-        setAlertsState("ready");
-      })
-      .catch((error) => {
-        if (error.name !== "AbortError") setAlertsState("error");
-      });
-    return () => controller.abort();
-  }, [safetyArea]);
 
   const FEATURE_CARDS: FeatureCard[] = [
     { icon: Radio, label: "Community Intelligence", color: "#CA922B", bg: "#CA922B18", href: "#alerts" },
@@ -618,16 +592,6 @@ export default function Safety() {
     { icon: Heart, label: "Mental Health Resources", color: "#EC4899", bg: "#EC489918", href: "/resources" },
     { icon: Clock, label: "Officer Watch", color: "#6B7280", bg: "#6B728018", href: "/map" },
   ];
-
-  function timeAgo(iso: string): string {
-    const diff = Date.now() - new Date(iso).getTime();
-    const m = Math.floor(diff / 60000);
-    if (m < 1) return "Just now";
-    if (m < 60) return `${m}m ago`;
-    const h = Math.floor(m / 60);
-    if (h < 24) return `${h}h ago`;
-    return `${Math.floor(h / 24)}d ago`;
-  }
 
   return (
     <div className="min-h-screen bg-[#FAF6EF]">
@@ -689,73 +653,19 @@ export default function Safety() {
           </div>
         </div>
 
-        {/* Community Intelligence / Nearby Alerts */}
+        {/* Community Intelligence is intentionally non-proximity based. */}
         <div id="alerts">
           <div className="flex items-center justify-between mb-3">
             <p className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">Community Intelligence</p>
             <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#CA922B]">
-              <Radio className="w-3 h-3" /> Live
+              <Shield className="w-3 h-3" /> Privacy first
             </div>
           </div>
-          <div className="mb-3 rounded-2xl border border-[#3A1F0E]/8 bg-white p-4">
-            <SafetyLocationPicker
-              helpText="Choose the area you want to check. Mapping With Melanin will not assume Philadelphia or request your location until you choose to share it."
-              label="Check safety near"
-              onCleared={() => setSafetyArea(null)}
-              onResolved={(area) => setSafetyArea(area)}
-              value={safetyArea}
-            />
+          <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-6 text-center">
+            <Shield className="w-8 h-8 text-[#CA922B] mx-auto mb-2" />
+            <p className="text-sm font-bold text-[#2B1507]">No member-location safety feed</p>
+            <p className="text-xs text-[#3A1F0E]/50 mt-1">This Safety Hub does not request, retain, display, or use a member&apos;s current or recent location. Reports are moderated before any general-area community context is considered.</p>
           </div>
-          {alertsState === "idle" ? (
-            <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-6 text-center">
-              <MapPin className="w-8 h-8 text-[#CA922B] mx-auto mb-2" />
-              <p className="text-sm font-bold text-[#2B1507]">Choose a location to check nearby alerts</p>
-              <p className="text-xs text-[#3A1F0E]/50 mt-1">Search an area or use your current location above.</p>
-            </div>
-          ) : alertsState === "loading" ? (
-            <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-6 text-center">
-              <Loader2 className="w-8 h-8 text-[#CA922B] mx-auto mb-2 animate-spin" />
-              <p className="text-sm font-bold text-[#2B1507]">Checking approved community alerts…</p>
-            </div>
-          ) : alertsState === "error" ? (
-            <div className="bg-white rounded-2xl border border-red-200 p-6 text-center">
-              <AlertTriangle className="w-8 h-8 text-red-600 mx-auto mb-2" />
-              <p className="text-sm font-bold text-[#2B1507]">We could not check this area</p>
-              <p className="text-xs text-[#3A1F0E]/50 mt-1">Please choose the location again or try another area.</p>
-            </div>
-          ) : alerts.length === 0 ? (
-            <div className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-6 text-center">
-              <CheckCircle className="w-8 h-8 text-green-500 mx-auto mb-2" />
-              <p className="text-sm font-bold text-[#2B1507]">No active community alerts found nearby</p>
-              <p className="text-xs text-[#3A1F0E]/50 mt-1">No active community alerts were found within 10 miles of {safetyArea?.label}. This is not a guarantee that the area is risk-free.</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {alerts.map(alert => (
-                <div key={alert.id} className="bg-white rounded-2xl border border-[#3A1F0E]/8 p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center shrink-0">
-                      <AlertTriangle className="w-4 h-4 text-amber-600" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-bold text-sm text-[#2B1507] capitalize">{alert.type?.replace(/_/g, " ")}</p>
-                        <span className={`text-[9px] font-bold uppercase px-2 py-0.5 rounded-full ${alert.confirmCount >= 3 ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"}`}>
-                          {alert.confirmCount >= 3 ? "Confirmed" : "Possible"}
-                        </span>
-                      </div>
-                      {alert.description && <p className="text-xs text-[#3A1F0E]/60 mt-0.5 line-clamp-2">{alert.description}</p>}
-                      <div className="flex items-center gap-2 text-[10px] text-[#3A1F0E]/35 mt-1">
-                        <span>{timeAgo(alert.createdAt)}</span>
-                        <span>· {alert.distanceKm.toFixed(1)} km away</span>
-                        <span>· {alert.confirmCount} confirmed</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         {/* Safety Features Grid */}

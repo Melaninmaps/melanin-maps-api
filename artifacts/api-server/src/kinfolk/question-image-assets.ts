@@ -1,5 +1,6 @@
 import { pool } from "@workspace/db";
 import { kinfolkQuestionImageStorageClient } from "../lib/objectStorage";
+import { purgeExpiredKinfolkQuestionDocuments } from "./question-document-assets";
 
 const MAX_KINFOLK_QUESTION_IMAGES = 2;
 const KINFOLK_QUESTION_IMAGE_RETENTION_MS = 15 * 60 * 1000;
@@ -224,13 +225,18 @@ export function startKinfolkQuestionImageRetentionScheduler(log: {
 }): void {
   if (cleanupTimer) return;
   const run = () => {
-    void purgeExpiredKinfolkQuestionImages()
-      .then(({ deleted, pending }) => {
+    void Promise.all([
+      purgeExpiredKinfolkQuestionImages(),
+      purgeExpiredKinfolkQuestionDocuments(),
+    ])
+      .then(([images, documents]) => {
+        const deleted = images.deleted + documents.deleted;
+        const pending = images.pending + documents.pending;
         if (deleted > 0 || pending > 0) {
-          log.info?.({ deleted, pending }, "Kinfolk private question-image cleanup completed");
+          log.info?.({ deleted, pending }, "Kinfolk private question-attachment cleanup completed");
         }
       })
-      .catch(() => log.warn?.({}, "Kinfolk private question-image cleanup deferred"));
+      .catch(() => log.warn?.({}, "Kinfolk private question-attachment cleanup deferred"));
   };
   run();
   cleanupTimer = setInterval(run, KINFOLK_QUESTION_IMAGE_CLEANUP_INTERVAL_MS);

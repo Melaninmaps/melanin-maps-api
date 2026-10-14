@@ -15,6 +15,7 @@
 
 import { deriveBusinessSubject } from "./business-subject";
 import { resolveEmotionalSupportGuidance } from "./emotional-support";
+import { isExplicitCurrentItineraryRequest } from "./itinerary-response";
 
 export type DiscoveryKind =
   | "food"
@@ -59,7 +60,7 @@ const TRAVEL_RE =
 const BUSINESS_CATEGORY_RE =
   /\b(businesses?|laundromats?|laundry|grocer(?:y|ies)|salons?|hotels?)\b/i;
 const DISCOVERY_ACTION_RE =
-  /\b(?:find|recommend|locate|search(?:\s+for)?|show|browse|looking\s+for|help\s+me\s+find|tell\s+me\s+about|where\s+can\s+(?:i|we)|where\s+should\s+(?:i|we)|what|which|any\s+good|need|want)\b/i;
+  /\b(?:find|recommend|suggest|locate|search(?:\s+for)?|show|browse|looking\s+for|help\s+me\s+find|tell\s+me\s+about|where\s+can\s+(?:i|we)|where\s+should\s+(?:i|we)|what|which|any\s+good|need|want)\b/i;
 const CATEGORY_LOCATION_RE =
   /\b(?:food|restaurant|restaurants|eat|eating|dining|dinner|lunch|breakfast|cafe|caf[eé]|coffee|bakery|meal|spots?|nightlife|night life|bars?|clubs?|lounge|late[- ]night|entertainment|concert|music|party|businesses?|laundromats?|laundry|grocer(?:y|ies)|salons?|hotels?)\b[\s\S]{0,48}\b(?:in|near|around|at)\b/i;
 const TRAVEL_PLANNING_RE =
@@ -142,14 +143,16 @@ export function classifyKinfolkRequest(
     text,
     hasBusinessSubject: normalizedBusinessSubject,
   });
-  const explicitTravelPlanningIntent =
-    (TRAVEL_RE.test(text) && TRAVEL_PLANNING_RE.test(text)) ||
-    DAY_PLAN_RE.test(text);
+  const currentTurnLocation = cleanLocation(text.match(LOCATION_RE)?.[1]);
+  // An explicit itinerary action is actionable only when it names a destination
+  // in this turn. A destination declaration alone remains ordinary conversation,
+  // so a stale resolved city cannot turn “going to see a movie” into travel.
+  const explicitTravelPlanningIntent = isExplicitCurrentItineraryRequest(text);
   const postalCode = text.match(POSTAL_CODE_RE)?.[1] ?? null;
   // Use server-resolved city (alias-aware) when available; fall back to regex.
   const location = resolvedDestination
     ? resolvedDestination
-    : cleanLocation(text.match(LOCATION_RE)?.[1]);
+    : currentTurnLocation;
   const ownershipPreference =
     text.match(OWNERSHIP_RE)?.[1]?.toLowerCase() ?? null;
   const culturalContext: string[] = [];

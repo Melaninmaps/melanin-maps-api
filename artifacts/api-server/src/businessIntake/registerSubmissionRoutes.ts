@@ -111,6 +111,7 @@ function sendIdempotentSubmission(
   }
   const published = submission.status === "published";
   const possibleDuplicate = !published && Boolean(submission.matched_business_id);
+  const ownerRequest = submission.submission_intent === "owner";
   res.status(200).json({
     ok: true,
     submissionId: submission.id,
@@ -123,8 +124,12 @@ function sendIdempotentSubmission(
     message: published
       ? "This submission already published as a community-listed, unclaimed, not verified map listing."
       : possibleDuplicate
-        ? POSSIBLE_DUPLICATE_MEMBER_MESSAGE
-        : submission.review_note ?? "This submission is already saved. It was not submitted twice.",
+        ? ownerRequest
+          ? "We found an existing listing that may be your business. Your private ownership request is queued for review; the existing listing was not changed."
+          : POSSIBLE_DUPLICATE_MEMBER_MESSAGE
+        : ownerRequest
+          ? "Your private owner request is already saved for review. It is not public, verified, or connected to management access yet."
+          : submission.review_note ?? "This submission is already saved. It was not submitted twice.",
   });
 }
 
@@ -137,10 +142,10 @@ function websiteHost(website: string | null): string | null {
   }
 }
 
-// Called only inside the same transaction that finalizes a submission. Community
-// shares remain community-listed and unclaimed. A member's own business is
-// linked to that member for page-management access, but is never verified by
-// this path. Submission media remains private until separate moderation.
+// Called only inside the same transaction that finalizes a reviewed submission.
+// Every resulting public record remains community-listed and unclaimed; an
+// owner request can create a separate pending claim, but never self-grants
+// management access. Submission media remains private until separate moderation.
 async function publishFromSubmission(
   submission: Submission,
   actorId: string,
@@ -151,7 +156,7 @@ async function publishFromSubmission(
   const hasPreciseLocation = Boolean(
     coordinates && isValidPinCoordinates(coordinates.lat, coordinates.lng),
   );
-  if (!ownerSelfCreated && !hasPreciseLocation) {
+  if (!hasPreciseLocation) {
     throw new RouteError(409, "PRECISE_LOCATION_REQUIRED", "A precise non-zero location is required before publication.");
   }
   const resolvedCountry = submission.country
@@ -285,9 +290,7 @@ async function publishFromSubmission(
       submission.name,
       submission.category,
       submission.subcategory ?? submission.category,
-      submission.description ?? (ownerSelfCreated
-        ? `Owner-created business listing in ${submission.city}.`
-        : `Community-listed business in ${submission.city}.`),
+      submission.description ?? `Community-listed business in ${submission.city}.`,
       submission.address ?? null,
       submission.city,
       submission.state,
@@ -307,15 +310,15 @@ async function publishFromSubmission(
       submission.social_profiles?.youtube ?? null,
       JSON.stringify(socialProfiles),
       JSON.stringify(sourceEvidence),
-      JSON.stringify(ownerSelfCreated ? submission.ownership_designations ?? [] : []),
-      ownerSelfCreated ? "owner_self_created" : "unclaimed_community_submission",
-      ownerSelfCreated ? "live_claimed" : "live_unclaimed",
-      ownerSelfCreated ? "claimed" : "community_listed",
-      ownerSelfCreated ? "claimed" : "unclaimed",
-      ownerSelfCreated ? actorId : null,
+      JSON.stringify([]),
+      "unclaimed_community_submission",
+      "live_unclaimed",
+      "community_listed",
+      "unclaimed",
+      null,
       actorId,
-      ownerSelfCreated ? "owner_self_created" : "community_submission",
-      ownerSelfCreated ? "owner_self_created" : "community_submission",
+      ownerSelfCreated ? "owner_submission" : "community_submission",
+      ownerSelfCreated ? "owner_submission" : "community_submission",
       submission.provider_place_id,
       normalizeText(submission.name),
       canonicalDedupeKey,
@@ -354,7 +357,7 @@ async function publishFromSubmission(
         candidate_category, candidate_source_provider, matched_business_id, reason)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
       [
-        ownerSelfCreated ? "owner_self_created" : "community_submission",
+        ownerSelfCreated ? "owner_submission" : "community_submission",
         "approved",
         submission.name,
         submission.address ?? submission.city,
@@ -366,7 +369,7 @@ async function publishFromSubmission(
         submission.category,
         coordinates.source,
         result.rows[0].id,
-        `Published from ${ownerSelfCreated ? "owner-created" : "community"} submission ${submission.id} by objective automatic checks; actor ${actorId}; location source ${coordinates.source}`,
+        `Published from ${ownerSelfCreated ? "reviewed owner" : "community"} submission ${submission.id}; actor ${actorId}; location source ${coordinates.source}`,
       ],
     );
   }
@@ -374,12 +377,11 @@ async function publishFromSubmission(
   return result.rows[0].id;
 }
 
-function assessOwnerSelfPublication(input: Parameters<typeof publicationCandidateFromInput>[0]) {
+function assessOwnerSubmissionReview(input: Parameters<typeof publicationCandidateFromInput>[0]) {
   const base = assessCommunityPublication(publicationCandidateFromInput(input));
-  // Owner-created records retain the same resource, regulated-service, and
-  // protected-demo safeguards. They do not inherit the community pathway's
-  // precise-address gate: a valid public presence may be listed without a
-  // fabricated pin, and the owner can add a verified address later.
+  // Owner requests retain resource, regulated-service, and protected-demo
+  // safeguards. They are always private until a reviewer decides both listing
+  // eligibility and the separate ownership-control request.
   if (["prohibited", "community_context_review", "regulated_review", "resource_review"].includes(base.outcome)) {
     return base;
   }
@@ -395,49 +397,11 @@ function assessOwnerSelfPublication(input: Parameters<typeof publicationCandidat
     };
   }
   return {
-    outcome: "eligible" as const,
+    outcome: "owner_review" as const,
     submissionStatus: "pending_review" as const,
-    publicMessage: "Eligible for immediate owner-created publication. A precise address is optional and controls map-pin visibility.",
-    auditNote: "Owner self-create passed public-presence and classification checks.",
+    publicMessage: "Your owner request was saved for review. It is private, not verified, and does not create a public page or management access yet.",
+    auditNote: "Owner request passed public-presence and classification checks; retained for private review.",
   };
-}
-
-// A member who creates their own listing receives a scoped management link to
-// that listing. This is an ownership-control record, not identity or ownership
-// verification: verified and verified_designations remain untouched.
-async function grantOwnerSelfCreatedManagement(
-  submission: Submission,
-  businessId: string,
-  actorId: string,
-  client: PoolClient,
-): Promise<void> {
-  if (submission.submission_intent !== "owner") return;
-  const existing = await client.query<{ id: string }>(
-    `SELECT id FROM business_owner_links
-     WHERE business_id = $1 AND user_id = $2 AND revoked_at IS NULL
-     LIMIT 1`,
-    [businessId, actorId],
-  );
-  if (!existing.rows[0]) {
-    await client.query(
-      `INSERT INTO business_owner_links
-         (id, user_id, business_id, role, status, approved_by, approved_at, created_at)
-       VALUES ($1,$2,$3,'owner','approved',$2,NOW(),NOW())`,
-      [`bol_${Date.now()}_${randomUUID().slice(0, 8)}`, actorId, businessId],
-    );
-  }
-  await client.query(
-    `UPDATE businesses
-     SET ownership_control_status = 'claimed',
-         profile_status = 'claimed',
-         listing_status = 'live_claimed',
-         owner_claim_status = 'claimed',
-         claimed_owner_member_id = $2,
-         owner_name = COALESCE(owner_name, $3),
-         updated_at = NOW()
-     WHERE id = $1`,
-    [businessId, actorId, submission.owner_name ?? null],
-  );
 }
 
 // Existing public listings use a distinct, auditable claim process. That path
@@ -508,10 +472,10 @@ export function registerSubmissionRoutes(
   const approvedMember = dependencies.approvedMemberMiddleware ?? requireApprovedMember;
   const resolveLocation = dependencies.resolveLocation ?? resolvePreciseBusinessLocation;
 
-  // Approved members and testers only. Ordinary submissions with complete
-  // evidence publish atomically as unclaimed/not verified. Objective holds
-  // stay private; no founder click is required for an eligible bakery, shop,
-  // restaurant, salon, or other ordinary business.
+  // Approved members and testers only. Ordinary community submissions with
+  // complete evidence may publish atomically as unclaimed/not verified. Owner
+  // submissions always remain private until human review; no owner page,
+  // ownership link, or management access is created by this intake endpoint.
   app.post(
     "/api/community/business-submissions",
     approvedMember,
@@ -571,14 +535,16 @@ export function registerSubmissionRoutes(
             publicationOutcome: "possible_duplicate_review",
             mapPin: false,
             duplicateRetry: !queued.created,
-            message: POSSIBLE_DUPLICATE_MEMBER_MESSAGE,
+            message: input.submissionIntent === "owner"
+              ? "We found an existing listing that may be your business. Your private ownership request is queued for review; the existing listing was not changed and no management access was granted."
+              : POSSIBLE_DUPLICATE_MEMBER_MESSAGE,
           });
           return;
         }
 
         const ownerSelfCreated = input.submissionIntent === "owner";
         let assessment = ownerSelfCreated
-          ? assessOwnerSelfPublication(input)
+          ? assessOwnerSubmissionReview(input)
           : assessCommunityPublication(publicationCandidateFromInput(input));
         let preparedLocation: ResolvedBusinessLocation | null = null;
         if (assessment.outcome === "eligible" && input.address?.trim()) {
@@ -612,18 +578,14 @@ export function registerSubmissionRoutes(
         let mapPin = false;
         let publicationOutcome: string = assessment.outcome;
 
-        if (assessment.outcome === "eligible" && (ownerSelfCreated || preparedLocation)) {
+        if (!ownerSelfCreated && assessment.outcome === "eligible" && preparedLocation) {
           const stored = await repository.getByIdForUpdate(result.submission.id, client)
             ?? result.submission;
           businessId = await publishFromSubmission(stored, user.id, client, preparedLocation);
-          if (ownerSelfCreated) {
-            await grantOwnerSelfCreatedManagement(stored, businessId, user.id, client);
-          } else {
-            await createPendingOwnerClaimFromSubmission(stored, businessId, user.id, client);
-          }
+          await createPendingOwnerClaimFromSubmission(stored, businessId, user.id, client);
           const reviewNote = preparedLocation
             ? automaticPublicationReviewNote(preparedLocation)
-            : "Owner-created listing published without a precise address; no map pin was created.";
+            : "Published without a precise address; no map pin was created.";
           const published = await repository.finalizeAutomaticPublication(
             stored.id,
             businessId,
@@ -636,21 +598,19 @@ export function registerSubmissionRoutes(
           await repository.logAuditEvent(
             stored.id,
             user.id,
-            ownerSelfCreated ? "owner_self_created_published" : "automatic_published",
+            "automatic_published",
             reviewNote,
             client,
           );
           status = "published";
           publicationOutcome = "published";
           mapPin = Boolean(preparedLocation);
-          message = ownerSelfCreated
-            ? `Your business page is live and connected to your profile. You can manage it now. It is not verified, and ${preparedLocation ? "has a precise map pin." : "has no map pin until you add a precise address."}`
-            : "Published on the map as community-listed, unclaimed, and not verified.";
+          message = "Published on the map as community-listed, unclaimed, and not verified.";
         } else {
           await repository.logAuditEvent(
             result.submission.id,
             user.id,
-            `automatic_hold_${assessment.outcome}`,
+            ownerSelfCreated ? "owner_request_pending_review" : `automatic_hold_${assessment.outcome}`,
             assessment.auditNote,
             client,
           );
@@ -744,14 +704,19 @@ export function registerSubmissionRoutes(
             publicationOutcome: "possible_duplicate_review",
             mapPin: false,
             duplicateRetry: !queued.created,
-            message: POSSIBLE_DUPLICATE_MEMBER_MESSAGE,
+            message: input.submissionIntent === "owner"
+              ? "We found an existing listing that may be your business. Your private ownership request is queued for review; the existing listing was not changed and no management access was granted."
+              : POSSIBLE_DUPLICATE_MEMBER_MESSAGE,
           });
           return;
         }
 
-        let assessment = assessCommunityPublication(publicationCandidateFromInput(input));
+        const ownerResubmission = input.submissionIntent === "owner";
+        let assessment = ownerResubmission
+          ? assessOwnerSubmissionReview(input)
+          : assessCommunityPublication(publicationCandidateFromInput(input));
         let preparedLocation: ResolvedBusinessLocation | null = null;
-        if (assessment.outcome === "eligible") {
+        if (!ownerResubmission && assessment.outcome === "eligible") {
           preparedLocation = await resolveLocation(publicationCandidateFromInput(input));
           if (!preparedLocation) assessment = locationNeedsInformationAssessment();
         }
@@ -780,7 +745,7 @@ export function registerSubmissionRoutes(
         let publicationOutcome: string = assessment.outcome;
         let mapPin = false;
         let message = assessment.publicMessage;
-        if (assessment.outcome === "eligible" && preparedLocation) {
+        if (!ownerResubmission && assessment.outcome === "eligible" && preparedLocation) {
           businessId = await publishFromSubmission(amended, user.id, client, preparedLocation);
           const ownerClaimId = await createPendingOwnerClaimFromSubmission(amended, businessId, user.id, client);
           const reviewNote = automaticPublicationReviewNote(preparedLocation);
@@ -802,7 +767,7 @@ export function registerSubmissionRoutes(
           await repository.logAuditEvent(
             amended.id,
             user.id,
-            `automatic_hold_${assessment.outcome}`,
+            ownerResubmission ? "owner_request_resubmitted_for_review" : `automatic_hold_${assessment.outcome}`,
             assessment.auditNote,
             client,
           );

@@ -21,6 +21,10 @@ export interface SessionData {
   access_token: string;
   refresh_token?: string;
   expires_at?: number;
+  /** Epoch milliseconds from a successful local-password confirmation for the
+   * sensitive Kinfolk vault. This is scoped to one server-side session and
+   * expires independently of the ordinary seven-day session lifetime. */
+  sensitiveMemoryVaultReauthenticatedAt?: number;
 }
 
 let oidcConfig: client.Configuration | null = null;

@@ -61,12 +61,13 @@ describe("Kinfolk server-owned voice delivery", () => {
     expect(resolveMemberKinfolkSpeechVoice(config, "shimmer")).toBe("nova");
     expect(resolveMemberKinfolkSpeechVoice(config, "untrusted-client-voice")).toBe(config.baseVoice);
     expect(resolveMemberKinfolkSpeechVoice(config, undefined)).toBe(config.baseVoice);
-    expect(resolveKinfolkVoiceDelivery("community")).toMatchObject({ label: "Big Cousin" });
+    expect(resolveKinfolkVoiceDelivery("big_cousin")).toMatchObject({ label: "Big Cousin" });
+    expect(resolveKinfolkVoiceDelivery("community")).toMatchObject({ mode: "big_cousin", label: "Big Cousin" });
     expect(resolveKinfolkVoiceDelivery("professor")).toMatchObject({ label: "Professor" });
     expect(resolveKinfolkVoiceDelivery("business_manager")).toMatchObject({ label: "Business Manager" });
     expect(resolveKinfolkVoiceDelivery("best_friend")).toMatchObject({ label: "Best Friend" });
 
-    for (const mode of ["community", "professor", "business_manager", "best_friend"]) {
+    for (const mode of ["big_cousin", "professor", "business_manager", "best_friend"]) {
       const delivery = resolveKinfolkVoiceDelivery(mode);
       expect(delivery.styleInstruction).toMatch(/English/i);
       expect(delivery.styleInstruction).toMatch(/never imitate|never perform/i);
@@ -81,7 +82,7 @@ describe("Kinfolk server-owned voice delivery", () => {
     expect(female.styleInstruction).toMatch(/robotic, childish, breathy, overly cheerful, seductive, stereotyped/i);
     expect(female.styleInstruction).toMatch(/real person/i);
 
-    for (const mode of ["community", "professor", "business_manager", "best_friend"]) {
+    for (const mode of ["big_cousin", "professor", "business_manager", "best_friend"]) {
       const instruction = buildKinfolkSpeechInstruction(resolveKinfolkVoiceDelivery(mode), female);
       expect(instruction).toContain(female.styleInstruction);
       expect(instruction).toContain("never changes the selected speaker identity");
@@ -95,7 +96,7 @@ describe("Kinfolk server-owned voice delivery", () => {
       voice: "untrusted-client-voice",
     })).toEqual({ mode: "professor", requestId: "turn-123" });
     expect(normalizeKinfolkSpeechRequest({ mode: "unrecognized", requestId: 8 }))
-      .toEqual({ mode: "community", requestId: null });
+      .toEqual({ mode: "big_cousin", requestId: null });
   });
 
   it("returns only valid audio metadata to the protected client playback path", () => {

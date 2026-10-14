@@ -52,6 +52,15 @@ describe("Kinfolk web voice upload", () => {
     expect(travel).not.toContain('recorder.start(250)');
     expect(travel).toContain('recorder.stream.getTracks().forEach((track) => track.stop())');
   });
+
+  it("keeps a voice failure separate from the member's typed composer draft", () => {
+    const travel = readFileSync(new URL("../pages/travel.tsx", import.meta.url), "utf8");
+    expect(travel).toContain('const [voiceError, setVoiceError] = useState<string | null>(null)');
+    expect(travel).toContain('setVoiceError(classifyVoiceError(r.status, body))');
+    expect(travel).toContain('setVoiceError("Voice transcription took too long. Please type your question.")');
+    expect(travel).not.toContain('setInput(classifyVoiceError(r.status, body))');
+    expect(travel).not.toContain('setInput("Voice transcription took too long. Please type your question.")');
+  });
 });
 
 describe("Kinfolk automatic spoken replies", () => {

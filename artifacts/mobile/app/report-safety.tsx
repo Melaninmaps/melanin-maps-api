@@ -4,10 +4,8 @@ import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import * as Location from "expo-location";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Animated,
   KeyboardAvoidingView,
@@ -22,8 +20,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { useAuth } from "@/lib/auth";
-
-const API_BASE = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
+import { getApiBase } from "@/lib/api";
 
 const REPORT_TYPES = [
   {
@@ -82,7 +79,7 @@ interface FormData {
   severity: string;
   city: string;
   neighborhood: string;
-  locationSource: "manual_area" | "current_device";
+  locationSource: "manual_area";
   description: string;
   isAnonymous: boolean;
 }
@@ -145,35 +142,6 @@ export default function ReportSafetyScreen() {
   const [neighFocused, setNeighFocused] = useState(false);
   const [descFocused, setDescFocused] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [cityDetecting, setCityDetecting] = useState(false);
-
-  const handleUseCurrentLocation = async () => {
-    setCityDetecting(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== "granted") {
-        Alert.alert("Location Access", "You can continue by entering the incident city or area manually.");
-        return;
-      }
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Highest });
-      const [place] = await Location.reverseGeocodeAsync({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
-      if (place?.city) {
-        const region = place.region ?? place.subregion ?? "";
-        const neighborhood = place.district || place.subregion || "";
-        setForm((form) => ({
-          ...form,
-          city: `${place.city}${region ? `, ${region}` : ""}`,
-          neighborhood: form.reportType === "discrimination" ? "" : neighborhood,
-          locationSource: "current_device",
-        }));
-      }
-    } catch {
-      Alert.alert("Location Error", "We could not fill the incident area. You can still enter it manually.");
-    } finally {
-      setCityDetecting(false);
-    }
-  };
-
   const [fadeAnim] = useState(() => new Animated.Value(1));
   const [slideAnim] = useState(() => new Animated.Value(0));
 
@@ -217,7 +185,7 @@ export default function ReportSafetyScreen() {
         : form.city.trim();
 
       const token = Platform.OS !== "web" ? await SecureStore.getItemAsync("auth_session_token") : null;
-      const res = await fetch(`${API_BASE}/api/reports`, {
+      const res = await fetch(`${getApiBase()}/api/reports`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify({
@@ -253,7 +221,7 @@ export default function ReportSafetyScreen() {
   };
 
   const canProceed1 = form.reportType !== "" && form.severity !== "";
-  // City is required (auto-detected); description is optional — a chip selection alone is enough
+  // City is member-entered; description is optional — a category and area are enough to submit a reviewable report.
   const canProceed2 = form.city.trim().length > 0;
 
   const isSuccess = step === 3;
@@ -441,7 +409,7 @@ export default function ReportSafetyScreen() {
                 <View>
                   <Text style={[styles.stepTitle, { color: colors.foreground }]}>Incident Location & Details</Text>
                   <Text style={[styles.stepSub, { color: colors.mutedForeground }]}>
-                    Enter where the situation happened. This may be different from where you are now. You can type an area or choose to use your precise current location.
+                    Enter only the incident city and, if helpful, a general neighborhood. Do not enter a street address or use device location.
                   </Text>
 
                   {selectedType && (
@@ -455,10 +423,7 @@ export default function ReportSafetyScreen() {
                   )}
 
                   <View style={styles.fieldWrap}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 6 }}>
-                      <Text style={[styles.fieldLabel, { color: colors.foreground, marginBottom: 0 }]}>Incident City / Area *</Text>
-                      {cityDetecting && <Text style={[styles.fieldHint, { color: colors.primary, marginBottom: 0 }]}>Locating…</Text>}
-                    </View>
+                    <Text style={[styles.fieldLabel, { color: colors.foreground, marginBottom: 0 }]}>Incident City / Area *</Text>
                     <TextInput
                       value={form.city}
                       onChangeText={(v) => setForm((f) => ({ ...f, city: v, locationSource: "manual_area" }))}
@@ -493,19 +458,6 @@ export default function ReportSafetyScreen() {
                       />
                     </View>
                   )}
-                  <TouchableOpacity
-                    onPress={() => void handleUseCurrentLocation()}
-                    disabled={cityDetecting}
-                    accessibilityRole="button"
-                    accessibilityLabel="Use my current location as the incident location"
-                    style={[styles.locationButton, { backgroundColor: colors.secondary, borderColor: colors.border }]}
-                  >
-                    {cityDetecting
-                      ? <ActivityIndicator size="small" color={colors.primary} />
-                      : <Feather name="navigation" size={15} color={colors.primary} />}
-                    <Text style={[styles.locationButtonText, { color: colors.foreground }]}>Use current location for this incident</Text>
-                  </TouchableOpacity>
-
                   <View style={styles.fieldWrap}>
                     <Text style={[styles.fieldLabel, { color: colors.foreground }]}>Description</Text>
                     <Text style={[styles.fieldHint, { color: colors.mutedForeground }]}>
@@ -545,9 +497,9 @@ export default function ReportSafetyScreen() {
                   <View style={[styles.disclaimer, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                     <Feather name="lock" size={14} color={colors.mutedForeground} />
                     <Text style={[styles.disclaimerText, { color: colors.mutedForeground }]}>
-                      Current location is requested only if you choose the button above. {form.reportType === "discrimination"
-                        ? "Discrimination reports store only the incident city, not neighborhood, street, or exact GPS."
-                        : "This report sends the incident city and optional neighborhood, not exact GPS coordinates."}
+                      Device location collection is disabled. {form.reportType === "discrimination"
+                        ? "Discrimination reports store only the incident city, not neighborhood, street, or exact coordinates."
+                        : "This report sends only the incident city and optional general neighborhood, never a street address or exact coordinates."}
                     </Text>
                   </View>
                 </View>
@@ -636,11 +588,6 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 14,
     paddingVertical: 12, fontFamily: "Inter_400Regular", fontSize: 15,
   },
-  locationButton: {
-    minHeight: 44, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14,
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-  },
-  locationButtonText: { fontFamily: "Inter_600SemiBold", fontSize: 13 },
   textarea: { height: 120, textAlignVertical: "top", paddingTop: 12 },
   charCount: { fontFamily: "Inter_400Regular", fontSize: 11, textAlign: "right" },
   disclaimer: {

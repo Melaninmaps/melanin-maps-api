@@ -268,32 +268,11 @@ export default function MapPage() {
   const [mapRefreshGeneration, setMapRefreshGeneration] = useState(0);
   const [savedDesignations, setSavedDesignations] = useState<string[]>([]);
   const [supportLensError, setSupportLensError] = useState<string | null>(null);
-  useEffect(() => {
-    fetch(`${BASE.replace(/\/$/, "")}/api/kinfolk/preferences`, { credentials: "include" })
-      .then((response) => response.ok ? response.json() : null)
-      .then((payload) => {
-        const prefs = payload?.preferences;
-        const values = Array.isArray(prefs?.preferredOwnershipTypes)
-          ? prefs.preferredOwnershipTypes
-          : Array.isArray(prefs?.ownershipTypes) ? prefs.ownershipTypes : [];
-        if (prefs?.supportLensMode === "strict_documented_designations") setSavedDesignations(values);
-      })
-      .catch(() => {});
-  }, []);
-  const removeMapDesignation = async (designation: string) => {
+  const removeMapDesignation = (designation: string) => {
     setSupportLensError(null);
-    const result = await persistReducedSupportLensRemoval({
-      baseUrl: `${BASE.replace(/\/$/, "")}/`, savedDesignations, removeDesignation: designation,
-    });
-    if (result.error) {
-      setSupportLensError(result.error);
-    } else {
-      const update = result.update;
-      setSavedDesignations(update.preferredOwnershipTypes);
-      setMapSupportScope(update.preferredOwnershipTypes.length ? null : "all_businesses");
-      setMapRefreshGeneration((generation) => generation + 1);
-      setUniversalResults(null);
-    }
+    setSavedDesignations((current) => current.filter((value) => value !== designation));
+    setMapRefreshGeneration((generation) => generation + 1);
+    setUniversalResults(null);
   };
   const { data: authData } = useGetCurrentAuthUser();
   const savedHomeCity = useMemo(() => {
@@ -393,6 +372,11 @@ export default function MapPage() {
   );
   const appliedHandoffQueryRef = useRef<string | null>(null);
   const appliedHandoffAreaRef = useRef<string | null>(null);
+  const resolvedHandoffAreaRef = useRef<{
+    area: string;
+    latitude: number;
+    longitude: number;
+  } | null>(null);
   // Prevent home-city geocoder and GPS from overriding a user-initiated search viewport
   const searchViewportLockedRef = useRef(false);
   const searchViewportSequenceRef = useRef(0);
@@ -938,11 +922,12 @@ export default function MapPage() {
     void runUniversalSearch(handoffQuery);
   }, [handoffQuery, ready, runUniversalSearch]);
 
-  // ── Resolve ?area= handoff once after the map is ready ───────────────────
-  // Parses a slug like "charlotte-nc" via /api/locations/resolve and sets
-  // detectedLocation, which activates LocalBusinessResults in the sidebar.
+  // ── Resolve ?area= handoff independently of the map provider ─────────────
+  // Parses the explicitly selected public area via /api/locations/resolve and
+  // retains the result for both the sidebar and a later map-object pan. The
+  // list context must remain useful when Google Maps is unavailable.
   useEffect(() => {
-    if (!handoffArea || !ready) return;
+    if (!handoffArea) return;
     if (appliedHandoffAreaRef.current === handoffArea) return;
     appliedHandoffAreaRef.current = handoffArea;
     const areaHandoffGeneration = ++areaHandoffGenerationRef.current;
@@ -956,6 +941,11 @@ export default function MapPage() {
         if (data?.latitude && data?.longitude) {
           const lat = Number(data.latitude);
           const lng = Number(data.longitude);
+          resolvedHandoffAreaRef.current = {
+            area: handoffArea,
+            latitude: lat,
+            longitude: lng,
+          };
           setDetectedLocation({ lat, lng, name: data.label ?? handoffArea });
           if (mapRef.current && !searchViewportLockedRef.current) {
             mapRef.current.panTo({ lat, lng });
@@ -964,6 +954,16 @@ export default function MapPage() {
         }
       })
       .catch(() => { /* area resolve failed — continue without it */ });
+  }, [handoffArea]);
+  // If the map provider finishes loading after the area resolver, pan only to
+  // the same explicitly requested public area. This never substitutes device
+  // location or makes the area visible to anyone else.
+  useEffect(() => {
+    const resolved = resolvedHandoffAreaRef.current;
+    if (!ready || !mapRef.current || !handoffArea || resolved?.area !== handoffArea) return;
+    if (searchViewportLockedRef.current) return;
+    mapRef.current.panTo({ lat: resolved.latitude, lng: resolved.longitude });
+    mapRef.current.setZoom(12);
   }, [handoffArea, ready]);
 
   // The legacy discoverability endpoint is intentionally not rendered here.
@@ -2306,21 +2306,12 @@ export default function MapPage() {
                         Remove {OWNERSHIP_FILTER_OPTIONS.find((option) => option.id === designation)?.label ?? designation}
                       </button>) : null}
                       <button
-                        onClick={() => { void (async () => {
+                        onClick={() => {
                           setSupportLensError(null);
-                          try {
-                            const response = await fetch(`${BASE.replace(/\/$/, "")}/api/kinfolk/preferences`, {
-                            method: "PUT", credentials: "include",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ preferredOwnershipTypes: [], supportLensMode: "all_businesses" }),
-                            });
-                            if (!response.ok) throw new Error("preference update failed");
-                            setMapSupportScope("all_businesses");
-                            setSearch(""); setMapDiscoveryFocus("all"); setBusinessSearchActive(false); setUniversalResults(null);
-                          } catch {
-                            setSupportLensError("Could not update Support Lens. Please try again.");
-                          }
-                        })(); }}
+                          setSavedDesignations([]);
+                          setMapSupportScope("all_businesses");
+                          setSearch(""); setMapDiscoveryFocus("all"); setBusinessSearchActive(false); setUniversalResults(null);
+                        }}
                         className="px-4 py-2 rounded-full border border-[#CA922B] text-[#CA922B] text-xs font-bold"
                       >
                         Show all businesses
@@ -2435,6 +2426,11 @@ export default function MapPage() {
           <p className="text-sm text-[#3A1F0E]/60 max-w-sm leading-relaxed">
             Search and business results remain available in the list. The map provider key is not configured in this deployment.
           </p>
+          {detectedLocation && (
+            <p data-testid="map-area-handoff-context" className="mt-3 max-w-sm text-sm font-medium text-[#3A1F0E]">
+              Showing list context for {detectedLocation.name}. This is the public area selected in Explore, not a live location.
+            </p>
+          )}
         </div>
       </div>
       </>

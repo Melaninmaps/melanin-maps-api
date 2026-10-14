@@ -1,5 +1,6 @@
 import {
   parseExplicitMemberMemory,
+  isExplicitDeliveryPreference,
   type ExplicitMemberMemory,
 } from "./explicit-member-memory";
 import {
@@ -21,9 +22,11 @@ export type ExplicitMemoryConsentPlan = Readonly<{
   purpose: ExplicitMemberMemory["purpose"];
   ordinary: readonly ExplicitMemoryConsentItem[];
   sensitive: readonly ExplicitMemoryConsentItem[];
+  /** A one-turn delivery choice stays client-local and is never persisted. */
+  oneTimeUseAvailable: boolean;
 }>;
 
-const MEMORY_CLAUSE_BOUNDARY = /\s+(?=(?:i\s+(?:am|am\s+not|have|do\s+not\s+have|don't\s+have|prefer|enjoy|like|love)|i['’]m|my\s+(?:birthday|age|allerg(?:y|ies))|as\s+a)\b)/gi;
+const MEMORY_CLAUSE_BOUNDARY = /\s+(?=(?:i\s+(?:am|am\s+not|have|do\s+not\s+have|don't\s+have|prefer|enjoy|like|love)|i['’]m|my\s+(?:birthday|age|allerg(?:y|ies)|mother|father|parent|child|son|daughter|family)|as\s+a)\b)/gi;
 const OWNERSHIP_SUPPORT_PREFERENCE = /\b(?:prefer|support|open\s+to|owned\s+business(?:es)?|minority[-\s]?owned)\b/i;
 const AGE_OR_BIRTHDAY = /\b(?:birthday|born\b|age\s*(?:is|:)?\s*\d{1,3}|i(?:\s+am|'m)\s+\d{1,3})\b/i;
 const ALLERGY_STATUS = /\b(?:no|not|without|have|has)\b[^.]{0,40}\b(?:allerg(?:y|ies)|allergic)\b/i;
@@ -31,6 +34,7 @@ const ALLERGY_STATUS = /\b(?:no|not|without|have|has)\b[^.]{0,40}\b(?:allerg(?:y
 function normalizeClause(value: string): string {
   return value
     .replace(/^[,;:\-–—\s]+|[,;:\-–—\s]+$/g, "")
+    .replace(/(?:,?\s+and)$/i, "")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -67,6 +71,9 @@ function sensitiveLabel(topic: ConsentSensitiveTopic): string {
 }
 
 function ordinaryLabel(content: string): string {
+  if (isExplicitDeliveryPreference(content)) {
+    return "Communication preference";
+  }
   if (/\b(?:prefer|support|owned\s+business|minority[-\s]?owned)\b/i.test(content)) {
     return "Support preference";
   }
@@ -133,5 +140,10 @@ export function buildExplicitMemoryConsentPlan(value: unknown): ExplicitMemoryCo
       : { id: "o-1", kind: "ordinary", label: ordinaryLabel(parsed.content), content: parsed.content });
   }
 
-  return { purpose: parsed.purpose, ordinary, sensitive };
+  return {
+    purpose: parsed.purpose,
+    ordinary,
+    sensitive,
+    oneTimeUseAvailable: isExplicitDeliveryPreference(parsed.content),
+  };
 }

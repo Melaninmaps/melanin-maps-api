@@ -22,7 +22,7 @@ describe("administrator public-discovery removal governance", () => {
     expect(adminRoute).toContain("remove_public_discovery");
     expect(adminRoute).toContain("restore_public_discovery");
     expect(adminRoute).toContain("business_listing_status_audit_events");
-    expect(adminRoute).toContain("listingStatus: \"archived\"");
+    expect(adminRoute).toContain('listingStatus: "archived"');
     expect(adminRoute).toContain('status: "suspended"');
     expect(adminRoute).toContain("promotionEligible: false");
     expect(adminRoute).toContain("featured: false");
@@ -51,6 +51,11 @@ describe("administrator public-discovery removal governance", () => {
     expect(businessesRoute).toContain("function publicBusinessVisibilityCondition");
     expect(businessesRoute).toContain("public.business_record_is_public");
     expect(businessesRoute).toContain("conditions.push(publicVisibilityCondition)");
+    expect(businessesRoute).toContain("const publicVisibilityCondition = publicBusinessVisibilityCondition()");
+    expect(businessesRoute).toContain("mwmPublicDirectoryCondition()");
+    expect(businessesRoute).toContain("mwmDiasporaPromotionCondition()");
+    expect(businessesRoute).not.toContain("function directNameLookupVisibilityCondition");
+    expect(businessesRoute).not.toContain("usedExplicitPublicLookup");
     expect(businessesRoute).not.toContain("directConditions.push(");
   });
 });

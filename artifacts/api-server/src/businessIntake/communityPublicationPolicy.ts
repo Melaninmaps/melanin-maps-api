@@ -8,6 +8,7 @@ import type {
 
 export type AutomaticPublicationOutcome =
   | "eligible"
+  | "owner_review"
   | "community_context_review"
   | "needs_location"
   | "needs_evidence"

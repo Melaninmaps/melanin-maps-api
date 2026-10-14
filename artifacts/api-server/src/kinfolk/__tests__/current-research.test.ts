@@ -4,6 +4,7 @@ import {
   inspectArticleSummaryRequest,
   isPublicNetWorthEstimateRequest,
   isPreferredNameRecallRequest,
+  requestedArticleSummaryFetchUrl,
   requestedArticleSummaryUrl,
   requiresCurrentResearch,
   requiresTimeSpecificResearch,
@@ -183,6 +184,9 @@ describe("current research routing", () => {
     expect(requiresCurrentResearch(message)).toBe(true);
     expect(hasRequestedArticleEvidence(requested, [{ url: "https://example.com/news/gas-prices" }])).toBe(true);
     expect(hasRequestedArticleEvidence(requested, [{ url: "https://example.com/another-story" }])).toBe(false);
+    expect(requestedArticleSummaryFetchUrl(message)).toBe(
+      "https://example.com/news/gas-prices?ref=kinfolk",
+    );
   });
 
   it("treats a provider's terminal-slash URL canonicalization as the same exact article", () => {
@@ -202,6 +206,33 @@ describe("current research routing", () => {
   it("does not accept a non-public or non-summary URL as an article request", () => {
     expect(requestedArticleSummaryUrl("Open https://example.com/news/gas-prices")).toBeNull();
     expect(requestedArticleSummaryUrl("Summarize https://localhost/private")).toBeNull();
+  });
+
+  it("reads an explicitly requested or standalone pasted public page without fetching incidental links", () => {
+    expect(inspectArticleSummaryRequest(
+      "Can you explain this website? https://example.org/services?city=philly",
+    )).toEqual({
+      state: "ready",
+      url: "https://example.org/services",
+    });
+    expect(requestedArticleSummaryFetchUrl(
+      "Can you explain this website? https://example.org/services?city=philly",
+    )).toBe("https://example.org/services?city=philly");
+    expect(inspectArticleSummaryRequest("https://example.org/services?city=philly")).toEqual({
+      state: "ready",
+      url: "https://example.org/services",
+    });
+    expect(requiresCurrentResearch("https://example.org/services?city=philly")).toBe(true);
+    expect(requestedArticleSummaryFetchUrl("https://example.org/services?city=philly")).toBe(
+      "https://example.org/services?city=philly",
+    );
+    expect(inspectArticleSummaryRequest("Here is https://example.org/services")).toEqual({
+      state: "ready",
+      url: "https://example.org/services",
+    });
+    expect(inspectArticleSummaryRequest(
+      "I saved https://example.org/services for later.",
+    )).toEqual({ state: "not_requested", url: null });
   });
 
   it("classifies only unsupported linked summaries before provider or memory work", () => {

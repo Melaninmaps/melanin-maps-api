@@ -36,21 +36,24 @@ describe("Kinfolk private image schema bootstrap", () => {
     expect(kinfolkRoute).toContain("additionalProperties: false");
   });
 
-  it("keeps private image turns out of live retrieval and source presentation", () => {
+  it("keeps private image and document turns out of live retrieval and source presentation", () => {
     expect(kinfolkRoute).toContain(
       "const isPrivateImageTurn = verifiedImageUrls.length > 0;",
     );
     expect(kinfolkRoute).toContain(
-      "!isPrivateImageTurn &&\n      (contextualIntelligenceEnabled || citedResearchRequired);",
+      "const isPrivateQuestionAttachment = isPrivateImageTurn || isPrivateDocumentTurn;",
     );
     expect(kinfolkRoute).toContain(
-      "if (!isPrivateImageTurn && (lensEligible || isEntityQuery))",
+      "!isPrivateQuestionAttachment &&\n      (contextualIntelligenceEnabled || citedResearchRequired);",
     );
     expect(kinfolkRoute).toContain(
-      "const libraryTopic = isPrivateImageTurn\n      ? null",
+      "if (!isPrivateQuestionAttachment && (lensEligible || isEntityQuery))",
     );
     expect(kinfolkRoute).toContain(
-      "const memberFacingSources = isPrivateImageTurn\n      ? []",
+      "const libraryTopic = isPrivateQuestionAttachment\n      ? null",
+    );
+    expect(kinfolkRoute).toContain(
+      "const memberFacingSources = isPrivateQuestionAttachment\n      ? []",
     );
     expect(kinfolkRoute).toContain('state: "not_needed" as const');
   });

@@ -32,6 +32,7 @@ describe("Kinfolk voice preference defaults and validation", () => {
       recommendationLifeStage: "40_64",
       personalityMode: "business_manager",
     })).toEqual({ ok: true });
+    expect(validateKinfolkPreferenceUpdate({ personalityMode: "big_cousin" })).toEqual({ ok: true });
 
     // Existing saved preference labels remain valid to avoid silently
     // overwriting a member's profile during the four-mode migration.

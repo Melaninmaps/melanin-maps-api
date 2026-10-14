@@ -23,6 +23,10 @@ import {
   KinfolkCompanionMemoryOfferCard,
   type KinfolkCompanionMemoryOffer,
 } from "@/components/kinfolk/KinfolkCompanionMemoryOffer";
+import {
+  KinfolkMemoryUseNotice,
+  type KinfolkMemoryUse,
+} from "@/components/kinfolk/KinfolkMemoryUseNotice";
 import { KinfolkContextClarifier } from "@/features/kinfolk/KinfolkContextClarifier";
 import { businessClarificationContinuation } from "@/features/kinfolk/businessClarificationContinuation";
 import {
@@ -39,6 +43,7 @@ import {
   KINFOLK_RESPONSE_STATUS_DELAYS_MS,
   KINFOLK_RESPONSE_STATUS_STAGES,
   type KinfolkItinerary as KinfolkItineraryResponse,
+  type KinfolkContextualVisual,
   type KinfolkMediaLink,
   type KinfolkRelatedConnection,
   type KinfolkResearchStatus,
@@ -145,6 +150,14 @@ interface KinfolkTaskAction {
   tasks: Array<{ title: string; notes?: string | null; dueAt?: string | null; dueTimeLabel?: string | null; category?: string }>;
 }
 interface KinfolkSource { title: string; url: string }
+interface KinfolkResourceCard {
+  id: string;
+  title: string;
+  url: string;
+  description: string;
+  type: "image_gallery" | "health_source" | "community_source" | "entity_source";
+  safetyNote?: string;
+}
 interface KinfolkLibraryEntry { url: string; readMoreLabel: string }
 interface CommunityPerspective {
   label: "Community perspective";
@@ -179,6 +192,8 @@ interface Message {
   mediaLinks?: KinfolkMediaLink[];
   relatedConnections?: KinfolkRelatedConnection[];
   researchStatus?: KinfolkResearchStatus | null;
+  contextualVisuals?: KinfolkContextualVisual[];
+  resourceCards?: KinfolkResourceCard[];
   followUpSuggestions?: string[]; timestamp: string;
   cultureAction?: CultureAction | null;
   libraryAction?: LibraryAction | null;
@@ -217,6 +232,8 @@ interface Message {
   /** Explicit private-memory offer for a named companion; never a profile mutation. */
   companionMemoryOffer?: CompanionMemoryOffer | null;
   inlineMemoryConsent?: { message: string; plan: KinfolkInlineMemoryConsentPlan; sessionId?: string | null } | null;
+  /** Generic acknowledgement only; the saved preference remains private. */
+  memoryUse?: KinfolkMemoryUse | null;
   /** Server decision metadata; the client fails closed for unauthorized cards. */
   responseMeta?: KinfolkResponseMeta | null;
 }
@@ -1044,12 +1061,20 @@ function TravelPage() {
   const [generatingImage, setGeneratingImage] = useState(false);
   const [imageCreationError, setImageCreationError] = useState<string | null>(null);
   const [generatedImage, setGeneratedImage] = useState<{ dataUrl: string; label: string } | null>(null);
+  const [showImageEdit, setShowImageEdit] = useState(false);
+  const [imageEditInstruction, setImageEditInstruction] = useState("");
+  const [imageEditConsent, setImageEditConsent] = useState(false);
+  const [editingImage, setEditingImage] = useState(false);
+  const [imageEditError, setImageEditError] = useState<string | null>(null);
+  const [editedImage, setEditedImage] = useState<{ dataUrl: string; label: string } | null>(null);
+  const [editSourceAssetId, setEditSourceAssetId] = useState<string | null>(null);
   const [includeCommunityPerspective, setIncludeCommunityPerspective] = useState(false);
   const [showMemoryManager, setShowMemoryManager] = useState(false);
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [conversationHandoff, setConversationHandoff] = useState<ConversationHandoffStatus | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [sessionsError, setSessionsError] = useState<string | null>(null);
   const [kinfolkContinuityEnabled, setKinfolkContinuityEnabled] = useState(false);
   const [kinfolkContinuityDisclosureRequired, setKinfolkContinuityDisclosureRequired] = useState(false);
   const [pendingSensitiveMemory, setPendingSensitiveMemory] = useState<{
@@ -1096,6 +1121,8 @@ function TravelPage() {
   const responseStatusTimersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
   const responseElapsedTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const activeChatControllerRef = useRef<AbortController | null>(null);
+  /** Browser-local only; consumed by the next successful Kinfolk chat request. */
+  const oneTurnDeliveryInstructionRef = useRef<string | null>(null);
 
   const clearResponseStatusTimers = useCallback((resetStatus = true) => {
     responseStatusTimersRef.current.forEach(clearTimeout);
@@ -1197,6 +1224,10 @@ function TravelPage() {
   // ── Voice input state ──────────────────────────────────────────────────────
   type VoiceState = "idle" | "notice" | "requesting" | "denied" | "unsupported" | "recording" | "processing";
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
+  // A voice failure must never overwrite a member's typed draft. Keep the
+  // guidance separate from the composer so the member can retry or continue
+  // with what they had already written.
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const [voiceTranscriptReview, setVoiceTranscriptReview] = useState<{
     originalText: string;
     suggestedText: string;
@@ -1349,6 +1380,7 @@ function TravelPage() {
 
   const finishRecording = useCallback(async (captured: Blob | Blob[], mimeType: SupportedRecordingMimeType) => {
     setVoiceState("processing");
+    setVoiceError(null);
     // Wall-clock duration from the ref set when recording started
     const durationMs = recordingStartedAtRef.current !== null
       ? Math.max(0, Math.round(performance.now() - recordingStartedAtRef.current))
@@ -1397,8 +1429,9 @@ function TravelPage() {
 
       if (!r.ok) {
         const body = await r.json().catch(() => ({})) as { error?: string; message?: string };
-        setInput(classifyVoiceError(r.status, body));
+        setVoiceError(classifyVoiceError(r.status, body));
         setVoiceState("idle");
+        setTimeout(() => inputRef.current?.focus(), 50);
         return;
       }
 
@@ -1437,9 +1470,10 @@ function TravelPage() {
       const timedOut = error instanceof Error
         && error.name === "AbortError"
         && controller?.signal.reason === "transcription_timeout";
-      if (timedOut) setInput("Voice transcription took too long. Please type your question.");
-      else if (!controller?.signal.aborted) setInput("Transcription failed — please type your question.");
+      if (timedOut) setVoiceError("Voice transcription took too long. Please type your question.");
+      else if (!controller?.signal.aborted) setVoiceError("Transcription failed — please type your question.");
       setVoiceState("idle");
+      if (!controller?.signal.aborted || timedOut) setTimeout(() => inputRef.current?.focus(), 50);
     } finally {
       if (transcriptionTimeoutRef.current) {
         clearTimeout(transcriptionTimeoutRef.current);
@@ -1472,6 +1506,7 @@ function TravelPage() {
   // This function intentionally does not contain the first-use notice gate so
   // accepting the notice can proceed directly to the browser permission prompt.
   const beginVoiceRecording = useCallback(async () => {
+    setVoiceError(null);
     setVoiceState("requesting");
     let stream: MediaStream | null = null;
     try {
@@ -1792,9 +1827,14 @@ function TravelPage() {
   const loadSessions = useCallback(async () => {
     if (!isLoggedIn) return;
     setSessionsLoading(true);
+    setSessionsError(null);
     try {
       const r = await fetch(`${BASE}api/kinfolk/sessions?view=${historyView}`, { credentials: "include", headers: kinfolkAuthHeaders() });
-      if (r.ok) { const d = await r.json() as { sessions: Session[] }; setSessions(d.sessions); }
+      if (!r.ok) throw new Error("Kinfolk conversation history could not be loaded.");
+      const d = await r.json() as { sessions: Session[] };
+      setSessions(d.sessions);
+    } catch (cause) {
+      setSessionsError(cause instanceof Error ? cause.message : "Kinfolk conversation history could not be loaded.");
     } finally { setSessionsLoading(false); }
   }, [isLoggedIn, historyView]);
 
@@ -1903,8 +1943,8 @@ function TravelPage() {
     pendingConversationScrollRef.current = null;
   }, [messages, sending]);
 
-  const uploadKinfolkImage = useCallback(async (file: File) => {
-    if (imageAttachments.length >= 2 || uploadingImage) return;
+  const uploadKinfolkImage = useCallback(async (file: File): Promise<{ assetId: string; previewUrl: string } | null> => {
+    if (imageAttachments.length >= 2 || uploadingImage) return null;
     setUploadingImage(true);
     setImageError(null);
     try {
@@ -1920,8 +1960,10 @@ function TravelPage() {
       setImageAttachments((items) => items.some((item) => item.assetId === body.assetId)
         ? items
         : [...items, { assetId: body.assetId!, previewUrl }].slice(0, 2));
+      return { assetId: body.assetId!, previewUrl };
     } catch (cause) {
       setImageError(cause instanceof Error ? cause.message : "Could not upload that image.");
+      return null;
     } finally {
       setUploadingImage(false);
     }
@@ -1981,6 +2023,23 @@ function TravelPage() {
     }
   }, [generatingImage, imageCreationBrief, providerDisclosureAccepted, noRealPersonOrPrivateInfoConfirmed]);
 
+  const editKinfolkImage = useCallback(async () => {
+    if (!editSourceAssetId || editingImage) return;
+    setEditingImage(true); setImageEditError(null);
+    try {
+      const response = await fetch(`${BASE}api/kinfolk/images/edit`, { method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include", body: JSON.stringify({ imageAssetId: editSourceAssetId, instruction: imageEditInstruction, providerDisclosureAccepted: imageEditConsent, editConsentAccepted: imageEditConsent }) });
+      const body = await response.json().catch(() => ({})) as { imageDataUrl?: string; contentLabel?: string; error?: string };
+      if (!response.ok || !body.imageDataUrl) throw new Error(body.error ?? "Kinfolk could not edit that image right now.");
+      setEditedImage({ dataUrl: body.imageDataUrl, label: body.contentLabel ?? "AI-edited visual" }); setShowImageEdit(false); setImageEditInstruction(""); setImageEditConsent(false);
+    } catch (cause) { setImageEditError(cause instanceof Error ? cause.message : "Kinfolk could not edit that image right now."); }
+    finally { setEditingImage(false); }
+  }, [editSourceAssetId, editingImage, imageEditConsent, imageEditInstruction]);
+  const editResultAgain = useCallback(async () => {
+    if (!editedImage) return;
+    try { const blob = await (await fetch(editedImage.dataUrl)).blob(); const uploaded = await uploadKinfolkImage(new File([blob], "kinfolk-private-edit.png", { type: "image/png" })); if (!uploaded) return; setEditSourceAssetId(uploaded.assetId); setEditedImage(null); setShowImageEdit(true); }
+    catch { setImageEditError("Could not prepare the edited image for another private edit."); }
+  }, [editedImage, uploadKinfolkImage]);
+
   const send = useCallback(async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || sending) return;
@@ -1998,6 +2057,7 @@ function TravelPage() {
       }));
     }
     const publicOrigin = exactRadiusOrigin.trim();
+    const oneTurnInstruction = oneTurnDeliveryInstructionRef.current;
     setInput("");
     setVoiceTranscriptReview(null);
     // An exact-radius origin is current-turn context only. Clear the browser
@@ -2038,7 +2098,7 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/chat`, {
         method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include",
-        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageAssetIds: attachedImageAssetIds, imageVisionConsent: attachedImageAssetIds.length > 0, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageAssetIds: attachedImageAssetIds, imageVisionConsent: attachedImageAssetIds.length > 0, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, oneTurnInstruction: oneTurnInstruction ?? undefined, conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
         signal: controller.signal,
       });
 
@@ -2068,6 +2128,8 @@ function TravelPage() {
         if (isBusy) return; // Input already restored — don't clear it in finally
         return;
       }
+
+      if (oneTurnInstruction) oneTurnDeliveryInstructionRef.current = null;
 
       const data = await r.json() as {
         sessionId?: string; reply?: string;
@@ -2110,6 +2172,9 @@ function TravelPage() {
         degraded?: boolean;
         degradedReason?: string | null;
         companionMemoryOffer?: CompanionMemoryOffer | null;
+        memoryUse?: KinfolkMemoryUse | null;
+        contextualVisuals?: KinfolkContextualVisual[] | null;
+        resourceCards?: KinfolkResourceCard[] | null;
         responseMeta?: KinfolkResponseMeta | null;
         sensitiveMemoryConfirmation?: {
           confirmationRequired?: boolean;
@@ -2150,6 +2215,13 @@ function TravelPage() {
         mediaLinks: data.mediaLinks ?? [],
         relatedConnections: data.relatedConnections ?? [],
         researchStatus: data.researchStatus ?? null,
+        contextualVisuals: Array.isArray(data.contextualVisuals) ? data.contextualVisuals.slice(0, 3) : [],
+        resourceCards: (data.resourceCards ?? []).flatMap((resource) => {
+          const href = safeExternalSourceHref(resource.url);
+          return href && resource.id && resource.title && resource.description
+            ? [{ ...resource, url: href }]
+            : [];
+        }).slice(0, 3),
         followUpSuggestions: data.followUpSuggestions ?? [], timestamp: new Date().toISOString(),
         cultureAction: data.cultureAction ?? null,
         libraryAction: data.libraryAction ?? null,
@@ -2175,6 +2247,7 @@ function TravelPage() {
         privateFinancialGoalOffer: Boolean(data.reply?.trim()) && isExplicitSavingsGoalPrompt(trimmed),
         companionMemoryOffer: data.companionMemoryOffer ?? null,
         inlineMemoryConsent: data.memoryConsentPlan ? { message: trimmed, plan: data.memoryConsentPlan, sessionId: data.sessionId ?? sessionId } : null,
+        memoryUse: data.memoryUse?.applied === true ? data.memoryUse : null,
         responseMeta,
       }]);
       if (shouldAutoSpeakNewReply({
@@ -2249,12 +2322,13 @@ function TravelPage() {
 
   const loadSession = useCallback(async (id: string) => {
     try {
+      setSessionsError(null);
       const r = await fetch(`${BASE}api/kinfolk/sessions/${id}`, { credentials: "include", headers: kinfolkAuthHeaders() });
-      if (!r.ok) return;
+      if (!r.ok) throw new Error("Kinfolk could not open this conversation. Try again.");
       const d = await r.json() as { session: { id: string; messages: Message[] }; resumePreview?: ConversationHandoffStatus | null };
       setSessionId(d.session.id); setMessages(d.session.messages ?? []); setConversationHandoff(d.resumePreview ?? null);
       setShowHistory(false);
-    } catch { /* ignore */ }
+    } catch (cause) { setSessionsError(cause instanceof Error ? cause.message : "Kinfolk could not open this conversation. Try again."); }
   }, []);
 
   const newChat = () => {
@@ -2599,6 +2673,8 @@ function TravelPage() {
           </div>
           {sessionsLoading ? (
             <div className="flex items-center justify-center py-8"><Loader2 size={16} className="text-[#CA922B] animate-spin" /></div>
+          ) : sessionsError ? (
+            <div className="px-3 py-6 text-center text-xs leading-5 text-red-700"><p>{sessionsError}</p><button type="button" onClick={() => void loadSessions()} className="mt-2 font-bold text-[#8D5C17]">Retry</button></div>
           ) : !kinfolkContinuityEnabled ? (
             <div className="px-3 py-6 text-center text-xs leading-5 text-[#3A1F0E]/40">Continuity is off. Turn it on in Memory settings whenever you want Kinfolk to use your saved conversations or approved memory again.</div>
           ) : sessions.length === 0 ? (
@@ -2925,8 +3001,23 @@ function TravelPage() {
                           mediaLinks={msg.mediaLinks}
                           relatedConnections={msg.relatedConnections}
                           researchStatus={msg.researchStatus}
+                          contextualVisuals={msg.contextualVisuals}
                         />
                       )}
+                      {msg.role === "assistant" && msg.resourceCards?.length ? (
+                        <aside data-testid="kinfolk-reviewed-resource-cards" className="mt-3 rounded-2xl border border-[#CA922B]/25 bg-[#FFF8EC] p-4">
+                          <p className="text-[10px] font-bold uppercase tracking-widest text-[#8D5C17]">Reviewed resources</p>
+                          <div className="mt-2 space-y-3">
+                            {msg.resourceCards.map((resource) => (
+                              <a key={resource.id} href={resource.url} target="_blank" rel="noreferrer" className="block rounded-xl bg-white p-3 transition-colors hover:bg-[#FFF4DF]">
+                                <p className="text-xs font-semibold text-[#2B1507]">{resource.type === "image_gallery" ? "Educational image library: " : ""}{resource.title}</p>
+                                <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/65">{resource.description}</p>
+                                {resource.safetyNote ? <p className="mt-1 text-xs font-medium leading-5 text-[#3A1F0E]/70">{resource.safetyNote}</p> : null}
+                              </a>
+                            ))}
+                          </div>
+                        </aside>
+                      ) : null}
                       {msg.role === "assistant" && msg.communityPerspective && (
                         <div data-testid="kinfolk-community-perspective" className="mt-3 rounded-2xl border border-[#CA922B]/20 bg-[#FFF8EC] px-4 py-3">
                           <p className="text-[10px] font-bold uppercase tracking-widest text-[#8D5C17]">{msg.communityPerspective.label}</p>
@@ -2958,7 +3049,11 @@ function TravelPage() {
                           sessionId={msg.inlineMemoryConsent.sessionId}
                           onSaved={() => { setMessages((current) => current.map((item) => item.id === msg.id ? { ...item, inlineMemoryConsent: null } : item)); void loadKinfolkContinuity(); }}
                           onDismiss={() => setMessages((current) => current.map((item) => item.id === msg.id ? { ...item, inlineMemoryConsent: null } : item))}
+                          onUseOnce={(instruction) => { oneTurnDeliveryInstructionRef.current = instruction; setMessages((current) => current.map((item) => item.id === msg.id ? { ...item, inlineMemoryConsent: null } : item)); }}
                         />
+                      )}
+                      {msg.role === "assistant" && msg.memoryUse?.applied === true && msg.content.trim() && (
+                        <KinfolkMemoryUseNotice memoryUse={msg.memoryUse} />
                       )}
                       {msg.role === "assistant" && msg.companionMemoryOffer && (
                         <KinfolkCompanionMemoryOfferCard
@@ -3166,6 +3261,15 @@ function TravelPage() {
                   </div>
                 )}
 
+                {voiceError && (
+                  <div data-testid="kinfolk-voice-input-error" role="alert" className="mb-3 max-w-3xl mx-auto flex items-start justify-between gap-3 rounded-2xl border border-[#CA922B]/30 bg-[#FFF8EC] px-4 py-3">
+                    <p className="text-xs leading-relaxed text-[#3A1F0E]/75">{voiceError}</p>
+                    <button type="button" onClick={() => setVoiceError(null)} className="shrink-0 text-[11px] font-semibold text-[#8D5C17] underline">
+                      Dismiss
+                    </button>
+                  </div>
+                )}
+
                 {voiceTranscriptReview && (
                   <div aria-live="polite" className="mb-3 max-w-3xl mx-auto rounded-2xl border border-[#CA922B]/30 bg-[#FFF8EC] px-4 py-3">
                     <p className="text-xs leading-relaxed text-[#3A1F0E]/75">
@@ -3243,6 +3347,8 @@ function TravelPage() {
                   </div>
                 </div>}
 
+                {showImageEdit && <div role="dialog" aria-modal="true" aria-label="Edit a private image with Kinfolk" className="mb-3 mx-auto max-w-3xl rounded-2xl border border-[#8D5C17]/25 bg-[#FFF9ED] p-4 text-sm text-[#3A1F0E] shadow-sm"><p className="font-bold">Edit a private image</p><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/75">Only the selected private image and your instruction are sent once to Kinfolk’s configured image provider. The result stays in this session and is not saved to memory.</p><textarea value={imageEditInstruction} onChange={(event) => setImageEditInstruction(event.target.value)} maxLength={800} rows={3} placeholder="Example: Change the background to a garden." className="mt-3 w-full resize-none rounded-xl border border-[#3A1F0E]/15 bg-white p-3 text-xs" /><label className="mt-3 flex items-start gap-2 text-xs leading-5 text-[#3A1F0E]/70"><input type="checkbox" checked={imageEditConsent} onChange={(event) => setImageEditConsent(event.target.checked)} className="mt-1" />I consent to send this private image and instruction once to Kinfolk’s configured image provider. The result is session-only and not saved to Kinfolk memory.</label>{imageEditError && <p role="alert" className="mt-2 text-xs text-red-700">{imageEditError}</p>}<div className="mt-3 flex gap-2"><button type="button" onClick={() => setShowImageEdit(false)} className="rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-xs font-bold">Cancel</button><button type="button" onClick={() => void editKinfolkImage()} disabled={editingImage || !imageEditConsent || imageEditInstruction.trim().length < 4} className="rounded-xl bg-[#8D5C17] px-3 py-2 text-xs font-bold text-white disabled:opacity-50">{editingImage ? "Editing…" : "Edit image"}</button></div></div>}
+
                 {showImageCreation && <div role="dialog" aria-modal="true" aria-label="Create an original visual with Kinfolk" className="mb-3 mx-auto max-w-3xl rounded-2xl border border-[#8D5C17]/25 bg-[#FFF9ED] p-4 text-sm text-[#3A1F0E] shadow-sm">
                   <div className="flex items-start justify-between gap-3">
                     <div>
@@ -3277,6 +3383,8 @@ function TravelPage() {
                   </div>
                 </div>}
 
+                {editedImage && <div className="mb-3 mx-auto max-w-3xl overflow-hidden rounded-2xl border border-[#8D5C17]/20 bg-[#FFF9ED] p-3 shadow-sm"><div className="mb-2 flex items-center justify-between gap-3"><div><p className="text-xs font-bold text-[#3A1F0E]">{editedImage.label}</p><p className="text-[11px] text-[#3A1F0E]/65">Session-only private result. It is not posted or added to Kinfolk memory.</p></div><button type="button" onClick={() => setEditedImage(null)} aria-label="Remove edited image" className="rounded-full p-1"><X size={16} /></button></div><img src={editedImage.dataUrl} alt="AI-edited private image" className="max-h-80 w-full rounded-xl object-contain bg-white" /><button type="button" onClick={() => void editResultAgain()} className="mt-3 rounded-xl border border-[#8D5C17]/30 bg-white px-3 py-2 text-xs font-bold text-[#8D5C17]">Edit this result again</button></div>}
+
                 {generatedImage && <div className="mb-3 mx-auto max-w-3xl overflow-hidden rounded-2xl border border-[#8D5C17]/20 bg-[#FFF9ED] p-3 shadow-sm">
                   <div className="mb-2 flex items-center justify-between gap-3">
                     <div><p className="text-xs font-bold text-[#3A1F0E]">{generatedImage.label}</p><p className="text-[11px] text-[#3A1F0E]/65">Created for this session only. It is not saved, posted, or added to Kinfolk memory.</p></div>
@@ -3310,7 +3418,8 @@ function TravelPage() {
                 <div className="flex items-end gap-2 max-w-3xl mx-auto">
                   <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif" className="hidden" onChange={(event) => { const file = event.target.files?.[0]; if (file) { setImageError(null); setPendingImageConsent(file); } event.target.value = ""; }} />
                   {isLoggedIn && <button data-testid="kinfolk-image-create" type="button" onClick={() => { setShowImageCreation(true); setImageCreationError(null); }} disabled={sending || uploadingImage} aria-label="Create an original visual" title="Create an original visual" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-[#CA922B]/10 border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] flex items-center justify-center disabled:opacity-40 shrink-0"><Sparkles size={16} /></button>}
-                  {isLoggedIn && <button data-testid="kinfolk-image-upload" onClick={() => imageInputRef.current?.click()} disabled={uploadingImage || imageAttachments.length >= 2 || sending} aria-label="Add an image" title="Ask Kinfolk about an image" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-[#CA922B]/10 border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] flex items-center justify-center disabled:opacity-40 shrink-0">{uploadingImage ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={16} />}</button>}
+                  {isLoggedIn && <button type="button" onClick={() => { const source = imageAttachments[0]; if (!source) { setImageError("Add a private image before editing."); return; } setEditSourceAssetId(source.assetId); setImageEditError(null); setShowImageEdit(true); }} disabled={!imageAttachments.length || sending} aria-label="Edit a private image" title="Edit a private image" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] border border-[#3A1F0E]/10 text-[#3A1F0E]/50 flex items-center justify-center disabled:opacity-40 shrink-0"><Sparkles size={16} /></button>}
+                                    {isLoggedIn && <button data-testid="kinfolk-image-upload" onClick={() => imageInputRef.current?.click()} disabled={uploadingImage || imageAttachments.length >= 2 || sending} aria-label="Add an image" title="Ask Kinfolk about an image" className="w-11 h-11 rounded-2xl bg-[#FAF6EF] hover:bg-[#CA922B]/10 border border-[#3A1F0E]/10 text-[#3A1F0E]/50 hover:text-[#CA922B] flex items-center justify-center disabled:opacity-40 shrink-0">{uploadingImage ? <Loader2 size={15} className="animate-spin" /> : <ImagePlus size={16} />}</button>}
                   {/* Microphone button */}
                   {isLoggedIn && (
                     <button

@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Image,
   Platform,
   ScrollView,
   StyleSheet,
@@ -49,10 +50,63 @@ interface UserProfile {
   memberType?: string | null;
   industry?: string | null;
   jobTitle?: string | null;
+  coverUrl?: string | null;
+  location?: string | null;
+  age?: number | null;
+  birthday?: string | null;
   createdAt?: string;
 }
 
+type EarnedBadge = { achievementType: string; earnedAt?: string | null };
+
 type FollowStatus = "not_following" | "following" | "pending";
+type ProfileTab = "posts" | "media" | "tagged" | "notes";
+type ProfileNote = {
+  id: string;
+  content: string;
+  createdAt?: string | null;
+  taggerFirstName?: string | null;
+  taggerLastName?: string | null;
+  taggerUsername?: string | null;
+};
+
+function toCommunityPost(post: any): CommunityPost {
+  return {
+    id: post.id,
+    author: post.authorName ?? "Community Member",
+    authorInitials: post.authorInitials ?? "CM",
+    authorColor: post.authorColor ?? "#CA922B",
+    authorId: post.authorId,
+    content: post.content,
+    likes: post.upvotes ?? 0,
+    comments: post.commentsCount ?? 0,
+    timeAgo: timeAgo(post.createdAt),
+    category: post.category ?? "general",
+    postType: post.postType ?? "community",
+    liked: false,
+    businessId: post.businessId,
+    businessName: post.businessName,
+    businessLink: post.businessLink,
+    mediaUrls: parseMediaUrls(post.mediaUrls),
+    savedPlaceId: post.savedPlaceId,
+    locationTag: post.locationTag,
+    locationType: post.locationType,
+    topicTag: post.topicTag,
+    isPrivateTopic: post.isPrivateTopic,
+    hasContentWarning: post.hasContentWarning,
+    contentWarningType: post.contentWarningType,
+    linkUrl: post.linkUrl,
+    linkTitle: post.linkTitle,
+    linkDescription: post.linkDescription,
+    linkDomain: post.linkDomain,
+    linkFavicon: post.linkFavicon,
+    repostId: post.repostId,
+    repostAuthorName: post.repostAuthorName,
+    repostAuthorInitials: post.repostAuthorInitials,
+    repostContent: post.repostContent,
+    visibility: post.visibility,
+  };
+}
 
 const MEMBER_BADGE: Record<string, { label: string; color: string }> = {
   navigator:   { label: "Navigator",   color: "#2D7A4F" },
@@ -70,28 +124,53 @@ export default function VisitorProfileScreen() {
   const [followStatus, setFollowStatus] = useState<FollowStatus>("not_following");
   const [canSeeContent, setCanSeeContent] = useState(true);
   const [posts, setPosts] = useState<CommunityPost[]>([]);
+  const [taggedPosts, setTaggedPosts] = useState<CommunityPost[]>([]);
+  const [profileNotes, setProfileNotes] = useState<ProfileNote[]>([]);
+  const [activeTab, setActiveTab] = useState<ProfileTab>("posts");
+  const [canReceiveDirectMessages, setCanReceiveDirectMessages] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingPosts, setLoadingPosts] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
   const [myId, setMyId] = useState<string | null>(null);
   const [isBlocked, setIsBlocked] = useState(false);
+  const [profileLoadError, setProfileLoadError] = useState<"unavailable" | "retry" | null>(null);
+  const [memberAuthHeaders, setMemberAuthHeaders] = useState<Record<string, string>>({});
+  const [earnedBadges, setEarnedBadges] = useState<EarnedBadge[]>([]);
 
   const loadProfile = useCallback(async () => {
     if (!id) return;
     setLoadingProfile(true);
+    setProfileLoadError(null);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
+      setMemberAuthHeaders(token ? { Authorization: `Bearer ${token}` } : {});
       const res = await fetch(`${getApiBase()}/api/users/${id}/profile`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (!res.ok) { setLoadingProfile(false); return; }
-      const data = await res.json() as { profile: UserProfile; isFollowing: boolean; followStatus: string | null; isFollowedBy: boolean; canSeeContent: boolean };
-      setProfile(data.profile);
+      if (!res.ok) {
+        setProfile(null);
+        setProfileLoadError(res.status >= 500 ? "retry" : "unavailable");
+        return;
+      }
+      const data = await res.json() as { profile: UserProfile; isFollowing: boolean; followStatus: string | null; isFollowedBy: boolean; canSeeContent: boolean; canReceiveDirectMessages?: boolean; badges?: EarnedBadge[]; tags?: ProfileNote[] };
+      const nextProfile = data.profile;
+      if (!nextProfile) {
+        setProfile(null);
+        setProfileLoadError("unavailable");
+        return;
+      }
+      setProfile(nextProfile);
       setCanSeeContent(data.canSeeContent);
+      setCanReceiveDirectMessages(Boolean(data.canReceiveDirectMessages));
+      setProfileNotes(Array.isArray(data.tags) ? data.tags.filter((tag): tag is ProfileNote => Boolean(tag) && typeof tag.id === "string" && typeof tag.content === "string") : []);
+      setEarnedBadges(Array.isArray(data.badges) ? data.badges.filter((badge): badge is EarnedBadge => Boolean(badge) && typeof badge.achievementType === "string") : []);
       if (data.isFollowing) setFollowStatus("following");
       else if (data.followStatus === "pending") setFollowStatus("pending");
       else setFollowStatus("not_following");
-    } catch { /* ignore */ } finally {
+    } catch {
+      setProfile(null);
+      setProfileLoadError("retry");
+    } finally {
       setLoadingProfile(false);
     }
   }, [id]);
@@ -101,54 +180,33 @@ export default function VisitorProfileScreen() {
     setLoadingPosts(true);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const res = await fetch(`${getApiBase()}/api/community/posts?authorId=${id}&limit=20`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!res.ok) { setLoadingPosts(false); return; }
-      const data = await res.json() as { posts: any[] };
-      const mapped: CommunityPost[] = (data.posts ?? []).map((p) => ({
-        id: p.id,
-        author: p.authorName ?? "Community Member",
-        authorInitials: p.authorInitials ?? "CM",
-        authorColor: p.authorColor ?? "#CA922B",
-        authorId: p.authorId,
-        content: p.content,
-        likes: p.upvotes ?? 0,
-        comments: p.commentsCount ?? 0,
-        timeAgo: timeAgo(p.createdAt),
-        category: p.category ?? "general",
-        postType: p.postType ?? "community",
-        liked: false,
-        businessId: p.businessId,
-        businessName: p.businessName,
-        businessLink: p.businessLink,
-        mediaUrls: parseMediaUrls(p.mediaUrls),
-        savedPlaceId: p.savedPlaceId,
-        locationTag: p.locationTag,
-        locationType: p.locationType,
-        topicTag: p.topicTag,
-        isPrivateTopic: p.isPrivateTopic,
-        hasContentWarning: p.hasContentWarning,
-        contentWarningType: p.contentWarningType,
-        linkUrl: p.linkUrl,
-        linkTitle: p.linkTitle,
-        linkDescription: p.linkDescription,
-        linkDomain: p.linkDomain,
-        linkFavicon: p.linkFavicon,
-        repostId: p.repostId,
-        repostAuthorName: p.repostAuthorName,
-        repostAuthorInitials: p.repostAuthorInitials,
-        repostContent: p.repostContent,
-        visibility: p.visibility,
-      }));
-      setPosts(mapped);
+      const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+      const [authoredResponse, taggedResponse] = await Promise.all([
+        fetch(`${getApiBase()}/api/community/posts?authorId=${encodeURIComponent(id)}&limit=20`, { headers }),
+        fetch(`${getApiBase()}/api/community/posts?taggedUserId=${encodeURIComponent(id)}&limit=20`, { headers }),
+      ]);
+      const [authoredPayload, taggedPayload] = await Promise.all([
+        authoredResponse.ok ? authoredResponse.json() as Promise<{ posts?: any[] }> : Promise.resolve({ posts: [] }),
+        taggedResponse.ok ? taggedResponse.json() as Promise<{ posts?: any[] }> : Promise.resolve({ posts: [] }),
+      ]);
+      setPosts((authoredPayload.posts ?? []).map(toCommunityPost));
+      setTaggedPosts((taggedPayload.posts ?? []).map(toCommunityPost));
     } catch { /* ignore */ } finally {
       setLoadingPosts(false);
     }
   }, [id]);
 
   useEffect(() => { queueMicrotask(() => { void loadProfile(); }); }, [loadProfile]);
-  useEffect(() => { queueMicrotask(() => { void loadPosts(); }); }, [loadPosts]);
+  useEffect(() => { setActiveTab("posts"); }, [id]);
+  useEffect(() => {
+    if (!profile?.id || !canSeeContent) {
+      setPosts([]);
+      setTaggedPosts([]);
+      setLoadingPosts(false);
+      return;
+    }
+    queueMicrotask(() => { void loadPosts(); });
+  }, [canSeeContent, loadPosts, profile?.id]);
   useEffect(() => {
     SecureStore.getItemAsync("auth_session_token").then((token) => {
       if (!token) return;
@@ -238,7 +296,9 @@ export default function VisitorProfileScreen() {
         if (res.ok) {
           setFollowStatus("not_following");
           setProfile((p) => p ? { ...p, followersCount: Math.max((p.followersCount ?? 1) - 1, 0) } : p);
-          if (!profile.isPrivate) setCanSeeContent(false);
+          // Public profiles remain readable after an unfollow. Private profiles
+          // immediately return to their server-shaped private state.
+          setCanSeeContent(!profile.isPrivate);
         }
       } else {
         const res = await fetch(`${getApiBase()}/api/users/${id}/follow`, {
@@ -259,7 +319,31 @@ export default function VisitorProfileScreen() {
     }
   };
 
-  const displayName = profile?.username ? `@${profile.username}` : "Community Member";
+  const handleStartMessage = async () => {
+    if (!id || !profile) return;
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      if (!token) {
+        Alert.alert("Sign in required", "You need to be signed in to message this member.");
+        return;
+      }
+      const res = await fetch(`${getApiBase()}/api/conversations`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ type: "dm", participantId: id, title: profile.username ? `@${profile.username}` : "Direct Message" }),
+      });
+      const data = await res.json() as { conversation?: { id: number }; error?: string };
+      if (!res.ok || !data.conversation) {
+        Alert.alert("Message unavailable", data.error ?? "This member cannot receive direct messages right now.");
+        return;
+      }
+      router.push({ pathname: "/chat/[id]", params: { id: String(data.conversation.id) } });
+    } catch {
+      Alert.alert("Message unavailable", "Could not start a conversation. Please try again.");
+    }
+  };
+
+  const displayName = [profile?.firstName, profile?.lastName].filter(Boolean).join(" ") || (profile?.username ? `@${profile.username}` : "Community Member");
   const initials = (profile?.username ?? "CM").slice(0, 2).toUpperCase();
   const memberBadge = MEMBER_BADGE[(profile?.memberType ?? "free").toLowerCase()];
   const isOwnProfile = myId && id && myId === id;
@@ -276,6 +360,9 @@ export default function VisitorProfileScreen() {
   const visiblePosts = canSeeContent
     ? posts
     : posts.filter((p) => (p as any).visibility === "public");
+  const mediaPosts = visiblePosts.filter((post) => (post.mediaUrls?.length ?? 0) > 0);
+  const activePosts = activeTab === "media" ? mediaPosts : activeTab === "tagged" ? taggedPosts : visiblePosts;
+  const activeSectionTitle = activeTab === "media" ? "Photos & videos" : activeTab === "tagged" ? "Tagged" : activeTab === "notes" ? "Profile notes" : canSeeContent ? "Posts" : "Public posts";
 
   return (
     <View style={[s.container, { backgroundColor: colors.background }]}>
@@ -316,16 +403,18 @@ export default function VisitorProfileScreen() {
         ) : !profile ? (
           <View style={s.emptyState}>
             <Feather name="user-x" size={40} color={colors.muted} />
-            <Text style={[s.emptyTitle, { color: colors.foreground }]}>Profile not found</Text>
-            <Text style={[s.emptySub, { color: colors.mutedForeground }]}>This user may have deleted their account.</Text>
+            <Text style={[s.emptyTitle, { color: colors.foreground }]}>{profileLoadError === "retry" ? "Profile unavailable" : "Profile unavailable"}</Text>
+            <Text style={[s.emptySub, { color: colors.mutedForeground }]}>{profileLoadError === "retry" ? "We could not load this profile. Please try again." : "This member profile is unavailable or you do not have permission to view it."}</Text>
+            {profileLoadError === "retry" ? <TouchableOpacity style={[s.retryBtn, { backgroundColor: colors.primary }]} onPress={() => void loadProfile()} accessibilityRole="button" accessibilityLabel="Retry loading member profile"><Text style={s.retryBtnText}>Retry</Text></TouchableOpacity> : null}
           </View>
         ) : (
           <>
             {/* Profile card */}
             <View style={[s.profileCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              {profile.coverUrl && canSeeContent ? <Image source={{ uri: `${getApiBase()}${profile.coverUrl}`, headers: memberAuthHeaders }} style={s.coverImage} accessibilityLabel={`${displayName} profile cover`} /> : null}
               {/* Avatar */}
               <View style={[s.avatar, { backgroundColor: "#CA922B" }]}>
-                <Text style={s.avatarInitials}>{initials}</Text>
+                {profile.profileImageUrl ? <Image source={{ uri: profile.profileImageUrl }} style={s.avatarImage} accessibilityLabel={`${displayName} profile image`} /> : <Text style={s.avatarInitials}>{initials}</Text>}
               </View>
 
               {/* Handle + verified */}
@@ -335,6 +424,9 @@ export default function VisitorProfileScreen() {
                   <Feather name="check-circle" size={16} color="#2D7A4F" />
                 )}
               </View>
+              {profile.bio && canSeeContent && (
+                <Text style={[s.bio, { color: colors.foreground }]}>{profile.bio}</Text>
+              )}
               {memberBadge && (
                 <View style={[s.memberBadge, { backgroundColor: memberBadge.color + "15", borderColor: memberBadge.color + "40" }]}>
                   <View style={[s.memberDot, { backgroundColor: memberBadge.color }]} />
@@ -349,28 +441,37 @@ export default function VisitorProfileScreen() {
                 </Text>
               )}
 
-              {/* Bio */}
-              {profile.bio && canSeeContent && (
-                <Text style={[s.bio, { color: colors.foreground }]}>{profile.bio}</Text>
+              {(profile.location || profile.age || profile.birthday) && canSeeContent && (
+                <View style={s.profileFacts}>
+                  {profile.location ? <Text style={[s.profileFact, { color: colors.mutedForeground }]}><Feather name="map-pin" size={12} color={colors.primary} /> {profile.location}</Text> : null}
+                  {profile.age ? <Text style={[s.profileFact, { color: colors.mutedForeground }]}><Feather name="user" size={12} color={colors.primary} /> {profile.age}</Text> : null}
+                  {profile.birthday ? <Text style={[s.profileFact, { color: colors.mutedForeground }]}><Feather name="gift" size={12} color={colors.primary} /> {profile.birthday}</Text> : null}
+                </View>
               )}
 
+              {earnedBadges.length > 0 && canSeeContent ? (
+                <View style={s.badgeRow} accessibilityLabel="Earned profile badges">
+                  {earnedBadges.slice(0, 4).map((badge) => <View key={`${badge.achievementType}-${badge.earnedAt ?? "earned"}`} style={[s.earnedBadge, { backgroundColor: colors.primary + "14", borderColor: colors.primary + "30" }]}><Feather name="award" size={12} color={colors.primary} /><Text style={[s.earnedBadgeText, { color: colors.primary }]}>{badge.achievementType.replace(/[_-]+/g, " ")}</Text></View>)}
+                </View>
+              ) : null}
+
               {/* Private account notice */}
-              {profile.isPrivate && !canSeeContent && (
+              {!canSeeContent && (
                 <View style={[s.privateNotice, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
                   <Feather name="lock" size={14} color={colors.mutedForeground} />
-                  <Text style={[s.privateText, { color: colors.mutedForeground }]}>This account is private. Follow to see their content.</Text>
+                  <Text style={[s.privateText, { color: colors.mutedForeground }]}>This profile is private. Follow requests must be accepted before activity is shown.</Text>
                 </View>
               )}
 
               {/* Stats row */}
               <View style={[s.statsRow, { borderTopColor: colors.border }]}>
                 <View style={s.statItem}>
-                  <Text style={[s.statValue, { color: colors.primary }]}>{profile.followersCount ?? 0}</Text>
+                  <Text style={[s.statValue, { color: colors.primary }]}>{typeof profile.followersCount === "number" ? profile.followersCount : "—"}</Text>
                   <Text style={[s.statLabel, { color: colors.mutedForeground }]}>Followers</Text>
                 </View>
                 <View style={[s.statDivider, { backgroundColor: colors.border }]} />
                 <View style={s.statItem}>
-                  <Text style={[s.statValue, { color: colors.primary }]}>{profile.followingCount ?? 0}</Text>
+                  <Text style={[s.statValue, { color: colors.primary }]}>{typeof profile.followingCount === "number" ? profile.followingCount : "—"}</Text>
                   <Text style={[s.statLabel, { color: colors.mutedForeground }]}>Following</Text>
                 </View>
                 <View style={[s.statDivider, { backgroundColor: colors.border }]} />
@@ -381,7 +482,12 @@ export default function VisitorProfileScreen() {
               </View>
 
               {/* Actions */}
-              {!isOwnProfile && (
+              {isOwnProfile ? (
+                <TouchableOpacity style={[s.editBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]} onPress={() => router.push("/(tabs)/profile" as never)} accessibilityRole="button" accessibilityLabel="Edit my profile">
+                  <Feather name="edit-2" size={15} color={colors.foreground} />
+                  <Text style={[s.messageBtnText, { color: colors.foreground }]}>Edit profile</Text>
+                </TouchableOpacity>
+              ) : (
                 <View style={s.actionsRow}>
                   <TouchableOpacity
                     style={[
@@ -393,6 +499,9 @@ export default function VisitorProfileScreen() {
                     onPress={handleFollow}
                     disabled={followLoading}
                     activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${followBtnLabel} ${displayName}`}
+                    accessibilityState={{ busy: followLoading, selected: followStatus === "following" }}
                   >
                     {followLoading ? (
                       <ActivityIndicator size="small" color={followStatus !== "not_following" ? colors.foreground : "#FFFFFF"} />
@@ -405,23 +514,38 @@ export default function VisitorProfileScreen() {
                       </>
                     )}
                   </TouchableOpacity>
-                  <TouchableOpacity
+                  {canReceiveDirectMessages ? <TouchableOpacity
                     style={[s.messageBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
-                    onPress={() => router.push(`/messages?userId=${id}` as any)}
+                    onPress={() => void handleStartMessage()}
                     activeOpacity={0.8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Message ${displayName}`}
                   >
                     <Feather name="message-circle" size={15} color={colors.foreground} />
                     <Text style={[s.messageBtnText, { color: colors.foreground }]}>Message</Text>
-                  </TouchableOpacity>
+                  </TouchableOpacity> : null}
                 </View>
               )}
             </View>
 
-            {/* Posts section */}
+            {/* Server-authorized profile activity. The tagged feed repeats all
+                Community visibility, block, moderation, and group checks. */}
             <View style={s.postsSection}>
-              <Text style={[s.postsSectionTitle, { color: colors.foreground }]}>
-                {canSeeContent ? "Posts" : "Public Posts"}
-              </Text>
+              {canSeeContent ? <View style={s.profileTabs} accessibilityRole="tablist">
+                {([
+                  ["posts", "Posts"],
+                  ["media", "Media"],
+                  ["tagged", "Tagged"],
+                  ["notes", "Notes"],
+                ] as Array<[ProfileTab, string]>).map(([tab, label]) => <TouchableOpacity
+                  key={tab}
+                  style={[s.profileTab, { backgroundColor: activeTab === tab ? colors.primary : colors.secondary, borderColor: activeTab === tab ? colors.primary : colors.border }]}
+                  onPress={() => setActiveTab(tab)}
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: activeTab === tab }}
+                ><Text style={[s.profileTabText, { color: activeTab === tab ? "#FFFFFF" : colors.mutedForeground }]}>{label}</Text></TouchableOpacity>)}
+              </View> : null}
+              <Text style={[s.postsSectionTitle, { color: colors.foreground }]}>{activeSectionTitle}</Text>
               {!canSeeContent && (
                 <View style={[s.followersOnlyTeaser, { backgroundColor: colors.card, borderColor: colors.border }]}>
                   <Feather name="lock" size={18} color={colors.muted} />
@@ -431,15 +555,25 @@ export default function VisitorProfileScreen() {
                   </Text>
                 </View>
               )}
-              {loadingPosts ? (
+              {loadingPosts && activeTab !== "notes" ? (
                 <ActivityIndicator color={colors.primary} style={{ marginTop: 20 }} />
-              ) : visiblePosts.length === 0 ? (
+              ) : activeTab === "notes" ? profileNotes.length === 0 ? (
+                <View style={s.emptyPosts}>
+                  <Feather name="message-square" size={28} color={colors.muted} />
+                  <Text style={[s.emptyPostsText, { color: colors.mutedForeground }]}>No visible profile notes yet</Text>
+                </View>
+              ) : profileNotes.map((note) => (
+                <View key={note.id} style={[s.profileNote, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Text style={[s.profileNoteText, { color: colors.foreground }]}>{note.content}</Text>
+                  <Text style={[s.profileNoteByline, { color: colors.mutedForeground }]}>{[note.taggerFirstName, note.taggerLastName].filter(Boolean).join(" ") || note.taggerUsername || "Community member"}</Text>
+                </View>
+              )) : activePosts.length === 0 ? (
                 <View style={s.emptyPosts}>
                   <Feather name="edit-3" size={28} color={colors.muted} />
-                  <Text style={[s.emptyPostsText, { color: colors.mutedForeground }]}>No posts yet</Text>
+                  <Text style={[s.emptyPostsText, { color: colors.mutedForeground }]}>{activeTab === "tagged" ? "No visible tagged activity yet" : activeTab === "media" ? "No visible photos or videos yet" : "No posts yet"}</Text>
                 </View>
               ) : (
-                visiblePosts.map((post) => (
+                activePosts.map((post) => (
                   <CommunityPostCard
                     key={post.id}
                     post={post}
@@ -480,7 +614,9 @@ const s = StyleSheet.create({
     padding: 20,
     alignItems: "center",
     gap: 6,
+    overflow: "hidden",
   },
+  coverImage: { alignSelf: "stretch", height: 112, marginTop: -20, marginBottom: 8, marginHorizontal: -20 },
   avatar: {
     width: 72,
     height: 72,
@@ -490,6 +626,7 @@ const s = StyleSheet.create({
     marginBottom: 4,
   },
   avatarInitials: { fontFamily: "Inter_700Bold", fontSize: 26, color: "#FFFFFF" },
+  avatarImage: { width: "100%", height: "100%", borderRadius: 36 },
   nameRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   displayName: { fontFamily: "Inter_700Bold", fontSize: 20 },
   username: { fontFamily: "Inter_400Regular", fontSize: 13 },
@@ -506,6 +643,8 @@ const s = StyleSheet.create({
   memberDot: { width: 6, height: 6, borderRadius: 3 },
   memberBadgeText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   jobLine: { fontFamily: "Inter_400Regular", fontSize: 13 },
+  profileFacts: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 8, marginTop: 2 },
+  profileFact: { fontFamily: "Inter_400Regular", fontSize: 12 },
   bio: {
     fontFamily: "Inter_400Regular",
     fontSize: 13,
@@ -513,6 +652,9 @@ const s = StyleSheet.create({
     textAlign: "center",
     paddingHorizontal: 8,
   },
+  badgeRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center", gap: 6, marginTop: 4 },
+  earnedBadge: { flexDirection: "row", alignItems: "center", gap: 4, borderWidth: 1, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 4 },
+  earnedBadgeText: { fontFamily: "Inter_600SemiBold", fontSize: 10, textTransform: "capitalize" },
   privateNotice: {
     flexDirection: "row",
     alignItems: "center",
@@ -562,10 +704,14 @@ const s = StyleSheet.create({
     borderWidth: 1,
   },
   messageBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
+  editBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7, width: "100%", paddingVertical: 10, borderRadius: 10, borderWidth: 1 },
   postsSection: {
     paddingHorizontal: 16,
     paddingBottom: 20,
   },
+  profileTabs: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 16 },
+  profileTab: { borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 },
+  profileTabText: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   postsSectionTitle: {
     fontFamily: "Inter_700Bold",
     fontSize: 17,
@@ -583,7 +729,12 @@ const s = StyleSheet.create({
   teaserSub: { fontFamily: "Inter_400Regular", fontSize: 12, textAlign: "center", lineHeight: 17 },
   emptyPosts: { alignItems: "center", paddingVertical: 40, gap: 10 },
   emptyPostsText: { fontFamily: "Inter_400Regular", fontSize: 14 },
+  profileNote: { borderWidth: 1, borderRadius: 12, padding: 14, marginBottom: 10, gap: 8 },
+  profileNoteText: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 20 },
+  profileNoteByline: { fontFamily: "Inter_400Regular", fontSize: 12 },
   emptyState: { alignItems: "center", paddingVertical: 60, gap: 12, paddingHorizontal: 32 },
   emptyTitle: { fontFamily: "Inter_700Bold", fontSize: 18 },
   emptySub: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 20 },
+  retryBtn: { marginTop: 6, paddingHorizontal: 18, paddingVertical: 10, borderRadius: 10 },
+  retryBtnText: { fontFamily: "Inter_700Bold", fontSize: 14, color: "#FFFFFF" },
 });

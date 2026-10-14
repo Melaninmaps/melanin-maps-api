@@ -1,15 +1,11 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, safetyReportsTable, safetyIncidentsTable, businessesTable } from "@workspace/db";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, gt, isNull } from "drizzle-orm";
 import { reportLimiter } from "../middleware/rateLimiter";
 import { sendAdminSafetyReportAlert } from "../lib/email";
+import { isNamedAdmin } from "../lib/adminAuth";
 import { moderateSafetyReport } from "../safety/moderateSafetyReport";
-import {
-  getCachedProximityWarnings,
-  invalidateProximityWarningCache,
-  proximityCacheKey,
-  setCachedProximityWarnings,
-} from "../safety/proximityWarningCache";
+import { invalidateProximityWarningCache } from "../safety/proximityWarningCache";
 import {
   normalizeIncidentLocation,
   normalizePoliceEncounterType,
@@ -17,6 +13,15 @@ import {
   reportMustBeAnonymous,
   type IncidentLocation,
 } from "../safety/reportContract";
+import {
+  hasPoliceIceReportingConsent,
+  POLICE_ICE_REPORTING_CONSENT_VERSION,
+} from "../safety/policeIceAlertPolicy";
+import {
+  calculateSafetyReportDisplayExpiry,
+  normalizeLifecycleText,
+  parseLifecycleExpiry,
+} from "../safety/safetyHubLifecycle";
 
 const router: IRouter = Router();
 
@@ -69,7 +74,6 @@ const SPOKEN_SEVERITY_MAP: Record<string, typeof VALID_SEVERITIES[number]> = {
   "I felt targeted or unsafe here": "high",
   "There may be an immediate danger": "critical",
 };
-const INCIDENT_THRESHOLD = 3;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function canonicalSensitiveIncidentLocation(
@@ -131,7 +135,8 @@ function publicSafetyReport(report: typeof safetyReportsTable.$inferSelect) {
     severity: report.severity,
     status: report.status,
     businessResponseText: report.businessResponseText,
-    createdAt: report.createdAt,
+    displayExpiresAt: report.displayExpiresAt,
+    correctedAt: report.correctedAt,
   };
 }
 
@@ -151,6 +156,8 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
     incidentDescription,
     evidenceLinks,
     encounterType,  // police/ICE sub-type (e.g. "Excessive Force/Misconduct")
+    reportingConsent,
+    reportingConsentVersion,
   } = body;
 
   // Build 105 sent the selected Police/ICE subtype in `category`. Accept it as
@@ -177,6 +184,16 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
     res.status(400).json({ error: "A valid Police/ICE encounter type is required" });
     return;
   }
+  if (resolvedCategory === "police" && !hasPoliceIceReportingConsent({
+    reportingConsent,
+    reportingConsentVersion,
+  })) {
+    res.status(400).json({
+      error: "Explicit consent is required before submitting a Police/ICE observation",
+      requiredConsentVersion: POLICE_ICE_REPORTING_CONSENT_VERSION,
+    });
+    return;
+  }
 
   // Accept internal severity values OR spoken-language labels from the UI
   const resolvedSeverity: typeof VALID_SEVERITIES[number] =
@@ -198,7 +215,12 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
   }
 
   try {
-    const storedIncidentLocation = sensitiveReport
+    // Police/ICE intake is city-only even when a canonical location ID is
+    // supplied. A member observation must never become a street, neighborhood,
+    // or device-location record before moderation/corroboration.
+    const storedIncidentLocation = resolvedCategory === "police"
+      ? incidentLocation
+      : sensitiveReport
       ? await canonicalSensitiveIncidentLocation(pool, body, incidentLocation)
       : incidentLocation;
     const [report] = await db
@@ -234,6 +256,9 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
         incidentDescription: typeof incidentDescription === "string" ? incidentDescription.slice(0, 2000) : null,
         evidenceLinks: typeof evidenceLinks === "string" ? evidenceLinks : null,
         status: "pending",
+        // Expiry controls display only; safety evidence remains available for
+        // review and audit after the public-current window ends.
+        displayExpiresAt: calculateSafetyReportDisplayExpiry(),
       })
       .returning();
 
@@ -272,51 +297,12 @@ router.post("/reports", reportLimiter, async (req: Request, res: Response): Prom
   }
 });
 
-router.get("/reports", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const reports = await db
-      .select()
-      .from(safetyReportsTable)
-      .where(eq(safetyReportsTable.status, "approved"))
-      .orderBy(desc(safetyReportsTable.createdAt))
-      .limit(100);
-    res.json({ reports: reports.map(publicSafetyReport) });
-  } catch (err) {
-    req.log.error({ err }, "Failed to fetch safety reports");
-    res.status(500).json({ error: "Failed to fetch reports" });
-  }
+router.get("/reports", async (_req: Request, res: Response): Promise<void> => {
+  res.status(410).json({ error: "Individual Safety report listings are unavailable. Choose a city for consented aggregate Community Intelligence instead." });
 });
 
-router.get("/incidents", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const incidents = await pool.query(
-      `SELECT si.id, si.city, si.region, si.neighborhood, si.category, si.severity,
-              approved.report_count::int AS "reportCount",
-              si.status, si.notifications_sent AS "notificationsSent",
-              si.triggered_at AS "triggeredAt"
-       FROM safety_incidents si
-       JOIN LATERAL (
-         SELECT COUNT(*) AS report_count
-         FROM safety_reports sr
-         WHERE LOWER(sr.incident_city) = LOWER(si.city)
-           AND LOWER(sr.incident_region) = LOWER(si.region)
-           AND sr.category = si.category
-           AND sr.status = 'approved'
-           AND sr.created_at > NOW() - INTERVAL '7 days'
-       ) approved ON approved.report_count >= $1
-       WHERE si.status = 'active'
-         AND si.region IS NOT NULL
-         AND si.triggered_at > NOW() - INTERVAL '7 days'
-       ORDER BY si.triggered_at DESC
-       LIMIT 50`,
-      [INCIDENT_THRESHOLD],
-    );
-
-    res.json({ incidents: incidents.rows });
-  } catch (err) {
-    req.log.error({ err }, "Failed to fetch safety incidents");
-    res.status(500).json({ error: "Failed to fetch incidents" });
-  }
+router.get("/incidents", async (_req: Request, res: Response): Promise<void> => {
+  res.status(410).json({ error: "Individual incident listings are unavailable. Safety does not publish current report activity or location overlays." });
 });
 
 router.get("/admin/safety-reports", async (req: any, res: Response): Promise<void> => {
@@ -371,6 +357,101 @@ router.patch("/admin/safety-reports/:id", async (req: any, res: Response): Promi
   }
 });
 
+/**
+ * Source-preserving Safety Hub lifecycle control. This endpoint never deletes
+ * or overwrites report evidence; it records an auditable withdrawal or
+ * correction, or changes only the current display expiry.
+ */
+router.patch("/admin/safety-reports/:id/lifecycle", async (req: Request, res: Response): Promise<void> => {
+  if (!isNamedAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+
+  const action = typeof req.body?.action === "string" ? req.body.action : "";
+  const reason = normalizeLifecycleText(req.body?.reason, 500);
+  const correctionNote = normalizeLifecycleText(req.body?.correctionNote, 2000);
+  const displayExpiresAt = parseLifecycleExpiry(req.body?.displayExpiresAt);
+  const now = new Date();
+
+  if (action !== "withdraw" && action !== "correct" && action !== "set_expiration") {
+    res.status(400).json({ error: "Invalid lifecycle action" });
+    return;
+  }
+  if (action === "withdraw" && !reason) {
+    res.status(400).json({ error: "A withdrawal reason is required" });
+    return;
+  }
+  if (action === "correct" && !correctionNote) {
+    res.status(400).json({ error: "A correction note is required" });
+    return;
+  }
+  if (action === "set_expiration" && !displayExpiresAt) {
+    res.status(400).json({ error: "A valid displayExpiresAt timestamp is required" });
+    return;
+  }
+
+  try {
+    const lifecycleUpdate = action === "withdraw"
+      ? {
+          withdrawnAt: now,
+          withdrawnBy: req.user!.id,
+          withdrawalReason: reason,
+        }
+      : action === "correct"
+        ? {
+            correctedAt: now,
+            correctedBy: req.user!.id,
+            correctionNote,
+            // A correction records source metadata and immediately ends only
+            // the current display window; the original report is retained.
+            displayExpiresAt: now,
+          }
+        : { displayExpiresAt: displayExpiresAt! };
+    // A withdrawal or correction must preserve its first audit record. A
+    // withdrawn/corrected source row can never be reactivated by merely moving
+    // its display expiry.
+    const lifecycleWhere = action === "withdraw"
+      ? and(
+          eq(safetyReportsTable.id, String(req.params.id)),
+          isNull(safetyReportsTable.withdrawnAt),
+        )
+      : action === "correct"
+        ? and(
+            eq(safetyReportsTable.id, String(req.params.id)),
+            isNull(safetyReportsTable.correctedAt),
+          )
+        : and(
+            eq(safetyReportsTable.id, String(req.params.id)),
+            isNull(safetyReportsTable.withdrawnAt),
+            isNull(safetyReportsTable.correctedAt),
+          );
+    const [report] = await db
+      .update(safetyReportsTable)
+      .set(lifecycleUpdate)
+      .where(lifecycleWhere)
+      .returning();
+
+    if (!report) {
+      res.status(404).json({ error: "Report not found" });
+      return;
+    }
+    invalidateProximityWarningCache("report_lifecycle_changed");
+    res.json({
+      report: {
+        id: report.id,
+        status: report.status,
+        displayExpiresAt: report.displayExpiresAt,
+        withdrawnAt: report.withdrawnAt,
+        correctedAt: report.correctedAt,
+      },
+    });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update safety report lifecycle");
+    res.status(500).json({ error: "Failed to update report lifecycle" });
+  }
+});
+
 router.get("/admin/safety-incidents", async (req: any, res: Response): Promise<void> => {
   const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e: string) => e.trim()).filter(Boolean);
   if (!req.user?.email || !ADMIN_EMAILS.includes(req.user.email)) {
@@ -391,156 +472,14 @@ router.get("/admin/safety-incidents", async (req: any, res: Response): Promise<v
 });
 
 /**
- * GET /reports/proximity-warnings
- * Returns community danger flags within radius of a lat/lng.
- * Triggers when 3+ reports exist for a business or area in the last 7 days.
+ * Coordinate-based Safety warnings are intentionally unavailable. Safety does
+ * not receive route or device coordinates to rank reports, assess proximity,
+ * or show member-facing activity overlays.
  */
-router.get("/reports/proximity-warnings", async (req: Request, res: Response): Promise<void> => {
-  const lat = parseFloat(req.query.lat as string);
-  const lng = parseFloat(req.query.lng as string);
-  const radius = Math.min(parseFloat((req.query.radius as string) || "500"), 5000);
-
-  if (isNaN(lat) || isNaN(lng)) {
-    res.status(400).json({ error: "lat and lng are required" });
-    return;
-  }
-
-  // Return cached response for identical (or very nearby) coordinates within TTL
-  const cacheKey = proximityCacheKey(lat, lng, radius);
-  const cached = getCachedProximityWarnings(cacheKey);
-  if (cached) {
-    res.json(cached);
-    return;
-  }
-
-  try {
-    // Business-linked danger reports: join safety_reports → businesses for real coordinates.
-    // Groups by business, only surfaces those with 3+ approved reports in the last 7 days.
-    const businessWarnings = await pool.query<{
-      target_id: string;
-      business_name: string;
-      category: string;
-      severity: string;
-      report_count: string;
-      latitude: string;
-      longitude: string;
-      distance_meters: string;
-    }>(
-      `SELECT
-        sr.target_id,
-        b.name AS business_name,
-        sr.category,
-        CASE MAX(CASE sr.severity
-          WHEN 'critical' THEN 4
-          WHEN 'high' THEN 3
-          WHEN 'medium' THEN 2
-          WHEN 'low' THEN 1
-          ELSE 0
-        END)
-          WHEN 4 THEN 'critical'
-          WHEN 3 THEN 'high'
-          WHEN 2 THEN 'medium'
-          WHEN 1 THEN 'low'
-          ELSE 'medium'
-        END AS severity,
-        COUNT(*) AS report_count,
-        b.latitude::text,
-        b.longitude::text,
-        (
-          6371000 * acos(
-            LEAST(1.0,
-              cos(radians($1)) * cos(radians(b.latitude::double precision))
-              * cos(radians(b.longitude::double precision) - radians($2))
-              + sin(radians($1)) * sin(radians(b.latitude::double precision))
-            )
-          )
-        )::numeric(10,1) AS distance_meters
-      FROM safety_reports sr
-      JOIN businesses b ON sr.target_id = b.id::text
-      WHERE
-        sr.target_type = 'business'
-        AND sr.status = 'approved'
-        AND sr.created_at > NOW() - INTERVAL '7 days'
-      GROUP BY sr.target_id, b.name, sr.category, b.latitude, b.longitude
-      HAVING COUNT(*) >= $3
-        AND (
-          6371000 * acos(
-            LEAST(1.0,
-              cos(radians($1)) * cos(radians(b.latitude::double precision))
-              * cos(radians(b.longitude::double precision) - radians($2))
-              + sin(radians($1)) * sin(radians(b.latitude::double precision))
-            )
-          )
-        ) <= $4
-      ORDER BY distance_meters ASC
-      LIMIT 20`,
-      [lat, lng, INCIDENT_THRESHOLD, radius]
-    );
-
-    // Area-level active incidents (city/neighborhood level, no precise coordinates).
-    // Returned separately so the client can show a city-wide alert if needed.
-    const areaIncidents = await pool.query<{
-      id: string;
-      city: string;
-      region: string;
-      neighborhood: string | null;
-      category: string;
-      severity: string;
-      report_count: string;
-    }>(
-      `SELECT si.id, si.city, si.region, si.neighborhood, si.category, si.severity,
-              approved.report_count::text
-       FROM safety_incidents si
-       JOIN LATERAL (
-         SELECT COUNT(*) AS report_count
-         FROM safety_reports sr
-         WHERE LOWER(sr.incident_city) = LOWER(si.city)
-           AND LOWER(sr.incident_region) = LOWER(si.region)
-           AND sr.category = si.category
-           AND sr.status = 'approved'
-           AND sr.created_at > NOW() - INTERVAL '7 days'
-       ) approved ON approved.report_count >= $1
-       WHERE si.status = 'active'
-         AND si.region IS NOT NULL
-         AND si.triggered_at > NOW() - INTERVAL '7 days'
-       ORDER BY approved.report_count DESC
-       LIMIT 10`,
-      [INCIDENT_THRESHOLD]
-    );
-
-    const warnings = businessWarnings.rows.map((r) => ({
-      type: "business" as const,
-      targetId: r.target_id,
-      name: r.business_name,
-      category: r.category,
-      severity: r.severity,
-      reportCount: parseInt(r.report_count, 10),
-      latitude: parseFloat(r.latitude),
-      longitude: parseFloat(r.longitude),
-      distanceMeters: parseFloat(r.distance_meters),
-    }));
-
-    const responseData = {
-      warnings,
-      areaIncidents: areaIncidents.rows.map((r) => ({
-        id: r.id,
-        city: r.city,
-        region: r.region,
-        neighborhood: r.neighborhood,
-        category: r.category,
-        severity: r.severity,
-        reportCount: parseInt(r.report_count, 10),
-      })),
-    };
-
-    // Cache the result — community data only, no user-specific fields
-    setCachedProximityWarnings(cacheKey, responseData);
-
-    res.json(responseData);
-  } catch (err) {
-    req.log.error({ err }, "Failed to fetch proximity warnings");
-    res.status(500).json({ error: "Failed to fetch proximity warnings" });
-  }
+router.get("/reports/proximity-warnings", async (_req: Request, res: Response): Promise<void> => {
+  res.status(410).json({
+    error: "Coordinate-based Safety warnings have been retired. Choose a city for consented aggregate Community Intelligence instead.",
+  });
 });
 
 router.patch("/admin/safety-incidents/:id/resolve", async (req: any, res: Response): Promise<void> => {

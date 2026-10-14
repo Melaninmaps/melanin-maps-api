@@ -75,6 +75,7 @@ const CONDITION_PATTERNS: Array<[RegExp, string]> = [
   [/covid|coronavirus/i, "COVID-19"],
   [/mental\s+health|depression|anxiety/i, "mental health"],
   [/lupus/i, "lupus"],
+  [/\b(?:eczema|atopic dermatitis)\b/i, "eczema atopic dermatitis"],
   [/obesity|overweight/i, "obesity"],
   [/asthma/i, "asthma"],
   [/hiv|aids/i, "HIV AIDS"],
@@ -88,10 +89,7 @@ export function extractHealthTopic(message: string): string {
     return lifeGuidance.sourceQuery.replace(/\s+official guidance$/i, "");
   }
   const condition = CONDITION_PATTERNS.find(([pattern]) => pattern.test(msg))?.[1];
-  const identity = permittedIdentityContext(msg);
-  const population = identity.demographicQualifier;
-
-  if (condition) return [condition, population].filter(Boolean).join(" ");
+  if (condition) return condition;
 
   const cleaned = msg
     .toLowerCase()
@@ -101,7 +99,7 @@ export function extractHealthTopic(message: string): string {
     .trim()
     .slice(0, 80);
 
-  return [cleaned || message.slice(0, 60), population].filter(Boolean).join(" ");
+  return cleaned || message.slice(0, 60);
 }
 
 /** Query NIH MedlinePlus. Never throws; null means authoritative retrieval failed. */
@@ -151,9 +149,10 @@ export async function buildHealthRetrievalContext(
   const identity = permittedIdentityContext(message);
   const currentTurnPopulation = identity.demographicQualifier;
   const population = currentTurnPopulation ?? consentedPopulationContext?.label ?? null;
-  const topic = currentTurnPopulation
-    ? extractHealthTopic(message)
-    : [extractHealthTopic(message), population].filter(Boolean).join(" ");
+  // The authoritative primary track remains condition-first even when a member
+  // supplied an explicit or separately consented identity context. Representation
+  // and group-level evidence travel on the supplemental, source-labeled route.
+  const topic = extractHealthTopic(message);
   const nihResults = await fetchNIHHealthTopics(topic);
   const retrievedAt = new Date().toISOString().slice(0, 10);
   const sources: Array<{ title: string; url: string; source: string }> = [];

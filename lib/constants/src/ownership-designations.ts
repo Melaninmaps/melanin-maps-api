@@ -338,6 +338,7 @@ export function extractExplicitOwnershipDesignationFilterIds(message: string): s
   if (explicit("(?:disability|disabled)")) matched.push("disability");
   if (explicit("(?:hispanic|hispanics|latino|latinos|latina|latinas|latinx)")) matched.push("latino-hispanic");
   if (explicit("(?:asian|asian american|asians)")) matched.push("asian-american");
+  if (explicit("(?:caribbean|west\\s+indian)s?")) matched.push("caribbean-west-indian");
   if (explicit("guatemalans?")) matched.push("guatemalan");
   return normalizeOwnershipDesignationFilterIds(matched);
 }

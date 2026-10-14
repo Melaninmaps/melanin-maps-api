@@ -46,4 +46,21 @@ describe("Community Feed and My Groups active-membership boundary", () => {
     expect(communityFeed).toContain("visible_group_membership.group_id = CASE");
     expect(communityFeed).toContain("${POST_IS_NOT_GROUP_ONLY}");
   });
+
+  it("keeps Group creation, invitations, and member management behind existing tier and admin gates", () => {
+    const create = routeBlock(groupsRoute, 'router.post("/groups"', 'router.patch("/groups/:id/settings"');
+    const invite = routeBlock(groupsRoute, 'router.post("/groups/:id/invite"', 'router.post("/groups/invites/:inviteId/respond"');
+    const role = routeBlock(groupsRoute, 'router.patch("/groups/:id/members/:userId/role"', 'router.delete("/groups/:id/members/:userId"');
+    const remove = routeBlock(groupsRoute, 'router.delete("/groups/:id/members/:userId"', "export default router;");
+
+    expect(create).toContain("getUserTier(userId)");
+    expect(create).toContain("Creating groups requires an Explorer+ or higher membership.");
+    expect(create).toContain("await db.insert(groupMembers).values({ groupId: group.id, userId, role: \"admin\" })");
+    expect(invite).toContain("Only group admins can invite members");
+    expect(invite).toContain("Invite already pending for this user");
+    expect(role).toContain("Only admins can change member roles");
+    expect(role).toContain("A Group must keep at least one moderator");
+    expect(remove).toContain("Only admins can remove members");
+    expect(remove).toContain("A Group must keep at least one moderator");
+  });
 });

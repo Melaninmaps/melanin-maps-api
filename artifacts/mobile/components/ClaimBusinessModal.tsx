@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView,
   TextInput, ActivityIndicator, KeyboardAvoidingView, Platform,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { useColors } from "@/hooks/useColors";
 import { getApiBase, getMemberApiHeaders } from "@/lib/api";
 
@@ -21,8 +22,14 @@ interface Props {
   onClose: () => void;
 }
 
+type ClaimEligibility = {
+  eligibility: "claimable" | "pending_for_you" | "pending_for_other_user" | "already_claimed" | "not_claimable";
+  message?: string;
+};
+
 export function ClaimBusinessModal({ visible, businessId, businessName, onClose }: Props) {
   const colors = useColors();
+  const router = useRouter();
   const [ownerName, setOwnerName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -35,8 +42,52 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [eligibility, setEligibility] = useState<ClaimEligibility | null>(null);
+  const [eligibilityLoading, setEligibilityLoading] = useState(false);
+
+  const loadEligibility = useCallback(async () => {
+    if (!businessId) return;
+    setEligibilityLoading(true);
+    setEligibility(null);
+    try {
+      const apiBase = getApiBase();
+      const memberHeaders = await getMemberApiHeaders();
+      const response = await fetch(`${apiBase}/api/businesses/${businessId}/claim-eligibility`, {
+        headers: memberHeaders,
+      });
+      if (!response.ok) throw new Error("claim_eligibility_unavailable");
+      const body = await response.json() as ClaimEligibility;
+      if (!body?.eligibility) throw new Error("claim_eligibility_unavailable");
+      setEligibility(body);
+    } catch {
+      setEligibility({
+        eligibility: "not_claimable",
+        message: "Claim availability could not be checked. Please try again before submitting.",
+      });
+    } finally {
+      setEligibilityLoading(false);
+    }
+  }, [businessId]);
+
+  useEffect(() => {
+    if (!visible) return;
+    void loadEligibility();
+  }, [loadEligibility, visible]);
+
+  const canSubmit = eligibility?.eligibility === "claimable";
+  const eligibilityTitle = eligibility?.eligibility === "pending_for_you"
+    ? "Your claim is under review"
+    : eligibility?.eligibility === "pending_for_other_user"
+      ? "A claim is already under review"
+      : eligibility?.eligibility === "already_claimed"
+        ? "This listing already has an owner"
+        : "Claim unavailable";
 
   async function handleSubmit() {
+    if (eligibility?.eligibility !== "claimable") {
+      setError(eligibility?.message ?? "Claim availability could not be confirmed. Please try again.");
+      return;
+    }
     if (!ownerName.trim() || !email.trim()) {
       setError("Name and business email are required."); return;
     }
@@ -54,6 +105,7 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
         body: JSON.stringify({
           ownerName: ownerName.trim(),
           businessEmail: email.trim(),
+          claimantPhone: phone.trim() || null,
           role,
           officialUrl: website.trim() || null,
           socialHandle: instagram.replace("@", "").trim() || null,
@@ -63,9 +115,11 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
         }),
       });
       if (res.ok) {
+        setEligibility({ eligibility: "pending_for_you", message: "Your ownership claim is being reviewed." });
         setSubmitted(true);
       } else {
         const body = await res.json().catch(() => ({})) as { error?: string };
+        if (res.status === 409) void loadEligibility();
         setError(body.error ?? "Something went wrong. Please try again.");
       }
     } catch {
@@ -79,6 +133,7 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
     setOwnerName(""); setEmail(""); setPhone(""); setRole("owner");
     setWebsite(""); setInstagram(""); setAdditionalInfo(""); setVerificationMethod("manual_review"); setAttested(false);
     setError(null); setLoading(false); setSubmitted(false);
+    setEligibility(null); setEligibilityLoading(false);
     onClose();
   }
 
@@ -105,11 +160,16 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
               </View>
               <Text style={[styles.successTitle, { color: colors.text }]}>Claim Submitted!</Text>
               <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
-                Our team will review your claim and reach out within 2-3 business days. Thank you for being part of the community!
+                Your claim is private while our team reviews it. Approval may grant listing-management access; it does not verify the business or its ownership designations.
               </Text>
-              <TouchableOpacity style={[styles.doneBtn, { backgroundColor: colors.primary }]} onPress={handleClose}>
-                <Text style={styles.doneBtnText}>Done</Text>
-              </TouchableOpacity>
+              <View style={styles.successActions}>
+                <TouchableOpacity style={[styles.statusBtn, { borderColor: colors.primary }]} onPress={() => { handleClose(); router.push("/my-business-claims" as never); }}>
+                  <Text style={[styles.statusBtnText, { color: colors.primary }]}>View private status</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.doneBtn, { backgroundColor: colors.primary }]} onPress={handleClose}>
+                  <Text style={styles.doneBtnText}>Done</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
             <ScrollView
@@ -120,6 +180,28 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
                   Claiming requests management access after review. It does not verify this business or its ownership designations.
                 </Text>
               </View>
+
+              {eligibilityLoading ? (
+                <View style={[styles.eligibilityRow, { backgroundColor: colors.card, borderColor: colors.border }]} testID="claim-eligibility-loading">
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={[styles.eligibilityText, { color: colors.mutedForeground }]}>Checking claim availability…</Text>
+                </View>
+              ) : eligibility && !canSubmit ? (
+                <View style={[styles.eligibilityRow, { backgroundColor: "#FEF2F2", borderColor: "#FECACA" }]} testID="claim-eligibility-unavailable">
+                  <Ionicons name="information-circle-outline" size={19} color="#B91C1C" />
+                  <View style={styles.eligibilityBody}>
+                    <Text style={styles.eligibilityTitle}>{eligibilityTitle}</Text>
+                    <Text style={styles.eligibilityMessage}>{eligibility.message ?? "This listing cannot accept a new ownership claim."}</Text>
+                    <TouchableOpacity
+                      accessibilityLabel="Check ownership claim availability again"
+                      onPress={() => { void loadEligibility(); }}
+                      activeOpacity={0.8}
+                    >
+                      <Text style={[styles.eligibilityRetry, { color: colors.primary }]}>Check again</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : null}
 
               <Text style={[styles.label, { color: colors.text }]}>Your name *</Text>
               <TextInput
@@ -141,7 +223,7 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
                 autoCapitalize="none"
               />
 
-              <Text style={[styles.label, { color: colors.text }]}>Phone (optional)</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Private review phone (optional)</Text>
               <TextInput
                 style={[styles.input, { color: colors.text, backgroundColor: colors.card, borderColor: colors.border }]}
                 placeholder="(555) 000-0000"
@@ -150,6 +232,7 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
                 onChangeText={setPhone}
                 keyboardType="phone-pad"
               />
+              <Text style={[styles.helperText, { color: colors.mutedForeground }]}>Private to claim review; never added to the public listing.</Text>
 
               <Text style={[styles.label, { color: colors.text }]}>Your role</Text>
               <View style={styles.roleRow}>
@@ -232,9 +315,9 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
               )}
 
               <TouchableOpacity
-                style={[styles.submitBtn, { backgroundColor: ownerName.trim() && email.trim() && attested ? colors.primary : colors.border }]}
+                style={[styles.submitBtn, { backgroundColor: ownerName.trim() && email.trim() && attested && canSubmit && !eligibilityLoading ? colors.primary : colors.border }]}
                 onPress={handleSubmit}
-                disabled={loading || !ownerName.trim() || !email.trim() || !attested}
+                disabled={loading || eligibilityLoading || !canSubmit || !ownerName.trim() || !email.trim() || !attested}
                 activeOpacity={0.85}
               >
                 {loading ? (
@@ -262,8 +345,15 @@ const styles = StyleSheet.create({
   scroll: { padding: 20, paddingBottom: 32 },
   infoBadge: { flexDirection: "row", alignItems: "flex-start", gap: 8, borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 20 },
   infoBadgeText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, flex: 1 },
+  eligibilityRow: { flexDirection: "row", alignItems: "flex-start", gap: 9, borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 4 },
+  eligibilityBody: { flex: 1, gap: 3 },
+  eligibilityText: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
+  eligibilityTitle: { fontFamily: "Inter_700Bold", fontSize: 13, color: "#991B1B" },
+  eligibilityMessage: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, color: "#991B1B" },
+  eligibilityRetry: { fontFamily: "Inter_600SemiBold", fontSize: 13, marginTop: 3 },
   label: { fontFamily: "Inter_600SemiBold", fontSize: 14, marginBottom: 6, marginTop: 16 },
   input: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12, fontFamily: "Inter_400Regular", fontSize: 14 },
+  helperText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, marginTop: 6 },
   textArea: { height: 100, textAlignVertical: "top" },
   roleRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   roleChip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8 },
@@ -278,6 +368,9 @@ const styles = StyleSheet.create({
   successIcon: { width: 96, height: 96, borderRadius: 48, alignItems: "center", justifyContent: "center", marginBottom: 20 },
   successTitle: { fontFamily: "Inter_700Bold", fontSize: 24, marginBottom: 12, textAlign: "center" },
   successSub: { fontFamily: "Inter_400Regular", fontSize: 15, lineHeight: 23, textAlign: "center", marginBottom: 32 },
-  doneBtn: { borderRadius: 14, paddingHorizontal: 40, paddingVertical: 14 },
+  successActions: { flexDirection: "row", alignItems: "center", gap: 10 },
+  statusBtn: { borderWidth: 1, borderRadius: 14, paddingHorizontal: 18, paddingVertical: 14 },
+  statusBtnText: { fontFamily: "Inter_700Bold", fontSize: 14 },
+  doneBtn: { borderRadius: 14, paddingHorizontal: 22, paddingVertical: 14 },
   doneBtnText: { fontFamily: "Inter_700Bold", fontSize: 16, color: "#fff" },
 });

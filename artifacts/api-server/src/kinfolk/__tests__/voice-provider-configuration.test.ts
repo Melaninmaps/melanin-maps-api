@@ -8,6 +8,7 @@ import {
   createAudioUploadFile,
   createOpenAISpeechRequest,
   resolveAudioOpenAIConfiguration,
+  shouldTryOpenAIAudioModelFallback,
 } from "@workspace/integrations-openai-ai-server/audio";
 
 describe("Kinfolk voice provider configuration", () => {
@@ -30,14 +31,14 @@ describe("Kinfolk voice provider configuration", () => {
     });
   });
 
-  it("prefers the standard OpenAI endpoint for audio when both providers are configured", () => {
+  it("uses the explicit paired integration endpoint for audio when both providers are configured", () => {
     expect(resolveAudioOpenAIConfiguration({
       OPENAI_API_KEY: "standard-production-key",
       AI_INTEGRATIONS_OPENAI_API_KEY: "integration-key",
-      AI_INTEGRATIONS_OPENAI_BASE_URL: "https://text-only-proxy.example/v1",
+      AI_INTEGRATIONS_OPENAI_BASE_URL: "https://configured-provider.example/v1",
     } as NodeJS.ProcessEnv)).toEqual({
-      apiKey: "standard-production-key",
-      baseURL: STANDARD_OPENAI_BASE_URL,
+      apiKey: "integration-key",
+      baseURL: "https://configured-provider.example/v1",
     });
   });
 
@@ -111,5 +112,15 @@ describe("Kinfolk voice provider configuration", () => {
       voice: "alloy",
       format: "pcm16",
     }).response_format).toBe("pcm");
+  });
+
+  it("retries only explicit provider model/access compatibility failures", () => {
+    expect(shouldTryOpenAIAudioModelFallback({ status: 400 })).toBe(true);
+    expect(shouldTryOpenAIAudioModelFallback({ status: 403 })).toBe(true);
+    expect(shouldTryOpenAIAudioModelFallback({ status: 404 })).toBe(true);
+    expect(shouldTryOpenAIAudioModelFallback({ status: 401 })).toBe(false);
+    expect(shouldTryOpenAIAudioModelFallback({ status: 429 })).toBe(false);
+    expect(shouldTryOpenAIAudioModelFallback({ status: 500 })).toBe(false);
+    expect(shouldTryOpenAIAudioModelFallback(new Error("network down"))).toBe(false);
   });
 });

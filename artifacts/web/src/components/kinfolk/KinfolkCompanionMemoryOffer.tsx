@@ -21,6 +21,7 @@ export function KinfolkCompanionMemoryOfferCard({
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sensitiveConfirmationRequired, setSensitiveConfirmationRequired] = useState(false);
+  const [sensitivePassword, setSensitivePassword] = useState("");
 
   if (dismissed) return null;
 
@@ -30,6 +31,15 @@ export function KinfolkCompanionMemoryOfferCard({
     setSaving(true);
     setError(null);
     try {
+      if (sensitiveConsent) {
+        if (!sensitivePassword) throw new Error("Confirm your current password before saving a sensitive private note.");
+        const reauth = await fetch(`${BASE}api/kinfolk/sensitive-memory-vault/reauth`, {
+          method: "POST", credentials: "include", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ password: sensitivePassword }),
+        });
+        const reauthBody = await reauth.json().catch(() => ({})) as { error?: string };
+        if (!reauth.ok) throw new Error(reauthBody.error ?? "Sensitive memory could not be confirmed.");
+      }
       const response = await fetch(`${BASE}api/kinfolk/memories`, {
         method: "POST",
         credentials: "include",
@@ -88,7 +98,7 @@ export function KinfolkCompanionMemoryOfferCard({
             Separate from your profile. Kinfolk uses it only when you bring up {offer.label}, and your current request always comes first.
           </p>
           {error && <p role="alert" className="mt-2 text-[11px] text-red-700">{error}</p>}
-          {sensitiveConfirmationRequired && <p className="mt-3 text-xs leading-5 text-[#8D5C17]">This note may include a sensitive detail. Kinfolk has not saved it. Choose separately if you want to keep it private.</p>}
+          {sensitiveConfirmationRequired && <div className="mt-3 rounded-xl border border-[#CA922B]/25 bg-[#FFF8EC] p-3 text-xs leading-5 text-[#8D5C17]"><p>This note may include a sensitive detail. Kinfolk has not saved it. Confirm your current password before choosing to save it privately.</p><input type="password" value={sensitivePassword} onChange={(event) => setSensitivePassword(event.target.value)} autoComplete="current-password" aria-label="Current password to confirm sensitive companion note" placeholder="Current password" className="mt-2 w-full rounded-lg border border-[#3A1F0E]/15 bg-white px-2 py-1.5 text-[#2B1507]" /></div>}
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <button
               type="button"

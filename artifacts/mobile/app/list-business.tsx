@@ -420,6 +420,10 @@ export default function ListBusinessScreen() {
 
   const checkPotentialDuplicates = async (): Promise<boolean> => {
     if (duplicateReviewAcknowledged) return false;
+    // The owner path permits a city-only intake. The strict public duplicate
+    // endpoint requires a state, so defer to its final server-side duplicate
+    // guard instead of presenting a false client-side failure.
+    if (isOwnerIntent && !form.state.trim()) return false;
     const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
     const token = await SecureStore.getItemAsync("auth_session_token");
     if (!token) throw new Error("Sign in with your approved community account to submit a business.");
@@ -452,11 +456,11 @@ export default function ListBusinessScreen() {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (skipDuplicatePreflight = false) => {
     if (submitting) return;
     setSubmitting(true);
     try {
-      if (await checkPotentialDuplicates()) return;
+      if (!skipDuplicatePreflight && await checkPotentialDuplicates()) return;
       const apiBase = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
       const token = await SecureStore.getItemAsync("auth_session_token");
       if (!token) throw new Error("Sign in with your approved community account to submit a business.");
@@ -559,7 +563,7 @@ export default function ListBusinessScreen() {
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>
-          {isSuccess ? (submissionOutcome?.isDuplicate ? "Existing Listing Found" : submissionOutcome?.status === "published" ? (isOwnerIntent ? "Business Page Live" : "Live on the Map") : "Submission Saved") : isOwnerIntent ? "Add My Business" : "Share a Business"}
+          {isSuccess ? (submissionOutcome?.isDuplicate ? "Existing Listing Found" : isOwnerIntent ? "Owner Request Saved" : submissionOutcome?.status === "published" ? "Live on the Map" : "Submission Saved") : isOwnerIntent ? "Add My Business" : "Share a Business"}
         </Text>
         <View style={{ width: 22 }} />
       </View>
@@ -584,7 +588,7 @@ export default function ListBusinessScreen() {
               </View>
             </View>
             <Text style={[styles.successTitle, { color: colors.foreground }]}>
-              {submissionOutcome?.isDuplicate ? "We found the existing listing" : submissionOutcome?.status === "published" ? (isOwnerIntent ? "Your business page is live" : "This business is live") : "This submission is saved"}
+              {submissionOutcome?.isDuplicate ? "We found the existing listing" : isOwnerIntent ? "Your owner request is saved for review" : submissionOutcome?.status === "published" ? "This business is live" : "This submission is saved"}
             </Text>
             <Text style={[styles.successSub, { color: colors.mutedForeground }]}>
               <Text style={{ fontFamily: "Inter_600SemiBold", color: colors.foreground }}>{form.name || "Your business"}</Text>
@@ -597,10 +601,10 @@ export default function ListBusinessScreen() {
 
             <View style={[styles.successCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               {[
-                { icon: "check-circle", label: "Status", value: submissionOutcome?.isDuplicate ? "Possible duplicate queued for review" : submissionOutcome?.status === "published" ? "Published immediately" : "Software hold", color: "#22C55E" },
-                { icon: submissionOutcome?.mapPin ? "map-pin" : "eye", label: "Directory", value: submissionOutcome?.isDuplicate ? "Existing listing available now" : submissionOutcome?.status === "published" ? (submissionOutcome?.mapPin ? "Searchable with a precise pin" : "Searchable without a map pin") : "Not public yet", color: colors.primary },
+                { icon: "check-circle", label: "Status", value: submissionOutcome?.isDuplicate ? "Possible duplicate queued for review" : isOwnerIntent ? "Private owner review in progress" : submissionOutcome?.status === "published" ? "Published immediately" : "Software hold", color: "#22C55E" },
+                { icon: submissionOutcome?.mapPin ? "map-pin" : "eye", label: "Directory", value: submissionOutcome?.isDuplicate ? "Existing listing available now" : submissionOutcome?.status === "published" && !isOwnerIntent ? (submissionOutcome?.mapPin ? "Searchable with a precise pin" : "Searchable without a map pin") : "Not public yet", color: colors.primary },
                 { icon: "shield", label: "Verification", value: "Not verified", color: colors.accent },
-                { icon: isOwnerIntent ? "briefcase" : "user-x", label: "Owner", value: isOwnerIntent ? "Profile-linked manager" : "Unclaimed", color: colors.primary },
+                { icon: isOwnerIntent ? "briefcase" : "user-x", label: "Owner", value: isOwnerIntent ? "Ownership control not granted yet" : "Unclaimed", color: colors.primary },
               ].map((item) => (
                 <View key={item.label} style={styles.successRow}>
                   <Feather name={item.icon as any} size={16} color={item.color} />
@@ -618,28 +622,18 @@ export default function ListBusinessScreen() {
               <Text style={[styles.successBtnText, { color: colors.primaryForeground }]}>{isOwnerIntent ? "View My Business Submissions" : "View My Submissions"}</Text>
               <Feather name="arrow-right" size={16} color={colors.primaryForeground} />
             </TouchableOpacity>
-            {(submissionOutcome?.status === "published" || submissionOutcome?.isDuplicate) && submissionOutcome.businessId ? (
+            {(submissionOutcome?.isDuplicate || (!isOwnerIntent && submissionOutcome?.status === "published")) && submissionOutcome.businessId ? (
               <TouchableOpacity
                 style={[styles.successBtn, { backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.primary }]}
                 onPress={() => router.push({ pathname: "/business/[id]", params: { id: submissionOutcome.businessId } } as never)}
                 activeOpacity={0.85}
               >
-                <Text style={[styles.successBtnText, { color: colors.primary }]}>{submissionOutcome?.isDuplicate ? "View Existing Listing" : isOwnerIntent ? "View My Business Page" : "View Community Listing"}</Text>
+                <Text style={[styles.successBtnText, { color: colors.primary }]}>{submissionOutcome?.isDuplicate ? "View Existing Listing" : "View Community Listing"}</Text>
                 <Feather name="map-pin" size={16} color={colors.primary} />
               </TouchableOpacity>
             ) : null}
-            {isOwnerIntent && submissionOutcome?.status === "published" && submissionOutcome.businessId ? (
-              <TouchableOpacity
-                style={[styles.successBtn, { backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.primary }]}
-                onPress={() => router.push({ pathname: "/business-dashboard", params: { businessId: submissionOutcome.businessId } } as never)}
-                activeOpacity={0.85}
-              >
-                <Text style={[styles.successBtnText, { color: colors.primary }]}>Manage My Business</Text>
-                <Feather name="briefcase" size={16} color={colors.primary} />
-              </TouchableOpacity>
-            ) : null}
-            <TouchableOpacity onPress={() => router.replace("/(tabs)" as any)} activeOpacity={0.7}>
-              <Text style={[styles.successLink, { color: colors.primary }]}>Back to Discover</Text>
+            <TouchableOpacity onPress={() => router.replace((isOwnerIntent ? "/(tabs)/profile" : "/(tabs)") as any)} activeOpacity={0.7}>
+              <Text style={[styles.successLink, { color: colors.primary }]}>{isOwnerIntent ? "Back to Profile" : "Back to Discover"}</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -658,7 +652,7 @@ export default function ListBusinessScreen() {
                     <Feather name={isOwnerIntent ? "briefcase" : "heart"} size={16} color={colors.primary} />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.intentNoticeTitle, { color: colors.foreground }]}>{isOwnerIntent ? "This is my business" : "I am sharing someone else’s business"}</Text>
-                      <Text style={[styles.intentNoticeCopy, { color: colors.mutedForeground }]}>{isOwnerIntent ? "This creates a business page tied to your profile. Add a public website or social profile; an exact street address is optional and only controls the map pin. Verification is separate." : "This is a community recommendation. It will not be connected to your profile as an owner."}</Text>
+                      <Text style={[styles.intentNoticeCopy, { color: colors.mutedForeground }]}>{isOwnerIntent ? "This saves a private owner and profile request. Add a public website or social profile; a reviewer must approve any public page and ownership controls separately. Verification is separate." : "This is a community recommendation. It will not be connected to your profile as an owner."}</Text>
                     </View>
                   </View>
 
@@ -937,7 +931,7 @@ export default function ListBusinessScreen() {
                     <Feather name="map-pin" size={16} color={colors.primary} />
                     <Text style={[styles.mapHintText, { color: colors.foreground }]}>
                       {isOwnerIntent
-                        ? "A precise street address creates a truthful map pin. You can publish without one; we never use 0,0 or a city-center fallback."
+                        ? "A precise street address gives reviewers evidence for any future map pin. This request stays private until review; we never use 0,0 or a city-center fallback."
                         : "A complete street address is required for an immediate precise pin. We never use 0,0 or a city-center fallback."}
                     </Text>
                   </View>
@@ -964,7 +958,7 @@ export default function ListBusinessScreen() {
                     placeholder="yourwebsite.com"
                     keyboardType="url"
                     colors={colors}
-                    hint={isOwnerIntent ? "Add this or one public social profile below to publish your owner-created page" : "Add a website or one public social profile for immediate publication"}
+                    hint={isOwnerIntent ? "Add this or one public social profile below so reviewers can assess your owner request" : "Add a website or one public social profile for immediate publication"}
                   />
 
                   <Field
@@ -1049,7 +1043,7 @@ export default function ListBusinessScreen() {
                   {isOwnerIntent ? (
                     <View style={[styles.ownerClaimCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
                       <Text style={[styles.ownerClaimTitle, { color: colors.foreground }]}>Ownership request for this listing</Text>
-                      <Text style={[styles.ownerClaimCopy, { color: colors.mutedForeground }]}>Required for a profile-linked business. Your claim is reviewed separately from the public listing and does not create a verification badge.</Text>
+                      <Text style={[styles.ownerClaimCopy, { color: colors.mutedForeground }]}>Required for a private owner request. A reviewer must approve any public listing and ownership control separately; this does not create a verification badge.</Text>
                       <Field label="Your name *" value={form.ownerName} onChangeText={update("ownerName")} placeholder="Full name" colors={colors} />
                       <Field label="Business email *" value={form.ownerBusinessEmail} onChangeText={update("ownerBusinessEmail")} placeholder="owner@yourbusiness.com" keyboardType="email-address" colors={colors} />
                       <Text style={[fieldStyles.label, { color: colors.foreground, marginBottom: 8 }]}>Your role</Text>
@@ -1066,29 +1060,36 @@ export default function ListBusinessScreen() {
                   <View style={[styles.reviewNotice, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}>
                     <Feather name="shield" size={16} color={colors.primary} />
                     <View style={{ flex: 1 }}>
-                      <Text style={[styles.reviewNoticeTitle, { color: colors.foreground }]}>Community publication</Text>
+                      <Text style={[styles.reviewNoticeTitle, { color: colors.foreground }]}>{isOwnerIntent ? "Owner request review" : "Community publication"}</Text>
                       <Text style={[styles.reviewNoticeText, { color: colors.mutedForeground }]}>
-                        Complete ordinary businesses publish immediately after software checks for location, evidence, duplicates, regulated services, and resource routing. Published profiles are community-listed, unclaimed, and not verified.
+                        {isOwnerIntent
+                          ? "Your request stays private while reviewers check the public evidence, possible duplicates, regulated-service and resource safeguards. It does not publish a page, verify the business, or grant management access automatically."
+                          : "Complete ordinary businesses publish immediately after software checks for location, evidence, duplicates, regulated services, and resource routing. Published profiles are community-listed, unclaimed, and not verified."}
                       </Text>
                     </View>
                   </View>
                   {duplicateCandidates.length > 0 && !duplicateReviewAcknowledged ? (
                     <View style={[styles.duplicateCard, { backgroundColor: "#FFF8E8", borderColor: "#CA922B" }]}>
-                      <Text style={[styles.duplicateTitle, { color: colors.foreground }]}>Is this the place you meant?</Text>
-                      <Text style={[styles.duplicateCopy, { color: colors.mutedForeground }]}>We found an existing public listing with a matching name, address, website, or social profile. Confirm before creating a second record.</Text>
+                      <Text style={[styles.duplicateTitle, { color: colors.foreground }]}>{isOwnerIntent ? "Is this your existing listing?" : "Is this the place you meant?"}</Text>
+                      <Text style={[styles.duplicateCopy, { color: colors.mutedForeground }]}>{isOwnerIntent ? "We found an existing public listing with matching identity evidence. You can send a private ownership request for review; this check never changes the existing listing." : "We found an existing public listing with a matching name, address, website, or social profile. Confirm before creating a second record."}</Text>
                       {duplicateCandidates.map((candidate) => (
                         <View key={candidate.id} style={[styles.duplicateCandidate, { backgroundColor: colors.card, borderColor: colors.border }]}>
                           <Text style={[styles.duplicateCandidateName, { color: colors.foreground }]}>{candidate.name}</Text>
                           <Text style={[styles.duplicateCandidateCopy, { color: colors.mutedForeground }]}>{[candidate.address, candidate.city, candidate.state].filter(Boolean).join(", ")}</Text>
                           <Text style={[styles.duplicateCandidateCopy, { color: colors.mutedForeground }]}>{candidate.matchReasons.map((reason) => reason.replaceAll("_", " ")).join(" · ") || "possible match"}</Text>
                           <TouchableOpacity onPress={() => router.push({ pathname: "/business/[id]", params: { id: candidate.id } } as never)} activeOpacity={0.8} style={[styles.useExistingButton, { borderColor: colors.primary }]}>
-                            <Text style={[styles.useExistingText, { color: colors.primary }]}>Yes, use this listing</Text>
+                            <Text style={[styles.useExistingText, { color: colors.primary }]}>{isOwnerIntent ? "Review Existing Listing" : "Yes, use this listing"}</Text>
                             <Feather name="arrow-up-right" size={15} color={colors.primary} />
                           </TouchableOpacity>
                         </View>
                       ))}
-                      <TouchableOpacity onPress={() => { setDuplicateReviewAcknowledged(true); setDuplicateCandidates([]); }} activeOpacity={0.8} style={[styles.differentPlaceButton, { backgroundColor: colors.primary }]}>
-                        <Text style={[styles.differentPlaceText, { color: colors.primaryForeground }]}>No, this is a different place</Text>
+                      {isOwnerIntent ? (
+                        <TouchableOpacity onPress={() => { setDuplicateReviewAcknowledged(true); void handleSubmit(true); }} activeOpacity={0.8} style={[styles.differentPlaceButton, { backgroundColor: colors.primary }]}>
+                          <Text style={[styles.differentPlaceText, { color: colors.primaryForeground }]}>Send ownership request for review</Text>
+                        </TouchableOpacity>
+                      ) : null}
+                      <TouchableOpacity onPress={() => { setDuplicateReviewAcknowledged(true); setDuplicateCandidates([]); }} activeOpacity={0.8} style={[styles.differentPlaceButton, { backgroundColor: isOwnerIntent ? colors.secondary : colors.primary, borderWidth: isOwnerIntent ? 1 : 0, borderColor: isOwnerIntent ? colors.primary : undefined }]}>
+                        <Text style={[styles.differentPlaceText, { color: isOwnerIntent ? colors.primary : colors.primaryForeground }]}>{isOwnerIntent ? "This is a different business" : "No, this is a different place"}</Text>
                       </TouchableOpacity>
                     </View>
                   ) : null}

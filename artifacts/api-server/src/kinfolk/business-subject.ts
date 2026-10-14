@@ -160,13 +160,16 @@ const SUBJECTS: readonly SubjectDefinition[] = [
     key: "salon",
     label: "salons",
     match:
-      /\b(?:hair|salons?|hair stylists?|hairdressers?|hair color|wash and style)\b/i,
+      /\b(?:hair|salons?|hair stylists?|hairdressers?|hair color|wash and style|wigs?|bundles?|extensions?)\b/i,
     searchTerms: [
       "salon",
       "hair salon",
       "hair stylist",
       "hair color",
       "wash and style",
+      "wig",
+      "bundle",
+      "hair extension",
     ],
   },
   {
@@ -230,9 +233,10 @@ const SUBJECTS: readonly SubjectDefinition[] = [
     key: "locs",
     label: "loc and natural-hair care",
     match:
-      /\b(?:locs?|dreadlocks?|protective styles?|braids?|natural[ -]?hair)\b/i,
+      /\b(?:locs?|locticians?|dreadlocks?|protective styles?|braids?|natural[ -]?hair)\b/i,
     searchTerms: [
       "locs",
+      "loctician",
       "loc maintenance",
       "natural hair",
       "protective styles",
@@ -398,6 +402,73 @@ const WASHING_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
   ],
 };
 
+// Wigs and bundles are not interchangeable with a generic salon listing. The
+// member's current-turn wording is a hard published-service requirement, so a
+// general stylist cannot be substituted for documented installation work.
+const WIG_INSTALLATION_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "wig installation",
+  searchTerms: [
+    "wig installation",
+    "wig install",
+    "wig installs",
+  ],
+};
+
+// “Custom wig maker” is a distinct current-turn service request. A business
+// that installs a pre-purchased wig is not automatically documented as making
+// one, so the catalog must not substitute it for this request.
+const CUSTOM_WIG_MAKING_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "custom wig making",
+  searchTerms: [
+    "custom wig",
+    "custom wigs",
+    "wig maker",
+    "wig makers",
+    "wig making",
+  ],
+};
+
+const BUNDLE_INSTALLATION_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "bundle or extension installation",
+  searchTerms: [
+    "bundle installation",
+    "bundle install",
+    "bundle installs",
+    "extension installation",
+    "extension install",
+    "extension installs",
+  ],
+};
+
+// Loc maintenance is narrower than an initial loc style or generic natural-hair
+// appointment. It must be published by the listing before Kinfolk presents a
+// result for an explicit maintenance or retwist request.
+const LOC_MAINTENANCE_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "loc maintenance",
+  searchTerms: [
+    "loc maintenance",
+    "loc retwist",
+    "loc retwists",
+    "dreadlock maintenance",
+    "retwist",
+    "retwists",
+  ],
+};
+
+// “Dine-in” is a service capability, not an assumption from a restaurant
+// category. A delivery-only kitchen, caterer, or takeout counter is excluded
+// unless its published listing documents a sit-down/dine-in offering.
+const DINE_IN_SERVICE_REQUIREMENT: DocumentedServiceRequirement = {
+  label: "dine-in service",
+  searchTerms: [
+    "dine in",
+    "dine-in",
+    "dining room",
+    "table service",
+    "sit down dining",
+  ],
+};
+
 /**
  * A cuisine is a current-turn capability, not a generic restaurant category.
  * “Ethiopian food” must therefore match documented published business data;
@@ -417,6 +488,18 @@ const AMENITY_EVIDENCE_TERMS = [
   "wheelchair accessible",
 ] as const;
 
+const CONTEXTUAL_EVIDENCE_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  "wheelchair accessible": [
+    "wheelchair accessible",
+    "wheelchair access",
+    "ada compliant",
+    "ada accessible",
+    "accessible entrance",
+    "step free",
+    "elevator",
+  ],
+};
+
 function normalizeEvidenceTerm(value: string): string {
   return value
     .normalize("NFKD")
@@ -424,6 +507,11 @@ function normalizeEvidenceTerm(value: string): string {
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .replace(/\s+/g, " ");
+}
+
+function contextualEvidenceAlternatives(term: string): readonly string[] {
+  const normalized = normalizeEvidenceTerm(term);
+  return CONTEXTUAL_EVIDENCE_ALIASES[normalized] ?? [normalized];
 }
 
 /**
@@ -462,6 +550,9 @@ export function deriveContextualBusinessEvidenceTerms(
       terms.add(normalized);
     }
   }
+  if (/\b(?:wheelchair|ada|accessible|accessibility|mobility|step[- ]free|elevator)\b/i.test(message)) {
+    terms.add("wheelchair accessible");
+  }
   return [...terms].slice(0, 4);
 }
 
@@ -489,6 +580,21 @@ export function deriveDocumentedServiceRequirement(
   const quoted = quotedServiceRequirement(message);
   if (quoted) return quoted;
   if (/\bethiopian\b/i.test(message)) return ETHIOPIAN_CUISINE_REQUIREMENT;
+  if (/\b(?:custom\s+wigs?|wig\s+(?:maker|makers|making))\b/i.test(message)) {
+    return CUSTOM_WIG_MAKING_SERVICE_REQUIREMENT;
+  }
+  if (/\b(?:wig(?:s)?|wig[ -]?install(?:ation|s)?)\b/i.test(message)) {
+    return WIG_INSTALLATION_SERVICE_REQUIREMENT;
+  }
+  if (/\b(?:bundles?|hair[ -]?extensions?|extension[ -]?install(?:ation|s)?)\b/i.test(message)) {
+    return BUNDLE_INSTALLATION_SERVICE_REQUIREMENT;
+  }
+  if (/\b(?:loc\s+maintenance|dreadlock\s+maintenance|loc\s+retwists?|retwists?)\b/i.test(message)) {
+    return LOC_MAINTENANCE_SERVICE_REQUIREMENT;
+  }
+  if (/\bdine[ -]?in\b|\bsit[ -]?down\s+(?:dining|restaurant)\b/i.test(message)) {
+    return DINE_IN_SERVICE_REQUIREMENT;
+  }
   return /\b(?:full\s+wash\s+and\s+detangle|wash\s+and\s+detangle|washing\s+and\s+detangling|wash\s+and\s+braid(?:ing)?|wash\s+and\s+style)\b/i.test(
     message,
   )
@@ -741,6 +847,7 @@ export function matchesDocumentedContextualEvidence(
     stateCode?: string | null;
     tags?: readonly string[] | null;
     specialties?: readonly string[] | null;
+    accessibilityFeatures?: readonly string[] | null;
   }>,
   evidenceTerms: readonly string[] | undefined,
 ): boolean {
@@ -755,15 +862,18 @@ export function matchesDocumentedContextualEvidence(
     business.stateCode ?? "",
     ...(business.tags ?? []),
     ...(business.specialties ?? []),
+    ...(business.accessibilityFeatures ?? []),
   ]
     .join(" ")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, " ")
     .trim();
-  return evidenceTerms.every((term) => {
-    const phrase = normalizeEvidenceTerm(term);
-    return Boolean(phrase) && ` ${evidence} `.includes(` ${phrase} `);
-  });
+  return evidenceTerms.every((term) =>
+    contextualEvidenceAlternatives(term).some((alternative) => {
+      const phrase = normalizeEvidenceTerm(alternative);
+      return Boolean(phrase) && ` ${evidence} `.includes(` ${phrase} `);
+    }),
+  );
 }
 
 function searchTermPatterns(searchTerms: readonly string[]): string[] {
@@ -803,7 +913,10 @@ export function documentedServiceRequirementSearchPatterns(
 export function contextualEvidenceSearchPatterns(
   evidenceTerms: readonly string[] | undefined,
 ): string[] {
-  return searchTermPatterns(evidenceTerms ?? []);
+  return (evidenceTerms ?? []).flatMap((term) => {
+    const patterns = searchTermPatterns(contextualEvidenceAlternatives(term));
+    return patterns.length > 1 ? [`(?:${patterns.join("|")})`] : patterns;
+  });
 }
 
 export const BUSINESS_SUBJECTS = SUBJECTS.map(

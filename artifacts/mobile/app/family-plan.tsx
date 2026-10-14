@@ -543,7 +543,7 @@ export default function FamilyPlanScreen() {
                     Safety features are always included
                   </Text>
                   <Text style={{ fontSize: 12, color: colors.mutedForeground, lineHeight: 18 }}>
-                    Officer Watch, Unsafe Space reports, safety surveys, and neighborhood scores are available to everyone — no plan required.
+                    Police / ICE city-awareness reports, Unsafe Space reports, safety surveys, and neighborhood resources are available to everyone — no plan required.
                   </Text>
                 </View>
               </View>

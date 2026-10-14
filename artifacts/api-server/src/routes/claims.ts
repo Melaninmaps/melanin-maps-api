@@ -12,14 +12,140 @@
  *  - community_impact.ts had a competing POST /businesses/:id/claim which created
  *    owner links directly without evidence/validation — that route has been removed.
  *
- * All admin endpoints require isAdmin() — never just req.user?.id.
+ * All ordinary admin endpoints require isAdmin() — never just req.user?.id.
+ * The three canonical decision routes may additionally accept one short-lived,
+ * exact-email isolated-staging reviewer fixture; it never grants admin access.
  */
 import { Router, type IRouter, type Request, type Response } from "express";
 import { pool } from "@workspace/db";
 import { isAdmin } from "../lib/adminAuth.js";
+import {
+  isBoundOwnerClaimReviewerFixtureRequest,
+  OWNER_CLAIM_REVIEWER_FIXTURE_SCOPE,
+  parseOwnerClaimReviewerFixtureTtl,
+  requireClaimDecisionReviewer as resolveClaimDecisionReviewer,
+} from "../claims/isolatedOwnerClaimReviewerFixture.js";
 import { sendClaimReceived, sendClaimApproved } from "../lib/email.js";
 
 const router: IRouter = Router();
+
+/**
+ * The isolated reviewer fixture is deliberately considered only by the three
+ * canonical decision routes below. It is not accepted by ordinary admin reads,
+ * legacy routes, profile management, or any role/entitlement administration.
+ */
+async function requireClaimDecisionReviewer(
+  req: Request,
+  res: Response,
+): Promise<string | null> {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required" });
+    return null;
+  }
+  const reviewerId = await resolveClaimDecisionReviewer(req);
+  if (!reviewerId) {
+    res.status(403).json({ error: "Forbidden" });
+    return null;
+  }
+  return reviewerId;
+}
+
+// ── Isolated staging fixture: expiring claim-decision reviewer ──────────────
+// This is a double-bound test capability, not an administrator bootstrap.
+// It is unreachable unless the runtime is exact staging, both explicit fixture
+// values are present, and the signed-in disposable email matches the binding.
+router.post("/internal/isolated-fixtures/owner-claim-reviewer/grant", async (req: Request, res: Response) => {
+  if (!isBoundOwnerClaimReviewerFixtureRequest(req)) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  const body = req.body;
+  if (
+    typeof body !== "object"
+    || body === null
+    || Array.isArray(body)
+    || Object.keys(body).some((key) => key !== "expiresInSeconds")
+  ) {
+    res.status(400).json({ error: "Fixture request is invalid" });
+    return;
+  }
+  const ttlSeconds = parseOwnerClaimReviewerFixtureTtl(
+    (body as { expiresInSeconds?: unknown }).expiresInSeconds,
+  );
+  if (ttlSeconds === null) {
+    res.status(400).json({ error: "Fixture request is invalid" });
+    return;
+  }
+  try {
+    const { rows } = await pool.query<{ expires_at: Date }>(
+      `INSERT INTO owner_claim_reviewer_fixture_entitlements
+         (user_id, bound_email, scope, expires_at)
+       VALUES ($1, $2, $3, NOW() + make_interval(secs => $4::int))
+       ON CONFLICT (user_id) DO UPDATE
+         SET bound_email = EXCLUDED.bound_email,
+             scope = EXCLUDED.scope,
+             expires_at = EXCLUDED.expires_at,
+             created_at = NOW()
+       RETURNING expires_at`,
+      [req.user.id, req.user.email.trim().toLowerCase(), OWNER_CLAIM_REVIEWER_FIXTURE_SCOPE, ttlSeconds],
+    );
+    res.status(201).json({
+      ok: true,
+      scope: "isolated_staging_only",
+      expiresAt: rows[0]?.expires_at ?? null,
+    });
+  } catch (error) {
+    req.log.error({ error }, "Isolated owner-claim reviewer fixture grant failed");
+    res.status(503).json({ error: "Fixture entitlement unavailable" });
+  }
+});
+
+router.delete("/internal/isolated-fixtures/owner-claim-reviewer/grant", async (req: Request, res: Response) => {
+  if (!isBoundOwnerClaimReviewerFixtureRequest(req)) {
+    res.status(404).json({ error: "Not found" });
+    return;
+  }
+  try {
+    const result = await pool.query(
+      `DELETE FROM owner_claim_reviewer_fixture_entitlements
+        WHERE user_id = $1 AND bound_email = $2 AND scope = $3`,
+      [req.user.id, req.user.email.trim().toLowerCase(), OWNER_CLAIM_REVIEWER_FIXTURE_SCOPE],
+    );
+    res.json({
+      ok: true,
+      scope: "isolated_staging_only",
+      entitlementRemoved: (result.rowCount ?? 0) > 0,
+    });
+  } catch (error) {
+    req.log.error({ error }, "Isolated owner-claim reviewer fixture cleanup failed");
+    res.status(503).json({ error: "Fixture entitlement unavailable" });
+  }
+});
+
+/**
+ * A listing is marked claim_pending only while at least one reviewable claim
+ * remains. This shared guard is deliberately used by claimant withdrawal and
+ * every admin rejection path so a declined claim cannot strand a business in
+ * an unclaimable state. It never changes verification, publication, ownership
+ * designations, or an approved/revoked ownership audit record.
+ */
+async function releaseBusinessFromClaimPendingIfNoOpenClaims(businessId: string): Promise<void> {
+  const { rows: openClaims } = await pool.query(
+    `SELECT 1 FROM business_claims
+     WHERE business_id = $1 AND status IN ('pending', 'needs_info')
+     LIMIT 1`,
+    [businessId],
+  );
+
+  if (!openClaims[0]) {
+    await pool.query(
+      `UPDATE businesses
+       SET ownership_control_status = 'unclaimed', updated_at = NOW()
+       WHERE id = $1 AND ownership_control_status = 'claim_pending'`,
+      [businessId],
+    );
+  }
+}
 
 // ── GET /businesses/claim-candidates ─────────────────────────────────────────
 // Disambiguation helper: show every listing matching name+city+state so the
@@ -144,7 +270,7 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
   const businessId = String(req.params.id);
   const userId = req.user.id;
   const {
-    ownerName, role = "owner", businessEmail, verificationMethod,
+    ownerName, role = "owner", businessEmail, claimantPhone, verificationMethod,
     officialUrl, socialHandle, attestation, notes,
   } = req.body as Record<string, unknown>;
 
@@ -154,6 +280,14 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
   if (!businessEmail || typeof businessEmail !== "string" || !businessEmail.includes("@")) {
     res.status(400).json({ error: "A valid businessEmail is required" }); return;
   }
+  if (claimantPhone !== undefined && typeof claimantPhone !== "string") {
+    res.status(400).json({ error: "claimantPhone must be a phone number when provided" }); return;
+  }
+  // A claimant phone is private review contact information. It is never copied
+  // into the business listing, where it could overwrite or disclose public data.
+  const safeClaimantPhone = typeof claimantPhone === "string"
+    ? claimantPhone.trim().replace(/[^0-9+().\-\s]/g, "").slice(0, 30) || null
+    : null;
   const validMethods = ["domain_email", "social_account", "booking_page", "manual_review", "business_document"];
   if (!verificationMethod || typeof verificationMethod !== "string" || !validMethods.includes(verificationMethod)) {
     res.status(400).json({ error: `verificationMethod must be one of: ${validMethods.join(", ")}` }); return;
@@ -192,20 +326,34 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
       res.status(409).json({ error: "You already have an open claim for this business", claimId: existing[0].id }); return;
     }
 
+    // A listing has one active review path at a time. The eligibility route
+    // exposes the same rule; enforcing it here prevents a caller from bypassing
+    // the client-side state and creating a competing pending claim.
+    const { rows: competingClaims } = await pool.query(
+      `SELECT id FROM business_claims
+       WHERE business_id = $1 AND user_id <> $2 AND status IN ('pending', 'needs_info')
+       LIMIT 1`,
+      [businessId, userId],
+    );
+    if (competingClaims[0]) {
+      res.status(409).json({ error: "Another ownership claim is already being reviewed for this business" }); return;
+    }
+
     const claimId = `clm_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const safeNotes = typeof notes === "string" ? notes.replace(/<[^>]*>/g, "").slice(0, 1000) : null;
 
     await pool.query(
       `INSERT INTO business_claims
-         (id, business_id, user_id, business_name, owner_name, email, role,
+         (id, business_id, user_id, business_name, owner_name, email, phone, role,
           claim_type, verification_method, evidence_url, evidence_summary,
           attested_at, additional_info, status, created_at, updated_at)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,'ownership_control',$8,$9,$10,NOW(),$11,'pending',NOW(),NOW())`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'ownership_control',$9,$10,$11,NOW(),$12,'pending',NOW(),NOW())`,
       [
         claimId, businessId, userId,
         biz.name ?? null,
         ownerName.trim().slice(0, 255),
         businessEmail.trim().slice(0, 255),
+        safeClaimantPhone,
         (typeof role === "string" ? role : "owner").slice(0, 50),
         verificationMethod.slice(0, 40),
         typeof officialUrl === "string" ? officialUrl.slice(0, 500) : null,
@@ -229,7 +377,7 @@ router.post("/businesses/:id/claims", async (req: Request, res: Response) => {
 
     res.status(201).json({
       ok: true, claimId,
-      message: "Claim submitted. We review clear requests within one business day.",
+      message: "Claim submitted for private review. An approved claim may grant listing-management access; it does not verify the business or its ownership designations.",
     });
   } catch (err) {
     req.log.error({ err }, "POST /businesses/:id/claims failed");
@@ -285,17 +433,7 @@ router.patch("/me/business-claims/:id", async (req: Request, res: Response) => {
         `UPDATE business_claims SET status='withdrawn', withdrawn_at=NOW(), updated_at=NOW() WHERE id=$1`,
         [claimId]
       );
-      // Reset business status if no other open claims for this listing
-      const { rows: others } = await pool.query(
-        `SELECT 1 FROM business_claims WHERE business_id=$1 AND id!=$2 AND status IN ('pending','needs_info') LIMIT 1`,
-        [claim.business_id, claimId]
-      );
-      if (!others[0]) {
-        await pool.query(
-          `UPDATE businesses SET ownership_control_status='unclaimed' WHERE id=$1 AND ownership_control_status='claim_pending'`,
-          [claim.business_id]
-        );
-      }
+      await releaseBusinessFromClaimPendingIfNoOpenClaims(claim.business_id);
       res.json({ ok: true, message: "Claim withdrawn" });
       return;
     }
@@ -326,8 +464,9 @@ router.patch("/me/business-claims/:id", async (req: Request, res: Response) => {
 });
 
 // ══════════════════════════════════════════════════════════════════════════════
-// ADMINISTRATOR ENDPOINTS — all require isAdmin() (role === "admin")
-// Never gate admin routes on req.user?.id alone.
+// ADMINISTRATOR ENDPOINTS — ordinary routes require isAdmin() (role === "admin")
+// and canonical decision routes use requireClaimDecisionReviewer(). Never gate
+// an elevated route on req.user?.id alone.
 // ══════════════════════════════════════════════════════════════════════════════
 
 // ── GET /admin/business-claims ────────────────────────────────────────────────
@@ -354,7 +493,8 @@ router.get("/admin/business-claims", async (req: Request, res: Response) => {
 // ── PATCH /admin/business-claims/:id ─────────────────────────────────────────
 // Triage only — set needs_info or rejected. Approval is the dedicated endpoint below.
 router.patch("/admin/business-claims/:id", async (req: Request, res: Response) => {
-  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const reviewerId = await requireClaimDecisionReviewer(req, res);
+  if (!reviewerId) return;
   const claimId = String(req.params.id);
   const { status, decisionReason } = req.body as { status?: string; decisionReason?: string };
   if (status === "approved") {
@@ -372,9 +512,12 @@ router.patch("/admin/business-claims/:id", async (req: Request, res: Response) =
       `UPDATE business_claims
        SET status=$1, decision_reason=$2, reviewed_by=$3, reviewed_at=NOW(), updated_at=NOW()
        WHERE id=$4 RETURNING *`,
-      [status, decisionReason.trim(), req.user!.id, claimId]
+      [status, decisionReason.trim(), reviewerId, claimId]
     );
     if (!rows[0]) { res.status(404).json({ error: "Claim not found" }); return; }
+    if (status === "rejected") {
+      await releaseBusinessFromClaimPendingIfNoOpenClaims(rows[0].business_id);
+    }
     res.json({ claim: rows[0] });
   } catch (err) {
     req.log.error({ err }, "PATCH /admin/business-claims/:id failed");
@@ -392,10 +535,11 @@ router.patch("/admin/business-claims/:id", async (req: Request, res: Response) =
 // does NOT alter verified_designations, ratings, safety scores, or community tags.
 // Claiming grants profile control — verification is a separate MWM process.
 router.post("/admin/business-claims/:id/approve", async (req: Request, res: Response) => {
-  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const reviewerId = await requireClaimDecisionReviewer(req, res);
+  if (!reviewerId) return;
   const claimId = String(req.params.id);
   const { decisionReason } = req.body as { decisionReason?: string };
-  const adminId = req.user!.id;
+  const adminId = reviewerId;
 
   const client = await pool.connect();
   try {
@@ -506,13 +650,14 @@ router.post("/admin/business-claims/:id/approve", async (req: Request, res: Resp
 // Revokes an approved owner relationship. Audit history (business_claims row,
 // business_owner_links row) is NEVER deleted — revocation is a state change only.
 router.post("/admin/business-claims/:id/revoke", async (req: Request, res: Response) => {
-  if (!isAdmin(req)) { res.status(403).json({ error: "Forbidden" }); return; }
+  const reviewerId = await requireClaimDecisionReviewer(req, res);
+  if (!reviewerId) return;
   const claimId = String(req.params.id);
   const { revocationReason } = req.body as { revocationReason?: string };
   if (!revocationReason || revocationReason.trim().length < 3) {
     res.status(400).json({ error: "revocationReason is required (min 3 chars)" }); return;
   }
-  const adminId = req.user!.id;
+  const adminId = reviewerId;
 
   const client = await pool.connect();
   try {
@@ -585,6 +730,9 @@ router.patch("/admin/claims/:id", async (req: Request, res: Response) => {
       [status ?? null, adminNotes ?? null, id]
     );
     if (!rows[0]) { res.status(404).json({ error: "Claim not found" }); return; }
+    if (status === "rejected") {
+      await releaseBusinessFromClaimPendingIfNoOpenClaims(rows[0].business_id);
+    }
     res.json({ claim: rows[0] });
   } catch (err) {
     req.log.error({ err }, "PATCH /admin/claims/:id failed");

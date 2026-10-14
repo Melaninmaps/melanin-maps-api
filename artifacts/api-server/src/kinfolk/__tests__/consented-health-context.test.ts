@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolveConsentedHealthPopulationContext } from "../consented-health-context";
+import {
+  resolveConsentedHealthPopulationContext,
+  resolveConsentedHealthPopulationContextFromEncrypted,
+} from "../consented-health-context";
 
 const confirmedBlackWomanMemory = {
   content: "I am a BW.",
@@ -47,6 +50,43 @@ describe("consented private health population context", () => {
       resolveConsentedHealthPopulationContext(
         [confirmedBlackWomanMemory],
         "What should I know about anemia for Hispanic women?",
+      ),
+    ).toBeNull();
+  });
+
+  it("resolves a separately consented encrypted identity only in-process for a relevant health turn", () => {
+    const encryptedMemory = {
+      purpose: "profile_context",
+      isSensitive: true,
+      sensitiveConsentGrantedAt: new Date("2026-09-29T00:00:00.000Z"),
+      sensitiveEncryptedContent: "synthetic-encrypted-value",
+      sensitiveEncryptionKeyId: "test-key",
+    };
+
+    expect(
+      resolveConsentedHealthPopulationContextFromEncrypted(
+        [encryptedMemory],
+        "I think I have eczema, show me images",
+        () => "I am a Black woman.",
+      ),
+    ).toEqual({
+      label: "Black woman",
+      source: "consented_private_memory",
+    });
+  });
+
+  it("fails closed when a consented encrypted identity cannot be opened", () => {
+    expect(
+      resolveConsentedHealthPopulationContextFromEncrypted(
+        [{
+          purpose: "profile_context",
+          isSensitive: true,
+          sensitiveConsentGrantedAt: new Date("2026-09-29T00:00:00.000Z"),
+          sensitiveEncryptedContent: null,
+          sensitiveEncryptionKeyId: null,
+        }],
+        "I think I have eczema, show me images",
+        () => { throw new Error("vault unavailable"); },
       ),
     ).toBeNull();
   });

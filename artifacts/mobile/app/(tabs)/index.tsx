@@ -153,13 +153,6 @@ export default function DiscoverScreen() {
     })();
   }, [user?.id]);
 
-  // When saved preferences load, auto-apply ownership types if user hasn't set a filter yet
-  React.useEffect(() => {
-    if (preferences?.preferredOwnershipTypes?.length && filters.ownershipTypes.length === 0) {
-      queueMicrotask(() => { setFilters((f) => ({ ...f, ownershipTypes: preferences.preferredOwnershipTypes })); });
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [preferences?.preferredOwnershipTypes?.join(",")]);
   const [showPrefsSurvey, setShowPrefsSurvey] = useState(false);
   const [feedbackBusiness, setFeedbackBusiness] = useState<{ id: string; name: string; feedbackOptIn?: boolean } | null>(null);
   const [sponsoredDismissed, setSponsoredDismissed] = useState(false);
@@ -188,14 +181,10 @@ export default function DiscoverScreen() {
   const { businesses, isLoading: businessesLoading, refetch: refetchBusinesses } = useBusinesses({
     search,
     category: activeCategory,
-    // Explicit in-session selections always go to the server and override
-    // the saved lens mode for this request.
+    // Standalone Discovery uses only visible in-session selections. Kinfolk
+    // memory and Kinfolk preferences never become an implicit browse filter.
     designations: filters.ownershipTypes,
-    supportScope: supportScopeOverride ?? (
-      preferences?.supportLensMode === "strict_documented_designations"
-        ? "strict_documented_designations"
-        : undefined
-    ),
+    supportScope: supportScopeOverride ?? undefined,
   });
 
   const { spaces: searchSpaces } = useSpaces(search.trim().length > 2 ? { q: search.trim() } : undefined);
@@ -262,34 +251,11 @@ export default function DiscoverScreen() {
     return matchesScore && matchesVerified && matchesOwnership && matchesVibe;
   });
 
-  // Sort: preference-matched businesses first within each section
-  const savedOwnershipPrefs = preferences?.preferredOwnershipTypes ?? [];
-  const matchesPref = (b: (typeof filtered)[0]) =>
-    savedOwnershipPrefs.length === 0 ||
-    savedOwnershipPrefs.every(
-      (t) =>
-        (t === "black-african-american" && b.blackOwned) ||
-        b.ownershipFilterIds?.includes(t)
-    );
-
-  const sortByPref = (list: typeof filtered) => {
-    if (savedOwnershipPrefs.length === 0) return list;
-    const matched = list.filter(matchesPref);
-    const rest = list.filter((b) => !matchesPref(b));
-    return [...matched, ...rest];
-  };
-
-  const featured = sortByPref(filtered.filter((b) => b.featured));
-  const nearby = sortByPref(filtered.filter((b) => !b.featured));
-
-  // True when the user has ownership prefs but zero businesses match them
-  const prefMatchCount = filtered.filter(matchesPref).length;
-  const showNoPrefsMatch =
-    !prefsBannerDismissed &&
-    savedOwnershipPrefs.length > 0 &&
-    prefMatchCount === 0 &&
-    filtered.length > 0 &&
-    !businessesLoading;
+  // Discovery keeps its documented ordering unless the member selects a visible
+  // filter above. Kinfolk preferences never rank standalone browse results.
+  const featured = filtered.filter((b) => b.featured);
+  const nearby = filtered.filter((b) => !b.featured);
+  const showNoPrefsMatch = false;
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -307,22 +273,16 @@ export default function DiscoverScreen() {
 
   const nearYou = nearby.slice(0, 8);
 
-  const trending = sortByPref(
-    [...filtered]
-      .sort((a, b) => b.rating - a.rating || b.confidenceScore - a.confidenceScore)
-      .slice(0, 10)
-  );
+  const trending = [...filtered]
+    .sort((a, b) => b.rating - a.rating || b.confidenceScore - a.confidenceScore)
+    .slice(0, 10);
 
-  const newBusinesses = sortByPref(
-    [...businesses].filter((b) => !isDismissed(b.id)).reverse().slice(0, 10)
-  );
+  const newBusinesses = [...businesses].filter((b) => !isDismissed(b.id)).reverse().slice(0, 10);
 
-  const communityFaves = sortByPref(
-    filtered
-      .filter((b) => ((b.ownershipDesignations?.length ?? 0) > 0 || b.blackOwned) && b.verified)
-      .sort((a, b) => b.confidenceScore - a.confidenceScore)
-      .slice(0, 10)
-  );
+  const communityFaves = filtered
+    .filter((b) => ((b.ownershipDesignations?.length ?? 0) > 0 || b.blackOwned) && b.verified)
+    .sort((a, b) => b.confidenceScore - a.confidenceScore)
+    .slice(0, 10);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -535,10 +495,10 @@ export default function DiscoverScreen() {
                   We couldn&apos;t find businesses matching your saved preferences in this view. Would you like to explore other community businesses?
                 </Text>
                 <View style={styles.noPrefsMatchBtns}>
-                  <TouchableOpacity style={[styles.noPrefsBtn, { backgroundColor: "#CA922B" }]} onPress={() => { setSupportScopeOverride("all_businesses"); setFilters((f) => ({ ...f, ownershipTypes: [] })); void updatePreferences({ preferredOwnershipTypes: [], supportLensMode: "all_businesses" }); setPrefsBannerDismissed(true); }} activeOpacity={0.85}>
+                  <TouchableOpacity style={[styles.noPrefsBtn, { backgroundColor: "#CA922B" }]} onPress={() => { setSupportScopeOverride("all_businesses"); setFilters((f) => ({ ...f, ownershipTypes: [] })); setPrefsBannerDismissed(true); }} activeOpacity={0.85}>
                     <Text style={styles.noPrefsBtnTxt}>Show All Businesses</Text>
                   </TouchableOpacity>
-                  <TouchableOpacity style={[styles.noPrefsGhostBtn, { borderColor: colors.border }]} onPress={() => { setSupportScopeOverride("all_businesses"); setFilters((f) => ({ ...f, ownershipTypes: [] })); void updatePreferences({ preferredOwnershipTypes: [], supportLensMode: "all_businesses" }); setPrefsBannerDismissed(true); }} activeOpacity={0.85}>
+                  <TouchableOpacity style={[styles.noPrefsGhostBtn, { borderColor: colors.border }]} onPress={() => { setSupportScopeOverride("all_businesses"); setFilters((f) => ({ ...f, ownershipTypes: [] })); setPrefsBannerDismissed(true); }} activeOpacity={0.85}>
                     <Text style={[styles.noPrefsGhostTxt, { color: colors.mutedForeground }]}>Show Everything</Text>
                   </TouchableOpacity>
                 </View>

@@ -24,7 +24,8 @@ describe("heritage profile content separation", () => {
   });
 
   it("opens each HBCU through a contextual Library research prompt", () => {
-    expect(page).toContain("/library?q=");
+    expect(page).toContain("/library/search?q=");
+    expect(page).toContain("research=true");
     expect(mobile).toContain('pathname: "/library-research"');
     expect(mobile).toContain("academics, student life, alumni mentorship");
     expect(mobileLibrary).toContain("useLocalSearchParams");

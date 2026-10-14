@@ -1,6 +1,6 @@
 import { db, pushTokensTable, savedPlacesTable, businessesTable, notificationsTable, businessProfileViewsTable, reviewsTable, usersTable } from "@workspace/db";
 import { pool } from "@workspace/db";
-import { eq, inArray, ilike, isNotNull, gte, lte, ne, and, or } from "drizzle-orm";
+import { eq, inArray, ilike, isNotNull, gte, lte, ne, and } from "drizzle-orm";
 import { logger } from "./logger";
 import { normalizeHomeState } from "./happening-personalization";
 
@@ -8,6 +8,26 @@ interface PushMessage {
   title: string;
   body: string;
   data?: Record<string, unknown>;
+}
+
+/** A provider submission result, never a device-receipt confirmation. */
+export type PushSubmissionResult = "submitted" | "no_token" | "failed";
+
+/**
+ * Expo's immediate response is a provider-submission ticket, not proof that a
+ * device received or displayed the notification. A transport-level 2xx alone
+ * is insufficient: Expo can return a rejected ticket in a successful response.
+ */
+function isAcceptedProviderSubmission(ticket: unknown): boolean {
+  if (!ticket || typeof ticket !== "object" || !("data" in ticket)) return false;
+  const data = (ticket as { data?: unknown }).data;
+  if (!Array.isArray(data) || data.length !== 1) return false;
+  const result = data[0];
+  return Boolean(
+    result
+    && typeof result === "object"
+    && (result as { status?: unknown }).status === "ok",
+  );
 }
 
 async function sendToToken(token: string, message: PushMessage): Promise<boolean> {
@@ -30,15 +50,21 @@ async function sendToToken(token: string, message: PushMessage): Promise<boolean
     });
     if (!response.ok) {
       logger.warn({ status: response.status }, "[push] Expo push failed");
+      return false;
     }
-    return response.ok;
+    const ticket = await response.json().catch(() => null);
+    if (!isAcceptedProviderSubmission(ticket)) {
+      logger.warn({ status: response.status }, "[push] Expo push submission was not accepted");
+      return false;
+    }
+    return true;
   } catch (err) {
     logger.warn({ err }, "[push] Failed to send push notification");
     return false;
   }
 }
 
-export async function sendPushToUser(userId: string, message: PushMessage): Promise<void> {
+export async function sendPushToUser(userId: string, message: PushMessage): Promise<PushSubmissionResult> {
   try {
     const [row] = await db
       .select({ token: pushTokensTable.token })
@@ -46,10 +72,11 @@ export async function sendPushToUser(userId: string, message: PushMessage): Prom
       .where(eq(pushTokensTable.userId, userId))
       .limit(1);
 
-    if (!row?.token) return;
-    await sendToToken(row.token, message);
+    if (!row?.token) return "no_token";
+    return (await sendToToken(row.token, message)) ? "submitted" : "failed";
   } catch (err) {
     logger.warn({ err }, "[push] Failed to send push notification to user");
+    return "failed";
   }
 }
 
@@ -193,100 +220,108 @@ export async function sendAddressUpdateNotifications(
   }
 }
 
-export async function sendAlertPushToNearbyUsers(
-  alertId: string,
-  lat: number,
-  lng: number,
-  alertType: string,
-  radiusKm: number,
-): Promise<void> {
-  const ALERT_LABELS: Record<string, string> = {
-    police: "🚔 Police Activity Nearby",
-    ice: "⚠️ ICE Activity Nearby",
-    checkpoint: "🛑 Checkpoint Reported",
-    traffic: "🚦 Traffic Stop Nearby",
-    other: "📢 Community Alert",
-  };
-  const title = ALERT_LABELS[alertType] ?? "📢 Community Alert";
-  const body = "A community member reported activity near you. Stay aware.";
+export async function sendCorroboratedPoliceIceAlert(input: {
+  alertId: string;
+  city: string;
+  region: string;
+  kind: "police" | "ice";
+  reportCount: number;
+  expiresAt: Date;
+}): Promise<{ recipientCount: number; delivered: boolean }> {
+  const generalArea = `${input.city}, ${input.region}`;
+  const title = input.kind === "ice"
+    ? "Corroborated ICE activity report"
+    : "Corroborated Police activity report";
+  const body = `Moderated community reports corroborate activity in the general ${generalArea} area. This is not official confirmation.`;
 
   try {
-    // Fan-out group 1: users with a recent known location — filtered by per-user alert prefs + radius
-    const locationResult = await pool.query<{ token: string; user_id: string }>(
+    // The event itself is city-only. A canonical city centroid is used only for
+    // server-side radius matching; it is never delivered to a member or contact.
+    const centroidResult = await pool.query<{ latitude: string; longitude: string }>(
+      `SELECT latitude::text, longitude::text
+       FROM community_locations
+       WHERE LOWER(city_name) = LOWER($1)
+         AND LOWER(state_code) = LOWER($2)
+         AND neighborhood_name IS NULL
+         AND latitude IS NOT NULL
+         AND longitude IS NOT NULL
+       LIMIT 1`,
+      [input.city, input.region],
+    );
+    const centroid = centroidResult.rows[0];
+    if (!centroid) {
+      logger.info({ alertId: input.alertId, generalArea }, "[push] Police/ICE alert not delivered: no canonical coarse area");
+      return { recipientCount: 0, delivered: false };
+    }
+
+    // This path intentionally does not read contacts, location shares, saved
+    // places, or member/device coordinates. A member chooses a canonical
+    // city/state awareness area; radius comparison happens only between public
+    // city centroids and is never disclosed to anyone else.
+    const recipientResult = await pool.query<{ token: string; user_id: string }>(
       `SELECT pt.token, pt.user_id
-       FROM user_locations ul
-       JOIN push_tokens pt ON pt.user_id = ul.user_id
-       LEFT JOIN user_settings us ON us.user_id = ul.user_id
-       WHERE ul.updated_at > NOW() - INTERVAL '2 hours'
+       FROM user_settings us
+       JOIN push_tokens pt ON pt.user_id = us.user_id
+       JOIN LATERAL (
+         SELECT latitude::double precision AS latitude, longitude::double precision AS longitude
+         FROM community_locations
+         WHERE LOWER(city_name) = LOWER(us.safety_alert_area_city)
+           AND UPPER(state_code) = UPPER(us.safety_alert_area_state)
+           AND neighborhood_name IS NULL
+           AND latitude IS NOT NULL
+           AND longitude IS NOT NULL
+         LIMIT 1
+       ) awareness_area ON TRUE
+       WHERE us.safety_alert_area_city IS NOT NULL
+         AND us.safety_alert_area_state IS NOT NULL
          AND pt.token IS NOT NULL
          AND CASE
-               WHEN $4 = 'police' THEN COALESCE(us.safety_alert_police, true)
-               WHEN $4 = 'ice'    THEN COALESCE(us.safety_alert_ice, true)
-               ELSE true
+               WHEN $3 = 'ice' THEN us.safety_alert_ice
+               ELSE us.safety_alert_police
              END = true
+         AND us.safety_alert_radius_miles BETWEEN 1 AND 10
          AND (6371 * acos(
            GREATEST(-1, LEAST(1,
-             cos(radians($1)) * cos(radians(ul.lat::float)) * cos(radians(ul.lng::float) - radians($2))
-             + sin(radians($1)) * sin(radians(ul.lat::float))
+             cos(radians($1)) * cos(radians(awareness_area.latitude)) * cos(radians(awareness_area.longitude) - radians($2))
+             + sin(radians($1)) * sin(radians(awareness_area.latitude))
            ))
-         )) < LEAST(COALESCE(us.safety_alert_radius_miles, 5) * 1.60934, $3)`,
-      [lat, lng, radiusKm, alertType],
+         )) < (us.safety_alert_radius_miles * 1.60934)`,
+      [Number.parseFloat(centroid.latitude), Number.parseFloat(centroid.longitude), input.kind],
     );
 
-    // Fan-out group 2: users who have saved any business within the radius
-    const savedResult = await pool.query<{ token: string; user_id: string }>(
-      `SELECT DISTINCT pt.token, pt.user_id
-       FROM saved_places sp
-       JOIN businesses b ON b.id = sp.business_id
-       JOIN push_tokens pt ON pt.user_id = sp.user_id
-       LEFT JOIN user_settings us ON us.user_id = sp.user_id
-       WHERE pt.token IS NOT NULL
-         AND CASE
-               WHEN $4 = 'police' THEN COALESCE(us.safety_alert_police, true)
-               WHEN $4 = 'ice'    THEN COALESCE(us.safety_alert_ice, true)
-               ELSE true
-             END = true
-         AND (6371 * acos(
-           GREATEST(-1, LEAST(1,
-             cos(radians($1)) * cos(radians(b.latitude::float)) * cos(radians(b.longitude::float) - radians($2))
-             + sin(radians($1)) * sin(radians(b.latitude::float))
-           ))
-         )) < LEAST(COALESCE(us.safety_alert_radius_miles, 5) * 1.60934, $3)`,
-      [lat, lng, radiusKm, alertType],
-    );
+    const deliveryResults = await Promise.all(recipientResult.rows.map((row) => sendToToken(row.token, {
+      title,
+      body,
+      // Never include latitude, longitude, a reporter identifier, or a contact
+      // identifier. The client receives only the moderated, coarse disclosure.
+      data: {
+        alertId: input.alertId,
+        type: input.kind,
+        screen: "safety",
+        status: "corroborated",
+        generalArea,
+        reportCount: input.reportCount,
+        expiresAt: input.expiresAt.toISOString(),
+      },
+    })));
+    const deliveredCount = deliveryResults.filter(Boolean).length;
 
-    // Deduplicate by user_id — union both groups
-    const seenUserIds = new Set<string>();
-    const tokens: Array<{ token: string; user_id: string }> = [];
-    for (const row of [...locationResult.rows, ...savedResult.rows]) {
-      if (row.token && !seenUserIds.has(row.user_id)) {
-        seenUserIds.add(row.user_id);
-        tokens.push(row);
-      }
-    }
-
-    if (tokens.length === 0) return;
-
-    const userIds = tokens.map((r) => r.user_id);
-
-    for (const row of tokens) {
-      if (row.token) await sendToToken(row.token, { title, body, data: { alertId, type: alertType, screen: "map" } });
-    }
-
-    logger.info({ alertId, alertType, notified: tokens.length }, "[push] Community alert sent to nearby users");
-
-    if (userIds.length > 0) {
+    if (recipientResult.rows.length > 0) {
       await db.insert(notificationsTable).values(
-        userIds.map((userId) => ({
-          userId,
+        recipientResult.rows.map((row) => ({
+          userId: row.user_id,
           type: "safety" as const,
           title,
           body,
         })),
       );
     }
+
+    logger.info({ alertId: input.alertId, kind: input.kind, recipientCount: deliveredCount }, "[push] Corroborated Police/ICE alert delivered");
+    return { recipientCount: deliveredCount, delivered: deliveredCount > 0 };
   } catch (err) {
-    logger.warn({ err }, "[push] Failed to send alert push to nearby users");
+    logger.warn({ err, alertId: input.alertId }, "[push] Failed to deliver corroborated Police/ICE alert");
+    return { recipientCount: 0, delivered: false };
   }
 }
 
@@ -471,52 +506,6 @@ export async function sendNegativeReviewAlertIfThreshold(
     logger.info({ businessId, negativeCount: recentNegative.length, notified: userIds.length }, "[push] Negative review threshold alert sent");
   } catch (err) {
     logger.warn({ err }, "[push] Failed to send negative review alert");
-  }
-}
-
-// ─── Officer Watch: notify users in a city/state ───────────────────────────
-export async function sendPushToUsersInArea(
-  city: string,
-  state: string,
-  message: PushMessage,
-): Promise<number> {
-  try {
-    const matched = await db
-      .select({ id: usersTable.id })
-      .from(usersTable)
-      .where(
-        or(
-          ilike(usersTable.homeCity, `%${city}%`),
-          ilike(usersTable.homeCity, `%${state}%`),
-        ),
-      );
-
-    const userIds = matched.map((u) => u.id);
-    if (userIds.length === 0) return 0;
-
-    const tokens = await db
-      .select({ token: pushTokensTable.token, userId: pushTokensTable.userId })
-      .from(pushTokensTable)
-      .where(and(inArray(pushTokensTable.userId, userIds), isNotNull(pushTokensTable.token)));
-
-    for (const row of tokens) {
-      if (row.token) await sendToToken(row.token, message);
-    }
-
-    await db.insert(notificationsTable).values(
-      userIds.map((userId) => ({
-        userId,
-        type: "safety" as const,
-        title: message.title,
-        body: message.body,
-      })),
-    );
-
-    logger.info({ city, state, userCount: userIds.length }, "[push] Officer watch area alert sent");
-    return userIds.length;
-  } catch (err) {
-    logger.warn({ err }, "[push] Failed to send officer watch area alert");
-    return 0;
   }
 }
 

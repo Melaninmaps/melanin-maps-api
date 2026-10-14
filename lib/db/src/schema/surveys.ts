@@ -33,6 +33,10 @@ export const neighborhoodSurveysTable = pgTable("neighborhood_surveys", {
   moderatorNotes: text("moderator_notes"),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
   reviewedBy: varchar("reviewed_by"),
+  // Only a member who explicitly agrees may contribute to a delayed,
+  // city-level Community Intelligence aggregate. Historical rows remain
+  // excluded because this starts null and is never backfilled.
+  communityIntelligenceConsentAt: timestamp("community_intelligence_consent_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -66,6 +70,13 @@ export const safetyReportsTable = pgTable("safety_reports", {
   moderatorNotes: text("moderator_notes"),
   reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
   reviewedBy: varchar("reviewed_by"),
+  displayExpiresAt: timestamp("display_expires_at", { withTimezone: true }),
+  withdrawnAt: timestamp("withdrawn_at", { withTimezone: true }),
+  withdrawnBy: varchar("withdrawn_by"),
+  withdrawalReason: text("withdrawal_reason"),
+  correctedAt: timestamp("corrected_at", { withTimezone: true }),
+  correctedBy: varchar("corrected_by"),
+  correctionNote: text("correction_note"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -107,6 +118,13 @@ export const insertSafetyReportSchema = createInsertSchema(safetyReportsTable, {
   reviewedBy: true,
   businessResponseDeadline: true,
   autoEscalated: true,
+  displayExpiresAt: true,
+  withdrawnAt: true,
+  withdrawnBy: true,
+  withdrawalReason: true,
+  correctedAt: true,
+  correctedBy: true,
+  correctionNote: true,
 });
 
 export const selectSafetyReportSchema = createSelectSchema(safetyReportsTable);

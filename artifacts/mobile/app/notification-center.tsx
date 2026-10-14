@@ -27,97 +27,12 @@ interface Notif {
   color: string;
   title: string;
   body: string;
-  time: string;
+  time: string | null;
   read: boolean;
-  group: "Today" | "This Week" | "Earlier";
+  group: "Today" | "This Week" | "Earlier" | "Private alerts";
+  entityType?: string | null;
+  data?: { type?: string; screen?: string; checkinId?: string | number; postId?: string; commentId?: string; userId?: string; action?: string };
 }
-
-const NOTIFS: Notif[] = [
-  {
-    id: "n1", type: "safety", icon: "shield", color: "#CA922B",
-    title: "Safety Alert — Atlanta, GA",
-    body: "Community report: increased incidents near Ponce City Market. Stay aware this evening.",
-    time: "10 min ago", read: false, group: "Today",
-  },
-  {
-    id: "n2", type: "events", icon: "calendar", color: "#2D7A4F",
-    title: "Event Tomorrow: Black Business Expo",
-    body: "Don't forget — Black Business Expo starts at 10am at the Georgia World Congress Center.",
-    time: "1h ago", read: false, group: "Today",
-  },
-  {
-    id: "n3", type: "business", icon: "shopping-bag", color: "#C9922B",
-    title: "Sweet Auburn BBQ replied to your review",
-    body: "\"Thank you for the kind words! Come back and try our new weekend specials 🙌🏾\"",
-    time: "3h ago", read: false, group: "Today",
-  },
-  {
-    id: "n4", type: "community", icon: "message-circle", color: "#7B4F2E",
-    title: "Your post is trending",
-    body: "\"Best spots for brunch in ATL\" got 47 upvotes and 12 comments in the community feed.",
-    time: "5h ago", read: true, group: "Today",
-  },
-  {
-    id: "n5", type: "community", icon: "star", color: "#C9922B",
-    title: "New review on a business you follow",
-    body: "Trap Kitchen received a 5-star review: \"Best food truck in the city, hands down.\"",
-    time: "Yesterday", read: true, group: "This Week",
-  },
-  {
-    id: "n6", type: "events", icon: "calendar", color: "#2D7A4F",
-    title: "New event near you: Juneteenth Block Party",
-    body: "Houston, TX · June 19 · Free admission · Community food vendors + live music",
-    time: "2 days ago", read: true, group: "This Week",
-  },
-  {
-    id: "n7", type: "business", icon: "shopping-bag", color: "#C9922B",
-    title: "Business hours update: Busboys & Poets",
-    body: "Updated hours for the summer — now open until 11pm on Fridays and Saturdays.",
-    time: "3 days ago", read: true, group: "This Week",
-  },
-  {
-    id: "n8", type: "community", icon: "gift", color: "#CA922B",
-    title: "Referral milestone reached 🎉",
-    body: "You've referred 2 friends! You're halfway to earning your $10 credit. Keep it up!",
-    time: "5 days ago", read: true, group: "This Week",
-  },
-  {
-    id: "n9", type: "safety", icon: "shield", color: "#CA922B",
-    title: "Monthly Safety Digest",
-    body: "See the community safety report for cities you follow: Atlanta, Houston, Chicago.",
-    time: "1 week ago", read: true, group: "Earlier",
-  },
-  {
-    id: "n10", type: "community", icon: "users", color: "#7B4F2E",
-    title: "New community member joined via your link",
-    body: "Someone you referred just signed up and set up their profile. Welcome them!",
-    time: "2 weeks ago", read: true, group: "Earlier",
-  },
-  {
-    id: "n11", type: "weather", icon: "cloud-rain", color: "#1D4ED8",
-    title: "Severe Thunderstorm Warning — Houston, TX",
-    body: "NWS has issued a severe thunderstorm warning until 9pm. Outdoor events may be affected.",
-    time: "2h ago", read: false, group: "Today",
-  },
-  {
-    id: "n12", type: "travel", icon: "navigation", color: "#7C3AED",
-    title: "DC Metro Red Line Delays",
-    body: "Single tracking between Shady Grove and Grosvenor. Add 15–20 minutes to your commute.",
-    time: "4h ago", read: false, group: "Today",
-  },
-  {
-    id: "n13", type: "weather", icon: "cloud-rain", color: "#1D4ED8",
-    title: "FEMA Disaster Declaration — Flood",
-    body: "FEMA has issued a federal disaster declaration for flooding in South Carolina.",
-    time: "3 days ago", read: true, group: "This Week",
-  },
-  {
-    id: "n14", type: "travel", icon: "navigation", color: "#7C3AED",
-    title: "SEPTA Route 34 Detour",
-    body: "Trolley detoured at Broad & Washington through Sunday due to track maintenance.",
-    time: "4 days ago", read: true, group: "This Week",
-  },
-];
 
 const TABS: { id: NotifType; label: string }[] = [
   { id: "all", label: "All" },
@@ -156,6 +71,13 @@ function getRelativeTime(createdAt: string): string {
 
 function mapApiRow(row: Record<string, unknown>): Notif {
   const type = (row.type as string) in ICON_MAP ? (row.type as Notif["type"]) : "community";
+  const rawData = row.data;
+  const data = rawData && typeof rawData === "object" && !Array.isArray(rawData)
+    ? rawData as Notif["data"]
+    : undefined;
+  const entityType = typeof row.entityType === "string" ? row.entityType : null;
+  const isPrivateCheckinAlert = entityType === "safety_checkin" && data?.type === "safety_checkin_overdue";
+  const createdAt = String(row.createdAt ?? row.created_at ?? "");
   return {
     id: String(row.id),
     type,
@@ -163,9 +85,11 @@ function mapApiRow(row: Record<string, unknown>): Notif {
     color: COLOR_MAP[type] ?? "#7B4F2E",
     title: String(row.title ?? ""),
     body: String(row.body ?? ""),
-    time: getRelativeTime(String(row.createdAt ?? row.created_at ?? "")),
+    time: isPrivateCheckinAlert ? null : getRelativeTime(createdAt),
     read: Boolean(row.read),
-    group: getTimeGroup(String(row.createdAt ?? row.created_at ?? new Date().toISOString())),
+    group: isPrivateCheckinAlert ? "Private alerts" : getTimeGroup(createdAt || new Date().toISOString()),
+    entityType,
+    data,
   };
 }
 
@@ -179,7 +103,7 @@ export default function NotificationCenterScreen() {
   const bottomPad = Platform.OS === "web" ? 34 : insets.bottom;
 
   const [activeTab, setActiveTab] = useState<NotifType>("all");
-  const [notifs, setNotifs] = useState<Notif[]>(NOTIFS);
+  const [notifs, setNotifs] = useState<Notif[]>([]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -197,9 +121,9 @@ export default function NotificationCenterScreen() {
         if (!res.ok) return;
         const data = await res.json();
         const rows: Record<string, unknown>[] = data?.notifications ?? [];
-        if (rows.length > 0) setNotifs(rows.map(mapApiRow));
+        setNotifs(rows.map(mapApiRow));
       } catch {
-        // keep demo data on error
+        // Preserve the existing private list on a transient read failure.
       }
     }
     load();
@@ -208,7 +132,7 @@ export default function NotificationCenterScreen() {
   const filtered = activeTab === "all" ? notifs : notifs.filter((n) => n.type === activeTab);
   const unreadCount = notifs.filter((n) => !n.read).length;
 
-  const groups = ["Today", "This Week", "Earlier"] as const;
+  const groups = ["Private alerts", "Today", "This Week", "Earlier"] as const;
 
   const markAllRead = async () => {
     setNotifs((ns) => ns.map((n) => ({ ...n, read: true })));
@@ -236,6 +160,27 @@ export default function NotificationCenterScreen() {
         headers: { Authorization: `Bearer ${token}` },
       }).catch(() => {});
     } catch { /* ignore */ }
+  };
+
+  const openNotification = async (notif: Notif) => {
+    await markRead(notif.id);
+    if (
+      notif.entityType === "safety_checkin"
+      && notif.data?.type === "safety_checkin_overdue"
+    ) {
+      router.push({
+        pathname: "/safety-checkin-alert",
+        params: { notificationId: notif.id },
+      } as never);
+      return;
+    }
+    if (notif.entityType === "community_post" && notif.data?.screen === "community" && notif.data.postId) {
+      router.push({ pathname: "/(tabs)/community", params: { postId: notif.data.postId } } as never);
+      return;
+    }
+    if (notif.entityType === "member_profile" && notif.data?.screen === "profile" && notif.data.userId) {
+      router.push(`/user/${notif.data.userId}` as never);
+    }
   };
 
   return (
@@ -327,7 +272,7 @@ export default function NotificationCenterScreen() {
                         !notif.read && { backgroundColor: colors.primary + "08" },
                         i < items.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border },
                       ]}
-                      onPress={() => markRead(notif.id)}
+                      onPress={() => { void openNotification(notif); }}
                       activeOpacity={0.7}
                     >
                       <View style={[styles.iconBox, { backgroundColor: notif.color + "18" }]}>
@@ -345,7 +290,9 @@ export default function NotificationCenterScreen() {
                         <Text style={[styles.notifText, { color: colors.mutedForeground }]} numberOfLines={2}>
                           {notif.body}
                         </Text>
-                        <Text style={[styles.notifTime, { color: colors.mutedForeground }]}>{notif.time}</Text>
+                        {notif.time && (
+                          <Text style={[styles.notifTime, { color: colors.mutedForeground }]}>{notif.time}</Text>
+                        )}
                       </View>
                     </TouchableOpacity>
                   ))}

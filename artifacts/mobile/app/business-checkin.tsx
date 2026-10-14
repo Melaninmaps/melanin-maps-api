@@ -8,7 +8,6 @@
  */
 import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import * as Location from "expo-location";
 import * as SecureStore from "expo-secure-store";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useState } from "react";
@@ -58,7 +57,6 @@ export default function BusinessCheckinScreen() {
   const [stage, setStage] = useState<Stage>("idle");
   const [checkInId, setCheckInId] = useState<number | null>(null);
   const [pointsEarned, setPointsEarned] = useState(0);
-  const [verified, setVerified] = useState(false);
   const [note, setNote] = useState("");
   const [badge, setBadge] = useState<string[]>([]);
   const [upgrading, setUpgrading] = useState(false);
@@ -78,32 +76,15 @@ export default function BusinessCheckinScreen() {
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (token) headers["Cookie"] = `connect.sid=${token}`;
 
-      // Try to get GPS coords for proximity verification
-      let lat: number | undefined;
-      let lng: number | undefined;
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status === "granted") {
-          const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-          lat = pos.coords.latitude;
-          lng = pos.coords.longitude;
-        }
-      } catch { /* GPS optional */ }
-
       const res = await fetch(`${API_BASE}/api/checkins`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ businessId, lat, lng }),
+        body: JSON.stringify({ businessId }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        if (data.error === "too_far") {
-          setError(`You need to be within 500m of ${businessName ?? "this business"} to check in.`);
-          setStage("idle");
-          return;
-        }
         setError(data.error ?? "Could not check in. Please try again.");
         setStage("idle");
         return;
@@ -111,7 +92,6 @@ export default function BusinessCheckinScreen() {
 
       setCheckInId(data.checkIn?.id ?? null);
       setPointsEarned(data.pointsEarned ?? 0);
-      setVerified(data.verifiedLocation ?? false);
       setStage("checked_in");
     } catch {
       setError("Could not check in. Please check your connection.");
@@ -207,7 +187,7 @@ export default function BusinessCheckinScreen() {
                   {businessName ?? "Check-in recorded"}
                 </Text>
                 <Text style={[styles.bannerMeta, { color: colors.mutedForeground }]}>
-                  {verified ? "Location verified ✓" : "Check-in saved"} · +{pointsEarned} pts
+                  Private check-in saved · +{pointsEarned} pts
                 </Text>
               </View>
             </View>
@@ -297,13 +277,13 @@ export default function BusinessCheckinScreen() {
           ) : (
             <>
               <Feather name="map-pin" size={28} color={colors.primaryForeground} />
-              <Text style={[styles.checkinBtnLabel, { color: colors.primaryForeground }]}>I&apos;m here</Text>
+              <Text style={[styles.checkinBtnLabel, { color: colors.primaryForeground }]}>Save private check-in</Text>
             </>
           )}
         </TouchableOpacity>
 
         <Text style={[styles.hintText, { color: colors.mutedForeground, textAlign: "center" }]}>
-          You need to be within 500m of this business.
+          This private check-in does not request, use, or share your location.
         </Text>
       </View>
     </View>

@@ -7,6 +7,7 @@ import type { PoolClient } from "pg";
 import { pool } from "@workspace/db";
 import {
   PRIVATE_PLACES_DISCLOSURE_VERSION,
+  PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION,
   openPrivatePlace,
   sealPrivatePlace,
 } from "./private-places-policy";
@@ -129,7 +130,11 @@ export async function runPrivatePlacesProductionSyntheticAcceptance(): Promise<R
     });
     const address = server.address() as AddressInfo;
     const baseUrl = `http://127.0.0.1:${address.port}/api`;
-    const disclosed = {
+    const privatePlaceDisclosed = {
+      googleMapsGeocodingConsent: true,
+      disclosureVersion: PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION,
+    };
+    const temporaryStayDisclosed = {
       googleMapsGeocodingConsent: true,
       disclosureVersion: PRIVATE_PLACES_DISCLOSURE_VERSION,
     };
@@ -139,11 +144,11 @@ export async function runPrivatePlacesProductionSyntheticAcceptance(): Promise<R
 
     const privateStatus = await requestJson({ baseUrl, memberId: ownerId, method: "GET", path: "/kinfolk/private-places/status" });
     assert.equal(privateStatus.status, 200, "Private Places status must be available in the controlled harness");
-    assert.equal(privateStatus.body.disclosureVersion, PRIVATE_PLACES_DISCLOSURE_VERSION, "Private Places must disclose geocoding before save");
+    assert.equal(privateStatus.body.disclosureVersion, PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION, "Private Places must disclose geocoding before save");
 
     const declinedPrivateCreate = await requestJson({
       baseUrl, memberId: ownerId, method: "POST", path: "/kinfolk/private-places",
-      body: { label: "Synthetic place", exactAddress: PRIVATE_PLACES_FICTIONAL_QA_ADDRESS, googleMapsGeocodingConsent: false, disclosureVersion: PRIVATE_PLACES_DISCLOSURE_VERSION },
+      body: { label: "Synthetic place", exactAddress: PRIVATE_PLACES_FICTIONAL_QA_ADDRESS, googleMapsGeocodingConsent: false, disclosureVersion: PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION },
     });
     assert.equal(declinedPrivateCreate.status, 400, "Private Place create requires explicit disclosure");
     assert.equal(declinedPrivateCreate.body.code, "PRIVATE_PLACES_DISCLOSURE_REQUIRED");
@@ -151,7 +156,7 @@ export async function runPrivatePlacesProductionSyntheticAcceptance(): Promise<R
 
     const privateCreated = await requestJson({
       baseUrl, memberId: ownerId, method: "POST", path: "/kinfolk/private-places",
-      body: { label: "Synthetic place", exactAddress: PRIVATE_PLACES_FICTIONAL_QA_ADDRESS, ...disclosed },
+      body: { label: "Synthetic place", exactAddress: PRIVATE_PLACES_FICTIONAL_QA_ADDRESS, ...privatePlaceDisclosed },
     });
     assert.equal(privateCreated.status, 201, "disclosed fictional Private Place must create");
     assertSafeResponse(privateCreated.body);
@@ -169,20 +174,20 @@ export async function runPrivatePlacesProductionSyntheticAcceptance(): Promise<R
     assert.deepEqual(otherPrivateList.body.places, [], "cross-member Private Place list must be empty");
     const otherPrivateEdit = await requestJson({
       baseUrl, memberId: otherId, method: "PUT", path: `/kinfolk/private-places/${privatePlaceId}`,
-      body: { label: "Other synthetic place", exactAddress: PRIVATE_PLACES_FICTIONAL_QA_ADDRESS, ...disclosed },
+      body: { label: "Other synthetic place", exactAddress: PRIVATE_PLACES_FICTIONAL_QA_ADDRESS, ...privatePlaceDisclosed },
     });
     assert.equal(otherPrivateEdit.status, 404, "cross-member Private Place edit must be denied");
 
     const declinedPrivateEdit = await requestJson({
       baseUrl, memberId: ownerId, method: "PUT", path: `/kinfolk/private-places/${privatePlaceId}`,
-      body: { label: "Edited synthetic place", exactAddress: PRIVATE_PLACES_FICTIONAL_QA_ADDRESS, googleMapsGeocodingConsent: false, disclosureVersion: PRIVATE_PLACES_DISCLOSURE_VERSION },
+      body: { label: "Edited synthetic place", exactAddress: PRIVATE_PLACES_FICTIONAL_QA_ADDRESS, googleMapsGeocodingConsent: false, disclosureVersion: PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION },
     });
     assert.equal(declinedPrivateEdit.status, 400, "Private Place edit requires renewed disclosure");
     assert.equal(providerCalls, 1, "declined Private Place edit must not geocode");
 
     const privateEdited = await requestJson({
       baseUrl, memberId: ownerId, method: "PUT", path: `/kinfolk/private-places/${privatePlaceId}`,
-      body: { label: "Edited synthetic place", exactAddress: PRIVATE_PLACES_FICTIONAL_QA_ADDRESS, ...disclosed },
+      body: { label: "Edited synthetic place", exactAddress: PRIVATE_PLACES_FICTIONAL_QA_ADDRESS, ...privatePlaceDisclosed },
     });
     assert.equal(privateEdited.status, 200, "disclosed fictional Private Place edit must succeed");
     assertSafeResponse(privateEdited.body);
@@ -220,7 +225,7 @@ export async function runPrivatePlacesProductionSyntheticAcceptance(): Promise<R
     assert.equal(declinedStayCreate.status, 400, "Temporary Stay create requires explicit disclosure");
     assert.equal(providerCalls, 2, "declined Temporary Stay create must not geocode");
 
-    const stayCreated = await requestJson({ baseUrl, memberId: ownerId, method: "POST", path: "/kinfolk/temporary-stays", body: { ...stayInput, ...disclosed } });
+    const stayCreated = await requestJson({ baseUrl, memberId: ownerId, method: "POST", path: "/kinfolk/temporary-stays", body: { ...stayInput, ...temporaryStayDisclosed } });
     assert.equal(stayCreated.status, 201, "disclosed fictional Temporary Stay must create");
     assertSafeResponse(stayCreated.body);
     const stay = stayCreated.body.stay as JsonRecord;
@@ -235,7 +240,7 @@ export async function runPrivatePlacesProductionSyntheticAcceptance(): Promise<R
     assert.equal(declinedStayEdit.status, 400, "Temporary Stay edit requires renewed disclosure");
     assert.equal(providerCalls, 3, "declined Temporary Stay edit must not geocode");
 
-    const stayEdited = await requestJson({ baseUrl, memberId: ownerId, method: "PUT", path: `/kinfolk/temporary-stays/${stayId}`, body: { ...stayInput, label: "Edited synthetic stay", departureDate: "2035-10-18", ...disclosed } });
+    const stayEdited = await requestJson({ baseUrl, memberId: ownerId, method: "PUT", path: `/kinfolk/temporary-stays/${stayId}`, body: { ...stayInput, label: "Edited synthetic stay", departureDate: "2035-10-18", ...temporaryStayDisclosed } });
     assert.equal(stayEdited.status, 200, "disclosed fictional Temporary Stay edit must succeed");
     assertSafeResponse(stayEdited.body);
 
@@ -247,7 +252,7 @@ export async function runPrivatePlacesProductionSyntheticAcceptance(): Promise<R
     assert.deepEqual(otherStayList.body.stays, [], "cross-member Temporary Stay list must be empty");
     const otherStayEdit = await requestJson({
       baseUrl, memberId: otherId, method: "PUT", path: `/kinfolk/temporary-stays/${stayId}`,
-      body: { ...stayInput, departureDate: "2035-10-22", ...disclosed },
+      body: { ...stayInput, departureDate: "2035-10-22", ...temporaryStayDisclosed },
     });
     assert.equal(otherStayEdit.status, 404, "cross-member Temporary Stay edit must be denied");
     assert.equal(providerCalls, 4, "cross-member Temporary Stay edit must not geocode");

@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 const responsesCreate = vi.hoisted(() => vi.fn());
 vi.mock("@workspace/integrations-openai-ai-server", () => ({
@@ -21,12 +21,6 @@ import { classifyKinfolkRequest } from "../request-classifier";
 import { searchAllQueriesWithState, searchLocalBusinessQueriesWithState } from "../web-search";
 
 const originalFetch = globalThis.fetch;
-
-beforeEach(() => {
-  // Legacy behavioral fixtures exercise general discovery. Production defaults
-  // to the documented Diaspora Promotion Catalog and is covered separately.
-  vi.stubEnv("MWM_PROMOTION_CATALOG_MODE", "all_public");
-});
 
 afterEach(() => {
   vi.unstubAllEnvs();
@@ -292,6 +286,24 @@ describe("local business subject classification", () => {
       expect(subject?.searchTerms).toEqual(expect.arrayContaining(["braider", "braiding", "braids", "protective styles"]));
     },
   );
+
+  it("recognizes a loctician as exact loc-care discovery rather than a generic salon", () => {
+    const subject = deriveBusinessSubject("Find a loctician near me in Philadelphia PA");
+    expect(subject).toMatchObject({ key: "locs", label: "loc and natural-hair care" });
+    expect(subject?.searchTerms).toEqual(expect.arrayContaining(["loctician", "locs", "loc maintenance"]));
+  });
+
+  it.each([
+    ["wig installation", "wig installation"],
+    ["bundle install", "bundle or extension installation"],
+  ])("requires documented %s service evidence", (request, serviceLabel) => {
+    const subject = deriveBusinessSubject(`Find a ${request} in Philadelphia PA`);
+    expect(subject).toMatchObject({
+      key: "salon",
+      documentedServiceRequirement: { label: serviceLabel },
+    });
+    expect(subject?.searchTerms).toEqual(expect.arrayContaining(["wig", "bundle", "hair extension"]));
+  });
 });
 
 describe("deterministic local business discovery", () => {
@@ -336,6 +348,9 @@ describe("deterministic local business discovery", () => {
         matchReasons: ["category", "dietary: vegan"],
       }] }),
       webSearch,
+      // External results remain a separate research surface and require this
+      // member-controlled broader search choice.
+      allowAllPublicPlaces: true,
     });
 
     expect(result.recommendations?.summary).toContain("vegan restaurants");
@@ -379,6 +394,7 @@ describe("deterministic local business discovery", () => {
           { title: "Ethiopian restaurant guide", url: "https://example.com/ethiopian", content: "Ethiopian food in Minneapolis.", providerScore: 0.8, sourceQuery: { text: "Ethiopian restaurants Minneapolis, MN", role: "general", reason: "neutral" } },
         ],
       }),
+      allowAllPublicPlaces: true,
     });
 
     expect(result.discovery.platformBusinesses).toEqual([
@@ -524,6 +540,7 @@ describe("deterministic local business discovery", () => {
       subject: bookstore,
       repository: db,
       webSearch,
+      allowAllPublicPlaces: true,
     });
 
     expect(db.findBySubject).toHaveBeenCalledBefore(webSearch);
@@ -677,7 +694,7 @@ describe("deterministic local business discovery", () => {
     expect(result.discovery.platformBusinesses[0]?.ownershipEvidence).toBeNull();
   });
 
-  it("keeps current public discovery available during founder-led cleanup", async () => {
+  it("keeps current external research available after explicit all-places consent during founder-led cleanup", async () => {
     const webSearch = vi.fn().mockResolvedValue({
       state: "completed",
       attempted: true,
@@ -695,6 +712,7 @@ describe("deterministic local business discovery", () => {
       subject: bookstore,
       repository: repository(),
       webSearch,
+      allowAllPublicPlaces: true,
     });
     expect(webSearch).toHaveBeenCalled();
     expect(result.discovery.webFindings).toEqual([
@@ -789,6 +807,7 @@ describe("deterministic local business discovery", () => {
       subject: bookstore,
       repository: repository(),
       webSearch: vi.fn().mockResolvedValue({ state: "completed", attempted: true, provider: "openai", results: [] }),
+      allowAllPublicPlaces: true,
     });
     expect(completed.reply).toContain("couldn’t find matching MWM records or current web results");
 
@@ -797,6 +816,7 @@ describe("deterministic local business discovery", () => {
       subject: bookstore,
       repository: repository(),
       webSearch: vi.fn().mockResolvedValue({ state: "unavailable", attempted: false, provider: null, results: [] }),
+      allowAllPublicPlaces: true,
     });
     expect(unavailable.reply).toContain("Current external details are unavailable");
     expect(unavailable.reply).not.toContain("or current web results");
@@ -808,6 +828,7 @@ describe("deterministic local business discovery", () => {
       subject: bookstore,
       repository: repository({ places: [forKeepsPlace] }),
       webSearch: vi.fn().mockRejectedValue(Object.assign(new Error("rate limited"), { status: 429 })),
+      allowAllPublicPlaces: true,
     });
     expect(result.discovery.webSearch.state).toBe("degraded");
     expect(result.discovery.webSearch).toMatchObject({ fallbackUsed: false, partial: false });
@@ -827,6 +848,7 @@ describe("deterministic local business discovery", () => {
       repository: repository(),
       signalRepository,
       webSearch: vi.fn().mockResolvedValue({ state: "completed", attempted: true, provider: "openai", results: [] }),
+      allowAllPublicPlaces: true,
     });
 
     expect(signalRepository.recordCoverageGap).toHaveBeenCalledWith(expect.objectContaining({
@@ -890,6 +912,76 @@ describe("deterministic local business discovery", () => {
     });
     expect(result.discovery.mapPlaces).toEqual([]);
     expect(result.resultView.cards[0]?.supportingText).toMatch(/straight-line mi from your public origin/i);
+  });
+
+  it("returns only documented hard-requirement matches without changing catalog eligibility", async () => {
+    const supported = {
+      ...governedBusiness,
+      id: "documented-accessible-reading-room",
+      tags: ["books", "quiet reading"],
+      accessibilityFeatures: ["Wheelchair accessible entrance"],
+    };
+    const unsupported = {
+      ...governedBusiness,
+      id: "undocumented-accessibility-reading-room",
+      name: "Undocumented Accessibility Reading Room",
+      accessibilityFeatures: [],
+    };
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Atlanta", stateCode: "GA" },
+      subject: bookstore,
+      repository: repository({ businesses: [unsupported, supported], places: [forKeepsPlace] }),
+      webSearch: vi.fn().mockResolvedValue({
+        state: "completed",
+        attempted: false,
+        provider: null,
+        results: [],
+      }),
+      requirementEvidence: {
+        hasRequirement: true,
+        hasUnsupportedRequirement: false,
+        constraints: ["documented_accessibility"],
+      },
+    });
+
+    expect(result.discovery.platformBusinesses.map((business) => business.id)).toEqual([
+      "documented-accessible-reading-room",
+    ]);
+    expect(result.discovery.mapPlaces).toEqual([]);
+    expect(result.discovery.webFindings).toEqual([]);
+    expect(result.recommendations?.businesses.map((business) => business.id)).toEqual([
+      "documented-accessible-reading-room",
+    ]);
+    expect(result.discovery.requirementEvidence).toEqual({
+      active: true,
+      outcome: "matched",
+    });
+  });
+
+  it("returns no substitute when documented hard-requirement evidence is absent", async () => {
+    const result = await discoverLocalBusinesses({
+      scope: { city: "Atlanta", stateCode: "GA" },
+      subject: bookstore,
+      repository: repository({ businesses: [governedBusiness], places: [forKeepsPlace] }),
+      webSearch: vi.fn().mockResolvedValue({
+        state: "completed",
+        attempted: false,
+        provider: null,
+        results: [],
+      }),
+      requirementEvidence: {
+        hasRequirement: true,
+        hasUnsupportedRequirement: false,
+        constraints: ["documented_accessibility"],
+      },
+    });
+
+    expect(result.discovery.platformBusinesses).toEqual([]);
+    expect(result.recommendations).toBeNull();
+    expect(result.discovery.requirementEvidence).toEqual({
+      active: true,
+      outcome: "not_established",
+    });
   });
 });
 

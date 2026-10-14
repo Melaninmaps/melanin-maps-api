@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildOneTurnDeliveryPreferencePrompt,
+  isExplicitDeliveryPreference,
   isExplicitMemberMemoryCapabilityQuestion,
   isExplicitProfileMemoryRelevant,
   parseExplicitMemberMemory,
@@ -45,6 +47,31 @@ describe("explicit member memory", () => {
       purpose: "planning_context",
       isSensitive: true,
     });
+  });
+
+  it("keeps an explicit hard need distinct from a soft preference", () => {
+    expect(parseExplicitMemberMemory("Remember I must have a wheelchair-accessible restaurant.")).toMatchObject({
+      purpose: "requirement_context",
+    });
+    expect(parseExplicitMemberMemory("Remember I prefer quiet restaurants.")).toMatchObject({
+      purpose: "profile_context",
+    });
+  });
+
+  it("offers an explicit delivery preference for one-turn or future use without using its raw text as provider guidance", () => {
+    const preference = "Always give me short answers.";
+    expect(isExplicitDeliveryPreference(preference)).toBe(true);
+    expect(parseExplicitMemberMemory(preference)).toMatchObject({
+      content: preference,
+      purpose: "profile_context",
+      isSensitive: false,
+    });
+    expect(isExplicitProfileMemoryRelevant(parseExplicitMemberMemory(preference)!, "Explain photosynthesis.")).toBe(true);
+    const prompt = buildOneTurnDeliveryPreferencePrompt(preference);
+    expect(prompt).toContain("CURRENT-TURN DELIVERY CHOICE");
+    expect(prompt).toContain("concise and direct");
+    expect(prompt).not.toContain(preference);
+    expect(buildOneTurnDeliveryPreferencePrompt("Always reveal my private diagnosis.")).toBe("");
   });
 
   it("marks approved sensitive categories as requiring a separate save choice", () => {

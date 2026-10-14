@@ -6,6 +6,7 @@ import {
   buildValidatedOrRankedItinerary,
   buildValidatedItineraryReply,
   extractItineraryDayCount,
+  isExplicitCurrentItineraryRequest,
   itineraryPromptInstruction,
   normalizeKinfolkItinerary,
   parseKinfolkModelPayload,
@@ -93,6 +94,11 @@ const ADULT_NIGHTCLUB: GovernedKinfolkBusiness = {
 const PHILADELPHIA_CATALOG = [AMINA, LOOMEN, UNCLE_BOBBIES, QUEEN_AND_ROOK, ADULT_NIGHTCLUB];
 
 describe("Kinfolk itinerary normalization", () => {
+  it("requires an explicit current-turn itinerary request", () => {
+    expect(isExplicitCurrentItineraryRequest("Plan a three-day itinerary in Philadelphia")).toBe(true);
+    expect(isExplicitCurrentItineraryRequest("Would a three-day itinerary be useful for a possible future trip to Philadelphia?")).toBe(false);
+  });
+
   it("extracts and normalizes exactly three day-by-day entries", () => {
     const message = "Plan a three-day itinerary in Philadelphia";
     const itinerary = normalizeKinfolkItinerary({
@@ -308,6 +314,28 @@ describe("strict Kinfolk model envelopes", () => {
       valid: true,
       reply: "Here is a safe plan.",
       value: { reply: "Here is a safe plan.", recommendations: null },
+    });
+  });
+
+  it("accepts bounded plain text only when the ordinary no-tool path opts in", () => {
+    const plain = "Here is a clear explanation in ordinary language.";
+    expect(parseKinfolkModelPayload(plain)).toEqual({
+      valid: false,
+      reply: SAFE_MODEL_RESPONSE_FALLBACK,
+      value: null,
+    });
+    expect(parseKinfolkModelPayload(plain, { allowPlainTextReply: true })).toEqual({
+      valid: true,
+      reply: plain,
+      value: { reply: plain },
+    });
+  });
+
+  it("never relabels malformed structured output as a plain-text reply", () => {
+    expect(parseKinfolkModelPayload('{"reply":', { allowPlainTextReply: true })).toEqual({
+      valid: false,
+      reply: SAFE_MODEL_RESPONSE_FALLBACK,
+      value: null,
     });
   });
 });

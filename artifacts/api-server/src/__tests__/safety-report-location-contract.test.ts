@@ -165,6 +165,13 @@ describe("safety report location and privacy contract", () => {
           "incident_area",
           "incident_location_source",
           "incident_location_precision",
+          "display_expires_at",
+          "withdrawn_at",
+          "withdrawn_by",
+          "withdrawal_reason",
+          "corrected_at",
+          "corrected_by",
+          "correction_note",
         ].map((column_name) => ({ column_name })),
       })
       .mockResolvedValueOnce({ rows: [] });
@@ -254,7 +261,8 @@ describe("safety report location and privacy contract", () => {
     expect(route).toContain("targetId: sensitive ? null : report.targetId");
     expect(route).toContain("normalizeReportTarget(targetType, targetId, sensitiveReport)");
     expect(route).toContain("FROM community_locations");
-    expect(route).toContain("storedIncidentLocation = sensitiveReport");
+    expect(route).toContain('storedIncidentLocation = resolvedCategory === "police"');
+    expect(route).toContain("Police/ICE intake is city-only");
     expect(route).toContain("incidentLocationSource: storedIncidentLocation.source");
     expect(route).toContain("`${report.incidentArea}, ${cityRegion}`");
     expect(route).toContain("encounterType: resolvedEncounterType");
@@ -264,9 +272,11 @@ describe("safety report location and privacy contract", () => {
     expect(requiredSchema).toContain("Required safety report schema is incomplete");
     expect(requiredSchema).not.toMatch(/DELETE FROM safety_reports|TRUNCATE safety_reports/i);
     expect(entrypoint.indexOf("await ensureRequiredSafetyReportSchema(pool)")).toBeLessThan(entrypoint.indexOf("app.listen(port"));
-    expect(route).toContain('eq(safetyReportsTable.status, "approved")');
+    expect(route).toContain('router.get("/reports"');
+    expect(route).toContain("Individual Safety report listings are unavailable");
+    expect(route).toContain('router.get("/incidents"');
+    expect(route).toContain("Individual incident listings are unavailable");
     expect(route).not.toContain("await checkAndTriggerIncident(");
-    expect(route).toContain("sr.status = 'approved'");
     expect(route).toContain('const allowed = ["pending", "approved", "rejected"]');
     expect(route).not.toContain('status === "reviewed" || status === "actioned"');
     expect(moderation).toContain("await moderateSafetyReport({");
@@ -275,15 +285,18 @@ describe("safety report location and privacy contract", () => {
     expect(approvedAlerts).toContain("CASE MAX(CASE severity");
     expect(approvedAlerts).toContain("pg_advisory_xact_lock");
     expect(approvedAlerts).toContain("status = 'resolved'");
-    expect(approvedAlerts).toContain("sendPushToBusinessOwnersByCity(input.city, input.region");
+    expect(approvedAlerts).toContain("sendCorroboratedPoliceIceAlert");
+    expect(approvedAlerts).toContain("non-Police/ICE incident retained for private review");
+    expect(approvedAlerts).not.toContain("sendPushToBusinessOwnersByCity");
     expect(businessRating).toContain("AND status = 'approved'");
     expect(businessRating).toContain("business-safety-rating|");
     expect(businessRating).toContain("pg_advisory_xact_lock");
     expect(businessRating).toContain("SET safety_rating = NULL");
     expect(businessRating).toContain("FROM business_safety_submissions");
     expect(businessRating).not.toContain("status != 'dismissed'");
-    expect(route).toContain("LOWER(sr.incident_region) = LOWER(si.region)");
-    expect(route).toContain("CASE MAX(CASE sr.severity");
+    expect(route).toContain('router.get("/reports"');
+    expect(route).toContain('router.get("/incidents"');
+    expect(route).toContain("Individual incident listings are unavailable");
     expect(route).toContain("await moderateSafetyReport({");
     expect(route).toContain("invalidateProximityWarningCache()");
     expect(moderationService).toContain('await client.query("BEGIN")');
@@ -293,8 +306,9 @@ describe("safety report location and privacy contract", () => {
     expect(moderationService).toContain("invalidateProximityWarningCache()");
     expect(moderationService).toContain('await client.query("ROLLBACK")');
     expect(proximityCache).toContain("proximityCache.clear()");
-    expect(directions).toContain("AND sr.status = 'approved'");
-    expect(directions).not.toContain("AND sr.status != 'rejected'");
+    expect(directions).toContain('router.post("/directions/safety-context"');
+    expect(directions).toContain("res.status(410)");
+    expect(directions).not.toContain("pool.query");
     expect(pushNotifications).toContain("recipientCount: deliveredCount");
     expect(pushNotifications).toContain("delivered: deliveredCount > 0");
     expect(pushNotifications).toContain("normalizeHomeState(business.state) === canonicalRegion");
@@ -305,8 +319,10 @@ describe("safety report location and privacy contract", () => {
     expect(police).not.toContain("category: form.encounterType");
     expect(police).not.toMatch(/JSON\.stringify\([\s\S]{0,600}(latitude|longitude)/);
 
-    expect(general).toContain("Use current location for this incident");
+    expect(general).toContain("Device location collection is disabled");
     expect(general).toContain('locationSource: "manual_area"');
+    expect(general).not.toContain("expo-location");
+    expect(general).not.toContain("Use current location");
     expect(general).not.toContain("Auto-detect city from GPS on mount");
     expect(general).not.toMatch(/JSON\.stringify\([\s\S]{0,600}(latitude|longitude)/);
   });

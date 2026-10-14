@@ -1,7 +1,8 @@
 import { Router, type Request, type Response } from "express";
-import { db } from "@workspace/db";
+import { db, meetupVerificationsTable } from "@workspace/db";
 import { memberConnections, trustedContactShares, usersTable } from "@workspace/db/schema";
 import { eq, and, or } from "drizzle-orm";
+import { usersAreBlocked } from "../social/profileRelationshipAccess";
 
 const router = Router();
 
@@ -41,7 +42,10 @@ router.get("/connections", async (req: Request, res: Response) => {
       )
       .where(or(eq(memberConnections.requesterId, userId), eq(memberConnections.recipientId, userId)));
 
-    res.json({ connections: rows });
+    const visible = await Promise.all(rows.map(async (row) => (
+      !row.otherId || !await usersAreBlocked(userId, row.otherId) ? row : null
+    )));
+    res.json({ connections: visible.filter((row): row is NonNullable<typeof row> => row !== null) });
   } catch (err) {
     req.log.error({ err }, "GET /api/connections error");
     res.status(500).json({ error: "Internal server error" });
@@ -55,6 +59,7 @@ router.post("/connections/request", async (req: Request, res: Response) => {
     const { recipientId, groupId } = req.body as { recipientId?: string; groupId?: number };
     if (!recipientId) { res.status(400).json({ error: "recipientId required" }); return; }
     if (recipientId === requesterId) { res.status(400).json({ error: "Cannot connect with yourself" }); return; }
+    if (await usersAreBlocked(requesterId, recipientId)) { res.status(404).json({ error: "Member not found" }); return; }
 
     const [existing] = await db
       .select()
@@ -100,6 +105,11 @@ router.patch("/connections/:id/respond", async (req: Request, res: Response) => 
     if (!conn) { res.status(404).json({ error: "Connection not found" }); return; }
     if (conn.recipientId !== userId) { res.status(403).json({ error: "Not your connection request" }); return; }
     if (conn.status !== "pending") { res.status(409).json({ error: "Already responded" }); return; }
+    if (await usersAreBlocked(conn.requesterId, conn.recipientId)) {
+      await db.delete(memberConnections).where(eq(memberConnections.id, conn.id));
+      res.status(404).json({ error: "Connection not found" });
+      return;
+    }
 
     const [updated] = await db
       .update(memberConnections)
@@ -252,6 +262,38 @@ router.delete("/connections/:id", async (req: Request, res: Response) => {
       res.status(403).json({ error: "Not your connection" }); return;
     }
 
+    const partnerId = conn.requesterId === userId ? conn.recipientId : conn.requesterId;
+    const now = new Date();
+    await db
+      .update(meetupVerificationsTable)
+      .set({
+        status: "cancelled",
+        cancelledAt: now,
+        cancelledById: userId,
+        cancellationReason: "Connection removed",
+        location: null,
+        note: null,
+        clearCode: null,
+        safetyWatcherId: null,
+        safetyWatcherEmail: null,
+        arrivalCheckAt: null,
+        arrivalCheckedAt: null,
+        arrivalCheckStatus: null,
+        arrivalAlertSentAt: null,
+        homeCheckAt: null,
+        homeCheckedAt: null,
+        homeCheckStatus: null,
+        homeAlertSentAt: null,
+        safetyFriendName: null,
+        safetyFriendEmail: null,
+      })
+      .where(and(
+        or(
+          and(eq(meetupVerificationsTable.initiatorId, userId), eq(meetupVerificationsTable.partnerId, partnerId)),
+          and(eq(meetupVerificationsTable.initiatorId, partnerId), eq(meetupVerificationsTable.partnerId, userId)),
+        ),
+        or(eq(meetupVerificationsTable.status, "awaiting_partner"), eq(meetupVerificationsTable.status, "approved")),
+      ));
     await db.delete(memberConnections).where(eq(memberConnections.id, connId));
     res.json({ removed: true });
   } catch (err) {

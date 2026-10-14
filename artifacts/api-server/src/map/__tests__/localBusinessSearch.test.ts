@@ -70,6 +70,8 @@ describe("LocalBusinessSearch", () => {
     expect(sql).toContain("FROM public.public_businesses AS b");
     expect(sql).not.toMatch(/(?:FROM|JOIN)\s+(?:public\.)?businesses\b/i);
     expect(sql).toContain("FROM public.business_specialties AS specialty");
+    expect(sql).toContain("documented_eligibility.map_pin_evidence_id");
+    expect(sql).toContain("business_legacy_map_location_attestations");
     expect(sql).toContain("LOWER(COALESCE(b.name, '')) ~ ANY($3::text[])");
     expect(sql).toContain("LOWER(COALESCE(b.category, '')) ~ ANY($3::text[])");
     expect(sql).toContain("LOWER(COALESCE(b.subcategory, '')) ~ ANY($3::text[])");

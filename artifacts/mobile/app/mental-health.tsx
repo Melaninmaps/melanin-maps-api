@@ -57,12 +57,12 @@ const CRISIS_RESOURCES: Resource[] = [
     icon: "heart",
     color: "#0891B2",
     label: "NAMI Helpline",
-    subtitle: "1-800-950-NAMI (6264) — Mon–Fri, 10am–10pm ET",
+    subtitle: "1-800-950-NAMI (6264) · Text NAMI to 62640 · Mon–Fri, 10am–10pm ET",
     description:
-      "The National Alliance on Mental Illness offers peer support, information, and referrals to local services for individuals and families.",
+      "The NAMI HelpLine provides free, confidential support, information, and resources. It is not a 24/7 crisis service; call or text 988 in a crisis.",
     actions: [
       { label: "Call NAMI", type: "call", value: "tel:18009506264" },
-      { label: "Text NAMI to 741741", type: "text", value: "sms:741741&body=NAMI" },
+      { label: "Text NAMI to 62640", type: "text", value: "sms:62640&body=NAMI" },
     ],
   },
   {

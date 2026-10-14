@@ -31,7 +31,9 @@ describe("Community client contract", () => {
     expect(route).toContain("hasUnattributedLikes: totalLikes > members.length");
     expect(route).toContain("fetchViewerReactionIds");
     expect(web).toContain("community-reactions-dialog");
-    expect(web).toContain("href={`/members/${encodeURIComponent(member.userId)}`}");
+    expect(web).toContain("function memberProfilePath(userId: string): string {");
+    expect(web).toContain("return `/members/${encodeURIComponent(userId)}`;");
+    expect(web).toContain("href={memberProfilePath(member.userId)}");
     expect(mobile).toContain("onLikesPress?: () => void");
     expect(mobileFeed).toContain("<CommunityReactionsModal");
     expect(reactionsModal).toContain("/api/community/posts/${postId}/reactions");
@@ -73,7 +75,9 @@ describe("Community client contract", () => {
     expect(route).toContain('router.get("/community/thread/:threadId"');
     expect(route).toContain('res.status(401).json({ error: "Authentication required" })');
     expect(route).toContain("resolveCommentAccess(post.id, viewerId)");
-    expect(route).toContain("posts: posts.map((post) => serializeCommunityPost(post))");
+    expect(route).toContain("const serializedPosts = await Promise.all(posts.map((post) => serializeCommunityPost(post)))");
+    expect(route).toContain("posts: serializedPosts");
+    expect(route).toContain('res.setHeader("Cache-Control", "private, no-store")');
     expect(route).toContain("function serializeCommunityPost");
   });
 });

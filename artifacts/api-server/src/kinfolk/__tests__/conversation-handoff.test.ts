@@ -118,6 +118,92 @@ describe("Kinfolk conversation handoffs", () => {
     expect(scoped.handoff).toBeNull();
   });
 
+  it("keeps a bounded same-session comparison thread for a semantic follow-up", () => {
+    const messages = [
+      message("user", "Help me evaluate two job offers."),
+      message("assistant", "Let us compare the risk, compensation, and growth trade-offs."),
+    ];
+
+    const scoped = resolveConversationContextScope({
+      messages: messages as never,
+      currentMessage: "Which option is less risky if hiring freezes?",
+    });
+
+    expect(scoped.messages).toEqual(messages);
+    expect(scoped.handoff).toBeNull();
+  });
+
+  it("does not treat a new same-session topic as a continuation without a reference", () => {
+    const messages = [
+      message("user", "Help me evaluate two job offers."),
+      message("assistant", "Let us compare the risk and growth trade-offs."),
+    ];
+
+    const scoped = resolveConversationContextScope({
+      messages: messages as never,
+      currentMessage: "How do I make lentil soup?",
+    });
+
+    expect(scoped.messages).toEqual([]);
+  });
+
+  it("returns only the original writing pair when a later turn explicitly goes back to a draft", () => {
+    const draft = message("user", "Draft an email to my boss about a schedule change.");
+    const draftReply = message("assistant", "Subject: Schedule change\n\nFirst paragraph.\n\nSecond paragraph.\n\nThird paragraph.");
+    const lunch = message("user", "Where should I get lunch?");
+    const lunchReply = message("assistant", "Try a nearby lunch spot.");
+    const health = message("user", "What is a general health question I should ask my doctor?");
+    const healthReply = message("assistant", "A general health answer.");
+    const scoped = resolveConversationContextScope({
+      messages: [draft, draftReply, lunch, lunchReply, health, healthReply] as never,
+      currentMessage: "Go back to that email and make the third paragraph shorter.",
+    });
+    expect(scoped.messages).toEqual([draft, draftReply]);
+    expect(scoped.messages.map((item) => item.content).join(" ")).not.toContain("lunch");
+    expect(scoped.messages.map((item) => item.content).join(" ")).not.toContain("health");
+  });
+
+  it("returns one explicitly named non-sensitive subject without importing intervening topics", () => {
+    const recipe = message("user", "Share a lentil soup recipe for tonight.");
+    const recipeReply = message("assistant", "Start with lentils, onion, and stock.");
+    const city = message("user", "What should I see in Atlanta?");
+    const cityReply = message("assistant", "A city answer.");
+    const scoped = resolveConversationContextScope({
+      messages: [recipe, recipeReply, city, cityReply] as never,
+      currentMessage: "Go back to that recipe and make it vegetarian.",
+    });
+
+    expect(scoped.messages).toEqual([recipe, recipeReply]);
+    expect(scoped.messages.map((item) => item.content).join(" ")).not.toContain("Atlanta");
+    expect(scoped.requiresReferenceClarification).toBe(false);
+  });
+
+  it("keeps an immediate non-sensitive revision attached to its preceding answer", () => {
+    const draft = message("user", "Draft an email to my manager.");
+    const draftReply = message("assistant", "Here is a concise email draft.");
+    const scoped = resolveConversationContextScope({
+      messages: [draft, draftReply] as never,
+      currentMessage: "Make it more formal.",
+    });
+
+    expect(scoped.messages).toEqual([draft, draftReply]);
+  });
+
+  it("asks for one clarification instead of guessing when a return reference has no unique safe subject", () => {
+    const scoped = resolveConversationContextScope({
+      messages: [
+        message("user", "Share a vegetarian recipe."),
+        message("assistant", "Recipe one."),
+        message("user", "Share another recipe."),
+        message("assistant", "Recipe two."),
+      ] as never,
+      currentMessage: "Go back to that recipe and make it vegetarian.",
+    });
+
+    expect(scoped.messages).toEqual([]);
+    expect(scoped.requiresReferenceClarification).toBe(true);
+  });
+
   it("does not echo sensitive address or health content in a handoff preview", () => {
     const messages = [
       message("user", "My home address is 10 Example Street and I need help after my diagnosis."),

@@ -3,6 +3,7 @@ import {
   countMapDiscoveryFocuses,
   MAP_ESSENTIAL_SERVICE_CATEGORIES,
   matchesMapDiscoveryFocus,
+  OWNERSHIP_FILTER_OPTIONS,
   type MapEssentialServiceCategory,
   type MapDiscoveryFocus,
 } from "@workspace/constants";
@@ -29,24 +30,21 @@ import MapView, {
 } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { Business } from "@/constants/types";
-import {
-  useActivityAlerts,
-  ALERT_META,
-  type AlertType,
-} from "@/hooks/useActivityAlerts";
 import { useBusinesses } from "@/hooks/useBusinesses";
 import { useCanonicalMapPins } from "@/hooks/useCanonicalMapPins";
 import { isDeliberateMapBusinessNameSearch } from "@/hooks/support-lens-request";
 import { useColors } from "@/hooks/useColors";
-import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
-import { useSafetyProximity } from "@/hooks/useSafetyProximity";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import {
   mapLocationFailureNotice,
   mapLocationServicesOffNotice,
   type MapLocationNotice,
 } from "@/lib/mapLocationStatus";
-import { resolveMapBusinessProximity } from "@/lib/mapBusinessScope";
+import {
+  isDirectNamedSafetyContext,
+  matchesExplicitMapLocality,
+  resolveMapBusinessProximity,
+} from "@/lib/mapBusinessScope";
 import { useAuth } from "@/lib/auth";
 import {
   canLoadLocalCollections,
@@ -113,8 +111,17 @@ interface HeatmapPoint {
   lat: number;
   lng: number;
   avgScore: number;
-  surveyCount: number;
-  tier: "safe" | "moderate" | "alert";
+  approvedSurveyCount: number;
+  signal: "higher_reported_safety" | "mixed_reported_safety" | "lower_reported_safety";
+  evidence: {
+    confidence: "minimum_sample" | "larger_sample";
+    observationCount: number;
+  };
+}
+
+interface SafetyHeatmapResponse {
+  points: HeatmapPoint[];
+  dataStatus: "sufficient_evidence" | "insufficient_evidence";
 }
 
 interface CulturalSite {
@@ -479,18 +486,14 @@ export function FullMapView({
   const [selectedEssentialService, setSelectedEssentialService] = useState<EssentialServicePlace | null>(null);
   const [essentialServicesLoading, setEssentialServicesLoading] = useState(false);
   const [essentialServicesError, setEssentialServicesError] = useState<string | null>(null);
-  // The map remains a clean locality-first canvas, but it must honor the
-  // member's saved Support Lens in the same way as Directory and Kinfolk.
-  // Only documented designations are sent; no identity is inferred here.
-  const designationIds =
-    memberPreferences?.supportLensMode === "strict_documented_designations"
-      ? memberPreferences.preferredOwnershipTypes
-      : [];
+  // Map browsing is deliberately preference-neutral. Only an explicit local
+  // Map filter may be sent to Map APIs; Kinfolk memory and preferences stay
+  // inside Kinfolk conversations and never shape standalone pins.
+  const [selectedMapDesignations, setSelectedMapDesignations] = useState<string[]>([]);
+  const designationIds = selectedMapDesignations;
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(
     null,
   );
-  const [scannerAlertIdx, setScannerAlertIdx] = useState(0);
-  const [warningIdx, setWarningIdx] = useState(0);
 
   const showHeatmap = false;
   const showCulturalSites = true;
@@ -558,15 +561,13 @@ export function FullMapView({
       return () => setIsFocused(false);
     }, []),
   );
-  // Background proximity monitoring is off until a member explicitly chooses
-  // a location-based safety action from Safety Hub.
-  const pollingEnabled = false;
 
   const profileLocality = parseProfileHomeLocality(user?.homeCity);
   const routeSearchLocality = parseMapSearchLocality(searchCity, searchState);
   // A submitted search (including a map deep link) is an explicit geography
   // choice, so it overrides automatic device/profile locality until cleared.
-  const hasExplicitMapLocality = Boolean(searchedLocality || routeSearchLocality);
+  const explicitMapLocality = searchedLocality ?? routeSearchLocality;
+  const hasExplicitMapLocality = Boolean(explicitMapLocality);
   const mapLocality =
     searchedLocality ??
     routeSearchLocality ??
@@ -603,7 +604,7 @@ export function FullMapView({
     state: deliberateMapNameSearch ? "" : mapLocality?.state,
     radiusMiles: mapDiscoveryRadius,
     designations: designationIds,
-    supportScope: memberPreferences?.supportLensMode,
+    supportScope: undefined,
     directName: deliberateMapNameSearch,
     enabled: deliberateMapNameSearch || exploringAllAreas || mapLocality !== null,
   });
@@ -612,17 +613,6 @@ export function FullMapView({
   // permission change or an empty 50-mile local response must not clear a pin
   // layer the member was already able to use.
   const { pins: canonicalMapPins } = useCanonicalMapPins({ enabled: isFocused });
-
-  const {
-    alerts: activityAlerts,
-    confirmAlert,
-    clearAlert,
-    dismissAlert,
-  } = useActivityAlerts({ enabled: pollingEnabled });
-  const { warnings, dismissWarning } = useSafetyProximity({
-    enabled: pollingEnabled,
-  });
-  const { alert: geoAlert, dismissAlert: dismissGeoAlert } = useGeoSafeAlert();
 
   useEffect(() => {
     if (
@@ -675,21 +665,48 @@ export function FullMapView({
     // Canonical pins remain available during an empty local refresh, but they
     // must still respect the member-selected radius so the map count and camera
     // never claim that distant pins are nearby.
-    const scopePins = proximityMapLocation
+    const localityPins = hasExplicitMapLocality
       ? canonicalMapPins.filter((business) =>
-          distanceMiles(proximityMapLocation, business) <= mapDiscoveryRadius,
+          matchesExplicitMapLocality(business, explicitMapLocality),
         )
       : canonicalMapPins;
+    const scopePins = proximityMapLocation
+      ? localityPins.filter((business) =>
+          distanceMiles(proximityMapLocation, business) <= mapDiscoveryRadius,
+        )
+      : localityPins;
     return scopePins.filter((business) =>
-      matchesMapDiscoveryFocus(business, mapDiscoveryFocus),
+      matchesMapDiscoveryFocus(business, mapDiscoveryFocus) && (
+        designationIds.length === 0 || designationIds.every((designation) =>
+          (designation === "black-african-american" && business.blackOwned)
+          || business.ownershipFilterIds?.includes(designation),
+        )
+      ),
     );
-  }, [canonicalMapPins, mapDiscoveryFocus, mapDiscoveryRadius, proximityMapLocation]);
+  }, [canonicalMapPins, designationIds, explicitMapLocality, hasExplicitMapLocality, mapDiscoveryFocus, mapDiscoveryRadius, proximityMapLocation]);
+  const suppressSafetyContextBusinessResults = isDirectNamedSafetyContext(
+    businessSearchScope,
+  );
   const directMatch = businessSearchScope === "explicit_public_listing"
     ? businesses[0] ?? null
     : null;
+  const directMatchHasCoordinates = Boolean(
+    directMatch
+    && Number.isFinite(directMatch.latitude)
+    && Number.isFinite(directMatch.longitude)
+    && Math.abs(directMatch.latitude) <= 90
+    && Math.abs(directMatch.longitude) <= 180
+    && (Math.abs(directMatch.latitude) > 0.001 || Math.abs(directMatch.longitude) > 0.001),
+  );
   const displayBusinessPins = useMemo(() => {
-    // An exact-name safety/context lookup may identify a retained profile, but
-    // it never creates a map marker. Only the source-qualified map feed can.
+    // A direct-name safety-context response can inform a different surface, but
+    // it is not a public MWM listing and must never become a Map pin/card/fit.
+    if (suppressSafetyContextBusinessResults) return [];
+    // Direct-name lookup is limited to the API's public-listing scope. When
+    // that exact listing has valid audited coordinates, it is an intentional
+    // member request and deserves one focused Map pin and its normal MWM card.
+    // A result without coordinates still never fabricates a pin.
+    if (directMatchHasCoordinates && directMatch) return [directMatch];
     if (directMatch) return [];
     // A submitted service or keyword search is also a deliberate map request.
     // Do not leave the ordinary nearby fallback pins layered over its results:
@@ -704,7 +721,7 @@ export function FullMapView({
       if (!localById.has(business.id)) localById.set(business.id, business);
     });
     return [...localById.values()];
-  }, [directMatch, focusedMappedBusinesses, nearbyCanonicalMapPins, submittedBusinessSearch]);
+  }, [directMatch, directMatchHasCoordinates, focusedMappedBusinesses, nearbyCanonicalMapPins, submittedBusinessSearch, suppressSafetyContextBusinessResults]);
   const visibleMapPinCount = displayBusinessPins.length;
   const activeMapDiscoveryLabel = mapDiscoveryFocus === "all"
     ? "All nearby places"
@@ -716,8 +733,10 @@ export function FullMapView({
       : "in your map area";
   const hasSubmittedBusinessSearch = submittedBusinessSearch.length > 0;
   const submittedMappedBusinessResults = useMemo(
-    () => hasSubmittedBusinessSearch ? focusedMappedBusinesses.slice(0, 5) : [],
-    [focusedMappedBusinesses, hasSubmittedBusinessSearch],
+    () => hasSubmittedBusinessSearch && !suppressSafetyContextBusinessResults
+      ? focusedMappedBusinesses.slice(0, 5)
+      : [],
+    [focusedMappedBusinesses, hasSubmittedBusinessSearch, suppressSafetyContextBusinessResults],
   );
   const focusDirectBusinessOnMap = useCallback((business: Business) => {
     setSelectedBusiness(business);
@@ -741,6 +760,16 @@ export function FullMapView({
       longitudeDelta: 0.025,
     }, 500);
   }, [safelyAnimateToRegion]);
+
+  const showDirectMatchOnMap = useCallback(() => {
+    if (!directMatch || !directMatchHasCoordinates) return;
+    focusDirectBusinessOnMap(directMatch);
+  }, [directMatch, directMatchHasCoordinates, focusDirectBusinessOnMap]);
+
+  useEffect(() => {
+    if (!directMatchHasCoordinates) return;
+    showDirectMatchOnMap();
+  }, [directMatch?.id, directMatchHasCoordinates, showDirectMatchOnMap]);
 
   const clearEssentialServices = useCallback(() => {
     setEssentialServiceCategory(null);
@@ -934,6 +963,7 @@ export function FullMapView({
 
   useEffect(() => {
     if (directMatch) return;
+    if (suppressSafetyContextBusinessResults) return;
     // Local search results stay first. When a location/radius refresh returns
     // no local rows, fit the stable website-equivalent pins instead of leaving
     // a 50-mile choice on a blank map.
@@ -951,7 +981,7 @@ export function FullMapView({
     if (!exploringAllAreas && !isSafeLocalFit(coordinates)) return;
     hasFitToBusinessesRef.current = true;
     scheduleMapAction(() => safelyFitToCoordinates(coordinates), 600);
-  }, [directMatch, mapReady, focusedMappedBusinesses, nearbyCanonicalMapPins, exploringAllAreas, localityScopeKey, mapDiscoveryRadius, safelyFitToCoordinates, scheduleMapAction, submittedBusinessSearch]);
+  }, [directMatch, mapReady, focusedMappedBusinesses, nearbyCanonicalMapPins, exploringAllAreas, localityScopeKey, mapDiscoveryRadius, safelyFitToCoordinates, scheduleMapAction, submittedBusinessSearch, suppressSafetyContextBusinessResults]);
 
   const normalizedMapSearch = submittedBusinessSearch.trim().toLowerCase();
   const filteredCulturalSites = culturalSites.filter((site) => {
@@ -967,9 +997,6 @@ export function FullMapView({
   });
   const culturalSearchMatchCount = normalizedMapSearch ? filteredCulturalSites.length : 0;
 
-  const currentWarning =
-    warnings[Math.min(warningIdx, Math.max(0, warnings.length - 1))] ?? null;
-
   useEffect(() => {
     if (
       showHeatmap &&
@@ -982,8 +1009,12 @@ export function FullMapView({
           if (!base) return;
           const res = await fetch(`${base}/api/safety/heatmap${collectionScopeSuffix}`);
           if (res.ok) {
-            const data = (await res.json()) as { points: HeatmapPoint[] };
-            setHeatmapPoints(data.points ?? []);
+            const data = (await res.json()) as SafetyHeatmapResponse;
+            setHeatmapPoints(
+              data.dataStatus === "sufficient_evidence" && Array.isArray(data.points)
+                ? data.points
+                : [],
+            );
           }
         } catch {}
       })();
@@ -1363,7 +1394,10 @@ export function FullMapView({
 
       const loc = (await Promise.race([
         Location.getCurrentPositionAsync({
-          accuracy: Location.Accuracy.Balanced,
+          // This call is reachable only from the explicit, labelled nearby-map
+          // action. Its copy promises precise current location, so do not
+          // silently downgrade its requested accuracy.
+          accuracy: Location.Accuracy.Highest,
           mayShowUserSettingsDialog: true,
         }),
         new Promise<never>((_, reject) =>
@@ -1561,15 +1595,15 @@ export function FullMapView({
         {showHeatmap &&
           heatmapPoints.map((p) => {
             const fillColor =
-              p.avgScore >= 70
+              p.signal === "higher_reported_safety"
                 ? "rgba(34,197,94,0.18)"
-                : p.avgScore >= 50
+                : p.signal === "mixed_reported_safety"
                   ? "rgba(251,191,36,0.18)"
                   : "rgba(239,68,68,0.18)";
             const strokeColor =
-              p.avgScore >= 70
+              p.signal === "higher_reported_safety"
                 ? "rgba(34,197,94,0.60)"
-                : p.avgScore >= 50
+                : p.signal === "mixed_reported_safety"
                   ? "rgba(251,191,36,0.60)"
                   : "rgba(239,68,68,0.60)";
             return (
@@ -1751,145 +1785,6 @@ export function FullMapView({
 
       {/* ── Top overlay ── */}
       <View style={[s.topOverlay, { paddingTop: insets.top + 6 }]}>
-        {/* Activity scanner banner */}
-        {activityAlerts.length > 0 &&
-          (() => {
-            const a =
-              activityAlerts[
-                Math.min(scannerAlertIdx, activityAlerts.length - 1)
-              ];
-            if (!a) return null;
-            const meta = ALERT_META[a.type as AlertType] ?? ALERT_META.other;
-            return (
-              <View style={[s.banner, { backgroundColor: meta.bgColor }]}>
-                <View style={{ flex: 1 }}>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 6,
-                    }}
-                  >
-                    <Text style={{ fontSize: 13 }}>{meta.icon}</Text>
-                    <Text style={s.bannerTitle}>{meta.label}</Text>
-                    {activityAlerts.length > 1 && (
-                      <View style={s.badgePill}>
-                        <Text style={s.badgePillTxt}>
-                          {activityAlerts.length}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text style={s.bannerSub}>
-                    {a.distanceMeters < 1000
-                      ? "< 0.1 mi away"
-                      : `${(a.distanceMeters / 1609.34).toFixed(1)} mi away`}
-                    {a.confirmedCount > 0
-                      ? ` · ${a.confirmedCount} confirmed`
-                      : ""}
-                  </Text>
-                </View>
-                <View
-                  style={{ flexDirection: "row", gap: 6, alignItems: "center" }}
-                >
-                  <TouchableOpacity
-                    style={s.bannerBtn}
-                    onPress={() => void confirmAlert(a.id)}
-                  >
-                    <Text style={s.bannerBtnTxt}>✓</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[
-                      s.bannerBtn,
-                      { backgroundColor: "rgba(255,255,255,0.15)" },
-                    ]}
-                    onPress={() => void clearAlert(a.id)}
-                  >
-                    <Text style={s.bannerBtnTxt}>✗</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    onPress={() => dismissAlert(a.id)}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <Feather name="x" size={14} color="rgba(255,255,255,0.7)" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            );
-          })()}
-
-        {activityAlerts.length > 1 && (
-          <View style={[s.navRow, { backgroundColor: colors.card }]}>
-            <TouchableOpacity
-              onPress={() => setScannerAlertIdx((i) => Math.max(0, i - 1))}
-              disabled={scannerAlertIdx === 0}
-              style={{ opacity: scannerAlertIdx === 0 ? 0.3 : 1 }}
-            >
-              <Feather name="chevron-left" size={15} color={GOLD} />
-            </TouchableOpacity>
-            <Text style={[s.navTxt, { color: GOLD }]}>
-              Alert {scannerAlertIdx + 1} of {activityAlerts.length}
-            </Text>
-            <TouchableOpacity
-              onPress={() =>
-                setScannerAlertIdx((i) =>
-                  Math.min(activityAlerts.length - 1, i + 1),
-                )
-              }
-              disabled={scannerAlertIdx === activityAlerts.length - 1}
-              style={{
-                opacity:
-                  scannerAlertIdx === activityAlerts.length - 1 ? 0.3 : 1,
-              }}
-            >
-              <Feather name="chevron-right" size={15} color={GOLD} />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Proximity safety warning */}
-        {currentWarning && (
-          <View style={[s.banner, { backgroundColor: "#7F1D1D" }]}>
-            <Feather name="alert-octagon" size={13} color="#fff" />
-            <View style={{ flex: 1, marginLeft: 6 }}>
-              <Text style={s.bannerTitle}>{currentWarning.name}</Text>
-              <Text style={s.bannerSub}>
-                {currentWarning.distanceMeters < 1000
-                  ? "< 0.1 mi away"
-                  : `${(currentWarning.distanceMeters / 1609.34).toFixed(1)} mi away`}{" "}
-                · {currentWarning.reportCount} community{" "}
-                {currentWarning.reportCount === 1 ? "report" : "reports"}
-              </Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => {
-                dismissWarning(currentWarning.targetId);
-                setWarningIdx((i) => Math.max(0, i - 1));
-              }}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Feather name="x" size={14} color="rgba(255,255,255,0.7)" />
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Geo-safe area alert */}
-        {!currentWarning && geoAlert && (
-          <TouchableOpacity
-            style={[s.banner, { backgroundColor: "#92400E" }]}
-            onPress={dismissGeoAlert}
-            activeOpacity={0.85}
-          >
-            <Feather name="alert-triangle" size={13} color="#fff" />
-            <Text style={[s.bannerSub, { flex: 1, marginLeft: 6 }]}>
-              Safety alert · {geoAlert.city}
-              {geoAlert.neighborhood ? ` · ${geoAlert.neighborhood}` : ""} — avg
-              score {geoAlert.avgSafetyScore}/100 from {geoAlert.surveyCount}{" "}
-              reports
-            </Text>
-          </TouchableOpacity>
-        )}
-
         {/* One canonical search drives local business, service, item, and explicit
             city queries. The existing server search supplies normalization and
             typo-tolerant matching; an explicit "City, ST" changes the map scope. */}
@@ -1975,13 +1870,47 @@ export function FullMapView({
                 : businessSearchError
                   ? "Couldn’t search local listings. Try again."
                   : directMatch
-                    ? `${directMatch.name} is available by direct name for safety or context. It is not included in map discovery.`
+                    ? directMatchHasCoordinates
+                      ? `${directMatch.name} is shown as your exact Map search.`
+                      : `${directMatch.name} is available by direct name, but does not have an audited Map pin.`
                     : mapped.length + culturalSearchMatchCount > 0
-                    ? `${mapped.length + culturalSearchMatchCount} mapped local result${mapped.length + culturalSearchMatchCount === 1 ? "" : "s"}`
-                    : "No mapped local results. Try another name, service, or location."}
+                      ? `${mapped.length + culturalSearchMatchCount} mapped local result${mapped.length + culturalSearchMatchCount === 1 ? "" : "s"}`
+                      : "No mapped local results. Try another name, service, or location."}
             </Text>
           </View>
         )}
+
+        {hasSubmittedBusinessSearch &&
+          !isBusinessSearchLoading &&
+          !businessSearchError &&
+          directMatch &&
+          directMatchHasCoordinates && (
+            <View
+              accessibilityLabel="Exact business map result"
+              style={[s.mapSearchResults, wideMapOverlayStyle]}
+            >
+              <TouchableOpacity
+                accessibilityLabel={`Show ${directMatch.name} on the map`}
+                accessibilityRole="button"
+                activeOpacity={0.86}
+                style={s.mapSearchResultCard}
+                onPress={showDirectMatchOnMap}
+              >
+                <Text numberOfLines={1} style={s.mapSearchResultName}>
+                  {directMatch.name}
+                </Text>
+                <Text numberOfLines={1} style={s.mapSearchResultMeta}>
+                  {[directMatch.subcategory, directMatch.city, directMatch.state]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </Text>
+                <View style={s.mapSearchResultAction}>
+                  <Feather name="map-pin" size={11} color="#FFFFFF" />
+                  <Text style={s.mapSearchResultActionText}>Show pin</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          )}
 
         {hasSubmittedBusinessSearch &&
           !isBusinessSearchLoading &&
@@ -2103,6 +2032,37 @@ export function FullMapView({
                 </TouchableOpacity>
               ))}
             </ScrollView>
+            <View testID="map-ownership-filters" style={{ marginTop: 10, gap: 6 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                <Text style={s.mapDiscoverySubtitle}>Ownership designations</Text>
+                {selectedMapDesignations.length > 0 ? (
+                  <TouchableOpacity
+                    onPress={() => setSelectedMapDesignations([])}
+                    accessibilityLabel="Clear Map ownership filters"
+                  >
+                    <Text style={s.mapDiscoveryReset}>Clear</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.mapDiscoveryFocusRow}>
+                {OWNERSHIP_FILTER_OPTIONS.map((option) => {
+                  const selected = selectedMapDesignations.includes(option.id);
+                  return (
+                    <TouchableOpacity
+                      key={option.id}
+                      onPress={() => setSelectedMapDesignations((current) => selected
+                        ? current.filter((id) => id !== option.id)
+                        : [...current, option.id])}
+                      accessibilityLabel={`Filter Map by ${option.label}`}
+                      accessibilityState={{ selected }}
+                      style={[s.mapDiscoveryFocus, selected && s.mapDiscoveryFocusActive]}
+                    >
+                      <Text style={[s.mapDiscoveryFocusText, selected && s.mapDiscoveryFocusTextActive]}>{option.label}</Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
             {mapDiscoveryFocus !== "all" && (
               <Text style={s.mapDiscoveryExplanation}>
                 Showing {activeMapDiscoveryLabel.toLowerCase()} because you chose it. This uses existing listing categories and tags; direct search stays in charge.

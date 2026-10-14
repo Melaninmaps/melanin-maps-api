@@ -2,6 +2,7 @@ import {
   normalizeKinfolkConversationMode,
   type KinfolkConversationMode,
 } from "./conversation-mode";
+import { kinfolkModel } from "./model-config";
 
 /**
  * The server owns all provider and model choices. Members can choose only the
@@ -24,10 +25,12 @@ const APPROVED_OPENAI_VOICES = new Set([
   "shimmer",
 ]);
 
+type KinfolkSpeechModel = "gpt-4o-mini-tts";
+
 export type KinfolkSpeechConfiguration = Readonly<{
   enabled: boolean;
   provider: "openai";
-  model: "gpt-4o-mini-tts";
+  model: KinfolkSpeechModel;
   baseVoice: "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer";
 }>;
 
@@ -71,11 +74,16 @@ export function resolveKinfolkSpeechConfiguration(
   // that existing setting as an alias, then use the documented Speech API model
   // so Railway only needs the standard OPENAI_API_KEY already configured.
   if (requestedModel !== "gpt-4o-mini-tts" && requestedModel !== "gpt-audio") return null;
+  const modelEnvironment = requestedModel === "gpt-audio"
+    ? { ...environment, [KINFOLK_TTS_MODEL_ENV]: "gpt-4o-mini-tts" }
+    : environment;
+  const model = kinfolkModel("speech", modelEnvironment);
+  if (model !== "gpt-4o-mini-tts") return null;
 
   return {
     enabled: true,
     provider: "openai",
-    model: "gpt-4o-mini-tts",
+    model,
     baseVoice: requestedVoice as KinfolkSpeechConfiguration["baseVoice"],
   };
 }
@@ -159,10 +167,10 @@ export function resolveKinfolkVoiceDelivery(
         styleInstruction:
           "Speak in English with genuine warmth and natural conversational energy. Sound supportive and candid without exaggeration, imitation, or forced familiarity; never imitate an accent or perform a stereotype.",
       };
-    case "community":
+    case "big_cousin":
     default:
       return {
-        mode: "community",
+        mode: "big_cousin",
         label: "Big Cousin",
         styleInstruction:
           "Speak in English with a warm, grounded, steady conversational cadence. Sound like a capable older cousin who is direct, caring, and easy to understand; never imitate an accent or perform a stereotype.",

@@ -26,6 +26,25 @@ describe("member privacy contract", () => {
     expect(users).toContain("const canSeeContent = callerId === targetId || (!user.isPrivate || isFollowing);");
     expect(users).toContain("reviews: canSeeContent ? reviews : []");
     expect(users).toContain("tags: canSeeContent ? tags : []");
+    expect(users).toContain("const visibleProfile = canSeeContent ? contentProfile : identityProfile;");
+    expect(users).toContain("bio: user.bio,");
+    expect(users).toContain("industry: user.industry,");
+    expect(users).toContain("jobTitle: user.jobTitle,");
+    expect(users).toContain("profile: visibleProfile,");
     expect(users).toContain("canSeeContent,");
+  });
+
+  it("does not surface private accounts through member search or suggestions", () => {
+    expect(users).toContain("eq(usersTable.isPrivate, false)");
+    expect(users).toContain("AND u.is_private = false");
+  });
+
+  it("does not let direct profile-tag routes bypass profile privacy or blocks", () => {
+    expect(users).toContain('router.post("/users/:userId/tags"');
+    expect(users).toContain('router.get("/users/:userId/tags"');
+    expect(users).toContain('if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }');
+    expect(users).toContain('if (!acceptedFollow) { res.status(403).json({ error: "This profile is private" }); return; }');
+    expect(users).toContain('let canSeeTags = callerId === taggedUserId || !target.isPrivate;');
+    expect(users).toContain('if (!canSeeTags) { res.json({ tags: [] }); return; }');
   });
 });

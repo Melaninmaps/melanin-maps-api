@@ -13,6 +13,10 @@ export type SessionMessage = {
         title: string;
         url: string;
     }>;
+    /** Client-safe provenance retained with an owner-scoped answer, never raw retrieval input. */
+    sourceContext?: string;
+    /** Reviewed resource cards retained only when the current answer returned them. */
+    resourceCards?: Array<Record<string, unknown>>;
     timestamp: string;
 };
 export declare const kinfolkSessionsTable: import("drizzle-orm/pg-core").PgTableWithColumns<{
@@ -243,9 +247,9 @@ export declare const kinfolkSessionsTable: import("drizzle-orm/pg-core").PgTable
 export declare const insertKinfolkSessionSchema: z.ZodObject<{
     userId: z.ZodString;
     title: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    destination: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     vibes: z.ZodOptional<z.ZodNullable<z.ZodType<string[], string[], z.core.$ZodTypeInternals<string[], string[]>>>>;
     messages: z.ZodOptional<z.ZodNullable<z.ZodType<SessionMessage[], SessionMessage[], z.core.$ZodTypeInternals<SessionMessage[], SessionMessage[]>>>>;
-    destination: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     shareId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     archivedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
     pinnedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;

@@ -27,11 +27,14 @@ describe("web-only administrator surface", () => {
     expect(accessLedger).toContain("Access ledger");
   });
 
-  it("uses reversible hide and suspension controls instead of deleting member records", () => {
+  it("keeps reversible lifecycle controls and guarded permanent cleanup on the web dashboard", () => {
     expect(authSchema).toContain('accountStatus: varchar("account_status"');
     expect(adminUsersRoute).toContain('"/admin/users/:id/lifecycle"');
     expect(adminUsersRoute).toContain("admin_account_lifecycle_events");
     expect(adminUsersRoute).toContain("action must be hide, suspend, or restore");
-    expect(adminUsersRoute).toContain("Account deletion is disabled");
+    expect(adminUsersRoute).toContain('router.delete("/admin/users/:id"');
+    expect(adminUsersRoute).toContain("Administrator accounts cannot be deleted from this screen.");
+    expect(adminUsersRoute).toContain("ACCOUNT_HAS_OWNER_DEPENDENCIES");
+    expect(adminUsersRoute).toContain("DELETE FROM users WHERE id = $1");
   });
 });

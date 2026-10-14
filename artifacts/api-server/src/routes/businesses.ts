@@ -545,6 +545,30 @@ function approvedOwnerPredicate(userId: string) {
   )`;
 }
 
+type LegacyManagedBusinessSelection =
+  | { kind: "none" }
+  | { kind: "multiple" }
+  | { kind: "selected"; business: typeof businessesTable.$inferSelect };
+
+/**
+ * Legacy owner routes pre-date multi-business ownership. They may retain the
+ * one-business convenience only when it is unambiguous; silently choosing the
+ * first approved relationship can mutate the wrong public business profile.
+ */
+async function resolveLegacySingleManagedBusiness(
+  userId: string,
+): Promise<LegacyManagedBusinessSelection> {
+  const businesses = await db
+    .select()
+    .from(businessesTable)
+    .where(approvedOwnerPredicate(userId))
+    .orderBy(asc(businessesTable.name), asc(businessesTable.id))
+    .limit(2);
+  if (businesses.length === 0) return { kind: "none" };
+  if (businesses.length > 1) return { kind: "multiple" };
+  return { kind: "selected", business: businesses[0] };
+}
+
 // ── GET /businesses/categories ── master taxonomy (single source of truth) ────
 // Returns the full 22-category taxonomy with subcategories.
 // Used by web dropdowns, mobile filters, business onboarding, and Excel sheets.
@@ -571,21 +595,9 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
         ? req.query.designations.split(",")
         : []),
     ]);
-    if (requestedIds.length === 0 && !allBusinessesOverride && req.user?.id) {
-      const [prefs] = await db
-        .select({
-          supportLensMode: userPreferencesTable.supportLensMode,
-          preferredOwnershipTypes: userPreferencesTable.preferredOwnershipTypes,
-        })
-        .from(userPreferencesTable)
-        .where(eq(userPreferencesTable.userId, req.user.id))
-        .limit(1);
-      if (prefs?.supportLensMode === "strict_documented_designations") {
-        requestedIds = normalizeOwnershipDesignationFilterIds(
-          (prefs.preferredOwnershipTypes as string[] | null) ?? [],
-        );
-      }
-    }
+    // Standalone Map is deliberately preference-neutral. Only a designation
+    // supplied by this Map request may filter pins; Kinfolk memories and saved
+    // Kinfolk preference fields are never read here.
     const designationClauses: string[] = [];
     const designationParams: unknown[] = [];
     resolveDesignationScope({
@@ -818,36 +830,13 @@ router.get("/businesses", async (req: Request, res: Response) => {
               AND COALESCE(jsonb_array_length(${businessesTable.ownershipDesignations}), 0) = 0`,
           );
         }
-        let savedDesignationFilterIds: string[] = [];
-        if (req.user?.id) {
-          try {
-            const [prefs] = await db
-              .select({
-                supportLensMode: userPreferencesTable.supportLensMode,
-                preferredOwnershipTypes:
-                  userPreferencesTable.preferredOwnershipTypes,
-              })
-              .from(userPreferencesTable)
-              .where(eq(userPreferencesTable.userId, req.user.id))
-              .limit(1);
-            if (
-              supportScope !== "all_businesses" &&
-              prefs?.supportLensMode === "strict_documented_designations"
-            ) {
-              savedDesignationFilterIds =
-                normalizeOwnershipDesignationFilterIds(
-                  (prefs.preferredOwnershipTypes as string[] | null) ?? [],
-                );
-            }
-          } catch {
-            // Discovery remains available if optional preference storage is unavailable.
-          }
-        }
         const designationFilterIds = resolveDesignationScope({
           explicit: explicitDesignationFilterIds,
           supportScope: supportScope as string | undefined,
-          saved: savedDesignationFilterIds,
-          savedMode: supportScope === "all_businesses" ? null : "strict_documented_designations",
+          // Standalone Directory/Explore uses only visible request filters. It
+          // must not read Kinfolk memory or private Kinfolk preference fields.
+          saved: [],
+          savedMode: null,
         });
         for (const designationId of designationFilterIds) {
           const filter = ownershipDesignationStorageValues(designationId);
@@ -1587,6 +1576,136 @@ router.get(
   },
 );
 
+// Owner-console discovery is intentionally separate from the legacy single
+// business read below. Existing business-specific flows still consume the
+// latter, while this read-only contract lists every active owner relationship.
+router.get("/businesses/mine/managed", async (req: any, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const businesses = await db
+      .select({
+        id: businessesTable.id,
+        name: businessesTable.name,
+        category: businessesTable.category,
+        city: businessesTable.city,
+        state: businessesTable.state,
+        verified: businessesTable.verified,
+      })
+      .from(businessesTable)
+      .where(approvedOwnerPredicate(String(userId)))
+      .orderBy(asc(businessesTable.name), asc(businessesTable.id));
+
+    res.json({ businesses });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch managed businesses");
+    res.status(500).json({ error: "Failed to fetch managed businesses" });
+  }
+});
+
+// The target ID is mandatory for multi-business profile work. This route is
+// intentionally narrower than the legacy /mine profile endpoint: it permits
+// only ordinary profile/contact fields and never changes publication,
+// ownership, evidence, eligibility, map coordinates, or protected status.
+router.get("/businesses/mine/managed/:businessId", async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  const businessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (!businessId) {
+    res.status(400).json({ error: "A business selection is required." });
+    return;
+  }
+  try {
+    const [business] = await db
+      .select()
+      .from(businessesTable)
+      .where(and(
+        eq(businessesTable.id, businessId),
+        approvedOwnerPredicate(String(userId)),
+      ))
+      .limit(1);
+    if (!business) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+    res.json({ business });
+  } catch (err) {
+    req.log.error({ err }, "Failed to fetch selected managed business");
+    res.status(500).json({ error: "Failed to fetch managed business" });
+  }
+});
+
+router.patch("/businesses/mine/managed/:businessId/profile", async (req: any, res: Response) => {
+  const userId = req.user?.id;
+  const businessId = typeof req.params.businessId === "string" ? req.params.businessId.trim() : "";
+  if (!userId) {
+    res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+  if (!businessId) {
+    res.status(400).json({ error: "A business selection is required." });
+    return;
+  }
+
+  const {
+    name, category, subcategory, description, phone, website, hours,
+    instagram, tiktok, facebook, twitter, youtube, pinterest,
+    primarySocialPlatform, businessTagline, ownerName, ownerBio, ownerStory,
+  } = req.body as Record<string, string | null | undefined>;
+  if (category && !ALL_VALID_CATEGORY_NAMES.includes(category)) {
+    res.status(400).json({ error: "Invalid category" });
+    return;
+  }
+
+  const updates: Record<string, unknown> = { updatedAt: new Date() };
+  if (name?.trim()) updates.name = name.trim();
+  if (category) {
+    updates.category = category;
+    updates.subcategory = subcategory?.trim() || category;
+  }
+  if (typeof description === "string") updates.description = description.trim();
+  if (phone !== undefined) updates.phone = phone?.trim() || null;
+  if (website !== undefined) updates.website = website?.trim() || null;
+  if (hours !== undefined) updates.hours = hours?.trim() || null;
+  if (instagram !== undefined) updates.instagram = instagram?.trim() || null;
+  if (tiktok !== undefined) updates.tiktok = tiktok?.trim() || null;
+  if (facebook !== undefined) updates.facebook = facebook?.trim() || null;
+  if (twitter !== undefined) updates.twitter = twitter?.trim() || null;
+  if (youtube !== undefined) updates.youtube = youtube?.trim() || null;
+  if (pinterest !== undefined) updates.pinterest = pinterest?.trim() || null;
+  if (primarySocialPlatform !== undefined) updates.primarySocialPlatform = primarySocialPlatform || null;
+  if (businessTagline !== undefined) updates.businessTagline = businessTagline?.trim() || null;
+  if (ownerName !== undefined) updates.ownerName = ownerName?.trim() || null;
+  if (ownerBio !== undefined) updates.ownerBio = ownerBio?.trim() || null;
+  if (ownerStory !== undefined) updates.ownerStory = ownerStory?.trim() || null;
+
+  try {
+    const [updated] = await db
+      .update(businessesTable)
+      .set(updates)
+      .where(and(
+        eq(businessesTable.id, businessId),
+        approvedOwnerPredicate(String(userId)),
+      ))
+      .returning();
+    if (!updated) {
+      res.status(404).json({ error: "Managed business not found." });
+      return;
+    }
+    res.json({ business: updated });
+  } catch (err) {
+    req.log.error({ err }, "Failed to update selected managed business profile");
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
 router.get("/businesses/mine", async (req: any, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -1594,12 +1713,15 @@ router.get("/businesses/mine", async (req: any, res: Response) => {
       res.json({ business: null });
       return;
     }
-    const [business] = await db
-      .select()
-      .from(businessesTable)
-      .where(approvedOwnerPredicate(String(userId)))
-      .limit(1);
-    res.json({ business: business ?? null });
+    const selection = await resolveLegacySingleManagedBusiness(String(userId));
+    if (selection.kind === "multiple") {
+      res.status(409).json({
+        error: "Select a business before opening legacy business tools.",
+        code: "BUSINESS_SELECTION_REQUIRED",
+      });
+      return;
+    }
+    res.json({ business: selection.kind === "selected" ? selection.business : null });
   } catch (err) {
     req.log.error({ err }, "Failed to fetch user business");
     res.status(500).json({ error: "Failed to fetch business" });
@@ -1610,6 +1732,26 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
   const userId = req.user?.id;
   if (!userId) {
     res.status(401).json({ error: "Unauthorized" });
+    return;
+  }
+
+  let selection: LegacyManagedBusinessSelection;
+  try {
+    selection = await resolveLegacySingleManagedBusiness(String(userId));
+  } catch (err) {
+    req.log.error({ err }, "Failed to resolve managed business selection");
+    res.status(500).json({ error: "Failed to load business selection" });
+    return;
+  }
+  if (selection.kind === "multiple") {
+    res.status(409).json({
+      error: "Select a business before updating its profile.",
+      code: "BUSINESS_SELECTION_REQUIRED",
+    });
+    return;
+  }
+  if (selection.kind === "none") {
+    res.status(404).json({ error: "Business not found" });
     return;
   }
 
@@ -1688,7 +1830,10 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
     const [updated] = await db
       .update(businessesTable)
       .set(updates)
-      .where(approvedOwnerPredicate(String(userId)))
+      .where(and(
+        eq(businessesTable.id, selection.business.id),
+        approvedOwnerPredicate(String(userId)),
+      ))
       .returning();
     if (!updated) {
       res.status(404).json({ error: "Business not found" });

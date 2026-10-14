@@ -110,6 +110,7 @@ import businessImprovementRouter from "./business-improvement";
 import communityAppreciationRouter from "./community-appreciation";
 import circlesRouter from "./circles";
 import communityRequestsRouter from "./community-requests";
+import communityOpportunitiesRouter from "./community-opportunities";
 import userAchievementsRouter from "./user-achievements";
 import communitySaysRouter from "./community-says";
 import communityFeedbackRouter from "./community-feedback";
@@ -124,7 +125,6 @@ import forYouRouter from "./for-you";
 import knowledgeDeliveryRouter from "./knowledge-delivery";
 import businessInsightsRouter from "./business-insights";
 import globalRecommendationsRouter from "./global-recommendations";
-import officerWatchRouter from "./officer-watch";
 import wellnessRouter from "./wellness";
 import kinfolkTasksRouter from "./kinfolk-tasks";
 import featuredVideoRouter from "./featured-video";
@@ -176,6 +176,10 @@ import knowledgeGraphRouter from "./knowledge-graph";
 import testerReportRouter from "./tester-report";
 import communityLanguageRouter from "./community-language";
 import officialPublicAlertsRouter from "./official-public-alerts";
+import seriousCredibleThreatRouter from "./serious-credible-threats";
+import seriousCredibleThreatPrivateModeratorRouter from "./serious-credible-threat-reviewer";
+import familyImpactIntelligenceRouter from "./family-impact-intelligence";
+import persistentSafetyLocationRouter from "./persistent-safety-location";
 import { requireAuth } from "../middlewares/requireAuth";
 
 const router: IRouter = Router();
@@ -209,6 +213,11 @@ router.use(communityFeedbackRouter); // GET public (counts); PUT self-authentica
 // bearer-link views stay public without opening any platform intelligence.
 router.use(locationSharesRouter);
 router.use(trustedSafetyShareRouter);
+router.use(persistentSafetyLocationRouter);
+// Family-impact consent, check-in, and source-ingestion boundaries authenticate
+// each operation internally so their narrowly protected internal route remains
+// default-off without opening the member-facing operations.
+router.use(familyImpactIntelligenceRouter);
 
 // Canonical business discovery is public so any visitor can search the founder-
 // and community-fed directory. The business router itself authenticates every
@@ -279,6 +288,8 @@ router.use(conversationsRouter);
 // /community/events compat — canonical path is /api/events; audit found /api/community/events 404
 // The compatibility path stays public for the same read-only calendar reason.
 router.use("/community", eventsRouter);
+// Persist Police/ICE preferences before broad legacy users routes can shadow this path.
+router.use(userSettingsRouter);
 router.use(usersRouter);
 router.use(groupsRouter);
 router.use(adminRouter);
@@ -298,6 +309,13 @@ router.use(canonicalMwmOwnerAttachmentRouter);
 router.use(businessOwnerInsightsRouter);
 router.use(notificationsRouter);
 router.use(officialPublicAlertsRouter);
+// Dedicated, member-only private-review intake. This is intentionally separate
+// from Police/ICE observations and exposes no notice or delivery operation.
+router.use(seriousCredibleThreatRouter);
+// The paired named-admin interface is isolated from ordinary moderation. Its
+// default adapter remains unavailable until separately approved durable storage
+// is explicitly wired; mounting this route does not activate retention.
+router.use(seriousCredibleThreatPrivateModeratorRouter);
 router.use(adminUsersRouter);
 router.use(adminTestersRouter);
 router.use(adminAuditRouter);
@@ -321,7 +339,6 @@ router.use(skipFeedbackRouter);
 router.use(businessesAnalyticsRouter);
 router.use(promoteRouter);
 router.use(postNudgeRouter);
-router.use(userSettingsRouter);
 router.use(spaceReportsRouter);
 router.use(connectRouter);
 router.use(communitySpacesRouter);
@@ -371,6 +388,7 @@ router.use(businessImprovementRouter);
 router.use(communityAppreciationRouter);
 router.use(circlesRouter);
 router.use(communityRequestsRouter);
+router.use(communityOpportunitiesRouter);
 router.use(userAchievementsRouter);
 router.use(communitySaysRouter);
 router.use(communityChallengesNewRouter);
@@ -384,7 +402,6 @@ router.use(topicBriefsRouter);
 router.use(knowledgeHubsRouter);
 router.use(forYouRouter);
 router.use(globalRecommendationsRouter);
-router.use(officerWatchRouter);
 router.use(wellnessRouter);
 router.use(featuredVideoRouter);
 router.use(hubBadgesRouter);

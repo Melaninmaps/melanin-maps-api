@@ -58,12 +58,13 @@ describe("founder business discoverability correction", () => {
     expect(businesses).toContain(".from(businessesTable)");
   });
 
-  it("keeps a failed-query name fallback within the documented Kinfolk catalog", () => {
+  it("keeps a failed-query direct-name fallback within the canonical public view", () => {
     expect(businesses).toContain("sendDirectNameAvailabilityFallback");
     expect(businesses).toContain("Directory query failed; returned direct-name availability fallback");
     expect(businesses).toContain("SELECT * FROM public.public_businesses");
-    expect(businesses).toContain('mwmDiasporaPromotionSqlPredicate("public.public_businesses.id")');
-    expect(businesses).toContain('searchScope: "diaspora_promotion_catalog"');
+    expect(businesses).toContain('searchScope: "direct_named_safety_context"');
+    expect(businesses).toContain("availabilityFallback: true");
+    expect(businesses).toContain("if (!isDeliberateNamedBusinessLookup(search)) return false");
     expect(businesses).toContain("if (await sendDirectNameAvailabilityFallback(req, res)) return");
   });
 

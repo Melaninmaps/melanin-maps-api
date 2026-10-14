@@ -12,9 +12,9 @@ describe("social authorization contracts", () => {
 
   it("protects direct messages from nonparticipants, blocks, and unavailable recipients", () => {
     expect(conversations).toContain("function conversationHasParticipant");
-    expect(conversations).toContain("async function usersAreBlocked");
+    expect(conversations).toContain('import { filterBlockedRelationships, usersAreBlocked } from "../social/profileRelationshipAccess"');
     expect(conversations).toContain("async function dmConversationIsBlocked");
-    expect(conversations).toContain("userBlocksTable");
+    expect(conversations).toContain("filterBlockedRelationships(req.user.id, candidates)");
     expect(conversations).toContain("Recipient not found");
     expect(conversations).toContain("This member is not accepting direct messages");
     expect(conversations).toContain("A direct message is unavailable for this member");

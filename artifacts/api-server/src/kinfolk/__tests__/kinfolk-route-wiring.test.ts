@@ -20,9 +20,16 @@ const citySafetyV1Source = readFileSync(
   fileURLToPath(new URL("../city-safety-briefing-v1.ts", import.meta.url)),
   "utf8",
 );
+const chatRouteStart = routeSource.indexOf('router.post("/kinfolk/chat"');
+const chatRouteEnd = routeSource.indexOf(
+  'router.get("/kinfolk/business-action-plan',
+  chatRouteStart,
+);
+// The action-plan endpoint is optional in current source variants. Never turn a
+// missing boundary into slice(..., -1), which silently truncates the chat route.
 const chatRoute = routeSource.slice(
-  routeSource.indexOf('router.post("/kinfolk/chat"'),
-  routeSource.indexOf('router.get("/kinfolk/business-action-plan'),
+  chatRouteStart,
+  chatRouteEnd === -1 ? routeSource.length : chatRouteEnd,
 );
 
 describe("Kinfolk chat static wiring", () => {
@@ -40,6 +47,23 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("governedBusinessRepository.findWithinRadius");
     expect(chatRoute).toContain("governedBusinessRepository.findHomeFallback");
     expect(chatRoute).not.toMatch(/(?:FROM|JOIN)\s+(?:public\.)?businesses\s+b\b/i);
+  });
+
+  it("does not ask the provider to broaden an eligible catalog into unverified or category-mismatched recommendations", () => {
+    expect(routeSource).toContain(
+      "These are server-governed public Mapping With Melanin listings for this response.",
+    );
+    expect(routeSource).toContain(
+      "only when its supplied category, subcategory, or tags actually fit the member's requested service",
+    );
+    expect(routeSource).toContain(
+      "does not currently have an eligible matching listing and use the governed no-result path",
+    );
+    expect(routeSource).toContain(
+      "Do not call a listing verified, ownership-matched, promoted, safe, or personally endorsed unless the server supplies that specific evidence.",
+    );
+    expect(routeSource).not.toContain("Unverified businesses are still real community spots — recommend them.");
+    expect(routeSource).not.toContain("Do NOT require an exact category match.");
   });
 
   it("does not load a home catalog for ordinary no-location chat", () => {
@@ -62,7 +86,9 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("resolvePermittedIdentityContext(message)");
     expect(chatRoute).toContain("classifyEvidenceRoute(message)");
     expect(chatRoute).toContain("evidenceFailureReply({");
-    expect(chatRoute).toContain("parseKinfolkModelPayload(rawContent)");
+    expect(chatRoute).toContain("parseKinfolkModelPayload(rawContent, {");
+    expect(chatRoute).toContain("allowPlainTextReply: leanGeneralChat");
+    expect(chatRoute).toContain("sanitizeKinfolkGeneralReply(modelPayload.reply)");
     expect(chatRoute).toContain("buildValidatedOrRankedItinerary({");
     expect(chatRoute).toContain("recommendations = enforced.recommendations");
     expect(chatRoute).toContain("if (travelPlanning) recommendations = null");
@@ -132,7 +158,7 @@ describe("Kinfolk chat static wiring", () => {
 
   it("keeps deterministic directory discovery out of every current-research turn", () => {
     expect(chatRoute).toMatch(
-      /verifiedImageUrls\.length === 0\s*&&\s*!requiresCurrentResearch\(message\)\s*&&\s*\(await tryAnswerDeterministicBusinessDiscovery\(/,
+      /!hasPrivateQuestionAttachment\s*&&\s*!requiresCurrentResearch\(message\)\s*&&\s*!isTravelPlanningPrompt\(message\)\s*&&\s*\(await tryAnswerDeterministicBusinessDiscovery\(/,
     );
   });
 
@@ -175,6 +201,21 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("namedBusiness && !healthCareOverride.suppressesGeneralBusinessCatalog");
   });
 
+  it("returns direct qualified-care navigation before optional sessions, profile reads, or a model call", () => {
+    const earlyCare = chatRoute.indexOf("const earlyHealthCareOverride = buildHealthCareOverride");
+    const ownerMemory = chatRoute.indexOf("resolveOwnerKinfolkMemoryAccess(req.user.id)");
+    const userRead = chatRoute.indexOf("const user = await storage.getUser(req.user.id)");
+    const providerCall = chatRoute.indexOf("openai.chat.completions.create(");
+
+    expect(earlyCare).toBeGreaterThan(-1);
+    expect(earlyCare).toBeLessThan(ownerMemory);
+    expect(earlyCare).toBeLessThan(userRead);
+    expect(earlyCare).toBeLessThan(providerCall);
+    expect(chatRoute).toContain('answerMode: "qualified_care_navigation"');
+    expect(chatRoute).toContain('retrieval: "official_care_finders"');
+    expect(chatRoute).toContain("allowBusinessCards: false");
+  });
+
   it("runs medical questions through authoritative retrieval before the Living Library shortcut", () => {
     expect(chatRoute).toContain('intentClass !== "medical_health"');
     expect(chatRoute).toContain("buildHealthRetrievalContext(");
@@ -213,6 +254,24 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("articleSummaryFailureReply(articleSummaryState)");
     expect(chatRoute).toContain("articleSummaryState === \"paywall_or_login\"");
     expect(chatRoute).toContain("!requestedArticleUrl &&");
+  });
+
+  it("uses the bounded page reader for a member-supplied link before private memory or model work", () => {
+    const linkReader = chatRoute.indexOf("await understandKinfolkLink(requestedLinkUrl)");
+    const explicitMemory = chatRoute.indexOf("persistExplicitMemberMemory({");
+    const providerCall = chatRoute.indexOf('chatStage = "provider_call"');
+
+    expect(routeSource).toContain('import { understandKinfolkLink } from "../kinfolk/link-understanding";');
+    expect(linkReader).toBeGreaterThan(-1);
+    expect(linkReader).toBeLessThan(explicitMemory);
+    expect(linkReader).toBeLessThan(providerCall);
+    expect(chatRoute).toContain('answerMode: "linked_page_extractive_summary"');
+    expect(chatRoute).toContain('provider: "kinfolk_link_reader"');
+    expect(chatRoute).toContain("Kinfolk has not independently verified those claims.");
+    expect(chatRoute).toContain("persistDeterministicDiscoveryTurn({");
+    expect(chatRoute).toContain("This is a public social-media page.");
+    expect(chatRoute).toContain("Page-published business details (not independently verified)");
+    expect(chatRoute).toContain("const pageBusiness = linkedPage.source.business;");
   });
 
   it("ranks the governed travel catalog with canonical age assurance and explicit preferences before prompting", () => {
@@ -269,7 +328,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("!requiresCurrentResearch(message)");
     expect(chatRoute).toContain("&& !sensitiveTopicDetected");
     expect(chatRoute).toContain("!bodyCircleId");
-    expect(chatRoute).toContain("verifiedImageUrls.length === 0");
+    expect(chatRoute).toContain("!hasPrivateQuestionAttachment");
     expect(chatRoute).toContain('intentClass: "travel_planning"');
     expect(chatRoute).toContain("usedLiveWeb: false");
     expect(chatRoute).toContain('const detailUrl = `/businesses/${encodeURIComponent(business.id)}`');
@@ -345,7 +404,9 @@ describe("Kinfolk chat static wiring", () => {
   });
 
   it("routes a resolved before-you-go question through current news research even when semantic planning is off", () => {
-    const cityBriefingPlan = chatRoute.indexOf("let cityBriefingPlan = isCityBriefingRequest(message, destination)");
+    const cityBriefingPlan = chatRoute.indexOf(
+      "!isPrivateQuestionAttachment && isCityBriefingRequest(message, destination)",
+    );
     const contextualPlan = chatRoute.indexOf("let contextualPlan: SemanticTurnPlan | null = cityBriefingPlan");
     const semanticPlanner = chatRoute.indexOf("if (contextualResearchEnabled && !contextualPlan)");
     const researchExecution = chatRoute.indexOf("if (contextualPlan) {");
@@ -379,7 +440,9 @@ describe("Kinfolk chat static wiring", () => {
   });
 
   it("uses bounded semantic city-readiness classification for natural arrival language without weakening deterministic routes", () => {
-    const cityBriefingPlan = chatRoute.indexOf("let cityBriefingPlan = isCityBriefingRequest(message, destination)");
+    const cityBriefingPlan = chatRoute.indexOf(
+      "!isPrivateQuestionAttachment && isCityBriefingRequest(message, destination)",
+    );
     const contextualPlan = chatRoute.indexOf("let contextualPlan: SemanticTurnPlan | null = cityBriefingPlan");
 
     expect(cityBriefingPlan).toBeGreaterThan(-1);
@@ -516,7 +579,9 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("const citedResearchRequired =");
     expect(chatRoute).toContain("requiresCurrentResearch(researchContextMessage)");
     expect(chatRoute).toContain("let contextualResearchEnabled = contextualIntelligenceEnabled");
-    expect(chatRoute).toContain("contextualResearchEnabled =\n      contextualIntelligenceEnabled || citedResearchRequired");
+    expect(chatRoute).toContain(
+      "contextualResearchEnabled =\n      !isPrivateQuestionAttachment &&\n      (contextualIntelligenceEnabled || citedResearchRequired)",
+    );
     expect(chatRoute).toContain("if (contextualResearchEnabled && !contextualPlan)");
     expect(chatRoute).toContain("!contextualResearchEnabled");
     expect(chatRoute).toContain('intentClass === "general_knowledge" &&\n        requiresCurrentResearch(researchContextMessage)');
@@ -563,10 +628,13 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("!contextualEvidence.degraded");
   });
 
-  it("does not replace a current city briefing or any generic current-evidence turn with a catalog itinerary", () => {
+  it("allows a catalog itinerary only for an explicit current-turn request", () => {
     expect(chatRoute).toContain('const isCurrentCityBriefing = contextualPlan?.taskMode === "city_briefing"');
     expect(chatRoute).toMatch(
-      /const travelPlanning\s*=\s*!isCurrentCityBriefing\s*&&\s*!generalAnswerRoute\.requiresCurrentEvidence\s*&&\s*\(isTravelPlanningPrompt\(message\)\s*\|\|\s*earlyDecision\.route === "travel_planning"\);/,
+      /const explicitCurrentItineraryRequest\s*=\s*isTravelPlanningPrompt\(message\);/,
+    );
+    expect(chatRoute).toMatch(
+      /const travelPlanning\s*=\s*!isCurrentCityBriefing\s*&&\s*!generalAnswerRoute\.requiresCurrentEvidence\s*&&\s*explicitCurrentItineraryRequest;/,
     );
   });
 
@@ -585,7 +653,8 @@ describe("Kinfolk chat static wiring", () => {
 
     expect(correctionInstruction).toBeGreaterThan(sessionRead);
     expect(correctionInstruction).toBeLessThan(systemPrompt);
-    expect(chatRoute).toContain("history: existingMessages");
+    expect(chatRoute).toContain("history: scopedConversationMessages");
+    expect(chatRoute).not.toContain("history: existingMessages");
     expect(chatRoute).toContain("currentTurnCorrectionInstruction");
   });
 
@@ -647,8 +716,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(handoffBlock).toContain(".orderBy(desc(kinfolkSessionsTable.updatedAt))");
     expect(chatRoute).toContain("crossSessionHandoff?.scope");
     expect(chatRoute).toContain("conversationHandoff: conversationContextScope?.handoff ?? null");
-    expect(chatRoute).toContain('conversationContextScope?.handoff?.state !== "resumed"');
-    expect(chatRoute).toContain(": historyMessages");
+    expect(chatRoute).toContain("buildLeanGeneralHistory(scopedConversationMessages)");
+    expect(chatRoute).toContain("reintroduce older drafts or unrelated topic switches");
     expect(chatRoute).toContain("This member explicitly resumed the bounded private thread above");
     expect(chatRoute).toContain("do not say that prior context is unavailable");
     expect(chatRoute).toContain("EXPLICIT RESUMED THREAD");

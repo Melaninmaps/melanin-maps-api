@@ -1,5 +1,6 @@
 import { MapPin, ShieldCheck, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "wouter";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -8,6 +9,7 @@ type PrivatePlace = {
   label: string;
   isActive: boolean;
   geocodeProvider: string;
+  disclosureVersion: string;
 };
 
 type PrivatePlacesStatus = {
@@ -16,6 +18,39 @@ type PrivatePlacesStatus = {
   disclosure: string;
 };
 
+/** The nearby endpoint returns full governed records; retain only safe directory-card fields. */
+type NearbyDirectoryBusiness = Readonly<{
+  id: string;
+  name: string;
+  category: string;
+  city: string;
+  stateCode: string | null;
+  verified: boolean;
+}>;
+
+function readPublicDirectoryBusinesses(payload: unknown): NearbyDirectoryBusiness[] {
+  const businesses = payload && typeof payload === "object"
+    ? (payload as { businesses?: unknown }).businesses
+    : null;
+  if (!Array.isArray(businesses)) return [];
+
+  return businesses.flatMap((candidate): NearbyDirectoryBusiness[] => {
+    if (!candidate || typeof candidate !== "object") return [];
+    const result = candidate as Record<string, unknown>;
+    const id = typeof result.id === "string" ? result.id.trim() : "";
+    const name = typeof result.name === "string" ? result.name.trim() : "";
+    if (!id || !name) return [];
+    return [{
+      id,
+      name,
+      category: typeof result.category === "string" ? result.category.trim() : "",
+      city: typeof result.city === "string" ? result.city.trim() : "",
+      stateCode: typeof result.stateCode === "string" && result.stateCode.trim() ? result.stateCode.trim() : null,
+      verified: result.verified === true,
+    }];
+  });
+}
+
 async function responseMessage(response: Response, fallback: string): Promise<string> {
   const body = (await response.json().catch(() => ({}))) as { error?: unknown };
   return typeof body.error === "string" ? body.error : fallback;
@@ -23,8 +58,9 @@ async function responseMessage(response: Response, fallback: string): Promise<st
 
 /**
  * An intentionally separate control center: it never passes an exact place to
- * Kinfolk chat. The only time the backend unseals coordinates is after a member
- * presses “Use for nearby directory search” for an active, selected place.
+ * the Kinfolk model or chat memory. The backend unseals coordinates only after
+ * an active member explicitly selects nearby search or asks Kinfolk for nearby
+ * businesses using that Saved Place nickname.
  */
 export function PrivatePlacesSettings() {
   const [status, setStatus] = useState<PrivatePlacesStatus | null>(null);
@@ -32,9 +68,11 @@ export function PrivatePlacesSettings() {
   const [label, setLabel] = useState("");
   const [exactAddress, setExactAddress] = useState("");
   const [acceptedDisclosure, setAcceptedDisclosure] = useState(false);
+  const [editingPlace, setEditingPlace] = useState<PrivatePlace | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [nearbySummary, setNearbySummary] = useState<string | null>(null);
+  const [nearbyBusinesses, setNearbyBusinesses] = useState<NearbyDirectoryBusiness[]>([]);
+  const [nearbySearched, setNearbySearched] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
@@ -47,6 +85,8 @@ export function PrivatePlacesSettings() {
     setStatus(nextStatus);
     if (!nextStatus.enabled) {
       setPlaces([]);
+      setNearbyBusinesses([]);
+      setNearbySearched(false);
       return;
     }
     const placeResponse = await fetch(`${BASE}api/kinfolk/private-places`, { credentials: "include" });
@@ -65,8 +105,12 @@ export function PrivatePlacesSettings() {
     setSaving(true);
     setError(null);
     try {
-      const response = await fetch(`${BASE}api/kinfolk/private-places`, {
-        method: "POST",
+      const response = await fetch(
+        editingPlace
+          ? `${BASE}api/kinfolk/private-places/${encodeURIComponent(editingPlace.id)}`
+          : `${BASE}api/kinfolk/private-places`,
+        {
+        method: editingPlace ? "PUT" : "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -75,11 +119,13 @@ export function PrivatePlacesSettings() {
           googleMapsGeocodingConsent: true,
           disclosureVersion: status.disclosureVersion,
         }),
-      });
+        },
+      );
       if (!response.ok) throw new Error(await responseMessage(response, "This Private Place could not be saved."));
       setLabel("");
       setExactAddress("");
       setAcceptedDisclosure(false);
+      setEditingPlace(null);
       await load();
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : "This Private Place could not be saved.");
@@ -90,6 +136,8 @@ export function PrivatePlacesSettings() {
 
   const setActive = async (place: PrivatePlace, isActive: boolean) => {
     setError(null);
+    setNearbyBusinesses([]);
+    setNearbySearched(false);
     const response = await fetch(`${BASE}api/kinfolk/private-places/${encodeURIComponent(place.id)}/active`, {
       method: "PATCH",
       credentials: "include",
@@ -103,8 +151,27 @@ export function PrivatePlacesSettings() {
     await load();
   };
 
+  const beginEdit = (place: PrivatePlace) => {
+    // Exact addresses are never returned to the browser. Updating a record
+    // therefore requires a deliberate re-entry and fresh Google disclosure.
+    setEditingPlace(place);
+    setLabel(place.label);
+    setExactAddress("");
+    setAcceptedDisclosure(false);
+    setError(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingPlace(null);
+    setLabel("");
+    setExactAddress("");
+    setAcceptedDisclosure(false);
+  };
+
   const remove = async (place: PrivatePlace) => {
     setError(null);
+    setNearbyBusinesses([]);
+    setNearbySearched(false);
     const response = await fetch(`${BASE}api/kinfolk/private-places/${encodeURIComponent(place.id)}`, {
       method: "DELETE",
       credentials: "include",
@@ -118,7 +185,8 @@ export function PrivatePlacesSettings() {
 
   const useForNearbySearch = async (place: PrivatePlace) => {
     setError(null);
-    setNearbySummary(null);
+    setNearbyBusinesses([]);
+    setNearbySearched(false);
     const response = await fetch(`${BASE}api/kinfolk/private-places/${encodeURIComponent(place.id)}/nearby`, {
       method: "POST",
       credentials: "include",
@@ -129,8 +197,9 @@ export function PrivatePlacesSettings() {
       setError(await responseMessage(response, "Nearby directory search could not run."));
       return;
     }
-    const payload = (await response.json()) as { businesses?: unknown[] };
-    setNearbySummary(`${Array.isArray(payload.businesses) ? payload.businesses.length : 0} nearby directory results loaded from ${place.label}.`);
+    const payload = (await response.json()) as unknown;
+    setNearbyBusinesses(readPublicDirectoryBusinesses(payload));
+    setNearbySearched(true);
   };
 
   return (
@@ -140,7 +209,7 @@ export function PrivatePlacesSettings() {
         <h4 className="text-sm font-bold text-[#2B1507]">Private Places</h4>
       </div>
       <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/55">
-        Keep a place such as Mom&apos;s house or your school separate from Kinfolk. It is never chat memory, never a check-in, and never used automatically.
+        Keep a place such as Mom&apos;s house or your school separate from Kinfolk memory. It is never chat memory, a check-in, or used automatically. An active place is used only when you explicitly request nearby businesses; exact address and coordinates stay private.
       </p>
       {error ? <p role="alert" className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-700">{error}</p> : null}
       {!status ? <p className="mt-3 text-xs text-[#3A1F0E]/50">Checking Private Places…</p> : null}
@@ -156,19 +225,48 @@ export function PrivatePlacesSettings() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <p className="text-sm font-bold text-[#2B1507]">{place.label}</p>
-                  <p className="mt-1 text-xs text-[#3A1F0E]/55">{place.isActive ? "Active only when you choose it" : "Paused — never used for nearby search"}</p>
+                  <p className="mt-1 text-xs text-[#3A1F0E]/55">{place.isActive ? place.disclosureVersion === status.disclosureVersion ? "Active only when you choose it" : "Update and re-acknowledge before this place can be used for nearby search" : "Paused — never used for nearby search"}</p>
                 </div>
                 <div className="flex flex-wrap gap-3 text-xs font-bold">
-                  {place.isActive ? <button type="button" onClick={() => void useForNearbySearch(place)} className="text-[#8D5C17]">Use for nearby directory search</button> : null}
+                  {place.isActive && place.disclosureVersion === status.disclosureVersion ? <button type="button" onClick={() => void useForNearbySearch(place)} className="text-[#8D5C17]">Use for nearby directory search</button> : null}
+                  <button type="button" onClick={() => beginEdit(place)} className="text-[#8D5C17]">Edit</button>
                   <button type="button" onClick={() => void setActive(place, !place.isActive)} className="text-[#8D5C17]">{place.isActive ? "Pause" : "Resume"}</button>
                   <button type="button" onClick={() => void remove(place)} className="inline-flex items-center gap-1 text-red-700"><Trash2 className="h-3.5 w-3.5" />Delete</button>
                 </div>
               </div>
             </div>
           ))}
-          {nearbySummary ? <p className="rounded-xl bg-[#FFF8EC] px-3 py-2 text-xs text-[#3A1F0E]/70">{nearbySummary}</p> : null}
+          {nearbySearched ? (
+            <section data-testid="private-places-nearby-results" aria-label="Nearby public business results" className="overflow-hidden rounded-2xl border border-[#3A1F0E]/10 bg-white">
+              <p className="border-b border-[#3A1F0E]/10 bg-[#FFF8EC] px-4 py-3 text-xs font-bold text-[#2B1507]">Nearby public businesses</p>
+              {nearbyBusinesses.length === 0 ? (
+                <p className="px-4 py-3 text-xs leading-5 text-[#3A1F0E]/60">No public businesses were found in this search area.</p>
+              ) : (
+                <ul className="divide-y divide-[#3A1F0E]/10">
+                  {nearbyBusinesses.map((business) => (
+                    <li key={business.id} data-testid="private-places-nearby-result" className="hover:bg-[#FAF6EF]">
+                      <Link href={`/businesses/${encodeURIComponent(business.id)}`} className="flex items-start justify-between gap-3 px-4 py-3">
+                        <span className="min-w-0">
+                          <strong className="block truncate text-sm text-[#2B1507]">{business.name}</strong>
+                          <span className="mt-1 block text-xs text-[#3A1F0E]/60">{[business.category, business.city, business.stateCode].filter(Boolean).join(" · ")}</span>
+                          {business.verified ? <span className="mt-1 block text-[11px] font-bold text-[#8D5C17]">Verified business</span> : null}
+                        </span>
+                        <span className="shrink-0 text-xs font-bold text-[#8D5C17]">View →</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          ) : null}
           <div className="rounded-2xl border border-[#3A1F0E]/10 bg-white p-4">
-            <p className="text-sm font-semibold text-[#2B1507]">Save a new Private Place</p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-[#2B1507]">{editingPlace ? `Update ${editingPlace.label}` : "Save a new Private Place"}</p>
+                {editingPlace ? <p className="mt-1 text-xs leading-5 text-[#3A1F0E]/55">For privacy, enter the current or replacement address again. It is never displayed back to the browser.</p> : null}
+              </div>
+              {editingPlace ? <button type="button" onClick={cancelEdit} className="text-xs font-bold text-[#8D5C17]">Cancel edit</button> : null}
+            </div>
             <input value={label} onChange={(event) => setLabel(event.target.value)} maxLength={80} placeholder="Nickname, for example Mom’s house" aria-label="Private Place nickname" className="mt-3 w-full rounded-xl border border-[#3A1F0E]/15 px-3 py-2 text-sm" />
             <input value={exactAddress} onChange={(event) => setExactAddress(event.target.value)} maxLength={300} placeholder="Exact address" aria-label="Exact Private Place address" className="mt-2 w-full rounded-xl border border-[#3A1F0E]/15 px-3 py-2 text-sm" />
             <label className="mt-3 flex gap-2 text-xs leading-5 text-[#3A1F0E]/60">
@@ -176,7 +274,7 @@ export function PrivatePlacesSettings() {
               <span>{status.disclosure}</span>
             </label>
             <button type="button" disabled={!label.trim() || !exactAddress.trim() || !acceptedDisclosure || saving} onClick={() => void save()} className="mt-3 inline-flex items-center gap-2 rounded-xl bg-[#2B1507] px-3 py-2 text-xs font-bold text-white disabled:opacity-55">
-              <ShieldCheck className="h-3.5 w-3.5" />{saving ? "Saving…" : "Save Private Place"}
+              <ShieldCheck className="h-3.5 w-3.5" />{saving ? "Saving…" : editingPlace ? "Update Private Place" : "Save Private Place"}
             </button>
           </div>
         </div>

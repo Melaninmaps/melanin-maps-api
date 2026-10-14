@@ -94,7 +94,7 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("Location.requestForegroundPermissionsAsync()");
     expect(fullMapSource).toContain("Location.hasServicesEnabledAsync()");
     expect(fullMapSource).toContain("Location.getLastKnownPositionAsync({");
-    expect(fullMapSource).toContain("accuracy: Location.Accuracy.Balanced");
+    expect(fullMapSource).toContain("accuracy: Location.Accuracy.Highest");
     expect(fullMapSource).toContain("hasRequestedInitialLocationRef.current = true");
     expect(fullMapSource).toContain("void recenter()");
     expect(fullMapSource).toContain('if (Platform.OS === "web" || !isFocused || hasRequestedInitialLocationRef.current) return;');
@@ -125,6 +125,14 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("? focusedMappedBusinesses");
     expect(fullMapSource).toContain(": nearbyCanonicalMapPins;");
     expect(fullMapSource).toContain("const coordinates = pinsToFit.map");
+  });
+
+  it("filters cached canonical fallback pins to a complete explicit city/state without changing around-me fallback", () => {
+    expect(fullMapSource).toContain("const explicitMapLocality = searchedLocality ?? routeSearchLocality");
+    expect(fullMapSource).toContain("const localityPins = hasExplicitMapLocality");
+    expect(fullMapSource).toContain("matchesExplicitMapLocality(business, explicitMapLocality)");
+    expect(fullMapSource).toContain(": canonicalMapPins;");
+    expect(fullMapSource).toContain("distanceMiles(proximityMapLocation, business) <= mapDiscoveryRadius");
   });
 
   it("keeps the business hook backward-compatible while allowing map views to stop unscoped fetches", () => {
@@ -168,18 +176,33 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("const deliberateMapNameSearch = isDeliberateMapBusinessNameSearch");
     expect(fullMapSource).toContain("directName: deliberateMapNameSearch");
     expect(fullMapSource).toContain('searchScope: businessSearchScope');
+    expect(fullMapSource).toContain("const directMatchHasCoordinates = Boolean(");
     expect(fullMapSource).toContain("const showDirectMatchOnMap = useCallback");
     expect(fullMapSource).toContain("Show pin");
+  });
+
+  it("preserves direct-name safety context from the API but excludes it from Map pins, cards, and fitting", () => {
+    expect(businessHookSource).toContain('"direct_named_safety_context"');
+    expect(businessHookSource).toContain('data.searchScope === "direct_named_safety_context"');
+    expect(fullMapSource).toContain("const suppressSafetyContextBusinessResults = isDirectNamedSafetyContext(");
+    expect(fullMapSource).toContain("if (suppressSafetyContextBusinessResults) return [];");
+    expect(fullMapSource).toContain("hasSubmittedBusinessSearch && !suppressSafetyContextBusinessResults");
+    expect(fullMapSource).toContain("if (suppressSafetyContextBusinessResults) return;");
+    expect(fullMapSource).toContain('businessSearchScope === "explicit_public_listing"');
+    expect(fullMapSource).toContain("if (directMatchHasCoordinates && directMatch) return [directMatch]");
   });
 
   it("centers a deliberate exact-name search on the matched pin and opens its MWM card", () => {
     expect(fullMapSource).toContain("const pendingBusinessFocusRef = useRef<Business | null>(null)");
     expect(fullMapSource).toContain("if (directMatchHasCoordinates && directMatch) return [directMatch]");
     expect(fullMapSource).toContain("const focusDirectBusinessOnMap = useCallback");
+    expect(fullMapSource).toContain("const showDirectMatchOnMap = useCallback");
+    expect(fullMapSource).toContain("if (!directMatch || !directMatchHasCoordinates) return;");
+    expect(fullMapSource).toContain("showDirectMatchOnMap();");
     expect(fullMapSource).toContain("pendingBusinessFocusRef.current = business");
     expect(fullMapSource).toContain("const pendingBusiness = pendingBusinessFocusRef.current");
     expect(fullMapSource).toContain("latitudeDelta: 0.025");
-    expect(fullMapSource).toContain("if (directMatchHasCoordinates) return;");
+    expect(fullMapSource).toContain("if (directMatch) return;");
   });
 
   it("offers 50 miles for business discovery without widening public-facility availability", () => {
@@ -188,10 +211,12 @@ describe("FullMapView locality-first contracts", () => {
     expect(fullMapSource).toContain("radius: String(Math.min(mapDiscoveryRadius, 25))");
   });
 
-  it("uses the saved strict Support Lens for map business requests", () => {
-    expect(fullMapSource).toContain('import { useUserPreferences } from "@/hooks/useUserPreferences"');
-    expect(fullMapSource).toContain('memberPreferences?.supportLensMode === "strict_documented_designations"');
+  it("uses only Map-controlled ownership filters for map business requests", () => {
+    expect(fullMapSource).toContain("const [selectedMapDesignations, setSelectedMapDesignations] = useState<string[]>([]);");
+    expect(fullMapSource).toContain("const designationIds = selectedMapDesignations;");
     expect(fullMapSource).toContain("designations: designationIds");
-    expect(fullMapSource).toContain("supportScope: memberPreferences?.supportLensMode");
+    expect(fullMapSource).toContain("supportScope: undefined,");
+    expect(fullMapSource).toContain("Kinfolk memory and preferences stay");
+    expect(fullMapSource).not.toContain("memberPreferences?.supportLensMode");
   });
 });

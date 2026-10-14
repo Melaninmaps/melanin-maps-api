@@ -49,7 +49,8 @@ describe("OpenAI Library writer request compatibility", () => {
     const body = await requestFor("gpt-5-mini");
     expect(body).toMatchObject({
       model: "gpt-5-mini",
-      max_completion_tokens: 1500,
+      max_completion_tokens: 3000,
+      reasoning: { effort: "low" },
       response_format: { type: "json_schema", json_schema: { name: "library_research_entry", strict: true } },
     });
     expect(body).not.toHaveProperty("max_tokens");
@@ -60,9 +61,10 @@ describe("OpenAI Library writer request compatibility", () => {
     const body = await requestFor("gpt-4o-mini");
     expect(body).toMatchObject({
       model: "gpt-4o-mini",
-      max_tokens: 1500,
+      max_tokens: 3000,
       response_format: { type: "json_schema" },
     });
+    expect(body).not.toHaveProperty("reasoning");
     expect(body).not.toHaveProperty("max_completion_tokens");
   });
 

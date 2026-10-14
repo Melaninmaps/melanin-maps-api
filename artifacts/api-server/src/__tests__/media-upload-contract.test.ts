@@ -197,6 +197,38 @@ describe("POST /api/media/upload error contract", () => {
     ]);
   });
 
+  it("requires explicit per-answer consent before accepting a Kinfolk question PDF", async () => {
+    const file = workingFile();
+    const response = await request(createTestApp(file))
+      .post("/api/media/upload?purpose=kinfolk_question_document")
+      .attach("file", Buffer.from("%PDF-1.4\nprivate test"), { filename: "question.pdf", contentType: "application/pdf" });
+    expect(response.status).toBe(400);
+    expect(response.body.code).toBe(MEDIA_UPLOAD_ERROR_CODES.DOCUMENT_CONSENT_REQUIRED);
+    expect(file.save).not.toHaveBeenCalled();
+  });
+  it("returns only an opaque asset reference for a consented Kinfolk question PDF", async () => {
+    const file = workingFile();
+    const recordAsset = vi.fn<(values: readonly unknown[]) => Promise<unknown>>().mockResolvedValue(undefined);
+    const response = await request(createTestApp(file, true, recordAsset))
+      .post("/api/media/upload?purpose=kinfolk_question_document")
+      .field("kinfolkDocumentConsent", "true")
+      .attach("file", Buffer.from("%PDF-1.4\nprivate test"), { filename: "question.pdf", contentType: "application/pdf" });
+    expect(response.status).toBe(201);
+    expect(response.body).toMatchObject({ assetId: expect.any(String), type: "document", expiresAt: expect.any(String) });
+    expect(response.body.url).toBeUndefined();
+    expect(file.save).toHaveBeenCalledWith(expect.any(Buffer), { contentType: "application/pdf", resumable: false });
+    expect(file.getSignedUrl).not.toHaveBeenCalled();
+    expect(file.makePublic).not.toHaveBeenCalled();
+    expect(recordAsset).toHaveBeenCalledWith([
+      response.body.assetId,
+      "media-contract-user",
+      "kinfolk_question_document",
+      "application/pdf",
+      expect.any(Number),
+      expect.stringContaining("media-uploads/kinfolk-private-documents/media-contract-user/"),
+      null,
+    ]);
+  });
   it("uses the private bucket even when public delivery configuration is unavailable", async () => {
     vi.stubEnv("PUBLIC_MEDIA_BUCKET_ID", "");
     vi.stubEnv("MEDIA_PUBLIC_BASE_URL", "");

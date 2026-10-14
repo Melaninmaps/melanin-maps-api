@@ -58,6 +58,7 @@ export type CommunityPostRow = {
 export type ActiveCommunityComment = {
   id: string;
   postId: string;
+  parentCommentId: string | null;
   authorId: string | null;
   authorName: string;
   authorInitials: string;
@@ -82,6 +83,8 @@ type CommunityFeedQueryInput = {
   viewerId: string;
   feedMode: CommunityFeedMode;
   authorId?: string;
+  /** Posts in which this member was explicitly tagged by the post author. */
+  taggedUserId?: string;
   limit: number;
   offset: number;
 };
@@ -244,6 +247,24 @@ function acceptedRelationship(viewerPlaceholder: string): string {
   )`;
 }
 
+/**
+ * A Group post may be read by a current member of that exact Group even when
+ * the author has a private profile and the members do not follow each other.
+ * The Group check is repeated for every read so removal revokes access.
+ */
+function currentGroupMembership(viewerPlaceholder: string): string {
+  return `EXISTS (
+    SELECT 1
+    FROM group_members profile_group_membership
+    WHERE profile_group_membership.user_id = ${viewerPlaceholder}
+      AND profile_group_membership.group_id = CASE
+        WHEN COALESCE(to_jsonb(cp)->>'group_id', '') ~ '^[0-9]+$'
+          THEN (to_jsonb(cp)->>'group_id')::integer
+        ELSE NULL
+      END
+  )`;
+}
+
 function notBlocked(viewerPlaceholder: string): string {
   return `NOT EXISTS (
     SELECT 1
@@ -281,8 +302,37 @@ export function buildCommunityFeedQuery(
   options: CommunityFeedQueryOptions = {},
 ): CommunitySqlQuery {
   const projection = communityPostProjection(capabilities);
+  if (input.taggedUserId) {
+    const relation = acceptedRelationship("$2");
+    const groupMembership = currentGroupMembership("$2");
+    const feedVisibility = postIsVisibleInCommunityFeed("$2");
+    return {
+      text: `SELECT ${projection}
+        FROM community_posts cp
+        LEFT JOIN users u ON u.id = cp.author_id
+        WHERE EXISTS (
+          SELECT 1 FROM community_post_member_tags_v1 profile_tags
+           WHERE profile_tags.post_id = cp.id
+             AND profile_tags.tagged_user_id = $1
+        )
+          AND ${feedVisibility}
+          AND (${POST_REQUIRES_MODERATION} = false OR cp.author_id = $2)
+          AND ${INTERNAL_CONTENT_EXCLUSION}
+          AND ${notBlocked("$2")}
+          AND (
+            cp.author_id = $2
+            OR (${relation} AND ${POST_VISIBILITY} IN ('public', 'followers_only'))
+            OR ${groupMembership}
+            OR (${POST_VISIBILITY} = 'public' AND (${AUTHOR_IS_PRIVATE} = false OR u.id IS NULL))
+          )
+        ORDER BY cp.created_at DESC
+        LIMIT $3 OFFSET $4`,
+      values: [input.taggedUserId, input.viewerId, input.limit, input.offset],
+    };
+  }
   if (input.authorId) {
     const relation = acceptedRelationship("$2");
+    const groupMembership = currentGroupMembership("$2");
     const feedVisibility = postIsVisibleInCommunityFeed("$2");
     return {
       text: `SELECT ${projection}
@@ -296,6 +346,7 @@ export function buildCommunityFeedQuery(
           AND (
             cp.author_id = $2
             OR (${relation} AND ${POST_VISIBILITY} IN ('public', 'followers_only'))
+            OR ${groupMembership}
             OR (${POST_VISIBILITY} = 'public' AND (${AUTHOR_IS_PRIVATE} = false OR u.id IS NULL))
           )
         ORDER BY cp.created_at DESC
@@ -306,12 +357,13 @@ export function buildCommunityFeedQuery(
 
   if (input.feedMode === "following") {
     const relation = acceptedRelationship("$1");
+    const groupMembership = currentGroupMembership("$1");
     const feedVisibility = postIsVisibleInCommunityFeed("$1");
     return {
       text: `SELECT ${projection}
         FROM community_posts cp
         LEFT JOIN users u ON u.id = cp.author_id
-        WHERE (cp.author_id = $1 OR ${relation})
+        WHERE (cp.author_id = $1 OR ${relation} OR ${groupMembership})
           AND ${feedVisibility}
           AND ${POST_VISIBILITY} IN ('public', 'followers_only')
           AND (${POST_REQUIRES_MODERATION} = false OR cp.author_id = $1)
@@ -328,6 +380,7 @@ export function buildCommunityFeedQuery(
       ? ""
       : "AND cp.created_at > NOW() - INTERVAL '30 days'";
     const feedVisibility = postIsVisibleInCommunityFeed("$1");
+    const groupMembership = currentGroupMembership("$1");
     return {
       text: `SELECT ${projection}
         FROM community_posts cp
@@ -335,7 +388,7 @@ export function buildCommunityFeedQuery(
         WHERE ${POST_VISIBILITY} = 'public'
           AND ${feedVisibility}
           AND ${POST_REQUIRES_MODERATION} = false
-          AND (${AUTHOR_IS_PRIVATE} = false OR u.id IS NULL)
+          AND (${AUTHOR_IS_PRIVATE} = false OR u.id IS NULL OR ${groupMembership})
           AND ${INTERNAL_CONTENT_EXCLUSION}
           AND ${notBlocked("$1")}
           ${recentWindow}
@@ -346,6 +399,7 @@ export function buildCommunityFeedQuery(
   }
 
   const relation = acceptedRelationship("$1");
+  const groupMembership = currentGroupMembership("$1");
   const feedVisibility = postIsVisibleInCommunityFeed("$1");
   return {
     text: `SELECT ${projection}
@@ -361,6 +415,7 @@ export function buildCommunityFeedQuery(
           OR u.id IS NULL
           OR cp.author_id = $1
           OR ${relation}
+          OR ${groupMembership}
         )
       ORDER BY cp.created_at DESC
       LIMIT $2 OFFSET $3`,
@@ -453,7 +508,7 @@ export async function fetchCommunityFeedRows(
   // older public posts only when the recent, privacy-filtered for-you result is
   // empty. Visibility, moderation, block, and internal-test exclusions remain
   // unchanged; this changes ranking reach, not access control.
-  if (!input.authorId && input.feedMode === "foryou" && rows.length === 0) {
+  if (!input.authorId && !input.taggedUserId && input.feedMode === "foryou" && rows.length === 0) {
     query = buildCommunityFeedQuery(input, ALL_COMMUNITY_FEED_CAPABILITIES, {
       recentOnly: false,
     });
@@ -467,7 +522,7 @@ export async function fetchCommunityFeedRows(
       ({ rows } = await queryable.query<CommunityPostRow>(query.text, query.values));
     }
   }
-  if (input.authorId || input.feedMode !== "foryou") return rows;
+  if (input.authorId || input.taggedUserId || input.feedMode !== "foryou") return rows;
 
   const [preferences, relatedIds] = await Promise.all([
     loadForYouPreferences(queryable, input.viewerId),
@@ -581,6 +636,7 @@ export async function fetchActiveCommunityComments(
   const { rows } = await queryable.query<{
     id: string;
     post_id: string;
+    parent_comment_id: string | null;
     author_id: string | null;
     author_name: string;
     author_initials: string;
@@ -592,6 +648,7 @@ export async function fetchActiveCommunityComments(
     SELECT
       c.id,
       c.post_id,
+      c.parent_comment_id,
       c.author_id,
       c.author_name,
       c.author_initials,
@@ -609,6 +666,7 @@ export async function fetchActiveCommunityComments(
   return rows.map((row) => ({
     id: row.id,
     postId: row.post_id,
+    parentCommentId: row.parent_comment_id,
     authorId: row.author_id,
     authorName: row.author_name,
     authorInitials: row.author_initials,

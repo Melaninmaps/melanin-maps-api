@@ -38,6 +38,14 @@ export async function generateImageBuffer(
   return Buffer.from(base64, "base64");
 }
 
+export async function editImageFromUrl(imageUrl: string, prompt: string): Promise<Buffer> {
+  const source = await fetch(imageUrl);
+  if (!source.ok) throw new Error("KINFOLK_PRIVATE_IMAGE_UNAVAILABLE");
+  const bytes = Buffer.from(await source.arrayBuffer());
+  const image = await toFile(bytes, "kinfolk-private-edit-source.png", { type: source.headers.get("content-type") || "image/png" });
+  const response = await getOpenAI().images.edit({ model: "gpt-image-1", image, prompt });
+  return Buffer.from(response.data?.[0]?.b64_json ?? "", "base64");
+}
 export async function editImages(
   imageFiles: string[],
   prompt: string,

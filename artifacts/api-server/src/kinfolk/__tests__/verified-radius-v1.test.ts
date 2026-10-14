@@ -42,6 +42,15 @@ describe("verified radius v1", () => {
     expect(extractCurrentTurnPublicOrigin("Find dinner within 10 miles of my hotel.")).toBeNull();
   });
 
+  it("accepts a named public landmark but redacts it as a generic public origin", () => {
+    const message = "Find Black-owned lunch within 3 miles of the Lincoln Memorial in Washington, DC.";
+    const origin = extractCurrentTurnPublicOrigin(message);
+    expect(origin).toBe("the Lincoln Memorial");
+    expect(redactCurrentTurnPublicOrigin(message, origin)).toBe(
+      "Find Black-owned lunch within 3 miles of your public origin in Washington, DC.",
+    );
+  });
+
   it("accepts only a geocoded public origin in the requested city and state", async () => {
     const fetchImpl = vi.fn().mockResolvedValue({
       ok: true,

@@ -3,7 +3,7 @@ import { sensitiveMemoryTopic } from "./sensitive-memory";
 
 export type ExplicitMemberMemory = Readonly<{
   content: string;
-  purpose: "planning_context" | "profile_context";
+  purpose: "planning_context" | "profile_context" | "requirement_context";
   isSensitive: boolean;
 }>;
 
@@ -11,6 +11,8 @@ const MEMORY_COMMANDS = [
   /^(?:hey\s+)?(?:kinfolk(?:ai)?[,.!\s]+)?(?:please\s+)?remember(?:\s+(?:this|that))?\s*[:,\-–—]?\s*(.+)$/i,
   /^(?:hey\s+)?(?:kinfolk(?:ai)?[,.!\s]+)?(?:(?:this|here)\s+is\s+what\s+I\s+want\s+you\s+to\s+remember\s+about\s+me|I\s+want\s+you\s+to\s+remember\s+(?:this\s+)?about\s+me)\s*[:,\-–—]?\s*(.+)$/i,
 ];
+const PERSISTENT_DELIVERY_PREFERENCE = /^(?:(?:hey\s+)?kinfolk(?:ai)?[,.!\s]+)?(?:please\s+)?(?:always|from\s+now\s+on|going\s+forward|in\s+future\s+(?:answers?|responses?))\b/i;
+const DELIVERY_PREFERENCE_TERMS = /\b(?:short|brief|concise|detailed|thorough|direct|professional|formal|casual|friendly|warm|plain\s+language|simple\s+language|bullet(?:\s+points?)?)\b/i;
 const QUESTION_AFTER_REMEMBER = /^(?:what|when|where|who|why|how|if|to)\b/i;
 const MEMORY_CAPABILITY_QUESTION = /^(?:(?:can|could|do|will)\s+(?:you|kinfolk(?:ai)?)\s+)?(?:remember|store|save|keep)\s+(?:my\s+)?(?:personal\s+)?(?:information|details?|preferences?|context|memory)(?:\s+(?:about\s+me|for\s+me))?\??$/i;
 
@@ -24,6 +26,7 @@ const PERSONAL_CONTEXT_REQUEST = /\b(?:remember|know about me|my profile|call me
 const HEALTH_OR_PERSONAL_SERVICE_REQUEST = /\b(?:doctor|physician|medical|health(?:\s+care)?|therap(?:y|ist)|counsel(?:or|ling)|dentist|specialist|clinic|hospital|midwi(?:fe|fery)|ob[- ]?gyn|pediatric(?:ian|s)?)\b/i;
 const CURRENT_AFFAIRS_INTEREST = /\b(?:military|deployment|war|conflict|foreign policy|geopolitic(?:s|al)|oil|energy)\b/i;
 const CURRENT_AFFAIRS_REQUEST = /\b(?:war|conflict|military|deployment|foreign policy|geopolitic(?:s|al)|iran|oil|energy)\b/i;
+const HARD_REQUIREMENT_CONTEXT = /\b(?:must(?:\s+not)?|need(?:\s+to)?|require(?:d|ment)?|cannot|can't|do\s+not|don't|never|only|avoid|without)\b/i;
 
 const DISCOVERY_CONTEXT_TERMS: ReadonlyArray<{
   pattern: RegExp;
@@ -48,12 +51,13 @@ export function parseExplicitMemberMemory(
 ): ExplicitMemberMemory | null {
   if (typeof value !== "string") return null;
   const normalized = value.replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
+  const explicitDeliveryPreference = isExplicitDeliveryPreference(normalized);
   const match = MEMORY_COMMANDS.map((command) => command.exec(normalized)).find(
     (candidate): candidate is RegExpExecArray => candidate !== null,
   );
-  if (!match) return null;
+  if (!match && !explicitDeliveryPreference) return null;
 
-  const content = match[1]?.trim() ?? "";
+  const content = explicitDeliveryPreference ? normalized : match?.[1]?.trim() ?? "";
   if (content.length < 3 || content.length > 1_000 || QUESTION_AFTER_REMEMBER.test(content) || /\?$/.test(content)) {
     return null;
   }
@@ -61,7 +65,11 @@ export function parseExplicitMemberMemory(
   return {
     content,
     purpose:
-      NAME_OR_NICKNAME_CONTEXT.test(content) ||
+      explicitDeliveryPreference
+        ? "profile_context"
+        : isExplicitMemberMemoryRequirement(content)
+        ? "requirement_context"
+        : NAME_OR_NICKNAME_CONTEXT.test(content) ||
       LIFESTYLE_PROFILE_CONTEXT.test(content)
         ? "profile_context"
         : PLANNING_CONTEXT.test(content)
@@ -69,6 +77,52 @@ export function parseExplicitMemberMemory(
           : "profile_context",
     isSensitive: sensitiveMemoryTopic(content) !== null,
   };
+}
+
+/**
+ * Detects a narrow, non-sensitive request about how Kinfolk should deliver an
+ * answer. It is deliberately limited to recognizable response-style terms, so
+ * a broad sentence beginning with "always" never becomes private memory.
+ */
+export function isExplicitDeliveryPreference(value: unknown): boolean {
+  if (typeof value !== "string") return false;
+  const normalized = value.replace(/[\u0000-\u001F\u007F]/g, " ").replace(/\s+/g, " ").trim();
+  return PERSISTENT_DELIVERY_PREFERENCE.test(normalized) &&
+    DELIVERY_PREFERENCE_TERMS.test(normalized) &&
+    normalized.length <= 240;
+}
+
+/**
+ * Converts a member-selected one-turn delivery choice into fixed, non-sensitive
+ * provider guidance. Raw member text never enters the system prompt, and this
+ * helper never writes a preference to memory or any other storage.
+ */
+export function buildOneTurnDeliveryPreferencePrompt(value: unknown): string {
+  if (!isExplicitDeliveryPreference(value)) return "";
+  const normalized = String(value).toLowerCase();
+  if (/\b(?:short|brief|concise)\b/.test(normalized)) {
+    return "CURRENT-TURN DELIVERY CHOICE: Keep this answer concise and direct. Apply this instruction only to this answer; do not store it or mention the choice unless the member asks.";
+  }
+  if (/\b(?:detailed|thorough)\b/.test(normalized)) {
+    return "CURRENT-TURN DELIVERY CHOICE: Give this answer a clear, structured level of detail proportionate to the question. Apply this instruction only to this answer; do not store it or mention the choice unless the member asks.";
+  }
+  if (/\b(?:professional|formal)\b/.test(normalized)) {
+    return "CURRENT-TURN DELIVERY CHOICE: Use a clear, warm professional tone for this answer. Apply this instruction only to this answer; do not store it or mention the choice unless the member asks.";
+  }
+  if (/\b(?:bullet(?:\s+points?)?|plain\s+language|simple\s+language|direct)\b/.test(normalized)) {
+    return "CURRENT-TURN DELIVERY CHOICE: Use clear, direct plain language and concise bullets when helpful for this answer. Apply this instruction only to this answer; do not store it or mention the choice unless the member asks.";
+  }
+  return "CURRENT-TURN DELIVERY CHOICE: Use a warm, conversational style for this answer. Apply this instruction only to this answer; do not store it or mention the choice unless the member asks.";
+}
+
+/**
+ * A member's direct "must", "need", or "avoid" instruction is distinct from
+ * a preference. Requirement context is never converted into soft discovery
+ * ranking terms: a later answer must meet it, ask a clarifying question, or say
+ * that it cannot verify a match rather than quietly relaxing it.
+ */
+export function isExplicitMemberMemoryRequirement(value: unknown): boolean {
+  return typeof value === "string" && HARD_REQUIREMENT_CONTEXT.test(value);
 }
 
 /**
@@ -118,6 +172,10 @@ export function isExplicitProfileMemoryRelevant(
 ): boolean {
   if (memory.purpose !== "profile_context") return false;
   if (NAME_OR_NICKNAME_CONTEXT.test(memory.content)) return true;
+  // An explicitly saved delivery preference is inherently relevant to the
+  // member's next answer, but it remains bounded to response style. It cannot
+  // alter evidence, eligibility, safety, sources, or another member's answer.
+  if (isExplicitDeliveryPreference(memory.content)) return true;
   if (PERSONAL_CONTEXT_REQUEST.test(currentMessage)) return true;
 
   const remembersTravelOrLocation = /\b(?:travel|work|city|neighborhood|vacation|nightlife|restaurant|spa|hotel|trip|visit)\b/i.test(memory.content);

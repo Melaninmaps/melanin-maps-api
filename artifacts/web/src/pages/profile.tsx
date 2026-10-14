@@ -59,6 +59,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { KinfolkExperienceSettings } from "@/components/kinfolk/KinfolkExperienceSettings";
+import { ProfilePresentationControls } from "@/components/profile/ProfilePresentationControls";
 import { SocialVideoPreferences } from "@/features/profile/SocialVideoPreferences";
 import { BusinessSupportPreferences } from "@/features/profile/BusinessSupportPreferences";
 import { MemberContextPreferences } from "@/features/profile/MemberContextPreferences";
@@ -1998,6 +1999,7 @@ export default function Profile() {
                   {updateProfile.isPending ? "Saving…" : "Save Changes"}
                 </Button>
               </form>
+              <ProfilePresentationControls />
             </div>
 
             {/* Saved Places below profile card on mobile / side column */}

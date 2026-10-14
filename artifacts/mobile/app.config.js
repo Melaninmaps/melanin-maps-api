@@ -11,20 +11,27 @@ const domain = process.env.EXPO_PUBLIC_DOMAIN ?? "";
 const apiOrigin = process.env.EXPO_PUBLIC_API_ORIGIN ?? (domain ? `https://${domain}` : "");
 const revenueCatEnabled = process.env.EXPO_PUBLIC_REVENUECAT_ENABLED === "true";
 const buildPlatform = process.env.EAS_BUILD_PLATFORM ?? "";
+const isolatedStagingDomain = "kinfolk-memory-api-staging-staging.up.railway.app";
+const isolatedStagingOrigin = `https://${isolatedStagingDomain}`;
 
 if (environment === "staging") {
-  if (domain !== "mwm-staging.35.196.78.19.nip.io") {
+  if (domain !== isolatedStagingDomain) {
     throw new Error("Staging Expo config requires the reviewed staging API domain");
   }
-  if (apiOrigin !== "https://mwm-staging.35.196.78.19.nip.io") {
+  if (apiOrigin !== isolatedStagingOrigin) {
     throw new Error("Staging Expo config requires the reviewed staging API origin");
   }
   if (revenueCatEnabled) {
-    throw new Error("RevenueCat must remain disabled for Build 106 staging");
+    throw new Error("RevenueCat must remain disabled for the isolated staging build");
   }
 }
 if (releaseChannel === "testflight-staging" && environment !== "staging") {
   throw new Error("The testflight-staging channel requires APP_ENV=staging");
+}
+if (buildPlatform === "android" && !mapsKey) {
+  throw new Error(
+    "Android build configuration requires GOOGLE_MAPS_API_KEY for native map rendering",
+  );
 }
 
 /** @type {import('expo/config').ExpoConfig} */

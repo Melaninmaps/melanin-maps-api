@@ -15,12 +15,11 @@ describe("Kinfolk native copy and arrival awareness contracts", () => {
     expect(travel).toContain('accessibilityLabel="Copy this Kinfolk answer"');
   });
 
-  it("requires an explicit foreground arrival-awareness opt-in", () => {
-    expect(settings).toContain("arrivalAwarenessEnabled: false");
-    expect(settings).toContain("requestForegroundPermissionsAsync");
-    expect(layout).toContain("function ArrivalAwarenessWatcher()");
-    expect(layout).toContain("getForegroundPermissionsAsync()");
-    expect(layout).toContain("/api/kinfolk/arrival-awareness");
-    expect(layout).toContain("foreground-only until an explicit background-location");
+  it("retires arrival awareness so the app never polls device location", () => {
+    expect(settings).not.toContain("arrivalAwarenessEnabled");
+    expect(settings).not.toContain("expo-location");
+    expect(layout).not.toContain("ArrivalAwarenessWatcher");
+    expect(layout).not.toContain("getForegroundPermissionsAsync()");
+    expect(layout).not.toContain("/api/kinfolk/arrival-awareness");
   });
 });

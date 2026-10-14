@@ -90,6 +90,9 @@ describe("native Community content-first surface", () => {
     expect(source).toContain('router.push("/connections")');
     expect(source).toContain("const feedListRef = useRef<FlatList<CommunityPost> | null>(null)");
     expect(source).toContain("feedListRef.current?.scrollToOffset({ offset: 0, animated: false })");
+    expect(source).toContain('useState<CommunityFeedDisplay>("text_first")');
+    expect(source).toContain('setActiveTab("Community Feed")');
+    expect(source).not.toContain('setActiveTab("Feed")');
     expect(source).toContain("setShowFeedControls(false)");
   });
 
@@ -99,7 +102,8 @@ describe("native Community content-first surface", () => {
       "Community video",
       "Play Community video",
       "inlineVideoCallToAction",
-      "useVideoPlayer({ uri: url, useCaching: true }",
+      "headers: item.private ? headers : undefined",
+      "useCaching: !item.private",
     ]) {
       expect(postCardSource).toContain(marker);
     }
@@ -136,5 +140,16 @@ describe("native Community content-first surface", () => {
     expect(threadSource).toContain("/api/community/thread/");
     expect(threadSource).toContain("Community thread");
     expect(threadSource).toContain("keyboardDismissMode=\"on-drag\"");
+  });
+
+  it("lets Group administrators manage roles and remove members through protected routes", () => {
+    expect(groupDetailSource).toContain("async (memberId: string, role: \"admin\" | \"member\")");
+    expect(groupDetailSource).toContain("/api/groups/${group.id}/members/${encodeURIComponent(memberId)}/role");
+    expect(groupDetailSource).toContain('method: "PATCH"');
+    expect(groupDetailSource).toContain("/api/groups/${group.id}/members/${encodeURIComponent(memberId)}");
+    expect(groupDetailSource).toContain('method: "DELETE"');
+    expect(groupDetailSource).toContain("Make moderator");
+    expect(groupDetailSource).toContain("Remove this member?");
+    expect(groupDetailSource).toContain("They will lose access to this Group’s posts, media, members, and plans.");
   });
 });

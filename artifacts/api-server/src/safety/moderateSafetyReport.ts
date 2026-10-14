@@ -16,6 +16,7 @@ export type SafetyReportModerationStatus = "pending" | "approved" | "rejected";
 export interface ModeratedSafetyReport {
   id: string;
   category: string;
+  encounterType: string | null;
   status: string;
   targetType: string;
   targetId: string | null;
@@ -46,6 +47,7 @@ async function updateReport(
   const result = await client.query<{
     id: string;
     category: string;
+    encounter_type: string | null;
     status: string;
     target_type: string;
     target_id: string | null;
@@ -63,7 +65,7 @@ async function updateReport(
          reviewed_at = NOW(),
          reviewed_by = $3
      WHERE id = $4
-     RETURNING id, category, status, target_type, target_id,
+     RETURNING id, category, encounter_type, status, target_type, target_id,
                incident_city, incident_region, incident_area, severity,
                moderator_notes, reviewed_at, reviewed_by`,
     [input.status, input.moderatorNotes, input.reviewedBy, input.id],
@@ -73,6 +75,7 @@ async function updateReport(
   return {
     id: row.id,
     category: row.category,
+    encounterType: row.encounter_type,
     status: row.status,
     targetType: row.target_type,
     targetId: row.target_id,
@@ -116,6 +119,7 @@ export async function moderateSafetyReport(input: {
           city: report.incidentCity,
           region: report.incidentRegion,
           category: report.category,
+          encounterType: report.encounterType,
           area: reportMustBeAnonymous(report.category) ? null : report.incidentArea,
         }
       : null;
@@ -124,6 +128,7 @@ export async function moderateSafetyReport(input: {
           city: incidentInput.city as string,
           region: incidentInput.region as string,
           category: incidentInput.category,
+          encounterType: incidentInput.encounterType,
           area: incidentInput.area,
         })
       : null;

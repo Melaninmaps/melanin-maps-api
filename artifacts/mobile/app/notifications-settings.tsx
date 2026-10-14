@@ -37,7 +37,6 @@ interface UserSettings {
   notifDigest: boolean;
   notifTips: boolean;
   notifReminders: boolean;
-  arrivalAwarenessEnabled: boolean;
   notifPostNudges: boolean;
   notifProductRecalls: boolean;
   notifPublicHealthAlerts: boolean;
@@ -56,7 +55,6 @@ const DEFAULTS: UserSettings = {
   notifDigest: true,
   notifTips: false,
   notifReminders: true,
-  arrivalAwarenessEnabled: false,
   notifPostNudges: true,
   notifProductRecalls: false,
   notifPublicHealthAlerts: false,
@@ -132,16 +130,6 @@ export default function NotificationsSettingsScreen() {
 
   const handleCategoryToggle = async (id: keyof UserSettings) => {
     const next = !settings[id];
-    // Location is never requested by browsing or by another notification
-    // category. It is requested only after this explicit opt-in.
-    if (id === "arrivalAwarenessEnabled" && next && Platform.OS !== "web") {
-      const Location = await import("expo-location").catch(() => null);
-      const permission = await Location?.requestForegroundPermissionsAsync();
-      if (!permission || permission.status !== "granted") {
-        Alert.alert("Location permission needed", "Arrival Awareness uses your current location only while the app is active to check for current official city alerts.");
-        return;
-      }
-    }
     update({ [id]: next });
   };
 
@@ -198,7 +186,6 @@ export default function NotificationsSettingsScreen() {
     { id: "notifDigest", icon: "mail", label: "Weekly Digest Email", sub: "Top picks and community highlights" },
     { id: "notifTips", icon: "info", label: "Tips & Features", sub: "How to get the most from the app" },
     { id: "notifReminders", icon: "bell", label: "KinfolkAI™ Reminders", sub: "Birthdays, anniversaries, and reminders you ask Kinfolk to save" },
-    { id: "arrivalAwarenessEnabled", icon: "map-pin", label: "Arrival Awareness", sub: "When the app is active, notify me only about current official alerts in a reviewed city" },
     { id: "notifPostNudges", icon: "zap", label: "KinfolkAI™ Post Nudges", sub: "Smart prompts when your customers are active (business owners)" },
     { id: "notifProductRecalls", icon: "package", label: "Official Product Recalls", sub: "Optional official notices for affected products and foods" },
     { id: "notifPublicHealthAlerts", icon: "heart", label: "Official Health Alerts", sub: "Optional public-health notices; not medical advice" },
@@ -239,7 +226,7 @@ export default function NotificationsSettingsScreen() {
         <View style={[styles.infoBox, { backgroundColor: colors.secondary }]}>
           <Feather name="shield" size={18} color={colors.primary} />
           <Text style={[styles.infoTxt, { color: colors.mutedForeground }]}>
-            Community safety alerts are always on to keep you and the community protected.
+            Private Check-In and trusted-contact alerts follow their own consent. City/state Police and ICE awareness is optional and managed in Profile.
           </Text>
         </View>
 
@@ -273,7 +260,7 @@ export default function NotificationsSettingsScreen() {
             </View>
             <View style={styles.rowContent}>
               <Text style={[styles.rowLabel, { color: colors.foreground }]}>Community Safety Alerts</Text>
-              <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>Urgent reports near your location</Text>
+              <Text style={[styles.rowSub, { color: colors.mutedForeground }]}>Private Check-In and trusted-contact updates; city/state Police and ICE awareness remains separately optional</Text>
             </View>
             <View style={[styles.toggle, { backgroundColor: colors.primary, opacity: 0.5 }]}>
               <View style={[styles.thumb, { transform: [{ translateX: 20 }] }]} />

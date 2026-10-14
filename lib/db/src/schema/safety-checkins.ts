@@ -7,6 +7,7 @@ import {
   text,
   timestamp,
   uniqueIndex,
+  uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 import { usersTable } from "./auth";
@@ -46,11 +47,37 @@ export const safetyCheckinRecipientsTable = pgTable(
       .references(() => usersTable.id, { onDelete: "cascade" }),
     recipientName: varchar("recipient_name", { length: 150 }).notNull(),
     notificationId: varchar("notification_id"),
+    // These states record only durable in-app creation and provider submission
+    // attempts. Neither is evidence that a device received the alert.
     deliveryStatus: varchar("delivery_status", {
-      enum: ["pending", "delivered", "skipped"],
+      enum: [
+        "pending",
+        "in_app_created",
+        "in_app_failed",
+        "push_pending",
+        "push_attempting",
+        "push_failed",
+        "push_submitted",
+        "skipped",
+      ],
     })
       .notNull()
       .default("pending"),
+    inAppAttemptCount: integer("in_app_attempt_count").notNull().default(0),
+    pushAttemptCount: integer("push_attempt_count").notNull().default(0),
+    inAppAttemptedAt: timestamp("in_app_attempted_at", { withTimezone: true }),
+    // The legacy notified_at field is retained for compatibility; this field is
+    // the unambiguous timestamp for creation of the durable in-app record.
+    inAppCreatedAt: timestamp("in_app_created_at", { withTimezone: true }),
+    inAppFailedAt: timestamp("in_app_failed_at", { withTimezone: true }),
+    pushAttemptedAt: timestamp("push_attempted_at", { withTimezone: true }),
+    // A claim token prevents a stale worker from finalizing a newer retry.
+    pushAttemptId: uuid("push_attempt_id"),
+    pushSubmittedAt: timestamp("push_submitted_at", { withTimezone: true }),
+    pushFailedAt: timestamp("push_failed_at", { withTimezone: true }),
+    nextRetryAt: timestamp("next_retry_at", { withTimezone: true }),
+    // Store a bounded internal code rather than provider or recipient details.
+    lastErrorCode: varchar("last_error_code", { length: 80 }),
     notifiedAt: timestamp("notified_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -65,6 +92,11 @@ export const safetyCheckinRecipientsTable = pgTable(
       table.checkinId,
       table.deliveryStatus,
       table.notifiedAt,
+    ),
+    index("safety_checkin_recipients_retry_idx").on(
+      table.checkinId,
+      table.deliveryStatus,
+      table.nextRetryAt,
     ),
   ],
 );

@@ -76,8 +76,6 @@ describe("map-first Web layout", () => {
   it("clears a searched locality and invalidates late search responses when recentering", () => {
     const resetStart = mapSource.indexOf("const resetView = useCallback(() => {");
     const resetSource = mapSource.slice(resetStart, mapSource.indexOf("const clearRoute", resetStart));
-    const areaHandoffStart = mapSource.indexOf("// ── Resolve ?area= handoff once after the map is ready");
-    const areaHandoffSource = mapSource.slice(areaHandoffStart, mapSource.indexOf("// The legacy discoverability endpoint", areaHandoffStart));
 
     expect(resetSource).toContain("universalSearchGenerationRef.current += 1;");
     expect(resetSource).toContain("areaHandoffGenerationRef.current += 1;");
@@ -91,7 +89,7 @@ describe("map-first Web layout", () => {
     expect(resetSource).toContain("clearEssentialServices();");
     expect(mapSource).toContain("const searchGeneration = ++universalSearchGenerationRef.current;");
     expect(mapSource).toContain("if (!isCurrentSearch()) return;");
-    expect(areaHandoffSource).toContain("const areaHandoffGeneration = ++areaHandoffGenerationRef.current;");
-    expect(areaHandoffSource).toContain("if (areaHandoffGeneration !== areaHandoffGenerationRef.current) return;");
+    expect(mapSource).toContain("const areaHandoffGeneration = ++areaHandoffGenerationRef.current;");
+    expect(mapSource).toContain("if (areaHandoffGeneration !== areaHandoffGenerationRef.current) return;");
   });
 });

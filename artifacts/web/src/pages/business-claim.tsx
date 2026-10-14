@@ -1,85 +1,118 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { Link, useLocation, Redirect } from "wouter";
 import { Layout } from "@/components/layout";
-import { MediaUploader, getMediaUrls } from "@/components/MediaUploader";
-import {
-  Shield, CheckCircle2, ArrowLeft, Store, AlertCircle,
-} from "lucide-react";
+import { AlertCircle, ArrowLeft, CheckCircle2, Shield, Store } from "lucide-react";
 
 const BASE = import.meta.env.BASE_URL;
+
+type ClaimEligibility =
+  | "loading"
+  | "claimable"
+  | "pending_for_you"
+  | "pending_for_other_user"
+  | "already_claimed"
+  | "not_claimable"
+  | "not_found"
+  | "unavailable";
 
 export default function BusinessClaim() {
   const { data: auth, isLoading: authLoading } = useGetCurrentAuthUser();
   const [location] = useLocation();
-
-  // businessId comes from the URL: /businesses/:id/claim
   const businessId = location.split("/")[2];
+  const user = auth?.user as { id?: string; email?: string } | undefined;
 
   const [business, setBusiness] = useState<{ name: string; city: string; category: string } | null>(null);
+  const [eligibility, setEligibility] = useState<ClaimEligibility>("loading");
+  const [eligibilityMessage, setEligibilityMessage] = useState("");
   const [loadingBiz, setLoadingBiz] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
-
   const [form, setForm] = useState({
-    claimantName: "",
-    claimantTitle: "",
+    ownerName: "",
+    role: "owner",
+    businessEmail: "",
     claimantPhone: "",
-    verificationNote: "",
+    verificationMethod: "manual_review",
+    officialUrl: "",
+    socialHandle: "",
+    notes: "",
+    attestation: false,
   });
 
-  const user = auth?.user as any;
+  useEffect(() => {
+    if (user?.email && !form.businessEmail) {
+      setForm((current) => ({ ...current, businessEmail: user.email ?? "" }));
+    }
+  }, [user?.email, form.businessEmail]);
 
   useEffect(() => {
     if (!businessId) return;
-    fetch(`${BASE}api/businesses/${businessId}`, { credentials: "include" })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data?.business ?? data?.id) {
-          const biz = data.business ?? data;
-          setBusiness({ name: biz.name, city: biz.city, category: biz.category });
-        }
-      })
-      .catch(() => {})
-      .finally(() => setLoadingBiz(false));
+    const controller = new AbortController();
+    void Promise.all([
+      fetch(`${BASE}api/businesses/${businessId}`, { credentials: "include", signal: controller.signal })
+        .then((response) => response.ok ? response.json() : null),
+      fetch(`${BASE}api/businesses/${businessId}/claim-eligibility`, { credentials: "include", signal: controller.signal })
+        .then((response) => response.ok ? response.json() : null),
+    ]).then(([businessPayload, eligibilityPayload]) => {
+      const value = businessPayload?.business ?? businessPayload;
+      if (value?.id) setBusiness({ name: value.name, city: value.city, category: value.category });
+      const state = eligibilityPayload?.eligibility as ClaimEligibility | undefined;
+      setEligibility(state ?? "unavailable");
+      setEligibilityMessage(typeof eligibilityPayload?.message === "string" ? eligibilityPayload.message : "Business ownership claims are unavailable right now.");
+    }).catch(() => {
+      if (!controller.signal.aborted) {
+        setEligibility("unavailable");
+        setEligibilityMessage("Business ownership claims are unavailable right now.");
+      }
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoadingBiz(false);
+    });
+    return () => controller.abort();
   }, [businessId]);
 
   if (!authLoading && !user?.id) {
     return <Redirect to={`/login?next=/businesses/${businessId}/claim`} />;
   }
 
-  const set = (field: keyof typeof form, value: string) =>
-    setForm((f) => ({ ...f, [field]: value }));
+  const set = (field: keyof typeof form, value: string | boolean) =>
+    setForm((current) => ({ ...current, [field]: value }));
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!form.claimantName.trim()) {
-      setError("Your name is required so we can verify your identity.");
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!form.ownerName.trim() || !form.businessEmail.trim()) {
+      setError("Your name and a business contact email are required.");
+      return;
+    }
+    if (!form.attestation) {
+      setError("Confirm that you are authorized to request control of this listing.");
       return;
     }
     setSubmitting(true);
     setError(null);
-
     try {
-      const resp = await fetch(`${BASE}api/businesses/${businessId}/claim`, {
+      const response = await fetch(`${BASE}api/businesses/${businessId}/claims`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...form,
-          verificationUrls: uploadedUrls,
+          ownerName: form.ownerName.trim(),
+          role: form.role,
+          businessEmail: form.businessEmail.trim(),
+          claimantPhone: form.claimantPhone.trim() || undefined,
+          verificationMethod: form.verificationMethod,
+          officialUrl: form.officialUrl.trim() || undefined,
+          socialHandle: form.socialHandle.trim().replace(/^@/, "") || undefined,
+          notes: form.notes.trim() || undefined,
+          attestation: true,
         }),
       });
-
-      const data = await resp.json() as { ok?: boolean; error?: string };
-
-      if (!resp.ok) {
-        setError(data.error ?? "Failed to submit claim. Please try again.");
+      const payload = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) {
+        setError(payload.error ?? "Failed to submit the ownership claim. Please try again.");
         return;
       }
-
       setSuccess(true);
     } catch {
       setError("Network error. Please try again.");
@@ -91,168 +124,56 @@ export default function BusinessClaim() {
   if (success) {
     return (
       <Layout>
-        <div className="min-h-[70vh] flex items-center justify-center px-4 py-16">
-          <div className="max-w-md w-full text-center space-y-6">
-            <div className="w-20 h-20 bg-[#CA922B]/10 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle2 className="w-10 h-10 text-[#CA922B]" />
-            </div>
+        <div className="flex min-h-[70vh] items-center justify-center px-4 py-16">
+          <div className="w-full max-w-md space-y-6 text-center">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-[#CA922B]/10"><CheckCircle2 className="h-10 w-10 text-[#CA922B]" /></div>
             <div>
-              <h1 className="font-serif text-3xl font-bold text-[#3A1F0E] mb-3">
-                Claim submitted!
-              </h1>
-              <p className="text-[#3A1F0E]/70 leading-relaxed">
-                Our team will review your claim within a few business days.
-                The listing stays public while we verify your ownership.
-              </p>
+              <h1 className="mb-3 font-serif text-3xl font-bold text-[#3A1F0E]">Ownership claim submitted</h1>
+              <p className="leading-relaxed text-[#3A1F0E]/70">Your request is under review. Approval can grant listing-management access; it does not verify the business, ownership designation, safety, or public eligibility.</p>
             </div>
-            <Link href={`/businesses/${businessId}`}>
-              <button className="px-6 py-3 bg-[#CA922B] text-white font-semibold rounded-2xl hover:bg-[#B38024] transition-colors text-sm">
-                Back to listing →
-              </button>
-            </Link>
+            <Link href={`/businesses/${businessId}`}><button className="rounded-2xl bg-[#CA922B] px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#B38024]">Back to listing →</button></Link>
           </div>
         </div>
       </Layout>
     );
   }
 
+  const unavailable = eligibility !== "loading" && eligibility !== "claimable";
   return (
     <Layout>
-      <div className="max-w-xl mx-auto px-4 py-12 md:py-16">
-        {/* Header */}
+      <div className="mx-auto max-w-xl px-4 py-12 md:py-16">
+        <Link href={`/businesses/${businessId}`}><button className="mb-6 flex items-center gap-1.5 text-sm text-[#3A1F0E]/50 transition-colors hover:text-[#CA922B]"><ArrowLeft className="h-4 w-4" />Back to listing</button></Link>
         <div className="mb-10">
-          <Link href={`/businesses/${businessId}`}>
-            <button className="flex items-center gap-1.5 text-sm text-[#3A1F0E]/50 hover:text-[#CA922B] transition-colors mb-6">
-              <ArrowLeft className="w-4 h-4" />
-              Back to listing
-            </button>
-          </Link>
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-[#CA922B]/10 rounded-xl flex items-center justify-center">
-              <Shield className="w-5 h-5 text-[#CA922B]" />
-            </div>
-            <span className="text-sm font-semibold text-[#CA922B] uppercase tracking-wide">
-              Claim ownership
-            </span>
-          </div>
-          <h1 className="font-serif text-3xl font-bold text-[#3A1F0E] mb-3">
-            Is this your business?
-          </h1>
-
-          {loadingBiz ? (
-            <div className="h-6 w-48 bg-[#3A1F0E]/8 rounded animate-pulse" />
-          ) : business ? (
-            <div className="flex items-center gap-2 text-[#3A1F0E]/60 text-sm">
-              <Store className="w-4 h-4 text-[#CA922B]" />
-              <span>{business.name} · {business.city} · {business.category}</span>
-            </div>
-          ) : null}
-
-          <p className="text-[#3A1F0E]/70 mt-4 leading-relaxed">
-            Verified business owners get access to respond to reviews,
-            update their listing, and share promotions with the community.
-          </p>
+          <div className="mb-3 flex items-center gap-3"><div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#CA922B]/10"><Shield className="h-5 w-5 text-[#CA922B]" /></div><span className="text-sm font-semibold uppercase tracking-wide text-[#CA922B]">Claim ownership</span></div>
+          <h1 className="mb-3 font-serif text-3xl font-bold text-[#3A1F0E]">Is this your business?</h1>
+          {loadingBiz ? <div className="h-6 w-48 animate-pulse rounded bg-[#3A1F0E]/8" /> : business ? <div className="flex items-center gap-2 text-sm text-[#3A1F0E]/60"><Store className="h-4 w-4 text-[#CA922B]" /><span>{business.name} · {business.city} · {business.category}</span></div> : null}
+          <p className="mt-4 leading-relaxed text-[#3A1F0E]/70">Request authorized management access to this existing listing. Ownership claims are reviewed; submitting one does not change public details, verification, ownership designations, ranking, safety information, or publication.</p>
         </div>
 
-        <form onSubmit={submit} className="space-y-5">
-          <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-start gap-3 text-sm text-amber-800">
-            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
-            <span>
-              We'll review your identity documents before granting access. The
-              listing stays public while your claim is pending.
-            </span>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-[#3A1F0E]">
-              Your name <span className="text-[#CA922B]">*</span>
-            </label>
-            <input
-              value={form.claimantName}
-              onChange={(e) => set("claimantName", e.target.value)}
-              placeholder="Your full legal name"
-              className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] placeholder:text-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm"
-              required
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-[#3A1F0E]">
-              Your role at this business
-            </label>
-            <input
-              value={form.claimantTitle}
-              onChange={(e) => set("claimantTitle", e.target.value)}
-              placeholder="e.g. Owner, Co-founder, Manager"
-              className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] placeholder:text-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-[#3A1F0E]">
-              Business phone number
-            </label>
-            <input
-              value={form.claimantPhone}
-              onChange={(e) => set("claimantPhone", e.target.value)}
-              placeholder="Phone we can call to verify"
-              type="tel"
-              className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] placeholder:text-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-[#3A1F0E]">
-              Verification documents <span className="font-normal text-[#3A1F0E]/40">(photos or PDFs)</span>
-            </label>
-            <p className="text-xs text-[#3A1F0E]/50">
-              Business license, utility bill, government ID, or any document
-              that links you to this business. Up to 6 files.
-            </p>
-            <MediaUploader
-              purpose="business_claim"
-              maxFiles={6}
-              accept="images+docs"
-              label="Upload verification documents"
-              onFilesChange={(files) => setUploadedUrls(getMediaUrls(files))}
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-sm font-semibold text-[#3A1F0E]">
-              Additional context
-            </label>
-            <textarea
-              value={form.verificationNote}
-              onChange={(e) => set("verificationNote", e.target.value)}
-              placeholder="Anything else that can help us verify your ownership?"
-              rows={3}
-              className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] placeholder:text-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm resize-none"
-            />
-          </div>
-
-          {error && (
-            <div className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-xl px-4 py-3">
-              {error}
-            </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={submitting || !form.claimantName.trim()}
-            className="w-full bg-[#CA922B] text-white font-bold py-4 rounded-2xl hover:bg-[#B38024] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-base"
-          >
-            {submitting ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                Submitting claim…
-              </span>
-            ) : (
-              "Submit ownership claim →"
-            )}
-          </button>
-        </form>
+        {unavailable ? (
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 text-sm leading-6 text-amber-900"><AlertCircle className="mb-2 h-5 w-5 text-amber-700" /><p className="font-semibold">This listing cannot accept a new ownership claim right now.</p><p className="mt-1">{eligibilityMessage}</p></div>
+        ) : (
+          <form onSubmit={submit} className="space-y-5">
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800"><div className="flex items-start gap-3"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" /><span>Only submit a claim if you are the owner or an authorized representative. A claim remains private to review staff until a separate approval decision.</span></div></div>
+            <Field label="Your name" required><input value={form.ownerName} onChange={(event) => set("ownerName", event.target.value)} placeholder="Your full name" className="claim-input" required /></Field>
+            <Field label="Your role at this business"><input value={form.role} onChange={(event) => set("role", event.target.value)} placeholder="Owner, co-founder, or authorized representative" className="claim-input" /></Field>
+            <Field label="Business contact email" required><input value={form.businessEmail} onChange={(event) => set("businessEmail", event.target.value)} placeholder="name@business.com" type="email" className="claim-input" required /></Field>
+            <Field label="Private review phone (optional)"><input value={form.claimantPhone} onChange={(event) => set("claimantPhone", event.target.value)} placeholder="(555) 000-0000" type="tel" className="claim-input" /><p className="mt-1 text-xs text-[#3A1F0E]/60">Used only for private claim review; it is never added to the public listing.</p></Field>
+            <Field label="How should the claim be reviewed?" required><select value={form.verificationMethod} onChange={(event) => set("verificationMethod", event.target.value)} className="claim-input"><option value="manual_review">Manual review</option><option value="domain_email">Business-domain email</option><option value="social_account">Official social account</option><option value="booking_page">Official booking page</option><option value="business_document">Business document</option></select></Field>
+            <Field label="Official website or public proof link"><input value={form.officialUrl} onChange={(event) => set("officialUrl", event.target.value)} placeholder="https://…" type="url" className="claim-input" /></Field>
+            <Field label="Official social handle"><input value={form.socialHandle} onChange={(event) => set("socialHandle", event.target.value)} placeholder="@yourbusiness" className="claim-input" /></Field>
+            <Field label="Additional context"><textarea value={form.notes} onChange={(event) => set("notes", event.target.value)} placeholder="Anything that will help the review team verify your authorization" rows={3} className="claim-input resize-none" /></Field>
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-[#3A1F0E]/15 bg-white p-4 text-sm leading-5 text-[#3A1F0E]"><input type="checkbox" checked={form.attestation} onChange={(event) => set("attestation", event.target.checked)} className="mt-1 h-4 w-4 accent-[#CA922B]" /><span>I confirm that I am authorized to request management access for this exact listing and that my information is accurate.</span></label>
+            {error && <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>}
+            <button type="submit" disabled={submitting || eligibility !== "claimable" || !form.ownerName.trim() || !form.businessEmail.trim() || !form.attestation} className="w-full rounded-2xl bg-[#CA922B] py-4 text-base font-bold text-white transition-colors hover:bg-[#B38024] disabled:cursor-not-allowed disabled:opacity-50">{submitting ? "Submitting claim…" : "Submit ownership claim →"}</button>
+          </form>
+        )}
       </div>
+      <style>{`.claim-input{width:100%;border:1px solid rgba(58,31,14,.15);border-radius:.75rem;padding:.75rem 1rem;color:#3A1F0E;background:#fff;font-size:.875rem}.claim-input:focus{outline:none;border-color:rgba(202,146,43,.7)}`}</style>
     </Layout>
   );
+}
+
+function Field({ label, required = false, children }: { label: string; required?: boolean; children: ReactNode }) {
+  return <div className="space-y-1.5"><label className="text-sm font-semibold text-[#3A1F0E]">{label}{required && <span className="text-[#CA922B]"> *</span>}</label>{children}</div>;
 }

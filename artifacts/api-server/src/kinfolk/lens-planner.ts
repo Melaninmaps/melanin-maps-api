@@ -39,10 +39,21 @@ export type SearchQuery = {
 export type SearchPlan = {
   intent: LensIntent;
   activeLenses: Lens[];
+  /** A retrieval preference, never a claim about the member's identity. */
+  representationMode: "none" | "diaspora_first_default" | "explicit_current_turn" | "consented_identity" | "explicit_override";
   queries: SearchQuery[];
   imageRequested: boolean;
   urgentHealthFlag: boolean;
 };
+
+export type RepresentationPlanningContext = Readonly<{
+  /**
+   * A separately consented, sensitive profile-context memory selected by the
+   * server for this relevant health turn. It is never inferred from account
+   * data, a name, a location, or an ordinary preference.
+   */
+  consentedHealthPopulationLabel?: string | null;
+}>;
 
 // ── Term libraries ─────────────────────────────────────────────────────────────
 
@@ -61,6 +72,16 @@ const URGENT_TERMS = [
   "upper stomach pain", "upper abdominal pain",
   "pregnant and swelling", "postpartum headache",
 ];
+
+const SKIN_REPRESENTATION_RE = /\b(?:eczema|dermatitis|rash|skin|psoriasis|acne|hyperpigment(?:ation)?|melasma)\b/i;
+const REPRESENTATION_RELEVANT_HEALTH_RE = /\b(?:eczema|dermatitis|rash|skin|psoriasis|acne|hyperpigment(?:ation)?|melasma|hair(?:\s+care)?|scalp|hypertension|blood\s+pressure|heart\s+(?:attack|disease|failure)|stroke|maternal|pregnan(?:cy|t)|postpartum|preeclampsia|fibroids?|lupus|sickle\s+cell|diabetes|asthma)\b/i;
+const LIGHTER_SKIN_OVERRIDE_RE = /\b(?:lighter|light)[-\s]+skin(?:\s+(?:examples|images|pictures|photos))?\b/i;
+const BROAD_SKIN_TONE_OVERRIDE_RE = /\b(?:all|different|multiple|varied)\s+skin\s+tones?\b|\bskin[-\s]+tone\s+comparison\b/i;
+// These are subject-matter signals, never identity proxies. They permit a
+// non-identifying diaspora-first educational source track only when the topic
+// itself makes that perspective useful.
+const HAIR_CARE_EDUCATION_RE = /\b(?:natural\s+hair|coily|curly|textured\s+hair|protective\s+style|locs?|loctician|braid(?:s|er|ing)?|twists?|wigs?|weaves?|extensions?|silk\s+press|wash(?:\s*(?:and|&)\s*)?detangle)\b/i;
+const CULTURAL_EDUCATION_RE = /\b(?:african\s+diaspora|diaspora|black\s+history|african\s+american\s+history|caribbean\s+history|hbcu|civil\s+rights|heritage|cultural\s+history|african\s+presence)\b/i;
 
 // ── Build MemberProfile from MWM user preferences ────────────────────────────
 
@@ -130,6 +151,89 @@ function currentTurnLens(query: string): Lens | null {
   };
 }
 
+function explicitRepresentationOverrideLens(query: string): Lens | null {
+  if (LIGHTER_SKIN_OVERRIDE_RE.test(query)) {
+    return {
+      id: "explicit-lighter-skin-request",
+      label: "lighter skin representation",
+      searchTerms: ["lighter skin", "light skin"],
+      priority: 0,
+    };
+  }
+  if (BROAD_SKIN_TONE_OVERRIDE_RE.test(query)) {
+    return {
+      id: "explicit-broad-skin-tone-request",
+      label: "broad skin-tone representation",
+      searchTerms: ["all skin tones", "skin tone comparison"],
+      priority: 0,
+    };
+  }
+  return null;
+}
+
+function defaultDiasporaFirstHealthLens(query: string): Lens | null {
+  if (!REPRESENTATION_RELEVANT_HEALTH_RE.test(query)) return null;
+  return {
+    id: "diaspora-first-representation-default",
+    label: "Black and Brown representation",
+    searchTerms: ["Black", "Brown", "skin of color", "darker skin"],
+    priority: 1,
+  };
+}
+
+function defaultDiasporaFirstEducationLens(query: string): Lens | null {
+  if (!HAIR_CARE_EDUCATION_RE.test(query) && !CULTURAL_EDUCATION_RE.test(query)) {
+    return null;
+  }
+  return {
+    id: "diaspora-first-education-default",
+    label: "Black and Brown diaspora perspectives",
+    searchTerms: ["Black", "Brown", "African diaspora", "Caribbean"],
+    priority: 1,
+  };
+}
+
+function resolveRepresentationLens(
+  query: string,
+  intent: LensIntent,
+  context: RepresentationPlanningContext,
+): { lens: Lens | null; mode: SearchPlan["representationMode"] } {
+  if (intent === "health") {
+    const explicitPopulation = currentTurnLens(query);
+    if (explicitPopulation) return { lens: explicitPopulation, mode: "explicit_current_turn" };
+
+    const explicitOverride = explicitRepresentationOverrideLens(query);
+    if (explicitOverride) return { lens: explicitOverride, mode: "explicit_override" };
+
+    const consentedLabel = context.consentedHealthPopulationLabel?.trim();
+    if (consentedLabel) {
+      return {
+        lens: {
+          id: "consented-health-representation",
+          label: consentedLabel,
+          searchTerms: [consentedLabel],
+          priority: 0,
+        },
+        mode: "consented_identity",
+      };
+    }
+
+    const defaultLens = defaultDiasporaFirstHealthLens(query);
+    return defaultLens
+      ? { lens: defaultLens, mode: "diaspora_first_default" }
+      : { lens: null, mode: "none" };
+  }
+
+  // Hair-care and cultural-history queries can benefit from a non-identifying
+  // diaspora source track. This is determined only from the topic in the
+  // current turn; a name, location, membership, or saved identity never turns
+  // it on, and it cannot change a directory or promotion rule.
+  const educationLens = defaultDiasporaFirstEducationLens(query);
+  return educationLens
+    ? { lens: educationLens, mode: "diaspora_first_default" }
+    : { lens: null, mode: "none" };
+}
+
 function healthSubject(query: string): string {
   return normalize(query)
     .replace(/\b(?:i am|i'm|i’m|i identify as|as)\s+(?:a|an)?\s*/i, "")
@@ -139,14 +243,55 @@ function healthSubject(query: string): string {
     .trim() || normalize(query);
 }
 
-function explicitPopulationHealthQueries(query: string, lens: Lens): SearchQuery[] {
+function representationHealthQueries(
+  query: string,
+  lens: Lens,
+  mode: SearchPlan["representationMode"],
+  imageRequested: boolean,
+): SearchQuery[] {
   const subject = healthSubject(query);
-  return [{
-    text: `${subject} ${lens.label} population evidence`,
+  const skinTopic = SKIN_REPRESENTATION_RE.test(query);
+  const defaultMode = mode === "diaspora_first_default";
+  const explicitOverride = mode === "explicit_override";
+  const queryLabel = defaultMode
+    ? (skinTopic ? "skin of color" : "Black and Brown health equity")
+    : lens.label;
+  const reason = defaultMode
+    ? "Diaspora-first representation default for a relevant health topic; it improves source coverage without identifying the member or changing condition-first evidence."
+    : explicitOverride
+      ? "Member explicitly requested a different representation for this turn; it overrides the default retrieval preference."
+      : mode === "consented_identity"
+        ? "Supplemental group-level evidence from a separately consented identity memory; do not disclose the saved note or diagnose the member."
+        : "Supplemental population evidence requested by explicit current-turn wording; treat it as group-level and non-diagnostic.";
+  const queries: SearchQuery[] = [{
+    text: `${subject} ${queryLabel} ${skinTopic ? "clinical guidance" : "population evidence"}`,
     role: "community_primary",
     lensId: lens.id,
-    reason:
-      "Supplemental population evidence requested by explicit current-turn wording; treat it as group-level and non-diagnostic.",
+    reason,
+  }];
+
+  if (skinTopic && (imageRequested || defaultMode || explicitOverride)) {
+    queries.push({
+      text: `${subject} ${queryLabel} clinician reviewed images`,
+      role: "image",
+      lensId: lens.id,
+      reason: `${reason} Images must be clinically reviewed and sourced; they are educational, not diagnostic.`,
+    });
+  }
+  return queries;
+}
+
+function diasporaFirstEducationQueries(query: string, lens: Lens): SearchQuery[] {
+  const hairCareTopic = HAIR_CARE_EDUCATION_RE.test(query);
+  return [{
+    text: hairCareTopic
+      ? `${query} Black and Brown hair care educational guidance`
+      : `${query} Black and Brown diaspora history and cultural context authoritative sources`,
+    role: "community_primary" as const,
+    lensId: lens.id,
+    reason: hairCareTopic
+      ? "Diaspora-first hair-care education may improve relevance for this topic without identifying the member or altering any service requirement."
+      : "Diaspora-first cultural education may improve source coverage for this topic without identifying the member or asserting a single community view.",
   }];
 }
 
@@ -171,12 +316,13 @@ export function buildSearchPlan(
   query: string,
   profile: MemberProfile,
   entityIndex: Record<string, { searchQuery: string }[]>,
+  representationContext: RepresentationPlanningContext = {},
 ): SearchPlan {
   const intent = detectLensIntent(query, entityIndex);
   const imageRequested = detectImageIntent(query);
   const urgentHealthFlag = isUrgentHealthQuery(query);
-  const explicitLens = currentTurnLens(query);
-  const activeLenses = explicitLens ? [explicitLens] : [];
+  const representation = resolveRepresentationLens(query, intent, representationContext);
+  const activeLenses = representation.lens ? [representation.lens] : [];
 
   if (intent === "entity") {
     const candidates = entityIndex[normalize(query)] ?? [];
@@ -184,6 +330,7 @@ export function buildSearchPlan(
     return {
       intent,
       activeLenses,
+      representationMode: representation.mode,
       imageRequested,
       urgentHealthFlag,
       queries: candidates.map((c, i) => ({
@@ -205,8 +352,15 @@ export function buildSearchPlan(
       role: "evidence",
       reason: "Condition-first authoritative evidence is required before any population context.",
     });
-    if (explicitLens) queries.push(...explicitPopulationHealthQueries(query, explicitLens));
-    if (imageRequested && /(eczema|dermatitis|skin)/.test(normalize(query))) {
+    if (representation.lens) {
+      queries.push(...representationHealthQueries(
+        query,
+        representation.lens,
+        representation.mode,
+        imageRequested,
+      ));
+    }
+    if (imageRequested && SKIN_REPRESENTATION_RE.test(query) && !representation.lens) {
       queries.push({
         text: `${subject} clinician reviewed images`,
         role: "image",
@@ -219,6 +373,9 @@ export function buildSearchPlan(
       role: "general",
       reason: "General evidence query retained for accuracy and source verification.",
     });
+    if (representation.lens) {
+      queries.push(...diasporaFirstEducationQueries(query, representation.lens));
+    }
     if (imageRequested) {
       queries.push({
         text: `${query} images`,
@@ -228,7 +385,14 @@ export function buildSearchPlan(
     }
   }
 
-  return { intent, activeLenses, queries: dedupeQueries(queries), imageRequested, urgentHealthFlag };
+  return {
+    intent,
+    activeLenses,
+    representationMode: representation.mode,
+    queries: dedupeQueries(queries),
+    imageRequested,
+    urgentHealthFlag,
+  };
 }
 
 /** Stored-profile lens disclosure is disabled until purpose-consent is implemented. */

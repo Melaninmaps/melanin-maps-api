@@ -98,23 +98,20 @@ describe("Community, map, and primary Kinfolk regressions", () => {
     expect(map).toContain('Text style={s.cardBtnTxt}>View Business</Text>');
   });
 
-  it("gives the primary Kinfolk conversation the guarded server transcription path", () => {
+  it("gives the primary Kinfolk conversation one guarded reviewed-transcript path", () => {
     const travel = source("app/travel.tsx");
-    expect(travel).toContain("useAudioRecorder(RecordingPresets.HIGH_QUALITY)");
-    expect(travel).toContain("requestRecordingPermissionsAsync()");
-    expect(travel).toContain("useAudioRecorderState(primaryRecorder, 250)");
-    expect(travel).toContain("primaryRecorder.getStatus().canRecord");
-    expect(travel).toContain("primaryRecorder.getStatus().isRecording");
-    expect(travel).toContain("Linking.openSettings()");
-    expect(travel).toContain("/api/kinfolk/transcribe");
-    expect(travel).toContain('form.append("durationMs", String(durationMs))');
-    expect(travel).toContain('form.append(\n        "regionalFlavor"');
+    const voiceSource = source("hooks/useKinfolkVoiceSource.ts");
+    const voiceControls = source("components/KinfolkVoiceSourceControls.tsx");
+    expect(travel).toContain("useKinfolkVoiceSource");
+    expect(travel).toContain("KinfolkVoiceSourceControls");
+    expect(travel).toContain("startPrimaryVoiceSource");
+    expect(travel).toContain("addPrimaryVoiceTranscriptToDraft");
     expect(travel).toContain("Record a voice question for Kinfolk");
-    expect(travel).toContain("const originalText = payload.meaningReview?.originalText?.trim() || payload.text.trim()");
-    expect(travel).toContain("voiceTranscriptReview");
-    expect(travel).toContain("Use suggestion");
-    expect(travel).toContain("Keep original");
-    expect(travel).not.toContain("await handleSend(payload.text)");
+    expect(travel).not.toContain("useAudioRecorder(RecordingPresets.HIGH_QUALITY)");
+    expect(travel).not.toContain("primaryRecorder.getStatus()");
+    expect(voiceSource).toContain("/api/kinfolk/transcribe");
+    expect(voiceControls).toContain("Review transcription");
+    expect(voiceSource).not.toContain("/api/kinfolk/chat");
   });
 
   it("keeps How do you travel multi-select and explains the behavior", () => {

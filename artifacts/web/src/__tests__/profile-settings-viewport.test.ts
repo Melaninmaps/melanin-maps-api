@@ -56,7 +56,8 @@ describe("profile settings viewport", () => {
 
   it("keeps a member-linked business entry and submission review route reachable", () => {
     expect(profile).toContain('id="profile-settings-folder-business"');
-    expect(profile).toContain('href="/submit-business?source=profile&campaign=member-business-entry"');
+    expect(profile).toContain('href="/submit-business?intent=owner&source=profile&campaign=member-business-owner-entry"');
+    expect(profile).toContain('href="/submit-business?source=profile&campaign=member-community-business-entry"');
     expect(profile).toContain('href="/my-business-submissions"');
     expect(profile).toContain("Add my business");
   });

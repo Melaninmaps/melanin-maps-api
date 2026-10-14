@@ -235,7 +235,7 @@ export default function ConnectionsScreen() {
               <View key={u.id} style={[s.searchRow, { borderBottomColor: colors.border }]}>
                 <TouchableOpacity activeOpacity={0.85}
                   style={{ flexDirection: "row", alignItems: "center", gap: 10, flex: 1 }}
-                  onPress={() => { setSearchQuery(""); setSearchResults([]); router.push(`/user-profile/${u.id}` as never); }}
+                  onPress={() => { setSearchQuery(""); setSearchResults([]); router.push(`/user/${u.id}` as never); }}
                 >
                   {u.profileImageUrl ? (
                     <Image source={{ uri: u.profileImageUrl }} style={s.avatar} />
@@ -325,7 +325,7 @@ export default function ConnectionsScreen() {
                       <View key={u.id} style={[s.connectionRow, { backgroundColor: colors.card, borderColor: colors.border, marginBottom: 8 }]}>
                         <TouchableOpacity
                           style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}
-                          onPress={() => router.push(`/user-profile/${u.id}` as never)}
+                          onPress={() => router.push(`/user/${u.id}` as never)}
                           activeOpacity={0.8}
                         >
                           {u.profileImageUrl ? (
@@ -422,7 +422,7 @@ export default function ConnectionsScreen() {
               <View style={[s.connectionRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
                 <TouchableOpacity
                   style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }}
-                  onPress={() => conn.otherId && router.push(`/user-profile/${conn.otherId}` as never)}
+                  onPress={() => conn.otherId && router.push(`/user/${conn.otherId}` as never)}
                   activeOpacity={0.8}
                 >
                   {conn.otherProfileImageUrl ? (

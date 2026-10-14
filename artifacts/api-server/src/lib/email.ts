@@ -580,19 +580,32 @@ export async function sendBusinessOutreach(to: string, businessName: string, cla
 export async function sendApprovalNotification(
   to: string,
   firstName: string | null,
-  options: { hasExistingAccount?: boolean } = {},
+  options: {
+    hasExistingAccount?: boolean;
+    activationUrl?: string;
+    mobileActivationUrl?: string;
+    activationExpiresAt?: Date;
+  } = {},
 ) {
-  if (!resend) return;
+  if (!resend) {
+    throw new Error("RESEND_API_KEY is not configured — cannot send approval email");
+  }
   const name = firstName ?? "there";
   const hasExistingAccount = options.hasExistingAccount === true;
   const actionLabel = hasExistingAccount ? "Sign In Now" : "Create Your Account";
   const actionUrl = hasExistingAccount
     ? "https://mappingwithmelanin.com/login"
-    : "https://mappingwithmelanin.com/signup";
+    : (options.activationUrl ?? "https://mappingwithmelanin.com/signup");
+  const expirationText = options.activationExpiresAt
+    ? ` This secure activation link expires ${options.activationExpiresAt.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}.`
+    : "";
   const accountInstruction = hasExistingAccount
     ? "Sign in now to start discovering Minority-owned businesses, community events, and Community Intelligence for your area."
-    : "Create your account now with this approved email address to start discovering Minority-owned businesses, community events, and Community Intelligence for your area.";
-  await sendEmail({
+    : `Create your account now with this approved email address to start discovering Minority-owned businesses, community events, and Community Intelligence for your area.${expirationText}`;
+  const mobileInstruction = !hasExistingAccount && options.mobileActivationUrl
+    ? `<p style="color:#3A1F0E;opacity:0.65;font-size:13px;line-height:1.5;margin:0 0 24px">On your phone, you can also open the Mapping With Melanin app with <a href="${options.mobileActivationUrl}" style="color:#CA922B">this secure activation link</a>. If the app is not installed, use the button above in your browser.</p>`
+    : "";
+  return sendEmail({
     from: FROM,
     to,
     replyTo: "hello@mappingwithmelanin.com",
@@ -607,6 +620,7 @@ export async function sendApprovalNotification(
         <a href="${actionUrl}" style="display:inline-block;background:#CA922B;color:#fff;font-weight:700;font-size:16px;padding:14px 32px;border-radius:50px;text-decoration:none;margin-bottom:28px">
           ${actionLabel} →
         </a>
+        ${mobileInstruction}
         <p style="color:#3A1F0E;opacity:0.5;font-size:13px;margin:0">
           Questions? Reach us at <a href="mailto:hello@mappingwithmelanin.com" style="color:#CA922B">hello@mappingwithmelanin.com</a>
         </p>

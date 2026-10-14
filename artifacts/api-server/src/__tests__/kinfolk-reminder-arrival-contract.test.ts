@@ -22,12 +22,11 @@ describe("Kinfolk reminder and arrival awareness contracts", () => {
     expect(citySafetyCityId({ city: "Atlanta", stateCode: "GA" })).toBe("atlanta-ga");
   });
 
-  it("uses the protected, non-persistent arrival awareness boundary", () => {
+  it("retires arrival awareness rather than collecting transient member coordinates", () => {
     expect(route).toContain('router.post("/kinfolk/arrival-awareness"');
-    expect(route).toContain("Coordinates are used for this");
-    expect(route).toContain("isCitySafetyBriefingV1Enabled()");
-    expect(route).toContain("currentCitySafetyBriefing");
-    expect(route).not.toMatch(/INSERT\s+INTO\s+user_locations[\s\S]{0,300}arrival-awareness/i);
+    expect(route).toContain("MEMBER_LOCATION_RETIRED");
+    expect(route).toContain("does not collect or use a member's current or recent location");
+    expect(route).not.toContain("milesBetween(latitude, longitude");
   });
 
   it("delivers opted-in reminders exactly once through the protected cron route", () => {
@@ -39,11 +38,9 @@ describe("Kinfolk reminder and arrival awareness contracts", () => {
     expect(cron).toContain('screen: "kinfolk-tasks"');
   });
 
-  it("keeps reminder and arrival choices explicit and migrated", () => {
+  it("keeps reminders explicit while location-driven arrival awareness is retired", () => {
     expect(settings).toContain("notifReminders: true");
-    expect(settings).toContain("arrivalAwarenessEnabled: false");
     expect(migrations).toContain("notif_reminders BOOLEAN NOT NULL DEFAULT true");
-    expect(migrations).toContain("arrival_awareness_enabled BOOLEAN NOT NULL DEFAULT false");
   });
 
   it("validates and preserves exact member-supplied reminder times", () => {

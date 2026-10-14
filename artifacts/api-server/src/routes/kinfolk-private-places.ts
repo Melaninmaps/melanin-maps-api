@@ -3,7 +3,8 @@ import type { PoolClient } from "pg";
 import { pool } from "@workspace/db";
 import { createGovernedKinfolkBusinessRepository } from "../kinfolk/governedBusinessRepository";
 import {
-  PRIVATE_PLACES_DISCLOSURE_VERSION,
+  PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE,
+  PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION,
   normalizePrivatePlaceAddress,
   normalizePrivatePlaceLabel,
   openPrivatePlace,
@@ -11,6 +12,7 @@ import {
   sealPrivatePlace,
 } from "../kinfolk/private-places-policy";
 import {
+  fictionalPrivatePlacesStagingGeocode,
   isPrivatePlacesFictionalQaProvider,
   type PrivatePlacesGeocode,
 } from "../kinfolk/private-places-fictional-qa";
@@ -79,10 +81,12 @@ function validPlaceId(value: unknown): string | null {
 }
 
 function disclosureAccepted(body: Record<string, unknown>): boolean {
-  return body.googleMapsGeocodingConsent === true && body.disclosureVersion === PRIVATE_PLACES_DISCLOSURE_VERSION;
+  return body.googleMapsGeocodingConsent === true && body.disclosureVersion === PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION;
 }
 
 async function geocodeWithApprovedGoogleDisclosure(address: string): Promise<PrivatePlacesGeocode | null> {
+  const stagingFixture = fictionalPrivatePlacesStagingGeocode(address);
+  if (stagingFixture) return stagingFixture;
   const key = process.env.GOOGLE_MAPS_API_KEY;
   if (!key) throw new Error("PRIVATE_PLACES_GEOCODING_UNAVAILABLE");
   const response = await fetch(
@@ -165,7 +169,7 @@ export function createKinfolkPrivatePlacesRouter(
                   updated_at = NOW()
             WHERE id = $1 AND user_id = $2
             RETURNING *`,
-          [input.currentId, input.ownerId, input.label, sealed.encryptedPayload, sealed.encryptionKeyVersion, coordinates.provider, PRIVATE_PLACES_DISCLOSURE_VERSION],
+          [input.currentId, input.ownerId, input.label, sealed.encryptedPayload, sealed.encryptionKeyVersion, coordinates.provider, PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION],
         );
         row = updated.rows[0];
       } else {
@@ -174,7 +178,7 @@ export function createKinfolkPrivatePlacesRouter(
             (user_id, label, encrypted_payload, encryption_key_version, geocode_provider, disclosure_version)
            VALUES ($1, $2, $3, $4, $5, $6)
            RETURNING *`,
-          [input.ownerId, input.label, sealed.encryptedPayload, sealed.encryptionKeyVersion, coordinates.provider, PRIVATE_PLACES_DISCLOSURE_VERSION],
+          [input.ownerId, input.label, sealed.encryptedPayload, sealed.encryptionKeyVersion, coordinates.provider, PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION],
         );
         row = inserted.rows[0];
       }
@@ -202,12 +206,12 @@ export function createKinfolkPrivatePlacesRouter(
     const state = privatePlacesRuntimeState();
     res.json({
       enabled: state.enabled,
-      disclosureVersion: state.disclosureVersion,
-      disclosure: state.disclosure,
+      disclosureVersion: PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION,
+      disclosure: PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE,
       guarantees: [
-        "Private Places is separate from Kinfolk memory and chat.",
+        "Private Places is separate from Kinfolk memory and never used automatically.",
         "An exact address is sent to Google Maps only after this disclosure is accepted.",
-        "MWM stores the place as an encrypted record and does not use it automatically.",
+        "An active Saved Place can be used for nearby business search only after you accept the current disclosure.",
       ],
     });
   });
@@ -351,6 +355,12 @@ export function createKinfolkPrivatePlacesRouter(
       );
       const place = result.rows[0];
       if (!place) return void res.status(404).json({ error: "Active Private Place not found." });
+      if (place.disclosure_version !== PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION) {
+        return void res.status(409).json({
+          error: "Update this Private Place and accept the current disclosure before using it for nearby search.",
+          code: "PRIVATE_PLACES_DISCLOSURE_REFRESH_REQUIRED",
+        });
+      }
       if (isPrivatePlacesFictionalQaProvider(place.geocode_provider)) {
         // The non-geographic QA fixture must not read directory data, create a
         // recommendation, or expose a real nearby result.

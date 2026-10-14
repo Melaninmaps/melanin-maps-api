@@ -44,6 +44,7 @@ describe("Community feed client error state", () => {
   it("retains a scalar public provider attachment during legacy response normalization", () => {
     expect(communityPageSource).toContain("/^https?:\\/\\//i.test(current.trim())");
     expect(communityPageSource).toContain("return [current.trim()]");
-    expect(communityPageSource).toContain("<CommunityMedia key={url} url={url} index={i} />");
+    expect(communityPageSource).toContain("...(post.mediaUrls ?? []).map((url) => ({ url, type: undefined, privateMedia: false as const }))");
+    expect(communityPageSource).toContain("<CommunityMedia key={`${item.privateMedia ? \"private\" : \"public\"}-${item.url}`} url={item.url} index={i} privateMedia={item.privateMedia} mediaType={item.type} />");
   });
 });

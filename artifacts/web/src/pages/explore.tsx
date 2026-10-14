@@ -23,6 +23,29 @@ function documentedOwnershipTags(business: BusinessWithVerifiedDesignations): st
   );
 }
 
+function safeDirectoryImageUrl(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  try {
+    const url = new URL(value.trim());
+    return (url.protocol === "https:" || url.protocol === "http:") && !url.username && !url.password
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function DirectoryCardImage({ url, name }: { url: unknown; name: string }) {
+  const [unavailable, setUnavailable] = useState(false);
+  const safeUrl = safeDirectoryImageUrl(url);
+
+  if (!safeUrl || unavailable) {
+    return <div className="h-52 w-full bg-[#2B1507]" aria-label={`No preview available for ${name}`} role="img" />;
+  }
+
+  return <img src={safeUrl} alt={`Preview of ${name}`} onError={() => setUnavailable(true)} className="h-52 w-full object-cover" />;
+}
+
 export default function Explore() {
   const [, navigate] = useLocation();
 
@@ -31,7 +54,7 @@ export default function Explore() {
   const [searchQuery, setSearchQuery] = useState("");
   const [submittedSearch, setSubmittedSearch] = useState("");
 
-  const { data, isLoading, isError } = useListBusinesses({
+  const { data, isLoading, isError, refetch } = useListBusinesses({
     limit: 50,
     search: submittedSearch.trim() || undefined,
   });
@@ -86,25 +109,27 @@ export default function Explore() {
             <div className="flex-1 flex items-center px-4">
               <Search className="w-4 h-4 text-gray-400 mr-2" />
               <input
+                id="explore-directory-search"
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                aria-label="Search business name or type"
                 placeholder="Search business name or type…"
                 className="w-full bg-transparent border-none outline-none text-[#3A1F0E] placeholder:text-gray-400"
               />
               {submittedSearch && (
-                <button onClick={() => { setSearchQuery(""); setSubmittedSearch(""); }} className="ml-2 text-gray-400 hover:text-[#3A1F0E]">
+                <button type="button" onClick={() => { setSearchQuery(""); setSubmittedSearch(""); }} aria-label="Clear business search" className="ml-2 text-gray-400 hover:text-[#3A1F0E]">
                   <X className="w-4 h-4" />
                 </button>
               )}
             </div>
-            <Button onClick={handleSearch} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-10">Search</Button>
+            <Button type="button" onClick={handleSearch} className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-8 h-10">Search</Button>
           </div>
 
           <p className="mt-4 text-[#F5EBD8]/50 text-xs">
             Looking for businesses near a specific city?{" "}
-            <button onClick={() => navigate("/map")} className="underline hover:text-[#CA922B]">Open the Map</button>
+            <button type="button" onClick={() => navigate("/map")} className="underline hover:text-[#CA922B]">Open the Map</button>
           </p>
         </div>
       </section>
@@ -115,7 +140,9 @@ export default function Explore() {
           {categories.map((c) => (
             <button
               key={c}
+              type="button"
               onClick={() => setActiveCategory(c)}
+              aria-pressed={activeCategory === c}
               className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-medium transition-colors ${
                 activeCategory === c
                   ? "bg-[#3A1F0E] text-white"
@@ -136,6 +163,7 @@ export default function Explore() {
             {selectedOwnership.length > 0 && (
               <button
                 onClick={() => setSelectedOwnership([])}
+                type="button"
                 className="text-xs text-[#CA922B] font-medium flex items-center gap-1 hover:underline"
               >
                 <X className="w-3 h-3" /> Clear
@@ -148,7 +176,9 @@ export default function Explore() {
               return (
                 <button
                   key={opt.id}
+                  type="button"
                   onClick={() => toggleOwnership(opt.id)}
+                  aria-pressed={active}
                   style={active ? { backgroundColor: opt.color, borderColor: opt.color, color: "#FFFFFF" } : {}}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full whitespace-nowrap text-xs font-semibold border transition-colors shrink-0 ${
                     active
@@ -175,8 +205,8 @@ export default function Explore() {
             {!isLoading && hasFilters && <span className="text-[#3A1F0E]/50"> · filtered</span>}
           </h2>
           <div className="flex items-center gap-2 bg-white rounded-lg p-1 border border-gray-200 shadow-sm">
-            <button className="p-2 bg-[#FAF6EF] text-[#3A1F0E] rounded-md"><Grid className="w-4 h-4" /></button>
-            <button onClick={() => navigate("/map")} title="View on map" className="p-2 text-gray-400 hover:text-[#3A1F0E]"><MapIcon className="w-4 h-4" /></button>
+            <span aria-label="Grid view selected" className="p-2 bg-[#FAF6EF] text-[#3A1F0E] rounded-md"><Grid className="w-4 h-4" aria-hidden="true" /></span>
+            <button type="button" onClick={() => navigate("/map")} aria-label="View listings on map" title="View on map" className="p-2 text-gray-400 hover:text-[#3A1F0E]"><MapIcon className="w-4 h-4" aria-hidden="true" /></button>
           </div>
         </div>
 
@@ -193,7 +223,7 @@ export default function Explore() {
                   style={{ backgroundColor: opt.color }}
                 >
                   {opt.emoji} {opt.label}
-                  <button onClick={() => toggleOwnership(id)} className="ml-1 opacity-70 hover:opacity-100">
+                  <button type="button" onClick={() => toggleOwnership(id)} aria-label={`Remove ${opt.label} filter`} className="ml-1 opacity-70 hover:opacity-100">
                     <X className="w-3 h-3" />
                   </button>
                 </span>
@@ -204,28 +234,27 @@ export default function Explore() {
 
         {/* Listings */}
         {isLoading ? (
-          <div className="flex justify-center items-center gap-3 py-24 text-[#3A1F0E]" aria-live="polite">
+          <div data-testid="explore-directory-loading" role="status" aria-live="polite" aria-atomic="true" className="flex justify-center items-center gap-3 py-24 text-[#3A1F0E]">
             <LoaderCircle className="h-7 w-7 animate-spin" aria-hidden="true" />
             <span className="text-sm text-[#3A1F0E]/60">Loading live business listings…</span>
           </div>
         ) : isError ? (
-          <div className="py-24 text-center">
+          <div data-testid="explore-directory-error" role="alert" className="py-24 text-center">
             <h3 className="text-xl font-serif font-bold text-[#3A1F0E]">Live listings are unavailable right now</h3>
             <p className="mt-2 text-sm text-[#3A1F0E]/70">Please try again shortly or search on the Map.</p>
-            <Button onClick={() => navigate("/map")} className="mt-6 rounded-full bg-[#CA922B] text-white">Open the Map</Button>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <Button type="button" onClick={() => void refetch()} variant="outline" className="rounded-full border-[#CA922B] text-[#CA922B]">Try again</Button>
+              <Button type="button" onClick={() => navigate("/map")} className="rounded-full bg-[#CA922B] text-white">Open the Map</Button>
+            </div>
           </div>
         ) : filtered.length > 0 ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             {filtered.map((business: any) => {
               const ownership = documentedOwnershipTags(business);
               return (
-                <article key={business.id} className="bg-white rounded-2xl overflow-hidden border border-[#3A1F0E]/5 shadow-[0_4px_20px_rgba(43,21,7,0.06)] flex flex-col">
-                  <div className="h-52 bg-[#2B1507]/10 relative overflow-hidden">
-                    {business.imageUrl ? (
-                      <img src={business.imageUrl} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full bg-[#2B1507]" aria-hidden="true" />
-                    )}
+                  <article key={business.id} className="bg-white rounded-2xl overflow-hidden border border-[#3A1F0E]/5 shadow-[0_4px_20px_rgba(43,21,7,0.06)] flex flex-col">
+                    <div className="h-52 bg-[#2B1507]/10 relative overflow-hidden">
+                    <DirectoryCardImage url={business.imageUrl} name={business.name} />
                     {business.verified === true && (
                       <span className="absolute top-3 left-3 inline-flex items-center gap-1 bg-white/95 text-[#3A1F0E] text-[10px] font-bold px-2 py-1 rounded">
                         <BadgeCheck className="w-3 h-3 text-[#CA922B]" aria-hidden="true" /> Verified listing
@@ -255,16 +284,14 @@ export default function Explore() {
                         })}
                       </div>
                     ) : null}
-                    <Link href={`/businesses/${business.id}`} className="mt-auto">
-                      <Button className="w-full rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white">View Details</Button>
-                    </Link>
+                    <Link href={`/businesses/${encodeURIComponent(String(business.id))}`} className="mt-auto inline-flex min-h-10 items-center justify-center rounded-full bg-[#CA922B] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#B38024] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#CA922B]">View Details</Link>
                   </div>
                 </article>
               );
             })}
           </div>
         ) : (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
+          <div data-testid="explore-directory-empty" role="status" className="flex flex-col items-center justify-center py-24 text-center">
             <h3 className="text-xl font-serif font-bold text-[#3A1F0E] mb-2">
               {submittedSearch ? `No listings match "${submittedSearch}"` : "No live listings match those filters"}
             </h3>
@@ -273,13 +300,14 @@ export default function Explore() {
             </p>
             <div className="flex gap-3 flex-wrap justify-center">
               <Button
+                type="button"
                 onClick={() => { setSelectedOwnership([]); setActiveCategory("All"); setSearchQuery(""); setSubmittedSearch(""); }}
                 variant="outline"
                 className="rounded-full border-[#CA922B] text-[#CA922B]"
               >
                 Clear filters
               </Button>
-              <Button onClick={() => navigate("/map")} className="rounded-full bg-[#CA922B] text-white">
+              <Button type="button" onClick={() => navigate("/map")} className="rounded-full bg-[#CA922B] text-white">
                 Open the Map
               </Button>
             </div>

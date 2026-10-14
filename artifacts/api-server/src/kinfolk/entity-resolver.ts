@@ -125,13 +125,29 @@ function normalizeTerm(s: string): string {
 /**
  * Extract candidate search terms from the message.
  * Returns normalized terms ordered from longest to shortest (bigrams before unigrams).
+ *
+ * Conversational introductions such as "Tell me about" are not part of an
+ * entity alias. Preserve their tail as an additional candidate so a qualified
+ * multi-word person or work name is not silently broken into short fragments.
  */
-function extractCandidateTerms(message: string): string[] {
+export function extractEntityCandidateTerms(message: string): string[] {
   const words = message.trim().split(/\s+/);
   const terms = new Set<string>();
 
   // Whole message (up to 6 words) — for multi-word entity names
   if (words.length <= 6) terms.add(normalizeTerm(message.trim()));
+
+  const entityPhrase = message
+    .trim()
+    .replace(
+      /^(?:(?:can|could) you\s+)?(?:tell me about|what do you know about|who is|who was)\s+/i,
+      "",
+    )
+    .trim();
+  const entityPhraseWords = entityPhrase.split(/\s+/).filter(Boolean);
+  if (entityPhraseWords.length >= 2 && entityPhraseWords.length <= 6) {
+    terms.add(normalizeTerm(entityPhrase));
+  }
 
   // 4-grams
   for (let i = 0; i <= words.length - 4; i++) {
@@ -357,7 +373,7 @@ export async function resolveEntity(
   memberPreferences: ExplicitMemberPreferences | null,
 ): Promise<EntityResolutionResult> {
   const normalizedMsg = normalizeTerm(message);
-  const candidateTerms = extractCandidateTerms(message);
+  const candidateTerms = extractEntityCandidateTerms(message);
 
   // Gather all entity candidates by alias lookup
   const seenEntityIds = new Set<string>();

@@ -21,6 +21,7 @@ import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDiscl
 import { SupportLensDropdowns } from "@/components/SupportLensDropdowns";
 import { useColors } from "@/hooks/useColors";
 import { useUnsavedKinfolkExitGuard } from "@/hooks/useUnsavedKinfolkExitGuard";
+import { getApiBase } from "@/lib/api";
 
 type Mode = "community" | "best_friend" | "business_manager" | "professor";
 type Voice = "onyx" | "nova" | "shimmer";
@@ -85,10 +86,6 @@ const EMPTY_DRAFT: Draft = {
     favoriteCategories: [], lifestyleServices: [], culturalInterests: [],
   },
 };
-
-function apiBase(): string {
-  return process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-}
 
 async function token(): Promise<string | null> {
   try { return await SecureStore.getItemAsync("auth_session_token"); }
@@ -189,7 +186,7 @@ export default function KinfolkSettingsControlCenter() {
     setLoading(true);
     try {
       const auth = await token();
-      const base = apiBase();
+      const base = getApiBase();
       if (!auth || !base) throw new Error("Please sign in again to view Kinfolk Settings.");
       const headers = { Authorization: `Bearer ${auth}` };
       const [settingsRes, prefsRes, continuityRes, nameRes] = await Promise.all([
@@ -263,7 +260,7 @@ export default function KinfolkSettingsControlCenter() {
       setError(null);
       try {
         const auth = await token();
-        const base = apiBase();
+        const base = getApiBase();
         if (!auth || !base) throw new Error("Please sign in again before saving Kinfolk Settings.");
         const headers = { "Content-Type": "application/json", Authorization: `Bearer ${auth}` };
         const requests: Promise<Response>[] = [];
@@ -361,6 +358,8 @@ export default function KinfolkSettingsControlCenter() {
         <TouchableOpacity style={styles.row} activeOpacity={0.8} accessibilityLabel="Manage Private Places" onPress={() => router.push("/kinfolk-private-places" as never)}><Icon colors={colors} name="map-pin" /><View style={styles.grow}><Text style={[styles.rowTitle, { color: colors.foreground }]}>Private Places</Text><Text style={[styles.rowSub, { color: colors.mutedForeground }]}>A separate encrypted space for places you choose; never chat memory or an automatic recommendation.</Text></View><Feather name="chevron-right" color={colors.mutedForeground} size={18} /></TouchableOpacity>
         <Line colors={colors} />
         <TouchableOpacity style={styles.row} activeOpacity={0.8} accessibilityLabel="Manage Temporary Stays" onPress={() => router.push("/kinfolk-temporary-stays" as never)}><Icon colors={colors} name="calendar" /><View style={styles.grow}><Text style={[styles.rowTitle, { color: colors.foreground }]}>Temporary Stays</Text><Text style={[styles.rowSub, { color: colors.mutedForeground }]}>An encrypted travel stay with explicit dates, a limited post-stay grace window, and your own edit, pause, extend, and delete controls.</Text></View><Feather name="chevron-right" color={colors.mutedForeground} size={18} /></TouchableOpacity>
+        <Line colors={colors} />
+        <TouchableOpacity style={styles.row} activeOpacity={0.8} accessibilityLabel="Suggest a Community language term" onPress={() => router.push("/community-language" as never)}><Icon colors={colors} name="message-square" /><View style={styles.grow}><Text style={[styles.rowTitle, { color: colors.foreground }]}>Suggest Community language</Text><Text style={[styles.rowSub, { color: colors.mutedForeground }]}>Offer a term, meaning, and optional local context for review. Suggestions never change Kinfolk automatically.</Text></View><Feather name="chevron-right" color={colors.mutedForeground} size={18} /></TouchableOpacity>
       </View>
 
       <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>CONVERSATION MODE</Text>

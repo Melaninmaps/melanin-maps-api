@@ -20,6 +20,7 @@ describe("Business Voice Profile ownership boundary", () => {
     expect(route).toContain("business_owner_links bol");
     expect(route).toContain("bol.role = 'owner'");
     expect(route).toContain("bol.status = 'approved'");
+    expect(route).toContain("bol.revoked_at IS NULL");
     expect(route).toContain("ownerConfirmed");
     expect(route).not.toMatch(/FROM\s+(?:community_posts|reviews)/i);
     expect(route).not.toMatch(/JOIN\s+(?:community_posts|reviews)/i);

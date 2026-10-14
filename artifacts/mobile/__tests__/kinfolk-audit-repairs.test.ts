@@ -18,11 +18,53 @@ describe("Kinfolk audit repairs on mobile", () => {
   });
 
   it("authenticates before requesting microphone permission in the widget", () => {
-    const start = widget.indexOf("const startVoice = async () => {");
-    const end = widget.indexOf("const stopVoice", start);
-    const block = widget.slice(start, end);
-    expect(block.indexOf("if (!isAuthenticated || !token)")).toBeGreaterThan(-1);
-    expect(block.indexOf("requestRecordingPermissionsAsync()")).toBeGreaterThan(block.indexOf("if (!isAuthenticated || !token)"));
+    const voiceSource = readFileSync(
+      fileURLToPath(new URL("../hooks/useKinfolkVoiceSource.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(widget).toContain("useKinfolkVoiceSource({ isAuthenticated })");
+    expect(voiceSource).toContain("if (!options.isAuthenticated)");
+    expect(voiceSource).toContain("requestRecordingPermissionsAsync");
+  });
+
+  it("does not turn an absent or expired floating-widget session into a provider failure", () => {
+    const hook = readFileSync(
+      fileURLToPath(new URL("../hooks/useKinfolk.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(widget).toContain("if (!isAuthenticated || !user?.id) {");
+    expect(widget).toContain('"Sign in to ask Kinfolk"');
+    expect(widget).toContain("if (!token) {");
+    expect(widget).toContain("void refreshUser()");
+    expect(widget).toContain("status === 401");
+    expect(widget).toContain("setInput(text)");
+    expect(widget).toContain("const errorText =");
+    expect(widget).toContain("Kinfolk couldn't reach the service. Your question is back in the composer");
+    expect(widget).toContain("} else if (status !== 429) {");
+    expect(widget).toContain("Keep every unsuccessful non-rate-limited question available");
+    expect(widget).toContain("KINFOLK_CLIENT_TRACE_HEADER");
+    expect(widget).toContain("createKinfolkClientTrace");
+    expect(widget).toContain("kinfolkTraceReference(trace)");
+    expect(widget).toContain("sessionExpired: res.status === 401");
+    expect(widget).toContain("if (result.sessionExpired)");
+    expect(widget).toContain("Restoring secure sign-in…");
+    expect(widget).toContain("const sendDisabled = !input.trim() || widgetVoiceSource.canStop || authLoading");
+    expect(widget).toContain("disabled={sendDisabled}");
+    expect(widget.indexOf("if (!token) {")).toBeLessThan(widget.indexOf("const userMsg: Message"));
+    expect(hook).toContain("KINFOLK_CLIENT_TRACE_HEADER");
+    expect(hook).toContain("createKinfolkClientTrace");
+    expect(hook).toContain("kinfolkTraceReference(clientTrace)");
+    expect(hook).toContain('import { useAuth } from "@/lib/auth";');
+    expect(hook).toContain("const { refreshUser, user } = useAuth();");
+    expect(hook).toContain('content: "Your Kinfolk session needs to be refreshed. Please sign in again before sending your question."');
+    expect(hook).toContain("} else if (res.status === 401) {");
+    expect(hook).toContain('content: "Your Kinfolk session expired. Please sign in again, then resend your question."');
+    expect(hook.match(/void refreshUser\(\);/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("returns the standalone primary Kinfolk route to the app when navigation history is unavailable", () => {
+    expect(travel).toContain('router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)');
+    expect(travel).toContain('accessibilityLabel="Return to the app"');
   });
 
   it("shows, persists, and uses the four widget delivery modes", () => {
@@ -32,19 +74,26 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(widget).toContain("accessibilityRole=\"radio\"");
     expect(widget).toContain("void saveVoiceMode(v.id)");
     expect(widget).toContain("JSON.stringify({ personalityMode: nextMode })");
-    expect(widget).toContain("sendToKinfolk(text, token, voiceMode");
+    expect(widget).toContain("sendToKinfolk(text, user.id, token, voiceMode");
   });
 
-  it("keeps native voice controls off web and enforces a visible cancel-safe 60-second limit", () => {
+  it("keeps native voice controls off web and uses one visible cancel-safe 60-second source lifecycle", () => {
+    const voiceSource = readFileSync(
+      fileURLToPath(new URL("../hooks/useKinfolkVoiceSource.ts", import.meta.url)),
+      "utf8",
+    );
+    const voiceControls = readFileSync(
+      fileURLToPath(new URL("../components/KinfolkVoiceSourceControls.tsx", import.meta.url)),
+      "utf8",
+    );
     expect(widget).toContain('Platform.OS !== "web" ? (');
     expect(travel).toContain('Platform.OS !== "web" ? (');
-    expect(widget).toContain("NATIVE_VOICE_MAX_DURATION_MS = 60_000");
-    expect(travel).toContain("NATIVE_VOICE_MAX_DURATION_MS = 60_000");
-    expect(widget).toContain("recordingElapsedSeconds}s / 60s");
-    expect(travel).toContain("voiceRecordingElapsedSeconds}s / 60s");
-    expect(widget).toContain("setInput(draft)");
-    expect(travel).toContain("setInputText(primaryRecordingDraftRef.current)");
-    expect(travel).toContain("cancelPrimaryVoiceRecording()");
+    expect(widget).toContain("KinfolkVoiceSourceControls");
+    expect(widget).toContain("addWidgetVoiceTranscriptToDraft");
+    expect(travel).toContain("addPrimaryVoiceTranscriptToDraft");
+    expect(voiceSource).toContain("KINFOLK_VOICE_MAX_DURATION_MS");
+    expect(voiceControls).toContain("Cancel transcription");
+    expect(voiceControls).toContain("onUseTranscript");
   });
 
   it("does not silently persist a mobile reminder proposal and preserves its due date on explicit save", () => {
@@ -61,5 +110,19 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(widget).toContain("sensitiveMemoryDraft");
     expect(widget).toContain("KinfolkSensitiveMemoryConfirmation");
     expect(widget).toContain("purpose: data.sensitiveMemoryConfirmation.purpose");
+  });
+
+  it("keeps a one-time delivery choice local across primary and floating native Kinfolk", () => {
+    const hook = readFileSync(
+      fileURLToPath(new URL("../hooks/useKinfolk.ts", import.meta.url)),
+      "utf8",
+    );
+    expect(hook).toContain("oneTurnDeliveryInstructionRef");
+    expect(hook).toContain("oneTurnInstruction: oneTurnInstruction ?? undefined");
+    expect(hook).toContain("useOneTimeDeliveryInstruction");
+    expect(widget).toContain("oneTurnDeliveryInstructionRef");
+    expect(widget).toContain("oneTurnInstruction: oneTurnInstruction ?? undefined");
+    expect(widget).toContain("onUseOnce={(instruction) => { oneTurnDeliveryInstructionRef.current = instruction;");
+    expect(travel).toContain("onUseOnce={(instruction) => { useOneTimeDeliveryInstruction(instruction);");
   });
 });

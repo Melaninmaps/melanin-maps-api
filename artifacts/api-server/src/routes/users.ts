@@ -9,6 +9,15 @@ import { deleteAllSessionsForUser } from "../lib/auth";
 import { decryptToken, generateClientSecret, revokeAppleToken } from "../lib/apple";
 import { isAdmin } from "../lib/adminAuth";
 import { getUserTier, TIER_DISPLAY } from "../middleware/requireMembership";
+import { blockMemberAndCleanupRelationships, filterBlockedRelationships } from "../social/profileRelationshipAccess";
+import {
+  canPresentOptionalPersonalDetails,
+  getMemberProfilePresentation,
+  publicBirthdayLabel,
+  sanitizeMemberProfilePresentationPatch,
+  updateMemberProfilePresentation,
+  ageOnDate,
+} from "../social/memberProfilePresentation";
 
 const avatarUpload = multer({
   storage: multer.memoryStorage(),
@@ -20,6 +29,22 @@ const avatarUpload = multer({
 });
 
 const USERNAME_RE = /^[a-z0-9_]{3,30}$/;
+
+function privateProfileCoverStorageLocation(): { bucketId: string; prefix: string } | null {
+  const configured = process.env.PRIVATE_OBJECT_DIR?.trim();
+  if (!configured) return null;
+  const parts = configured.replace(/^\/+/, "").split("/").filter(Boolean);
+  const bucketId = parts.shift();
+  if (!bucketId) return null;
+  return { bucketId, prefix: parts.join("/") };
+}
+
+function profileCoverObjectKey(userId: string): { bucketId: string; objectKey: string } | null {
+  const location = privateProfileCoverStorageLocation();
+  if (!location) return null;
+  const base = location.prefix ? `${location.prefix}/` : "";
+  return { bucketId: location.bucketId, objectKey: `${base}member-profile-covers/${userId}/${randomUUID()}` };
+}
 function isReservedUsername(username: string): boolean {
   const n = username.toLowerCase().replace(/_/g, "");
   return ["mappingwithmelanin", "melaninmaps", "melaninmap", "melaninmapping", "mappingmelanin"].some(p => n.includes(p));
@@ -209,6 +234,7 @@ router.get("/users/search", async (req: Request, res: Response) => {
       .where(
         and(
           ne(usersTable.id, req.user.id),
+          eq(usersTable.isPrivate, false),
           or(
             ilike(usersTable.firstName, pattern),
             ilike(usersTable.lastName, pattern),
@@ -218,7 +244,9 @@ router.get("/users/search", async (req: Request, res: Response) => {
       )
       .limit(20);
 
-    res.json({ users: results });
+    // Search is a social discovery surface, so a block must conceal identity
+    // here as well as on profile, follow, and connection routes.
+    res.json({ users: await filterBlockedRelationships(req.user.id, results) });
   } catch (err) {
     req.log.error({ err }, "GET /api/users/search error");
     res.status(500).json({ error: "Internal server error" });
@@ -259,13 +287,16 @@ router.get("/users/suggestions", async (req: Request, res: Response) => {
        FROM users u
        LEFT JOIN friend_of_friend fof ON fof.suggested_id = u.id
        WHERE u.id != $1
+         AND u.is_private = false
          AND u.id NOT IN (SELECT friend_id FROM my_connections)
        ORDER BY fof.mutual_count DESC NULLS LAST, u.created_at DESC
        LIMIT 12`,
       [myId],
     );
 
-    res.json({ suggestions: rows.rows });
+    // Do not surface a blocked member through a recommendation after hiding
+    // their profile; blocks are intentionally bidirectional social boundaries.
+    res.json({ suggestions: await filterBlockedRelationships(myId, rows.rows) });
   } catch (err) {
     req.log.error({ err }, "GET /api/users/suggestions error");
     res.status(500).json({ error: "Internal server error" });
@@ -353,6 +384,131 @@ router.get("/users/me/privacy", async (req: Request, res: Response) => {
   }
 });
 
+// ── Member-facing social profile presentation ──────────────────────────────
+router.get("/users/me/profile-presentation", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  try {
+    const [user] = await db
+      .select({ dateOfBirth: usersTable.dateOfBirth })
+      .from(usersTable)
+      .where(eq(usersTable.id, req.user.id))
+      .limit(1);
+    if (!user) { res.status(404).json({ error: "User not found" }); return; }
+    const presentation = await getMemberProfilePresentation(req.user.id);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({
+      presentation: {
+        ...presentation,
+        coverUrl: presentation.coverObjectKey ? `/api/users/${encodeURIComponent(req.user.id)}/profile-cover` : null,
+      },
+      optionalPersonalDetailsAvailable: canPresentOptionalPersonalDetails(user.dateOfBirth),
+    });
+  } catch (err) {
+    req.log.error({ err }, "GET /api/users/me/profile-presentation error");
+    res.status(500).json({ error: "Could not load profile presentation settings" });
+  }
+});
+
+router.put("/users/me/profile-presentation", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const patch = sanitizeMemberProfilePresentationPatch(req.body);
+  if (!patch) { res.status(400).json({ error: "Provide one or more valid display choices" }); return; }
+  try {
+    const [user] = await db
+      .select({ dateOfBirth: usersTable.dateOfBirth })
+      .from(usersTable)
+      .where(eq(usersTable.id, req.user.id))
+      .limit(1);
+    if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+    // A stale setting must never make a minor's age, birthday, city, work, or
+    // achievement information public. Preserve the member's other settings.
+    if (!canPresentOptionalPersonalDetails(user.dateOfBirth)) {
+      patch.showAge = false;
+      patch.showBirthday = false;
+      patch.showLocation = false;
+      patch.showProfessionalDetails = false;
+      patch.showBadges = false;
+    }
+    const presentation = await updateMemberProfilePresentation(req.user.id, patch);
+    res.setHeader("Cache-Control", "private, no-store");
+    res.json({
+      presentation: {
+        ...presentation,
+        coverUrl: presentation.coverObjectKey ? `/api/users/${encodeURIComponent(req.user.id)}/profile-cover` : null,
+      },
+    });
+  } catch (err) {
+    req.log.error({ err }, "PUT /api/users/me/profile-presentation error");
+    res.status(500).json({ error: "Could not save profile presentation settings" });
+  }
+});
+
+// Cover images are stored as private objects and are delivered only through the
+// authenticated application route below. This is intentionally separate from
+// the legacy public avatar upload.
+router.post("/users/me/profile-cover", avatarUpload.single("cover"), async (req: any, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  if (!req.file) { res.status(400).json({ error: "No cover image provided" }); return; }
+  const target = profileCoverObjectKey(req.user.id);
+  if (!target) { res.status(503).json({ error: "Private storage is not configured" }); return; }
+  try {
+    await objectStorageClient.bucket(target.bucketId).file(target.objectKey).save(req.file.buffer, {
+      contentType: req.file.mimetype,
+      metadata: { cacheControl: "private, no-store" },
+    });
+    await updateMemberProfilePresentation(req.user.id, { coverObjectKey: target.objectKey });
+    res.setHeader("Cache-Control", "private, no-store");
+    res.status(201).json({ coverUrl: `/api/users/${encodeURIComponent(req.user.id)}/profile-cover` });
+  } catch (err) {
+    req.log.error({ err }, "POST /api/users/me/profile-cover error");
+    res.status(500).json({ error: "Could not save profile cover image" });
+  }
+});
+
+router.get("/users/:userId/profile-cover", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
+  const targetId = String(req.params.userId);
+  const callerId = req.user.id;
+  try {
+    const [targetUser] = await db
+      .select({ id: usersTable.id, isPrivate: usersTable.isPrivate })
+      .from(usersTable)
+      .where(eq(usersTable.id, targetId))
+      .limit(1);
+    if (!targetUser) { res.status(404).json({ error: "Cover not found" }); return; }
+    if (callerId !== targetId) {
+      const [block] = await db.select({ id: userBlocksTable.id }).from(userBlocksTable).where(or(
+        and(eq(userBlocksTable.blockerId, callerId), eq(userBlocksTable.blockedId, targetId)),
+        and(eq(userBlocksTable.blockerId, targetId), eq(userBlocksTable.blockedId, callerId)),
+      )).limit(1);
+      if (block) { res.status(404).json({ error: "Cover not found" }); return; }
+      if (targetUser.isPrivate) {
+        const [follow] = await db.select({ id: userFollowsTable.id }).from(userFollowsTable)
+          .where(and(eq(userFollowsTable.followerId, callerId), eq(userFollowsTable.followingId, targetId), eq(userFollowsTable.status, "accepted")))
+          .limit(1);
+        if (!follow) { res.status(404).json({ error: "Cover not found" }); return; }
+      }
+    }
+    const presentation = await getMemberProfilePresentation(targetId);
+    if (!presentation.coverObjectKey) { res.status(404).json({ error: "Cover not found" }); return; }
+    const location = privateProfileCoverStorageLocation();
+    if (!location) { res.status(503).json({ error: "Private storage is not configured" }); return; }
+    const file = objectStorageClient.bucket(location.bucketId).file(presentation.coverObjectKey);
+    const [exists] = await file.exists();
+    if (!exists) { res.status(404).json({ error: "Cover not found" }); return; }
+    const [metadata] = await file.getMetadata();
+    res.setHeader("Content-Type", String(metadata.contentType || "image/jpeg"));
+    res.setHeader("Cache-Control", "private, no-store");
+    file.createReadStream()
+      .on("error", () => { if (!res.headersSent) res.status(404).end(); else res.end(); })
+      .pipe(res);
+  } catch (err) {
+    req.log.error({ err }, "GET /api/users/:userId/profile-cover error");
+    res.status(404).json({ error: "Cover not found" });
+  }
+});
+
 router.patch("/users/me/privacy", async (req: Request, res: Response) => {
   if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   const { isPrivate, bio, allowDm } = req.body as Record<string, unknown>;
@@ -419,6 +575,9 @@ router.get("/users/:userId/profile", async (req: Request, res: Response) => {
         bio: usersTable.bio,
         industry: usersTable.industry,
         jobTitle: usersTable.jobTitle,
+        dateOfBirth: usersTable.dateOfBirth,
+        homeCity: usersTable.homeCity,
+        homeState: usersTable.homeState,
         createdAt: usersTable.createdAt,
         memberType: usersTable.memberType,
         isPrivate: usersTable.isPrivate,
@@ -514,16 +673,68 @@ router.get("/users/:userId/profile", async (req: Request, res: Response) => {
       }
     }
 
-    const { isPrivate, allowDm, ...profile } = user;
-    const { followersCount, followingCount, ...publicProfile } = profile;
+    const { followersCount, followingCount, allowDm } = user;
+
+    // A private profile may still expose a minimal identity card so a pending
+    // follower knows which request they sent. Bio, work details, member type,
+    // and all activity-derived information remain server-hidden until the
+    // relationship is accepted. This projection—not the client—is the privacy
+    // boundary for every member-profile entry point.
+    const identityProfile = {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      username: user.username,
+      profileImageUrl: user.profileImageUrl,
+      createdAt: user.createdAt,
+    };
+    const presentation = await getMemberProfilePresentation(targetId);
+    const canShowOptionalDetails = canSeeContent && canPresentOptionalPersonalDetails(user.dateOfBirth);
+    const age = canShowOptionalDetails && presentation.showAge ? ageOnDate(user.dateOfBirth) : null;
+    const birthday = canShowOptionalDetails && presentation.showBirthday ? publicBirthdayLabel(user.dateOfBirth) : null;
+    const location = canShowOptionalDetails && presentation.showLocation
+      ? [user.homeCity, user.homeState].filter(Boolean).join(", ") || null
+      : null;
+    const contentProfile = {
+      ...identityProfile,
+      bio: user.bio,
+      ...(canShowOptionalDetails && presentation.showProfessionalDetails ? {
+        industry: user.industry,
+        jobTitle: user.jobTitle,
+      } : {}),
+      ...(presentation.coverObjectKey && canSeeContent ? {
+        coverUrl: `/api/users/${encodeURIComponent(targetId)}/profile-cover`,
+      } : {}),
+      ...(age !== null ? { age } : {}),
+      ...(birthday ? { birthday } : {}),
+      ...(location ? { location } : {}),
+    };
+    const visibleProfile = canSeeContent ? contentProfile : identityProfile;
+    let badges: Array<{ achievementType: string; earnedAt: Date | null }> = [];
+    if (canSeeContent && canShowOptionalDetails && presentation.showBadges) {
+      try {
+        const badgeResult = await pool.query<{ achievement_type: string; earned_at: Date | null }>(
+          `SELECT achievement_type, earned_at FROM user_achievements WHERE user_id = $1 ORDER BY earned_at DESC LIMIT 12`,
+          [targetId],
+        );
+        badges = badgeResult.rows.map((row) => ({ achievementType: row.achievement_type, earnedAt: row.earned_at }));
+      } catch { badges = []; }
+    }
     res.json({
-      user: publicProfile,
-      profile: publicProfile,
-      // Follow totals are returned only to the account owner. Other member
-      // profile reads retain their current privacy-shaped response.
-      ...(callerId === targetId ? { followersCount, followingCount } : {}),
+      user: visibleProfile,
+      profile: visibleProfile,
+      // Counts are social proof, not relationship directories. They are visible
+      // only on the same privacy-shaped surface that can show profile activity:
+      // public profiles and accepted followers may see them; a pending/private
+      // viewer still receives only the minimal identity card.
+      ...(canSeeContent ? { followersCount, followingCount } : {}),
       reviews: canSeeContent ? reviews : [],
       tags: canSeeContent ? tags : [],
+      badges,
+      profilePresentation: callerId === targetId ? {
+        ...presentation,
+        coverUrl: presentation.coverObjectKey ? `/api/users/${encodeURIComponent(targetId)}/profile-cover` : null,
+      } : undefined,
       connectionStatus,
       connectionId,
       isFollowing,
@@ -547,6 +758,36 @@ router.post("/users/:userId/tags", async (req: Request, res: Response) => {
     const taggerId = req.user.id;
     if (taggerId === taggedUserId) { res.status(400).json({ error: "Cannot tag yourself" }); return; }
 
+    const [target] = await db
+      .select({ id: usersTable.id, isPrivate: usersTable.isPrivate })
+      .from(usersTable)
+      .where(eq(usersTable.id, taggedUserId))
+      .limit(1);
+    if (!target) { res.status(404).json({ error: "User not found" }); return; }
+
+    const [block] = await db
+      .select({ id: userBlocksTable.id })
+      .from(userBlocksTable)
+      .where(or(
+        and(eq(userBlocksTable.blockerId, taggerId), eq(userBlocksTable.blockedId, taggedUserId)),
+        and(eq(userBlocksTable.blockerId, taggedUserId), eq(userBlocksTable.blockedId, taggerId)),
+      ))
+      .limit(1);
+    if (block) { res.status(404).json({ error: "User not found" }); return; }
+
+    if (target.isPrivate) {
+      const [acceptedFollow] = await db
+        .select({ id: userFollowsTable.id })
+        .from(userFollowsTable)
+        .where(and(
+          eq(userFollowsTable.followerId, taggerId),
+          eq(userFollowsTable.followingId, taggedUserId),
+          eq(userFollowsTable.status, "accepted"),
+        ))
+        .limit(1);
+      if (!acceptedFollow) { res.status(403).json({ error: "This profile is private" }); return; }
+    }
+
     const { content } = req.body as { content?: string };
     if (!content?.trim()) { res.status(400).json({ error: "content is required" }); return; }
     if (content.trim().length > 280) { res.status(400).json({ error: "Tag must be 280 chars or fewer" }); return; }
@@ -565,8 +806,38 @@ router.post("/users/:userId/tags", async (req: Request, res: Response) => {
 });
 
 router.get("/users/:userId/tags", async (req: Request, res: Response) => {
+  if (!req.user?.id) { res.status(401).json({ error: "Authentication required" }); return; }
   try {
     const taggedUserId = String(req.params.userId);
+    const callerId = req.user.id;
+    const [target] = await db
+      .select({ id: usersTable.id, isPrivate: usersTable.isPrivate })
+      .from(usersTable)
+      .where(eq(usersTable.id, taggedUserId))
+      .limit(1);
+    if (!target) { res.status(404).json({ error: "User not found" }); return; }
+
+    const [block] = callerId === taggedUserId ? [undefined] : await db
+      .select({ id: userBlocksTable.id })
+      .from(userBlocksTable)
+      .where(or(
+        and(eq(userBlocksTable.blockerId, callerId), eq(userBlocksTable.blockedId, taggedUserId)),
+        and(eq(userBlocksTable.blockerId, taggedUserId), eq(userBlocksTable.blockedId, callerId)),
+      ))
+      .limit(1);
+    if (block) { res.status(404).json({ error: "User not found" }); return; }
+
+    let canSeeTags = callerId === taggedUserId || !target.isPrivate;
+    if (!canSeeTags) {
+      const [follow] = await db
+        .select({ status: userFollowsTable.status })
+        .from(userFollowsTable)
+        .where(and(eq(userFollowsTable.followerId, callerId), eq(userFollowsTable.followingId, taggedUserId)))
+        .limit(1);
+      canSeeTags = follow?.status === "accepted";
+    }
+    if (!canSeeTags) { res.json({ tags: [] }); return; }
+
     const tags = await db
       .select({
         id: profileTagsTable.id,
@@ -838,7 +1109,14 @@ router.put("/users/settings", async (req: Request, res: Response) => {
       Object.keys(officialAlertPatch).length > 0
         ? db
             .insert(userSettingsTable)
-            .values({ userId: req.user.id, ...officialAlertPatch })
+            .values({
+              userId: req.user.id,
+              // An unrelated official-alert preference must never create an
+              // affirmative Police/ICE alert subscription by database default.
+              safetyAlertPolice: false,
+              safetyAlertIce: false,
+              ...officialAlertPatch,
+            })
             .onConflictDoUpdate({
               target: userSettingsTable.userId,
               set: { ...officialAlertPatch, updatedAt: new Date() },
@@ -862,14 +1140,8 @@ router.post("/users/:id/block", async (req: Request, res: Response) => {
   const targetId = Array.isArray(rawTargetId) ? rawTargetId[0] ?? "" : rawTargetId;
   if (targetId === req.user.id) { res.status(400).json({ error: "Cannot block yourself" }); return; }
   try {
-    await db.insert(userBlocksTable).values({
-      blockerId: req.user.id,
-      blockedId: targetId,
-    }).onConflictDoNothing();
-    // Also unfollow if following
-    await db.delete(userFollowsTable).where(
-      and(eq(userFollowsTable.followerId, req.user.id), eq(userFollowsTable.followingId, targetId))
-    );
+    const result = await blockMemberAndCleanupRelationships(req.user.id, targetId);
+    if (!result.targetFound) { res.status(404).json({ error: "User not found" }); return; }
     res.json({ ok: true, blocked: true });
   } catch (err) {
     req.log.error({ err }, "POST /api/users/:id/block error");

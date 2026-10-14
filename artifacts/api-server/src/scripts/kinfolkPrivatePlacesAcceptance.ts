@@ -6,6 +6,7 @@ import { join } from "node:path";
 import express from "express";
 import { Client } from "pg";
 import request from "supertest";
+import { PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION } from "../kinfolk/private-places-policy";
 
 const POSTGRES_BIN = "/usr/lib/postgresql/16/bin";
 const root = mkdtempSync(join(tmpdir(), "mwm-private-places-"));
@@ -86,14 +87,14 @@ async function main() {
     const status = await authed(owner).get("/kinfolk/private-places/status");
     assert.equal(status.status, 200);
     assert.equal(status.body.enabled, true);
-    assert.equal(status.body.disclosureVersion, "private-places-google-geocoding-v1");
+    assert.equal(status.body.disclosureVersion, PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION);
 
     const syntheticAddress = "1000 Synthetic Avenue, Exampleville, PA 19199";
     const declined = await authed(owner).post("/kinfolk/private-places").send({
       label: "Workshop",
       exactAddress: syntheticAddress,
       googleMapsGeocodingConsent: false,
-      disclosureVersion: "private-places-google-geocoding-v1",
+      disclosureVersion: PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION,
     });
     assert.equal(declined.status, 400, "missing disclosure acknowledgement is rejected");
     assert.equal(declined.body.code, "PRIVATE_PLACES_DISCLOSURE_REQUIRED");
@@ -104,7 +105,7 @@ async function main() {
       label: "Workshop",
       exactAddress: syntheticAddress,
       googleMapsGeocodingConsent: true,
-      disclosureVersion: "private-places-google-geocoding-v1",
+      disclosureVersion: PRIVATE_PLACES_EXPLICIT_NEARBY_DISCLOSURE_VERSION,
     });
     assert.equal(created.status, 201, "explicit disclosure permits one controlled geocode");
     assert.equal(geocodeCalls, 1, "exactly one geocode call occurs after consent");
