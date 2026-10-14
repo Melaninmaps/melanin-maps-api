@@ -17,6 +17,7 @@ import {
   type LibraryResearchCollection,
 } from "@/features/library/libraryResearchPaths";
 import "./library-topic-page.css";
+import { CuriosityListsPanel } from "@/features/library/CuriosityListsPanel";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -253,6 +254,8 @@ export function LibraryHomePage() {
           book or ask Kinfolk a new question to add a verified entry.
         </p>
       </header>
+
+      <CuriosityListsPanel apiBase={BASE} />
 
       <form action="/library" className="mt-8 flex gap-3">
         <label className="sr-only" htmlFor="library-search">

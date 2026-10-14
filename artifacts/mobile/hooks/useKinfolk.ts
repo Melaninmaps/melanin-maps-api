@@ -510,6 +510,8 @@ export function useKinfolk() {
       documentProcessingConsent?: boolean;
       includeCommunityPerspective?: boolean;
       publicOrigin?: string;
+      /** Explicit private-list choice for this message only; never persisted. */
+      curiosityListId?: string;
       /** Active-screen only; request data, never ChatMessage or session data. */
       temporarySensitiveContext?: TemporarySensitiveConversationContext;
     },
@@ -586,6 +588,7 @@ export function useKinfolk() {
           documentProcessingConsent: opts?.documentProcessingConsent === true,
           includeCommunityPerspective: opts?.includeCommunityPerspective === true,
           publicOrigin: opts?.publicOrigin?.trim() || undefined,
+          curiosityListId: opts?.curiosityListId ?? undefined,
           oneTurnInstruction: oneTurnInstruction ?? undefined,
           conversationInstruction: getConversationInstruction(),
           ...(opts?.temporarySensitiveContext

@@ -19,6 +19,7 @@ import { useColors } from "@/hooks/useColors";
 import { useMembership } from "@/hooks/useMembership";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { PrivacyPinModal, isSensitiveCategory } from "@/components/PrivacyPinModal";
+import { CuriosityListsPanel } from "@/components/CuriosityListsPanel";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
 import {
   libraryCollectionResearchParams,
@@ -804,6 +805,9 @@ export default function LibraryScreen() {
                   <Feather name="arrow-up-right" size={16} color="#2A0F05" />
                 </TouchableOpacity>
               </View>
+            </View>
+            <View style={[styles.section, { marginTop: 18 }]}>
+              <CuriosityListsPanel authenticated={isAuthenticated} onSignIn={() => router.push("/login" as never)} />
             </View>
             {!isAuthenticated ? (
               <View style={styles.signInPrompt}>

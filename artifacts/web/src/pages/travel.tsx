@@ -189,6 +189,7 @@ interface ClarificationStep {
   options: ClarificationOption[]; skippable: boolean;
   persistence: "temporary" | "optional_member_memory";
 }
+type CuriosityListChoice = { id: string; name: string; allowKinfolkUse: boolean };
 interface Message {
   id: string; role: "user" | "assistant";
   content: string; recommendations?: Recommendations | null;
@@ -1057,6 +1058,9 @@ function TravelPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [exactRadiusOrigin, setExactRadiusOrigin] = useState("");
+  const [curiosityLists, setCuriosityLists] = useState<CuriosityListChoice[]>([]);
+  const [curiosityListCandidateId, setCuriosityListCandidateId] = useState("");
+  const [selectedCuriosityListId, setSelectedCuriosityListId] = useState<string | null>(null);
 
   // Pre-fill from ?q= URL param — set once on mount (map/business search handoff)
   useEffect(() => {
@@ -1119,6 +1123,48 @@ function TravelPage() {
   const [modeSaveStatus, setModeSaveStatus] = useState<"idle" | "saving" | "error">("idle");
   const [copyToast, setCopyToast] = useState<string | null>(null);
   const [shareLink, setShareLink] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!isLoggedIn) {
+      setCuriosityLists([]);
+      setCuriosityListCandidateId("");
+      setSelectedCuriosityListId(null);
+      return () => { cancelled = true; };
+    }
+    void fetch(`${BASE}api/kinfolk/curiosity-lists`, {
+      credentials: "include",
+      headers: kinfolkAuthHeaders(),
+    })
+      .then(async (response) => {
+        if (!response.ok) return [] as CuriosityListChoice[];
+        const body = await response.json() as { lists?: CuriosityListChoice[] };
+        return Array.isArray(body.lists) ? body.lists.filter((list) =>
+          typeof list?.id === "string" &&
+          typeof list?.name === "string" &&
+          list.allowKinfolkUse === true,
+        ) : [];
+      })
+      .then((lists) => {
+        if (cancelled) return;
+        setCuriosityLists(lists);
+        setCuriosityListCandidateId((current) =>
+          lists.some((list) => list.id === current) ? current : "",
+        );
+        setSelectedCuriosityListId((current) =>
+          lists.some((list) => list.id === current) ? current : null,
+        );
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCuriosityLists([]);
+          setCuriosityListCandidateId("");
+          setSelectedCuriosityListId(null);
+        }
+      });
+    return () => { cancelled = true; };
+  }, [isLoggedIn]);
+
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("settings") === "kinfolk") {
       setShowPrefs(true);
@@ -2078,6 +2124,11 @@ function TravelPage() {
     }
     const publicOrigin = exactRadiusOrigin.trim();
     const oneTurnInstruction = oneTurnDeliveryInstructionRef.current;
+    // This deliberate selection belongs to this one request only. Clear it
+    // before the fetch so retries, cancellation, and later turns never reuse it.
+    const curiosityListIdForMessage = selectedCuriosityListId;
+    setSelectedCuriosityListId(null);
+    setCuriosityListCandidateId("");
     setInput("");
     setVoiceTranscriptReview(null);
     // An exact-radius origin is current-turn context only. Clear the browser
@@ -2118,7 +2169,7 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/chat`, {
         method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include",
-        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageAssetIds: attachedImageAssetIds, imageVisionConsent: attachedImageAssetIds.length > 0, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, oneTurnInstruction: oneTurnInstruction ?? undefined, conversationInstruction: getConversationInstruction(), ...(temporarySensitiveContext ? { temporarySensitiveContext: temporarySensitiveContext } : {}), conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageAssetIds: attachedImageAssetIds, imageVisionConsent: attachedImageAssetIds.length > 0, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, curiosityListId: curiosityListIdForMessage ?? undefined, oneTurnInstruction: oneTurnInstruction ?? undefined, conversationInstruction: getConversationInstruction(), ...(temporarySensitiveContext ? { temporarySensitiveContext: temporarySensitiveContext } : {}), conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
         signal: controller.signal,
       });
 
@@ -2307,7 +2358,7 @@ function TravelPage() {
       // after its response (or the bounded expiry worker handles interruption).
       setImageAttachments([]);
     }
-  }, [sending, sessionId, loadSessions, imageAttachments, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, exactRadiusOrigin, releaseAudio, getConversationInstruction, temporarySensitiveContext]);
+  }, [sending, sessionId, loadSessions, imageAttachments, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, exactRadiusOrigin, releaseAudio, getConversationInstruction, temporarySensitiveContext, selectedCuriosityListId]);
 
   // Change the depth of an existing answer (Show more / Show less).
   // Records the event server-side and updates the local message state optimistically.
@@ -2366,7 +2417,7 @@ function TravelPage() {
     setPlayingId(null);
     setPausedId(null);
     autoSpokenMessageIdsRef.current.clear();
-    setSessionId(undefined); setMessages([]); setConversationHandoff(null); setInput(""); setVoiceTranscriptReview(null); setShowHistory(false); setPendingClarificationMsgId(null); setGeneratedImage(null);
+    setSessionId(undefined); setMessages([]); setConversationHandoff(null); setInput(""); setVoiceTranscriptReview(null); setShowHistory(false); setPendingClarificationMsgId(null); setGeneratedImage(null); setCuriosityListCandidateId(""); setSelectedCuriosityListId(null);
   };
 
   // Library suggestions — track which message IDs have been responded to
@@ -3400,6 +3451,46 @@ function TravelPage() {
                         </>
                       )}
                     </fieldset>
+                    {curiosityLists.length > 0 && (
+                      <fieldset data-testid="kinfolk-curiosity-list-use" className="mb-3 rounded-xl border border-[#CA922B]/30 bg-white p-3 text-xs text-[#3A1F0E]">
+                        <legend className="px-1 font-bold">Private Curiosity List — next message only</legend>
+                        <p className="mt-1 text-[11px] leading-5 text-[#3A1F0E]/65">Choose an enabled list, then explicitly use it for one directly related question. It is not memory or a profile claim, and is never used for discovery, Map, Directory, Community, safety, or media.</p>
+                        <label className="mt-3 block text-[11px] font-semibold">
+                          Enabled private list
+                          <select
+                            value={curiosityListCandidateId}
+                            onChange={(event) => {
+                              setCuriosityListCandidateId(event.target.value);
+                              setSelectedCuriosityListId(null);
+                            }}
+                            className="mt-1 min-h-11 w-full rounded-xl border border-[#3A1F0E]/15 bg-[#FAF6EF] px-3 text-xs font-normal text-[#3A1F0E]"
+                          >
+                            <option value="">Choose a private list</option>
+                            {curiosityLists.map((list) => <option key={list.id} value={list.id}>{list.name}</option>)}
+                          </select>
+                        </label>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            disabled={!curiosityListCandidateId}
+                            onClick={() => setSelectedCuriosityListId(curiosityListCandidateId)}
+                            className="min-h-11 rounded-xl bg-[#8D5C17] px-3 text-xs font-bold text-white disabled:opacity-50"
+                          >
+                            Use this private list for this message
+                          </button>
+                          {selectedCuriosityListId && (
+                            <button
+                              type="button"
+                              onClick={() => { setSelectedCuriosityListId(null); setCuriosityListCandidateId(""); }}
+                              className="min-h-11 px-3 text-xs font-bold text-[#8D5C17]"
+                            >
+                              Cancel private list use
+                            </button>
+                          )}
+                        </div>
+                        {selectedCuriosityListId && <p aria-live="polite" className="mt-2 text-[11px] font-semibold text-[#8D5C17]">Selected for your next message only. It clears after send or cancellation.</p>}
+                      </fieldset>
+                    )}
                     <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
                       <label className="flex items-start gap-2 text-[11px] leading-5 text-[#3A1F0E]/60" title="Use approved public Community posts with matching hashtags. This does not share your chat. Community content is perspective, never evidence or a recommendation.">
                         <input data-testid="kinfolk-community-perspective-opt-in" type="checkbox" checked={includeCommunityPerspective} onChange={(event) => setIncludeCommunityPerspective(event.target.checked)} className="mt-0.5" />

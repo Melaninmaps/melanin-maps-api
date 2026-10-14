@@ -32,6 +32,11 @@ import { parseKinfolkClientTrace } from "../kinfolk/client-request-trace";
 import crypto from "crypto";
 import { currentChapterPromptForRequest } from "../kinfolk/current-chapter-runtime";
 import {
+  buildExplicitCuriosityListPrompt,
+  contextForExplicitCuriosityListUse,
+  parseExplicitCuriosityListId,
+} from "../kinfolk/curiosity-list-conversation-use";
+import {
   buildBehavioralEvidencePrompt,
   parseBehavioralFeedbackSignal,
 } from "../kinfolk/behavioral-evidence-policy";
@@ -61,6 +66,8 @@ import {
   reviewsTable,
   businessAiPlanCacheTable,
   neighborhoodSurveysTable,
+  kinfolkCuriosityListsTable,
+  kinfolkCuriosityListItemsTable,
   type SessionMessage,
   type JourneyPhase,
 } from "@workspace/db";
@@ -8937,6 +8944,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     res.status(401).json({ error: "Authentication required" });
     return;
   }
+  const authenticatedUserId = req.user.id;
   const parsedConversationInstruction = parseConversationInstruction(
     (req.body as { conversationInstruction?: unknown } | undefined)?.conversationInstruction,
   );
@@ -8985,6 +8993,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     oneTurnInstruction,
     staffAudit: requestedStaffAudit,
     clientTimeZone,
+    curiosityListId: requestedCuriosityListId,
   } = req.body as {
     sessionId?: string;
     message: string;
@@ -9004,7 +9013,15 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     oneTurnInstruction?: unknown;
     staffAudit?: unknown;
     clientTimeZone?: unknown;
+    /** Optional exact list selection for this one conversational message only. */
+    curiosityListId?: unknown;
   };
+
+  // Invalid or absent values are deliberately indistinguishable: the private
+  // list is simply unavailable for this turn. The ID is never logged or stored.
+  const selectedCuriosityListId = parseExplicitCuriosityListId(
+    requestedCuriosityListId,
+  );
 
   if (!message?.trim()) {
     res.status(400).json({ error: "message is required" });
@@ -13028,6 +13045,70 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const reproductiveBlock = buildReproductiveContextInstruction(memberCtx);
     const lifeStageBlock = buildLifeStageInstruction(memberCtx);
 
+    // A private Curiosity List is never automatic personalization. Read only the
+    // exact list ID carried by this message, and only on a narrow ordinary
+    // conversation surface. Directory/Map, Community, safety, media, discovery,
+    // travel, and contextual/research paths fail closed before any list lookup.
+    const curiosityListConversationSurfaceAllowed = Boolean(
+      selectedCuriosityListId &&
+        !staffAuditPolicy &&
+        earlyDecision.route === "general_knowledge" &&
+        (intentClass === "general_knowledge" ||
+          intentClass === "culture_entertainment" ||
+          intentClass === "hobby_lifestyle") &&
+        includeCommunityPerspective !== true &&
+        !communityHashtagContext.promptBlock &&
+        !isPrivateQuestionAttachment &&
+        !contextualPlan &&
+        !contextualEvidence?.media.length &&
+        webContextualVisuals.length === 0,
+    );
+    const explicitCuriosityListContext = curiosityListConversationSurfaceAllowed
+      ? await (async () => {
+          try {
+            const [selectedList] = await db
+              .select()
+              .from(kinfolkCuriosityListsTable)
+              .where(
+                and(
+                  eq(kinfolkCuriosityListsTable.id, selectedCuriosityListId!),
+                  eq(kinfolkCuriosityListsTable.userId, authenticatedUserId),
+                ),
+              )
+              .limit(1);
+            if (!selectedList) return null;
+            const selectedItems = await db
+              .select()
+              .from(kinfolkCuriosityListItemsTable)
+              .where(
+                and(
+                  eq(kinfolkCuriosityListItemsTable.listId, selectedList.id),
+                  eq(kinfolkCuriosityListItemsTable.userId, authenticatedUserId),
+                ),
+              )
+              .orderBy(kinfolkCuriosityListItemsTable.position)
+              .limit(12);
+            return contextForExplicitCuriosityListUse({
+              lists: [selectedList],
+              items: selectedItems,
+              request: {
+                authenticatedOwner: authenticatedUserId,
+                selectedListId: selectedCuriosityListId!,
+                message,
+                memberRequestedUse: true,
+              },
+            });
+          } catch {
+            // A private-data failure must never expose, enumerate, or retry a
+            // list. Continue with ordinary chat and no list context.
+            return null;
+          }
+        })()
+      : null;
+    const explicitCuriosityListPrompt = buildExplicitCuriosityListPrompt(
+      explicitCuriosityListContext,
+    );
+
     // A direct member selection is its own item-level opt-in and may be used
     // even when ordinary chat continuity is off. It never enables session
     // persistence; only relevant selected facts reach the response prompt.
@@ -13418,7 +13499,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       : "";
     const systemPromptWithLibrary = (
       leanGeneralChat
-        ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${temporalContext}\n\n${responseDepthPrompt}${privateMemoryPromptSuffix}${behavioralEvidencePrompt ? `\n\n${behavioralEvidencePrompt}` : ""}`
+        ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${temporalContext}\n\n${responseDepthPrompt}${privateMemoryPromptSuffix}${explicitCuriosityListPrompt ? `\n\n${explicitCuriosityListPrompt}` : ""}${behavioralEvidencePrompt ? `\n\n${behavioralEvidencePrompt}` : ""}`
         : (!contextualHighConsequence && libraryGroundingBlock
             ? `${systemPrompt}\n\n${libraryGroundingBlock}`
             : systemPrompt) +
@@ -13427,6 +13508,9 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           (documentSafetyBlock ? `\n\n${documentSafetyBlock}` : "") +
           (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "") +
           privateMemoryPromptSuffix +
+          (explicitCuriosityListPrompt
+            ? `\n\n${explicitCuriosityListPrompt}`
+            : "") +
           (behavioralEvidencePrompt ? `\n\n${behavioralEvidencePrompt}` : "")
     ) + (temporarySensitiveContextPrompt
       ? `\n\n${temporarySensitiveContextPrompt}`

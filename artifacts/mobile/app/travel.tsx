@@ -66,6 +66,7 @@ import { useKinfolkVoiceSource } from "@/hooks/useKinfolkVoiceSource";
 import { KinfolkLifelongCompanionSheet } from "@/components/KinfolkLifelongCompanionSheet";
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
+type CuriosityListChoice = { id: string; name: string; allowKinfolkUse: boolean };
 
 const ALL_CATEGORIES = [
   "Food & Drink", "Nightlife", "Culture & Art", "Music & Live Events",
@@ -2164,6 +2165,9 @@ export default function TravelScreen() {
 
   const { q: searchHandoff } = useLocalSearchParams<{ q?: string }>();
   const [inputText, setInputText] = useState(searchHandoff?.trim() ?? "");
+  const [curiosityLists, setCuriosityLists] = useState<CuriosityListChoice[]>([]);
+  const [curiosityListCandidateId, setCuriosityListCandidateId] = useState("");
+  const [selectedCuriosityListId, setSelectedCuriosityListId] = useState<string | null>(null);
   const primaryVoiceSource = useKinfolkVoiceSource({
     isAuthenticated,
     regionalFlavor: typeof preferences?.regionalFlavor === "string"
@@ -2228,6 +2232,42 @@ export default function TravelScreen() {
   const [showCompanionIdentity, setShowCompanionIdentity] = useState(false);
   const { flatListRef, isAtBottom, onUserSend, onScroll: onChatScroll, onContentSizeChange: onChatContentSizeChange, scrollToBottom } = useKinfolkChatScroll();
   const [kinfolkOk, setKinfolkOk] = useState<boolean | null>(null); // null = checking
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!isAuthenticated) {
+      setCuriosityLists([]);
+      setCuriosityListCandidateId("");
+      setSelectedCuriosityListId(null);
+      return () => { cancelled = true; };
+    }
+    void (async () => {
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const response = await fetch(`${getApiBase()}/api/kinfolk/curiosity-lists`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!response.ok) throw new Error("private list unavailable");
+        const body = await response.json() as { lists?: CuriosityListChoice[] };
+        const lists = Array.isArray(body.lists) ? body.lists.filter((list) =>
+          typeof list?.id === "string" &&
+          typeof list?.name === "string" &&
+          list.allowKinfolkUse === true,
+        ) : [];
+        if (cancelled) return;
+        setCuriosityLists(lists);
+        setCuriosityListCandidateId((current) => lists.some((list) => list.id === current) ? current : "");
+        setSelectedCuriosityListId((current) => lists.some((list) => list.id === current) ? current : null);
+      } catch {
+        if (!cancelled) {
+          setCuriosityLists([]);
+          setCuriosityListCandidateId("");
+          setSelectedCuriosityListId(null);
+        }
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (!isLoading || kinfolkRequestStartedAt === null) {
@@ -2689,6 +2729,11 @@ export default function TravelScreen() {
     const attachedImageAssetIds = kinfolkImages.map((attachment) => attachment.assetId);
     const attachedDocumentAssetIds = kinfolkDocument ? [kinfolkDocument.assetId] : [];
     const publicOrigin = exactRadiusOrigin.trim();
+    // A selected private list belongs only to this outgoing message. Clear it
+    // before the request so an interruption or retry cannot reuse it.
+    const curiosityListIdForMessage = selectedCuriosityListId;
+    setSelectedCuriosityListId(null);
+    setCuriosityListCandidateId("");
     onUserSend(); // scroll to bottom, suppress jump button for this send
     armAutoSpeech();
     const accepted = await sendMessage(msg, {
@@ -2700,6 +2745,7 @@ export default function TravelScreen() {
       documentProcessingConsent: attachedDocumentAssetIds.length > 0,
       includeCommunityPerspective,
       publicOrigin: publicOrigin || undefined,
+      curiosityListId: curiosityListIdForMessage ?? undefined,
       temporarySensitiveContext: temporarySensitiveContext ?? undefined,
     });
     if (accepted) {
@@ -2712,7 +2758,7 @@ export default function TravelScreen() {
       setIncludeCommunityPerspective(false);
       Keyboard.dismiss();
     }
-  }, [inputText, voiceMode, sendMessage, isAuthenticated, authLoading, onUserSend, kinfolkImages, kinfolkDocument, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin, temporarySensitiveContext]);
+  }, [inputText, voiceMode, sendMessage, isAuthenticated, authLoading, onUserSend, kinfolkImages, kinfolkDocument, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin, temporarySensitiveContext, selectedCuriosityListId]);
 
   const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
     void submitFeedback(msgId, name, cat, city, r);
@@ -2790,6 +2836,8 @@ export default function TravelScreen() {
   const handleNewSession = useCallback(() => {
     clearConversationInstruction();
     clearTemporarySensitiveContext();
+    setCuriosityListCandidateId("");
+    setSelectedCuriosityListId(null);
     startNewSession();
     setGeneratedImage(null);
   }, [startNewSession, clearConversationInstruction, clearTemporarySensitiveContext]);
@@ -3196,6 +3244,34 @@ export default function TravelScreen() {
               </TouchableOpacity>
             </>}
           </View>
+          {curiosityLists.length > 0 && <View accessibilityLabel="Private Curiosity List for next message only" style={{ borderWidth: 1, borderRadius: 10, borderColor: colors.primary + "33", backgroundColor: colors.primary + "08", padding: 10, gap: 7 }}>
+            <Text style={{ fontFamily: "Inter_700Bold", fontSize: 12, color: colors.text }}>Private Curiosity List — next message only</Text>
+            <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, lineHeight: 14, color: colors.mutedForeground }}>Choose an enabled list, then explicitly use it for one directly related question. It is not memory or a profile claim, and is never used for discovery, Map, Directory, Community, safety, or media.</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }} accessibilityLabel="Choose an enabled private list">
+              {curiosityLists.map((list) => {
+                const candidate = curiosityListCandidateId === list.id;
+                return <TouchableOpacity
+                  key={list.id}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: candidate }}
+                  accessibilityLabel={`Choose private list ${list.name}`}
+                  onPress={() => { setCuriosityListCandidateId(list.id); setSelectedCuriosityListId(null); }}
+                  style={{ borderWidth: 1, borderRadius: 16, borderColor: candidate ? colors.primary : colors.border, backgroundColor: candidate ? colors.primary + "14" : colors.background, paddingHorizontal: 10, paddingVertical: 7 }}
+                ><Text style={{ fontFamily: "Inter_600SemiBold", fontSize: 11, color: colors.text }}>{list.name}</Text></TouchableOpacity>;
+              })}
+            </ScrollView>
+            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+              <TouchableOpacity
+                accessibilityRole="button"
+                accessibilityState={{ disabled: !curiosityListCandidateId }}
+                disabled={!curiosityListCandidateId}
+                onPress={() => setSelectedCuriosityListId(curiosityListCandidateId)}
+                style={{ borderRadius: 16, backgroundColor: colors.primary, paddingHorizontal: 11, paddingVertical: 8, opacity: curiosityListCandidateId ? 1 : 0.5 }}
+              ><Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primaryForeground }}>Use this private list for this message</Text></TouchableOpacity>
+              {selectedCuriosityListId ? <TouchableOpacity accessibilityRole="button" accessibilityLabel="Cancel private list use" onPress={() => { setSelectedCuriosityListId(null); setCuriosityListCandidateId(""); }} style={{ paddingHorizontal: 7, paddingVertical: 8 }}><Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primary }}>Cancel private list use</Text></TouchableOpacity> : null}
+            </View>
+            {selectedCuriosityListId ? <Text accessibilityLiveRegion="polite" style={{ fontFamily: "Inter_600SemiBold", fontSize: 10, color: colors.primary }}>Selected for your next message only. It clears after send or cancellation.</Text> : null}
+          </View>}
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end" }}>
             <TouchableOpacity accessibilityLabel="Manage private Kinfolk memory" onPress={() => router.push("/kinfolk-memory" as any)}><Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primary }}>Manage memory</Text></TouchableOpacity>
           </View>
