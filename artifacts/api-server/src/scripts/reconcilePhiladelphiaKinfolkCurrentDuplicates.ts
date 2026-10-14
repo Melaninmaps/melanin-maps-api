@@ -110,6 +110,21 @@ export type KinfolkCurrentCityDuplicateInventory = Readonly<{
   }>;
 }>;
 
+/**
+ * Read-only administrator report. This carries the same city-scoped manual
+ * cases calculated for the guarded reconciler, without exposing an apply path
+ * or changing a business, receipt, review item, or audit record.
+ */
+export type KinfolkCurrentCityManualReviewReport = Readonly<{
+  totalCurrentKinfolkRowsRead: number;
+  manualReviewCases: Array<{
+    city: string;
+    state: string;
+    label: string;
+    cases: DuplicateReconciliationPlan["manualReview"];
+  }>;
+}>;
+
 export type PhiladelphiaKinfolkCurrentDuplicateManifest =
   KinfolkCurrentCityDuplicateManifest;
 
@@ -337,6 +352,37 @@ export async function listKinfolkCurrentCityDuplicateInventory(): Promise<Kinfol
     totalCurrentKinfolkRowsRead: records.length,
     citiesWithDuplicateSignals,
   };
+}
+
+export async function listKinfolkCurrentCityManualReviewReport(): Promise<KinfolkCurrentCityManualReviewReport> {
+  const { records, receiptsByBusinessId } = await loadCurrentKinfolkRecords();
+  const scopes = new Map<string, KinfolkCurrentCityScope>();
+  for (const record of records) {
+    const city = record.city?.trim() ?? "";
+    const state = record.state?.trim() ?? "";
+    if (!city || !state) continue;
+    scopes.set(`${normalizedScopePart(city)}:${normalizedScopePart(state)}`, {
+      city,
+      state,
+    });
+  }
+  const manualReviewCases = [...scopes.values()]
+    .map((scope) => {
+      const plan = buildKinfolkCurrentCityDuplicatePlan(
+        records,
+        receiptsByBusinessId,
+        scope,
+      );
+      return {
+        city: scope.city,
+        state: scope.state,
+        label: scopeLabel(scope),
+        cases: plan.manualReview,
+      };
+    })
+    .filter((city) => city.cases.length > 0)
+    .sort((left, right) => left.label.localeCompare(right.label));
+  return { totalCurrentKinfolkRowsRead: records.length, manualReviewCases };
 }
 
 export async function buildPhiladelphiaKinfolkCurrentDuplicateManifest(): Promise<PhiladelphiaKinfolkCurrentDuplicateManifest> {

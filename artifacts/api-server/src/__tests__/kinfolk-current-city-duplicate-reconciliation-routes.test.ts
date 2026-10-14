@@ -33,4 +33,20 @@ describe("Kinfolk Current city duplicate reconciliation", () => {
     expect(reconciler).toContain("buildKinfolkCurrentCityDuplicateManifest");
     expect(reconciler).toContain("applyKinfolkCurrentCityDuplicateManifest");
   });
+
+  it("exposes manual-review evidence through an authenticated read-only report", () => {
+    expect(adminRoute).toContain(
+      "/admin/businesses/kinfolk-current/city-duplicate-manual-review-report",
+    );
+    expect(adminRoute).toContain("listKinfolkCurrentCityManualReviewReport");
+    expect(adminRoute).toContain(
+      "This report is read-only and cannot apply a duplicate consolidation.",
+    );
+    expect(adminRoute).toContain('res.set("Cache-Control", "no-store")');
+    expect(reconciler).toContain(
+      "export async function listKinfolkCurrentCityManualReviewReport",
+    );
+    expect(reconciler).toContain("cases: plan.manualReview");
+    expect(reconciler).not.toContain("ManualReviewReport().then");
+  });
 });

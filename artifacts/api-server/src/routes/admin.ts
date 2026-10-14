@@ -60,6 +60,7 @@ import {
   buildKinfolkCurrentCityDuplicateManifest,
   buildPhiladelphiaKinfolkCurrentDuplicateManifest,
   listKinfolkCurrentCityDuplicateInventory,
+  listKinfolkCurrentCityManualReviewReport,
 } from "../scripts/reconcilePhiladelphiaKinfolkCurrentDuplicates";
 import {
   isDirectoryPublicDiscoveryRemovalReasonCode,
@@ -1590,6 +1591,31 @@ router.post("/admin/businesses/kinfolk-current/city-duplicate-reconciliation", a
   } catch (err) {
     req.log?.error({ err }, "POST /admin/businesses/kinfolk-current/city-duplicate-reconciliation error");
     res.status(500).json({ error: "The city duplicate reconciliation did not complete. No partial consolidation was saved." });
+  }
+});
+
+/**
+ * This endpoint is deliberately read-only. It exposes the already-computed
+ * manual-review reasons to an authenticated administrator so additional
+ * evidence can be assessed without invoking the reconciliation apply path.
+ */
+router.get("/admin/businesses/kinfolk-current/city-duplicate-manual-review-report", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) return void res.status(403).json({ error: "Forbidden" });
+  try {
+    const report = await listKinfolkCurrentCityManualReviewReport();
+    res.set("Cache-Control", "no-store");
+    res.json({
+      dryRun: true,
+      ...report,
+      safeguards: [
+        "This report is read-only and cannot apply a duplicate consolidation.",
+        "Manual cases retain the exact guarded-plan reasons and stable business identifiers.",
+        "A future write still requires a fresh city-scoped plan and matching stale-record guard.",
+      ],
+    });
+  } catch (err) {
+    req.log?.error({ err }, "GET /admin/businesses/kinfolk-current/city-duplicate-manual-review-report error");
+    res.status(500).json({ error: "The manual duplicate review report is temporarily unavailable." });
   }
 });
 
