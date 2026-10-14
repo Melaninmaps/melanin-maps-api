@@ -37,6 +37,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { getApiBase } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useConversationInstruction, type ConversationInstruction } from "@/hooks/useConversationInstruction";
+import { KinfolkConversationInstructionControls } from "@/components/KinfolkConversationInstructionControls";
 import {
   createKinfolkClientTrace,
   KINFOLK_CLIENT_TRACE_HEADER,
@@ -46,6 +48,7 @@ import { parseSafeSourceLink } from "@/lib/sourceLinks";
 import {
   getKinfolkConversation,
   recordKinfolkConversation,
+  clearKinfolkConversation,
 } from "@/lib/kinfolkConversationHandoff";
 import { KinfolkAnswerText } from "@/components/KinfolkAnswerText";
 import { KinfolkVoiceSourceControls } from "@/components/KinfolkVoiceSourceControls";
@@ -222,6 +225,7 @@ async function sendToKinfolk(
     documentProcessingConsent?: boolean;
     /** Device-local delivery preference consumed by this one request only. */
     oneTurnInstruction?: string;
+    conversationInstruction?: ConversationInstruction;
   }>,
 ): Promise<{
   reply: string;
@@ -275,6 +279,7 @@ async function sendToKinfolk(
         documentAssetIds: options?.documentAssetIds ?? [],
         documentProcessingConsent: options?.documentProcessingConsent === true,
         oneTurnInstruction: options?.oneTurnInstruction,
+        conversationInstruction: options?.conversationInstruction,
         clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       }),
       signal,
@@ -424,6 +429,10 @@ export function AIChatWidget() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading, refreshUser } = useAuth();
+  const { conversationInstruction, setConversationInstruction, clearConversationInstruction, getConversationInstruction } =
+    useConversationInstruction(isAuthenticated ? user?.id ?? null : null);
+  const [showConversationControls, setShowConversationControls] = useState(false);
+  const widgetConversationSessionRef = useRef<string | undefined>(undefined);
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [messages, setMessages] = useState<Message[]>(() => [
@@ -809,6 +818,11 @@ export function AIChatWidget() {
   }, [player]);
 
   const setWidgetOpen = useCallback((nextOpen: boolean) => {
+    if (nextOpen) {
+      const nextSessionId = getKinfolkConversation(user?.id)?.sessionId;
+      if (nextSessionId !== widgetConversationSessionRef.current) clearConversationInstruction();
+      widgetConversationSessionRef.current = nextSessionId;
+    }
     openRef.current = nextOpen;
     setOpen(nextOpen);
     if (!nextOpen) {
@@ -818,7 +832,21 @@ export function AIChatWidget() {
       setTyping(false);
       stopPlayback("widget_closed");
     }
-  }, [stopPlayback]);
+  }, [stopPlayback, user?.id, clearConversationInstruction]);
+
+  const startNewWidgetConversation = useCallback(() => {
+    clearConversationInstruction();
+    activeChatRequestRef.current?.abort();
+    activeChatRequestRef.current = null;
+    chatRequestGenerationRef.current += 1;
+    setTyping(false);
+    stopPlayback("new_widget_conversation");
+    clearKinfolkConversation(user?.id);
+    widgetConversationSessionRef.current = undefined;
+    setMessages([{ id: "0", text: GREETING, fromUser: false, ts: Date.now() }]);
+    setInput("");
+    setSuggestions([]);
+  }, [clearConversationInstruction, stopPlayback, user?.id]);
 
   const openRecommendationBusiness = useCallback((businessId: string) => {
     // A Kinfolk pick is a Mapping with Melanin listing, so its primary tap
@@ -1073,7 +1101,8 @@ export function AIChatWidget() {
     chatRequestGenerationRef.current += 1;
     setTyping(false);
     stopPlayback("widget_suppressed");
-  }, [stopPlayback, suppressed]);
+    if (onPrimaryKinfolkConversation) clearConversationInstruction();
+  }, [stopPlayback, suppressed, onPrimaryKinfolkConversation, clearConversationInstruction]);
 
   if (suppressed) return null;
 
@@ -1114,6 +1143,9 @@ export function AIChatWidget() {
     const attachedImagePreviewUris = kinfolkImages.map((attachment) => attachment.previewUri);
     const attachedDocumentAssetIds = kinfolkDocument ? [kinfolkDocument.assetId] : [];
     const oneTurnInstruction = oneTurnDeliveryInstructionRef.current;
+    const requestSessionId = getKinfolkConversation(user.id)?.sessionId;
+    if (requestSessionId !== widgetConversationSessionRef.current) clearConversationInstruction();
+    widgetConversationSessionRef.current = requestSessionId;
     activeChatRequestRef.current?.abort();
     const requestGeneration = ++chatRequestGenerationRef.current;
     const request = new AbortController();
@@ -1169,9 +1201,11 @@ export function AIChatWidget() {
         documentAssetIds: attachedDocumentAssetIds,
         documentProcessingConsent: attachedDocumentAssetIds.length > 0,
         oneTurnInstruction: oneTurnInstruction ?? undefined,
+        conversationInstruction: getConversationInstruction(),
       });
       if (requestGeneration !== chatRequestGenerationRef.current) return;
       if (oneTurnInstruction) oneTurnDeliveryInstructionRef.current = null;
+      widgetConversationSessionRef.current = getKinfolkConversation(user.id)?.sessionId;
       setKinfolkImages([]);
       setKinfolkDocument(null);
 
@@ -1963,6 +1997,17 @@ export function AIChatWidget() {
             </ScrollView>
           )}
 
+          <View style={{ paddingHorizontal: 12, paddingVertical: 4, backgroundColor: colors.background }}>
+            <TouchableOpacity accessibilityRole="button" accessibilityLabel="Open conversation delivery controls" accessibilityState={{ expanded: showConversationControls }} onPress={() => setShowConversationControls((value) => !value)} style={{ minHeight: 44, justifyContent: "center" }}>
+              <Text style={{ color: colors.primary, fontSize: 11, fontWeight: "700" }}>This conversation only</Text>
+            </TouchableOpacity>
+            {showConversationControls ? <View style={{ gap: 6 }}>
+              <KinfolkConversationInstructionControls value={conversationInstruction} onChange={setConversationInstruction} onClear={clearConversationInstruction} />
+              <TouchableOpacity accessibilityRole="button" accessibilityLabel="Start a new widget conversation" onPress={startNewWidgetConversation} style={{ minHeight: 44, justifyContent: "center" }}>
+                <Text style={{ color: colors.primary, fontSize: 11 }}>New conversation</Text>
+              </TouchableOpacity>
+            </View> : null}
+          </View>
           {messages.length === 1 && !typing && (
             <View style={[styles.trustWrap, { borderTopColor: colors.border }]}>
               <Text style={[styles.trustTxt, { color: colors.mutedForeground }]}>

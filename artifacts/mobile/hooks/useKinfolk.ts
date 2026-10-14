@@ -2,6 +2,7 @@ import * as SecureStore from "expo-secure-store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { getApiBase } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import { useConversationInstruction } from "./useConversationInstruction";
 import {
   createKinfolkClientTrace,
   KINFOLK_CLIENT_TRACE_HEADER,
@@ -431,6 +432,8 @@ export async function saveKinfolkTaskAction(input: TaskActionWriteInput): Promis
 
 export function useKinfolk() {
   const { refreshUser, user } = useAuth();
+  const { conversationInstruction, setConversationInstruction, clearConversationInstruction, getConversationInstruction } =
+    useConversationInstruction(user?.id ?? null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const messagesRef = useRef<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -532,7 +535,10 @@ export function useKinfolk() {
     const oneTurnInstruction = oneTurnDeliveryInstructionRef.current;
     const sharedConversation = getKinfolkConversation(user?.id);
     const effectiveSessionId = sharedConversation?.sessionId ?? sessionId;
-    if (effectiveSessionId && effectiveSessionId !== sessionId) setSessionId(effectiveSessionId);
+    if (effectiveSessionId && effectiveSessionId !== sessionId) {
+      clearConversationInstruction();
+      setSessionId(effectiveSessionId);
+    }
     const conversationContext = messagesRef.current.slice(-6).map((message) => ({
       role: message.role,
       content: message.content,
@@ -578,6 +584,7 @@ export function useKinfolk() {
           includeCommunityPerspective: opts?.includeCommunityPerspective === true,
           publicOrigin: opts?.publicOrigin?.trim() || undefined,
           oneTurnInstruction: oneTurnInstruction ?? undefined,
+          conversationInstruction: getConversationInstruction(),
           conversationContext,
           clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         }),
@@ -586,7 +593,6 @@ export function useKinfolk() {
 
       if (requestGeneration !== requestGenerationRef.current) return false;
       if (res.ok) {
-        if (oneTurnInstruction) oneTurnDeliveryInstructionRef.current = null;
         const data = (await res.json()) as {
           sessionId?: string;
           reply: string;
@@ -628,6 +634,8 @@ export function useKinfolk() {
           memoryConsentPlan?: InlineMemoryConsentPlan | null;
         };
 
+        if (controller.signal.aborted || requestGeneration !== requestGenerationRef.current) return false;
+        if (oneTurnInstruction) oneTurnDeliveryInstructionRef.current = null;
         if (data.sessionId) {
           setSessionId(data.sessionId);
           recordKinfolkConversation(user?.id, data.sessionId, "primary");
@@ -784,7 +792,7 @@ export function useKinfolk() {
         setRequestStartedAt(null);
       }
     }
-  }, [refreshUser, sessionId, user?.id]);
+  }, [refreshUser, sessionId, user?.id, getConversationInstruction, clearConversationInstruction]);
 
   const submitFeedback = useCallback(async (
     messageId: string,
@@ -906,6 +914,7 @@ export function useKinfolk() {
   }, [loadSessions]);
 
   const loadSession = useCallback(async (id: string): Promise<boolean> => {
+    clearConversationInstruction();
     const token = await getToken();
     const apiBase = getApiBase();
     if (!token || !apiBase) {
@@ -958,7 +967,7 @@ export function useKinfolk() {
       return false;
     }
     finally { setIsLoading(false); }
-  }, [user?.id]);
+  }, [user?.id, clearConversationInstruction]);
 
   // The opaque handoff ID is resolved through the existing authenticated
   // history route. That gives the member their server-authorized conversation
@@ -970,11 +979,12 @@ export function useKinfolk() {
   }, [handoffSessionToLoad, loadSession]);
 
   const startNewSession = useCallback(() => {
+    clearConversationInstruction();
     setMessages([]);
     setSessionId(null);
     clearKinfolkConversation(user?.id);
     setConversationHandoff(null);
-  }, [user?.id]);
+  }, [user?.id, clearConversationInstruction]);
 
   const confirmTaskAction = useCallback(async (messageId: string, action: TaskAction): Promise<TaskActionSaveResult> => {
     const existing = messagesRef.current.find((message) => message.id === messageId);
@@ -1062,6 +1072,9 @@ export function useKinfolk() {
     pendingRetryText,
     clearPendingRetryText,
     sendMessage,
+    conversationInstruction,
+    setConversationInstruction,
+    clearConversationInstruction,
     interruptCurrentReply,
     submitFeedback,
     loadSessions,

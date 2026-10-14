@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback, Component, type ReactNode } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
+import { CONVERSATION_INSTRUCTIONS, useConversationInstruction } from "@/hooks/useConversationInstruction";
 import {
   Sparkles, Send, Plus, MapPin, ChevronRight, ThumbsUp, ThumbsDown,
   Clock, Compass, ShieldCheck, Lightbulb, Loader2, Lock, MessageSquare,
@@ -1034,6 +1035,9 @@ class KinfolkErrorBoundary extends Component<{ children: ReactNode }, { error: E
 function TravelPage() {
   const { data: authData, isLoading: authLoading } = useGetCurrentAuthUser();
   const isLoggedIn = !authLoading && !!authData?.user;
+  const authAccountId = (authData?.user as { id?: unknown } | undefined)?.id;
+  const { conversationInstruction, setConversationInstruction, clearConversationInstruction, getConversationInstruction } =
+    useConversationInstruction(isLoggedIn && typeof authAccountId === "string" ? authAccountId : null);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -2099,7 +2103,7 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/chat`, {
         method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include",
-        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageAssetIds: attachedImageAssetIds, imageVisionConsent: attachedImageAssetIds.length > 0, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, oneTurnInstruction: oneTurnInstruction ?? undefined, conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageAssetIds: attachedImageAssetIds, imageVisionConsent: attachedImageAssetIds.length > 0, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, oneTurnInstruction: oneTurnInstruction ?? undefined, conversationInstruction: getConversationInstruction(), conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
         signal: controller.signal,
       });
 
@@ -2130,7 +2134,6 @@ function TravelPage() {
         return;
       }
 
-      if (oneTurnInstruction) oneTurnDeliveryInstructionRef.current = null;
 
       const data = await r.json() as {
         sessionId?: string; reply?: string;
@@ -2184,6 +2187,8 @@ function TravelPage() {
         memoryConsentPlan?: KinfolkInlineMemoryConsentPlan | null;
       };
 
+      if (controller.signal.aborted) return;
+      if (oneTurnInstruction) oneTurnDeliveryInstructionRef.current = null;
       // A structured itinerary may intentionally omit conversational copy. Legacy replies
       // retain the recoverable fallback rather than ever rendering a blank message.
       const replyContent = data.reply?.trim()
@@ -2287,7 +2292,7 @@ function TravelPage() {
       // after its response (or the bounded expiry worker handles interruption).
       setImageAttachments([]);
     }
-  }, [sending, sessionId, loadSessions, imageAttachments, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, exactRadiusOrigin, releaseAudio]);
+  }, [sending, sessionId, loadSessions, imageAttachments, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, exactRadiusOrigin, releaseAudio, getConversationInstruction]);
 
   // Change the depth of an existing answer (Show more / Show less).
   // Records the event server-side and updates the local message state optimistically.
@@ -2322,6 +2327,7 @@ function TravelPage() {
   }, []);
 
   const loadSession = useCallback(async (id: string) => {
+    clearConversationInstruction();
     try {
       setSessionsError(null);
       const r = await fetch(`${BASE}api/kinfolk/sessions/${id}`, { credentials: "include", headers: kinfolkAuthHeaders() });
@@ -2330,9 +2336,10 @@ function TravelPage() {
       setSessionId(d.session.id); setMessages(d.session.messages ?? []); setConversationHandoff(d.resumePreview ?? null);
       setShowHistory(false);
     } catch (cause) { setSessionsError(cause instanceof Error ? cause.message : "Kinfolk could not open this conversation. Try again."); }
-  }, []);
+  }, [clearConversationInstruction]);
 
   const newChat = () => {
+    clearConversationInstruction();
     clearResponseStatusTimers();
     activeChatControllerRef.current?.abort("new_chat");
     voiceGuardRef.current.invalidate("new_chat");
@@ -3324,6 +3331,22 @@ function TravelPage() {
                 </div>
                 {showComposerControls && (
                   <div id="kinfolk-composer-controls" className="mx-auto mb-3 max-w-3xl rounded-2xl border border-[#3A1F0E]/8 bg-[#FAF6EF] p-3">
+                    <fieldset className="mb-3 text-xs text-[#3A1F0E]">
+                      <legend className="font-bold">This conversation only</legend>
+                      <p className="my-2 text-[11px] text-[#3A1F0E]/60">Applies to each answer in this chat. Not saved to your profile, memory, or history.</p>
+                      <div className="flex flex-wrap gap-2">
+                        {CONVERSATION_INSTRUCTIONS.map((option) => (
+                          <label key={option.id} className="flex min-h-11 items-center gap-2 rounded-xl border border-[#3A1F0E]/15 px-3 py-2">
+                            <input type="radio" name="kinfolk-conversation-instruction" value={option.id} checked={conversationInstruction === option.id} onChange={() => setConversationInstruction(option.id)} />
+                            {option.label}
+                          </label>
+                        ))}
+                      </div>
+                      <div className="mt-2 flex items-center justify-between gap-2">
+                        <p aria-live="polite">Current: {CONVERSATION_INSTRUCTIONS.find((option) => option.id === conversationInstruction)?.label ?? "None"}</p>
+                        <button type="button" aria-label="Clear conversation instruction" disabled={!conversationInstruction} onClick={clearConversationInstruction} className="min-h-11 px-3 font-bold text-[#8D5C17] disabled:opacity-50">Clear</button>
+                      </div>
+                    </fieldset>
                     <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
                       <label className="flex items-start gap-2 text-[11px] leading-5 text-[#3A1F0E]/60" title="Use approved public Community posts with matching hashtags. This does not share your chat. Community content is perspective, never evidence or a recommendation.">
                         <input data-testid="kinfolk-community-perspective-opt-in" type="checkbox" checked={includeCommunityPerspective} onChange={(event) => setIncludeCommunityPerspective(event.target.checked)} className="mt-0.5" />

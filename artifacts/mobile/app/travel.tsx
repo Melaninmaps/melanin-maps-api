@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useKinfolkChatScroll } from "@/hooks/useKinfolkChatScroll";
+import { KinfolkConversationInstructionControls } from "@/components/KinfolkConversationInstructionControls";
 import { getDailyQuoteText } from "@/constants/brandQuotes";
 import {
   ActivityIndicator,
@@ -2140,7 +2141,7 @@ export default function TravelScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
-  const { messages, sessionId, conversationHandoff, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, sessionError, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, useOneTimeDeliveryInstruction } = useKinfolk();
+  const { messages, sessionId, conversationHandoff, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, sessionError, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, conversationInstruction, setConversationInstruction, clearConversationInstruction, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, useOneTimeDeliveryInstruction } = useKinfolk();
   const { preferences, update: updatePreferences } = useUserPreferences();
   const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -2770,9 +2771,10 @@ export default function TravelScreen() {
   }, [loadSession, loadSessions]);
 
   const handleNewSession = useCallback(() => {
+    clearConversationInstruction();
     startNewSession();
     setGeneratedImage(null);
-  }, [startNewSession]);
+  }, [startNewSession, clearConversationInstruction]);
 
   const handleCompareToggle = useCallback((biz: TravelBusiness) => {
     setCompareSelected((prev) => {
@@ -3120,6 +3122,7 @@ export default function TravelScreen() {
 
         {showComposerControls && <>
         <View style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, gap: 7 }}>
+          <KinfolkConversationInstructionControls value={conversationInstruction} onChange={setConversationInstruction} onClear={clearConversationInstruction} />
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end" }}>
             <TouchableOpacity accessibilityLabel="Manage private Kinfolk memory" onPress={() => router.push("/kinfolk-memory" as any)}><Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primary }}>Manage memory</Text></TouchableOpacity>
           </View>
