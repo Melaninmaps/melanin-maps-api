@@ -26,6 +26,16 @@ export type KinfolkLinkFailureReason =
   | "response_too_large"
   | "no_readable_content";
 
+export type KinfolkLinkBusinessDetails = Readonly<{
+  /** These are page-published claims, not directory verification. */
+  name?: string;
+  description?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  hours?: string[];
+}>;
+
 export type KinfolkLinkSource = Readonly<{
   /** The exact final public URL that was fetched, not an inferred source. */
   url: string;
@@ -34,6 +44,7 @@ export type KinfolkLinkSource = Readonly<{
   siteName?: string;
   author?: string;
   publishedAt?: string;
+  business?: KinfolkLinkBusinessDetails;
 }>;
 
 export type KinfolkLinkSummary = Readonly<{
@@ -424,6 +435,29 @@ function socialHostname(hostname: string): boolean {
   return SOCIAL_HOSTS.has(root);
 }
 
+function textValue(value: unknown, max = 240): string | undefined {
+  return typeof value === "string" ? normalizedText(value, max) || undefined : undefined;
+}
+
+function extractPageBusinessDetails(html: string): KinfolkLinkBusinessDetails | undefined {
+  const scripts = html.match(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script\s*>/gi) ?? [];
+  const candidates: Record<string, unknown>[] = [];
+  for (const script of scripts) {
+    const raw = script.replace(/^<script\b[^>]*>/i, "").replace(/<\/script\s*>$/i, "").trim();
+    try { const parsed: unknown = JSON.parse(raw); const queue = Array.isArray(parsed) ? parsed : [parsed]; for (const entry of queue) { if (entry && typeof entry === "object") { const row = entry as Record<string, unknown>; candidates.push(row); if (Array.isArray(row["@graph"])) candidates.push(...row["@graph"].filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")); } } } catch { /* malformed page metadata is not evidence */ }
+  }
+  const business = candidates.find((row) => {
+    const types = Array.isArray(row["@type"]) ? row["@type"] : [row["@type"]];
+    return types.some((type) => typeof type === "string" && /(?:localbusiness|organization|restaurant|store|medicalbusiness|professionalservice)/i.test(type));
+  });
+  if (!business) return undefined;
+  const addressValue = business.address;
+  const address = typeof addressValue === "string" ? textValue(addressValue) : addressValue && typeof addressValue === "object" ? ["streetAddress", "addressLocality", "addressRegion", "postalCode"].map((key) => textValue((addressValue as Record<string, unknown>)[key], 120)).filter(Boolean).join(", ") || undefined : undefined;
+  const hours = (Array.isArray(business.openingHours) ? business.openingHours : [business.openingHours]).flatMap((value) => textValue(value, 160) ? [textValue(value, 160)!] : []).slice(0, 7);
+  const details: KinfolkLinkBusinessDetails = { ...(textValue(business.name) ? { name: textValue(business.name) } : {}), ...(textValue(business.description, 400) ? { description: textValue(business.description, 400) } : {}), ...(address ? { address } : {}), ...(textValue(business.telephone) ? { phone: textValue(business.telephone) } : {}), ...(textValue(business.email) ? { email: textValue(business.email) } : {}), ...(hours.length ? { hours } : {}) };
+  return Object.keys(details).length ? details : undefined;
+}
+
 function classifyLink(html: string, hostname: string): KinfolkLinkKind {
   if (socialHostname(hostname)) return "social";
   const ogType = metaContent(html, ["og:type"]);
@@ -441,6 +475,7 @@ function fetchedResult(url: string, hostname: string, html: string): KinfolkLink
   if (!summaryText) {
     return unavailable("no_readable_content");
   }
+  const business = extractPageBusinessDetails(html);
   const source: KinfolkLinkSource = {
     url,
     host: hostname,
@@ -448,6 +483,7 @@ function fetchedResult(url: string, hostname: string, html: string): KinfolkLink
     ...(metaContent(html, ["og:site_name"]) ? { siteName: metaContent(html, ["og:site_name"])! } : {}),
     ...(metaContent(html, ["author", "article:author"]) ? { author: metaContent(html, ["author", "article:author"])! } : {}),
     ...(metaContent(html, ["article:published_time", "date", "datepublished"]) ? { publishedAt: metaContent(html, ["article:published_time", "date", "datepublished"])! } : {}),
+    ...(business ? { business } : {}),
   };
   return {
     state: "fetched",

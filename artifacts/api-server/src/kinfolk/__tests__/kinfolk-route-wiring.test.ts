@@ -239,7 +239,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("!requestedArticleUrl &&");
   });
 
-  it("uses the bounded page reader for an explicit member-supplied link before private memory or model work", () => {
+  it("uses the bounded page reader for a member-supplied link before private memory or model work", () => {
     const linkReader = chatRoute.indexOf("await understandKinfolkLink(requestedLinkUrl)");
     const explicitMemory = chatRoute.indexOf("persistExplicitMemberMemory({");
     const providerCall = chatRoute.indexOf('chatStage = "provider_call"');
@@ -253,6 +253,8 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("Kinfolk has not independently verified those claims.");
     expect(chatRoute).toContain("persistDeterministicDiscoveryTurn({");
     expect(chatRoute).toContain("This is a public social-media page.");
+    expect(chatRoute).toContain("Page-published business details (not independently verified)");
+    expect(chatRoute).toContain("const pageBusiness = linkedPage.source.business;");
   });
 
   it("ranks the governed travel catalog with canonical age assurance and explicit preferences before prompting", () => {

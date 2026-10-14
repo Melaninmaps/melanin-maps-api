@@ -123,6 +123,33 @@ describe("Kinfolk link understanding", () => {
     }));
   });
 
+
+  it("extracts only explicitly page-published first-party business details from JSON-LD", async () => {
+    const result = await understandKinfolkLink("https://garden.example.com/visit", {
+      resolveHostname: async () => publicAddress,
+      fetchPage: async () => htmlResponse(`
+        <html><head><meta name="description" content="A neighborhood garden with accessible programming and workshops."></head>
+        <body><main>Visit our community garden for classes and volunteer days.</main>
+        <script type="application/ld+json">{"@context":"https://schema.org","@type":"LocalBusiness","name":"Garden Studio","description":"First-party garden workshops","telephone":"+1-555-0100","email":"hello@garden.example.com","address":{"streetAddress":"10 Green Way","addressLocality":"Philadelphia","addressRegion":"PA","postalCode":"19103"},"openingHours":["Mo-Fr 09:00-17:00"]}</script>
+        </body></html>
+      `),
+    });
+
+    expect(result).toEqual(expect.objectContaining({
+      state: "fetched",
+      source: expect.objectContaining({
+        business: {
+          name: "Garden Studio",
+          description: "First-party garden workshops",
+          address: "10 Green Way, Philadelphia, PA, 19103",
+          phone: "+1-555-0100",
+          email: "hello@garden.example.com",
+          hours: ["Mo-Fr 09:00-17:00"],
+        },
+      }),
+      claimBoundary: "source_claims_unverified",
+    }));
+  });
   it("fails closed before any fetch when DNS resolves to a private, reserved, or mixed address", async () => {
     const fetchPage = vi.fn();
     const privateResult = await understandKinfolkLink("https://public-looking.example.com/path", {

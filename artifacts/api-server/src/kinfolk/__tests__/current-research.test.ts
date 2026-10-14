@@ -208,7 +208,7 @@ describe("current research routing", () => {
     expect(requestedArticleSummaryUrl("Summarize https://localhost/private")).toBeNull();
   });
 
-  it("recognizes an explicit request to explain a supplied public website without fetching a casually shared link", () => {
+  it("reads an explicitly requested or standalone pasted public page without fetching incidental links", () => {
     expect(inspectArticleSummaryRequest(
       "Can you explain this website? https://example.org/services?city=philly",
     )).toEqual({
@@ -218,6 +218,18 @@ describe("current research routing", () => {
     expect(requestedArticleSummaryFetchUrl(
       "Can you explain this website? https://example.org/services?city=philly",
     )).toBe("https://example.org/services?city=philly");
+    expect(inspectArticleSummaryRequest("https://example.org/services?city=philly")).toEqual({
+      state: "ready",
+      url: "https://example.org/services",
+    });
+    expect(requiresCurrentResearch("https://example.org/services?city=philly")).toBe(true);
+    expect(requestedArticleSummaryFetchUrl("https://example.org/services?city=philly")).toBe(
+      "https://example.org/services?city=philly",
+    );
+    expect(inspectArticleSummaryRequest("Here is https://example.org/services")).toEqual({
+      state: "ready",
+      url: "https://example.org/services",
+    });
     expect(inspectArticleSummaryRequest(
       "I saved https://example.org/services for later.",
     )).toEqual({ state: "not_requested", url: null });

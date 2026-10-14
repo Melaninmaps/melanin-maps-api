@@ -196,6 +196,9 @@ const INTRINSIC_CURRENT_PUBLIC_EVENT_STATUS_RE = /\b(?:is|are|will|when|where|wh
 // read, explain, review, or identify the page.
 const LINK_UNDERSTANDING_REQUEST_RE = /\b(?:summari[sz]e|summary|read|explain|review|what(?:'s|\s+is)\s+(?:this|on)\s+(?:link|page|site|article|website)|what\s+does\s+(?:this|the)\s+(?:link|page|site|article|website)\s+say|tell\s+me\s+about\s+(?:this|the)\s+(?:link|page|site|article|website))\b/i;
 const ARTICLE_LINK_CANDIDATE_RE = /(?:https?:\/\/|www\.)[^\s<>'"`]+/i;
+// A standalone pasted public link is an unambiguous request for Kinfolk to read
+// that page. Incidental URLs inside a substantive message remain opt-in.
+const STANDALONE_LINK_WRAPPER_RE = /^(?:here(?:'s| is)|this|look at|check out|can you help with)?\s*(?:https?:\/\/|www\.)[^\s<>'"`]+[),.;!?]*\s*$/i;
 
 export type ArticleSummaryRetrievalState =
   | "not_requested"
@@ -254,7 +257,7 @@ export function requestedArticleSummaryFetchUrl(message: string): string | null 
  * response for unsupported links before memory, providers, or model work.
  */
 export function inspectArticleSummaryRequest(message: string): ArticleSummaryRequest {
-  if (!LINK_UNDERSTANDING_REQUEST_RE.test(message)) {
+  if (!LINK_UNDERSTANDING_REQUEST_RE.test(message) && !STANDALONE_LINK_WRAPPER_RE.test(message.trim())) {
     return { state: "not_requested", url: null };
   }
   const raw = message.match(ARTICLE_LINK_CANDIDATE_RE)?.[0]?.replace(/[),.;!?]+$/, "") ?? "";

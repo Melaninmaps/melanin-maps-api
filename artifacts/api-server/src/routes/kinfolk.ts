@@ -8933,7 +8933,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     return;
   }
 
-  // A member explicitly asking Kinfolk to read a public page gets a bounded,
+  // An explicit request or standalone public-link paste gets a bounded,
   // server-extracted answer before private memory, catalog retrieval, or model
   // generation. The page reader has SSRF/redirect/content guards and returns
   // only extractive text from this exact URL; it never turns page claims into
@@ -8981,9 +8981,21 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       const sourceBoundary = linkedPage.linkType === "social"
         ? "This is a public social-media page. This summary uses only fetched public page text or metadata; Kinfolk cannot verify unexposed video, image, or private content."
         : "This reflects claims on the linked page. Kinfolk has not independently verified those claims.";
+      const pageBusiness = linkedPage.source.business;
+      const pageBusinessDetails = pageBusiness
+        ? [
+            pageBusiness.name ? `Name: ${pageBusiness.name}` : null,
+            pageBusiness.description ? `Description: ${pageBusiness.description}` : null,
+            pageBusiness.address ? `Address: ${pageBusiness.address}` : null,
+            pageBusiness.phone ? `Contact: ${pageBusiness.phone}` : null,
+            pageBusiness.email ? `Email: ${pageBusiness.email}` : null,
+            pageBusiness.hours?.length ? `Page-published hours: ${pageBusiness.hours.join("; ")}` : null,
+          ].filter((value): value is string => Boolean(value))
+        : [];
       const reply = [
         `Here is an extractive summary of ${sourceTitle}:`,
         linkedPage.summary.text,
+        ...(pageBusinessDetails.length ? [`Page-published business details (not independently verified):\n${pageBusinessDetails.map((detail) => `- ${detail}`).join("\n")}`] : []),
         sourceBoundary,
       ].join("\n\n");
       const linkedPageSessionId = await persistDeterministicDiscoveryTurn({
