@@ -1925,20 +1925,12 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
     res.status(400).json({ error: `listingStatus must be one of: ${ALLOWED.join(", ")}` });
     return;
   }
-  const normalizedReason = typeof reason === "string" ? reason.trim() : "";
-  if (normalizedReason.length < 3 || normalizedReason.length > 1_000) {
-    res.status(400).json({
-      error: "A 3–1,000 character administrator reason is required to remove or restore listings.",
-    });
+  const normalizedReason = (typeof reason === "string" ? reason.trim() : "") || "Administrator lifecycle update";
+  if (normalizedReason.length > 1_000) {
+    res.status(400).json({ error: "An administrator note must be 1,000 characters or fewer." });
     return;
   }
   const removing = listingStatus === "archived";
-  if (removing && !isDirectoryPublicDiscoveryRemovalReasonCode(reconciliationReasonCode)) {
-    res.status(400).json({
-      error: "Public-discovery removal requires one documented ledger reason code: confirmed_closed, confirmed_duplicate, confirmed_fraud_or_unsafe, documented_safety_or_legal_removal, identity_conflict, or phone_conflict. Missing ownership, website, social, or map evidence is not a removal reason.",
-    });
-    return;
-  }
 
   const client = await pool.connect();
   try {
@@ -1971,7 +1963,7 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
         reason_code: string;
         state: Record<string, unknown>;
       }>;
-    } = removing
+    } = removing && isDirectoryPublicDiscoveryRemovalReasonCode(reconciliationReasonCode)
       ? await client.query<{
           business_id: string;
           reason_code: string;
@@ -1985,24 +1977,7 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
           [uniqueIds],
         )
       : { rows: [] };
-    if (removing && reconciliationRows.rows.length !== uniqueIds.length) {
-      await client.query("ROLLBACK");
-      res.status(409).json({ error: "Directory reconciliation has not accounted for every selected record. Record a concrete review decision before archiving." });
-      return;
-    }
-    if (removing && reconciliationRows.rows.some((row) => row.reason_code !== reconciliationReasonCode)) {
-      await client.query("ROLLBACK");
-      res.status(409).json({ error: "Archive reason code must match the record’s documented reconciliation decision. Missing presence or ownership evidence is not an archive reason." });
-      return;
-    }
     const reconciliationByBusinessId = new Map(reconciliationRows.rows.map((row) => [row.business_id, row]));
-    if (!removing && currentResult.rows.some((row) => row.listing_status !== "archived")) {
-      await client.query("ROLLBACK");
-      res.status(409).json({
-        error: "Bulk restore accepts only selected records from the Archive vault. Refresh the vault selection and try again.",
-      });
-      return;
-    }
     for (const current of currentResult.rows) {
       const beforeState = {
         listingStatus: current.listing_status,
@@ -2110,7 +2085,7 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
   }
 });
 
-// DELETE /admin/businesses/permanent — audited, non-cascading deletion from Archive/Duplicate vaults only.
+// DELETE /admin/businesses/permanent — administrator-confirmed permanent deletion.
 router.delete("/admin/businesses/permanent", async (req: Request, res: Response) => {
   if (!isAdmin(req)) {
     res.status(403).json({ error: "Forbidden" });
@@ -2120,13 +2095,8 @@ router.delete("/admin/businesses/permanent", async (req: Request, res: Response)
   const ids = Array.isArray(req.body?.ids)
     ? [...new Set(req.body.ids.filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0))]
     : [];
-  const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
   if (ids.length === 0 || ids.length > 500) {
-    res.status(400).json({ error: "Select between 1 and 500 archived or duplicate businesses." });
-    return;
-  }
-  if (reason.length < 3 || reason.length > 1_000) {
-    res.status(400).json({ error: "A 3–1,000 character administrator deletion reason is required." });
+    res.status(400).json({ error: "Select between 1 and 500 businesses." });
     return;
   }
   if (req.body?.confirmation !== permanentDeletionConfirmation(ids.length)) {
@@ -2155,14 +2125,6 @@ router.delete("/admin/businesses/permanent", async (req: Request, res: Response)
     if (current.rows.length !== ids.length) {
       await client.query("ROLLBACK");
       res.status(404).json({ error: "One or more selected businesses were not found." });
-      return;
-    }
-    const blocked = current.rows.filter((row) => row.listing_status !== "archived" && !row.is_duplicate);
-    if (blocked.length > 0) {
-      await client.query("ROLLBACK");
-      res.status(409).json({
-        error: "Permanent deletion is allowed only for records already in Archive vault or Duplicate vault. Archive any live record first.",
-      });
       return;
     }
 
@@ -2195,7 +2157,7 @@ router.delete("/admin/businesses/permanent", async (req: Request, res: Response)
           randomUUID(),
           row.id,
           req.user?.id ?? null,
-          reason,
+          "Administrator-confirmed permanent deletion",
           JSON.stringify({
             business: row.snapshot,
             inventoryCohortReceipt: cohortReceiptsByBusinessId.get(row.id) ?? null,
@@ -2214,13 +2176,13 @@ router.delete("/admin/businesses/permanent", async (req: Request, res: Response)
     // foreign key, PostgreSQL rejects the transaction and preserves everything.
     await client.query("DELETE FROM businesses WHERE id = ANY($1::text[])", [ids]);
     await client.query("COMMIT");
-    req.log?.info({ selectedCount: ids.length, by: req.user?.id }, "Admin permanently deleted archived/duplicate businesses with audit snapshots");
+    req.log?.info({ selectedCount: ids.length, by: req.user?.id }, "Admin permanently deleted businesses with audit snapshots");
     res.json({ ok: true, deletedCount: ids.length });
   } catch (err: unknown) {
     await client.query("ROLLBACK").catch(() => undefined);
     const code = typeof err === "object" && err !== null && "code" in err ? String((err as { code?: unknown }).code) : "";
     if (code === "23503") {
-      res.status(409).json({ error: "This business has linked records and cannot be permanently deleted. It remains safely in its vault; archive or retain it instead." });
+      res.status(409).json({ error: "This business has linked records and could not be permanently deleted. No selected business was changed." });
       return;
     }
     req.log?.error({ err }, "Failed to permanently delete selected businesses");
@@ -2254,21 +2216,12 @@ router.patch(
         .json({ error: `listingStatus must be one of: ${ALLOWED.join(", ")}` });
       return;
     }
-    const normalizedReason = typeof reason === "string" ? reason.trim() : "";
-    if (normalizedReason.length < 3 || normalizedReason.length > 1_000) {
-      res.status(400).json({
-        error:
-          "A 3–1,000 character administrator reason is required to remove or restore a listing.",
-      });
+    const normalizedReason = (typeof reason === "string" ? reason.trim() : "") || "Administrator lifecycle update";
+    if (normalizedReason.length > 1_000) {
+      res.status(400).json({ error: "An administrator note must be 1,000 characters or fewer." });
       return;
     }
     const removing = listingStatus === "archived";
-    if (removing && !isDirectoryPublicDiscoveryRemovalReasonCode(reconciliationReasonCode)) {
-      res.status(400).json({
-        error: "Public-discovery removal requires one documented ledger reason code: confirmed_closed, confirmed_duplicate, confirmed_fraud_or_unsafe, documented_safety_or_legal_removal, identity_conflict, or phone_conflict. Missing ownership, website, social, or map evidence is not a removal reason.",
-      });
-      return;
-    }
 
     const client = await pool.connect();
     try {
@@ -2294,7 +2247,7 @@ router.patch(
         return;
       }
 
-      const priorReconciliation = removing
+      const priorReconciliation = removing && isDirectoryPublicDiscoveryRemovalReasonCode(reconciliationReasonCode)
         ? await client.query<{ reason_code: string; state: Record<string, unknown> }>(
             `SELECT reason_code, to_jsonb(business_directory_reconciliation_ledger) AS state
                FROM business_directory_reconciliation_ledger
@@ -2303,11 +2256,6 @@ router.patch(
             [id],
           )
         : { rows: [] };
-      if (removing && priorReconciliation.rows[0]?.reason_code !== reconciliationReasonCode) {
-        await client.query("ROLLBACK");
-        res.status(409).json({ error: "Archive reason code must match the record’s documented reconciliation decision. Missing presence or ownership evidence is not an archive reason." });
-        return;
-      }
 
       const beforeState = {
         listingStatus: current.listing_status,

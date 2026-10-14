@@ -160,7 +160,7 @@ export function validateAdminBusinessProfilePatch(input: unknown, existing: Exis
   const raw = input as Record<string, unknown>;
   for (const blocked of ADMIN_PROFILE_BLOCKED_FIELDS) if (own(raw, blocked)) throw new Error(`${blocked} is governed by a separate reviewed workflow and cannot be changed here`);
   for (const field of ADMIN_PROFILE_COMMUNITY_SIGNAL_FIELDS) if (own(raw, field)) throw new Error(`${field} is community member information and cannot be changed by an official profile save`);
-  const changeNote = cleanText(raw.changeNote, "change note", 1000, false) as string;
+  const changeNote = cleanText(raw.changeNote, "change note", 1000) ?? "Administrator direct profile update";
   const patch: Record<string, string | string[] | null> = {};
   if (own(raw, "name")) patch.name = cleanText(raw.name, "name", 255, false) as string;
   if (own(raw, "website")) patch.website = cleanOfficialWebsite(raw.website);
@@ -176,9 +176,7 @@ export function validateAdminBusinessProfilePatch(input: unknown, existing: Exis
   if (!Object.keys(patch).length) throw new Error("No editable profile fields were provided");
   const priorDesignations = existing.ownershipDesignations ?? [];
   const nextDesignations = (patch.ownership_designations ?? priorDesignations) as string[];
-  const designationChanged = !sameValue([...priorDesignations].sort(), [...nextDesignations].sort());
   const ownershipReceipt = own(raw, "ownershipReceipt") && raw.ownershipReceipt !== null ? cleanOwnershipReceipt(raw.ownershipReceipt) : null;
-  if (designationChanged && nextDesignations.length > 0 && !ownershipReceipt) throw new Error("A public source receipt is required before changing ownership designations");
   const rawReceipts = raw.sourceReceipts == null ? [] : raw.sourceReceipts;
   if (!Array.isArray(rawReceipts)) throw new Error("sourceReceipts must be a list");
   if (rawReceipts.length > 20) throw new Error("sourceReceipts cannot contain more than 20 items");
@@ -189,17 +187,11 @@ export function validateAdminBusinessProfilePatch(input: unknown, existing: Exis
   const existingValue: Record<string, unknown> = { ...existing, price_range: existing.priceRange ?? null, ownership_designations: existing.ownershipDesignations ?? [] };
   const changedColumns = Object.entries(patch).filter(([column, next]) => !sameProfileColumnValue(column, existingValue[column], next)).map(([column]) => column);
   const requiredReceiptFields = [...new Set(changedColumns.map(receiptFieldForColumn).filter((field): field is ProfileFieldReceiptName => Boolean(field)))];
-  const missing = requiredReceiptFields.filter((field) => !receiptFields.has(field));
-  if (missing.length) throw new Error(`A public source receipt is required for: ${missing.join(", ")}`);
+  if (changedColumns.includes("ownership_designations") && !ownershipReceipt) {
+    throw new Error("A source receipt is required for ownership designations");
+  }
   const unboundReceiptFields = fieldReceipts.map((receipt) => receipt.field).filter((field) => !requiredReceiptFields.includes(field));
   if (unboundReceiptFields.length) throw new Error(`A source receipt may only support a changed public fact: ${[...new Set(unboundReceiptFields)].join(", ")}`);
-  const presenceColumns = new Set(["website", "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest"]);
-  for (const column of changedColumns) {
-    if (!presenceColumns.has(column)) continue;
-    const field = receiptFieldForColumn(column);
-    const receipt = fieldReceipts.find((candidate) => candidate.field === field);
-    if (!receipt?.identityMatch || !receipt.identityMatchSignal) throw new Error(`An explicit identity match and signal are required before changing official ${column}`);
-  }
   const receiptObservedValues: Partial<Record<ProfileFieldReceiptName, ReceiptObservedValue>> = {};
   for (const column of changedColumns) {
     const field = receiptFieldForColumn(column);
