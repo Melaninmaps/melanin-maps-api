@@ -1512,7 +1512,11 @@ export default function Admin() {
               : 0,
         );
         setBusinessInventoryPage(typeof data.page === "number" ? data.page : page);
-        setBusinessInventoryPageSize(data.pageSize === 100 ? 100 : 50);
+        setBusinessInventoryPageSize(
+          data.pageSize === 500 || data.pageSize === 250 || data.pageSize === 100
+            ? data.pageSize
+            : 50,
+        );
         setBusinessInventoryTotalPages(
           typeof data.totalPages === "number" ? data.totalPages : 1,
         );
