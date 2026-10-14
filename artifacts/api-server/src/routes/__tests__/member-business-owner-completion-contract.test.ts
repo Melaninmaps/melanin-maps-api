@@ -3,6 +3,14 @@ import { describe, expect, it } from "vitest";
 
 const claims = readFileSync(new URL("../claims.ts", import.meta.url), "utf8");
 const businesses = readFileSync(new URL("../businesses.ts", import.meta.url), "utf8");
+const businessSchema = readFileSync(
+  new URL("../../../../../lib/db/src/schema/businesses.ts", import.meta.url),
+  "utf8",
+);
+const claimSchema = readFileSync(
+  new URL("../../../../../lib/db/src/schema/business-claims.ts", import.meta.url),
+  "utf8",
+);
 const migration = readFileSync(
   new URL("../../../migrations/20261014_member_business_owner_source_only.sql", import.meta.url),
   "utf8",
@@ -18,6 +26,12 @@ describe("member-business owner completion contract", () => {
     expect(migration).toContain("business_claim_verification_challenges");
     expect(migration).toContain("business_manager_invitations");
     expect(migration).toContain("business_owner_links_active_lookup_idx");
+    expect(migration).toContain("ALTER TABLE businesses");
+    expect(migration).toContain("ownership_control_status");
+    expect(migration).toContain("publication_status");
+    expect(migration).toContain("ALTER TABLE business_claims");
+    expect(migration).toContain("claim_type");
+    expect(migration).toContain("decision_reason");
     expect(migration).not.toContain("INSERT INTO business_owner_links");
     expect(migration).not.toContain("UPDATE businesses SET");
   });
@@ -29,6 +43,15 @@ describe("member-business owner completion contract", () => {
     expect(verification).toContain("CLAIM_VERIFICATION_TTL_MINUTES = 15");
     expect(verification).toContain("BUSINESS_CLAIM_VERIFICATION_ENABLED");
     expect(verification).toContain("BUSINESS_CLAIM_EMAIL_VERIFICATION_ENABLED");
+  });
+
+  it("keeps route lifecycle columns aligned with shared database schemas", () => {
+    expect(businessSchema).toContain('ownershipControlStatus: varchar("ownership_control_status"');
+    expect(businessSchema).toContain('publicationStatus: varchar("publication_status"');
+    expect(businessSchema).toContain('verificationStatus: varchar("verification_status"');
+    expect(claimSchema).toContain('claimType: varchar("claim_type"');
+    expect(claimSchema).toContain('verificationMethod: varchar("verification_method"');
+    expect(claimSchema).toContain('decisionReason: varchar("decision_reason"');
   });
 
   it("keeps personal login and private claim contact distinct", () => {
