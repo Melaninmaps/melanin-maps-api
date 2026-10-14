@@ -5,6 +5,7 @@ import {
   type KinfolkCurrentBusinessRecord,
   type ProfileFieldReceipt,
 } from "../philadelphiaKinfolkCurrentDuplicateReconciliation";
+import { duplicateReviewCandidateAddress } from "../../scripts/reconcilePhiladelphiaKinfolkCurrentDuplicates";
 
 function record(
   overrides: Partial<KinfolkCurrentBusinessRecord>,
@@ -50,6 +51,24 @@ function receipt(
 }
 
 describe("Philadelphia Kinfolk Current duplicate reconciliation", () => {
+  it("uses an audit-only non-null address fallback without changing a business record", () => {
+    expect(
+      duplicateReviewCandidateAddress(
+        { address: "  12 Duplicate Lane  " },
+        { address: "34 Canonical Avenue" },
+      ),
+    ).toBe("12 Duplicate Lane");
+    expect(
+      duplicateReviewCandidateAddress(
+        { address: null },
+        { address: "34 Canonical Avenue" },
+      ),
+    ).toBe("34 Canonical Avenue");
+    expect(
+      duplicateReviewCandidateAddress({ address: null }, { address: "" }),
+    ).toBe("Address unavailable — see canonical business profile");
+  });
+
   it("keeps the only pinned record and transfers only source-receipted missing socials", () => {
     const pinned = record({ id: "business-pinned" });
     const duplicate = record({

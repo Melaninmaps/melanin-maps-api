@@ -357,6 +357,24 @@ function pickSocials(
   ) as Record<SocialField, string | null>;
 }
 
+/**
+ * business_review_items preserves an immutable snapshot and requires a
+ * non-null address. This fallback is audit-only: it never changes either
+ * business profile, its map pin, or its stored address.
+ */
+export function duplicateReviewCandidateAddress(
+  duplicate: Record<string, unknown>,
+  canonical: Record<string, unknown>,
+): string {
+  const text = (value: unknown): string | null =>
+    typeof value === "string" && value.trim() ? value.trim() : null;
+  return (
+    text(duplicate.address) ??
+    text(canonical.address) ??
+    "Address unavailable — see canonical business profile"
+  );
+}
+
 export async function applyKinfolkCurrentCityDuplicateManifest(
   manifest: KinfolkCurrentCityDuplicateManifest,
   actor: string,
@@ -509,6 +527,10 @@ export async function applyKinfolkCurrentCityDuplicateManifest(
       }
 
       const reviewItemId = randomUUID();
+      const reviewCandidateAddress = duplicateReviewCandidateAddress(
+        duplicateBefore,
+        canonicalBefore,
+      );
       await client.query(
         `INSERT INTO public.business_review_items
            (id, review_type, status, candidate_name, candidate_address, candidate_city, candidate_state,
@@ -519,7 +541,7 @@ export async function applyKinfolkCurrentCityDuplicateManifest(
         [
           reviewItemId,
           duplicateBefore.name,
-          duplicateBefore.address,
+          reviewCandidateAddress,
           duplicateBefore.city,
           duplicateBefore.state,
           duplicateBefore.website,
