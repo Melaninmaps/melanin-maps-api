@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { BusinessOwnershipEditor } from "@/features/businesses/BusinessOwnershipEditor";
 import { BusinessExperienceEditor } from "@/features/businesses/BusinessExperienceEditor";
 import { BusinessVoiceProfileEditor } from "@/features/businesses/BusinessVoiceProfileEditor";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -113,10 +114,12 @@ export default function BusinessDashboard() {
   const [gSuccess, setGSuccess] = useState(false);
 
   useEffect(() => {
-    // `/auth/user` must not be served from a 304 cache response: fetch() has
+    // `/auth/user` must not be served from a 304 cache response: a request has
     // no JSON body to parse for a revalidated 304, which falsely rendered a
-    // signed-in owner as signed out in this dashboard.
-    fetch(`${BASE}api/auth/user`, { credentials: "include", cache: "no-store" })
+    // signed-in owner as signed out in this dashboard. Use the same bearer +
+    // cookie transport as Admin so session restoration is server-authoritative
+    // across supported browsers and devices.
+    authenticatedFetch(`${BASE}api/auth/user`, { credentials: "include", cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setUser(d?.user ?? null))
       .catch(() => setUser(null))
@@ -124,7 +127,7 @@ export default function BusinessDashboard() {
     // The dashboard is explicitly multi-business. Do not call the legacy
     // single-business endpoint: it correctly fails closed when a member has
     // more than one approved owner relationship.
-    fetch(`${BASE}api/businesses/mine/managed`, { credentials: "include" }).then((r) => r.json()).then((d) => {
+    authenticatedFetch(`${BASE}api/businesses/mine/managed`, { credentials: "include" }).then((r) => r.json()).then((d) => {
       const list = Array.isArray(d.businesses) ? d.businesses : [];
       setBusinesses(list);
       if (list.length) setSelectedId(list[0].id);
@@ -134,8 +137,8 @@ export default function BusinessDashboard() {
 
   useEffect(() => {
     if (!selectedId) return;
-    fetch(`${BASE}api/reviews?businessId=${selectedId}`, { credentials: "include" }).then((r) => r.json()).then((d) => setReviews(d.reviews ?? [])).catch(() => {});
-    fetch(`${BASE}api/businesses/${selectedId}/kinfolk-community-needs`, { credentials: "include" })
+    authenticatedFetch(`${BASE}api/reviews?businessId=${selectedId}`, { credentials: "include" }).then((r) => r.json()).then((d) => setReviews(d.reviews ?? [])).catch(() => {});
+    authenticatedFetch(`${BASE}api/businesses/${selectedId}/kinfolk-community-needs`, { credentials: "include" })
       .then((r) => r.ok ? r.json() : { insights: [] })
       .then((d: { insights?: CommunityNeedInsight[] }) => setCommunityNeeds(d.insights ?? []))
       .catch(() => setCommunityNeeds([]));
@@ -144,14 +147,14 @@ export default function BusinessDashboard() {
   useEffect(() => {
     if (activeTab !== "promote" || !selectedId) return;
     setGrowthLoading(true);
-    fetch(`${BASE}api/businesses/mine/growth-tools`, { credentials: "include" })
+    authenticatedFetch(`${BASE}api/businesses/mine/growth-tools`, { credentials: "include" })
       .then((r) => r.json()).then((d) => setGrowthData(d as GrowthData)).catch(() => {}).finally(() => setGrowthLoading(false));
   }, [activeTab, selectedId]);
 
   useEffect(() => {
     if (activeTab !== "global") return;
     setGlobalLoading(true);
-    fetch(`${BASE}api/global-recommendations/mine`, { credentials: "include" })
+    authenticatedFetch(`${BASE}api/global-recommendations/mine`, { credentials: "include" })
       .then((r) => r.json())
       .then((d: { recommendations?: GlobalRec[]; badge?: string }) => {
         setGlobalRecs(d.recommendations ?? []);
@@ -165,7 +168,7 @@ export default function BusinessDashboard() {
     if (!gCountry.trim() || !gName.trim()) return;
     setGSubmitting(true);
     try {
-      const res = await fetch(`${BASE}api/global-recommendations`, {
+      const res = await authenticatedFetch(`${BASE}api/global-recommendations`, {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ country: gCountry, city: gCity || undefined, businessName: gName, website: gWebsite || undefined, type: gType, reason: gReason || undefined, personalConnection: gConnection || undefined }),
@@ -186,7 +189,7 @@ export default function BusinessDashboard() {
   async function handleCheckout(type: PromotionType) {
     setCheckoutLoading(type);
     try {
-      const res = await fetch(`${BASE}api/businesses/mine/growth-tools/checkout`, {
+      const res = await authenticatedFetch(`${BASE}api/businesses/mine/growth-tools/checkout`, {
         method: "POST", credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type }),
