@@ -3,7 +3,9 @@ import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   Animated,
+  Linking,
   Platform,
   ScrollView,
   StyleSheet,
@@ -14,6 +16,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import { getApiBase } from "@/lib/api";
+import { openInteractivePreview } from "@/lib/interactivePreviewHandoff";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 type Stats = { businesses: number; cities: number; members: number; reviews: number };
@@ -252,6 +255,7 @@ export default function PreviewScreen() {
   const [loading, setLoading] = useState(true);
   const [showNudge, setShowNudge] = useState(false);
   const [activeTab, setActiveTab] = useState<"community" | "business">("community");
+  const [openingInteractivePreview, setOpeningInteractivePreview] = useState(false);
 
   const [fade] = useState(() => new Animated.Value(0));
 
@@ -280,6 +284,22 @@ export default function PreviewScreen() {
 
   const handleJoin = () => router.push("/signup" as never);
   const handleLogin = () => router.push("/login" as never);
+  const handleOpenInteractivePreview = async () => {
+    if (openingInteractivePreview) return;
+
+    setOpeningInteractivePreview(true);
+    try {
+      const result = await openInteractivePreview(Linking);
+      if (result === "unavailable") {
+        Alert.alert(
+          "Interactive preview unavailable",
+          "We couldn't open the interactive preview in your browser. Please try again in a moment.",
+        );
+      }
+    } finally {
+      setOpeningInteractivePreview(false);
+    }
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
@@ -307,6 +327,25 @@ export default function PreviewScreen() {
           <Text style={[s.heroSub, { color: colors.mutedForeground }]}>
             Mapping With Melanin is the first travel and discovery platform built entirely for our community — by our community. Here&apos;s a taste of what Founding Members get.
           </Text>
+
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel="Open the interactive website preview"
+            accessibilityHint="Opens the live Mapping With Melanin interactive preview in your browser"
+            accessibilityState={{ busy: openingInteractivePreview }}
+            disabled={openingInteractivePreview}
+            style={[
+              s.interactivePreviewBtn,
+              { backgroundColor: colors.card, borderColor: colors.primary + "55", opacity: openingInteractivePreview ? 0.65 : 1 },
+            ]}
+            onPress={() => { void handleOpenInteractivePreview(); }}
+            activeOpacity={0.8}
+          >
+            <Feather name="external-link" size={16} color={colors.primary} />
+            <Text style={[s.interactivePreviewBtnText, { color: colors.primary }]}>
+              {openingInteractivePreview ? "Opening Interactive Preview…" : "Open Interactive Preview"}
+            </Text>
+          </TouchableOpacity>
 
           {/* Founding badge */}
           <View style={[s.foundingBadge, { backgroundColor: colors.primary + "18", borderColor: colors.primary + "35" }]}>
@@ -561,6 +600,19 @@ const s = StyleSheet.create({
   },
   heroTitle: { fontFamily: "Inter_700Bold", fontSize: 22, textAlign: "center" },
   heroSub: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", lineHeight: 22 },
+  interactivePreviewBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    width: "100%",
+    minHeight: 46,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderRadius: 12,
+    marginTop: 4,
+  },
+  interactivePreviewBtnText: { fontFamily: "Inter_700Bold", fontSize: 14 },
 
   foundingBadge: {
     flexDirection: "row",
