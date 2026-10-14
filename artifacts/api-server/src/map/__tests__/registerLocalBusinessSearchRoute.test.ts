@@ -26,11 +26,11 @@ describe("local business search route", () => {
     expect(response.headers["x-query-retention"]).toBe("none");
   });
 
-  it.each([5, 10, 25])("accepts the governed %i-mile radius", async (radius) => {
+  it.each([5, 10, 25, 50])("accepts the governed %i-mile radius", async (radius) => {
     const search = vi.fn().mockResolvedValue({
       scope: radius === 5 ? "local" : "expanded", radiusMi: radius, limit: 2,
       totalRelevantListings: 0, pinnableCount: 0, results: [], pins: [],
-      expansion: { available: radius < 25, nextRadiusMi: radius === 5 ? 10 : radius === 10 ? 25 : null, message: null },
+      expansion: { available: radius < 50, nextRadiusMi: radius === 5 ? 10 : radius === 10 ? 25 : radius === 25 ? 50 : null, message: null },
     });
     const app = express();
     registerLocalBusinessSearchRoute(app, { search } as never);
@@ -89,9 +89,9 @@ describe("local business search route", () => {
     expect(search).toHaveBeenCalledWith(expect.objectContaining({ latitude, longitude }));
   });
 
-  it("rejects unsupported radius values", async () => {
+  it.each([15, 100])("rejects unsupported %i-mile radius values", async (radius) => {
     const app = express();
     registerLocalBusinessSearchRoute(app, { search: vi.fn() } as never);
-    await request(app).get("/api/map/local-business-search?subject=bookstore&lat=39&lng=-75&radius=50").expect(400, { code: "INVALID_RADIUS" });
+    await request(app).get(`/api/map/local-business-search?subject=bookstore&lat=39&lng=-75&radius=${radius}`).expect(400, { code: "INVALID_RADIUS" });
   });
 });

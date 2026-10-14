@@ -24,7 +24,7 @@ type SearchResponse = {
   pins: Result[];
   expansion: {
     available: boolean;
-    nextRadiusMi: 10 | 25 | null;
+    nextRadiusMi: 10 | 25 | 50 | null;
     message: string | null;
   };
 };
@@ -51,7 +51,7 @@ export function hasValidLocalResultCoordinates(
 export function LocalBusinessResults({ query, subject, area, onPinsChange }: Props) {
   const [response, setResponse] = useState<SearchResponse | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
-  const [radiusMi, setRadiusMi] = useState<5 | 10 | 25>(5);
+  const [radiusMi, setRadiusMi] = useState<5 | 10 | 25 | 50>(5);
 
   useEffect(() => {
     setRadiusMi(5);

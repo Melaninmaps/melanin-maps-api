@@ -127,7 +127,7 @@ describe("LocalBusinessSearch", () => {
     });
   });
 
-  it("offers only the explicit 5 to 10 to 25 mile expansion sequence based on pinnable availability", async () => {
+  it("offers only the explicit 5 to 10 to 25 to 50 mile expansion sequence based on pinnable availability", async () => {
     const { service } = serviceReturning([
       { ...mappedBookstore, totalRelevantListings: 4, pinnableCount: 1 },
       unpinnedBookstore,
@@ -136,6 +136,7 @@ describe("LocalBusinessSearch", () => {
     const five = await service.search({ ...atlantaSearch, radiusMi: 25, expansionAccepted: false });
     const ten = await service.search({ ...atlantaSearch, radiusMi: 10, expansionAccepted: true });
     const twentyFive = await service.search({ ...atlantaSearch, radiusMi: 25, expansionAccepted: true });
+    const fifty = await service.search({ ...atlantaSearch, radiusMi: 50, expansionAccepted: true });
 
     expect(five).toMatchObject({
       scope: "local",
@@ -152,6 +153,11 @@ describe("LocalBusinessSearch", () => {
     expect(twentyFive).toMatchObject({
       scope: "expanded",
       radiusMi: 25,
+      expansion: { available: true, nextRadiusMi: 50 },
+    });
+    expect(fifty).toMatchObject({
+      scope: "expanded",
+      radiusMi: 50,
       expansion: { available: false, nextRadiusMi: null },
     });
   });

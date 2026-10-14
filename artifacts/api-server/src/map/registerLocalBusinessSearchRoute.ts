@@ -14,7 +14,7 @@ function decimalCoordinate(value: unknown): number {
  *
  * Returns the two nearest pinnable businesses plus every matching unpinned
  * listing in an explicitly supplied city or ZIP. Coordinate-bearing rows are
- * constrained to the requested radius (5 / 10 / 25 miles). There is no
+ * constrained to the requested radius (5 / 10 / 25 / 50 miles). There is no
  * national fallback and no independent pin source.
  *
  * Query params:
@@ -22,7 +22,7 @@ function decimalCoordinate(value: unknown): number {
  *   subject — normalized current-turn business subject (preferred over q)
  *   lat     — decimal latitude of the member's location
  *   lng     — decimal longitude of the member's location
- *   radius  — one of 5 | 10 | 25 (default: 5)
+ *   radius  — one of 5 | 10 | 25 | 50 (default: 5)
  *   expand  — "1" to activate the radius (used for explicit expansion clicks only)
  *   city/stateCode — explicit geography used to retain matching unpinned rows
  *
@@ -54,7 +54,7 @@ export function registerLocalBusinessSearchRoute(
         if (!isValidMapCoordinatePair(latitude, longitude)) {
           return response.status(400).json({ code: "LOCATION_REQUIRED" });
         }
-        if (![5, 10, 25].includes(radius)) {
+        if (![5, 10, 25, 50].includes(radius)) {
           return response.status(400).json({ code: "INVALID_RADIUS" });
         }
 
@@ -62,7 +62,7 @@ export function registerLocalBusinessSearchRoute(
           query,
           latitude,
           longitude,
-          radiusMi: radius as 5 | 10 | 25,
+          radiusMi: radius as 5 | 10 | 25 | 50,
           expansionAccepted,
           city,
           stateCode,

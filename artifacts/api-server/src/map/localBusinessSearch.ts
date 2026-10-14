@@ -11,7 +11,7 @@ export type LocalSearchRequest = {
   query: string;
   latitude: number;
   longitude: number;
-  radiusMi?: 5 | 10 | 25;
+  radiusMi?: 5 | 10 | 25 | 50;
   limit?: number;
   expansionAccepted?: boolean;
   city?: string;
@@ -40,7 +40,7 @@ export type LocalSearchResponse = {
   pins: LocalBusinessResult[];
   expansion: {
     available: boolean;
-    nextRadiusMi: 10 | 25 | null;
+    nextRadiusMi: 10 | 25 | 50 | null;
     message: string | null;
   };
 };
@@ -260,10 +260,16 @@ export class LocalBusinessSearch {
     radiusMi: number,
     pinnableCount: number,
   ): LocalSearchResponse["expansion"] {
-    if (pinnableCount >= DEFAULT_PIN_LIMIT || radiusMi >= 25) {
+    if (pinnableCount >= DEFAULT_PIN_LIMIT || radiusMi >= 50) {
       return { available: false, nextRadiusMi: null, message: null };
     }
-    const nextRadiusMi = radiusMi === 5 ? 10 : radiusMi === 10 ? 25 : null;
+    const nextRadiusMi = radiusMi === 5
+      ? 10
+      : radiusMi === 10
+        ? 25
+        : radiusMi === 25
+          ? 50
+          : null;
     return nextRadiusMi
       ? {
           available: true,

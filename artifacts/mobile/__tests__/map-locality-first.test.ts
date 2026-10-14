@@ -208,6 +208,7 @@ describe("FullMapView locality-first contracts", () => {
   it("offers 50 miles for business discovery without widening public-facility availability", () => {
     expect(fullMapSource).toContain("useState<5 | 10 | 25 | 50>(10)");
     expect(fullMapSource).toContain("[5, 10, 25, 50].map");
+    expect(fullMapSource).toContain("radiusMiles: mapDiscoveryRadius");
     expect(fullMapSource).toContain("radius: String(Math.min(mapDiscoveryRadius, 25))");
   });
 
