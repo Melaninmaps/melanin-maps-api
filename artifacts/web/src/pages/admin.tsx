@@ -2488,18 +2488,10 @@ export default function Admin() {
       ...businessServiceOptions,
     ].map((service) => [service.value, service])).values(),
   ).sort((a, b) => a.label.localeCompare(b.label));
-  const archivableFilteredBiz = filteredBiz.filter(
-    (b) => b.listingStatus !== "archived" && !b.isDuplicate,
-  );
-  const restorableFilteredBiz = filteredBiz.filter(
-    (b) => b.listingStatus === "archived" && !b.isDuplicate,
-  );
+  const archivableFilteredBiz = filteredBiz.filter((b) => b.listingStatus !== "archived");
+  const restorableFilteredBiz = filteredBiz.filter((b) => b.listingStatus === "archived");
   const kinfolkCurrentCohortSelected = bizIntakeCohortFilter === "kinfolk_current";
-  const selectableBusinessRows = bizStatusFilter === "duplicates"
-    ? filteredBiz
-    : bizStatusFilter === "archived"
-      ? restorableFilteredBiz
-      : archivableFilteredBiz;
+  const selectableBusinessRows = filteredBiz;
   const selectedVisibleBusinessCount = selectedBusinessIds.size;
   const businessInventoryExportHref = (() => {
     const params = new URLSearchParams({ status: bizStatusFilter });
@@ -2649,32 +2641,10 @@ export default function Admin() {
     const ids = [...selectedBusinessIds];
     if (ids.length === 0) return;
     const restoring = listingStatus === "live_unclaimed";
-    const reason = window.prompt(
-      restoring
-        ? `Why should these ${ids.length} selected archived business profile${ids.length === 1 ? "" : "s"} return to public discovery? This is reversible and recorded. Only the checked Archive vault records will be restored; all other archived records stay hidden.`
-        : `Why should these ${ids.length} business profile${ids.length === 1 ? "" : "s"} be removed from public discovery? This is reversible. Their profiles, research, source links, Kinfolk context, media, and audit history remain preserved.`,
-    )?.trim();
-    if (!reason) return;
-    const reconciliationReasonCode = restoring
-      ? undefined
-      : window.prompt(
-        "Enter the documented ledger reason code exactly: confirmed_closed, confirmed_duplicate, confirmed_fraud_or_unsafe, documented_safety_or_legal_removal, identity_conflict, or phone_conflict. Missing ownership, website, social, or map evidence is not a removal reason.",
-      )?.trim();
-    if (!restoring && ![
-      "confirmed_closed",
-      "confirmed_duplicate",
-      "confirmed_fraud_or_unsafe",
-      "documented_safety_or_legal_removal",
-      "identity_conflict",
-      "phone_conflict",
-    ].includes(reconciliationReasonCode ?? "")) {
-      window.alert("No public-discovery action was taken. A documented ledger reason code is required.");
-      return;
-    }
     if (
       !window.confirm(
         restoring
-          ? `Restore only these ${ids.length} selected business profile${ids.length === 1 ? "" : "s"} to public search, Kinfolk, and map discovery? All other Archive vault records remain hidden.`
+          ? `Restore these ${ids.length} selected business profile${ids.length === 1 ? "" : "s"} to public search, Kinfolk, and map discovery?`
           : `Remove ${ids.length} selected business profile${ids.length === 1 ? "" : "s"} from public search, Kinfolk, and the map? This archives—not deletes—them.`,
       )
     )
@@ -2685,7 +2655,7 @@ export default function Admin() {
         method: "PATCH",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids, listingStatus, reason, reconciliationReasonCode }),
+        body: JSON.stringify({ ids, listingStatus }),
       });
       const body = (await response.json().catch(() => ({}))) as { error?: string };
       if (!response.ok) {
@@ -2714,28 +2684,20 @@ export default function Admin() {
 
   const permanentlyDeleteBusinesses = async (ids: string[], names: string[]) => {
     if (ids.length === 0 || ids.length > 500) return;
-    if (bizStatusFilter !== "archived" && bizStatusFilter !== "duplicates") {
-      window.alert("Permanent deletion is available only from Archive vault or Duplicate vault.");
-      return;
-    }
     const summary = names.slice(0, 3).join(", ") + (names.length > 3 ? ` and ${names.length - 3} more` : "");
-    const reason = window.prompt(
-      `Why should ${ids.length} selected record${ids.length === 1 ? "" : "s"} be permanently deleted? This removes the business row. A private audit snapshot remains; linked records block deletion rather than being removed.
-
-Selected: ${summary}`,
-    )?.trim();
-    if (!reason) return;
     const requiredConfirmation = `DELETE ${ids.length} ${ids.length === 1 ? "BUSINESS" : "BUSINESSES"}`;
-    const confirmation = window.prompt(`This cannot be undone. Type exactly ${requiredConfirmation} to permanently delete only the selected Archive/Duplicate vault record${ids.length === 1 ? "" : "s"}.`);
+    const confirmation = window.prompt(`This permanently deletes ${ids.length} selected business record${ids.length === 1 ? "" : "s"}. This cannot be undone. Type exactly ${requiredConfirmation} to continue.
+
+Selected: ${summary}`);
     if (confirmation !== requiredConfirmation) return;
-    if (!window.confirm(`Permanently delete ${ids.length} selected business record${ids.length === 1 ? "" : "s"}? This cannot be undone.`)) return;
+    if (!window.confirm(`Permanently delete ${ids.length} selected business record${ids.length === 1 ? "" : "s"} now? This cannot be undone.`)) return;
     setBulkBusinessUpdating(true);
     try {
       const response = await fetch(`${BASE}api/admin/businesses/permanent`, {
         method: "DELETE",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids, reason, confirmation }),
+        body: JSON.stringify({ ids, confirmation }),
       });
       const body = await response.json().catch(() => ({})) as { error?: string };
       if (!response.ok) {
@@ -2754,6 +2716,34 @@ Selected: ${summary}`,
   const permanentlyDeleteSelectedBusinesses = () => {
     const selectedRows = filteredBiz.filter((business) => selectedBusinessIds.has(business.id));
     void permanentlyDeleteBusinesses(selectedRows.map((business) => business.id), selectedRows.map((business) => business.name));
+  };
+
+  const updateSingleBusinessListingStatus = async (
+    business: Pick<AdminBusiness, "id" | "name">,
+    listingStatus: "archived" | "live_unclaimed",
+  ) => {
+    const removing = listingStatus === "archived";
+    if (!window.confirm(
+      removing
+        ? `Archive "${business.name}" from member-facing discovery now?`
+        : `Restore "${business.name}" to member-facing discovery now?`,
+    )) return;
+    try {
+      const response = await fetch(`${BASE}api/admin/businesses/${business.id}/listing-status`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listingStatus }),
+      });
+      const body = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) {
+        window.alert(body.error ?? "The listing could not be updated.");
+        return;
+      }
+      await loadBusinesses();
+    } catch {
+      window.alert("The listing could not be updated. Please try again.");
+    }
   };
 
   // ── Waitlist analytics (all computed client-side) ─────────────────────────
@@ -5209,9 +5199,9 @@ Selected: ${summary}`,
               <div>
                 <strong className="text-[#3A1F0E]">{businessInventoryFilteredTotal.toLocaleString()} filtered results.</strong>{" "}
                 {bizStatusFilter === "duplicates"
-                  ? "These are confirmed duplicate records retained from all historical states. They are excluded from public discovery. Select one or more to permanently delete only after the required typed confirmation, or open Duplicates & review to restore an audited merge."
+                  ? "These are duplicate records retained from all historical states. You can edit, archive, or permanently delete selected records."
                   : bizStatusFilter === "archived"
-                  ? "These are separated from routine city and business-name review. Use Unhide / restore public listing only after confirming the record should return to normal discovery, or permanently delete selected records with the typed confirmation."
+                  ? "These are separated from routine city and business-name review. Restore them to discovery or permanently delete selected records."
                   : "Archive removes a selected profile from public Directory search, Kinfolk recommendations, and map pins while retaining the full MWM record and intake evidence for restoration."}
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
@@ -5292,6 +5282,15 @@ Selected: ${summary}`,
                       {bulkBusinessUpdating
                         ? "Archiving…"
                         : `Archive selected (${selectedVisibleBusinessCount})`}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={permanentlyDeleteSelectedBusinesses}
+                      disabled={bulkBusinessUpdating || selectedVisibleBusinessCount === 0}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      {bulkBusinessUpdating ? "Deleting…" : `Permanently delete selected (${selectedVisibleBusinessCount})`}
                     </button>
                   </>
                 ) : (
@@ -5577,15 +5576,19 @@ Selected: ${summary}`,
                             <>
                               <button
                                   onClick={() => {
-                                    if (!biz.isDuplicate) {
-                                      setEditingBiz({ id: biz.id, name: biz.name });
-                                    }
+                                    setEditingBiz({ id: biz.id, name: biz.name });
                                   }}
-                                  disabled={biz.isDuplicate}
-                                  title={biz.isDuplicate ? "Duplicate records remain unchanged unless an audited merge is restored." : undefined}
-                                  className="flex items-center gap-1 text-xs font-bold text-[#CA922B] hover:text-[#B38024] border border-[#CA922B]/30 hover:bg-[#CA922B]/5 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap disabled:cursor-not-allowed disabled:opacity-45"
+                                  className="flex items-center gap-1 text-xs font-bold text-[#CA922B] hover:text-[#B38024] border border-[#CA922B]/30 hover:bg-[#CA922B]/5 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                                 >
                                   Edit profile
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => void permanentlyDeleteBusinesses([biz.id], [biz.name])}
+                                  className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-800 border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                                  title="Permanently delete this business after typed confirmation"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" /> Permanently delete
                                 </button>
                                 {biz.isDuplicate ? (
                               bizStatusFilter === "duplicates" ? (
@@ -5608,54 +5611,7 @@ Selected: ${summary}`,
                               )
                                 ) : biz.listingStatus !== "archived" ? (
                               <button
-                                onClick={async () => {
-                                  const reason = window.prompt(
-                                    `Why should "${biz.name}" be removed from public discovery? This immediately removes it from public search, map pins, and Kinfolk promotion. The record, reports, and linked data remain intact.`,
-                                  )?.trim();
-                                  if (!reason) return;
-                                  const reconciliationReasonCode = window.prompt(
-                                    "Enter the documented ledger reason code exactly: confirmed_closed, confirmed_duplicate, confirmed_fraud_or_unsafe, documented_safety_or_legal_removal, identity_conflict, or phone_conflict. Missing ownership, website, social, or map evidence is not a removal reason.",
-                                  )?.trim();
-                                  if (![
-                                    "confirmed_closed",
-                                    "confirmed_duplicate",
-                                    "confirmed_fraud_or_unsafe",
-                                    "documented_safety_or_legal_removal",
-                                    "identity_conflict",
-                                    "phone_conflict",
-                                  ].includes(reconciliationReasonCode ?? "")) {
-                                    window.alert("No public-discovery action was taken. A documented ledger reason code is required.");
-                                    return;
-                                  }
-                                  if (
-                                    !window.confirm(
-                                      `Remove "${biz.name}" from public discovery now? This is reversible and will be recorded with your reason.`,
-                                    )
-                                  )
-                                    return;
-                                  try {
-                                    const r = await fetch(
-                                      `${BASE}api/admin/businesses/${biz.id}/listing-status`,
-                                      {
-                                        method: "PATCH",
-                                        credentials: "include",
-                                        headers: {
-                                          "Content-Type": "application/json",
-                                        },
-                                        body: JSON.stringify({
-                                          listingStatus: "archived",
-                                          reason,
-                                          reconciliationReasonCode,
-                                        }),
-                                      },
-                                    );
-                                    const body = await r.json().catch(() => ({})) as { error?: string };
-                                    if (r.ok) loadBusinesses();
-                                    else window.alert(body.error ?? "The listing could not be removed.");
-                                  } catch {
-                                    window.alert("The listing could not be removed. Please try again.");
-                                  }
-                                }}
+                                onClick={() => void updateSingleBusinessListingStatus(biz, "archived")}
                                 className="flex items-center gap-1 text-xs font-bold text-red-500 hover:text-red-700 border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                               >
                                 <Archive className="h-3.5 w-3.5" />
@@ -5664,33 +5620,7 @@ Selected: ${summary}`,
                                 ) : (
                               <>
                                 <button
-                                onClick={async () => {
-                                  const reason = window.prompt(
-                                    `Why should "${biz.name}" be restored to public discovery? This will be recorded with the restoration.`,
-                                  )?.trim();
-                                  if (!reason) return;
-                                  try {
-                                    const r = await fetch(
-                                      `${BASE}api/admin/businesses/${biz.id}/listing-status`,
-                                      {
-                                        method: "PATCH",
-                                        credentials: "include",
-                                        headers: {
-                                          "Content-Type": "application/json",
-                                        },
-                                        body: JSON.stringify({
-                                          listingStatus: "live_unclaimed",
-                                          reason,
-                                        }),
-                                      },
-                                    );
-                                    const body = await r.json().catch(() => ({})) as { error?: string };
-                                    if (r.ok) loadBusinesses();
-                                    else window.alert(body.error ?? "The listing could not be restored.");
-                                  } catch {
-                                    window.alert("The listing could not be restored. Please try again.");
-                                  }
-                                }}
+                                onClick={() => void updateSingleBusinessListingStatus(biz, "live_unclaimed")}
                                 className="flex items-center gap-1 text-xs font-bold text-green-600 hover:text-green-800 border border-green-200 hover:bg-green-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
                               >
                                 <RotateCcw className="h-3.5 w-3.5" />

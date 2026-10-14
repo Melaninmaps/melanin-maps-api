@@ -85,7 +85,7 @@ export function mwmCoreDiscoverySqlPredicate(
   businessIdExpression: string,
   _configuredValue: string | undefined = process.env[MWM_CORE_DISCOVERY_MODE_ENV],
 ): string {
-  return documentedDiscoveryEligibilitySqlPredicate(businessIdExpression, "discovery");
+  return kinfolkCurrentSqlPredicate(businessIdExpression);
 }
 
 /** Compatibility predicate for ownership-filtered Discovery, Kinfolk, and Explore. */
@@ -93,7 +93,33 @@ export function mwmDiasporaPromotionSqlPredicate(
   businessIdExpression: string,
   _configuredValue: string | undefined = process.env[MWM_PROMOTION_CATALOG_MODE_ENV],
 ): string {
-  return documentedDiscoveryEligibilitySqlPredicate(businessIdExpression, "discovery");
+  return kinfolkCurrentSqlPredicate(businessIdExpression);
+}
+
+/**
+ * A signed-in administrator has final control over the Kinfolk Current catalog.
+ * `ready` explicitly includes an existing canonical profile; `removed` explicitly
+ * excludes it. The durable cohort row is append-only-audited by the catalog route.
+ */
+export function kinfolkCurrentSqlPredicate(businessIdExpression: string): string {
+  const directCurrentMembership = `EXISTS (
+    SELECT 1
+      FROM public.business_catalog_cohort_memberships AS kinfolk_current_membership
+     WHERE kinfolk_current_membership.business_id::text = ${businessIdExpression}::text
+       AND kinfolk_current_membership.cohort_key = 'kinfolk_catalog'
+       AND kinfolk_current_membership.state = 'ready'
+  )`;
+  const explicitRemoval = `EXISTS (
+    SELECT 1
+      FROM public.business_catalog_cohort_memberships AS kinfolk_current_removal
+     WHERE kinfolk_current_removal.business_id::text = ${businessIdExpression}::text
+       AND kinfolk_current_removal.cohort_key = 'kinfolk_catalog'
+       AND kinfolk_current_removal.state = 'removed'
+  )`;
+  return `(NOT ${explicitRemoval} AND (
+    ${directCurrentMembership}
+    OR ${documentedDiscoveryEligibilitySqlPredicate(businessIdExpression, "discovery")}
+  ))`;
 }
 
 /**
@@ -134,14 +160,23 @@ export function mwmPublicDirectorySqlPredicate(
 export type MwmCoreReceiptCandidate = DocumentedDiscoveryEligibilityCandidate & {
   mwmCoreCohort?: string | null;
   mwm_core_cohort?: string | null;
+  kinfolkCatalogState?: "intake" | "review" | "ready" | "held" | "removed" | null;
+  kinfolk_catalog_state?: "intake" | "review" | "ready" | "held" | "removed" | null;
 };
+
+function isAdministratorKinfolkCurrent(record: MwmCoreReceiptCandidate): boolean | null {
+  const state = record.kinfolkCatalogState ?? record.kinfolk_catalog_state ?? null;
+  if (state === "ready") return true;
+  if (state === "removed") return false;
+  return null;
+}
 
 /** Pure compatibility counterpart used by tests and non-SQL callers. */
 export function isMwmCoreDiscoveryEligible(
   record: MwmCoreReceiptCandidate,
   _configuredValue: string | undefined = process.env[MWM_CORE_DISCOVERY_MODE_ENV],
 ): boolean {
-  return isDocumentedDiscoveryEligible(record);
+  return isAdministratorKinfolkCurrent(record) ?? isDocumentedDiscoveryEligible(record);
 }
 
 /** Pure counterpart for the documented Diaspora recommendation catalog. */
@@ -149,7 +184,7 @@ export function isMwmDiasporaPromotionEligible(
   record: MwmCoreReceiptCandidate,
   _configuredValue: string | undefined = process.env[MWM_PROMOTION_CATALOG_MODE_ENV],
 ): boolean {
-  return isDocumentedDiscoveryEligible(record);
+  return isAdministratorKinfolkCurrent(record) ?? isDocumentedDiscoveryEligible(record);
 }
 
 /** Visible copy used only where an operator needs the policy explanation. */

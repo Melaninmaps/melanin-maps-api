@@ -46,6 +46,14 @@ describe("MWM Core discovery policy compatibility", () => {
     } as unknown as typeof documented)).toBe(false);
   });
 
+  it("honors the final administrator Kinfolk Current decision without changing ownership evidence", () => {
+    expect(isMwmCoreDiscoveryEligible({ ...documented, kinfolkCatalogState: "removed" })).toBe(false);
+    expect(isMwmDiasporaPromotionEligible({
+      eligibilityStatus: "held",
+      kinfolkCatalogState: "ready",
+    })).toBe(true);
+  });
+
   it("allows only current active source receipts into general directory browse", () => {
     const sourceReceipt = sourceBackedGeneralDirectorySqlPredicate("b.id");
     const generalDirectory = mwmPublicDirectorySqlPredicate("b.id");

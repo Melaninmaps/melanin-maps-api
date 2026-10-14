@@ -21,12 +21,14 @@ describe("audited administrator business profile policy", () => {
       expect(() => validateAdminBusinessProfilePatch(patch({ [field]: [] }), existing)).toThrow("community member information");
     }
   });
-  it("requires a public source receipt for every changed public fact", () => {
-    expect(() => validateAdminBusinessProfilePatch(patch({ description: "Updated bookstore description." }), existing)).toThrow("source receipt is required for: description");
+  it("allows direct administrator changes while retaining optional source receipts", () => {
+    const directDescriptionChange = validateAdminBusinessProfilePatch(patch({ description: "Updated bookstore description." }), existing);
+    expect(directDescriptionChange.changedColumns).toEqual(["description"]);
+    expect(directDescriptionChange.fieldReceipts).toEqual([]);
     const descriptionChange = validateAdminBusinessProfilePatch(patch({ description: "Updated bookstore description.", sourceReceipts: [receipt("description")] }), existing);
     expect(descriptionChange.requiredReceiptFields).toEqual(["description"]);
     expect(descriptionChange.receiptObservedValues).toEqual({ description: { fields: { description: "Updated bookstore description." }, identityMatch: { asserted: false, signal: null } } });
-    expect(() => validateAdminBusinessProfilePatch(patch({ priceRange: "$$" }), existing)).toThrow("source receipt is required for: price_range");
+    expect(validateAdminBusinessProfilePatch(patch({ priceRange: "$$" }), existing).changedColumns).toEqual(["price_range"]);
     const priceChange = validateAdminBusinessProfilePatch(patch({ priceRange: "$$", sourceReceipts: [receipt("price_range")] }), existing);
     expect(priceChange.requiredReceiptFields).toEqual(["price_range"]);
     expect(priceChange.receiptObservedValues).toEqual({ price_range: { fields: { price_range: "$$" }, identityMatch: { asserted: false, signal: null } } });
@@ -111,7 +113,7 @@ describe("audited administrator business profile policy", () => {
     expect(() => validateAdminBusinessProfilePatch(patch({ website: "https://www.instagram.com/communitybooks/" }), existing)).toThrow("official website");
     expect(() => validateAdminBusinessProfilePatch(patch({ website: "https://g.page/community-books" }), existing)).toThrow("official website");
     expect(() => validateAdminBusinessProfilePatch(patch({ instagram: "https://www.yelp.com/biz/community-books" }), existing)).toThrow("official instagram");
-    expect(() => validateAdminBusinessProfilePatch(patch({ instagram: "https://www.instagram.com/communitybooks/", sourceReceipts: [receipt("instagram")] }), existing)).toThrow("explicit identity match");
+    expect(validateAdminBusinessProfilePatch(patch({ instagram: "https://www.instagram.com/communitybooks/", sourceReceipts: [receipt("instagram")] }), existing).patch.instagram).toContain("instagram.com");
     expect(validateAdminBusinessProfilePatch(patch({ instagram: "https://www.instagram.com/communitybooks/", sourceReceipts: [receipt("instagram", true)] }), existing).patch.instagram).toContain("instagram.com");
   });
   it("allows the legacy direct-create path to create only a staged receipt-free shell", () => {

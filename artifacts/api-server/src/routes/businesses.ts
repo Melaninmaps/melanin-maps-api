@@ -4239,9 +4239,10 @@ router.get("/admin/businesses/:id/profile", async (req: Request, res: Response) 
   }
 });
 
-// This is the sole generic profile edit path. Lifecycle publication, reviewed
-// discovery eligibility, verified ownership, claims, duplicates, and map pins
-// are intentionally excluded and each retain their dedicated workflows.
+// This is the generic administrator profile edit path. Lifecycle publication,
+// Kinfolk Current membership, claims, and map pins retain their dedicated
+// controls; duplicate records remain directly editable so administrators can
+// correct or clear stale profile fields before resolving the duplicate itself.
 router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response) => {
   if (!hasAdminAccess(req)) {
     res.status(403).json({ error: "Admin required" });
@@ -4258,12 +4259,6 @@ router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response
       res.status(404).json({ error: "Business not found" });
       return;
     }
-    if (existing.is_duplicate) {
-      await client.query("ROLLBACK");
-      res.status(409).json({ error: "Confirmed duplicate records are read-only until an audited restore resolves the duplicate" });
-      return;
-    }
-
     let validated;
     try {
       validated = validateAdminBusinessProfilePatch(req.body, {

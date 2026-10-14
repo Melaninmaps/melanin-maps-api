@@ -17,12 +17,12 @@ export function parseKinfolkCatalogStateChange(body: unknown): CatalogStateChang
   if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("A catalog state change is required");
   const input = body as Record<string, unknown>;
   const state = String(input.state ?? "").trim();
-  const reason = String(input.reason ?? "").trim();
+  const reason = String(input.reason ?? "").trim() || "Administrator catalog decision";
   if (!KINFOLK_CATALOG_STATES.includes(state as KinfolkCatalogState)) {
     throw new Error("state must be intake, review, ready, held, or removed");
   }
-  if (reason.length < 3 || reason.length > 1000) {
-    throw new Error("reason must be between 3 and 1000 characters");
+  if (reason.length > 1000) {
+    throw new Error("reason must be 1,000 characters or fewer");
   }
   return { state: state as KinfolkCatalogState, reason };
 }

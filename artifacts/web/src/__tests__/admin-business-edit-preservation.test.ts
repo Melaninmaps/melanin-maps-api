@@ -19,14 +19,15 @@ describe("audited admin business editor", () => {
     expect(editor).not.toContain("/api/businesses/${businessId}`");
   });
 
-  it("preserves legacy categories and requires a note plus source receipts", () => {
+  it("preserves legacy categories while allowing direct administrator saves", () => {
     const editor = source();
     expect(editor).toContain("const hasLegacyCategory");
     expect(editor).toContain("(current)");
     expect(editor).toContain("ownershipReceipt");
     expect(editor).toContain("sourceReceipts");
     expect(editor).toContain("changeNote");
-    expect(editor).toContain("Every changed public fact needs a source before save");
+    expect(editor).toContain("Field-level source receipts (optional)");
+    expect(editor).toContain("Optional profile edit note");
   });
 
   it("requires an explicit, clickable identity-match signal for official presence receipts", () => {
@@ -42,8 +43,8 @@ describe("audited admin business editor", () => {
     const editor = source();
     expect(editor).not.toContain("blackOwned:");
     expect(editor).toContain("A new pin requires separate, audited geocode evidence");
-    expect(editor).toContain("Apply audited lifecycle change");
-    expect(editor).toContain("It never creates a listing, changes public visibility, or turns a business into an owner-verified profile.");
+    expect(editor).toContain("Save listing lifecycle");
+    expect(editor).toContain("Kinfolk Current administrator control");
   });
 
   it("exposes a separate documented Kinfolk qualification control rather than broadening profile saves", () => {
