@@ -298,7 +298,7 @@ function ConnectionsPanel({ onClose }: { onClose: () => void }) {
     const accessMode = connection.accessModes.includes("free_busy")
       ? "free_busy"
       : (connection.accessModes[0] ?? "manual");
-    if (connection.availability !== "ready" || accessMode === "manual") return;
+    if (connection.availability !== "available" || accessMode === "manual") return;
     setChanging(connection.provider);
     setError(null);
     try {
@@ -379,7 +379,7 @@ function ConnectionsPanel({ onClose }: { onClose: () => void }) {
                   <p className="mt-1 text-xs leading-5 text-[#3B1F0E]/65">
                     {connection.status === "connected"
                       ? `Connected with ${connection.accessMode.replace(/_/g, " ")} access.`
-                      : connection.availability === "ready"
+                      : connection.availability === "available"
                         ? "Available when you choose Connect."
                         : (connection.blockers[0] ??
                           "Not available in this environment.")}
@@ -400,17 +400,17 @@ function ConnectionsPanel({ onClose }: { onClose: () => void }) {
                   <button
                     type="button"
                     className={
-                      connection.availability === "ready" ? PRIMARY : SECONDARY
+                      connection.availability === "available" ? PRIMARY : SECONDARY
                     }
                     disabled={
                       changing === connection.provider ||
-                      connection.availability !== "ready"
+                      connection.availability !== "available"
                     }
                     onClick={() => void connect(connection)}
                   >
                     {changing === connection.provider
                       ? "Opening…"
-                      : connection.availability === "ready"
+                      : connection.availability === "available"
                         ? "Connect"
                         : "Not configured"}
                   </button>

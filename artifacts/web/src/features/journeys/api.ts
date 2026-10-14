@@ -155,7 +155,7 @@ export type JourneyConnection = {
     | "outlook_mail"
     | "device_calendar"
     | "flight_status";
-  availability: "ready" | "not_configured" | "disabled";
+  availability: "available" | "not_configured" | "disabled";
   accessModes: Array<
     "free_busy" | "selected_items" | "calendar_details" | "manual"
   >;

@@ -44,6 +44,12 @@ describe("Kinfolk Journeys private workspace contract", () => {
     expect(apiSource).toContain("registerAttachment");
   });
 
+  it("uses the API's available readiness state before opening a configured provider", () => {
+    expect(apiSource).toContain('availability: "available"');
+    expect(pageSource).toContain('connection.availability !== "available"');
+    expect(pageSource).not.toContain('connection.availability !== "ready"');
+  });
+
   it("offers an explicit private-document review action without sending attachments to ordinary chat", () => {
     expect(apiSource).toContain("extractPrivateDocument");
     expect(pageSource).toContain("Review private document");

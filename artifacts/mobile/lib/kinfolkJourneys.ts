@@ -119,7 +119,7 @@ export type JourneyProvider =
   | "flight_status";
 export type KinfolkJourneyConnection = {
   provider: JourneyProvider;
-  availability: "ready" | "not_configured" | "disabled";
+  availability: "available" | "not_configured" | "disabled";
   status: string;
   accessModes: string[];
   blockers: string[];

@@ -36,6 +36,18 @@ describe("Kinfolk Connected Apps route contract", () => {
     expect(route).toContain("contextual");
   });
 
+  it("clears local authorization on revoke or deletion without deleting a Journey", () => {
+    expect(route).toContain("revokeJourneyProviderConnection");
+    expect(route).toContain(
+      "SET status = 'revoked', token_envelope = NULL, oauth_state_hash = NULL",
+    );
+    expect(route).toContain(
+      "SET status = 'deleted', token_envelope = NULL, deleted_at = NOW()",
+    );
+    expect(route).toContain("Authorization and any stored provider token envelope were revoked.");
+    expect(route).toContain("This action does not silently delete Journey plans");
+  });
+
   it("offers contextual prompts without linking private attachment content to an app", () => {
     expect(kinfolkRoute).toContain(
       "buildContextualConnectedAppsPrompt(message)",

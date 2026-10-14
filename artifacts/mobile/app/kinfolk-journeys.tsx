@@ -635,7 +635,7 @@ export default function KinfolkJourneysScreen() {
       void reviewDeviceCalendar();
       return;
     }
-    if (connection.availability !== "ready") return;
+    if (connection.availability !== "available") return;
     setWorking(true);
     setError(null);
     try {
@@ -815,15 +815,15 @@ export default function KinfolkJourneysScreen() {
               <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
                 {connection.status === "connected"
                   ? "Connected"
-                  : connection.availability === "ready"
+                  : connection.availability === "available"
                     ? "Available when you choose Connect."
                     : (connection.blockers[0] ?? "Not configured.")}
               </Text>
               <TouchableOpacity
-                disabled={working || connection.availability !== "ready"}
+                disabled={working || connection.availability !== "available"}
                 onPress={() => void connectProvider(connection)}
                 style={[
-                  connection.availability === "ready"
+                  connection.availability === "available"
                     ? styles.primaryButton
                     : styles.secondaryButton,
                   working && styles.dim,
@@ -831,14 +831,14 @@ export default function KinfolkJourneysScreen() {
               >
                 <Text
                   style={
-                    connection.availability === "ready"
+                    connection.availability === "available"
                       ? styles.primaryText
                       : styles.secondaryText
                   }
                 >
                   {connection.provider === "device_calendar"
                     ? "Choose events from device"
-                    : connection.availability === "ready"
+                    : connection.availability === "available"
                       ? "Connect"
                       : "Not configured"}
                 </Text>

@@ -49,6 +49,23 @@ describe("Kinfolk Journeys API contract", () => {
     expect(journeyRoute).toContain("until you choose Disconnect");
   });
 
+  it("fails closed across members and when duplicate or stale reviews conflict", () => {
+    expect(journeyRoute).toContain("async function requireOwnedJourney");
+    expect(journeyRoute).toContain(
+      "WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL",
+    );
+    expect(journeyRoute).toContain(
+      "WHERE id=$1 AND journey_id=$2 AND user_id=$3 AND deleted_at IS NULL",
+    );
+    expect(journeyRoute).toContain(
+      "ON CONFLICT (journey_id,content_digest) DO NOTHING",
+    );
+    expect(journeyRoute).toContain("duplicate: true");
+    expect(journeyRoute).toContain(
+      "This private attachment changed while it was being reviewed.",
+    );
+  });
+
   it("requires owned private assets and a verified PKCE callback", () => {
     expect(journeyRoute).toContain(
       'router.post("/kinfolk-journeys/:journeyId/imports/assets"',

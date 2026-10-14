@@ -168,6 +168,19 @@ describe("Journey private document extraction", () => {
     ).rejects.toMatchObject({ code: "JOURNEY_INVALID", status: 422 });
   });
 
+  it("does not disclose one member's private asset to another member", async () => {
+    query.mockResolvedValueOnce({ rows: [] });
+
+    await expect(
+      extractJourneyPrivateDocument({ userId: "member-b", assetId: ASSET_ID }),
+    ).rejects.toMatchObject({ code: "JOURNEY_NOT_FOUND", status: 404 });
+
+    expect(query).toHaveBeenCalledWith(
+      expect.stringContaining("uploader_id=$2"),
+      [ASSET_ID, "member-b"],
+    );
+  });
+
   it("does not treat an unreadable PDF as a source of facts", async () => {
     query.mockResolvedValueOnce({ rows: [assetRow()] });
     const { storageClient } = storageFor("pdf");

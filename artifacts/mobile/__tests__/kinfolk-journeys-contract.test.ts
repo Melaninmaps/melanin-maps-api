@@ -32,6 +32,12 @@ describe("native Kinfolk Journeys contract", () => {
     expect(client).toContain("registerAttachment");
   });
 
+  it("uses the API's available readiness state before opening a configured provider", () => {
+    expect(client).toContain('availability: "available"');
+    expect(screen).toContain('connection.availability !== "available"');
+    expect(screen).not.toContain('connection.availability !== "ready"');
+  });
+
   it("requires explicit member selection for calendar events and never presents booking", () => {
     expect(screen).toContain("requestCalendarPermissionsAsync");
     expect(screen).toContain("Add selected events");
