@@ -24,7 +24,7 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { dirname, resolve } from "node:path";
 import { pool } from "@workspace/db";
 import {
   PHILADELPHIA_KINFOLK_DUPLICATE_RECONCILIATION_POLICY_VERSION,
@@ -42,7 +42,7 @@ export const PHILADELPHIA_KINFOLK_DUPLICATE_APPLY_CONFIRMATION =
 const CHANGE_NOTE =
   "Consolidated a confirmed Philadelphia Kinfolk Current duplicate while preserving the canonical map pin and copying only audited official social profiles.";
 const MERGE_REASON =
-  "Confirmed high-confidence duplicate in Philadelphia Kinfolk Current; retained the only stored map pin and copied only missing social profiles backed by an identity-attested receipt or exact shared official website domain plus normalized phone legacy provenance.";
+  "Confirmed high-confidence duplicate in Philadelphia Kinfolk Current; retained the only stored map pin and copied only missing social profiles backed by an identity-attested receipt or multiple exact identity signals.";
 
 type RawBusinessRow = {
   id: string;
@@ -337,37 +337,40 @@ export async function applyPhiladelphiaKinfolkCurrentDuplicateManifest(
         );
       }
 
-      const assignments = candidate.transfers.map(
-        (transfer, index) => `${transfer.field} = $${index + 1}`,
-      );
-      const values: unknown[] = candidate.transfers.map(
-        (transfer) => transfer.value,
-      );
-      values.push(candidate.canonicalId, candidate.canonicalUpdatedAt);
-      const canonicalUpdate = await client.query<Record<string, unknown>>(
-        `UPDATE public.businesses
-            SET ${assignments.join(", ")}, updated_at = NOW()
-          WHERE id::text = $${values.length - 1}
-            AND updated_at::text = $${values.length}
-            AND COALESCE(is_duplicate, false) = false
-          RETURNING id::text AS id,
-                    name,
-                    instagram,
-                    facebook,
-                    tiktok,
-                    twitter,
-                    youtube,
-                    pinterest,
-                    latitude,
-                    longitude,
-                    updated_at::text AS "updatedAt"`,
-        values,
-      );
-      const canonicalAfter = canonicalUpdate.rows[0];
-      if (!canonicalAfter)
-        throw new Error(
-          `Canonical ${candidate.canonicalId} failed its stale-record guard.`,
+      let canonicalAfter: Record<string, unknown> = canonicalBefore;
+      if (candidate.transfers.length > 0) {
+        const assignments = candidate.transfers.map(
+          (transfer, index) => `${transfer.field} = $${index + 1}`,
         );
+        const values: unknown[] = candidate.transfers.map(
+          (transfer) => transfer.value,
+        );
+        values.push(candidate.canonicalId, candidate.canonicalUpdatedAt);
+        const canonicalUpdate = await client.query<Record<string, unknown>>(
+          `UPDATE public.businesses
+              SET ${assignments.join(", ")}, updated_at = NOW()
+            WHERE id::text = $${values.length - 1}
+              AND updated_at::text = $${values.length}
+              AND COALESCE(is_duplicate, false) = false
+            RETURNING id::text AS id,
+                      name,
+                      instagram,
+                      facebook,
+                      tiktok,
+                      twitter,
+                      youtube,
+                      pinterest,
+                      latitude,
+                      longitude,
+                      updated_at::text AS "updatedAt"`,
+          values,
+        );
+        canonicalAfter = canonicalUpdate.rows[0] ?? {};
+        if (!canonicalUpdate.rows[0])
+          throw new Error(
+            `Canonical ${candidate.canonicalId} failed its stale-record guard.`,
+          );
+      }
 
       for (const transfer of candidate.transfers) {
         const observedValue = {
@@ -401,26 +404,30 @@ export async function applyPhiladelphiaKinfolkCurrentDuplicateManifest(
         );
       }
 
-      await client.query(
-        `INSERT INTO public.business_admin_profile_edit_audit_events
-           (id, business_id, actor_user_id, change_note, changed_fields, before_state, after_state)
-         VALUES ($1::uuid, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb)`,
-        [
-          randomUUID(),
-          candidate.canonicalId,
-          actor,
-          CHANGE_NOTE,
-          JSON.stringify(candidate.transfers.map((transfer) => transfer.field)),
-          JSON.stringify({
-            id: candidate.canonicalId,
-            socials: pickSocials(canonicalBefore),
-          }),
-          JSON.stringify({
-            id: candidate.canonicalId,
-            socials: pickSocials(canonicalAfter),
-          }),
-        ],
-      );
+      if (candidate.transfers.length > 0) {
+        await client.query(
+          `INSERT INTO public.business_admin_profile_edit_audit_events
+             (id, business_id, actor_user_id, change_note, changed_fields, before_state, after_state)
+           VALUES ($1::uuid, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb)`,
+          [
+            randomUUID(),
+            candidate.canonicalId,
+            actor,
+            CHANGE_NOTE,
+            JSON.stringify(
+              candidate.transfers.map((transfer) => transfer.field),
+            ),
+            JSON.stringify({
+              id: candidate.canonicalId,
+              socials: pickSocials(canonicalBefore),
+            }),
+            JSON.stringify({
+              id: candidate.canonicalId,
+              socials: pickSocials(canonicalAfter),
+            }),
+          ],
+        );
+      }
 
       const reviewItemId = randomUUID();
       await client.query(
@@ -612,9 +619,10 @@ async function main(): Promise<void> {
 // into the server entrypoint, so comparing it to process.argv[1] would execute
 // a dry run during API startup. Only an explicit TypeScript script invocation
 // can execute the command-line entrypoint.
-const invokedAsCli = /(?:^|\/)reconcilePhiladelphiaKinfolkCurrentDuplicates\.ts$/.test(
-  process.argv[1] ?? "",
-);
+const invokedAsCli =
+  /(?:^|\/)reconcilePhiladelphiaKinfolkCurrentDuplicates\.ts$/.test(
+    process.argv[1] ?? "",
+  );
 
 if (invokedAsCli) {
   main()

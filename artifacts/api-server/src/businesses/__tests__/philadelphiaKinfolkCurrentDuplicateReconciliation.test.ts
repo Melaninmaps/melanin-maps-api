@@ -89,7 +89,7 @@ describe("Philadelphia Kinfolk Current duplicate reconciliation", () => {
     ]);
   });
 
-  it("uses the narrow shared-website-and-phone legacy fallback when a receipt is absent", () => {
+  it("uses multiple exact identity signals before transferring an unreceipted social profile", () => {
     const pinned = record({ id: "business-pinned" });
     const duplicate = record({
       id: "business-socials",
@@ -109,15 +109,15 @@ describe("Philadelphia Kinfolk Current duplicate reconciliation", () => {
       {
         field: "instagram",
         value: "https://www.instagram.com/barberlife/",
-        provenance: "shared_website_phone_legacy",
+        provenance: "multi_signal_identity_legacy",
         receipt: {
-          sourceLabel: "Legacy Kinfolk Current shared website + phone match",
+          sourceLabel: "Legacy Kinfolk Current multi-signal identity match",
         },
       },
     ]);
   });
 
-  it("requires both the same official website domain and normalized phone for the legacy fallback", () => {
+  it("keeps conflicting official phone numbers in manual review even with multiple other matching signals", () => {
     const pinned = record({ id: "business-pinned" });
     const duplicate = record({
       id: "business-socials",
@@ -136,9 +136,6 @@ describe("Philadelphia Kinfolk Current duplicate reconciliation", () => {
     expect(plan.manualReview).toHaveLength(1);
     expect(plan.manualReview[0]?.reasons).toContain(
       "different normalized phone numbers",
-    );
-    expect(plan.manualReview[0]?.reasons).toContain(
-      "instagram lacks a matching identity-attested field receipt",
     );
   });
 
@@ -163,5 +160,56 @@ describe("Philadelphia Kinfolk Current duplicate reconciliation", () => {
     expect(plan.manualReview[0]?.reasons).toContain(
       "both records have stored map coordinates",
     );
+  });
+
+  it("consolidates a single-pin exact duplicate even when no additional social profile is needed", () => {
+    const pinned = record({
+      id: "business-pinned",
+      instagram: "https://www.instagram.com/barberlife/",
+    });
+    const duplicate = record({
+      id: "business-identical-socials",
+      latitude: null,
+      longitude: null,
+      instagram: "https://www.instagram.com/barberlife/",
+      updatedAt: "2026-10-14 20:01:00+00",
+    });
+
+    const plan = buildPhiladelphiaKinfolkCurrentDuplicatePlan(
+      [pinned, duplicate],
+      new Map(),
+    );
+
+    expect(plan.manualReview).toEqual([]);
+    expect(plan.approved).toHaveLength(1);
+    expect(plan.approved[0]?.transfers).toEqual([]);
+    expect(plan.approved[0]).toMatchObject({
+      canonicalId: pinned.id,
+      duplicateId: duplicate.id,
+    });
+  });
+
+  it("copies an unreceipted social profile only with two independent exact identity signals", () => {
+    const pinned = record({ id: "business-pinned", phone: null });
+    const duplicate = record({
+      id: "business-socials",
+      latitude: null,
+      longitude: null,
+      phone: null,
+      instagram: "https://www.instagram.com/barberlife/",
+      updatedAt: "2026-10-14 20:01:00+00",
+    });
+
+    const plan = buildPhiladelphiaKinfolkCurrentDuplicatePlan(
+      [pinned, duplicate],
+      new Map(),
+    );
+
+    expect(plan.manualReview).toEqual([]);
+    expect(plan.approved).toHaveLength(1);
+    expect(plan.approved[0]?.transfers[0]).toMatchObject({
+      field: "instagram",
+      provenance: "multi_signal_identity_legacy",
+    });
   });
 });
