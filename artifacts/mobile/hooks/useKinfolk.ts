@@ -9,6 +9,11 @@ import {
 } from "@/lib/kinfolkRequestTrace";
 import { parseSafeSourceLink } from "@/lib/sourceLinks";
 import {
+  clearKinfolkConversation,
+  getKinfolkConversation,
+  recordKinfolkConversation,
+} from "@/lib/kinfolkConversationHandoff";
+import {
   canRenderKinfolkBusinessCards,
   type KinfolkResponseMeta,
 } from "@workspace/constants";
@@ -425,10 +430,11 @@ export async function saveKinfolkTaskAction(input: TaskActionWriteInput): Promis
 }
 
 export function useKinfolk() {
-  const { refreshUser } = useAuth();
+  const { refreshUser, user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const messagesRef = useRef<ChatMessage[]>([]);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [handoffSessionToLoad, setHandoffSessionToLoad] = useState<string | null>(null);
   const [conversationHandoff, setConversationHandoff] = useState<ConversationHandoffStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   /** Client-request timing only; never a claim about server-side research. */
@@ -447,6 +453,28 @@ export function useKinfolk() {
   const savingTaskActionIdsRef = useRef(new Set<string>());
   /** Device-local only. The next successful chat request consumes this style. */
   const oneTurnDeliveryInstructionRef = useRef<string | null>(null);
+  const handoffAccountRef = useRef<string | null>(null);
+
+  // A floating Kinfolk turn may already have an authenticated server session.
+  // Adopt only the opaque session ID for this same account; no transcript,
+  // attachment, prompt, or account credential crosses the surface boundary.
+  useEffect(() => {
+    const accountId = user?.id ?? null;
+    if (!accountId) {
+      handoffAccountRef.current = null;
+      return;
+    }
+    if (handoffAccountRef.current === accountId) return;
+    handoffAccountRef.current = accountId;
+    const handoff = getKinfolkConversation(accountId);
+    if (!handoff || handoff.surface !== "floating") return;
+    setSessionId(handoff.sessionId);
+    setHandoffSessionToLoad(handoff.sessionId);
+    setConversationHandoff({
+      state: "resumed",
+      summary: "Conversation resumed from Kinfolk’s floating assistant on this device.",
+    });
+  }, [user?.id]);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -502,6 +530,9 @@ export function useKinfolk() {
     }
     const apiBase = getApiBase();
     const oneTurnInstruction = oneTurnDeliveryInstructionRef.current;
+    const sharedConversation = getKinfolkConversation(user?.id);
+    const effectiveSessionId = sharedConversation?.sessionId ?? sessionId;
+    if (effectiveSessionId && effectiveSessionId !== sessionId) setSessionId(effectiveSessionId);
     const conversationContext = messagesRef.current.slice(-6).map((message) => ({
       role: message.role,
       content: message.content,
@@ -536,7 +567,7 @@ export function useKinfolk() {
         method: "POST",
         headers,
         body: JSON.stringify({
-          sessionId,
+          sessionId: effectiveSessionId,
           message: text,
           vibes: opts?.vibes ?? [],
           voiceMode: opts?.voiceMode ?? "community",
@@ -597,17 +628,20 @@ export function useKinfolk() {
           memoryConsentPlan?: InlineMemoryConsentPlan | null;
         };
 
-        if (data.sessionId) setSessionId(data.sessionId);
+        if (data.sessionId) {
+          setSessionId(data.sessionId);
+          recordKinfolkConversation(user?.id, data.sessionId, "primary");
+        }
         setConversationHandoff(data.conversationHandoff ?? null);
         const inlineMemoryConsent: ChatMessage["inlineMemoryConsent"] = data.memoryConsentPlan
-          ? { message: text, plan: data.memoryConsentPlan, sessionId: data.sessionId ?? sessionId }
+          ? { message: text, plan: data.memoryConsentPlan, sessionId: data.sessionId ?? effectiveSessionId }
           : null;
         let sensitiveMemoryDraft: ChatMessage["sensitiveMemoryDraft"] =
           data.sensitiveMemoryConfirmation?.confirmationRequired === true
             ? {
                 content: text,
                 purpose: data.sensitiveMemoryConfirmation.purpose ?? "ongoing_context",
-                sessionId: data.sessionId ?? sessionId,
+                sessionId: data.sessionId ?? effectiveSessionId,
               }
             : null;
         if (typeof data.queriesUsed === "number") setQueriesUsed(data.queriesUsed);
@@ -750,7 +784,7 @@ export function useKinfolk() {
         setRequestStartedAt(null);
       }
     }
-  }, [refreshUser, sessionId]);
+  }, [refreshUser, sessionId, user?.id]);
 
   const submitFeedback = useCallback(async (
     messageId: string,
@@ -890,6 +924,7 @@ export function useKinfolk() {
           resumePreview?: ConversationHandoffStatus | null;
         };
       setSessionId(id);
+      recordKinfolkConversation(user?.id, id, "primary");
       setConversationHandoff(data.resumePreview ?? null);
       setMessages(
           data.session.messages.map((m) => ({
@@ -923,13 +958,23 @@ export function useKinfolk() {
       return false;
     }
     finally { setIsLoading(false); }
-  }, []);
+  }, [user?.id]);
+
+  // The opaque handoff ID is resolved through the existing authenticated
+  // history route. That gives the member their server-authorized conversation
+  // view without copying a local widget transcript between surfaces.
+  useEffect(() => {
+    if (!handoffSessionToLoad) return;
+    setHandoffSessionToLoad(null);
+    void loadSession(handoffSessionToLoad);
+  }, [handoffSessionToLoad, loadSession]);
 
   const startNewSession = useCallback(() => {
     setMessages([]);
     setSessionId(null);
+    clearKinfolkConversation(user?.id);
     setConversationHandoff(null);
-  }, []);
+  }, [user?.id]);
 
   const confirmTaskAction = useCallback(async (messageId: string, action: TaskAction): Promise<TaskActionSaveResult> => {
     const existing = messagesRef.current.find((message) => message.id === messageId);

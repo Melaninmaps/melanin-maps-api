@@ -43,6 +43,10 @@ import {
   kinfolkTraceReference,
 } from "@/lib/kinfolkRequestTrace";
 import { parseSafeSourceLink } from "@/lib/sourceLinks";
+import {
+  getKinfolkConversation,
+  recordKinfolkConversation,
+} from "@/lib/kinfolkConversationHandoff";
 import { KinfolkAnswerText } from "@/components/KinfolkAnswerText";
 import { KinfolkVoiceSourceControls } from "@/components/KinfolkVoiceSourceControls";
 import { useKinfolkVoiceSource } from "@/hooks/useKinfolkVoiceSource";
@@ -153,8 +157,6 @@ function normalizeVoiceMode(value: unknown): VoiceMode {
   return "community";
 }
 
-let sessionId: string | undefined;
-
 let cachedVoiceMode: VoiceMode | null = null;
 
 type VoiceModeLoadResult = {
@@ -207,6 +209,7 @@ async function nearbyCityHint(message: string): Promise<string | undefined> {
 
 async function sendToKinfolk(
   message: string,
+  accountId: string | null | undefined,
   token: string | null,
   voiceMode: VoiceMode,
   cityHint?: string,
@@ -221,6 +224,7 @@ async function sendToKinfolk(
   }>,
 ): Promise<{
   reply: string;
+  sessionId?: string;
   taskAction?: TaskActionPayload | null;
   followUpSuggestions: string[];
   location?: { city: string; state: string | null; source: string } | null;
@@ -246,6 +250,7 @@ async function sendToKinfolk(
   resourceCards?: KinfolkResourceCard[];
 }> {
   const base = getApiBase();
+  const requestSessionId = getKinfolkConversation(accountId)?.sessionId;
   const clientTrace = createKinfolkClientTrace();
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -259,7 +264,7 @@ async function sendToKinfolk(
       headers,
       body: JSON.stringify({
         message,
-        sessionId,
+        sessionId: requestSessionId,
         voiceMode,
         cityHint,
         // Private server references only: never send device-local preview URIs,
@@ -316,10 +321,12 @@ async function sendToKinfolk(
     contextualVisuals?: KinfolkContextualVisual[] | null;
     resourceCards?: KinfolkResourceCard[] | null;
   };
-  if (data.sessionId) sessionId = data.sessionId;
+  const resolvedSessionId = data.sessionId ?? requestSessionId;
+  if (data.sessionId) recordKinfolkConversation(accountId, data.sessionId, "floating");
   const responseMeta = data.responseMeta ?? null;
   return {
     reply: data.reply ?? "Sorry, something went sideways on my end.",
+    sessionId: resolvedSessionId,
     taskAction: data.taskAction,
     followUpSuggestions: data.followUpSuggestions ?? [],
     location: data.location ?? null,
@@ -348,13 +355,13 @@ async function sendToKinfolk(
         : [];
     }).slice(0, 3),
     clarificationSteps: Array.isArray(data.clarificationSteps) ? data.clarificationSteps.slice(0, 3) : [],
-    inlineMemoryConsent: data.memoryConsentPlan ? { message, plan: data.memoryConsentPlan, sessionId: data.sessionId ?? sessionId } : null,
+    inlineMemoryConsent: data.memoryConsentPlan ? { message, plan: data.memoryConsentPlan, sessionId: resolvedSessionId } : null,
     sensitiveMemoryDraft:
       data.sensitiveMemoryConfirmation?.confirmationRequired === true
         ? {
             content: message,
             purpose: data.sensitiveMemoryConfirmation.purpose ?? "ongoing_context",
-            sessionId: data.sessionId ?? sessionId,
+            sessionId: resolvedSessionId,
           }
         : null,
     recommendations: canRenderKinfolkBusinessCards(responseMeta) && Array.isArray(data.recommendations?.businesses)
@@ -415,7 +422,7 @@ export function AIChatWidget() {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, isLoading: authLoading, refreshUser } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, refreshUser } = useAuth();
   const [open, setOpen] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const [messages, setMessages] = useState<Message[]>(() => [
@@ -565,7 +572,7 @@ export function AIChatWidget() {
   );
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user?.id) {
       cachedVoiceMode = null;
       setVoiceMode("community");
       return;
@@ -1075,7 +1082,7 @@ export function AIChatWidget() {
     // primary Kinfolk screen. Do not append a turn or call the provider before
     // local session restoration completes.
     if (authLoading) return;
-    if (!isAuthenticated) {
+    if (!isAuthenticated || !user?.id) {
       Alert.alert(
         "Sign in to ask Kinfolk",
         "Create or sign in to a free account to start a Kinfolk conversation and keep control of your preferences.",
@@ -1154,7 +1161,7 @@ export function AIChatWidget() {
         relatedConnections,
         researchStatus,
         contextualVisuals,
-      } = await sendToKinfolk(text, token, voiceMode, cityHint, request.signal, {
+      } = await sendToKinfolk(text, user.id, token, voiceMode, cityHint, request.signal, {
         imageAssetIds: attachedImageAssetIds,
         imageVisionConsent: attachedImageAssetIds.length > 0,
         documentAssetIds: attachedDocumentAssetIds,
@@ -1282,6 +1289,11 @@ export function AIChatWidget() {
       return;
     }
 
+    const widgetSessionId = getKinfolkConversation(user?.id)?.sessionId;
+    if (!widgetSessionId) {
+      Alert.alert("Conversation unavailable", "Kinfolk could not verify this conversation. Send another message before sharing feedback.");
+      return;
+    }
     const previous = responseFeedback[message.id];
     setResponseFeedback((current) => ({ ...current, [message.id]: reaction }));
     setFeedbackSavingId(message.id);
@@ -1290,7 +1302,7 @@ export function AIChatWidget() {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({
-          sessionId,
+          sessionId: widgetSessionId,
           messageId: message.id,
           reaction,
           note: includeNote ? responseFeedbackNotes[message.id]?.trim() || null : null,
@@ -1426,6 +1438,19 @@ export function AIChatWidget() {
               <TouchableOpacity onPress={goToTasks} style={[styles.tasksBtn, { borderColor: colors.border }]}>
                 <Feather name="check-square" size={14} color={colors.primary} />
                 <Text style={[styles.tasksBtnTxt, { color: colors.primary }]}>My Lists</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setWidgetOpen(false);
+                  router.push("/travel" as never);
+                }}
+                style={[styles.tasksBtn, { borderColor: colors.border }]}
+                accessibilityRole="button"
+                accessibilityLabel="Continue this Kinfolk conversation full screen"
+                accessibilityHint="Opens your same authenticated Kinfolk conversation in the full screen assistant"
+              >
+                <Feather name="maximize-2" size={14} color={colors.primary} />
+                <Text style={[styles.tasksBtnTxt, { color: colors.primary }]}>Full chat</Text>
               </TouchableOpacity>
               {Platform.OS !== "web" ? (
                 <TouchableOpacity
@@ -1780,7 +1805,7 @@ export function AIChatWidget() {
                 {!item.fromUser && item.companionMemoryOffer ? (
                   <KinfolkCompanionMemoryOfferCard
                     offer={item.companionMemoryOffer}
-                    sessionId={sessionId}
+                    sessionId={getKinfolkConversation(user?.id)?.sessionId}
                   />
                 ) : null}
                 {!item.fromUser && item.memoryUse ? (
