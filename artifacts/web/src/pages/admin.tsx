@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { getWebToken, syncTokenToCookie } from "@/lib/webAuth";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
+import { authenticatedAdminFetch, readAdminJson } from "@/lib/adminDataFetch";
 import { BUSINESS_CATEGORY_TAXONOMY } from "@workspace/constants";
 import { Button } from "@/components/ui/button";
 import {
@@ -71,7 +72,15 @@ import {
 } from "recharts";
 
 const BASE = import.meta.env.BASE_URL;
-
+type AdminDataSurface = "waitlist" | "users" | "businesses" | "members" | "reviews" | "reports";
+const ADMIN_DATA_SURFACE_LABELS: Record<AdminDataSurface, string> = {
+  waitlist: "Waitlist",
+  users: "Registered Users",
+  businesses: "Businesses",
+  members: "Members",
+  reviews: "Reviews",
+  reports: "Reports",
+};
 const FOUNDER_OWNER_ADMIN_EMAILS = new Set([
   "tlindsay428@yahoo.com",
   "tlindsay428@gmail.com",
@@ -898,12 +907,9 @@ function AdminBootstrap({
 
 export default function Admin() {
   const { data: auth, isLoading: authLoading } = useGetCurrentAuthUser();
-  // Every Admin request must send the durable bearer session as well as the
-  // same-origin cookie. A browser can retain the bearer session while an API
-  // subdomain does not receive the cookie; using the shared helper avoids an
-  // Admin capability check succeeding while a later archive/approval request
-  // is incorrectly denied.
-  const fetch = authenticatedFetch;
+  // Every Admin request sends the durable bearer session as well as the
+  // same-origin cookie and bypasses stale browser cache entries.
+  const fetch = authenticatedAdminFetch;
   const currentAdminEmail = String((auth?.user as any)?.email ?? "")
     .trim()
     .toLowerCase();
@@ -941,6 +947,7 @@ export default function Admin() {
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [reports, setReports] = useState<ContentReportRow[]>([]);
+  const [adminDataErrors, setAdminDataErrors] = useState<Partial<Record<AdminDataSurface, string>>>({});
   const [reviewSearch, setReviewSearch] = useState("");
   const [reviewStatusFilter, setReviewStatusFilter] = useState("all");
   const [selectedReviewIds, setSelectedReviewIds] = useState<Set<string>>(new Set());
@@ -1159,6 +1166,19 @@ export default function Admin() {
   const [sourceDirectoryIntakeApplying, setSourceDirectoryIntakeApplying] = useState(false);
   const [sourceDirectoryIntakeResult, setSourceDirectoryIntakeResult] = useState<string | null>(null);
 
+  const recordAdminDataError = useCallback((surface: AdminDataSurface, error: unknown) => {
+    const message = error instanceof Error ? error.message : "The Admin request did not complete. Please retry.";
+    setAdminDataErrors((previous) => ({ ...previous, [surface]: message }));
+  }, []);
+  const clearAdminDataError = useCallback((surface: AdminDataSurface) => {
+    setAdminDataErrors((previous) => {
+      if (!previous[surface]) return previous;
+      const next = { ...previous };
+      delete next[surface];
+      return next;
+    });
+  }, []);
+
   useEffect(() => {
     if (!selectedCity) {
       setCityTrend([]);
@@ -1274,9 +1294,12 @@ export default function Admin() {
       return fetch(`${BASE}api/admin/waitlist?${params}`, {
         credentials: "include",
       })
-        .then((r) => r.json())
+        .then((response) => readAdminJson<any>(response))
         .then((data) => {
-          setWaitlist(data.entries ?? []);
+          if (!Array.isArray(data.entries)) {
+            throw new Error("The Waitlist response was incomplete. Please retry.");
+          }
+          setWaitlist(data.entries);
           setWaitlistTotal(data.total ?? 0);
           setWaitlistRetainedTotal(data.retainedTotal ?? data.total ?? 0);
           setWaitlistArchivedCount(data.archivedCount ?? 0);
@@ -1290,23 +1313,30 @@ export default function Admin() {
           setWaitlistCityRollup(
             Array.isArray(data.cityRollup) ? data.cityRollup : [],
           );
+          clearAdminDataError("waitlist");
         })
+        .catch((error) => recordAdminDataError("waitlist", error))
         .finally(() => setWaitlistLoading(false));
     },
-    [PAGE_SIZE, showSyntheticWaitlist, waitlistCityFilter],
+    [PAGE_SIZE, clearAdminDataError, recordAdminDataError, showSyntheticWaitlist, waitlistCityFilter],
   );
 
   const loadUsers = useCallback(() => {
     const visibility = showHiddenUsers ? "?visibility=all" : "";
     return fetch(`${BASE}api/admin/users${visibility}`, { credentials: "include" })
-      .then((r) => r.json())
+      .then((response) => readAdminJson<any>(response))
       .then((data) => {
-        setUsers(data.users ?? []);
+        if (!Array.isArray(data.users)) {
+          throw new Error("The Registered Users response was incomplete. Please retry.");
+        }
+        setUsers(data.users);
         setUsersRetainedTotal(data.retainedTotal ?? data.users?.length ?? 0);
         setHiddenUserCount(data.hiddenCount ?? 0);
         setLastRefreshed(new Date());
-      });
-  }, [showHiddenUsers]);
+        clearAdminDataError("users");
+      })
+      .catch((error) => recordAdminDataError("users", error));
+  }, [clearAdminDataError, recordAdminDataError, showHiddenUsers]);
 
   const loadLeaderboard = useCallback(() => {
     setLeaderboardLoading(true);
@@ -1386,9 +1416,13 @@ export default function Admin() {
     const requestId = ++businessInventoryRequestId.current;
     setBusinessInventoryLoading(true);
     return fetch(`${BASE}api/admin/businesses?${params}`, { credentials: "include" })
-      .then((r) => r.json())
+      .then((response) => readAdminJson<any>(response))
       .then((data) => {
         if (requestId !== businessInventoryRequestId.current) return;
+        if (!Array.isArray(data.businesses)) {
+          throw new Error("The Businesses response was incomplete. Please retry.");
+        }
+        clearAdminDataError("businesses");
         const expectedCities = normalizedCityFilterValues(cityValues);
         const appliedCities = normalizedCityFilterValues(data?.appliedFilters?.cities);
         if (
@@ -1409,9 +1443,7 @@ export default function Admin() {
           setBusinessInventoryFilterError("The inventory response did not confirm the source-batch filter, so no mismatched businesses were shown. Refresh and try the filter again.");
           return;
         }
-        const responseBusinesses: AdminBusiness[] = Array.isArray(data.businesses)
-          ? data.businesses as AdminBusiness[]
-          : [];
+        const responseBusinesses = data.businesses as AdminBusiness[];
         const cityScopedBusinesses = expectedCities.length === 0
           ? responseBusinesses
           : responseBusinesses.filter((business) => expectedCities.includes(
@@ -1488,12 +1520,17 @@ export default function Admin() {
         );
         setLastRefreshed(new Date());
       })
+      .catch((error) => {
+        if (requestId === businessInventoryRequestId.current) {
+          recordAdminDataError("businesses", error);
+        }
+      })
       .finally(() => {
         if (requestId === businessInventoryRequestId.current) {
           setBusinessInventoryLoading(false);
         }
       });
-  }, []);
+  }, [clearAdminDataError, recordAdminDataError]);
 
   const loadSourceBackedDirectoryIntakePreview = useCallback(async (
     batch = sourceDirectoryIntakeBatch,
@@ -1609,31 +1646,45 @@ export default function Admin() {
 
   const loadMembers = useCallback(() => {
     return fetch(`${BASE}api/admin/members`, { credentials: "include" })
-      .then((r) => r.json())
+      .then((response) => readAdminJson<any>(response))
       .then((data) => {
-        setMembers(data.members ?? []);
+        if (!Array.isArray(data.members)) {
+          throw new Error("The Members response was incomplete. Please retry.");
+        }
+        setMembers(data.members);
         setLastRefreshed(new Date());
-      });
-  }, []);
+        clearAdminDataError("members");
+      })
+      .catch((error) => recordAdminDataError("members", error));
+  }, [clearAdminDataError, recordAdminDataError]);
 
   const loadReviews = useCallback(() => {
     return fetch(`${BASE}api/admin/reviews`, { credentials: "include" })
-      .then((r) => r.json())
+      .then((response) => readAdminJson<any>(response))
       .then((data) => {
-        setReviews(data.reviews ?? []);
+        if (!Array.isArray(data.reviews)) {
+          throw new Error("The Reviews response was incomplete. Please retry.");
+        }
+        setReviews(data.reviews);
         setLastRefreshed(new Date());
-      });
-  }, []);
+        clearAdminDataError("reviews");
+      })
+      .catch((error) => recordAdminDataError("reviews", error));
+  }, [clearAdminDataError, recordAdminDataError]);
 
   const loadReports = useCallback(() => {
     return fetch(`${BASE}api/admin/content-reports`, { credentials: "include" })
-      .then((r) => r.json())
+      .then((response) => readAdminJson<any>(response))
       .then((data) => {
-        setReports(data.reports ?? []);
+        if (!Array.isArray(data.reports)) {
+          throw new Error("The Reports response was incomplete. Please retry.");
+        }
+        setReports(data.reports);
         setLastRefreshed(new Date());
+        clearAdminDataError("reports");
       })
-      .catch(() => {});
-  }, []);
+      .catch((error) => recordAdminDataError("reports", error));
+  }, [clearAdminDataError, recordAdminDataError]);
 
   const loadChallengeApps = useCallback(() => {
     return fetch(`${BASE}api/admin/challenge-applications`, {
@@ -3155,6 +3206,22 @@ Selected: ${summary}`);
   const selectableUsers = visibleUsers.filter(
     (user) => user.role !== "admin" && !PROTECTED_ADMIN_EMAILS.has((user.email ?? "").trim().toLowerCase()),
   );
+  const activeAdminDataSurface: AdminDataSurface | null = tab === "waitlist"
+    ? "waitlist"
+    : tab === "users"
+      ? "users"
+      : tab === "businesses" || tab === "kinfolk-catalog"
+        ? "businesses"
+        : tab === "members"
+          ? "members"
+          : tab === "reviews"
+            ? "reviews"
+            : tab === "reports"
+              ? "reports"
+              : null;
+  const activeAdminDataError = activeAdminDataSurface
+    ? adminDataErrors[activeAdminDataSurface]
+    : null;
 
   const tabs: {
     id: Tab;
@@ -3804,6 +3871,24 @@ Selected: ${summary}`);
 
       {/* Content */}
       <div className="max-w-[1500px] mx-auto px-6 py-8">
+        {activeAdminDataError && activeAdminDataSurface && (
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+            <div>
+              <strong>Could not load {ADMIN_DATA_SURFACE_LABELS[activeAdminDataSurface]}.</strong>{" "}
+              {activeAdminDataError}
+              <p className="mt-1 text-xs text-red-700/80">
+                Existing rows, if any, stay visible. A failed request is never presented as zero matching records.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => void refreshAll()}
+              className="rounded-lg border border-red-300 bg-white px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-100"
+            >
+              Retry data load
+            </button>
+          </div>
+        )}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-8 h-8 border-2 border-[#CA922B] border-t-transparent rounded-full animate-spin" />
