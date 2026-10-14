@@ -30,6 +30,7 @@ import {
 import { getCachedPrefs, invalidatePrefsCache } from "../kinfolk/preference-cache";
 import { parseKinfolkClientTrace } from "../kinfolk/client-request-trace";
 import crypto from "crypto";
+import { currentChapterPromptForRequest } from "../kinfolk/current-chapter-runtime";
 import {
   db,
   pool,
@@ -13348,7 +13349,11 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const unresolvedReferenceInstruction = conversationContextScope?.requiresReferenceClarification
       ? "\n\nEXPLICIT PRIOR-SUBJECT REFERENCE: The member asked to return to an earlier subject, but the safe bounded session did not identify exactly one non-sensitive subject. Ask one short clarification naming no private details. Do not infer, retrieve, or repeat another topic."
       : "";
-    const systemPromptWithResponseFormat = `${systemPromptWithLibrary}${explicitResumeResponsePolicy}${unresolvedReferenceInstruction}\n\n${conversationalIntentPrompt}\n\n${buildKinfolkFormalResponseContract()}`;
+    const currentChapterPrompt = await currentChapterPromptForRequest({
+      owner: req.user?.id ?? "", message, intent: intentClass, surface: "conversation",
+      excludedContext: Boolean(libraryGroundingBlock || contextualEvidence || communityHashtagContext.promptBlock || isPrivateQuestionAttachment),
+    });
+    const systemPromptWithResponseFormat = `${systemPromptWithLibrary}${explicitResumeResponsePolicy}${unresolvedReferenceInstruction}\n\n${conversationalIntentPrompt}\n\n${buildKinfolkFormalResponseContract()}${currentChapterPrompt ? `\n\n${currentChapterPrompt}` : ""}`;
 
     const continuityInstruction = conversationalResearchSubject.inheritedSubject
       ? `\n\n[Conversation continuity: The member's immediately preceding subject was “${conversationalResearchSubject.inheritedSubject}”. Answer this follow-up about that subject. Do not ask them to repeat it.]`

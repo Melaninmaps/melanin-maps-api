@@ -36,6 +36,7 @@ import {
 } from "./lib/startup-migrations";
 import { assertDirectoryReviewLocalStaging } from "./directoryImport/localStagingGuard";
 import { ensureRequiredSafetyReportSchema } from "./safety/ensureSafetyReportSchema";
+import { ensureKinfolkCurrentChaptersSchema } from "./lib/kinfolk-current-chapters-schema";
 import { bootstrapDirectoryReviewSchema } from "./directoryImport/reviewDatabase";
 import { startDirectoryPublicationWorker } from "./directoryImport/publicationWorker";
 import { startFounderMapRestorationWorker } from "./businesses/mapRestorationWorker";
@@ -155,6 +156,10 @@ try {
   logger.info("Kinfolk delivery-profile schema ready before traffic acceptance");
   await ensureKinfolkPreferredNameSchema(logger);
   logger.info("Kinfolk preferred-name schema ready before traffic acceptance");
+  await ensureKinfolkCurrentChaptersSchema(
+    (message) => logger.info(message),
+    (message) => logger.warn(message),
+  );
   // Approval issuance and self-registration share this narrow, additive table.
   // Keep it outside the broad runner so explicit feature-release mode cannot
   // expose a route that would fail closed only after an administrator acts.

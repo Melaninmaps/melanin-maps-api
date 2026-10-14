@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Lock, Pencil, RotateCcw, Trash2, X } from "lucide-react";
+import { CurrentChapterManager } from "./CurrentChapterManager";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -219,6 +220,7 @@ export function KinfolkMemoryManager({ onClose, onReset }: KinfolkMemoryManagerP
         <button onClick={onClose} aria-label="Close memory settings" className="rounded-full bg-[#FAF6EF] p-2"><X className="h-4 w-4" /></button>
       </header>
       <div className="max-h-[60vh] overflow-y-auto p-5">
+        <CurrentChapterManager />
         {memories.some((memory) => memory.isSensitive) ? <section data-testid="sensitive-memory-vault" className="mb-4 rounded-2xl border border-[#CA922B]/25 bg-[#FFF8EC] p-4"><p className="text-sm font-semibold text-[#2B1507]">Sensitive Memory Vault</p><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">{vaultUnlocked ? "Unlocked briefly for this session. Sensitive details remain hidden from ordinary memory views." : "Sensitive details are hidden. Confirm your current password to review or change them."}</p>{!vaultUnlocked ? <div className="mt-3 flex flex-col gap-2 sm:flex-row"><input type="password" value={vaultPassword} onChange={(event) => setVaultPassword(event.target.value)} disabled={unlockingVault} autoComplete="current-password" aria-label="Current password for sensitive memory vault" className="min-w-0 flex-1 rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm text-[#2B1507]" /><button type="button" disabled={!vaultPassword || unlockingVault} onClick={() => void unlockSensitiveVault()} className="rounded-xl bg-[#2B1507] px-3 py-2 text-xs font-bold text-white disabled:opacity-60">{unlockingVault ? "Confirming…" : "Open sensitive vault"}</button></div> : null}</section> : null}
         {loading ? (
           <div className="flex justify-center py-10"><Loader2 className="h-5 w-5 animate-spin text-[#CA922B]" /></div>

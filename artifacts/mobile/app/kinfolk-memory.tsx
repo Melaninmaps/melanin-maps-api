@@ -20,6 +20,7 @@ import { useColors } from "@/hooks/useColors";
 import { getApiBase } from "@/lib/api";
 import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDisclosure";
 import { useUnsavedKinfolkExitGuard } from "@/hooks/useUnsavedKinfolkExitGuard";
+import { CurrentChapterManager } from "@/components/CurrentChapterManager";
 
 async function getToken(): Promise<string | null> {
   try { return await SecureStore.getItemAsync("auth_session_token"); } catch { return null; }
@@ -426,6 +427,7 @@ export default function KinfolkMemoryScreen() {
     <View style={[styles.header, { paddingTop: topPad + 12 }]}><TouchableOpacity activeOpacity={0.85} style={styles.back} onPress={() => router.canGoBack() ? router.back() : router.replace("/kinfolk-settings" as never)}><Feather name="arrow-left" size={22} color={colors.foreground} /></TouchableOpacity><Text style={[styles.headerTitle, { color: colors.foreground }]}>What KinfolkAI™ Knows</Text><View style={{ width: 40 }} /></View>
     {loading ? <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}><ActivityIndicator size="large" color={colors.primary} /></View> : <ScrollView keyboardDismissMode="on-drag" showsVerticalScrollIndicator={false} contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 40 }]}>
       <View style={[styles.hero, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "30" }]}><View style={[styles.heroIcon, { backgroundColor: colors.primary }]}><Feather name="cpu" size={22} color="#fff" /></View><Text style={[styles.heroTitle, { color: colors.foreground }]}>Your KinfolkAI™ Memory</Text><Text style={[styles.heroDesc, { color: colors.mutedForeground }]}>Review what Kinfolk can use in future conversations. You can edit, delete, turn continuity off, or reset Kinfolk anytime.</Text></View>
+      <CurrentChapterManager getToken={getToken} />
       <Text style={[styles.sectionTitle, { color: colors.mutedForeground }]}>PREFERRED NAME</Text>
       <View style={[styles.continuityCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
         <View style={[styles.itemIcon, { backgroundColor: colors.primary + "18" }]}><Feather name="user" size={16} color={colors.primary} /></View>

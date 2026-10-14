@@ -219,3 +219,4 @@ export type {
   KinfolkResponseMeta,
   KinfolkRetrievalKind,
 } from "./kinfolk-chat-contract";
+export * from "./kinfolk-current-chapters";

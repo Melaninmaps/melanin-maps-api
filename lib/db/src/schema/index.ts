@@ -1,6 +1,7 @@
 export * from "./auth";
 export * from "./user-identity-context";
 export * from "./tester-feedback";
+export * from "./kinfolk-current-chapters";
 export * from "./pending-tester-emails";
 export * from "./city-archives";
 export * from "./city-launches";
