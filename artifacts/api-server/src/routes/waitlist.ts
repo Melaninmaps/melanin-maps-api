@@ -2,7 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { db, pool, waitlistTable, usersTable, businessRecommendationsTable, pointsLedgerTable, businessesTable, businessSuggestionsTable, waitlistSafetyReportsTable } from "@workspace/db";
 import { and, asc, count, desc, eq, gte, ilike, isNotNull, lt, ne, sql } from "drizzle-orm";
 import { waitlistLimiter } from "../middleware/rateLimiter";
-import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite, sendFriendInvitation, sendBusinessWaitlistInvitation, sendReferralMilestoneUpdate, sendReferralNudge, sendAppLaunchBlast, sendBetaAnnouncementBlast, sendWaitlistInvitation } from "../lib/email";
+import { sendWaitlistConfirmation, sendWelcomeEmail, sendApprovalNotification, sendBusinessRecommendationInvite, sendFriendInvitation, sendBusinessWaitlistInvitation, sendReferralMilestoneUpdate, sendReferralNudge, sendAppLaunchBlast, sendBetaAnnouncementBlast, sendWaitlistInvitation, sendWaitlistFounderRegistrationAlert } from "../lib/email";
 import { runWeeklyNudge } from "../lib/nudgeScheduler";
 import { isAdmin } from "../lib/adminAuth";
 import { isApprovalRequired } from "../lib/approvalGate";
@@ -300,6 +300,26 @@ router.post("/waitlist", waitlistLimiter, async (req: Request, res: Response) =>
       // waitlist email that says access is still awaiting approval.
       sendWelcomeEmail(cleanEmail, cleanFirst)
         .catch((err: unknown) => req.log.error({ err }, "Failed to send tester welcome email"));
+    }
+
+    // Only an atomically created primary public entry can send this founder
+    // alert. Repeat joins and concurrent duplicate submissions leave `created`
+    // false, while family entries intentionally do not multiply the alert.
+    if (created && entryId) {
+      sendWaitlistFounderRegistrationAlert({
+        registrationId: entryId,
+        email: cleanEmail,
+        city: normalizedCity,
+        submittedAt: new Date(),
+      }).catch(() => {
+        // Keep registration successful after durable persistence. The existing
+        // email layer has no durable retry queue; record only a bounded event,
+        // never the registrant email, request body, or provider error.
+        req.log.warn(
+          { event: "WAITLIST_FOUNDER_NOTIFICATION_FAILED" },
+          "Founder waitlist registration notification failed",
+        );
+      });
     }
 
     // Fire referral milestone update to the referrer when someone joins via their code
