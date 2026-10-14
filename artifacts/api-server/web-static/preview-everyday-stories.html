@@ -1,0 +1,602 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1a0c04">
+  <title>Mapping With Melanin — Everyday With Kinfolk</title>
+  <style>
+    :root {
+      --ink: #2b1507;
+      --espresso: #1a0c04;
+      --brown: #3b1f0e;
+      --cream: #fbf2e5;
+      --paper: #fffaf2;
+      --gold: #cf9825;
+      --gold-soft: #f1d58e;
+      --sage: #1f4d3e;
+      --sage-light: #dff0e4;
+      --muted: #806653;
+      --line: rgba(255, 246, 232, .16);
+      --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --serif: Georgia, "Times New Roman", serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; background: var(--espresso); }
+    body { margin: 0; background: var(--espresso); color: var(--cream); font-family: var(--sans); }
+    button, input, textarea { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, a:focus-visible { outline: 3px solid var(--gold-soft); outline-offset: 4px; }
+    .skip { position: fixed; z-index: 100; top: 10px; left: 10px; padding: 10px 14px; color: var(--espresso); background: var(--gold-soft); transform: translateY(-180%); }
+    .skip:focus { transform: translateY(0); }
+
+    .site-header { position: fixed; z-index: 40; top: 0; right: 0; left: 0; display: flex; align-items: center; justify-content: space-between; padding: 20px clamp(18px, 4vw, 64px); border-bottom: 1px solid rgba(255,255,255,.08); background: linear-gradient(to bottom, rgba(20,10,4,.86), rgba(20,10,4,.42), transparent); backdrop-filter: blur(8px); }
+    .wordmark { color: var(--paper); font-size: .74rem; font-weight: 800; letter-spacing: .16em; line-height: 1.1; text-decoration: none; text-transform: uppercase; }
+    .wordmark em { color: var(--gold-soft); font-style: normal; }
+    .header-nav { display: flex; align-items:center; gap: clamp(10px, 2vw, 24px); max-width:min(76vw,690px); overflow-x:auto; white-space:nowrap; scrollbar-width:none; }
+    .header-nav::-webkit-scrollbar { display:none; }
+    .header-nav a { color: rgba(255,246,232,.75); font-size: .68rem; font-weight: 700; letter-spacing: .1em; text-decoration: none; text-transform: uppercase; }
+    .header-nav a:hover, .header-nav a[aria-current="page"] { color: var(--gold-soft); }
+
+    .hero { position: relative; display: grid; min-height: 100svh; padding: clamp(125px, 14vw, 180px) clamp(24px, 8vw, 140px) 72px; overflow: hidden; isolation: isolate; }
+    .hero::before { position: absolute; z-index: -2; inset: 0; background: linear-gradient(90deg, rgba(26,12,4,.92) 0%, rgba(26,12,4,.7) 46%, rgba(26,12,4,.32) 100%), linear-gradient(0deg, rgba(26,12,4,.86), transparent 45%), url("assets/cinematic/kinfolk-companion.jpg") center / cover; content: ""; }
+    .hero::after { position: absolute; z-index: -1; width: min(70vw, 850px); aspect-ratio: 1; right: -27vw; bottom: -53vw; border: 1px solid rgba(241,213,142,.24); border-radius: 50%; box-shadow: 0 0 0 62px rgba(241,213,142,.04), 0 0 0 124px rgba(241,213,142,.025); content: ""; }
+    .hero-inner { display: grid; align-content: center; max-width: 830px; }
+    .eyebrow { display: flex; align-items: center; gap: 11px; margin: 0 0 22px; color: var(--gold-soft); font-size: .7rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    .eyebrow::before { width: 29px; height: 1px; background: currentColor; content: ""; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { max-width: 760px; margin-bottom: 23px; font-family: var(--serif); font-size: clamp(4rem, 8.6vw, 8.2rem); font-weight: 500; letter-spacing: -.065em; line-height: .88; }
+    h1 em { color: var(--gold-soft); font-style: italic; }
+    .hero-lede { max-width: 590px; margin-bottom: 31px; color: rgba(255,246,232,.83); font-size: clamp(1.05rem, 1.65vw, 1.28rem); line-height: 1.6; }
+    .hero-prompt { display: grid; grid-template-columns: auto 1fr; gap: 12px; max-width: 610px; padding: 16px 18px; color: var(--paper); border: 1px solid rgba(241,213,142,.36); border-radius: 18px; background: rgba(34,17,8,.55); box-shadow: 0 16px 45px rgba(0,0,0,.18); backdrop-filter: blur(12px); }
+    .hero-prompt b { display: grid; place-items: center; width: 31px; height: 31px; color: var(--espresso); border-radius: 50%; background: var(--gold-soft); font-family: var(--serif); font-size: 1.1rem; }
+    .hero-prompt span { display: block; color: rgba(255,246,232,.64); font-size: .67rem; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .hero-prompt strong { display: block; margin-top: 3px; font-size: .99rem; line-height: 1.4; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 29px; }
+    .button { display: inline-flex; align-items: center; justify-content: center; gap: 9px; min-height: 48px; padding: 13px 18px; border-radius: 999px; font-size: .82rem; font-weight: 800; text-decoration: none; transition: transform .2s ease, background .2s ease; }
+    .button:hover { transform: translateY(-2px); }
+    .button.primary { color: var(--espresso); background: var(--gold-soft); }
+    .button.secondary { color: var(--paper); border: 1px solid rgba(255,246,232,.25); background: rgba(255,255,255,.06); }
+    .hero-footnote { position: absolute; right: clamp(24px, 8vw, 140px); bottom: 31px; max-width: 265px; color: rgba(255,246,232,.54); font-size: .7rem; line-height: 1.45; }
+
+    .story-intro { padding: clamp(86px, 12vw, 150px) clamp(24px, 8vw, 140px); background: var(--cream); color: var(--ink); }
+    .story-intro > div { max-width: 860px; margin: auto; }
+    .story-intro .eyebrow { color: #9a6b1e; }
+    .story-intro h2 { max-width: 780px; margin-bottom: 21px; font-family: var(--serif); font-size: clamp(3rem, 6.4vw, 6.5rem); font-weight: 500; letter-spacing: -.06em; line-height: .92; }
+    .story-intro h2 em { color: #a57627; font-style: italic; }
+    .story-intro p:last-child { max-width: 670px; color: #6d5240; font-size: 1.08rem; line-height: 1.65; }
+
+    .product-story { position: relative; padding: 0 clamp(18px, 6vw, 112px); background: #f7ebda; color: var(--ink); }
+    .product-story::before { position: absolute; inset: 0; opacity: .44; pointer-events: none; content: ""; }
+    .product-story.member::before { background: radial-gradient(circle at 88% 9%, rgba(207,152,37,.24), transparent 21%), url("assets/cinematic/everyday-life.jpg") 50% 0 / 100% auto no-repeat; mix-blend-mode: multiply; }
+    .product-story.owner { background: #0f2d25; color: var(--cream); }
+    .product-story.owner::before { background: linear-gradient(rgba(14,43,35,.87), rgba(14,43,35,.98)), url("assets/cinematic/business-owner.jpg") center / cover; opacity: 1; }
+    .story-shell { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(340px, .86fr) minmax(420px, 1fr); width: min(100%, 1280px); gap: clamp(40px, 8vw, 132px); margin: auto; align-items: start; }
+    .product-story.owner .story-shell { grid-template-columns: minmax(420px, 1fr) minmax(340px, .86fr); }
+
+    .story-device-wrap { position: sticky; top: 84px; display: grid; min-height: 100svh; place-items: center; }
+    .product-story.owner .story-device-wrap { grid-column: 2; grid-row: 1; }
+    .device { width: min(100%, 404px); padding: 10px; border: 2px solid rgba(255,251,241,.8); border-radius: 43px; background: #0e0906; box-shadow: 0 34px 60px rgba(0,0,0,.3), 0 0 0 4px rgba(207,152,37,.13); }
+    .device-top { position: absolute; z-index: 5; width: 38%; height: 18px; margin-left: 30%; border-radius: 0 0 14px 14px; background: #0b0705; }
+    .device-screen { position: relative; min-height: 700px; overflow: hidden; border-radius: 33px; background: #fbf7f0; }
+    .story-screen { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; color: #2d180b; opacity: 0; pointer-events: none; transform: translateX(48px) scale(.98); transition: opacity .45s ease, transform .55s cubic-bezier(.2,.8,.2,1); }
+    .story-screen.is-active { z-index: 2; opacity: 1; pointer-events: auto; transform: translateX(0) scale(1); }
+    .story-screen.is-exit { transform: translateX(-38px) scale(.98); }
+    .story-screen img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .screen-status { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px 7px; color: #715947; font-size: 9px; font-weight: 800; letter-spacing: .06em; }
+    .screen-head { display: flex; align-items: center; justify-content: space-between; gap: 9px; padding: 9px 20px 14px; border-bottom: 1px solid #e6d7c6; }
+    .screen-head b { display: block; font-size: 15px; letter-spacing: -.025em; }
+    .screen-head small { display: block; margin-top: 2px; color: #927051; font-size: 8px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .kinfolk-mark { display: grid; place-items: center; width: 29px; height: 29px; color: #fff; border-radius: 50%; background: #c9922b; font-family: var(--serif); font-size: 16px; }
+    .screen-body { display: flex; flex: 1; flex-direction: column; gap: 11px; padding: 17px 17px 15px; overflow: hidden; }
+    .screen-eyebrow { margin: 0; color: #9a6e22; font-size: 8px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .screen-title { margin: 0; font-family: var(--serif); font-size: 28px; font-weight: 500; letter-spacing: -.045em; line-height: .98; }
+    .screen-sub { margin: -2px 0 2px; color: #77604d; font-size: 10px; line-height: 1.42; }
+    .taste-chip { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; padding: 7px 10px; color: #8a651e; border-radius: 999px; background: #fff1d4; font-size: 9px; font-weight: 800; }
+    .message { max-width: 90%; padding: 11px 12px; border-radius: 15px; font-size: 11px; line-height: 1.4; }
+    .message.member { align-self: flex-end; color: #fffaf2; border-bottom-right-radius: 3px; background: #3b1f0e; }
+    .message.kinfolk { align-self: flex-start; border: 1px solid #dfcdb7; border-bottom-left-radius: 3px; background: #fffdf9; }
+    .message b { display: block; margin-bottom: 4px; color: inherit; font-size: 8px; letter-spacing: .08em; text-transform: uppercase; opacity: .66; }
+    .quick-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+    .quick-pills span { padding: 6px 8px; color: #78602f; border: 1px solid #dec28a; border-radius: 999px; background: #fffaf0; font-size: 8px; font-weight: 700; }
+    .screen-composer { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 8px; margin-top: auto; padding: 10px 11px 10px 13px; color: #9a816b; border: 1px solid #dfcfbd; border-radius: 15px; background: #fffdf9; font-size: 9px; text-align: left; }
+    .screen-composer:hover { border-color: #c9922b; background: #fff7e9; }
+    .screen-composer i { display: grid; place-items: center; width: 21px; height: 21px; color: #fff; border-radius: 50%; background: #c9922b; font-size: 12px; font-style: normal; }
+    .replit-advance { position: absolute; z-index: 6; right: 16px; bottom: 12px; left: 16px; display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; color: #2b1707; border: 0; border-radius: 13px; background: #f1d58e; box-shadow: 0 8px 18px rgba(0,0,0,.3); font-size: 9px; font-weight: 800; }
+    .replit-advance:hover { background: #fff0bd; }
+    .trip-card, .task-card, .dinner-card, .plan-card, .response-card, .safety-card { border: 1px solid #e0cdb4; border-radius: 16px; background: #fffdf9; box-shadow: 0 6px 16px rgba(66,37,17,.05); }
+    .trip-card { padding: 12px; }
+    .trip-card .trip-head { display: flex; align-items: center; justify-content: space-between; gap: 7px; }
+    .trip-card .trip-head strong { font-size: 11px; }
+    .trip-card .trip-head span { padding: 4px 6px; color: #83611e; border-radius: 99px; background: #f9e8be; font-size: 8px; font-weight: 800; }
+    .trip-row { display: grid; grid-template-columns: 33px 1fr; gap: 9px; margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee2d3; }
+    .trip-row b { color: #89641d; font-size: 9px; }
+    .trip-row strong { display: block; font-size: 10px; }
+    .trip-row p { margin: 2px 0 0; color: #7b6250; font-size: 9px; line-height: 1.35; }
+    .task-card { padding: 11px; color: #3d291b; background: #f6ead7; }
+    .task-card .task-top { display: flex; align-items: center; justify-content: space-between; gap: 7px; }
+    .task-card .tag { padding: 4px 6px; color: #84601d; border-radius: 8px; background: #fff6e6; font-size: 8px; font-weight: 800; }
+    .task-card strong { font-size: 10px; }
+    .task-card p { margin: 5px 0 7px; color: #725846; font-size: 9px; line-height: 1.35; }
+    .task-card button { padding: 6px 8px; color: #fff; border: 0; border-radius: 9px; background: #3b1f0e; font-size: 8px; font-weight: 800; }
+    .dinner-card { display: grid; grid-template-columns: 42px 1fr auto; gap: 9px; align-items: center; padding: 11px; }
+    .dinner-icon { display: grid; place-items: center; width: 42px; height: 42px; color: #f8e3af; border-radius: 11px; background: linear-gradient(135deg, #305e49, #17372d); font-size: 17px; }
+    .dinner-card strong { display: block; font-size: 10px; }
+    .dinner-card span { display: block; margin-top: 2px; color: #7a6250; font-size: 8px; }
+    .dinner-card b { color: #267048; font-size: 9px; }
+    .replit-screen { background: #160800; }
+    .replit-screen::after { position: absolute; z-index: 5; right: 14px; bottom: 59px; padding: 5px 7px; color: #f4d998; border: 1px solid rgba(244,217,152,.36); border-radius: 999px; background: rgba(18,7,2,.75); content: "Existing Replit screen"; font-size: 7px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    .safety-screen { background: #faf6ef; }
+    .safety-header { padding: 19px 18px 16px; color: #fff; background: #2b1507; }
+    .safety-header span { color: #f5dfac; font-size: 8px; font-weight: 800; letter-spacing: .11em; text-transform: uppercase; }
+    .safety-header h3 { margin: 5px 0 4px; font-family: var(--serif); font-size: 21px; font-weight: 600; }
+    .safety-header p { margin: 0; color: rgba(255,246,232,.7); font-size: 9px; line-height: 1.35; }
+    .privacy-note { margin: 12px 17px 3px; padding: 10px; color: #fff4df; border-radius: 13px; background: #3f2818; font-size: 9px; line-height: 1.4; }
+    .safety-content { display: grid; gap: 9px; padding: 12px 17px 17px; }
+    .sos { display: flex; align-items: center; gap: 10px; padding: 11px; color: #fff; border-radius: 14px; background: #b52824; }
+    .sos b { display: block; font-size: 11px; }
+    .sos span { display: block; margin-top: 2px; color: rgba(255,255,255,.74); font-size: 8px; }
+    .safety-label { margin: 2px 0 0; color: #866b58; font-size: 8px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+    .safety-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .safety-card { min-height: 66px; padding: 9px; }
+    .safety-card b { display: block; color: #2b1507; font-size: 9px; line-height: 1.23; }
+    .safety-card span { display: block; margin-top: 4px; color: #7d6555; font-size: 7px; line-height: 1.28; }
+    .alert-check { padding: 11px; color: #344235; border: 1px solid #cde2d2; border-radius: 14px; background: #eff8f1; font-size: 9px; line-height: 1.38; }
+    .alert-check b { display: block; margin-bottom: 3px; color: #256340; font-size: 10px; }
+
+    .story-rail { position: relative; padding: clamp(82px, 9vw, 116px) 0 calc(clamp(82px, 9vw, 116px) + 78svh); }
+    .product-story.owner .story-rail { grid-column: 1; grid-row: 1; }
+    .story-rail::before { position: absolute; top: 118px; bottom: 118px; left: 8px; width: 1px; background: rgba(89,59,35,.2); content: ""; }
+    .owner .story-rail::before { background: rgba(255,245,228,.22); }
+    .story-beat { position: relative; min-height: min(76svh, 760px); padding: 12px 0 30px 42px; scroll-margin-top: 92px; }
+    .story-beat::before { position: absolute; top: 18px; left: 0; width: 17px; height: 17px; border: 3px solid #f7ebda; border-radius: 50%; background: #b98027; box-shadow: 0 0 0 1px rgba(77,43,14,.48); content: ""; transition: transform .3s ease, background .3s ease; }
+    .owner .story-beat::before { border-color: #0f2d25; background: #d8ad4f; }
+    .story-beat.is-active::before { background: #2b1507; transform: scale(1.32); }
+    .owner .story-beat.is-active::before { background: #fff2d2; }
+    .beat-count { display: block; margin-bottom: 14px; color: #966a20; font-size: .69rem; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
+    .owner .beat-count { color: var(--gold-soft); }
+    .story-beat h3 { max-width: 590px; margin-bottom: 16px; font-family: var(--serif); font-size: clamp(2.65rem, 4.8vw, 5.2rem); font-weight: 500; letter-spacing: -.055em; line-height: .93; }
+    .story-beat h3 em { color: #a77525; font-style: italic; }
+    .owner .story-beat h3 em { color: var(--gold-soft); }
+    .story-beat > p { max-width: 520px; color: #715745; font-size: 1.02rem; line-height: 1.65; }
+    .owner .story-beat > p { color: rgba(255,247,232,.75); }
+    .beat-note { max-width: 460px; margin-top: 22px; padding: 14px 15px; color: #6d533f; border-left: 2px solid #c9922b; background: rgba(255,255,255,.42); font-size: .78rem; line-height: 1.5; }
+    .owner .beat-note { color: rgba(255,247,232,.72); border-color: var(--gold-soft); background: rgba(255,255,255,.055); }
+    .beat-select { display: inline-flex; align-items: center; gap: 8px; margin-top: 25px; padding: 10px 13px; color: #fff; border: 0; border-radius: 999px; background: #3b1f0e; font-size: .76rem; font-weight: 800; }
+    .owner .beat-select { color: #1b1007; background: var(--gold-soft); }
+    .beat-select[aria-current="step"] { box-shadow: 0 0 0 4px rgba(201,146,43,.18); }
+
+    .source-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 20px; }
+    .source-strip span { padding: 7px 9px; color: #805d2d; border: 1px solid rgba(163,114,32,.28); border-radius: 999px; background: rgba(255,250,243,.56); font-size: .7rem; font-weight: 800; }
+    .owner .source-strip span { color: #f6d98c; border-color: rgba(246,217,140,.25); background: rgba(255,255,255,.055); }
+
+    .screen-plan { background: #fbf7f0; }
+    .plan-progress { display: flex; gap: 5px; padding: 13px 18px 5px; }
+    .plan-progress i { height: 4px; flex: 1; border-radius: 99px; background: #e2d1bb; }
+    .plan-progress i:nth-child(-n+2) { background: #c9922b; }
+    .plan-body { display: grid; gap: 10px; padding: 12px 17px 17px; }
+    .plan-body .screen-title { font-size: 26px; }
+    .choice-row { display: flex; align-items: center; width: 100%; gap: 9px; padding: 10px; color: inherit; border: 1px solid #d9c3a8; border-radius: 12px; background: #fffdf9; text-align: left; }
+    .choice-row:hover { border-color: #c9922b; }
+    .choice-row.is-picked { border-color: #c9922b; background: #fff5df; }
+    .choice-row b { display: grid; place-items: center; width: 23px; height: 23px; color: #fff; border-radius: 7px; background: #c9922b; font-size: 11px; }
+    .choice-row span { color: #463325; font-size: 9px; font-weight: 700; }
+    .plan-brief { padding: 11px; color: #715745; border-radius: 13px; background: #f2e6d3; font-size: 9px; line-height: 1.4; }
+    .plan-brief b { display: block; margin-bottom: 4px; color: #8a651d; font-size: 9px; }
+    .plan-cta { margin-top: 4px; padding: 11px; color: #fff; border: 0; border-radius: 13px; background: #3b1f0e; font-size: 10px; font-weight: 800; }
+
+    .screen-response { background: #fbf7f0; }
+    .response-body { display: grid; gap: 10px; padding: 16px 17px; }
+    .response-warning { padding: 10px; color: #785530; border-radius: 12px; background: #fff0d2; font-size: 9px; line-height: 1.38; }
+    .response-field { padding: 10px; border: 1px solid #e0ceb9; border-radius: 12px; background: #fffdf9; }
+    .response-field b { display: block; color: #3a2519; font-size: 9px; }
+    .response-field p { margin: 5px 0 0; color: #836b59; font-size: 8px; line-height: 1.35; }
+    .response-field.is-filled p { color: #4e3929; }
+    .response-footer { margin-top: auto; padding: 11px 17px 17px; }
+    .response-footer button { width: 100%; padding: 12px; color: #fff; border: 0; border-radius: 13px; background: #c9922b; font-size: 10px; font-weight: 800; }
+    .demo-boundary { margin: 0; padding: 8px 10px; color: #74582f; border: 1px solid #e8ca87; border-radius: 10px; background: #fff3d4; font-size: 8px; font-weight: 800; line-height: 1.35; }
+    .business-card { display: grid; grid-template-columns: 35px 1fr auto; gap: 9px; width: 100%; padding: 10px; color: #2d180b; border: 1px solid #d9c3a8; border-radius: 13px; background: #fffdf9; text-align: left; box-shadow: 0 5px 12px rgba(66,37,17,.045); }
+    .business-card:hover { border-color: #c9922b; background: #fff8e9; }
+    .business-card .business-art { display: grid; place-items: center; width: 35px; height: 35px; color: #f6e1a5; border-radius: 10px; background: linear-gradient(135deg, #1d503f, #8b4d1d); font-family: var(--serif); font-size: 18px; }
+    .business-card .business-art.category-art { color: #f1d58e; border: 1px solid rgba(241,213,142,.42); background: linear-gradient(135deg, #2f1607, #6e3b16); }
+    .category-art svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.7; }
+    .business-card strong { display: block; font-size: 10px; }
+    .business-card span { display: block; margin-top: 3px; color: #735a47; font-size: 8px; line-height: 1.3; }
+    .business-card .verified { display: inline-block; margin-top: 5px; padding: 3px 5px; color: #286146; border-radius: 999px; background: #e6f3e9; font-size: 6.5px; font-weight: 900; letter-spacing: .045em; text-transform: uppercase; }
+    .business-card .open-profile { align-self: center; color: #a77525; font-size: 13px; }
+    .video-card { padding: 10px; border: 1px solid #d9c3a8; border-radius: 14px; background: #fffdf9; }
+    .video-thumb { position: relative; height: 78px; overflow: hidden; border-radius: 10px; background: linear-gradient(135deg, #a14b29, #e4ab47 50%, #1d503f); }
+    .video-thumb::before { position: absolute; inset: 13px 48% 13px 11px; border: 1px solid rgba(255,255,255,.48); border-radius: 8px; content: ""; }
+    .video-thumb::after { position: absolute; top: 50%; left: 50%; width: 29px; height: 29px; border-radius: 50%; background: rgba(255,248,234,.92); box-shadow: 0 5px 13px rgba(0,0,0,.2); transform: translate(-50%,-50%); content: "▶"; color: #2b1707; font-size: 11px; line-height: 29px; text-align: center; }
+    .video-card b { display: block; margin-top: 8px; font-size: 10px; }
+    .video-card span { display: block; margin-top: 3px; color: #78604c; font-size: 8px; line-height: 1.35; }
+    .caption-choice { display: block; width: 100%; padding: 9px 10px; color: #432a19; border: 1px solid #dfc8ac; border-radius: 11px; background: #fffdf9; font-size: 8px; text-align: left; }
+    .caption-choice.is-picked { color: #285b45; border-color: #c9922b; background: #fff4dc; }
+    .business-popover { position: absolute; z-index: 14; inset: 0; display: grid; align-items: end; padding: 0; background: rgba(18,8,3,.58); opacity: 0; pointer-events: none; transform:translateX(var(--business-sheet-x,0px)); transition: opacity .22s ease; }
+    .business-popover.is-open { opacity: 1; pointer-events: auto; }
+    .business-popover-card { width: min(100%, 430px); max-height: 85svh; overflow: auto; color: #2b1707; border-top: 1px solid rgba(255,247,232,.8); border-radius: 25px 25px 0 0; background: #fffaf2; box-shadow: 0 -12px 44px rgba(0,0,0,.32); transform: translateY(24px); transition: transform .25s ease; }
+    .business-popover.is-open .business-popover-card { transform: translateY(0); }
+    .business-popover-handle { width: 40px; height: 4px; margin: 10px auto 5px; border-radius: 9px; background: #dcccb8; }
+    .business-popover-hero { position: relative; height: 162px; overflow: hidden; color: #fff; background: #3b1f0e; }
+    .business-popover-hero img { width: 100%; height: 100%; object-fit: cover; }
+    .business-popover-hero.is-category-art { background: radial-gradient(circle at 22% 22%, rgba(241,213,142,.18), transparent 34%), linear-gradient(135deg, #2d1608, #6f3b16); }
+    .business-popover-hero.is-category-art img { display: none; }
+    .business-popover-category-mark { position: absolute; z-index: 1; top: 50%; left: 50%; display: none; width: 76px; height: 76px; color: #f1d58e; border: 1px solid rgba(241,213,142,.48); border-radius: 22px; background: rgba(20,10,4,.24); transform: translate(-50%,-53%); }
+    .business-popover-hero.is-category-art .business-popover-category-mark { display: grid; place-items: center; }
+    .business-popover-category-mark svg { width: 47px; height: 47px; fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; stroke-width: 1.5; }
+    .business-popover-hero::after { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(26,12,4,.76), rgba(26,12,4,.05) 68%); content: ""; }
+    .business-popover-hero-copy { position: absolute; z-index: 1; right: 54px; bottom: 14px; left: 16px; }
+    .business-popover-kicker { margin: 0 0 4px; color: rgba(255,250,241,.8); font-size: 8px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+    .business-popover h3 { margin: 0; color: #fff; font-family: var(--serif); font-size: 26px; font-weight: 500; letter-spacing: -.045em; line-height: .96; }
+    .business-popover-subtitle { display: block; margin-top: 5px; color: rgba(255,250,241,.75); font-size: 9px; }
+    .business-popover-close { position: absolute; z-index: 2; top: 12px; right: 12px; display: grid; place-items: center; width: 34px; height: 34px; color: #fff; border: 0; border-radius: 50%; background: rgba(0,0,0,.34); font-size: 19px; }
+    .business-popover-body { display: grid; gap: 12px; padding: 15px 16px 19px; }
+    .profile-rating-row { display: flex; align-items: center; justify-content: space-between; gap: 9px; }
+    .profile-rating { color: #5d4633; font-size: 10px; font-weight: 800; }
+    .profile-pinned { display: inline-flex; align-items: center; gap: 5px; padding: 5px 9px; color: #7b5a1d; border: 1px solid #e5ca96; border-radius: 99px; background: #fff5df; font-size: 8px; font-weight: 900; }
+    .profile-section-label { margin: 0 0 7px; color: #8b7160; font-size: 8px; font-weight: 900; letter-spacing: .1em; text-transform: uppercase; }
+    .profile-chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+    .profile-chip { padding: 6px 9px; color: #315d48; border: 1px solid #b9d9c2; border-radius: 99px; background: #eef8ef; font-size: 8px; font-weight: 800; }
+    .profile-chip.quote { color: #a34e2c; border-color: #e7b79f; background: #fff2ec; }
+    .business-popover-description { margin: 0; color: #735a47; font-size: 10px; line-height: 1.45; }
+    .profile-demo-note { padding: 9px 10px; color: #6f593e; border-left: 2px solid #c9922b; background: #fff4dc; font-size: 8px; line-height: 1.38; }
+    .business-popover .screen-composer { margin-top: 1px; }
+    .business-popover .screen-composer i { background: #3b1f0e; }
+    @media (max-width: 430px) { .business-popover-hero { height: 145px; } .business-popover h3 { font-size: 23px; } }
+
+    .closing { position: relative; padding: clamp(110px, 16vw, 190px) clamp(24px, 8vw, 140px); overflow: hidden; background: #1b0d05; }
+    .closing::before { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(27,13,5,.94), rgba(27,13,5,.5)), url("assets/cinematic/safety-belonging.jpg") center / cover; opacity: .8; content: ""; }
+    .closing > div { position: relative; max-width: 830px; }
+    .closing h2 { margin-bottom: 23px; font-family: var(--serif); font-size: clamp(3.5rem, 7.4vw, 7.7rem); font-weight: 500; letter-spacing: -.065em; line-height: .9; }
+    .closing h2 em { color: var(--gold-soft); font-style: italic; }
+    .closing p { max-width: 620px; color: rgba(255,246,232,.8); font-size: 1.1rem; line-height: 1.65; }
+    .closing .micro { margin-top: 36px; color: rgba(255,246,232,.52); font-size: .72rem; }
+
+    @media (max-width: 860px) {
+      .site-header { padding: 17px 18px; }
+      .header-nav a:last-child { display: none; }
+      .hero { min-height: 92svh; padding: 132px 24px 95px; }
+      .hero::before { background-position: 60% center; }
+      .hero-footnote { right: 24px; left: 24px; bottom: 28px; }
+      .story-shell, .product-story.owner .story-shell { grid-template-columns: 1fr; gap: 0; }
+      .story-device-wrap, .product-story.owner .story-device-wrap { position: sticky; z-index: 4; top: 61px; grid-column: 1; grid-row: 1; min-height: min(82svh, 740px); padding-top: 21px; background: linear-gradient(to bottom, rgba(247,235,218,.96), rgba(247,235,218,.75) 76%, transparent); }
+      .product-story.owner .story-device-wrap { background: linear-gradient(to bottom, rgba(15,45,37,.97), rgba(15,45,37,.78) 76%, transparent); }
+      .device { width: min(90vw, 370px); transform: scale(.92); transform-origin: top center; }
+      .device-screen { min-height: 660px; }
+      .story-rail, .product-story.owner .story-rail { z-index: 5; grid-column: 1; grid-row: 2; padding-top: 31px; }
+      .story-rail::before { top: 52px; bottom: 62px; }
+      .story-beat { min-height: 72svh; padding-left: 37px; }
+      .story-beat::before { top: 18px; }
+      .story-beat h3 { font-size: clamp(2.65rem, 12.6vw, 4rem); }
+      .story-beat > p { font-size: .96rem; }
+      .story-intro { padding: 82px 24px; }
+      .story-intro h2 { font-size: clamp(3rem, 13vw, 4.7rem); }
+    }
+
+    @media (max-width: 430px) {
+      .header-nav { gap: 12px; }
+      .header-nav a { font-size: .58rem; }
+      .hero-lede { font-size: .99rem; }
+      .device { transform: scale(.86); margin-bottom: -91px; }
+      .story-device-wrap { min-height: 610px; }
+      .story-beat { min-height: 68svh; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+    }
+
+    .kinfolk-mark { overflow: hidden; } .kinfolk-mark img { display:block; width: 72%; height: 72%; object-fit: contain; }
+</style>
+</head>
+<body>
+  <a class="skip" href="#kinfolk-story">Skip to the product story</a>
+  <header class="site-header">
+    <a class="wordmark" href="kinfolk-preview-suite.html">← All<br>experiences</a>
+    <nav class="header-nav" aria-label="Preview experience navigation"><a href="preview-one-problem-whole-day.html">01 Everyday</a><a href="preview-everyday-stories.html#kinfolk-story" aria-current="page">02 Travel</a><a href="preview-everyday-stories.html#owner-story">03 Business</a><a href="preview-safety-peace-of-mind.html">04 Safety</a><a href="preview-explore-your-way.html#app-preview">05 Explore</a></nav>
+  </header>
+
+  <main id="top">
+    <section class="hero" aria-labelledby="hero-heading">
+      <div class="hero-inner">
+        <p class="eyebrow">A product-first founder preview</p>
+        <h1 id="hero-heading">Life does not pause<br>between the <em>plans.</em></h1>
+        <p class="hero-lede">A trip. A workday. A dinner decision. A business trying to grow. Kinfolk connects the context around all of it—so a member can move with more of what matters in view.</p>
+        <div class="hero-prompt" aria-label="Example Kinfolk prompt"><b>K</b><div><span>Kinfolk, during a real day</span><strong>“I’m excited for my trip to Atlanta. What should I know before I go?”</strong></div></div>
+        <div class="hero-actions"><a class="button primary" href="#kinfolk-story">Follow the member journey <span aria-hidden="true">↓</span></a><a class="button secondary" href="#owner-story">See the owner journey</a></div>
+      </div>
+      <p class="hero-footnote">Scroll at your own pace. The app frame changes as each moment becomes relevant—no autoplaying carousel, no detached feature list.</p>
+    </section>
+
+    <section class="story-intro" aria-labelledby="intro-heading">
+      <div>
+        <p class="eyebrow">The difference is continuity</p>
+        <h2 id="intro-heading">Not “where should I go?”<br><em>“What does this day need?”</em></h2>
+        <p>Kinfolk should feel useful before someone reaches a destination. It can remember the context a member chooses, help turn a busy day into a workable plan, connect them to the right business, and make shared care easy to find when the place is unfamiliar.</p>
+      </div>
+    </section>
+
+    <section class="product-story member" id="kinfolk-story" data-story="member" aria-labelledby="member-heading">
+      <div class="story-shell">
+        <div class="story-device-wrap" aria-label="Full Kinfolk member app screens">
+          <div class="device"><div class="device-top" aria-hidden="true"></div><div class="device-screen">
+            <article class="story-screen is-active" data-screen="before">
+              <div class="screen-status"><span>9:41</span><span>● ● ●</span></div>
+              <div class="screen-head"><div><b>Kinfolk</b><small>Private, practical, yours</small></div><span class="kinfolk-mark"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+              <div class="screen-body">
+                <p class="screen-eyebrow">Before the trip</p><h3 class="screen-title">Kinfolk here—<br>let’s map it out.</h3>
+                <span class="taste-chip">✦ Your taste profile is active</span>
+                <div class="message member"><b>You</b>I’m excited for my trip to Atlanta next week. What should I know before I go? I also need a hair appointment before I leave.</div>
+                <div class="message kinfolk"><b>Kinfolk</b>I can help you think through the city around your actual days: get ready before you go, shape the travel rhythm, and find the things that change after you land.</div>
+                <div class="quick-pills"><span>Hair before departure</span><span>Meeting rhythm</span><span>Places to support</span></div>
+                <button class="screen-composer" type="button" data-screen-next="hair">Find a hair appointment before I go <i>→</i></button>
+              </div>
+            </article>
+
+            <article class="story-screen" data-screen="hair">
+              <div class="screen-status"><span>9:44</span><span>● ● ●</span></div>
+              <div class="screen-head"><div><b>Kinfolk</b><small>Atlanta · getting ready</small></div><span class="kinfolk-mark"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+              <div class="screen-body">
+                <p class="screen-eyebrow">Before you leave</p><h3 class="screen-title">Make room to feel<br>ready for the trip.</h3>
+                <div class="message member"><b>You</b>I need braids before I leave for Atlanta. I want something that fits my schedule.</div>
+                <div class="message kinfolk"><b>Kinfolk</b>I found two verified minority-owned braid studios to review before your trip. Tap a card to pull up the business profile—nothing is booked from this demonstration.</div>
+                <button class="business-card" type="button" data-trip-choice="hair-morning" data-business-card="braids" aria-pressed="true"><span class="business-art category-art" aria-label="Beauty and hair"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v5H4z"></path><path d="M5 9v4M7 9v4M9 9v4"></path><circle cx="16.5" cy="6.5" r="2.5"></circle><circle cx="16.5" cy="17.5" r="2.5"></circle><line x1="14.3" y1="8.7" x2="5" y2="18"></line><line x1="14.3" y1="15.3" x2="11.3" y2="12.3"></line></svg></span><span><strong>Crown &amp; Coil Braiding Studio</strong><span>Knotless braids · pre-departure appointment window</span><span class="verified">Verified Minority-Owned</span></span><b class="open-profile">↗</b></button>
+                <button class="business-card" type="button" data-trip-choice="hair-evening" data-business-card="braids-alt" aria-pressed="false"><span class="business-art category-art" aria-label="Beauty and hair"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v5H4z"></path><path d="M5 9v4M7 9v4M9 9v4"></path><circle cx="16.5" cy="6.5" r="2.5"></circle><circle cx="16.5" cy="17.5" r="2.5"></circle><line x1="14.3" y1="8.7" x2="5" y2="18"></line><line x1="14.3" y1="15.3" x2="11.3" y2="12.3"></line></svg></span><span><strong>Rooted Braid Bar</strong><span>Boho braids · alternate travel-day window</span><span class="verified">Verified Minority-Owned</span></span><b class="open-profile">↗</b></button>
+                <p class="demo-boundary">Demonstration only · business names, verification, service details, schedule, and booking are not live.</p>
+                <button class="screen-composer" type="button" data-screen-next="plan">Build the Atlanta plan around it <i>→</i></button>
+              </div>
+            </article>
+
+            <article class="story-screen" data-screen="plan">
+              <div class="screen-status"><span>9:41</span><span>● ● ●</span></div>
+              <div class="screen-head"><div><b>Kinfolk</b><small>Atlanta · trip context</small></div><span class="kinfolk-mark"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+              <div class="screen-body">
+                <p class="screen-eyebrow">The day takes shape</p><h3 class="screen-title">Plan around the life<br>inside the trip.</h3>
+                <p class="screen-sub">Kinfolk starts with what the member shared—not only the city name.</p>
+                <article class="trip-card"><div class="trip-head"><strong>Atlanta · business trip</strong><span>Next week</span></div><div class="trip-row"><b>01</b><div><strong>Before you land</strong><p>Save the questions that will make arrival feel easier.</p></div></div><div class="trip-row"><b>02</b><div><strong>Between meetings</strong><p>Find places that fit the time, the neighborhood, and your values.</p></div></div><div class="trip-row"><b>03</b><div><strong>After a long day</strong><p>Keep dinner, rest, and shared-care context close by.</p></div></div></article>
+                <div class="message kinfolk"><b>Kinfolk</b>Let’s keep the plan flexible. Your current request always comes first.</div>
+                <button class="screen-composer" type="button" data-screen-next="nails">Show an arrival-day beauty backup <i>→</i></button>
+              </div>
+            </article>
+
+            <article class="story-screen" data-screen="nails">
+              <div class="screen-status"><span>6:18</span><span>● ● ●</span></div>
+              <div class="screen-head"><div><b>Kinfolk</b><small>Atlanta · arrival-day change</small></div><span class="kinfolk-mark"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+              <div class="screen-body">
+                <p class="screen-eyebrow">After you land</p><h3 class="screen-title">A small change can<br>still change the day.</h3>
+                <div class="message member"><b>You</b>I broke my nail when I got to Atlanta. I need to get it fixed.</div>
+                <div class="message kinfolk"><b>Kinfolk</b>I found a verified minority-owned nail studio near your hotel. Tap the card to see the business profile, then choose how you want to keep tonight moving.</div>
+                <button class="business-card" type="button" data-trip-choice="nails-walk" data-business-card="nails" aria-pressed="true"><span class="business-art category-art" aria-label="Beauty and nail care"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v5H4z"></path><path d="M5 9v4M7 9v4M9 9v4"></path><circle cx="16.5" cy="6.5" r="2.5"></circle><circle cx="16.5" cy="17.5" r="2.5"></circle><line x1="14.3" y1="8.7" x2="5" y2="18"></line><line x1="14.3" y1="15.3" x2="11.3" y2="12.3"></line></svg></span><span><strong>Peach City Nail Room</strong><span>Near your hotel · repair + gel overlay</span><span class="verified">Verified Minority-Owned</span></span><b class="open-profile">↗</b></button>
+                <button class="business-card" type="button" data-trip-choice="nails-ride" data-business-card="nails-alt" aria-pressed="false"><span class="business-art category-art" aria-label="Beauty and nail care"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v5H4z"></path><path d="M5 9v4M7 9v4M9 9v4"></path><circle cx="16.5" cy="6.5" r="2.5"></circle><circle cx="16.5" cy="17.5" r="2.5"></circle><line x1="14.3" y1="8.7" x2="5" y2="18"></line><line x1="14.3" y1="15.3" x2="11.3" y2="12.3"></line></svg></span><span><strong>Glossed in the City</strong><span>Atlanta evening repair option</span><span class="verified">Verified Minority-Owned</span></span><b class="open-profile">↗</b></button>
+                <p class="demo-boundary">Demonstration only · profile, verification, location relation, service details, availability, price, and booking are not live.</p>
+                <button class="screen-composer" type="button" data-screen-next="long-night">Continue with tonight’s plan <i>→</i></button>
+              </div>
+            </article>
+
+            <article class="story-screen" data-screen="long-night">
+              <div class="screen-status"><span>5:47</span><span>● ● ●</span></div>
+              <div class="screen-head"><div><b>Kinfolk</b><small>Still with the day</small></div><span class="kinfolk-mark"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+              <div class="screen-body">
+                <p class="screen-eyebrow">Between meetings</p><h3 class="screen-title">Make the long night<br>feel possible.</h3>
+                <div class="message member"><b>You</b>It will be a long night. Help me create the follow-up email, then find a restaurant for pickup when I’m done.</div>
+                <article class="task-card"><div class="task-top"><strong>Follow-up email</strong><span class="tag">Idea in review</span></div><p>Keep it direct: thank them, name the decision, attach the proposal, and give a clear next step.</p><button type="button" data-local-action="email">Save the next step</button></article>
+                <button class="dinner-card" type="button" data-business-card="dinner"><span class="dinner-icon category-art" aria-label="Dining"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg></span><span><strong>After Hours Kitchen</strong><span>Verified Minority-Owned · dinner pickup near the end of your day</span></span><b>Open →</b></button>
+                <p class="screen-sub">Kinfolk tasks/reminders are source-backed. The email outline is a founder-review direction for making the task feel complete.</p>
+                <button class="screen-composer" type="button" data-screen-next="profile">Open the business profile <i>→</i></button>
+              </div>
+            </article>
+
+            <article class="story-screen replit-screen" data-screen="profile">
+              <img src="assets/replit-reference/business-profile-visitor.png" alt="Existing Replit visitor-facing business profile for Deja's Soul Kitchen in Atlanta">
+              <button class="replit-advance" type="button" data-screen-next="safety">Keep shared care in view <span aria-hidden="true">→</span></button>
+            </article>
+
+            <article class="story-screen safety-screen" data-screen="safety">
+              <div class="screen-status"><span>9:41</span><span>● ● ●</span></div>
+              <div class="safety-header"><span>Safety Hub</span><h3>Community Intelligence</h3><p>Community-sourced context for informed choices.</p></div>
+              <div class="privacy-note"><b>You control report privacy.</b><br>Choose what you share, and keep your identity out of public views when needed.</div>
+              <div class="safety-content">
+                <div class="sos"><div>☎</div><div><b>Emergency SOS</b><span>Call 911 in a life-threatening emergency.</span></div></div>
+                <p class="safety-label">Quick report</p><div class="safety-grid"><article class="safety-card"><b>Report a safety concern</b><span>Neighborhood or community context.</span></article><article class="safety-card"><b>Share an experience</b><span>Good or bad—your voice matters.</span></article></div>
+                <p class="safety-label">Community Intelligence · location-led</p><div class="alert-check"><b>Check an area before you move through it.</b>Choose a location to see approved community context. Absence of alerts is never a guarantee.</div>
+                <button class="screen-composer" type="button" data-screen-next="before">Restart the Atlanta story <i>↺</i></button>
+              </div>
+            </article>
+          </div></div></div>
+
+        <div class="story-rail">
+          <section class="story-beat is-active" data-screen-trigger="before">
+            <span class="beat-count">01 · Before you go</span><h3 id="member-heading">Excited for Atlanta.<br><em>Not starting from zero.</em></h3><p>Kinfolk begins with the context a member chose to share—how they like to move through a city, what they value, and what this trip is actually for.</p><div class="source-strip"><span>Continuity controls</span><span>Taste profile</span><span>Conversation first</span></div><button class="beat-select" type="button" data-screen-select="before" aria-current="step">See this screen <span aria-hidden="true">↗</span></button>
+          </section>
+          <section class="story-beat" data-screen-trigger="hair">
+            <span class="beat-count">02 · Get ready before you go</span><h3>Hair before departure.<br><em>One less thing to hold.</em></h3><p>A trip starts before the flight. Kinfolk makes a pre-departure braid appointment part of the same conversation, then lets the member pull up a complete demonstration business profile without leaving the app.</p><div class="beat-note">The phone uses demonstration business cards. Live service, timing, cost, availability, verification, and booking require connected business data.</div><button class="beat-select" type="button" data-screen-select="hair" aria-current="false">See the hair-planning screen <span aria-hidden="true">↗</span></button>
+          </section>
+          <section class="story-beat" data-screen-trigger="plan">
+            <span class="beat-count">03 · Plan the rhythm</span><h3>“What should I know<br><em>before I go?”</em></h3><p>Instead of dumping a list, Kinfolk helps someone shape a day around arrival, work, dinner, rest, and the people or places that will make the city feel usable.</p><div class="beat-note">The trip is useful because it is not fixed. The next question can change the plan without making the member begin again.</div><button class="beat-select" type="button" data-screen-select="plan" aria-current="false">See this screen <span aria-hidden="true">↗</span></button>
+          </section>
+          <section class="story-beat" data-screen-trigger="nails">
+            <span class="beat-count">04 · Adapt after arrival</span><h3>An emergency nail appointment.<br><em>Still one conversation.</em></h3><p>Once the member lands, an appointment change becomes a practical new request. Kinfolk identifies a verified minority-owned nail studio near the member’s hotel, then helps compare the next choice without promising availability it cannot verify.</p><div class="beat-note">The in-phone cards are demonstration-only. No service, price, reservation, travel time, verification, or payment is shown as live or completed.</div><button class="beat-select" type="button" data-screen-select="nails" aria-current="false">See the emergency nail screen <span aria-hidden="true">↗</span></button>
+          </section>
+          <section class="story-beat" data-screen-trigger="long-night">
+            <span class="beat-count">05 · Make a hard day easier</span><h3>Email. Dinner.<br><em>One conversation.</em></h3><p>This is the everyday proof point: “Help me make the email,” becomes a next step; “find pickup dinner” becomes discovery shaped by where the day ends, what the member needs, and the places they want to support.</p><div class="beat-note">The email-support panel is a product direction. Kinfolk’s saveable task/reminder action and contextual discovery surfaces already exist in the product source.</div><button class="beat-select" type="button" data-screen-select="long-night" aria-current="false">See this screen <span aria-hidden="true">↗</span></button>
+          </section>
+          <section class="story-beat" data-screen-trigger="profile">
+            <span class="beat-count">06 · The right business</span><h3>Not a pin.<br><em>A full picture.</em></h3><p>When a recommendation matters, the member should open more than an address. They see the business owner, the verified business card, community voice, social presence, saves, and an immediate way to visit or follow.</p><div class="beat-note">This is an existing Replit visitor-profile screen—not a redrawn placeholder.</div><button class="beat-select" type="button" data-screen-select="profile" aria-current="false">See the Replit screen <span aria-hidden="true">↗</span></button>
+          </section>
+          <section class="story-beat" data-screen-trigger="safety">
+            <span class="beat-count">07 · Move with shared care</span><h3>Safety is part of the<br><em>whole day.</em></h3><p>The Safety Hub belongs inside the journey—not as a fear-driven add-on. It gives someone a clear place for community intelligence, privacy-aware reports, and source-led local context when they need it.</p><div class="source-strip"><span>Community Intelligence</span><span>Private reporting</span><span>Location-led alerts</span></div><button class="beat-select" type="button" data-screen-select="safety" aria-current="false">See Safety Hub <span aria-hidden="true">↗</span></button>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="story-intro" aria-labelledby="owner-intro-heading">
+      <div>
+        <p class="eyebrow">The owner side of the same relationship</p>
+        <h2 id="owner-intro-heading">The business gets more than visibility.<br><em>It gets a way to act.</em></h2>
+        <p>Member discovery, owner planning, post nudges, community feedback, accountable response, and profile presence are not different products. They are the same community relationship viewed from two sides.</p>
+      </div>
+    </section>
+
+    <section class="product-story owner" id="owner-story" data-story="owner" aria-labelledby="owner-heading">
+      <div class="story-shell">
+        <div class="story-device-wrap" aria-label="Full business owner app screens">
+          <div class="device"><div class="device-top" aria-hidden="true"></div><div class="device-screen">
+            <article class="story-screen replit-screen is-active" data-screen="dashboard"><img src="assets/replit-reference/business-dashboard.png" alt="Existing Replit business owner dashboard with profile views, saves, reviews, and management options"><button class="replit-advance" type="button" data-screen-next="business-plan">Turn insight into a plan <span aria-hidden="true">→</span></button></article>
+            <article class="story-screen screen-plan" data-screen="business-plan">
+              <div class="screen-status"><span>9:41</span><span>● ● ●</span></div>
+              <div class="screen-head"><div><b>KinfolkAI</b><small>Business improvement plan</small></div><span class="kinfolk-mark"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+              <div class="plan-progress" aria-label="Step 2 of 4"><i></i><i></i><i></i><i></i></div>
+              <div class="plan-body"><p class="screen-eyebrow">Build a plan around the real need</p><h3 class="screen-title">“Help us make this work.”</h3><div class="message member"><b>Business owner</b>We want to make our weekly dinner series stronger. Help me build a plan for it.</div><button class="choice-row is-picked" type="button" data-owner-choice="visibility" aria-pressed="true"><b>✓</b><span>Marketing & community visibility</span></button><button class="choice-row" type="button" data-owner-choice="partners" aria-pressed="false"><b>02</b><span>Who do you want to reach or partner with?</span></button><button class="choice-row" type="button" data-owner-choice="resources" aria-pressed="false"><b>03</b><span>What timing and resources are realistic?</span></button><div class="plan-brief"><b>Kinfolk planning surface</b>Translate the goal into a sequence: clarify the challenge, name preferences, identify support, and leave with next steps.</div><button class="plan-cta" type="button" data-screen-next="post-nudge">See the post nudge</button></div>
+            </article>
+            <article class="story-screen screen-plan" data-screen="post-nudge">
+              <div class="screen-status"><span>11:18</span><span>● ● ●</span></div>
+              <div class="screen-head"><div><b>Business nudges</b><small>Community momentum</small></div><span class="kinfolk-mark"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+              <div class="plan-body"><p class="screen-eyebrow">A timely invitation</p><h3 class="screen-title">Your supporters<br>are online.</h3><div class="message kinfolk"><b>Kinfolk</b>This is a good moment to share the dinner-series video. Want to upload it and start with one of these captions?</div><div class="video-card"><div class="video-thumb"></div><b>Behind the scenes · dinner series</b><span>Video upload is shown for demonstration only. Nothing will upload or publish.</span></div><button class="caption-choice is-picked" type="button" data-owner-caption="one" aria-pressed="true">“Dinner is on. Pull up hungry.”</button><button class="caption-choice" type="button" data-owner-caption="two" aria-pressed="false">“Tables, stories, and something worth sharing.”</button><button class="caption-choice" type="button" data-owner-caption="three" aria-pressed="false">“Meet us Wednesday. Bring your people.”</button><button class="screen-composer" type="button" data-screen-next="community-loop">Review the community loop <i>→</i></button></div>
+            </article>
+            <article class="story-screen screen-plan" data-screen="community-loop">
+              <div class="screen-status"><span>11:20</span><span>● ● ●</span></div>
+              <div class="screen-head"><div><b>Community loop</b><small>Business + community</small></div><span class="kinfolk-mark"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+              <div class="plan-body"><p class="screen-eyebrow">A signal worth acting on</p><h3 class="screen-title">People are looking<br>for happy hour.</h3><div class="message kinfolk"><b>Kinfolk</b>Community members have been searching for happy hour near you. Would you like to create a menu for them?</div><button class="business-card" type="button" data-business-card="owner"><span class="business-art category-art" aria-label="Dining"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg></span><span><strong>Sunday Table Dinner Series</strong><span>Community-facing business card</span><span class="verified">Business profile preview</span></span><b class="open-profile">↗</b></button><p class="demo-boundary">Demonstration only · this community signal, menu, and any resulting promotion are not live.</p><button class="plan-cta" type="button" data-local-action="menu">Create a happy hour menu draft</button><button class="screen-composer" type="button" data-screen-next="response">Prepare an accountable response <i>→</i></button></div>
+            </article>
+            <article class="story-screen screen-response" data-screen="response">
+              <div class="screen-status"><span>9:41</span><span>● ● ●</span></div>
+              <div class="screen-head"><div><b>Business response</b><small>Owner view · moderated</small></div><span class="kinfolk-mark"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+              <div class="response-body"><p class="screen-eyebrow">Respond with accountability</p><h3 class="screen-title">Community feedback deserves a real answer.</h3><div class="response-warning"><b>A member shared a concern.</b><br>Prepare a response before it appears alongside the report.</div><div class="response-field is-filled"><b>Statement</b><p>We hear the concern and appreciate the opportunity to address it.</p></div><div class="response-field"><b>Corrective action</b><p>What changed, who owns it, and when will it be complete?</p></div><div class="response-field"><b>Trust plan</b><p>How will the business keep the community informed?</p></div></div><div class="response-footer"><button type="button" data-screen-next="member-view">Preview the moderated member view</button></div>
+            </article>
+            <article class="story-screen replit-screen" data-screen="member-view"><img src="assets/replit-reference/business-profile-visitor.png" alt="Existing Replit community-facing business owner profile"><button class="replit-advance" type="button" data-screen-next="dashboard">Restart the owner story <span aria-hidden="true">↺</span></button></article>
+          </div></div></div>
+
+        <div class="story-rail">
+          <section class="story-beat is-active" data-screen-trigger="dashboard">
+            <span class="beat-count">01 · Know what is happening</span><h3 id="owner-heading">The business is<br><em>already in motion.</em></h3><p>Start with the actual owner dashboard: views, saves, reviews, link clicks, profile management, identity, highlights, video, and Broadcasts live in one place.</p><div class="beat-note">This is an existing Replit dashboard screen. It gives the owner a clear picture of what the community is already doing with their presence.</div><button class="beat-select" type="button" data-screen-select="dashboard" aria-current="step">See the Replit dashboard <span aria-hidden="true">↗</span></button>
+          </section>
+          <section class="story-beat" data-screen-trigger="business-plan">
+            <span class="beat-count">02 · Make a practical plan</span><h3>“Help me make a<br><em>business plan.”</em></h3><p>The owner should be able to start with a plain-language need, then move through the existing plan structure: the issue, the people or services needed, the budget/timing, and the next action.</p><div class="source-strip"><span>Improvement plan flow</span><span>Provider matching</span><span>Action roadmap</span></div><button class="beat-select" type="button" data-screen-select="business-plan" aria-current="false">See the plan screen <span aria-hidden="true">↗</span></button>
+          </section>
+          <section class="story-beat" data-screen-trigger="promotion">
+            <span class="beat-count">03 · Invite the community in</span><h3>Your supporters<br><em>are online.</em></h3><p>The owner gets a timely nudge to share a dinner-series video, sees caption ideas, and can hold the post inside the same business flow before any upload or publication occurs.</p><div class="beat-note">Video, captions, timing, and publishing are all demonstration-only states. No media is stored, sent, or posted.</div><button class="beat-select" type="button" data-screen-select="post-nudge" aria-current="false">See the post nudge <span aria-hidden="true">↗</span></button>
+          </section>
+          <section class="story-beat" data-screen-trigger="community-loop">
+            <span class="beat-count">04 · Close the community loop</span><h3>“People are searching<br><em>for happy hour.”</em></h3><p>Discovery can flow back to the owner as a useful question: would a happy-hour menu help people find what they are already looking for?</p><div class="beat-note">The search signal, menu draft, and business card are demonstration-only. They do not represent live analytics or a published menu.</div><button class="beat-select" type="button" data-screen-select="community-loop" aria-current="false">See the community loop <span aria-hidden="true">↗</span></button>
+          </section>
+          <section class="story-beat" data-screen-trigger="response">
+            <span class="beat-count">05 · Answer the community</span><h3>Not a reaction.<br><em>A responsible response.</em></h3><p>A response to a concern becomes a clear statement, a corrective action, and a trust plan—then enters moderation. This shows the owner doing the work, not simply managing a reputation metric.</p><div class="source-strip"><span>Statement</span><span>Corrective action</span><span>Trust plan</span></div><button class="beat-select" type="button" data-screen-select="response" aria-current="false">See the response flow <span aria-hidden="true">↗</span></button>
+          </section>
+          <section class="story-beat" data-screen-trigger="member-view">
+            <span class="beat-count">06 · Close the loop</span><h3>What the owner builds<br><em>is what a member sees.</em></h3><p>Profile, identity, a verified business card, community posts, follower connection, and an immediate next action return the owner’s work to the member journey—the relationship is visible on both sides.</p><div class="beat-note">This final state uses the existing Replit visitor profile in full. No blurred placeholder replaces the product screen.</div><button class="beat-select" type="button" data-screen-select="member-view" aria-current="false">See the member view <span aria-hidden="true">↗</span></button>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing" id="shared-care" aria-labelledby="closing-heading"><div><p class="eyebrow">The full story, in one connected system</p><h2 id="closing-heading">Make the day work.<br><em>Make the connection count.</em></h2><p>Kinfolk can meet a member before the trip, carry context through a long day, bring the right business into view, and make shared care easier to reach. Owners can turn that same connection into a profile, a plan, a timely post nudge, a community-led menu idea, and an accountable response.</p><p class="micro">Founder-review prototype only. Existing Replit screens are included as visual source references; no preview action saves data, sends a message, posts a promotion, creates a plan, or publishes a response.</p></div></section>
+    </section>
+  </main>
+  <aside class="business-popover" data-business-popover aria-hidden="true" aria-labelledby="business-popover-title">
+    <div class="business-popover-card" role="dialog" aria-modal="true">
+      <div class="business-popover-handle" aria-hidden="true"></div>
+      <div class="business-popover-hero"><img data-business-popover-image src="assets/mwm/icon.png" alt=""><span class="business-popover-category-mark" data-business-category-art aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 1 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg></span><div class="business-popover-hero-copy"><p class="business-popover-kicker" data-business-popover-kicker>Business profile</p><h3 id="business-popover-title" data-business-popover-title>Business name</h3><span class="business-popover-subtitle" data-business-popover-subtitle>Category · Atlanta</span></div><button class="business-popover-close" type="button" data-close-business aria-label="Close business profile">×</button></div>
+      <div class="business-popover-body"><div class="profile-rating-row"><span class="profile-rating" data-business-popover-rating>★★★★★ · Community rating</span><span class="profile-pinned">▱ <span data-business-popover-pinned>Pinned</span></span></div><div><p class="profile-section-label">Community ratings</p><div class="profile-chip-row" data-business-popover-chips><span class="profile-chip">Community Fave</span><span class="profile-chip">Worth the Return</span></div></div><div><p class="profile-section-label">Community says</p><div class="profile-chip-row"><span class="profile-chip quote" data-business-popover-caption>“Good energy.”</span></div></div><p class="business-popover-description" data-business-popover-description>Business details.</p><div class="profile-demo-note" data-business-popover-note>Demonstration only.</div><button class="screen-composer" type="button" data-business-profile-action>View full profile <i>→</i></button><button class="screen-composer" type="button" data-close-business>Return to the story <i>×</i></button></div>
+    </div>
+  </aside>
+
+  <script>
+    (() => {
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const stories = [...document.querySelectorAll('[data-story]')];
+      function activate(story, key) {
+        const screens = [...story.querySelectorAll('[data-screen]')];
+        const beats = [...story.querySelectorAll('[data-screen-trigger]')];
+        const buttons = [...story.querySelectorAll('[data-screen-select]')];
+        screens.forEach((screen) => {
+          const active = screen.dataset.screen === key;
+          const wasActive = screen.classList.contains('is-active');
+          screen.classList.toggle('is-active', active);
+          screen.classList.toggle('is-exit', !active && wasActive);
+          screen.setAttribute('aria-hidden', String(!active));
+        });
+        beats.forEach((beat) => beat.classList.toggle('is-active', beat.dataset.screenTrigger === key));
+        buttons.forEach((button) => button.setAttribute('aria-current', String(button.dataset.screenSelect === key ? 'step' : 'false')));
+      }
+      stories.forEach((story) => {
+        const buttons = [...story.querySelectorAll('[data-screen-select]')];
+        buttons.forEach((button) => button.addEventListener('click', () => {
+          const key = button.dataset.screenSelect;
+          const target = story.querySelector(`[data-screen-trigger="${key}"]`);
+          activate(story, key);
+          target?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
+        }));
+        story.querySelectorAll('[data-screen-next]').forEach((button) => button.addEventListener('click', () => {
+          activate(story, button.dataset.screenNext);
+        }));
+        story.querySelectorAll('[data-trip-choice], [data-owner-choice], [data-owner-caption]').forEach((button) => button.addEventListener('click', () => {
+          const selector = button.hasAttribute('data-trip-choice') ? '[data-trip-choice]' : button.hasAttribute('data-owner-choice') ? '[data-owner-choice]' : '[data-owner-caption]';
+          story.querySelectorAll(selector).forEach((option) => {
+            const selected = option === button;
+            option.classList.toggle('is-picked', selected);
+            option.setAttribute('aria-pressed', String(selected));
+            const marker = option.querySelector('b');
+            if (marker && selector !== '[data-owner-caption]') marker.textContent = selected ? '✓' : '0' + ([...story.querySelectorAll(selector)].indexOf(option) + 1);
+          });
+        }));
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) activate(story, entry.target.dataset.screenTrigger);
+          });
+        }, { threshold: .56, rootMargin: '-12% 0px -12% 0px' });
+        story.querySelectorAll('[data-screen-trigger]').forEach((beat) => observer.observe(beat));
+      });
+      document.querySelectorAll('[data-local-action]').forEach((button) => button.addEventListener('click', () => {
+        const original = button.textContent;
+        button.textContent = 'Previewed locally';
+        window.setTimeout(() => { button.textContent = original; }, 1800);
+      }));
+      const businessCategoryArt = {
+        beauty: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v5H4z"></path><path d="M5 9v4M7 9v4M9 9v4"></path><circle cx="16.5" cy="6.5" r="2.5"></circle><circle cx="16.5" cy="17.5" r="2.5"></circle><line x1="14.3" y1="8.7" x2="5" y2="18"></line><line x1="14.3" y1="15.3" x2="11.3" y2="12.3"></line></svg>`,
+        dining: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8h1a4 4 0 0 1 0 8h-1"></path><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"></path><line x1="6" y1="1" x2="6" y2="4"></line><line x1="10" y1="1" x2="10" y2="4"></line><line x1="14" y1="1" x2="14" y2="4"></line></svg>`,
+        default: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 1 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>`
+      };
+      const businessProfiles = {
+        braids: { name: 'Crown & Coil Braiding Studio', kicker: 'Pre-departure braid appointment', subtitle: 'Beauty · Atlanta, GA', description: 'Knotless and boho braid styles for a travel-ready look before Atlanta.', rating: '★★★★★ · Community rating', pinned: 'Pinned locally', chips: ['✓ Verified', 'Community Fave'], caption: '“Careful work and a warm room.”', visual: 'beauty', image: '', note: 'Demonstration only · profile, verification, styles, scheduling, availability, and booking are not live.' },
+        'braids-alt': { name: 'Rooted Braid Bar', kicker: 'Pre-departure braid appointment', subtitle: 'Beauty · Atlanta, GA', description: 'An alternate braid studio card for a different travel-day timing choice.', rating: '★★★★★ · Community rating', pinned: 'Pinned locally', chips: ['✓ Verified', 'Worth the Return'], caption: '“A real travel-day save.”', visual: 'beauty', image: '', note: 'Demonstration only · profile, verification, styles, scheduling, availability, and booking are not live.' },
+        nails: { name: 'Peach City Nail Room', kicker: 'Atlanta hotel-area repair', subtitle: 'Nail repair · Atlanta, GA', description: 'A nail-repair card near the member’s hotel after an arrival-day break.', rating: '★★★★★ · Community rating', pinned: 'Pinned locally', chips: ['✓ Verified', 'Community Fave'], caption: '“They made the evening feel possible.”', visual: 'beauty', image: '', note: 'Demonstration only · profile, verification, proximity, services, hours, availability, price, and booking are not live.' },
+        'nails-alt': { name: 'Glossed in the City', kicker: 'Atlanta evening repair', subtitle: 'Nail repair · Atlanta, GA', description: 'An alternate repair option to compare as the evening changes.', rating: '★★★★★ · Community rating', pinned: 'Pinned locally', chips: ['✓ Verified', 'Worth the Return'], caption: '“Quick, welcoming, and detailed.”', visual: 'beauty', image: '', note: 'Demonstration only · profile, verification, proximity, services, hours, availability, price, and booking are not live.' },
+        dinner: { name: 'After Hours Kitchen', kicker: 'Dinner pickup', subtitle: 'Food · Atlanta, GA', description: 'A dinner-pickup business card that keeps the long night connected to the next practical decision.', rating: '★★★★★ · Community rating', pinned: 'Pinned locally', chips: ['✓ Verified', 'Worth the Return'], caption: '“The kind of pickup you remember.”', visual: 'dining', image: '', note: 'Demonstration only · profile, verification, menu, hours, availability, ordering, and payment are not live.' },
+        owner: { name: 'Sunday Table Dinner Series', kicker: 'Owner business card', subtitle: 'Community dining · Atlanta, GA', description: 'The community-facing surface for the dinner series the owner is building and sharing.', rating: '★★★★★ · Community rating', pinned: 'Pinned locally', chips: ['Community Fave', 'Worth the Return'], caption: '“A table that feels like a welcome.”', visual: 'dining', image: '', note: 'Demonstration only · profile, community signal, menu creation, video upload, captions, and publication are not live.' }
+      };
+      const popover = document.querySelector('[data-business-popover]');
+      const popoverHome = popover.parentElement;
+      function closeBusinessCard() { popover.classList.remove('is-open'); popover.setAttribute('aria-hidden', 'true'); window.setTimeout(() => { if (popover.parentElement !== popoverHome) popoverHome.append(popover); }, 230); }
+      function openBusinessCard(key, source) {
+        const profile = businessProfiles[key];
+        const host = source?.closest('.device-screen');
+        if (!profile || !host) return;
+        if (popover.parentElement !== host) host.append(popover);
+        popover.style.setProperty('--business-sheet-x', `${host.getBoundingClientRect().left - popover.getBoundingClientRect().left}px`);
+        const popoverHero = popover.querySelector('.business-popover-hero');
+        popoverHero.classList.toggle('is-category-art', Boolean(profile.visual));
+        popover.querySelector('[data-business-category-art]').innerHTML = businessCategoryArt[profile.visual] || businessCategoryArt.default;
+        popover.querySelector('[data-business-popover-kicker]').textContent = profile.kicker;
+        popover.querySelector('[data-business-popover-title]').textContent = profile.name;
+        popover.querySelector('[data-business-popover-subtitle]').textContent = profile.subtitle;
+        const profileImage = popover.querySelector('[data-business-popover-image]');
+        if (profile.image) profileImage.src = profile.image;
+        profileImage.alt = profile.visual ? `${profile.name} ${profile.visual} category mark` : `${profile.name} business preview image`;
+        popover.querySelector('[data-business-popover-rating]').textContent = profile.rating;
+        popover.querySelector('[data-business-popover-pinned]').textContent = profile.pinned;
+        popover.querySelector('[data-business-popover-description]').textContent = profile.description;
+        popover.querySelector('[data-business-popover-caption]').textContent = profile.caption;
+        popover.querySelector('[data-business-popover-chips]').innerHTML = profile.chips.map((chip) => `<span class="profile-chip">${chip}</span>`).join('');
+        popover.querySelector('[data-business-popover-note]').textContent = profile.note;
+        popover.classList.add('is-open'); popover.setAttribute('aria-hidden', 'false');
+      }
+      document.querySelectorAll('[data-business-card]').forEach((card) => card.addEventListener('click', () => openBusinessCard(card.dataset.businessCard, card)));
+      document.querySelectorAll('[data-close-business]').forEach((button) => button.addEventListener('click', closeBusinessCard));
+      document.querySelector('[data-business-profile-action]')?.addEventListener('click', (event) => { const button = event.currentTarget; const original = button.textContent; button.textContent = 'Profile preview opened locally'; window.setTimeout(() => { button.innerHTML = 'View full profile <i>→</i>'; }, 1600); });
+      popover.addEventListener('click', (event) => { if (event.target === popover) closeBusinessCard(); });
+    })();
+  </script>
+</body>
+</html>

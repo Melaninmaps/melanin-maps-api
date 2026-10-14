@@ -1,0 +1,719 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A cinematic founder-review narrative for Mapping With Melanin and KinfolkAI.">
+  <title>Mapping With Melanin — A Life in Motion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink: #1f0e05;
+      --ink-2: #35180a;
+      --cream: #fbf1e3;
+      --cream-muted: #e7d7c1;
+      --gold: #d4aa52;
+      --gold-soft: #f1d594;
+      --sage: #8aa99a;
+      --line: rgba(251, 241, 227, .22);
+      --shadow: rgba(13, 5, 1, .62);
+      --serif: "Playfair Display", Georgia, serif;
+      --sans: "DM Sans", Arial, sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--ink); scroll-behavior: smooth; scroll-snap-type: y proximity; }
+    body { margin: 0; overflow-x: hidden; color: var(--cream); background: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+    button, a { font: inherit; }
+    a { color: inherit; }
+    button { cursor: pointer; }
+    ::selection { color: var(--ink); background: var(--gold-soft); }
+
+    .skip-link { position: fixed; z-index: 100; top: 10px; left: 10px; padding: 10px 14px; color: var(--ink); background: var(--gold-soft); border-radius: 999px; transform: translateY(-160%); transition: transform .2s ease; }
+    .skip-link:focus { transform: translateY(0); outline: 3px solid var(--cream); outline-offset: 2px; }
+    :focus-visible { outline: 3px solid var(--gold-soft); outline-offset: 4px; }
+
+    .site-nav { position: fixed; z-index: 20; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 21px clamp(20px, 4vw, 62px); border-bottom: 1px solid transparent; transition: background .45s ease, border-color .45s ease, padding .45s ease; }
+    .site-nav.is-scrolled { padding-top: 13px; padding-bottom: 13px; border-bottom-color: rgba(251, 241, 227, .13); background: rgba(31, 14, 5, .86); backdrop-filter: blur(18px); }
+    .wordmark { color: var(--cream); font-size: .72rem; font-weight: 700; letter-spacing: .16em; line-height: 1.1; text-decoration: none; text-transform: uppercase; }
+    .nav-note { display: flex; align-items: center; gap: 10px; color: var(--cream-muted); font-size: .71rem; letter-spacing: .04em; }
+    .nav-note::before { content: ""; width: 8px; height: 8px; border: 1px solid var(--gold); border-radius: 50%; }
+
+    .story-progress { position: fixed; z-index: 15; top: 50%; right: clamp(15px, 2.2vw, 34px); display: grid; gap: 11px; padding: 10px 0; transform: translateY(-50%); }
+    .story-progress a { position: relative; display: grid; place-items: center; width: 16px; height: 16px; color: transparent; border-radius: 50%; text-decoration: none; }
+    .story-progress a::before { content: ""; width: 5px; height: 5px; border: 1px solid rgba(251,241,227,.78); border-radius: 50%; transition: width .25s ease, height .25s ease, background .25s ease; }
+    .story-progress a[aria-current="step"]::before { width: 10px; height: 10px; border-color: var(--gold); background: var(--gold); }
+    .story-progress a span { position: absolute; right: 24px; width: max-content; color: var(--cream); font-size: .64rem; font-weight: 700; letter-spacing: .08em; opacity: 0; pointer-events: none; text-transform: uppercase; transform: translateX(8px); transition: opacity .2s ease, transform .2s ease; }
+    .story-progress a:hover span, .story-progress a:focus-visible span { opacity: 1; transform: translateX(0); }
+
+    .progress-line { position: fixed; z-index: 17; top: 0; left: 0; width: 100%; height: 3px; background: rgba(251,241,227,.08); }
+    .progress-line span { display: block; width: 0; height: 100%; background: var(--gold); transform-origin: left; }
+    .read-status { position: fixed; z-index: 16; bottom: 18px; left: clamp(20px, 4vw, 62px); color: rgba(251,241,227,.75); font-size: .68rem; letter-spacing: .1em; text-transform: uppercase; }
+
+    .story { overflow: clip; }
+    .scene { position: relative; min-height: 112svh; display: grid; align-items: center; padding: clamp(110px, 13vw, 180px) clamp(26px, 8vw, 140px) clamp(70px, 10vw, 120px); isolation: isolate; scroll-snap-align: start; }
+    .scene::before { content: ""; position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, rgba(31,14,5,.94) 0%, rgba(31,14,5,.79) 34%, rgba(31,14,5,.26) 76%, rgba(31,14,5,.35) 100%); }
+    .scene::after { content: ""; position: absolute; z-index: -1; inset: 0; opacity: .82; background: linear-gradient(180deg, rgba(16,6,1,.48), transparent 26%, transparent 71%, rgba(16,6,1,.72)); }
+    .scene.reverse::before { background: linear-gradient(270deg, rgba(31,14,5,.94) 0%, rgba(31,14,5,.78) 34%, rgba(31,14,5,.27) 76%, rgba(31,14,5,.42) 100%); }
+    .scene-image { position: absolute; z-index: -2; inset: -4%; width: 108%; height: 108%; object-fit: cover; filter: saturate(.78) contrast(1.04) brightness(.78); transform: scale(1.045) translate3d(0, 0, 0); transition: transform 1.35s cubic-bezier(.2,.7,.2,1), filter 1s ease; }
+    .scene.is-active .scene-image { filter: saturate(.93) contrast(1.04) brightness(.9); transform: scale(1) translate3d(0, calc(var(--parallax, 0px) * .1), 0); }
+
+    .scene-copy { width: min(100%, 590px); padding: clamp(25px, 4vw, 47px); border: 1px solid rgba(251,241,227,.15); border-radius: 24px; background: rgba(31,14,5,.37); box-shadow: 0 22px 70px rgba(0,0,0,.15); backdrop-filter: blur(5px); opacity: .38; transform: translateY(28px); transition: opacity .8s ease, transform .9s cubic-bezier(.2,.7,.2,1); }
+    .scene.reverse .scene-copy { justify-self: end; }
+    .scene.is-active .scene-copy { opacity: 1; transform: translateY(0); }
+    .scene-number { display: flex; align-items: center; gap: 12px; margin: 0 0 19px; color: var(--gold-soft); font-size: .67rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+    .scene-number::before { content: ""; width: 30px; height: 1px; background: currentColor; }
+    .scene h1, .scene h2, .closing h2 { margin: 0; font-family: var(--serif); font-weight: 500; letter-spacing: -.045em; line-height: .98; }
+    .hero h1 { max-width: 800px; font-size: clamp(4rem, 9.3vw, 9.8rem); }
+    .scene h2 { font-size: clamp(3rem, 5.7vw, 6.7rem); }
+    .scene h2 em, .closing h2 em { color: var(--gold-soft); font-weight: 500; }
+    .copy-lede { max-width: 530px; margin: 28px 0 0; color: var(--cream-muted); font-size: clamp(1.05rem, 1.6vw, 1.28rem); line-height: 1.62; }
+    .copy-lede strong { color: var(--cream); font-weight: 600; }
+    .voice { max-width: 460px; margin: 27px 0 0; padding: 17px 0 0 20px; color: var(--cream); border-left: 1px solid var(--gold); font-family: var(--serif); font-size: clamp(1.2rem, 2vw, 1.65rem); font-style: italic; letter-spacing: -.02em; line-height: 1.35; }
+    .scene-foot { margin: 26px 0 0; color: rgba(251,241,227,.66); font-size: .73rem; letter-spacing: .03em; line-height: 1.55; }
+
+    .hero { min-height: 100svh; padding-top: 130px; }
+    .hero .scene-copy { width: min(100%, 820px); padding: 0; border: 0; background: none; box-shadow: none; backdrop-filter: none; }
+    .hero::before { background: linear-gradient(90deg, rgba(31,14,5,.95) 0%, rgba(31,14,5,.83) 36%, rgba(31,14,5,.22) 74%, rgba(31,14,5,.18) 100%); }
+    .hero .copy-lede { max-width: 625px; font-size: clamp(1.1rem, 1.7vw, 1.37rem); }
+    .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 22px; margin-top: 34px; }
+    .begin-link { display: inline-flex; align-items: center; gap: 11px; padding: 14px 19px; color: var(--ink); border-radius: 999px; background: var(--gold); font-size: .83rem; font-weight: 700; text-decoration: none; transition: transform .2s ease, background .2s ease; }
+    .begin-link:hover { background: var(--gold-soft); transform: translateY(-2px); }
+    .begin-link span { display: inline-block; font-size: 1.18rem; line-height: .6; }
+    .pace-note { color: var(--cream-muted); font-size: .78rem; letter-spacing: .02em; }
+    .hero-caption { position: absolute; right: clamp(44px, 7vw, 125px); bottom: 42px; max-width: 235px; color: rgba(251,241,227,.68); font-size: .68rem; line-height: 1.55; }
+
+    .interlude { min-height: 80svh; display: grid; place-items: center; padding: clamp(80px, 11vw, 145px) 28px; background: #f1e4d2; color: var(--ink); scroll-snap-align: start; }
+    .interlude-inner { width: min(100%, 1060px); display: grid; grid-template-columns: .72fr 1.28fr; gap: clamp(35px, 9vw, 120px); align-items: end; }
+    .interlude-tag { margin: 0 0 13px; color: #926d2d; font-size: .68rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    .interlude h2 { margin: 0; font-family: var(--serif); font-size: clamp(2.7rem, 5vw, 5.3rem); font-weight: 500; letter-spacing: -.04em; line-height: .99; }
+    .interlude p { max-width: 620px; margin: 0; color: #624a3b; font-size: clamp(1.08rem, 1.5vw, 1.35rem); line-height: 1.65; }
+    .interlude p strong { color: var(--ink); }
+
+    .business-bridge { position: relative; min-height: 83svh; display: grid; align-items: center; padding: clamp(90px, 11vw, 150px) clamp(26px, 8vw, 140px); background: #214238; color: var(--cream); scroll-snap-align: start; overflow: hidden; }
+    .business-bridge::before { content: ""; position: absolute; width: min(68vw, 940px); aspect-ratio: 1; top: -28%; right: -14%; border: 1px solid rgba(212,170,82,.44); border-radius: 50%; box-shadow: 0 0 0 75px rgba(212,170,82,.06), 0 0 0 150px rgba(212,170,82,.04); }
+    .business-bridge-inner { position: relative; width: min(100%, 830px); }
+    .business-bridge h2 { margin: 0; max-width: 720px; font-family: var(--serif); font-size: clamp(3.2rem, 6.4vw, 7rem); font-weight: 500; letter-spacing: -.045em; line-height: .98; }
+    .business-bridge h2 em { color: var(--gold-soft); font-style: italic; font-weight: 500; }
+    .business-bridge p { max-width: 630px; margin: 28px 0 0; color: rgba(251,241,227,.86); font-size: clamp(1.05rem, 1.55vw, 1.28rem); line-height: 1.65; }
+    .business-truth { max-width: 630px; margin: 27px 0 0; padding-top: 18px; border-top: 1px solid rgba(251,241,227,.26); color: rgba(251,241,227,.72); font-size: .79rem; line-height: 1.55; }
+
+    .app-in-hand { position: absolute; z-index: 3; width: clamp(290px, 24vw, 360px); min-width: 0; filter: drop-shadow(0 32px 36px rgba(0,0,0,.48)); }
+    .kinfolk-phone { left: clamp(28px, 8vw, 138px); bottom: clamp(112px, 13vh, 165px); transform: rotate(-3deg); }
+    .community-phone { right: clamp(28px, 8vw, 138px); bottom: clamp(112px, 13vh, 165px); transform: rotate(3deg); }
+    .owner-phone { left: clamp(28px, 8vw, 138px); bottom: clamp(112px, 13vh, 165px); transform: rotate(-2deg); }
+    .phone { position: relative; overflow: hidden; padding: 9px; border: 2px solid rgba(251,241,227,.72); border-radius: 40px; background: #110b08; box-shadow: inset 0 0 0 1px rgba(0,0,0,.7), 0 0 0 3px rgba(201,146,43,.18); }
+    .phone::before { content: ""; position: absolute; z-index: 3; top: 13px; left: 50%; width: 35%; height: 17px; border-radius: 999px; background: #0c0908; transform: translateX(-50%); }
+    .phone-screen { position: relative; display: flex; min-height: 592px; aspect-ratio: .49; flex-direction: column; overflow: hidden; color: #23170e; border-radius: 31px; background: #faf5ec; font-family: var(--sans); }
+    .phone-status { display: flex; align-items: center; justify-content: space-between; padding: 14px 19px 6px; color: #6e5949; font-size: 9px; font-weight: 700; letter-spacing: .04em; }
+    .app-head { display: flex; align-items: center; justify-content: space-between; gap: 9px; padding: 11px 19px 15px; border-bottom: 1px solid #eadbc8; }
+    .app-head strong { font-size: 16px; letter-spacing: -.02em; }
+    .app-head small { display: block; margin-top: 2px; color: #93714a; font-size: 8px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .app-orb { display: grid; place-items: center; width: 28px; height: 28px; color: #fff; border-radius: 50%; background: #c9922b; font-family: var(--serif); font-size: 15px; }
+    .screen-label { margin: 16px 19px 3px; color: #9b6f21; font-size: 9px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+    .screen-title { margin: 0 19px 11px; font-family: var(--serif); font-size: 26px; font-weight: 600; letter-spacing: -.035em; line-height: 1.02; }
+    .animated-step { opacity: 0; transform: translateY(10px); }
+    .scene.is-active .animated-step { animation: mock-reveal .66s cubic-bezier(.2,.7,.2,1) forwards; }
+    .scene.is-active .delay-1 { animation-delay: .42s; }
+    .scene.is-active .delay-2 { animation-delay: 1.35s; }
+    .scene.is-active .delay-3 { animation-delay: 2.25s; }
+    .scene.is-active .app-in-hand { animation: device-arrive .82s cubic-bezier(.2,.7,.2,1) both; }
+    @keyframes mock-reveal { to { opacity: 1; transform: translateY(0); } }
+    @keyframes device-arrive { from { opacity: 0; transform: translateY(28px) scale(.965) rotate(-1deg); } to { opacity: 1; } }
+    @keyframes type-query { from { width: 0; } to { width: 18.8em; } }
+    @keyframes cursor-pulse { 50% { border-color: transparent; } }
+
+    .app-conversation { display: grid; gap: 10px; padding: 4px 19px 14px; }
+    .bubble { max-width: 90%; padding: 11px 12px; border-radius: 15px; font-size: 11px; line-height: 1.38; }
+    .bubble.member { justify-self: end; color: #fff; border-bottom-right-radius: 3px; background: #3a1f0e; }
+    .bubble.kinfolk { border: 1px solid #d9c9b2; border-bottom-left-radius: 3px; background: #fffdf9; }
+    .search-field { display: flex; align-items: center; gap: 8px; margin: 1px 19px 12px; padding: 11px 12px; color: #5f4939; border: 1px solid #dac6ad; border-radius: 15px; background: #fffdf9; font-size: 10px; }
+    .search-glyph { color: #9b6f21; font-size: 16px; line-height: 1; }
+    .typed-query { width: 0; overflow: hidden; border-right: 1px solid #a66d15; color: #3b1f0e; font-weight: 700; letter-spacing: -.01em; white-space: nowrap; }
+    .scene.is-active .typed-query { animation: type-query 1.35s steps(25, end) .62s forwards, cursor-pulse .72s step-end infinite; }
+    .search-result { margin: 0 19px; padding: 13px; border: 1px solid #d9c7aa; border-radius: 17px; background: #f5ead8; }
+    .search-result small { display: block; color: #8e651e; font-size: 8px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .search-result p { margin: 7px 0 9px; color: #463326; font-size: 10px; font-weight: 600; line-height: 1.4; }
+    .result-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #7e6551; font-size: 8px; }
+    .result-meta button { padding: 6px 8px; color: #fff; border: 0; border-radius: 999px; background: #3b1f0e; font-size: 8px; font-weight: 700; }
+    .phone-disclosure { margin: auto 19px 16px; color: #8b7361; font-size: 8px; line-height: 1.35; }
+
+    .community-tabs { display: flex; gap: 14px; padding: 3px 19px 11px; color: #806652; font-size: 10px; font-weight: 700; }
+    .community-tabs strong { color: #2d7a4f; border-bottom: 2px solid #2d7a4f; }
+    .post-preview { margin: 4px 15px; padding: 15px; border: 1px solid #e5d8c6; border-radius: 18px; background: #fffdf9; box-shadow: 0 5px 14px rgba(59,31,14,.05); }
+    .post-byline { display: flex; align-items: center; gap: 8px; color: #745c4c; font-size: 9px; font-weight: 700; }
+    .post-avatar { width: 24px; height: 24px; border-radius: 50%; background: linear-gradient(135deg, #d3a456, #634023); }
+    .post-preview p { margin: 12px 0; font-size: 11px; line-height: 1.45; }
+    .post-topic { display: inline-block; padding: 5px 7px; color: #276445; border-radius: 999px; background: #e7f0ea; font-size: 8px; font-weight: 700; }
+    .post-actions { display: flex; gap: 11px; margin-top: 12px; padding-top: 10px; border-top: 1px solid #eee2d2; }
+    .post-action { padding: 0; color: #765c48; border: 0; background: transparent; font-size: 9px; font-weight: 700; }
+    .post-action.is-saved { color: #b47a16; }
+    .context-card { margin: 12px 15px; padding: 12px; border-radius: 15px; background: #204b3e; color: #f9f0e2; }
+    .context-card strong { display: block; color: #f3d993; font-size: 9px; }
+    .context-card span { display: block; margin-top: 5px; font-size: 9px; line-height: 1.38; }
+
+    .owner-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 12px 15px 6px; }
+    .owner-tabs button { padding: 8px 5px; color: #79604d; border: 1px solid #e3d4c0; border-radius: 10px; background: #fffdf9; font-size: 8px; font-weight: 700; }
+    .owner-tabs button[aria-selected="true"] { color: #fff; border-color: #3b1f0e; background: #3b1f0e; }
+    .owner-panel { padding: 7px 15px 0; }
+    .review-card { padding: 13px; border: 1px solid #e2d3bf; border-radius: 16px; background: #fffdf9; }
+    .review-card strong, .draft-note strong { display: block; color: #3a281d; font-size: 10px; }
+    .review-card span { display: block; margin-top: 5px; color: #7d6350; font-size: 9px; line-height: 1.36; }
+    .draft-note { margin-top: 10px; padding: 11px; border-radius: 14px; background: #f5ead8; }
+    .draft-note strong { color: #8e651e; }
+    .draft-note span { display: block; margin-top: 5px; color: #5e4837; font-size: 9px; line-height: 1.36; }
+    .owner-action { width: 100%; margin-top: 10px; padding: 11px; color: #fff; border: 0; border-radius: 13px; background: #c9922b; font-size: 10px; font-weight: 700; }
+    .broadcast-prompt { padding: 13px; border: 1px solid #e2d3bf; border-radius: 16px; background: #fffdf9; }
+    .broadcast-prompt strong { display: block; color: #3a281d; font-size: 12px; }
+    .broadcast-prompt span { display: block; margin-top: 4px; color: #7d6350; font-size: 9px; line-height: 1.36; }
+    .broadcast-types { display: flex; flex-wrap: wrap; gap: 6px; margin: 11px 0; }
+    .broadcast-types span { padding: 6px 7px; color: #2f6247; border: 1px solid #b9d4c2; border-radius: 999px; background: #eef6f0; font-size: 8px; font-weight: 700; }
+    .composer-field { min-height: 68px; padding: 11px; color: #967d69; border: 1px solid #dacbb9; border-radius: 12px; background: #fff; font-size: 9px; line-height: 1.35; }
+    .owner-next-prompt { margin: 9px 15px 0; color: #8e651e; font-size: 9px; font-weight: 700; line-height: 1.35; }
+    .owner-footer { margin: auto 15px 16px; padding: 10px; color: #6d5a4a; border-radius: 12px; background: #f0e8db; font-size: 8px; line-height: 1.35; }
+
+    .journey-sequence { position: relative; display: grid; min-height: 105svh; padding: clamp(100px, 12vw, 155px) clamp(26px, 8vw, 140px); overflow: hidden; scroll-snap-align: start; }
+    .journey-sequence::before { content: ""; position: absolute; width: min(72vw, 940px); aspect-ratio: 1; border: 1px solid rgba(201,146,43,.3); border-radius: 50%; pointer-events: none; }
+    .member-journey { color: var(--ink); background: radial-gradient(circle at 83% 27%, rgba(202,146,43,.18), transparent 25%), linear-gradient(135deg, #f6ead9 0%, #f9f2e7 56%, #ead6b9 100%); }
+    .member-journey::before { top: -35%; right: -17%; box-shadow: 0 0 0 65px rgba(201,146,43,.045), 0 0 0 130px rgba(201,146,43,.025); }
+    .owner-journey { color: var(--cream); background: radial-gradient(circle at 12% 50%, rgba(110,147,125,.32), transparent 29%), linear-gradient(135deg, #15372e 0%, #0d211b 68%, #2a1609 100%); }
+    .owner-journey::before { bottom: -42%; left: -14%; border-color: rgba(212,170,82,.34); box-shadow: 0 0 0 65px rgba(212,170,82,.05), 0 0 0 130px rgba(212,170,82,.025); }
+    .journey-grid { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, .88fr) minmax(330px, .7fr); width: min(100%, 1200px); gap: clamp(42px, 9vw, 135px); margin: auto; align-items: center; }
+    .owner-journey .journey-grid { grid-template-columns: minmax(330px, .7fr) minmax(0, .88fr); }
+    .journey-copy { max-width: 570px; }
+    .owner-journey .journey-copy { grid-column: 2; grid-row: 1; }
+    .journey-kicker { display: flex; align-items: center; gap: 10px; margin: 0 0 17px; color: #9b6f21; font-size: .68rem; font-weight: 700; letter-spacing: .15em; text-transform: uppercase; }
+    .journey-kicker::before { content: ""; width: 28px; height: 1px; background: currentColor; }
+    .owner-journey .journey-kicker { color: var(--gold-soft); }
+    .journey-copy h2 { max-width: 570px; margin: 0; font-family: var(--serif); font-size: clamp(3.3rem, 6.4vw, 7.2rem); font-weight: 500; letter-spacing: -.055em; line-height: .94; }
+    .journey-copy h2 em { color: #a8772b; font-style: italic; font-weight: 500; }
+    .owner-journey .journey-copy h2 em { color: var(--gold-soft); }
+    .journey-copy > p:not(.journey-kicker) { max-width: 525px; margin: 25px 0 0; color: #705543; font-size: clamp(1.02rem, 1.5vw, 1.23rem); line-height: 1.62; }
+    .owner-journey .journey-copy > p:not(.journey-kicker) { color: rgba(251,241,227,.76); }
+    .journey-accuracy { max-width: 490px; margin-top: 23px; padding: 14px 0 0; color: #806348; border-top: 1px solid rgba(67,35,15,.18); font-size: .77rem; line-height: 1.5; }
+    .owner-journey .journey-accuracy { color: rgba(251,241,227,.62); border-top-color: rgba(251,241,227,.19); }
+    .journey-step-nav { display: grid; gap: 9px; margin-top: 32px; }
+    .journey-step { display: grid; grid-template-columns: 32px 1fr; gap: 10px; width: 100%; padding: 11px 12px; color: #684e3c; border: 1px solid rgba(97,65,45,.17); border-radius: 14px; background: rgba(255,255,255,.42); text-align: left; transition: transform .2s ease, border-color .2s ease, background .2s ease; }
+    .journey-step:hover { transform: translateX(4px); }
+    .journey-step[aria-current="step"] { color: #2f1a0b; border-color: #b27e26; background: #fff7e9; box-shadow: 0 10px 22px rgba(93,60,22,.08); }
+    .owner-journey .journey-step { color: rgba(251,241,227,.72); border-color: rgba(251,241,227,.19); background: rgba(251,241,227,.055); }
+    .owner-journey .journey-step[aria-current="step"] { color: #1d120c; border-color: var(--gold-soft); background: var(--gold-soft); }
+    .journey-step b { display: grid; place-items: center; width: 26px; height: 26px; color: #936b28; border-radius: 50%; background: rgba(202,146,43,.15); font-size: .69rem; }
+    .journey-step[aria-current="step"] b { color: #fff; background: #a9711b; }
+    .owner-journey .journey-step b { color: var(--gold-soft); background: rgba(212,170,82,.15); }
+    .owner-journey .journey-step[aria-current="step"] b { color: #2b190a; background: #84611f; }
+    .journey-step span { display: block; font-size: .83rem; font-weight: 700; }
+    .journey-step small { display: block; margin-top: 2px; color: inherit; font-size: .68rem; font-weight: 500; line-height: 1.35; opacity: .84; }
+    .journey-device { justify-self: center; width: min(100%, 395px); }
+    .owner-journey .journey-device { grid-column: 1; grid-row: 1; }
+    .journey-device .phone { padding: 10px; border-color: rgba(251,241,227,.78); border-radius: 42px; }
+    .journey-device .phone-screen { min-height: 676px; border-radius: 33px; }
+    .journey-screen { display: none; flex: 1; flex-direction: column; }
+    .journey-screen.is-current { display: flex; }
+    .journey-sequence.is-in-view .journey-screen.is-current .journey-reveal { opacity: 0; transform: translateY(12px); animation: mock-reveal .62s cubic-bezier(.2,.7,.2,1) forwards; }
+    .journey-sequence.is-in-view .journey-screen.is-current .journey-delay-1 { animation-delay: .4s; }
+    .journey-sequence.is-in-view .journey-screen.is-current .journey-delay-2 { animation-delay: .92s; }
+    .journey-sequence.is-in-view .journey-screen.is-current .journey-delay-3 { animation-delay: 1.45s; }
+    .journey-screen .screen-label { margin-top: 18px; }
+    .memory-card, .journey-message, .profile-preview, .proposal-card, .promotion-card { margin: 0 18px; }
+    .memory-card { padding: 14px; border: 1px solid #d5b276; border-radius: 17px; background: #fff9f0; }
+    .memory-card strong, .journey-message strong, .profile-preview strong, .proposal-card strong, .promotion-card strong { display: block; color: #332015; font-size: 11px; }
+    .memory-card p, .journey-message p, .profile-preview p, .proposal-card p, .promotion-card p { margin: 6px 0 0; color: #735947; font-size: 10px; line-height: 1.45; }
+    .memory-note { min-height: 67px; margin-top: 10px; padding: 10px; color: #705746; border: 1px solid #dfcfbb; border-radius: 11px; background: #fff; font-size: 10px; line-height: 1.38; }
+    .memory-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .memory-actions button { padding: 8px 10px; color: #fff; border: 0; border-radius: 11px; background: #c9922b; font-size: 9px; font-weight: 700; }
+    .memory-actions span { color: #806652; font-size: 9px; font-weight: 600; }
+    .journey-message { padding: 13px; border: 1px solid #e0d0bb; border-radius: 16px; background: #fffdf9; }
+    .journey-message.member-voice { margin-top: 0; color: #fff; border-color: transparent; background: #3a1f0e; }
+    .journey-message.member-voice strong, .journey-message.member-voice p { color: #fff9ef; }
+    .journey-message.kinfolk-voice { margin-top: 10px; background: #f4ead9; }
+    .journey-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 18px 0; }
+    .journey-chips span { padding: 7px 8px; color: #765525; border: 1px solid #d5b276; border-radius: 999px; background: #fff8ea; font-size: 8px; font-weight: 700; }
+    .profile-preview { position: relative; overflow: hidden; min-height: 264px; padding: 15px; border: 1px solid #ddcbb5; border-radius: 19px; background: #fffaf1; }
+    .profile-mask { position: absolute; inset: 0; display: grid; align-content: center; gap: 10px; padding: 18px; filter: blur(4px); opacity: .66; pointer-events: none; }
+    .profile-mask i { display: block; height: 13px; border-radius: 999px; background: #b79978; }
+    .profile-mask i:nth-child(1) { width: 60%; height: 80px; border-radius: 12px; background: linear-gradient(135deg, #815735, #d5ae74); }
+    .profile-mask i:nth-child(3) { width: 84%; }
+    .profile-mask i:nth-child(4) { width: 69%; }
+    .profile-mask i:nth-child(5) { width: 78%; }
+    .profile-overlay { position: relative; z-index: 1; display: grid; height: 235px; align-content: space-between; }
+    .profile-overlay span { justify-self: start; padding: 5px 7px; color: #fff; border-radius: 999px; background: rgba(58,31,14,.78); font-size: 8px; font-weight: 700; }
+    .profile-overlay div { padding: 10px; color: #fff9ef; border-radius: 13px; background: rgba(37,21,10,.75); backdrop-filter: blur(8px); font-size: 9px; line-height: 1.38; }
+    .profile-overlay b { display: block; margin-bottom: 3px; color: #f1d594; font-size: 9px; }
+    .proposal-card { padding: 14px; border: 1px solid #d5b276; border-radius: 17px; background: #fffaf1; }
+    .proposal-card > span { display: inline-block; margin-bottom: 7px; padding: 5px 7px; color: #8d641f; border-radius: 999px; background: #f6e7c9; font-size: 8px; font-weight: 700; }
+    .proposal-outline { display: grid; gap: 7px; margin-top: 11px; }
+    .proposal-outline div { display: flex; gap: 8px; padding: 9px; border: 1px solid #e5d4bd; border-radius: 11px; background: #fff; }
+    .proposal-outline b { color: #9c6b21; font-size: 9px; }
+    .proposal-outline span { color: #6d5543; font-size: 9px; line-height: 1.35; }
+    .promotion-card { padding: 14px; border: 1px solid #bdd6c5; border-radius: 17px; background: #eff7f1; }
+    .promotion-card > span { display: inline-block; margin-bottom: 7px; padding: 5px 7px; color: #266143; border-radius: 999px; background: #d9ebdf; font-size: 8px; font-weight: 700; }
+    .broadcast-mini { margin-top: 10px; padding: 10px; border: 1px solid #c9ddcf; border-radius: 12px; background: #fff; }
+    .broadcast-mini label { display: block; color: #6a5141; font-size: 8px; font-weight: 700; }
+    .broadcast-mini p { margin-top: 5px; color: #4c392c; font-size: 10px; }
+    .journey-action { width: calc(100% - 36px); margin: auto 18px 18px; padding: 12px; color: #fff; border: 0; border-radius: 14px; background: #3a1f0e; font-size: 10px; font-weight: 700; }
+    .owner-journey .journey-action { background: #c9922b; }
+    .journey-status { min-height: 35px; margin: 0 18px 12px; color: #806652; font-size: 8px; line-height: 1.35; }
+
+    .safety-note { position: absolute; right: clamp(26px, 8vw, 140px); bottom: clamp(55px, 9vw, 105px); width: min(300px, 33vw); padding: 18px; border: 1px solid rgba(212,170,82,.43); border-radius: 16px; background: rgba(29,51,43,.67); color: var(--cream-muted); font-size: .72rem; line-height: 1.5; backdrop-filter: blur(8px); }
+    .safety-note strong { display: block; margin-bottom: 7px; color: var(--gold-soft); font-size: .63rem; letter-spacing: .12em; text-transform: uppercase; }
+
+    .knowledge { min-height: 100svh; display: grid; align-items: center; padding: clamp(110px, 13vw, 160px) clamp(26px, 8vw, 140px); color: var(--cream); background: radial-gradient(circle at 75% 35%, rgba(137,168,153,.25), transparent 27%), linear-gradient(135deg, #2d1708, #100904 68%); scroll-snap-align: start; }
+    .knowledge-inner { width: min(100%, 900px); }
+    .knowledge h2 { max-width: 780px; margin: 0; font-family: var(--serif); font-size: clamp(3.25rem, 7vw, 7.5rem); font-weight: 500; letter-spacing: -.05em; line-height: .97; }
+    .knowledge h2 em { color: var(--gold-soft); font-style: italic; font-weight: 500; }
+    .knowledge p { max-width: 650px; margin: 31px 0 0; color: var(--cream-muted); font-size: clamp(1.08rem, 1.6vw, 1.34rem); line-height: 1.66; }
+    .knowledge-loop { display: flex; flex-wrap: wrap; gap: 12px; max-width: 700px; margin-top: 38px; }
+    .knowledge-loop span { padding: 11px 14px; color: var(--cream); border: 1px solid rgba(251,241,227,.23); border-radius: 999px; background: rgba(251,241,227,.06); font-size: .79rem; font-weight: 600; }
+    .knowledge-loop i { align-self: center; color: var(--gold); font-style: normal; }
+
+    .closing { position: relative; min-height: 100svh; display: grid; place-items: center; padding: 120px 28px 80px; text-align: center; background: #f0e1cd; color: var(--ink); scroll-snap-align: start; overflow: hidden; }
+    .closing::before, .closing::after { content: ""; position: absolute; border: 1px solid rgba(156,111,34,.35); border-radius: 50%; pointer-events: none; }
+    .closing::before { width: min(94vw, 1000px); aspect-ratio: 1; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+    .closing::after { width: min(61vw, 650px); aspect-ratio: 1; top: 50%; left: 50%; transform: translate(-50%, -50%); box-shadow: 0 0 0 55px rgba(156,111,34,.05), 0 0 0 110px rgba(156,111,34,.035); }
+    .closing-inner { position: relative; z-index: 1; width: min(100%, 920px); }
+    .closing .scene-number { justify-content: center; color: #936f2a; }
+    .closing h2 { font-size: clamp(4rem, 9vw, 9.4rem); }
+    .closing p { max-width: 635px; margin: 28px auto 0; color: #674d3b; font-size: clamp(1.06rem, 1.6vw, 1.3rem); line-height: 1.66; }
+    .closing-cta { display: inline-flex; margin-top: 34px; padding-bottom: 8px; color: var(--ink); border-bottom: 1px solid var(--gold); font-size: .88rem; font-weight: 700; letter-spacing: .03em; text-decoration: none; }
+    .closing-cta:hover { color: #926c23; }
+    .review-disclosure { max-width: 650px; margin: 55px auto 0; color: #80644e; font-size: .7rem; line-height: 1.55; }
+
+    .footer { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 24px clamp(20px, 4vw, 62px); color: rgba(251,241,227,.62); background: var(--ink); font-size: .68rem; letter-spacing: .045em; }
+    .footer strong { color: var(--cream); }
+
+    @media (max-width: 780px) {
+      .site-nav { padding: 18px 20px; }
+      .site-nav.is-scrolled { padding-top: 12px; padding-bottom: 12px; }
+      .nav-note { font-size: .61rem; }
+      .story-progress { display: none; }
+      .read-status { left: 20px; bottom: 13px; font-size: .59rem; }
+      .scene { min-height: 105svh; padding: 104px 20px 66px; align-items: end; }
+      .scene::before, .scene.reverse::before { background: linear-gradient(180deg, rgba(31,14,5,.59) 0%, rgba(31,14,5,.26) 26%, rgba(31,14,5,.91) 75%, rgba(31,14,5,.97) 100%); }
+      .scene-image { inset: 0; width: 100%; height: 100%; }
+      .scene-copy { padding: 22px; border-radius: 18px; }
+      .scene h2 { font-size: clamp(2.55rem, 12vw, 4.15rem); }
+      .hero { min-height: 100svh; padding-top: 117px; align-items: center; }
+      .hero h1 { font-size: clamp(3.9rem, 17vw, 6.2rem); }
+      .hero-caption { right: 20px; bottom: 55px; max-width: 190px; }
+      .interlude { min-height: 70svh; }
+      .interlude-inner { grid-template-columns: 1fr; gap: 23px; }
+      .business-bridge { min-height: 78svh; padding: 82px 20px; }
+      .business-bridge::before { width: 110vw; right: -58%; top: -11%; }
+      .business-bridge h2 { font-size: clamp(3rem, 13vw, 4.6rem); }
+      .scene.with-phone { min-height: 145svh; align-content: end; grid-template-rows: auto auto; }
+      .scene.with-phone .scene-copy { grid-row: 1; }
+      .app-in-hand { position: relative; inset: auto; width: min(320px, 86vw); min-width: 0; margin-top: 25px; transform: none; }
+      .scene.with-phone .app-in-hand { grid-row: 2; }
+      .scene.reverse.with-phone .app-in-hand { justify-self: start; }
+      .scene:not(.reverse).with-phone .app-in-hand { justify-self: end; }
+      .phone-screen { min-height: 592px; }
+      .journey-sequence { min-height: auto; padding: 84px 20px; }
+      .journey-grid, .owner-journey .journey-grid { grid-template-columns: 1fr; gap: 38px; }
+      .owner-journey .journey-copy, .owner-journey .journey-device { grid-column: auto; grid-row: auto; }
+      .journey-copy h2 { font-size: clamp(3rem, 13vw, 4.8rem); }
+      .journey-step-nav { margin-top: 25px; }
+      .journey-device { width: min(100%, 352px); }
+      .journey-device .phone-screen { min-height: 624px; }
+      .safety-note { position: static; width: 100%; margin-top: 25px; }
+      .knowledge { min-height: 90svh; padding: 90px 20px; }
+      .knowledge h2 { font-size: clamp(3rem, 13.5vw, 5rem); }
+      .knowledge-loop { gap: 8px; }
+      .knowledge-loop span { font-size: .69rem; }
+      .closing { min-height: 90svh; }
+      .closing h2 { font-size: clamp(3.8rem, 16vw, 6.7rem); }
+      .footer { align-items: flex-start; flex-direction: column; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; }
+      .scene-image, .scene.is-active .scene-image { transform: none; }
+    }
+
+    .app-orb { overflow: hidden; } .app-orb img { display:block; width: 72%; height: 72%; object-fit: contain; }
+</style>
+</head>
+<body>
+  <a class="skip-link" href="#story-start">Skip to the story</a>
+  <div class="progress-line" aria-hidden="true"><span id="progress-fill"></span></div>
+  <nav class="site-nav" aria-label="Story navigation">
+    <a class="wordmark" href="#top" aria-label="Return to the beginning">Mapping With<br>Melanin</a>
+    <span class="nav-note">Founder review · cinematic direction</span>
+  </nav>
+  <nav class="story-progress" aria-label="Story chapters">
+    <a href="#everyday" aria-current="step" data-progress-link="everyday"><span>Everyday life</span></a>
+    <a href="#kinfolk" data-progress-link="kinfolk"><span>Kinfolk</span></a>
+    <a href="#community" data-progress-link="community"><span>Community knowledge</span></a>
+    <a href="#business" data-progress-link="business"><span>Business</span></a>
+    <a href="#safety" data-progress-link="safety"><span>Shared care</span></a>
+    <a href="#knowledge" data-progress-link="knowledge"><span>Knowledge</span></a>
+  </nav>
+  <p class="read-status" id="read-status" aria-live="polite">A life in motion · 01 of 06</p>
+
+  <main class="story" id="top">
+    <section class="scene hero is-active" id="story-start" data-chapter="opening" aria-labelledby="hero-heading">
+      <img class="scene-image" src="assets/cinematic/everyday-life.jpg" alt="A person walking toward a warmly lit community gathering at dusk.">
+      <div class="scene-copy">
+        <p class="scene-number">A cinematic founder-review direction</p>
+        <h1 id="hero-heading">Map your life.<br><em>Connect deeper.</em></h1>
+        <p class="copy-lede">Mapping With Melanin is not a map app. It is a living way to move through life with more context, more connection, and more possibility.</p>
+        <div class="hero-actions">
+          <a class="begin-link" href="#everyday">Read the story slowly <span aria-hidden="true">↓</span></a>
+          <span class="pace-note">Nothing moves until you do.</span>
+        </div>
+      </div>
+      <p class="hero-caption">A scroll-led website experience for people deciding whether this is a community they want to be part of.</p>
+    </section>
+
+    <section class="interlude" aria-labelledby="premise-heading">
+      <div class="interlude-inner">
+        <div>
+          <p class="interlude-tag">The premise</p>
+          <h2 id="premise-heading">No one starts with a feature.</h2>
+        </div>
+        <p>They start with a life: a question they cannot quite name, a place they need to understand, a business they want to trust, or a future they want to help shape. <strong>That is where the story begins.</strong></p>
+      </div>
+    </section>
+
+    <section class="scene" id="everyday" data-chapter="everyday" aria-labelledby="everyday-heading">
+      <img class="scene-image" src="assets/cinematic/everyday-life.jpg" alt="A person finding their way toward a familiar neighborhood gathering.">
+      <div class="scene-copy">
+        <p class="scene-number">01 · Everyday life</p>
+        <h2 id="everyday-heading">A person is trying to find their <em>footing.</em></h2>
+        <p class="copy-lede">Maybe they are new to a city. Maybe they need care, work, a sense of home, a place to gather, or simply someone who understands the question beneath the question.</p>
+        <p class="voice">“I do not need another list. I need a way forward that feels like it was made for real life.”</p>
+      </div>
+    </section>
+
+    <section class="scene reverse with-phone" id="kinfolk" data-chapter="kinfolk" aria-labelledby="kinfolk-heading">
+      <img class="scene-image" src="assets/cinematic/kinfolk-companion.jpg" alt="A person pausing with a notebook in a warm cafe, considering their next step.">
+      <div class="scene-copy">
+        <p class="scene-number">02 · KinfolkAI</p>
+        <h2 id="kinfolk-heading">Kinfolk listens for the <em>life</em> inside the question.</h2>
+        <p class="copy-lede">Kinfolk is not a chatbot bolted onto a directory. It is the companion that helps someone name what they need, hold the context around it, and recognize a meaningful next step.</p>
+        <p class="voice">“Let’s make this smaller together. What would feeling supported look like today?”</p>
+        <p class="scene-foot">A guide should make a person feel more capable—not make them work harder to be understood.</p>
+      </div>
+      <aside class="app-in-hand kinfolk-phone" aria-label="Illustrative Kinfolk business-search app mockup">
+        <div class="phone"><div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>● ● ●</span></div>
+          <div class="app-head"><div><strong>Kinfolk</strong><small>Private by default · illustrative</small></div><span class="app-orb"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+          <p class="screen-label">Find a business</p><h3 class="screen-title">Start with the feeling.</h3>
+          <div class="app-conversation"><p class="bubble member animated-step">I need a dinner spot where I can have a real conversation.</p><p class="bubble kinfolk animated-step delay-1" id="kinfolk-mock-reply">I can start with currently public listings, then bring forward the details and community context that help you decide.</p></div>
+          <div class="search-field animated-step delay-1"><span class="search-glyph" aria-hidden="true">⌕</span><span class="typed-query">dinner with community</span></div>
+          <article class="search-result animated-step delay-2"><small>Kinfolk’s next step</small><p>Explore potential matches with the context a simple pin cannot carry.</p><div class="result-meta"><span>Illustrative search</span><button type="button" data-kinfolk-search aria-pressed="false">See context</button></div></article>
+          <p class="phone-disclosure">A concept view of the current public-listing recommendation pattern; confirm business details directly before you go.</p>
+        </div></div>
+      </aside>
+    </section>
+
+    <section class="journey-sequence member-journey" id="member-journey" data-chapter="kinfolk" data-journey="member" aria-labelledby="member-journey-heading">
+      <div class="journey-grid">
+        <div class="journey-copy">
+          <p class="journey-kicker">A practical Kinfolk journey</p>
+          <h2 id="member-journey-heading">Remember the <em>context.</em><br>Find the place.</h2>
+          <p>A business trip is never only a calendar. It is how someone wants to start their morning, move between meetings, find a place to exhale, and make the city feel less unfamiliar.</p>
+          <div class="journey-step-nav" aria-label="Kinfolk member journey steps">
+            <button class="journey-step" type="button" data-journey-target="memory" aria-current="step"><b>01</b><span>Remember me<small>Private continuity a member can edit, turn off, or delete.</small></span></button>
+            <button class="journey-step" type="button" data-journey-target="ask" aria-current="false"><b>02</b><span>Ask in real life<small>“I’m heading to Phoenix for business—what should I know?”</small></span></button>
+            <button class="journey-step" type="button" data-journey-target="find" aria-current="false"><b>03</b><span>Find a place with context<small>See the shape of a business profile before choosing where to go.</small></span></button>
+          </div>
+          <p class="journey-accuracy">The memory choice and public-listing recommendation pattern are source-informed. The Phoenix dialogue and intentionally blurred profile are illustrative; no local facts or live business data are being claimed.</p>
+        </div>
+        <div class="journey-device" aria-label="Illustrative Kinfolk member journey screens">
+          <div class="phone"><div class="phone-screen">
+            <section class="journey-screen is-current" data-journey-screen="memory">
+              <div class="phone-status"><span>9:41</span><span>● ● ●</span></div>
+              <div class="app-head"><div><strong>Kinfolk</strong><small>Your continuity, your control</small></div><span class="app-orb"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+              <p class="screen-label journey-reveal">A private choice</p><h3 class="screen-title journey-reveal journey-delay-1">Let Kinfolk remember?</h3>
+              <article class="memory-card journey-reveal journey-delay-2"><strong>A private note for this trip</strong><p>What should Kinfolk consider about the way you want to move through Phoenix?</p><div class="memory-note">Quiet mornings. Community-forward places. Room to take a breath between meetings.</div><div class="memory-actions"><button type="button" data-memory-choice>Let Kinfolk remember</button><span>Keep memory off</span></div></article>
+              <p class="journey-status journey-reveal journey-delay-3" data-memory-status>Private, editable, and separate from a public profile.</p>
+            </section>
+            <section class="journey-screen" data-journey-screen="ask">
+              <div class="phone-status"><span>9:41</span><span>● ● ●</span></div>
+              <div class="app-head"><div><strong>Kinfolk</strong><small>Trip context · illustrative</small></div><span class="app-orb"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+              <p class="screen-label journey-reveal">A real-world question</p><h3 class="screen-title journey-reveal journey-delay-1">Make the trip feel held.</h3>
+              <article class="journey-message member-voice journey-reveal journey-delay-1"><strong>Member</strong><p>I’m heading to Phoenix for business—what should I know?</p></article>
+              <article class="journey-message kinfolk-voice journey-reveal journey-delay-2"><strong>Kinfolk</strong><p>Let’s start with your days: what would help before you land, between meetings, and when you need a place to yourself?</p></article>
+              <div class="journey-chips journey-reveal journey-delay-3"><span>Before I land</span><span>Between meetings</span><span>An evening to myself</span></div>
+              <p class="journey-status">Illustrative conversation. It asks for context before it offers a path.</p>
+            </section>
+            <section class="journey-screen" data-journey-screen="find">
+              <div class="phone-status"><span>9:41</span><span>● ● ●</span></div>
+              <div class="app-head"><div><strong>Kinfolk</strong><small>Public listing context</small></div><span class="app-orb"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+              <p class="screen-label journey-reveal">A place, in full context</p><h3 class="screen-title journey-reveal journey-delay-1">Look beyond the pin.</h3>
+              <article class="profile-preview journey-reveal journey-delay-2"><div class="profile-mask" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><div class="profile-overlay"><span>Illustrative profile preview</span><div><b>Story · timing · access · community notes</b>The business detail is deliberately blurred here; the point is the depth of context a member can open before deciding.</div></div></article>
+              <button class="journey-action journey-reveal journey-delay-3" type="button" data-member-save>Save this path</button><p class="journey-status" data-member-status>Profile preview only—no live business has been opened or saved.</p>
+            </section>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="scene with-phone" id="community" data-chapter="community" aria-labelledby="community-heading">
+      <img class="scene-image" src="assets/cinematic/community-knowledge.jpg" alt="Community members sharing stories and knowledge around a table.">
+      <div class="scene-copy">
+        <p class="scene-number">03 · Community knowledge</p>
+        <h2 id="community-heading">The answer may already live in the <em>room.</em></h2>
+        <p class="copy-lede">A recommendation becomes more useful when it comes with a person, a story, a memory, and the kind of detail that only lived experience can offer. Mapping With Melanin gives that knowledge somewhere to travel.</p>
+        <p class="voice">“My auntie told me about this place. It is not just good—it understands what we need.”</p>
+      </div>
+      <aside class="app-in-hand community-phone" aria-label="Illustrative community mobile feed mockup">
+        <div class="phone"><div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>● ● ●</span></div>
+          <div class="app-head"><div><strong>Community</strong><small>Shared in context</small></div><span class="app-orb"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+          <div class="community-tabs"><strong>For you</strong><span>Near you</span><span>Groups</span></div>
+          <article class="post-preview animated-step"><div class="post-byline"><span class="post-avatar" aria-hidden="true"></span><span>A member shares a note</span></div><p>“I return here when I need a place that feels like my people already understand the assignment.”</p><span class="post-topic">Community context</span><div class="post-actions"><button class="post-action" type="button" data-save-mock aria-pressed="false">Save</button><button class="post-action" type="button">Join the conversation</button></div></article>
+          <div class="context-card animated-step delay-1"><strong>What makes this useful</strong><span>Stories, tags, and lived experience make a recommendation easier to understand.</span></div>
+          <p class="phone-disclosure animated-step delay-2">Illustrative community context—not a live post or review.</p>
+        </div></div>
+      </aside>
+    </section>
+
+    <section class="business-bridge" id="business" data-chapter="business" aria-labelledby="business-bridge-heading">
+      <div class="business-bridge-inner">
+        <p class="scene-number">04 · Business belongs in the story</p>
+        <h2 id="business-bridge-heading">A business is not a pin. It is a <em>promise to people.</em></h2>
+        <p>When someone finds the right business through trusted context, the business owner is not just receiving traffic. They are becoming visible in the relationship that brought a person there—and they can return value to the community that made the connection possible.</p>
+        <p class="business-truth">The business path is being shaped with care: a truer profile, a richer identity, community feedback with boundaries, ways to participate, and insight that helps an owner take a real next step. Public business-tier benefits are still being finalized, so this story does not invent a pricing or entitlement promise.</p>
+      </div>
+    </section>
+
+    <section class="scene reverse with-phone" id="owners" data-chapter="business" aria-labelledby="owners-heading">
+      <img class="scene-image" src="assets/cinematic/business-owner.jpg" alt="A small-business owner preparing a welcoming neighborhood shop as a customer arrives.">
+      <div class="scene-copy">
+        <p class="scene-number">The owner’s side of the connection</p>
+        <h2 id="owners-heading">Let an owner be known for more than what they <em>sell.</em></h2>
+        <p class="copy-lede">Their story, values, atmosphere, access needs, hours, community voice, and growth goals can sit together. Kinfolk can help turn a practical challenge into an informed next step—without promising outcomes that have not been earned.</p>
+        <p class="voice">“The point is not to look bigger. It is to be understood by the people I am here to serve.”</p>
+        <p class="scene-foot">Owner-facing access and membership eligibility will be communicated clearly as each offering is accepted and released.</p>
+      </div>
+      <aside class="app-in-hand owner-phone" aria-label="Illustrative business owner response and broadcast app mockup">
+        <div class="phone"><div class="phone-screen">
+          <div class="phone-status"><span>9:41</span><span>● ● ●</span></div>
+          <div class="app-head"><div><strong>Business admin</strong><small>Owner view · illustrative</small></div><span class="app-orb"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+          <div class="owner-tabs" role="tablist" aria-label="Business owner mockup flows"><button type="button" role="tab" aria-selected="true" data-owner-tab="response">Respond with care</button><button type="button" role="tab" aria-selected="false" data-owner-tab="broadcast">Create a post</button></div>
+          <section class="owner-panel" data-owner-panel="response">
+            <p class="screen-label">Moderated response flow</p>
+            <article class="review-card animated-step"><strong>A member shared a concern</strong><span>The current response flow supports a statement, corrective actions, and a trust plan; moderation applies before a response appears alongside a report.</span></article>
+            <div class="draft-note animated-step delay-1"><strong>Kinfolk draft helper · proposed</strong><span>Start with acknowledgement, name a next step, and prepare a response for the official review flow.</span></div>
+            <button class="owner-action animated-step delay-2" type="button" data-draft-concept>Preview draft guidance</button>
+          </section>
+          <section class="owner-panel" data-owner-panel="broadcast" hidden>
+            <p class="screen-label">Business broadcasts</p>
+            <article class="broadcast-prompt animated-step"><strong>What does your community need to know?</strong><span>Choose the update type, then write a clear headline and message.</span><div class="broadcast-types"><span>Event</span><span>Special offer</span><span>Community update</span></div><div class="composer-field">Tell your community what’s happening…</div></article>
+            <button class="owner-action animated-step delay-1" type="button" data-owner-compose>Continue to review</button>
+          </section>
+          <p class="owner-next-prompt animated-step delay-3">Next: share what is happening with your community → Create a post</p>
+          <p class="owner-footer" id="owner-mock-status">Current-source patterns: moderated business response and Broadcasts compose flow. Verified owner access and membership eligibility apply.</p>
+        </div></div>
+      </aside>
+    </section>
+
+    <section class="journey-sequence owner-journey" id="owner-journey" data-chapter="business" data-journey="owner" aria-labelledby="owner-journey-heading">
+      <div class="journey-grid">
+        <div class="journey-copy">
+          <p class="journey-kicker">A practical owner journey</p>
+          <h2 id="owner-journey-heading">Plan with <em>Kinfolk.</em><br>Promote with care.</h2>
+          <p>For an owner, “help me with this” should become a useful next step—not another blank page. The opportunity is a companion that keeps the community relationship at the center of planning and promotion.</p>
+          <div class="journey-step-nav" aria-label="Business owner journey steps">
+            <button class="journey-step" type="button" data-journey-target="proposal" aria-current="step"><b>01</b><span>Shape the proposal<small>Turn a real business need into purpose, community benefit, and a next step.</small></span></button>
+            <button class="journey-step" type="button" data-journey-target="promote" aria-current="false"><b>02</b><span>Build the promotion<small>Translate a useful moment into language a community can understand.</small></span></button>
+            <button class="journey-step" type="button" data-journey-target="review" aria-current="false"><b>03</b><span>Review before it travels<small>The owner remains responsible for what is shared and when.</small></span></button>
+          </div>
+          <p class="journey-accuracy">The current source supports a business-improvement planning flow, AI promotion/review tools in business guidance, and a verified-owner Broadcasts compose pattern. Proposal drafting and the Kinfolk copy below are founder-review concepts, not released promises or tier claims.</p>
+        </div>
+        <div class="journey-device" aria-label="Illustrative business owner journey screens">
+          <div class="phone"><div class="phone-screen">
+            <section class="journey-screen is-current" data-journey-screen="proposal">
+              <div class="phone-status"><span>9:41</span><span>● ● ●</span></div>
+              <div class="app-head"><div><strong>Business with Kinfolk</strong><small>Founder-review concept</small></div><span class="app-orb"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+              <p class="screen-label journey-reveal">Start where the owner is</p><h3 class="screen-title journey-reveal journey-delay-1">“Help me with a proposal.”</h3>
+              <article class="journey-message member-voice journey-reveal journey-delay-1"><strong>Business owner</strong><p>Help me turn our spring pop-up into a clear proposal for a local partner.</p></article>
+              <article class="proposal-card journey-reveal journey-delay-2"><span>Kinfolk concept · draft together</span><strong>Start with the story, then the structure.</strong><div class="proposal-outline"><div><b>01</b><span>Purpose: why this moment matters now.</span></div><div><b>02</b><span>Community benefit: who it supports and how.</span></div><div><b>03</b><span>Next step: the partner ask and a clear timeline.</span></div></div></article>
+              <button class="journey-action journey-reveal journey-delay-3" type="button" data-proposal-preview>Preview working outline</button><p class="journey-status" data-proposal-status>Concept only—no proposal has been generated or sent.</p>
+            </section>
+            <section class="journey-screen" data-journey-screen="promote">
+              <div class="phone-status"><span>9:41</span><span>● ● ●</span></div>
+              <div class="app-head"><div><strong>Business with Kinfolk</strong><small>Promotion direction · illustrative</small></div><span class="app-orb"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+              <p class="screen-label journey-reveal">Use language that invites</p><h3 class="screen-title journey-reveal journey-delay-1">“How should we tell people?”</h3>
+              <article class="journey-message member-voice journey-reveal journey-delay-1"><strong>Business owner</strong><p>We have a Friday night event. Help me invite our community.</p></article>
+              <article class="promotion-card journey-reveal journey-delay-2"><span>Kinfolk promotion draft · proposed</span><strong>Begin with a reason to gather.</strong><p>“An evening for people to connect, support local, and make room for each other.”</p><div class="broadcast-mini"><label>Community update</label><p>Review the message, add the details that matter, then decide whether it should travel.</p></div></article>
+              <button class="journey-action journey-reveal journey-delay-3" type="button" data-promotion-preview>Preview community update</button><p class="journey-status" data-promotion-status>Concept copy only—no broadcast has been composed or sent.</p>
+            </section>
+            <section class="journey-screen" data-journey-screen="review">
+              <div class="phone-status"><span>9:41</span><span>● ● ●</span></div>
+              <div class="app-head"><div><strong>Broadcasts</strong><small>Owner review · illustrative</small></div><span class="app-orb"><img src="assets/mwm/icon.png" alt="Mapping With Melanin"></span></div>
+              <p class="screen-label journey-reveal">Owner stays in control</p><h3 class="screen-title journey-reveal journey-delay-1">Ready to review.</h3>
+              <article class="promotion-card journey-reveal journey-delay-2"><span>Current-source direction</span><strong>Before a community update travels</strong><div class="broadcast-mini"><label>Type · Event</label><p>Headline, message, and the owner’s final review sit together before a broadcast is sent.</p></div><p>Verified owner access and membership eligibility apply.</p></article>
+              <button class="journey-action journey-reveal journey-delay-3" type="button" data-owner-ready>Keep this in review</button><p class="journey-status" data-owner-ready-status>Illustrative review state—nothing is published from this preview.</p>
+            </section>
+          </div></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="scene" id="safety" data-chapter="safety" aria-labelledby="safety-heading">
+      <img class="scene-image" src="assets/cinematic/safety-belonging.jpg" alt="Friends walking together along a warmly lit neighborhood sidewalk after an evening gathering.">
+      <div class="scene-copy">
+        <p class="scene-number">05 · Shared care</p>
+        <h2 id="safety-heading">Safety begins long before an <em>emergency.</em></h2>
+        <p class="copy-lede">It lives in familiar places, trusted relationships, local knowledge, and the confidence to move through the world with one another in mind. It is collective care—not a fear-driven add-on.</p>
+        <p class="voice">“I want to know that the people and places around me are part of how we look out for each other.”</p>
+      </div>
+      <aside class="safety-note"><strong>Responsible preview language</strong>This founder-review story does not present emergency alerts, automated incident notifications, rerouting, trusted contacts, or other release-pending Safety functions as currently available.</aside>
+    </section>
+
+    <section class="knowledge" id="knowledge" data-chapter="knowledge" aria-labelledby="knowledge-heading">
+      <div class="knowledge-inner">
+        <p class="scene-number">06 · What stays with us</p>
+        <h2 id="knowledge-heading">Every connection can become knowledge worth <em>carrying forward.</em></h2>
+        <p>What a member learns can help someone else begin. What a business shares can become part of a neighborhood’s memory. What a community values can shape how it grows, gathers, supports, and protects its people.</p>
+        <div class="knowledge-loop" aria-label="The connected life cycle">
+          <span>A question is named</span><i aria-hidden="true">→</i><span>Context is shared</span><i aria-hidden="true">→</i><span>People and places connect</span><i aria-hidden="true">→</i><span>Knowledge returns to community</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="closing" aria-labelledby="closing-heading">
+      <div class="closing-inner">
+        <p class="scene-number">The invitation</p>
+        <h2 id="closing-heading">Map your life.<br><em>Connect deeper.</em></h2>
+        <p>Mapping With Melanin is the place where community, culture, business, knowledge, and care can meet. Kinfolk is the companion that helps a person find their way through it.</p>
+        <a class="closing-cta" href="#top">Return to the beginning ↑</a>
+        <p class="review-disclosure">Founder-review concept only. This cinematic website story is intentionally different from future mobile onboarding: the website gives a visitor time to feel the connected world; the app introduction should later be shorter, faster, and focused on getting a new member started.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer"><span><strong>Mapping With Melanin</strong> · Cinematic founder-review direction</span><span>Read at your own pace.</span></footer>
+
+  <script>
+    const chapters = [...document.querySelectorAll('[data-chapter]')];
+    const progressLinks = [...document.querySelectorAll('[data-progress-link]')];
+    const readStatus = document.getElementById('read-status');
+    const progressFill = document.getElementById('progress-fill');
+    const siteNav = document.querySelector('.site-nav');
+    const labels = {
+      everyday: 'Everyday life',
+      kinfolk: 'Kinfolk',
+      community: 'Community knowledge',
+      business: 'Business in relationship',
+      safety: 'Shared care',
+      knowledge: 'Knowledge carried forward'
+    };
+
+    function activateChapter(chapter) {
+      const key = chapter.dataset.chapter;
+      if (!labels[key]) return;
+      const chapterIndex = ['everyday', 'kinfolk', 'community', 'business', 'safety', 'knowledge'].indexOf(key) + 1;
+      chapters.forEach((item) => item.classList.toggle('is-active', item === chapter));
+      progressLinks.forEach((link) => link.setAttribute('aria-current', String(link.dataset.progressLink === key ? 'step' : 'false')));
+      if (chapterIndex > 0) readStatus.textContent = `${labels[key]} · ${String(chapterIndex).padStart(2, '0')} of 06`;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (visible) activateChapter(visible.target);
+    }, { threshold: [0.35, 0.52, 0.7], rootMargin: '-14% 0px -18% 0px' });
+    chapters.forEach((chapter) => observer.observe(chapter));
+
+    let ticking = false;
+    window.addEventListener('scroll', () => {
+      if (ticking) return;
+      window.requestAnimationFrame(() => {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        const percent = max > 0 ? Math.min((window.scrollY / max) * 100, 100) : 0;
+        progressFill.style.width = `${percent}%`;
+        siteNav.classList.toggle('is-scrolled', window.scrollY > 45);
+        chapters.forEach((chapter) => {
+          const rect = chapter.getBoundingClientRect();
+          const mid = rect.top + rect.height / 2 - window.innerHeight / 2;
+          chapter.style.setProperty('--parallax', `${Math.max(-90, Math.min(90, mid * -.08))}px`);
+        });
+        ticking = false;
+      });
+      ticking = true;
+    }, { passive: true });
+
+    document.querySelector('[data-kinfolk-search]').addEventListener('click', (event) => {
+      const button = event.currentTarget;
+      const explored = button.getAttribute('aria-pressed') === 'true';
+      button.setAttribute('aria-pressed', String(!explored));
+      button.textContent = explored ? 'See context' : 'Context saved';
+      document.getElementById('kinfolk-mock-reply').textContent = explored
+        ? 'I can start with currently public listings, then bring forward the details and community context that help you decide.'
+        : 'I’ll hold the search context so you can compare a place by more than its pin.';
+    });
+    document.querySelector('[data-save-mock]').addEventListener('click', (event) => {
+      const button = event.currentTarget;
+      const saved = button.getAttribute('aria-pressed') === 'true';
+      button.setAttribute('aria-pressed', String(!saved));
+      button.classList.toggle('is-saved', !saved);
+      button.textContent = saved ? 'Save' : 'Saved for later';
+    });
+    const ownerTabs = [...document.querySelectorAll('[data-owner-tab]')];
+    const ownerPanels = [...document.querySelectorAll('[data-owner-panel]')];
+    ownerTabs.forEach((button) => {
+      button.addEventListener('click', () => {
+        const target = button.dataset.ownerTab;
+        ownerTabs.forEach((item) => item.setAttribute('aria-selected', String(item === button)));
+        ownerPanels.forEach((panel) => { panel.hidden = panel.dataset.ownerPanel !== target; });
+        document.getElementById('owner-mock-status').textContent = target === 'response'
+          ? 'Current-source response pattern: moderation remains part of the official business response flow.'
+          : 'Current-source Broadcasts pattern: a verified owner composes an update before sending it to eligible followers.';
+      });
+    });
+    document.querySelector('[data-draft-concept]').addEventListener('click', (event) => {
+      event.currentTarget.textContent = 'Draft guidance previewed';
+      document.getElementById('owner-mock-status').textContent = 'Kinfolk draft helper is a proposed concept. The official response is still submitted through the moderated business-response flow.';
+    });
+    document.querySelector('[data-owner-compose]').addEventListener('click', (event) => {
+      event.currentTarget.textContent = 'Ready for review';
+      document.getElementById('owner-mock-status').textContent = 'Illustrative compose state. This preview does not send a broadcast or create a post.';
+    });
+    const journeySequences = [...document.querySelectorAll('[data-journey]')];
+    journeySequences.forEach((sequence) => {
+      const steps = [...sequence.querySelectorAll('[data-journey-target]')];
+      const screens = [...sequence.querySelectorAll('[data-journey-screen]')];
+      steps.forEach((step) => {
+        step.addEventListener('click', () => {
+          const target = step.dataset.journeyTarget;
+          steps.forEach((item) => item.setAttribute('aria-current', String(item === step ? 'step' : 'false')));
+          screens.forEach((screen) => screen.classList.toggle('is-current', screen.dataset.journeyScreen === target));
+          sequence.classList.remove('is-in-view');
+          window.requestAnimationFrame(() => sequence.classList.add('is-in-view'));
+        });
+      });
+    });
+    const journeyObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => entry.target.classList.toggle('is-in-view', entry.isIntersecting));
+    }, { threshold: .36 });
+    journeySequences.forEach((sequence) => journeyObserver.observe(sequence));
+    document.querySelector('[data-memory-choice]').addEventListener('click', (event) => {
+      event.currentTarget.textContent = 'Private note previewed';
+      document.querySelector('[data-memory-status]').textContent = 'Preview only—this page does not save a memory. In the app, it remains editable or deletable.';
+    });
+    document.querySelector('[data-member-save]').addEventListener('click', (event) => {
+      event.currentTarget.textContent = 'Path preview saved';
+      document.querySelector('[data-member-status]').textContent = 'Preview only—no business profile or path was saved from this website.';
+    });
+    document.querySelector('[data-proposal-preview]').addEventListener('click', (event) => {
+      event.currentTarget.textContent = 'Outline previewed';
+      document.querySelector('[data-proposal-status]').textContent = 'Founder-review concept only—this preview does not generate, store, or send a proposal.';
+    });
+    document.querySelector('[data-promotion-preview]').addEventListener('click', (event) => {
+      event.currentTarget.textContent = 'Community update previewed';
+      document.querySelector('[data-promotion-status]').textContent = 'Founder-review concept only—this preview does not compose or send a broadcast.';
+    });
+    document.querySelector('[data-owner-ready]').addEventListener('click', (event) => {
+      event.currentTarget.textContent = 'Kept in review';
+      document.querySelector('[data-owner-ready-status]').textContent = 'Illustrative review state—no update is published or queued from this website.';
+    });
+    window.dispatchEvent(new Event('scroll'));
+  </script>
+</body>
+</html>
