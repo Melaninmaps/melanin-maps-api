@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  filterMapPinsForExplicitLocality,
   isDirectNamedSafetyContext,
   matchesExplicitMapLocality,
   resolveMapBusinessProximity,
@@ -48,6 +49,24 @@ describe("native map business scope", () => {
       previousCityPin,
       { city: "Philadelphia" },
     )).toBe(true);
+  });
+
+  it("does not carry cached canonical pins from a prior city into an explicit city selection", () => {
+    const pins = [
+      { id: "phl", city: "Philadelphia", state: "PA" },
+      { id: "atl", city: "Atlanta", state: "GA" },
+    ];
+
+    expect(filterMapPinsForExplicitLocality(
+      pins,
+      { city: "Atlanta", state: "GA" },
+      true,
+    )).toEqual([{ id: "atl", city: "Atlanta", state: "GA" }]);
+  });
+
+  it("keeps the canonical feed available for an around-me request", () => {
+    const pins = [{ id: "phl", city: "Philadelphia", state: "PA" }];
+    expect(filterMapPinsForExplicitLocality(pins, null, false)).toEqual(pins);
   });
 
   it("identifies only direct-name safety context as non-Map search results", () => {

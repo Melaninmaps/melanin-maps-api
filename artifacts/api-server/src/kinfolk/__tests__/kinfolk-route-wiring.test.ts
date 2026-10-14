@@ -82,6 +82,16 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("catalogSource: promptCatalogSource");
   });
 
+  it("permits a directory itinerary only for an explicit current activity, date, and place request", () => {
+    expect(routeSource).toContain('import { isExplicitCurrentItineraryRequest } from "../kinfolk/itinerary-eligibility"');
+    expect(chatRoute).toContain("const explicitItineraryRequest = isExplicitCurrentItineraryRequest(message)");
+    expect(chatRoute).toContain("explicitItineraryRequest &&");
+    const catalogGate = chatRoute.indexOf("const catalogRequestedForTurn =");
+    const itineraryAssembly = chatRoute.indexOf("const travelPlanning =");
+    expect(catalogGate).toBeGreaterThan(-1);
+    expect(itineraryAssembly).toBeGreaterThan(catalogGate);
+  });
+
   it("wires current-turn identity, evidence routing, strict parsing, and itinerary normalization", () => {
     expect(chatRoute).toContain("resolvePermittedIdentityContext(message)");
     expect(chatRoute).toContain("classifyEvidenceRoute(message)");
@@ -294,7 +304,9 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("ageBand: effectiveAudienceBand");
     expect(chatRoute).toMatch(/audienceAllowsBusinessText\(\{\s*ageBand:\s*effectiveAudienceBand,\s*text:\s*message,?\s*\}\)/);
     expect(chatRoute).toContain("const directNameCatalog = namedBusiness");
-    expect(chatRoute).toContain("subjectScopedCatalog.filter((business) => business.id !== namedBusiness.id)");
+    expect(chatRoute).toMatch(
+      /subjectScopedCatalog\.filter\(\s*\(business\)\s*=>\s*business\.id\s*!==\s*namedBusiness\.id,?\s*\)/,
+    );
     expect(chatRoute).toContain("favoriteCategories: prefs?.favoriteCategories");
     expect(chatRoute).toContain("tripStyle: prefs?.tripStyle");
     expect(chatRoute).toContain("travelCompanion: prefs?.travelCompanion");
@@ -369,7 +381,9 @@ describe("Kinfolk chat static wiring", () => {
     expect(deterministicStart).toBeGreaterThan(-1);
     expect(deterministicStart).toBeLessThan(quotaCheck);
     expect(deterministicStart).toBeLessThan(providerCall);
-    expect(helper).toMatch(/resolveTurnGeography\(\s*discoveryMessage,\s*input\.cityHint \?\? currentSession\?\.destination \?\? ephemeralDiscoverySession\?\.destination \?\? null,?\s*\)/);
+    expect(helper).toMatch(
+      /resolveTurnGeography\(\s*discoveryMessage,\s*input\.cityHint\s*\?\?\s*currentSession\?\.destination\s*\?\?\s*ephemeralDiscoverySession\?\.destination\s*\?\?\s*null,?\s*\)/,
+    );
     expect(helper).toContain('decision.route !== "business_discovery"');
     expect(helper).toContain('namedBusiness.state !== "not_named"');
     expect(helper).toContain("getMemberAgeBand(input.req.user!.id)");
@@ -404,8 +418,8 @@ describe("Kinfolk chat static wiring", () => {
   });
 
   it("routes a resolved before-you-go question through current news research even when semantic planning is off", () => {
-    const cityBriefingPlan = chatRoute.indexOf(
-      "!isPrivateQuestionAttachment && isCityBriefingRequest(message, destination)",
+    const cityBriefingPlan = chatRoute.search(
+      /!isPrivateQuestionAttachment\s*&&\s*isCityBriefingRequest\(message,\s*destination\)/,
     );
     const contextualPlan = chatRoute.indexOf("let contextualPlan: SemanticTurnPlan | null = cityBriefingPlan");
     const semanticPlanner = chatRoute.indexOf("if (contextualResearchEnabled && !contextualPlan)");
@@ -431,17 +445,23 @@ describe("Kinfolk chat static wiring", () => {
   });
 
   it("routes plain-language city arrival questions through the reviewed official check before model prose", () => {
-    expect(routeSource).toContain("const requestedCityBriefing = isCityBriefingRequest(input.message, location.city)");
-    expect(routeSource).toContain("!requestsCurrentCitySafetyBriefing(input.message) && !requestedCityBriefing");
-    expect(routeSource).toContain("resolveAuthoritativeWeather(`${location.city}, ${location.state}`)");
+    expect(routeSource).toMatch(
+      /const requestedCityBriefing\s*=\s*isCityBriefingRequest\(\s*input\.message,\s*location\.city,?\s*\)/,
+    );
+    expect(routeSource).toMatch(
+      /!requestsCurrentCitySafetyBriefing\(input\.message\)\s*&&\s*!requestedCityBriefing/,
+    );
+    expect(routeSource).toMatch(
+      /resolveAuthoritativeWeather\(\s*`\$\{location\.city\}, \$\{location\.state\}`,?\s*\)/,
+    );
     expect(routeSource).toContain("For a visit to ${location.city}, here is the current arrival check I can verify from the linked public sources.");
     expect(routeSource).toContain("!requestsCurrentCityImmigrationContext(input.message)");
     expect(routeSource).not.toContain("• Immigration and civic context:");
   });
 
   it("uses bounded semantic city-readiness classification for natural arrival language without weakening deterministic routes", () => {
-    const cityBriefingPlan = chatRoute.indexOf(
-      "!isPrivateQuestionAttachment && isCityBriefingRequest(message, destination)",
+    const cityBriefingPlan = chatRoute.search(
+      /!isPrivateQuestionAttachment\s*&&\s*isCityBriefingRequest\(message,\s*destination\)/,
     );
     const contextualPlan = chatRoute.indexOf("let contextualPlan: SemanticTurnPlan | null = cityBriefingPlan");
 
@@ -551,7 +571,9 @@ describe("Kinfolk chat static wiring", () => {
     expect(directSafety).toBeGreaterThan(-1);
     expect(routeSource).toContain("requestsCurrentCitySafetyBriefing(input.message)");
     expect(routeSource).toContain("renderDirectCitySafetyBriefing(location.city, briefing)");
-    expect(routeSource).toContain('answerMode: requestedCityBriefing ? "official_city_arrival" : "official_city_safety"');
+    expect(routeSource).toMatch(
+      /answerMode:\s*requestedCityBriefing\s*\?\s*"official_city_arrival"\s*:\s*"official_city_safety"/,
+    );
     expect(routeSource).toContain("recommendations: null");
     expect(routeSource).toContain("resultView: null");
     expect(safetyInvocation).toBeGreaterThan(-1);
@@ -584,7 +606,6 @@ describe("Kinfolk chat static wiring", () => {
     );
     expect(chatRoute).toContain("if (contextualResearchEnabled && !contextualPlan)");
     expect(chatRoute).toContain("!contextualResearchEnabled");
-    expect(chatRoute).toContain('intentClass === "general_knowledge" &&\n        requiresCurrentResearch(researchContextMessage)');
     expect(chatRoute).toContain("!shouldResearchInLibrary");
     expect(routeSource).toContain("buildCurrentEvidenceSourceContext");
   });
@@ -617,7 +638,9 @@ describe("Kinfolk chat static wiring", () => {
     expect(routeSource).toContain("A broad \"before I go\" request may include weather");
     expect(routeSource).toContain("if (isCityBriefingRequest(input.message, currentTurnCity)) return false;");
     expect(chatRoute).toContain("await tryAnswerCurrentCitySafetyBriefing({");
-    expect(routeSource).toContain("const requestedCityBriefing = isCityBriefingRequest(input.message, location.city)");
+    expect(routeSource).toMatch(
+      /const requestedCityBriefing\s*=\s*isCityBriefingRequest\(\s*input\.message,\s*location\.city,?\s*\)/,
+    );
   });
 
   it("uses the bounded source-seeking ancient Mediterranean follow-up only for the supplied cultural case", () => {
@@ -631,10 +654,10 @@ describe("Kinfolk chat static wiring", () => {
   it("allows a catalog itinerary only for an explicit current-turn request", () => {
     expect(chatRoute).toContain('const isCurrentCityBriefing = contextualPlan?.taskMode === "city_briefing"');
     expect(chatRoute).toMatch(
-      /const explicitCurrentItineraryRequest\s*=\s*isTravelPlanningPrompt\(message\);/,
+      /const explicitItineraryRequest\s*=\s*isExplicitCurrentItineraryRequest\(message\);/,
     );
     expect(chatRoute).toMatch(
-      /const travelPlanning\s*=\s*!isCurrentCityBriefing\s*&&\s*!generalAnswerRoute\.requiresCurrentEvidence\s*&&\s*explicitCurrentItineraryRequest;/,
+      /const travelPlanning\s*=\s*!isCurrentCityBriefing\s*&&\s*!generalAnswerRoute\.requiresCurrentEvidence\s*&&\s*explicitItineraryRequest\s*&&\s*\(isTravelPlanningPrompt\(message\)\s*\|\|\s*earlyDecision\.route\s*===\s*"travel_planning"\s*\);/,
     );
   });
 

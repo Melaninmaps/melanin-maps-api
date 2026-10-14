@@ -31,8 +31,12 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(travelSource).toContain('testID="kinfolk-ownership-documented"');
     expect(travelSource).toContain("Listing: {businessTrustLabel(card)}");
     expect(travelSource).toContain("Why it surfaced:");
-    expect(travelSource).toContain("Ownership not documented — not an ownership-matched recommendation.");
-    expect(travelSource).toContain("Not ownership-matched — shown only because you chose to broaden this search.");
+    expect(travelSource).toMatch(
+      /Ownership not documented\s*—\s*not an ownership-matched\s*recommendation\./,
+    );
+    expect(travelSource).toMatch(
+      /Not ownership-matched\s*—\s*shown only because you chose to broaden\s*this search\./,
+    );
     expect(travelSource).toContain("Know before you go:");
     expect(travelSource).toContain("Confirm current hours, services, and availability");
     expect(hookSource).toContain("resultView?: ConversationalBusinessResultView | null");
@@ -46,7 +50,9 @@ describe("Expo Kinfolk business demo cards", () => {
   it("opens each compact Kinfolk pick on its MWM business page while retaining quick options", () => {
     expect(widgetSource).toContain("const openRecommendationBusiness = useCallback");
     expect(widgetSource).toContain('pathname: "/business/[id]"');
-    expect(widgetSource).toContain("onPress={() => openRecommendationBusiness(recommendation.id)}");
+    expect(widgetSource).toMatch(
+      /onPress=\{\s*\(\)\s*=>\s*openRecommendationBusiness\(\s*recommendation\.id\s*\)\s*\}/,
+    );
     expect(widgetSource).toContain('accessibilityLabel={`Open ${recommendation.name} on Mapping with Melanin`}');
     expect(widgetSource).toContain("setSelectedRecommendation(recommendation)");
     expect(widgetSource).toContain('accessibilityLabel={`More options for ${recommendation.name}`}');
@@ -89,17 +95,25 @@ describe("Expo Kinfolk business demo cards", () => {
   });
 
   it("keeps follow-up suggestions readable in both Kinfolk mobile surfaces", () => {
-    expect(widgetSource).toContain('backgroundColor: colors.secondary, borderColor: colors.primary');
+    expect(widgetSource).toMatch(
+      /backgroundColor:\s*colors\.secondary,\s*borderColor:\s*colors\.primary/,
+    );
     expect(widgetSource).toContain('numberOfLines={2}');
-    expect(widgetSource).toContain('minHeight: 42, maxWidth: 280');
+    expect(widgetSource).toMatch(/minHeight:\s*42,\s*maxWidth:\s*280/);
     expect(widgetSource).not.toContain('chipsScroll: { borderTopWidth: 1, maxHeight: 56 }');
-    expect(travelSource).toContain('backgroundColor: colors.secondary, borderColor: colors.primary');
-    expect(travelSource).toContain('minHeight: 40, maxWidth: 280');
+    expect(travelSource).toMatch(
+      /backgroundColor:\s*colors\.secondary,\s*borderColor:\s*colors\.primary/,
+    );
+    expect(travelSource).toMatch(/minHeight:\s*40,\s*maxWidth:\s*280/);
   });
 
   it("shows a searching-city label only for governed local discovery or itinerary answers", () => {
-    expect(travelSource).toContain('msg.intentClass === "business_discovery" || msg.intentClass === "travel_planning"');
-    expect(widgetSource).toContain('item.intentClass === "business_discovery" || item.intentClass === "travel_planning"');
+    expect(travelSource).toMatch(
+      /msg\.intentClass\s*===\s*"business_discovery"\s*\|\|\s*msg\.intentClass\s*===\s*"travel_planning"/,
+    );
+    expect(widgetSource).toMatch(
+      /item\.intentClass\s*===\s*"business_discovery"\s*\|\|\s*item\.intentClass\s*===\s*"travel_planning"/,
+    );
   });
 
   it("enables the Expo Audio iOS recording session before starting Kinfolk Voice", () => {
@@ -150,6 +164,10 @@ describe("Expo Kinfolk business demo cards", () => {
     expect(widgetSource).toContain('stopPlayback("app_background")');
     expect(widgetSource).toContain("if (!voiceGuardRef.current.canPlay(request)");
     expect(widgetSource).toContain("queuedPlaybackRequestRef.current = request");
+    expect(widgetSource).toContain("const pendingPlaybackFilesRef = useRef<FileSystem.File[]>([])");
+    expect(widgetSource).toContain("clips?: Array<{ audio?: string; spokenText?: string }>");
+    expect(widgetSource).toContain("setVoiceOutputStatus(\"Continuing Kinfolk Voice…\")");
+    expect(widgetSource).toContain("playerStatus.didJustFinish");
     expect(widgetSource).toContain("player.play()");
     expect(widgetSource).toContain("setListenUri(undefined)");
     // The widget guard blocks playback when it closes or backgrounds. The primary

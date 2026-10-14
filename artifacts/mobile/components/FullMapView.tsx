@@ -41,8 +41,8 @@ import {
   type MapLocationNotice,
 } from "@/lib/mapLocationStatus";
 import {
+  filterMapPinsForExplicitLocality,
   isDirectNamedSafetyContext,
-  matchesExplicitMapLocality,
   resolveMapBusinessProximity,
 } from "@/lib/mapBusinessScope";
 import { useAuth } from "@/lib/auth";
@@ -566,8 +566,7 @@ export function FullMapView({
   const routeSearchLocality = parseMapSearchLocality(searchCity, searchState);
   // A submitted search (including a map deep link) is an explicit geography
   // choice, so it overrides automatic device/profile locality until cleared.
-  const explicitMapLocality = searchedLocality ?? routeSearchLocality;
-  const hasExplicitMapLocality = Boolean(explicitMapLocality);
+  const hasExplicitMapLocality = Boolean(searchedLocality ?? routeSearchLocality);
   const mapLocality =
     searchedLocality ??
     routeSearchLocality ??
@@ -665,11 +664,11 @@ export function FullMapView({
     // Canonical pins remain available during an empty local refresh, but they
     // must still respect the member-selected radius so the map count and camera
     // never claim that distant pins are nearby.
-    const localityPins = hasExplicitMapLocality
-      ? canonicalMapPins.filter((business) =>
-          matchesExplicitMapLocality(business, explicitMapLocality),
-        )
-      : canonicalMapPins;
+    const localityPins = filterMapPinsForExplicitLocality(
+      canonicalMapPins,
+      mapLocality,
+      hasExplicitMapLocality,
+    );
     const scopePins = proximityMapLocation
       ? localityPins.filter((business) =>
           distanceMiles(proximityMapLocation, business) <= mapDiscoveryRadius,
@@ -683,7 +682,7 @@ export function FullMapView({
         )
       ),
     );
-  }, [canonicalMapPins, designationIds, explicitMapLocality, hasExplicitMapLocality, mapDiscoveryFocus, mapDiscoveryRadius, proximityMapLocation]);
+  }, [canonicalMapPins, designationIds, hasExplicitMapLocality, mapDiscoveryFocus, mapDiscoveryRadius, mapLocality, proximityMapLocation]);
   const suppressSafetyContextBusinessResults = isDirectNamedSafetyContext(
     businessSearchScope,
   );

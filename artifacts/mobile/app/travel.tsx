@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useKinfolkChatScroll } from "@/hooks/useKinfolkChatScroll";
 import { getDailyQuoteText } from "@/constants/brandQuotes";
 import {
@@ -26,10 +32,27 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useColors } from "@/hooks/useColors";
-import { useKinfolk, type ChatMessage, type TravelBusiness, type TravelNeighborhood, type TravelEvent, type SmartPromotion, type TaskAction, type LibraryAction, type HeritageSitePin, type NearbyNudge, type ConversationalBusinessResultView, type KinfolkResourceCard } from "@/hooks/useKinfolk";
+import {
+  useKinfolk,
+  type ChatMessage,
+  type TravelBusiness,
+  type TravelNeighborhood,
+  type TravelEvent,
+  type SmartPromotion,
+  type TaskAction,
+  type LibraryAction,
+  type HeritageSitePin,
+  type NearbyNudge,
+  type ConversationalBusinessResultView,
+  type KinfolkResourceCard,
+} from "@/hooks/useKinfolk";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useWishlist } from "@/hooks/useWishlist";
-import { KinfolkOnboarding, shouldShowKinfolkOnboarding, resetKinfolkOnboarding } from "@/components/KinfolkOnboarding";
+import {
+  KinfolkOnboarding,
+  shouldShowKinfolkOnboarding,
+  resetKinfolkOnboarding,
+} from "@/components/KinfolkOnboarding";
 import { useAuth } from "@/lib/auth";
 import { useMembership } from "@/hooks/useMembership";
 import { UpgradeModal } from "@/components/UpgradeModal";
@@ -47,8 +70,14 @@ import { getApiBase } from "@/lib/api";
 import { openExternalUrl } from "@/lib/safeLinking";
 import { parseSafeSourceLink } from "@/lib/sourceLinks";
 import { businessClarificationContinuation } from "@/lib/businessClarificationContinuation";
-import { kinfolkWorkingElapsedSeconds, kinfolkWorkingElapsedLabel } from "@/lib/kinfolkWorkingIndicator";
-import { createVoicePlaybackGuard, type VoicePlaybackRequest } from "@/lib/voicePlaybackGuard";
+import {
+  kinfolkWorkingElapsedSeconds,
+  kinfolkWorkingElapsedLabel,
+} from "@/lib/kinfolkWorkingIndicator";
+import {
+  createVoicePlaybackGuard,
+  type VoicePlaybackRequest,
+} from "@/lib/voicePlaybackGuard";
 import { KinfolkCompanionMemoryOfferCard } from "@/components/KinfolkCompanionMemoryOffer";
 import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDisclosure";
 import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiveMemoryConfirmation";
@@ -60,15 +89,30 @@ import { KinfolkVoiceSourceControls } from "@/components/KinfolkVoiceSourceContr
 import { useKinfolkVoiceSource } from "@/hooks/useKinfolkVoiceSource";
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
+const PRIMARY_ACTION_INK = "#241405";
 
 const ALL_CATEGORIES = [
-  "Food & Drink", "Nightlife", "Culture & Art", "Music & Live Events",
-  "Beauty & Wellness", "History", "Outdoors", "Family-Friendly",
-  "Shopping", "Coffee", "Spiritual", "Sports",
+  "Food & Drink",
+  "Nightlife",
+  "Culture & Art",
+  "Music & Live Events",
+  "Beauty & Wellness",
+  "History",
+  "Outdoors",
+  "Family-Friendly",
+  "Shopping",
+  "Coffee",
+  "Spiritual",
+  "Sports",
 ];
 const AVOID_CATEGORIES = [
-  "Nightlife", "Bars & Clubs", "Loud venues", "Crowded spaces",
-  "Tourist spots", "Chains", "Expensive dining",
+  "Nightlife",
+  "Bars & Clubs",
+  "Loud venues",
+  "Crowded spaces",
+  "Tourist spots",
+  "Chains",
+  "Expensive dining",
 ];
 const BUDGET_OPTIONS = [
   { id: "budget", label: "Budget 💵" },
@@ -101,10 +145,26 @@ const LIFE_CHIPS: { emoji: string; label: string; prompt: string }[] = [
   { emoji: "🏠", label: "I'm Moving", prompt: "I'm thinking about relocating" },
   { emoji: "✈️", label: "I'm Traveling", prompt: "I'm planning a trip" },
   { emoji: "💼", label: "My Career", prompt: "I need help with my career" },
-  { emoji: "🛍", label: "Find Businesses", prompt: "Help me find minority-owned businesses near me" },
-  { emoji: "🤝", label: "Community", prompt: "I want to connect with my community" },
-  { emoji: "🛡", label: "Stay Safe", prompt: "I want to check safety info for my area" },
-  { emoji: "❤️", label: "Healthcare", prompt: "I need healthcare recommendations" },
+  {
+    emoji: "🛍",
+    label: "Find Businesses",
+    prompt: "Help me find minority-owned businesses near me",
+  },
+  {
+    emoji: "🤝",
+    label: "Community",
+    prompt: "I want to connect with my community",
+  },
+  {
+    emoji: "🛡",
+    label: "Stay Safe",
+    prompt: "I want to check safety info for my area",
+  },
+  {
+    emoji: "❤️",
+    label: "Healthcare",
+    prompt: "I need healthcare recommendations",
+  },
   { emoji: "🎓", label: "Schools", prompt: "I need help finding good schools" },
 ];
 const WELCOME_CHIPS = [
@@ -120,17 +180,57 @@ const WELCOME_HEADLINE = "Kinfolk here — let's map it out.";
 
 // ─── Kinfolk Voices™ constants ────────────────────────────────────────────────
 const KINFOLK_VOICES = [
-  { id: "community", icon: "🤎", label: "Big Cousin", desc: "Warm, grounded, practical", requiresPaid: false },
-  { id: "professor", icon: "🎓", label: "Professor", desc: "Clear, educational, evidence-aware", requiresPaid: false },
-  { id: "business_manager", icon: "💼", label: "Business Manager", desc: "Direct, organized, action-oriented", requiresPaid: false },
-  { id: "best_friend", icon: "✨", label: "Best Friend", desc: "Encouraging, candid, celebratory", requiresPaid: false },
+  {
+    id: "community",
+    icon: "🤎",
+    label: "Big Cousin",
+    desc: "Warm, grounded, practical",
+    requiresPaid: false,
+  },
+  {
+    id: "professor",
+    icon: "🎓",
+    label: "Professor",
+    desc: "Clear, educational, evidence-aware",
+    requiresPaid: false,
+  },
+  {
+    id: "business_manager",
+    icon: "💼",
+    label: "Business Manager",
+    desc: "Direct, organized, action-oriented",
+    requiresPaid: false,
+  },
+  {
+    id: "best_friend",
+    icon: "✨",
+    label: "Best Friend",
+    desc: "Encouraging, candid, celebratory",
+    requiresPaid: false,
+  },
 ] as const;
 
 const COMM_STYLES = [
-  { id: "friendly", label: "Friendly", example: "\"I found a few spots I think you'll love!\"" },
-  { id: "detailed", label: "Detailed", example: "\"Here is why each option may fit you.\"" },
-  { id: "professional", label: "Professional", example: "\"Here are three options matching your criteria.\"" },
-  { id: "conversational", label: "Conversational", example: "\"ok so there's this spot you gotta check out...\"" },
+  {
+    id: "friendly",
+    label: "Friendly",
+    example: '"I found a few spots I think you\'ll love!"',
+  },
+  {
+    id: "detailed",
+    label: "Detailed",
+    example: '"Here is why each option may fit you."',
+  },
+  {
+    id: "professional",
+    label: "Professional",
+    example: '"Here are three options matching your criteria."',
+  },
+  {
+    id: "conversational",
+    label: "Conversational",
+    example: '"ok so there\'s this spot you gotta check out..."',
+  },
 ];
 
 const EMOJI_LEVELS = [
@@ -146,30 +246,65 @@ const HUMOR_LEVELS = [
 ];
 
 const CULTURAL_INTERESTS_LIST = [
-  "Black History", "Soul Food", "Music & Jazz", "Natural Hair",
-  "HBCUs", "Faith-Based", "Family Travel", "Solo Exploration",
-  "Art & Culture", "Entrepreneurship", "Nightlife", "Blues & Gospel",
-  "Caribbean Culture", "African Heritage", "Wellness", "Local Events",
+  "Black History",
+  "Soul Food",
+  "Music & Jazz",
+  "Natural Hair",
+  "HBCUs",
+  "Faith-Based",
+  "Family Travel",
+  "Solo Exploration",
+  "Art & Culture",
+  "Entrepreneurship",
+  "Nightlife",
+  "Blues & Gospel",
+  "Caribbean Culture",
+  "African Heritage",
+  "Wellness",
+  "Local Events",
 ];
 
 // ─── Sub-component: Business Card ────────────────────────────────────────────
-function businessTrustLabel(biz: { verified?: boolean; claimed?: boolean }): string {
+function businessTrustLabel(biz: {
+  verified?: boolean;
+  claimed?: boolean;
+}): string {
   if (biz.verified === true) return "MWM verified";
   if (biz.claimed === true) return "Claimed · Not MWM verified";
   return "Unclaimed · Not MWM verified";
 }
 
 function BusinessCard({
-  biz, messageId, city, feedback, onFeedback, wishlistItemId, onWishlist,
-  compareMode, isSelected, onCompareToggle, colors,
+  biz,
+  messageId,
+  city,
+  feedback,
+  onFeedback,
+  wishlistItemId,
+  onWishlist,
+  compareMode,
+  isSelected,
+  onCompareToggle,
+  colors,
 }: {
   biz: TravelBusiness;
   messageId: string;
   city?: string;
   feedback: Record<string, "like" | "dislike">;
-  onFeedback: (msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => void;
+  onFeedback: (
+    msgId: string,
+    name: string,
+    cat: string,
+    city: string,
+    r: "like" | "dislike",
+  ) => void;
   wishlistItemId: string | null;
-  onWishlist: (biz: TravelBusiness, city: string, add: boolean, itemId: string | null) => void;
+  onWishlist: (
+    biz: TravelBusiness,
+    city: string,
+    add: boolean,
+    itemId: string | null,
+  ) => void;
   compareMode?: boolean;
   isSelected?: boolean;
   onCompareToggle?: (biz: TravelBusiness) => void;
@@ -183,45 +318,101 @@ function BusinessCard({
       onPress={compareMode ? () => onCompareToggle?.(biz) : undefined}
       style={[
         bizStyles.card,
-        { backgroundColor: colors.background, borderColor: isSelected ? colors.primary : colors.border },
+        {
+          backgroundColor: colors.background,
+          borderColor: isSelected ? colors.primary : colors.border,
+        },
         isSelected && { backgroundColor: colors.primary + "08" },
       ]}
     >
       {compareMode && (
-        <View style={[bizStyles.compareCheck, { borderColor: isSelected ? colors.primary : colors.border, backgroundColor: isSelected ? colors.primary : colors.background }]}>
-          {isSelected && <Ionicons name="checkmark" size={11} color={colors.primaryForeground} />}
+        <View
+          style={[
+            bizStyles.compareCheck,
+            {
+              borderColor: isSelected ? colors.primary : colors.border,
+              backgroundColor: isSelected ? colors.primary : colors.background,
+            },
+          ]}
+        >
+          {isSelected && (
+            <Ionicons
+              name="checkmark"
+              size={11}
+              color={colors.primaryForeground}
+            />
+          )}
         </View>
       )}
       <View style={bizStyles.cardTop}>
-        <View style={[bizStyles.badge, { backgroundColor: colors.primary + "18" }]}>
-          <Text style={[bizStyles.badgeText, { color: colors.primary }]}>{biz.category}</Text>
+        <View
+          style={[bizStyles.badge, { backgroundColor: colors.primary + "18" }]}
+        >
+          <Text style={[bizStyles.badgeText, { color: colors.primary }]}>
+            {biz.category}
+          </Text>
         </View>
         <Text style={[bizStyles.hood, { color: colors.mutedForeground }]}>
           <Ionicons name="location-outline" size={11} /> {biz.neighborhood}
         </Text>
-        <TouchableOpacity activeOpacity={0.85}
-          onPress={() => compareMode ? onCompareToggle?.(biz) : onWishlist(biz, city ?? "", !wishlisted, wishlistItemId)}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() =>
+            compareMode
+              ? onCompareToggle?.(biz)
+              : onWishlist(biz, city ?? "", !wishlisted, wishlistItemId)
+          }
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          style={[bizStyles.wishlistBtn, !compareMode && wishlisted && { backgroundColor: colors.primary + "18" }]}
+          style={[
+            bizStyles.wishlistBtn,
+            !compareMode &&
+              wishlisted && { backgroundColor: colors.primary + "18" },
+          ]}
         >
-          {compareMode
-            ? <Ionicons name={isSelected ? "checkmark-circle" : "ellipse-outline"} size={18} color={isSelected ? colors.primary : colors.mutedForeground} />
-            : <Ionicons name={wishlisted ? "bookmark" : "bookmark-outline"} size={16} color={wishlisted ? colors.primary : colors.mutedForeground} />}
+          {compareMode ? (
+            <Ionicons
+              name={isSelected ? "checkmark-circle" : "ellipse-outline"}
+              size={18}
+              color={isSelected ? colors.primary : colors.mutedForeground}
+            />
+          ) : (
+            <Ionicons
+              name={wishlisted ? "bookmark" : "bookmark-outline"}
+              size={16}
+              color={wishlisted ? colors.primary : colors.mutedForeground}
+            />
+          )}
         </TouchableOpacity>
       </View>
       <Text style={[bizStyles.name, { color: colors.text }]}>{biz.name}</Text>
-      <Text style={[bizStyles.desc, { color: colors.mutedForeground }]}>{biz.description}</Text>
-      <Text style={[bizStyles.unclaimed, { color: colors.primary }]}>{businessTrustLabel(biz)}</Text>
+      <Text style={[bizStyles.desc, { color: colors.mutedForeground }]}>
+        {biz.description}
+      </Text>
+      <Text style={[bizStyles.unclaimed, { color: colors.primary }]}>
+        {businessTrustLabel(biz)}
+      </Text>
       {biz.matchReasons && biz.matchReasons.length > 0 && (
-        <Text style={[bizStyles.matchReason, { color: colors.mutedForeground }]}>Why it surfaced: {biz.matchReasons.join(" · ")}</Text>
+        <Text
+          style={[bizStyles.matchReason, { color: colors.mutedForeground }]}
+        >
+          Why it surfaced: {biz.matchReasons.join(" · ")}
+        </Text>
       )}
-      <View style={[bizStyles.mustTry, { backgroundColor: GOLD + "14", borderColor: GOLD + "33" }]}>
+      <View
+        style={[
+          bizStyles.mustTry,
+          { backgroundColor: GOLD + "14", borderColor: GOLD + "33" },
+        ]}
+      >
         <Ionicons name="information-circle-outline" size={13} color={GOLD} />
         <Text style={[bizStyles.mustTryText, { color: colors.text }]}>
-          <Text style={{ fontFamily: "Inter_600SemiBold" }}>Know before you go: </Text>
-          {biz.mustTry?.trim() || (biz.website
-            ? "Confirm current hours, services, and availability on the official website before you go."
-            : "Open the Mapping With Melanin listing to confirm the currently documented details before you go.")}
+          <Text style={{ fontFamily: "Inter_600SemiBold" }}>
+            Know before you go:{" "}
+          </Text>
+          {biz.mustTry?.trim() ||
+            (biz.website
+              ? "Confirm current hours, services, and availability on the official website before you go."
+              : "Open the Mapping With Melanin listing to confirm the currently documented details before you go.")}
         </Text>
       </View>
       {(biz.id || biz.website) && (
@@ -230,39 +421,91 @@ function BusinessCard({
             <TouchableOpacity
               activeOpacity={0.85}
               style={[bizStyles.actionBtn, { backgroundColor: colors.primary }]}
-              onPress={() => router.push({ pathname: "/business/[id]", params: { id: biz.id! } })}
+              onPress={() =>
+                router.push({
+                  pathname: "/business/[id]",
+                  params: { id: biz.id! },
+                })
+              }
             >
-              <Text style={[bizStyles.actionPrimaryText, { color: colors.primaryForeground }]}>View details</Text>
-              <Ionicons name="chevron-forward" size={13} color={colors.primaryForeground} />
+              <Text
+                style={[
+                  bizStyles.actionPrimaryText,
+                  { color: colors.primaryForeground },
+                ]}
+              >
+                View details
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={13}
+                color={colors.primaryForeground}
+              />
             </TouchableOpacity>
           )}
           {biz.website && (
             <TouchableOpacity
               activeOpacity={0.85}
-              style={[bizStyles.actionBtn, { borderColor: colors.primary, borderWidth: 1 }]}
+              style={[
+                bizStyles.actionBtn,
+                { borderColor: colors.primary, borderWidth: 1 },
+              ]}
               onPress={() => void openExternalUrl(biz.website!)}
             >
-              <Text style={[bizStyles.actionSecondaryText, { color: colors.primary }]}>Visit website</Text>
+              <Text
+                style={[
+                  bizStyles.actionSecondaryText,
+                  { color: colors.primary },
+                ]}
+              >
+                Visit website
+              </Text>
               <Ionicons name="open-outline" size={13} color={colors.primary} />
             </TouchableOpacity>
           )}
         </View>
       )}
       <View style={bizStyles.feedbackRow}>
-        <Text style={[bizStyles.feedbackLabel, { color: colors.mutedForeground }]}>Helpful?</Text>
-        <TouchableOpacity activeOpacity={0.85}
-          style={[bizStyles.feedbackBtn, reaction === "like" && { backgroundColor: "#16A34A22" }]}
-          onPress={() => onFeedback(messageId, biz.name, biz.category, city ?? "", "like")}
+        <Text
+          style={[bizStyles.feedbackLabel, { color: colors.mutedForeground }]}
+        >
+          Helpful?
+        </Text>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={[
+            bizStyles.feedbackBtn,
+            reaction === "like" && { backgroundColor: "#16A34A22" },
+          ]}
+          onPress={() =>
+            onFeedback(messageId, biz.name, biz.category, city ?? "", "like")
+          }
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
-          <Ionicons name={reaction === "like" ? "thumbs-up" : "thumbs-up-outline"} size={16} color={reaction === "like" ? "#16A34A" : colors.mutedForeground} />
+          <Ionicons
+            name={reaction === "like" ? "thumbs-up" : "thumbs-up-outline"}
+            size={16}
+            color={reaction === "like" ? "#16A34A" : colors.mutedForeground}
+          />
         </TouchableOpacity>
-        <TouchableOpacity activeOpacity={0.85}
-          style={[bizStyles.feedbackBtn, reaction === "dislike" && { backgroundColor: "#DC262622" }]}
-          onPress={() => onFeedback(messageId, biz.name, biz.category, city ?? "", "dislike")}
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={[
+            bizStyles.feedbackBtn,
+            reaction === "dislike" && { backgroundColor: "#DC262622" },
+          ]}
+          onPress={() =>
+            onFeedback(messageId, biz.name, biz.category, city ?? "", "dislike")
+          }
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         >
-          <Ionicons name={reaction === "dislike" ? "thumbs-down" : "thumbs-down-outline"} size={16} color={reaction === "dislike" ? "#DC2626" : colors.mutedForeground} />
+          <Ionicons
+            name={
+              reaction === "dislike" ? "thumbs-down" : "thumbs-down-outline"
+            }
+            size={16}
+            color={reaction === "dislike" ? "#DC2626" : colors.mutedForeground}
+          />
         </TouchableOpacity>
       </View>
     </TouchableOpacity>
@@ -271,37 +514,106 @@ function BusinessCard({
 
 const bizStyles = StyleSheet.create({
   card: { borderRadius: 12, borderWidth: 1.5, padding: 12, marginBottom: 8 },
-  compareCheck: { position: "absolute", top: -6, left: -6, width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, alignItems: "center", justifyContent: "center", zIndex: 1 },
-  cardTop: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
+  compareCheck: {
+    position: "absolute",
+    top: -6,
+    left: -6,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1,
+  },
+  cardTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 6,
+  },
   badge: { borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2 },
   badgeText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   hood: { fontFamily: "Inter_400Regular", fontSize: 11, flex: 1 },
   wishlistBtn: { padding: 4, borderRadius: 8 },
   name: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 4 },
-  desc: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, marginBottom: 8 },
-  unclaimed: { fontFamily: "Inter_700Bold", fontSize: 10, textTransform: "uppercase", marginBottom: 6 },
-  matchReason: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, marginBottom: 8 },
-  mustTry: { flexDirection: "row", alignItems: "flex-start", gap: 6, borderRadius: 8, borderWidth: 1, padding: 8, marginBottom: 8 },
+  desc: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  unclaimed: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 10,
+    textTransform: "uppercase",
+    marginBottom: 6,
+  },
+  matchReason: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    lineHeight: 16,
+    marginBottom: 8,
+  },
+  mustTry: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    borderRadius: 8,
+    borderWidth: 1,
+    padding: 8,
+    marginBottom: 8,
+  },
   mustTryText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
-  actionRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 8 },
-  actionBtn: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 18, paddingHorizontal: 11, paddingVertical: 7 },
+  actionRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 8,
+  },
+  actionBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderRadius: 18,
+    paddingHorizontal: 11,
+    paddingVertical: 7,
+  },
   actionPrimaryText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   actionSecondaryText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
-  feedbackRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 },
+  feedbackRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginTop: 2,
+  },
   feedbackLabel: { fontFamily: "Inter_400Regular", fontSize: 11, flex: 1 },
   feedbackBtn: { padding: 6, borderRadius: 8 },
 });
 
 // ─── Sub-component: Neighborhood Card ────────────────────────────────────────
-function NeighborhoodCard({ n, colors }: { n: TravelNeighborhood; colors: ReturnType<typeof useColors> }) {
+function NeighborhoodCard({
+  n,
+  colors,
+}: {
+  n: TravelNeighborhood;
+  colors: ReturnType<typeof useColors>;
+}) {
   return (
-    <View style={[nhStyles.card, { backgroundColor: colors.background, borderColor: colors.border }]}>
+    <View
+      style={[
+        nhStyles.card,
+        { backgroundColor: colors.background, borderColor: colors.border },
+      ]}
+    >
       <Text style={[nhStyles.name, { color: colors.text }]}>{n.name}</Text>
       <Text style={[nhStyles.vibe, { color: GOLD }]}>{n.vibe}</Text>
       {n.highlights.map((h, i) => (
         <View key={i} style={nhStyles.hlRow}>
           <View style={[nhStyles.dot, { backgroundColor: colors.primary }]} />
-          <Text style={[nhStyles.hlText, { color: colors.mutedForeground }]}>{h}</Text>
+          <Text style={[nhStyles.hlText, { color: colors.mutedForeground }]}>
+            {h}
+          </Text>
         </View>
       ))}
       {n.safetyNote ? (
@@ -317,17 +629,46 @@ const nhStyles = StyleSheet.create({
   card: { borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 8 },
   name: { fontFamily: "Inter_700Bold", fontSize: 14, marginBottom: 2 },
   vibe: { fontFamily: "Inter_600SemiBold", fontSize: 12, marginBottom: 8 },
-  hlRow: { flexDirection: "row", alignItems: "flex-start", gap: 6, marginBottom: 4 },
+  hlRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    marginBottom: 4,
+  },
   dot: { width: 5, height: 5, borderRadius: 3, marginTop: 5 },
   hlText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
-  safetyRow: { flexDirection: "row", alignItems: "flex-start", gap: 6, backgroundColor: "#F0FDF4", borderRadius: 8, padding: 8, marginTop: 4 },
-  safetyText: { fontFamily: "Inter_400Regular", fontSize: 12, color: "#15803D", flex: 1 },
+  safetyRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    backgroundColor: "#F0FDF4",
+    borderRadius: 8,
+    padding: 8,
+    marginTop: 4,
+  },
+  safetyText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: "#15803D",
+    flex: 1,
+  },
 });
 
 // ─── Sub-component: Event Card ────────────────────────────────────────────────
-function EventCard({ ev, colors }: { ev: TravelEvent; colors: ReturnType<typeof useColors> }) {
+function EventCard({
+  ev,
+  colors,
+}: {
+  ev: TravelEvent;
+  colors: ReturnType<typeof useColors>;
+}) {
   return (
-    <View style={[evStyles.card, { backgroundColor: colors.background, borderColor: colors.border }]}>
+    <View
+      style={[
+        evStyles.card,
+        { backgroundColor: colors.background, borderColor: colors.border },
+      ]}
+    >
       <View style={evStyles.top}>
         <View style={[evStyles.badge, { backgroundColor: GOLD + "22" }]}>
           <Text style={[evStyles.badgeText, { color: GOLD }]}>{ev.type}</Text>
@@ -337,7 +678,9 @@ function EventCard({ ev, colors }: { ev: TravelEvent; colors: ReturnType<typeof 
         </Text>
       </View>
       <Text style={[evStyles.name, { color: colors.text }]}>{ev.name}</Text>
-      <Text style={[evStyles.desc, { color: colors.mutedForeground }]}>{ev.description}</Text>
+      <Text style={[evStyles.desc, { color: colors.mutedForeground }]}>
+        {ev.description}
+      </Text>
     </View>
   );
 }
@@ -346,14 +689,25 @@ const evStyles = StyleSheet.create({
   top: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 },
   badge: { borderRadius: 20, paddingHorizontal: 8, paddingVertical: 2 },
   badgeText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
-  timing: { fontFamily: "Inter_400Regular", fontSize: 11, flex: 1, textAlign: "right" },
+  timing: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    flex: 1,
+    textAlign: "right",
+  },
   name: { fontFamily: "Inter_700Bold", fontSize: 14, marginBottom: 4 },
   desc: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
 });
 
 // ─── Sub-component: Task Action Card ─────────────────────────────────────────
 function TaskActionCard({
-  action, saving, failure, onConfirm, onDismiss, onReviewLists, colors,
+  action,
+  saving,
+  failure,
+  onConfirm,
+  onDismiss,
+  onReviewLists,
+  colors,
 }: {
   action: TaskAction;
   saving?: boolean;
@@ -363,46 +717,102 @@ function TaskActionCard({
   onReviewLists: () => void;
   colors: ReturnType<typeof useColors>;
 }) {
-  const listName = action.list?.name ?? (action.type === "create_task" ? "Reminder" : "My List");
-  const icon = action.list?.icon ?? (action.type === "create_task" ? "⏰" : "📋");
+  const listName =
+    action.list?.name ??
+    (action.type === "create_task" ? "Reminder" : "My List");
+  const icon =
+    action.list?.icon ?? (action.type === "create_task" ? "⏰" : "📋");
   const needsReview = failure?.kind === "uncertain";
   return (
-    <View style={[taStyles.card, { backgroundColor: colors.card, borderColor: colors.primary + "40" }]}>
+    <View
+      style={[
+        taStyles.card,
+        { backgroundColor: colors.card, borderColor: colors.primary + "40" },
+      ]}
+    >
       <View style={taStyles.headerRow}>
-        <View style={[taStyles.iconWrap, { backgroundColor: colors.primary + "18" }]}>
-          <Ionicons name="checkmark-done-outline" size={16} color={colors.primary} />
+        <View
+          style={[
+            taStyles.iconWrap,
+            { backgroundColor: colors.primary + "18" },
+          ]}
+        >
+          <Ionicons
+            name="checkmark-done-outline"
+            size={16}
+            color={colors.primary}
+          />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={[taStyles.title, { color: colors.text }]}>
             {icon} {listName}
           </Text>
           <Text style={[taStyles.subtitle, { color: colors.mutedForeground }]}>
-            {action.tasks.length} {action.tasks.length === 1 ? "item" : "items"} — add to My Lists?
+            {action.tasks.length} {action.tasks.length === 1 ? "item" : "items"}{" "}
+            — add to My Lists?
           </Text>
         </View>
       </View>
       <View style={[taStyles.taskList, { borderColor: colors.border }]}>
         {action.tasks.slice(0, 5).map((t, i) => (
-          <View key={i} style={[taStyles.taskRow, i < Math.min(action.tasks.length, 5) - 1 && { borderBottomColor: colors.border, borderBottomWidth: 1 }]}>
-            <View style={[taStyles.taskDot, { backgroundColor: colors.primary }]} />
-            <Text style={[taStyles.taskTitle, { color: colors.text }]} numberOfLines={1}>{t.title}</Text>
+          <View
+            key={i}
+            style={[
+              taStyles.taskRow,
+              i < Math.min(action.tasks.length, 5) - 1 && {
+                borderBottomColor: colors.border,
+                borderBottomWidth: 1,
+              },
+            ]}
+          >
+            <View
+              style={[taStyles.taskDot, { backgroundColor: colors.primary }]}
+            />
+            <Text
+              style={[taStyles.taskTitle, { color: colors.text }]}
+              numberOfLines={1}
+            >
+              {t.title}
+            </Text>
             {t.dueTimeLabel ? (
-              <Text style={[taStyles.taskTime, { color: colors.mutedForeground }]}>{t.dueTimeLabel}</Text>
+              <Text
+                style={[taStyles.taskTime, { color: colors.mutedForeground }]}
+              >
+                {t.dueTimeLabel}
+              </Text>
             ) : null}
           </View>
         ))}
         {action.tasks.length > 5 && (
-          <Text style={[taStyles.more, { color: colors.mutedForeground }]}>+{action.tasks.length - 5} more items</Text>
+          <Text style={[taStyles.more, { color: colors.mutedForeground }]}>
+            +{action.tasks.length - 5} more items
+          </Text>
         )}
       </View>
       {failure ? (
         <View
           accessible
           accessibilityLabel={failure.message}
-          style={[taStyles.failure, { backgroundColor: `${colors.primary}12`, borderColor: colors.border }]}
+          style={[
+            taStyles.failure,
+            {
+              backgroundColor: `${colors.primary}12`,
+              borderColor: colors.border,
+            },
+          ]}
         >
-          <Ionicons name={needsReview ? "information-circle-outline" : "alert-circle-outline"} size={15} color={colors.primary} />
-          <Text style={[taStyles.failureText, { color: colors.text }]}>{failure.message}</Text>
+          <Ionicons
+            name={
+              needsReview
+                ? "information-circle-outline"
+                : "alert-circle-outline"
+            }
+            size={15}
+            color={colors.primary}
+          />
+          <Text style={[taStyles.failureText, { color: colors.text }]}>
+            {failure.message}
+          </Text>
         </View>
       ) : null}
       <View style={taStyles.actions}>
@@ -413,31 +823,61 @@ function TaskActionCard({
             accessibilityLabel="Review My Lists before trying this action again"
             activeOpacity={0.85}
           >
-            <Ionicons name="list-outline" size={14} color={colors.primaryForeground} />
-            <Text style={[taStyles.addBtnText, { color: colors.primaryForeground }]}>Review My Lists</Text>
+            <Ionicons
+              name="list-outline"
+              size={14}
+              color={colors.primaryForeground}
+            />
+            <Text
+              style={[taStyles.addBtnText, { color: colors.primaryForeground }]}
+            >
+              Review My Lists
+            </Text>
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            style={[taStyles.addBtn, { backgroundColor: colors.primary }, saving && { opacity: 0.65 }]}
+            style={[
+              taStyles.addBtn,
+              { backgroundColor: colors.primary },
+              saving && { opacity: 0.65 },
+            ]}
             onPress={onConfirm}
             disabled={saving}
-            accessibilityLabel={failure ? "Try saving this Kinfolk reminder again" : "Save this Kinfolk reminder"}
+            accessibilityLabel={
+              failure
+                ? "Try saving this Kinfolk reminder again"
+                : "Save this Kinfolk reminder"
+            }
             activeOpacity={0.85}
           >
-            <Ionicons name={saving ? "hourglass-outline" : "checkmark"} size={14} color={colors.primaryForeground} />
-            <Text style={[taStyles.addBtnText, { color: colors.primaryForeground }]}>
+            <Ionicons
+              name={saving ? "hourglass-outline" : "checkmark"}
+              size={14}
+              color={colors.primaryForeground}
+            />
+            <Text
+              style={[taStyles.addBtnText, { color: colors.primaryForeground }]}
+            >
               {saving ? "Saving…" : failure ? "Try again" : "Add to My Lists"}
             </Text>
           </TouchableOpacity>
         )}
         <TouchableOpacity
-          style={[taStyles.skipBtn, { borderColor: colors.border }, saving && { opacity: 0.65 }]}
+          style={[
+            taStyles.skipBtn,
+            { borderColor: colors.border },
+            saving && { opacity: 0.65 },
+          ]}
           onPress={onDismiss}
           disabled={saving}
           accessibilityLabel="Not now"
           activeOpacity={0.7}
         >
-          <Text style={[taStyles.skipBtnText, { color: colors.mutedForeground }]}>Not now</Text>
+          <Text
+            style={[taStyles.skipBtnText, { color: colors.mutedForeground }]}
+          >
+            Not now
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -445,22 +885,78 @@ function TaskActionCard({
 }
 const taStyles = StyleSheet.create({
   card: { borderRadius: 14, borderWidth: 1.5, padding: 14, marginTop: 8 },
-  headerRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 10 },
-  iconWrap: { width: 32, height: 32, borderRadius: 8, alignItems: "center", justifyContent: "center", marginTop: 1 },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    marginBottom: 10,
+  },
+  iconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
+  },
   title: { fontFamily: "Inter_700Bold", fontSize: 14, marginBottom: 2 },
   subtitle: { fontFamily: "Inter_400Regular", fontSize: 12 },
-  taskList: { borderRadius: 10, borderWidth: 1, overflow: "hidden", marginBottom: 12 },
-  taskRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 10, paddingVertical: 9 },
+  taskList: {
+    borderRadius: 10,
+    borderWidth: 1,
+    overflow: "hidden",
+    marginBottom: 12,
+  },
+  taskRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 9,
+  },
   taskDot: { width: 5, height: 5, borderRadius: 3, flexShrink: 0 },
   taskTitle: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
   taskTime: { fontFamily: "Inter_400Regular", fontSize: 11 },
-  more: { fontFamily: "Inter_400Regular", fontSize: 12, paddingHorizontal: 10, paddingVertical: 8 },
-  failure: { flexDirection: "row", alignItems: "flex-start", gap: 7, borderRadius: 9, borderWidth: 1, padding: 9, marginBottom: 10 },
-  failureText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  more: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  failure: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 7,
+    borderRadius: 9,
+    borderWidth: 1,
+    padding: 9,
+    marginBottom: 10,
+  },
+  failureText: {
+    flex: 1,
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    lineHeight: 17,
+  },
   actions: { flexDirection: "row", gap: 8 },
-  addBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, borderRadius: 10, paddingVertical: 10 },
+  addBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    borderRadius: 10,
+    paddingVertical: 10,
+  },
   addBtnText: { fontFamily: "Inter_700Bold", fontSize: 13 },
-  skipBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, borderWidth: 1, alignItems: "center", justifyContent: "center" },
+  skipBtn: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   skipBtnText: { fontFamily: "Inter_400Regular", fontSize: 13 },
 });
 
@@ -468,12 +964,20 @@ const taStyles = StyleSheet.create({
 // Shown below an AI reply when Kinfolk finds real cultural sites in the DB.
 // Each card offers two actions: open the site on the map, or view its MWM page.
 function HeritageSiteStrip({
-  sites, colors,
-}: { sites: HeritageSitePin[]; colors: ReturnType<typeof useColors> }) {
+  sites,
+  colors,
+}: {
+  sites: HeritageSitePin[];
+  colors: ReturnType<typeof useColors>;
+}) {
   if (!sites?.length) return null;
 
   const SITE_TYPE_ICONS: Record<string, string> = {
-    mural: "🎨", monument: "🗿", museum: "🏛", spiritual: "🕌", landmark: "📍",
+    mural: "🎨",
+    monument: "🗿",
+    museum: "🏛",
+    spiritual: "🕌",
+    landmark: "📍",
   };
 
   return (
@@ -489,16 +993,25 @@ function HeritageSiteStrip({
         {sites.map((site) => (
           <View
             key={site.id}
-            style={[hsStyles.card, { backgroundColor: colors.card, borderColor: colors.border }]}
+            style={[
+              hsStyles.card,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
           >
             <Text style={hsStyles.typeIcon}>
               {SITE_TYPE_ICONS[site.siteType] ?? "📍"}
             </Text>
-            <Text style={[hsStyles.name, { color: colors.text }]} numberOfLines={2}>
+            <Text
+              style={[hsStyles.name, { color: colors.text }]}
+              numberOfLines={2}
+            >
               {site.name}
             </Text>
             {site.address ? (
-              <Text style={[hsStyles.addr, { color: colors.mutedForeground }]} numberOfLines={1}>
+              <Text
+                style={[hsStyles.addr, { color: colors.mutedForeground }]}
+                numberOfLines={1}
+              >
                 {site.address}
               </Text>
             ) : null}
@@ -517,11 +1030,26 @@ function HeritageSiteStrip({
                   })
                 }
               >
-                <Ionicons name="map-outline" size={11} color={colors.primaryForeground} />
-                <Text style={[hsStyles.btnTxt, { color: colors.primaryForeground }]}>Show on Map</Text>
+                <Ionicons
+                  name="map-outline"
+                  size={11}
+                  color={colors.primaryForeground}
+                />
+                <Text
+                  style={[hsStyles.btnTxt, { color: colors.primaryForeground }]}
+                >
+                  Show on Map
+                </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[hsStyles.btn, { backgroundColor: colors.secondary, borderWidth: 1, borderColor: colors.border }]}
+                style={[
+                  hsStyles.btn,
+                  {
+                    backgroundColor: colors.secondary,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                  },
+                ]}
                 activeOpacity={0.85}
                 onPress={() =>
                   router.push({
@@ -530,8 +1058,14 @@ function HeritageSiteStrip({
                   })
                 }
               >
-                <Ionicons name="information-circle-outline" size={11} color={colors.text} />
-                <Text style={[hsStyles.btnTxt, { color: colors.text }]}>View More</Text>
+                <Ionicons
+                  name="information-circle-outline"
+                  size={11}
+                  color={colors.text}
+                />
+                <Text style={[hsStyles.btnTxt, { color: colors.text }]}>
+                  View More
+                </Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -542,19 +1076,32 @@ function HeritageSiteStrip({
 }
 const hsStyles = StyleSheet.create({
   container: { marginTop: 10 },
-  label: { fontFamily: "Inter_500Medium", fontSize: 11, marginBottom: 6, paddingHorizontal: 2 },
+  label: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 11,
+    marginBottom: 6,
+    paddingHorizontal: 2,
+  },
   scroll: { gap: 8, paddingBottom: 4 },
   card: {
-    width: 180, borderRadius: 12, borderWidth: 1.5,
-    padding: 12, gap: 4,
+    width: 180,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    padding: 12,
+    gap: 4,
   },
   typeIcon: { fontSize: 18 },
   name: { fontFamily: "Inter_600SemiBold", fontSize: 13, lineHeight: 18 },
   addr: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15 },
   btnRow: { flexDirection: "row", gap: 6, marginTop: 8 },
   btn: {
-    flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 4, borderRadius: 8, paddingVertical: 7,
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 4,
+    borderRadius: 8,
+    paddingVertical: 7,
   },
   btnTxt: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
 });
@@ -563,11 +1110,20 @@ const hsStyles = StyleSheet.create({
 // One sentence, one tap. Server guarantees: single preference-matched category,
 // real DB result confirmed, never shown when businesses already surfaced.
 function NearbyNudgeChip({
-  nudge, onSend, colors,
-}: { nudge: NearbyNudge; onSend: (text: string) => void; colors: ReturnType<typeof useColors> }) {
+  nudge,
+  onSend,
+  colors,
+}: {
+  nudge: NearbyNudge;
+  onSend: (text: string) => void;
+  colors: ReturnType<typeof useColors>;
+}) {
   return (
     <TouchableOpacity
-      style={[nnStyles.chip, { backgroundColor: colors.secondary, borderColor: colors.border }]}
+      style={[
+        nnStyles.chip,
+        { backgroundColor: colors.secondary, borderColor: colors.border },
+      ]}
       activeOpacity={0.82}
       onPress={() => onSend(nudge.quickReply)}
     >
@@ -577,31 +1133,61 @@ function NearbyNudgeChip({
       <Text style={[nnStyles.text, { color: colors.text }]} numberOfLines={2}>
         {nudge.text}
       </Text>
-      <Ionicons name="chevron-forward" size={13} color={colors.mutedForeground} />
+      <Ionicons
+        name="chevron-forward"
+        size={13}
+        color={colors.mutedForeground}
+      />
     </TouchableOpacity>
   );
 }
 const nnStyles = StyleSheet.create({
   chip: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    borderRadius: 12, borderWidth: 1,
-    paddingHorizontal: 12, paddingVertical: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     marginTop: 8,
   },
-  iconWrap: { width: 26, height: 26, borderRadius: 7, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  text: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1, lineHeight: 18 },
+  iconWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  text: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    flex: 1,
+    lineHeight: 18,
+  },
 });
 
 // ─── Sub-component: Library Action Pill ──────────────────────────────────────
 function LibraryActionPill({
-  action, colors,
-}: { action: LibraryAction; colors: ReturnType<typeof useColors> }) {
+  action,
+  colors,
+}: {
+  action: LibraryAction;
+  colors: ReturnType<typeof useColors>;
+}) {
   return (
     <TouchableOpacity
-      style={[laStyles.pill, { backgroundColor: colors.card, borderColor: GOLD + "40" }]}
+      style={[
+        laStyles.pill,
+        { backgroundColor: colors.card, borderColor: GOLD + "40" },
+      ]}
       activeOpacity={0.82}
       onPress={() =>
-        router.push({ pathname: "/(tabs)/library" as never, params: { topic: action.topicId, focus: "evidence" } })
+        router.push({
+          pathname: "/(tabs)/library" as never,
+          params: { topic: action.topicId, focus: "evidence" },
+        })
       }
     >
       <View style={[laStyles.iconWrap, { backgroundColor: GOLD + "18" }]}>
@@ -610,79 +1196,301 @@ function LibraryActionPill({
       <Text style={[laStyles.label, { color: colors.text }]} numberOfLines={1}>
         {action.label}
       </Text>
-      <Ionicons name="chevron-forward" size={13} color={colors.mutedForeground} />
+      <Ionicons
+        name="chevron-forward"
+        size={13}
+        color={colors.mutedForeground}
+      />
     </TouchableOpacity>
   );
 }
 const laStyles = StyleSheet.create({
   pill: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    borderRadius: 12, borderWidth: 1.5,
-    paddingHorizontal: 12, paddingVertical: 9,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     marginTop: 8,
   },
-  iconWrap: { width: 26, height: 26, borderRadius: 7, alignItems: "center", justifyContent: "center" },
+  iconWrap: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   label: { fontFamily: "Inter_500Medium", fontSize: 13, flex: 1 },
 });
 
-function recommendationRationale(card: ConversationalBusinessResultView["cards"][number]) {
-  return `${card.title} surfaced because ${card.matchReason.replace(/^Matched by\s*/i, "").replace(/^Matched as\s*/i, "").replace(/\.$/, "")}. Open the business page to see its details and any community posts. Kinfolk only adds reasons such as community feedback, a Hidden Gem signal, your saved preferences, budget, dietary fit, or a new owner update when that information is actually present in the record.`;
+function recommendationRationale(
+  card: ConversationalBusinessResultView["cards"][number],
+) {
+  return `${card.title} surfaced because ${card.matchReason
+    .replace(/^Matched by\s*/i, "")
+    .replace(/^Matched as\s*/i, "")
+    .replace(
+      /\.$/,
+      "",
+    )}. Open the business page to see its details and any community posts. Kinfolk only adds reasons such as community feedback, a Hidden Gem signal, your saved preferences, budget, dietary fit, or a new owner update when that information is actually present in the record.`;
 }
 
-function ConversationalResultCards({ view, colors }: { view: ConversationalBusinessResultView; colors: ReturnType<typeof useColors> }) {
+function ConversationalResultCards({
+  view,
+  colors,
+}: {
+  view: ConversationalBusinessResultView;
+  colors: ReturnType<typeof useColors>;
+}) {
   return (
     <View style={{ gap: 8, marginTop: 10 }}>
       {view.cards.map((card) => {
-        const website = card.actions.find((action) => action.label === "Visit website")?.url;
-        const hasDetails = card.actions.some((action) => action.label === "View details");
+        const website = card.actions.find(
+          (action) => action.label === "Visit website",
+        )?.url;
+        const hasDetails = card.actions.some(
+          (action) => action.label === "View details",
+        );
         return (
-          <View key={card.id} style={{ backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderRadius: 14, padding: 12 }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 14, flex: 1 }}>{card.title}</Text>
+          <View
+            key={card.id}
+            style={{
+              backgroundColor: colors.card,
+              borderColor: colors.border,
+              borderWidth: 1,
+              borderRadius: 14,
+              padding: 12,
+            }}
+          >
+            <View
+              style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+            >
+              <Text
+                style={{
+                  color: colors.text,
+                  fontFamily: "Inter_700Bold",
+                  fontSize: 14,
+                  flex: 1,
+                }}
+              >
+                {card.title}
+              </Text>
               <TouchableOpacity
-                onPress={() => Alert.alert(`Why Kinfolk suggested ${card.title}`, recommendationRationale(card))}
+                onPress={() =>
+                  Alert.alert(
+                    `Why Kinfolk suggested ${card.title}`,
+                    recommendationRationale(card),
+                  )
+                }
                 accessibilityRole="button"
                 accessibilityLabel={`Why Kinfolk suggested ${card.title}`}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <Ionicons name="ellipsis-horizontal" size={19} color={colors.mutedForeground} />
+                <Ionicons
+                  name="ellipsis-horizontal"
+                  size={19}
+                  color={colors.mutedForeground}
+                />
               </TouchableOpacity>
             </View>
-            <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold", fontSize: 10, marginTop: 3 }}>Listing: {businessTrustLabel(card)}</Text>
-            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginTop: 6 }}>{card.supportingText}</Text>
-            {card.ownershipStatus === "documented" && <Text testID="kinfolk-ownership-documented" style={{ color: "#166534", fontFamily: "Inter_600SemiBold", fontSize: 11, marginTop: 6 }}>Ownership: documented by source.</Text>}
-            {card.ownershipStatus === "not_documented" && <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold", fontSize: 11, marginTop: 6 }}>Ownership not documented — not an ownership-matched recommendation.</Text>}
-            {card.ownershipStatus === "not_matched" && <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold", fontSize: 11, marginTop: 6 }}>Not ownership-matched — shown only because you chose to broaden this search.</Text>}
+            <Text
+              style={{
+                color: colors.primary,
+                fontFamily: "Inter_600SemiBold",
+                fontSize: 10,
+                marginTop: 3,
+              }}
+            >
+              Listing: {businessTrustLabel(card)}
+            </Text>
+            <Text
+              style={{
+                color: colors.mutedForeground,
+                fontFamily: "Inter_400Regular",
+                fontSize: 12,
+                lineHeight: 18,
+                marginTop: 6,
+              }}
+            >
+              {card.supportingText}
+            </Text>
+            {card.ownershipStatus === "documented" && (
+              <Text
+                testID="kinfolk-ownership-documented"
+                style={{
+                  color: "#166534",
+                  fontFamily: "Inter_600SemiBold",
+                  fontSize: 11,
+                  marginTop: 6,
+                }}
+              >
+                Ownership: documented by source.
+              </Text>
+            )}
+            {card.ownershipStatus === "not_documented" && (
+              <Text
+                style={{
+                  color: colors.primary,
+                  fontFamily: "Inter_600SemiBold",
+                  fontSize: 11,
+                  marginTop: 6,
+                }}
+              >
+                Ownership not documented — not an ownership-matched
+                recommendation.
+              </Text>
+            )}
+            {card.ownershipStatus === "not_matched" && (
+              <Text
+                style={{
+                  color: colors.primary,
+                  fontFamily: "Inter_600SemiBold",
+                  fontSize: 11,
+                  marginTop: 6,
+                }}
+              >
+                Not ownership-matched — shown only because you chose to broaden
+                this search.
+              </Text>
+            )}
             <TouchableOpacity
-              onPress={() => Alert.alert(`Why Kinfolk suggested ${card.title}`, recommendationRationale(card))}
+              onPress={() =>
+                Alert.alert(
+                  `Why Kinfolk suggested ${card.title}`,
+                  recommendationRationale(card),
+                )
+              }
               accessibilityRole="button"
               accessibilityLabel={`Read why Kinfolk suggested ${card.title}`}
             >
-              <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 11, marginTop: 5 }}>Why Kinfolk suggested this: {card.matchReason}</Text>
+              <Text
+                style={{
+                  color: colors.mutedForeground,
+                  fontFamily: "Inter_400Regular",
+                  fontSize: 11,
+                  marginTop: 5,
+                }}
+              >
+                Why Kinfolk suggested this: {card.matchReason}
+              </Text>
             </TouchableOpacity>
-            <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 9 }}>
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                gap: 8,
+                marginTop: 9,
+              }}
+            >
               {hasDetails && (
-                <TouchableOpacity onPress={() => router.push({ pathname: "/business/[id]", params: { id: card.id } })} style={{ backgroundColor: colors.primary, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 7 }}>
-                  <Text style={{ color: colors.primaryForeground, fontFamily: "Inter_600SemiBold", fontSize: 11 }}>View details</Text>
+                <TouchableOpacity
+                  onPress={() =>
+                    router.push({
+                      pathname: "/business/[id]",
+                      params: { id: card.id },
+                    })
+                  }
+                  style={{
+                    backgroundColor: colors.primary,
+                    borderRadius: 16,
+                    paddingHorizontal: 12,
+                    paddingVertical: 7,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colors.primaryForeground,
+                      fontFamily: "Inter_600SemiBold",
+                      fontSize: 11,
+                    }}
+                  >
+                    View details
+                  </Text>
                 </TouchableOpacity>
               )}
               {website && (
-                <TouchableOpacity onPress={() => void openExternalUrl(website, { kind: "web" })} style={{ borderColor: colors.primary, borderWidth: 1, borderRadius: 16, paddingHorizontal: 12, paddingVertical: 7 }}>
-                  <Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold", fontSize: 11 }}>Visit website</Text>
+                <TouchableOpacity
+                  onPress={() => void openExternalUrl(website, { kind: "web" })}
+                  style={{
+                    borderColor: colors.primary,
+                    borderWidth: 1,
+                    borderRadius: 16,
+                    paddingHorizontal: 12,
+                    paddingVertical: 7,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colors.primary,
+                      fontFamily: "Inter_600SemiBold",
+                      fontSize: 11,
+                    }}
+                  >
+                    Visit website
+                  </Text>
                 </TouchableOpacity>
               )}
             </View>
           </View>
         );
       })}
-      {view.seeAll && <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_500Medium", fontSize: 11 }}>{view.seeAll.count} matching MWM listings found.</Text>}
+      {view.seeAll && (
+        <Text
+          style={{
+            color: colors.mutedForeground,
+            fontFamily: "Inter_500Medium",
+            fontSize: 11,
+          }}
+        >
+          {view.seeAll.count} matching MWM listings found.
+        </Text>
+      )}
       {view.external.length > 0 && (
-        <View style={{ backgroundColor: GOLD + "12", borderColor: GOLD + "33", borderWidth: 1, borderRadius: 14, padding: 12 }}>
-          <Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 11 }}>Current web findings</Text>
-          <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 10, marginTop: 2 }}>External sources are not MWM-verified business listings.</Text>
+        <View
+          style={{
+            backgroundColor: GOLD + "12",
+            borderColor: GOLD + "33",
+            borderWidth: 1,
+            borderRadius: 14,
+            padding: 12,
+          }}
+        >
+          <Text
+            style={{
+              color: colors.text,
+              fontFamily: "Inter_700Bold",
+              fontSize: 11,
+            }}
+          >
+            Current web findings
+          </Text>
+          <Text
+            style={{
+              color: colors.mutedForeground,
+              fontFamily: "Inter_400Regular",
+              fontSize: 10,
+              marginTop: 2,
+            }}
+          >
+            External sources are not MWM-verified business listings.
+          </Text>
           {view.external.map((finding) => (
-            <TouchableOpacity key={finding.url} onPress={() => void openExternalUrl(finding.url, { kind: "web" })} style={{ marginTop: 7 }}>
-              <Text style={{ color: GOLD, fontFamily: "Inter_600SemiBold", fontSize: 11 }}>{finding.title}</Text>
+            <TouchableOpacity
+              key={finding.url}
+              onPress={() => void openExternalUrl(finding.url, { kind: "web" })}
+              style={{ marginTop: 7 }}
+            >
+              <Text
+                style={{
+                  color: GOLD,
+                  fontFamily: "Inter_600SemiBold",
+                  fontSize: 11,
+                }}
+              >
+                {finding.title}
+              </Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -693,16 +1501,36 @@ function ConversationalResultCards({ view, colors }: { view: ConversationalBusin
 
 // ─── Sub-component: AI Message ────────────────────────────────────────────────
 function AiMessageBubble({
-  msg, onFeedback, onQuickReply, onWishlist, wishlistedNames,
-  compareMode, compareSelectedNames, onCompareToggle,
-  onConfirmTaskAction, onDismissTaskAction, onReviewTaskLists, onSpeak,
+  msg,
+  onFeedback,
+  onQuickReply,
+  onWishlist,
+  wishlistedNames,
+  compareMode,
+  compareSelectedNames,
+  onCompareToggle,
+  onConfirmTaskAction,
+  onDismissTaskAction,
+  onReviewTaskLists,
+  onSpeak,
   spokenVoiceText,
   colors,
 }: {
   msg: ChatMessage;
-  onFeedback: (msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => void;
+  onFeedback: (
+    msgId: string,
+    name: string,
+    cat: string,
+    city: string,
+    r: "like" | "dislike",
+  ) => void;
   onQuickReply: (text: string) => void;
-  onWishlist: (biz: TravelBusiness, city: string, add: boolean, itemId: string | null) => void;
+  onWishlist: (
+    biz: TravelBusiness,
+    city: string,
+    add: boolean,
+    itemId: string | null,
+  ) => void;
   wishlistedNames: Record<string, string>;
   compareMode: boolean;
   compareSelectedNames: Set<string>;
@@ -711,7 +1539,11 @@ function AiMessageBubble({
   onDismissTaskAction: (msgId: string) => void;
   onReviewTaskLists: () => void;
   onSpeak: (messageId: string, content: string) => void;
-  spokenVoiceText: { messageId: string; content: string; phase: "preparing" | "playing" | "finished" } | null;
+  spokenVoiceText: {
+    messageId: string;
+    content: string;
+    phase: "preparing" | "playing" | "finished";
+  } | null;
   colors: ReturnType<typeof useColors>;
 }) {
   const recs = msg.recommendations;
@@ -719,15 +1551,20 @@ function AiMessageBubble({
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [dismissedPromo, setDismissedPromo] = useState(false);
   const [clarificationAnswered, setClarificationAnswered] = useState(false);
-  const visibleSpokenText = spokenVoiceText?.messageId === msg.id ? spokenVoiceText : null;
+  const visibleSpokenText =
+    spokenVoiceText?.messageId === msg.id ? spokenVoiceText : null;
   const reviewedResources = (msg.resourceCards ?? []).flatMap((resource) => {
-    const safe = parseSafeSourceLink({ title: resource.title, url: resource.url });
+    const safe = parseSafeSourceLink({
+      title: resource.title,
+      url: resource.url,
+    });
     return safe && resource.id && resource.description
       ? [{ ...resource, title: safe.title, url: safe.url }]
       : [];
   });
 
-  const toggleSection = (s: string) => setExpandedSection((p) => (p === s ? null : s));
+  const toggleSection = (s: string) =>
+    setExpandedSection((p) => (p === s ? null : s));
 
   return (
     <View style={aiStyles.wrapper}>
@@ -738,7 +1575,12 @@ function AiMessageBubble({
       </View>
       <View style={aiStyles.contentCol}>
         {/* Reply text */}
-        <View style={[aiStyles.bubble, { backgroundColor: colors.card, borderColor: colors.border }]}>
+        <View
+          style={[
+            aiStyles.bubble,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+        >
           <KinfolkAnswerText
             content={msg.content}
             color={colors.text}
@@ -749,19 +1591,36 @@ function AiMessageBubble({
             <View
               testID="kinfolk-visible-spoken-text"
               accessible
-              accessibilityLabel={visibleSpokenText.phase === "playing"
-                ? "Kinfolk audio is playing. The exact spoken text is visible."
-                : "Kinfolk spoken text remains visible."}
-              style={{ marginTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingTop: 8 }}
+              accessibilityLabel={
+                visibleSpokenText.phase === "playing"
+                  ? "Kinfolk audio is playing. The exact spoken text is visible."
+                  : "Kinfolk spoken text remains visible."
+              }
+              style={{
+                marginTop: 10,
+                borderTopWidth: StyleSheet.hairlineWidth,
+                borderTopColor: colors.border,
+                paddingTop: 8,
+              }}
             >
-              <Text style={[aiStyles.copyLabel, { color: colors.mutedForeground }]}>
+              <Text
+                style={[aiStyles.copyLabel, { color: colors.mutedForeground }]}
+              >
                 {visibleSpokenText.phase === "playing"
                   ? "Audio is playing — spoken text"
                   : visibleSpokenText.phase === "finished"
                     ? "Audio finished — spoken text"
                     : "Preparing audio — spoken text"}
               </Text>
-              <Text selectable style={[aiStyles.bubbleText, { color: colors.text, marginTop: 3 }]}>{visibleSpokenText.content}</Text>
+              <Text
+                selectable
+                style={[
+                  aiStyles.bubbleText,
+                  { color: colors.text, marginTop: 3 },
+                ]}
+              >
+                {visibleSpokenText.content}
+              </Text>
             </View>
           ) : null}
           <TouchableOpacity
@@ -770,8 +1629,16 @@ function AiMessageBubble({
             accessibilityLabel="Copy this Kinfolk answer"
             activeOpacity={0.7}
           >
-            <Ionicons name="copy-outline" size={14} color={colors.mutedForeground} />
-            <Text style={[aiStyles.copyLabel, { color: colors.mutedForeground }]}>Copy</Text>
+            <Ionicons
+              name="copy-outline"
+              size={14}
+              color={colors.mutedForeground}
+            />
+            <Text
+              style={[aiStyles.copyLabel, { color: colors.mutedForeground }]}
+            >
+              Copy
+            </Text>
           </TouchableOpacity>
           {Platform.OS !== "web" ? (
             <TouchableOpacity
@@ -780,35 +1647,58 @@ function AiMessageBubble({
               accessibilityLabel="Listen to this Kinfolk reply"
               activeOpacity={0.7}
             >
-              <Ionicons name="volume-medium-outline" size={14} color={colors.mutedForeground} />
+              <Ionicons
+                name="volume-medium-outline"
+                size={14}
+                color={colors.mutedForeground}
+              />
             </TouchableOpacity>
           ) : null}
         </View>
 
         {/* Location resolution pill — shows which city Kinfolk resolved so the member
             never wonders whether their alias (e.g. "Philly", "nawlins") was understood */}
-        {msg.role === "assistant" && msg.location?.city &&
-          (msg.intentClass === "business_discovery" || msg.intentClass === "travel_planning") && (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6, marginBottom: 2 }}>
-            <Ionicons name="location-outline" size={11} color={GOLD} />
-            <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: GOLD + "BB" }}>
-              Searching {msg.location.city}{msg.location.state ? `, ${msg.location.state}` : ""}
-            </Text>
-          </View>
-        )}
+        {msg.role === "assistant" &&
+          msg.location?.city &&
+          (msg.intentClass === "business_discovery" ||
+            msg.intentClass === "travel_planning") && (
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 4,
+                marginTop: 6,
+                marginBottom: 2,
+              }}
+            >
+              <Ionicons name="location-outline" size={11} color={GOLD} />
+              <Text
+                style={{
+                  fontFamily: "Inter_500Medium",
+                  fontSize: 11,
+                  color: GOLD + "BB",
+                }}
+              >
+                Searching {msg.location.city}
+                {msg.location.state ? `, ${msg.location.state}` : ""}
+              </Text>
+            </View>
+          )}
 
         {/* Task Action Card — shown when AI wants to create tasks */}
-        {msg.taskAction && !msg.taskActionDone && msg.taskAction.tasks.length > 0 && (
-          <TaskActionCard
-            action={msg.taskAction}
-            saving={msg.taskActionSaving}
-            failure={msg.taskActionFailure}
-            onConfirm={() => onConfirmTaskAction(msg.id, msg.taskAction!)}
-            onDismiss={() => onDismissTaskAction(msg.id)}
-            onReviewLists={onReviewTaskLists}
-            colors={colors}
-          />
-        )}
+        {msg.taskAction &&
+          !msg.taskActionDone &&
+          msg.taskAction.tasks.length > 0 && (
+            <TaskActionCard
+              action={msg.taskAction}
+              saving={msg.taskActionSaving}
+              failure={msg.taskActionFailure}
+              onConfirm={() => onConfirmTaskAction(msg.id, msg.taskAction!)}
+              onDismiss={() => onDismissTaskAction(msg.id)}
+              onReviewLists={onReviewTaskLists}
+              colors={colors}
+            />
+          )}
 
         {/* Library Action Pill — server-controlled link to a published Library topic */}
         {msg.libraryAction?.type === "open_library_node" && (
@@ -822,47 +1712,90 @@ function AiMessageBubble({
 
         {/* Nearby Nudge — one preference-matched follow-up, only when real DB match exists */}
         {msg.nearbyNudge && !recs && (
-          <NearbyNudgeChip nudge={msg.nearbyNudge} onSend={onQuickReply} colors={colors} />
+          <NearbyNudgeChip
+            nudge={msg.nearbyNudge}
+            onSend={onQuickReply}
+            colors={colors}
+          />
         )}
 
-        {msg.resultView && <ConversationalResultCards view={msg.resultView} colors={colors} />}
+        {msg.resultView && (
+          <ConversationalResultCards view={msg.resultView} colors={colors} />
+        )}
 
         {msg.companionMemoryOffer && (
-          <KinfolkCompanionMemoryOfferCard offer={msg.companionMemoryOffer} offset={false} />
+          <KinfolkCompanionMemoryOfferCard
+            offer={msg.companionMemoryOffer}
+            offset={false}
+          />
         )}
 
         {/* Recommendations */}
         {recs && !msg.resultView && (
           <View style={aiStyles.recsContainer}>
             {/* Summary bar */}
-            <View style={[aiStyles.destBar, { backgroundColor: GOLD + "14", borderColor: GOLD + "33" }]}>
+            <View
+              style={[
+                aiStyles.destBar,
+                { backgroundColor: GOLD + "14", borderColor: GOLD + "33" },
+              ]}
+            >
               <Ionicons name="location" size={14} color={GOLD} />
-              <Text style={[aiStyles.destText, { color: colors.text }]}>{recs.destination}</Text>
-              <Text style={[aiStyles.destSummary, { color: colors.mutedForeground }]}>{recs.summary}</Text>
+              <Text style={[aiStyles.destText, { color: colors.text }]}>
+                {recs.destination}
+              </Text>
+              <Text
+                style={[
+                  aiStyles.destSummary,
+                  { color: colors.mutedForeground },
+                ]}
+              >
+                {recs.summary}
+              </Text>
             </View>
 
             {/* Spots section */}
             {recs.businesses?.length > 0 && (
               <View>
                 <TouchableOpacity
-                  style={[aiStyles.sectionHeader, { borderColor: colors.border }]}
+                  style={[
+                    aiStyles.sectionHeader,
+                    { borderColor: colors.border },
+                  ]}
                   onPress={() => toggleSection("spots")}
                   activeOpacity={0.7}
                 >
                   <Text style={aiStyles.sectionIcon}>📍</Text>
                   <Text style={[aiStyles.sectionTitle, { color: colors.text }]}>
-                    Spots <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>({recs.businesses.length})</Text>
+                    Spots{" "}
+                    <Text
+                      style={{
+                        color: colors.mutedForeground,
+                        fontFamily: "Inter_400Regular",
+                      }}
+                    >
+                      ({recs.businesses.length})
+                    </Text>
                   </Text>
                   <Ionicons
-                    name={expandedSection === "spots" ? "chevron-up" : "chevron-down"}
-                    size={16} color={colors.mutedForeground}
+                    name={
+                      expandedSection === "spots"
+                        ? "chevron-up"
+                        : "chevron-down"
+                    }
+                    size={16}
+                    color={colors.mutedForeground}
                   />
                 </TouchableOpacity>
                 {(expandedSection === "spots" || expandedSection === null) &&
                   recs.businesses.map((biz, i) => (
                     <BusinessCard
-                      key={i} biz={biz} messageId={msg.id} city={city}
-                      feedback={msg.feedback ?? {}} onFeedback={onFeedback}
+                      key={i}
+                      biz={biz}
+                      messageId={msg.id}
+                      city={city}
+                      feedback={msg.feedback ?? {}}
+                      onFeedback={onFeedback}
                       wishlistItemId={wishlistedNames[biz.name] ?? null}
                       onWishlist={onWishlist}
                       compareMode={compareMode}
@@ -878,17 +1811,33 @@ function AiMessageBubble({
             {recs.neighborhoods?.length > 0 && (
               <View>
                 <TouchableOpacity
-                  style={[aiStyles.sectionHeader, { borderColor: colors.border }]}
+                  style={[
+                    aiStyles.sectionHeader,
+                    { borderColor: colors.border },
+                  ]}
                   onPress={() => toggleSection("areas")}
                   activeOpacity={0.7}
                 >
                   <Text style={aiStyles.sectionIcon}>🗺</Text>
                   <Text style={[aiStyles.sectionTitle, { color: colors.text }]}>
-                    Areas <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>({recs.neighborhoods.length})</Text>
+                    Areas{" "}
+                    <Text
+                      style={{
+                        color: colors.mutedForeground,
+                        fontFamily: "Inter_400Regular",
+                      }}
+                    >
+                      ({recs.neighborhoods.length})
+                    </Text>
                   </Text>
                   <Ionicons
-                    name={expandedSection === "areas" ? "chevron-up" : "chevron-down"}
-                    size={16} color={colors.mutedForeground}
+                    name={
+                      expandedSection === "areas"
+                        ? "chevron-up"
+                        : "chevron-down"
+                    }
+                    size={16}
+                    color={colors.mutedForeground}
                   />
                 </TouchableOpacity>
                 {expandedSection === "areas" &&
@@ -902,17 +1851,33 @@ function AiMessageBubble({
             {recs.events?.length > 0 && (
               <View>
                 <TouchableOpacity
-                  style={[aiStyles.sectionHeader, { borderColor: colors.border }]}
+                  style={[
+                    aiStyles.sectionHeader,
+                    { borderColor: colors.border },
+                  ]}
                   onPress={() => toggleSection("events")}
                   activeOpacity={0.7}
                 >
                   <Text style={aiStyles.sectionIcon}>🎉</Text>
                   <Text style={[aiStyles.sectionTitle, { color: colors.text }]}>
-                    Events <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular" }}>({recs.events.length})</Text>
+                    Events{" "}
+                    <Text
+                      style={{
+                        color: colors.mutedForeground,
+                        fontFamily: "Inter_400Regular",
+                      }}
+                    >
+                      ({recs.events.length})
+                    </Text>
                   </Text>
                   <Ionicons
-                    name={expandedSection === "events" ? "chevron-up" : "chevron-down"}
-                    size={16} color={colors.mutedForeground}
+                    name={
+                      expandedSection === "events"
+                        ? "chevron-up"
+                        : "chevron-down"
+                    }
+                    size={16}
+                    color={colors.mutedForeground}
                   />
                 </TouchableOpacity>
                 {expandedSection === "events" &&
@@ -923,34 +1888,72 @@ function AiMessageBubble({
             )}
 
             {/* Safety section */}
-            {(recs.safetyTips?.length > 0 || recs.localInsights?.length > 0) && (
+            {(recs.safetyTips?.length > 0 ||
+              recs.localInsights?.length > 0) && (
               <View>
                 <TouchableOpacity
-                  style={[aiStyles.sectionHeader, { borderColor: colors.border }]}
+                  style={[
+                    aiStyles.sectionHeader,
+                    { borderColor: colors.border },
+                  ]}
                   onPress={() => toggleSection("safety")}
                   activeOpacity={0.7}
                 >
                   <Text style={aiStyles.sectionIcon}>🛡</Text>
-                  <Text style={[aiStyles.sectionTitle, { color: colors.text }]}>Safety & Insights</Text>
+                  <Text style={[aiStyles.sectionTitle, { color: colors.text }]}>
+                    Safety & Insights
+                  </Text>
                   <Ionicons
-                    name={expandedSection === "safety" ? "chevron-up" : "chevron-down"}
-                    size={16} color={colors.mutedForeground}
+                    name={
+                      expandedSection === "safety"
+                        ? "chevron-up"
+                        : "chevron-down"
+                    }
+                    size={16}
+                    color={colors.mutedForeground}
                   />
                 </TouchableOpacity>
                 {expandedSection === "safety" && (
-                  <View style={[aiStyles.safetyBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View
+                    style={[
+                      aiStyles.safetyBox,
+                      {
+                        backgroundColor: colors.card,
+                        borderColor: colors.border,
+                      },
+                    ]}
+                  >
                     {recs.safetyTips?.map((tip, i) => (
                       <View key={i} style={aiStyles.safetyRow}>
-                        <View style={[aiStyles.safetyNum, { backgroundColor: colors.primary }]}>
+                        <View
+                          style={[
+                            aiStyles.safetyNum,
+                            { backgroundColor: colors.primary },
+                          ]}
+                        >
                           <Text style={aiStyles.safetyNumText}>{i + 1}</Text>
                         </View>
-                        <Text style={[aiStyles.safetyText, { color: colors.mutedForeground }]}>{tip}</Text>
+                        <Text
+                          style={[
+                            aiStyles.safetyText,
+                            { color: colors.mutedForeground },
+                          ]}
+                        >
+                          {tip}
+                        </Text>
                       </View>
                     ))}
                     {recs.localInsights?.map((ins, i) => (
                       <View key={i} style={aiStyles.insightRow}>
                         <Ionicons name="bulb-outline" size={14} color={GOLD} />
-                        <Text style={[aiStyles.insightText, { color: colors.mutedForeground }]}>{ins}</Text>
+                        <Text
+                          style={[
+                            aiStyles.insightText,
+                            { color: colors.mutedForeground },
+                          ]}
+                        >
+                          {ins}
+                        </Text>
                       </View>
                     ))}
                   </View>
@@ -964,83 +1967,180 @@ function AiMessageBubble({
         {msg.smartPromotion && !dismissedPromo && (
           <SmartPromotionCard
             promo={msg.smartPromotion}
-            onCta={(query) => onQuickReply(`Find me ${query} near ${city || "me"}`)}
+            onCta={(query) =>
+              onQuickReply(`Find me ${query} near ${city || "me"}`)
+            }
             onDismiss={() => setDismissedPromo(true)}
             colors={colors}
           />
         )}
 
-        {msg.clarificationSteps && msg.clarificationSteps.length > 0 && !clarificationAnswered && (
-          <View style={[aiStyles.clarificationCard, { backgroundColor: colors.card, borderColor: GOLD + "4D" }]}>
-            {msg.clarificationSteps.map((step) => (
-              <View key={step.id} style={{ gap: 8 }}>
-                <Text style={[aiStyles.clarificationQuestion, { color: colors.text }]}>{step.question}</Text>
-                {step.explanation ? <Text style={[aiStyles.clarificationExplanation, { color: colors.mutedForeground }]}>{step.explanation}</Text> : null}
-                <View style={aiStyles.clarificationOptions}>
-                  {step.options.map((option) => (
+        {msg.clarificationSteps &&
+          msg.clarificationSteps.length > 0 &&
+          !clarificationAnswered && (
+            <View
+              style={[
+                aiStyles.clarificationCard,
+                { backgroundColor: colors.card, borderColor: GOLD + "4D" },
+              ]}
+            >
+              {msg.clarificationSteps.map((step) => (
+                <View key={step.id} style={{ gap: 8 }}>
+                  <Text
+                    style={[
+                      aiStyles.clarificationQuestion,
+                      { color: colors.text },
+                    ]}
+                  >
+                    {step.question}
+                  </Text>
+                  {step.explanation ? (
+                    <Text
+                      style={[
+                        aiStyles.clarificationExplanation,
+                        { color: colors.mutedForeground },
+                      ]}
+                    >
+                      {step.explanation}
+                    </Text>
+                  ) : null}
+                  <View style={aiStyles.clarificationOptions}>
+                    {step.options.map((option) => (
+                      <TouchableOpacity
+                        key={option.value}
+                        style={[
+                          aiStyles.clarificationOption,
+                          { borderColor: colors.border },
+                        ]}
+                        activeOpacity={0.75}
+                        onPress={() => {
+                          setClarificationAnswered(true);
+                          onQuickReply(
+                            businessClarificationContinuation(
+                              msg.originalQuery,
+                              option.label,
+                            ),
+                          );
+                        }}
+                      >
+                        <Text
+                          style={[
+                            aiStyles.clarificationOptionText,
+                            { color: colors.text },
+                          ]}
+                        >
+                          {option.label}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  {step.skippable && (
                     <TouchableOpacity
-                      key={option.value}
-                      style={[aiStyles.clarificationOption, { borderColor: colors.border }]}
-                      activeOpacity={0.75}
+                      accessibilityRole="button"
                       onPress={() => {
                         setClarificationAnswered(true);
-                        onQuickReply(businessClarificationContinuation(msg.originalQuery, option.label));
+                        onQuickReply(
+                          businessClarificationContinuation(msg.originalQuery),
+                        );
                       }}
                     >
-                      <Text style={[aiStyles.clarificationOptionText, { color: colors.text }]}>{option.label}</Text>
+                      <Text
+                        style={[
+                          aiStyles.clarificationSkip,
+                          { color: colors.mutedForeground },
+                        ]}
+                      >
+                        Skip and keep it broad
+                      </Text>
                     </TouchableOpacity>
-                  ))}
+                  )}
                 </View>
-                {step.skippable && (
-                  <TouchableOpacity
-                    accessibilityRole="button"
-                    onPress={() => {
-                      setClarificationAnswered(true);
-                      onQuickReply(businessClarificationContinuation(msg.originalQuery));
-                    }}
-                  >
-                    <Text style={[aiStyles.clarificationSkip, { color: colors.mutedForeground }]}>Skip and keep it broad</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            ))}
-          </View>
-        )}
+              ))}
+            </View>
+          )}
 
         {/* Quick reply chips */}
-        {(!msg.clarificationSteps || msg.clarificationSteps.length === 0) && msg.followUpSuggestions && msg.followUpSuggestions.length > 0 && (
-          <ScrollView
-        keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} style={aiStyles.chipsScroll}>
-            {msg.followUpSuggestions.map((s, i) => (
-              <TouchableOpacity
-                key={i}
-                style={[aiStyles.chip, { backgroundColor: colors.secondary, borderColor: colors.primary }]}
-                onPress={() => onQuickReply(s)}
-                activeOpacity={0.7}
-              >
-                <Text numberOfLines={2} style={[aiStyles.chipText, { color: colors.primary }]}>{s}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        )}
+        {(!msg.clarificationSteps || msg.clarificationSteps.length === 0) &&
+          msg.followUpSuggestions &&
+          msg.followUpSuggestions.length > 0 && (
+            <ScrollView
+              keyboardDismissMode="on-drag"
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={aiStyles.chipsScroll}
+            >
+              {msg.followUpSuggestions.map((s, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={[
+                    aiStyles.chip,
+                    {
+                      backgroundColor: colors.secondary,
+                      borderColor: colors.primary,
+                    },
+                  ]}
+                  onPress={() => onQuickReply(s)}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    numberOfLines={2}
+                    style={[aiStyles.chipText, { color: colors.primary }]}
+                  >
+                    {s}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          )}
 
         {reviewedResources.length > 0 ? (
-          <View testID="kinfolk-primary-reviewed-resource-cards" style={[aiStyles.reviewedResourcesBox, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <Text style={[aiStyles.reviewedResourcesTitle, { color: colors.text }]}>Reviewed resources</Text>
+          <View
+            testID="kinfolk-primary-reviewed-resource-cards"
+            style={[
+              aiStyles.reviewedResourcesBox,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <Text
+              style={[aiStyles.reviewedResourcesTitle, { color: colors.text }]}
+            >
+              Reviewed resources
+            </Text>
             {reviewedResources.map((resource: KinfolkResourceCard) => (
               <TouchableOpacity
                 key={resource.id}
                 accessibilityRole="link"
                 accessibilityLabel={`Open reviewed resource: ${resource.title}`}
                 accessibilityHint="Opens this reviewed educational source in your browser"
-                onPress={() => void openExternalUrl(resource.url, { kind: "web" })}
+                onPress={() =>
+                  void openExternalUrl(resource.url, { kind: "web" })
+                }
                 style={aiStyles.reviewedResourceCard}
               >
                 <Text style={[aiStyles.reviewedResourceLink, { color: GOLD }]}>
-                  {resource.type === "image_gallery" ? "Educational image library: " : ""}{resource.title}
+                  {resource.type === "image_gallery"
+                    ? "Educational image library: "
+                    : ""}
+                  {resource.title}
                 </Text>
-                <Text style={[aiStyles.reviewedResourceDescription, { color: colors.mutedForeground }]}>{resource.description}</Text>
-                {resource.safetyNote ? <Text style={[aiStyles.reviewedResourceSafety, { color: colors.mutedForeground }]}>{resource.safetyNote}</Text> : null}
+                <Text
+                  style={[
+                    aiStyles.reviewedResourceDescription,
+                    { color: colors.mutedForeground },
+                  ]}
+                >
+                  {resource.description}
+                </Text>
+                {resource.safetyNote ? (
+                  <Text
+                    style={[
+                      aiStyles.reviewedResourceSafety,
+                      { color: colors.mutedForeground },
+                    ]}
+                  >
+                    {resource.safetyNote}
+                  </Text>
+                ) : null}
               </TouchableOpacity>
             ))}
           </View>
@@ -1061,36 +2161,85 @@ function AiMessageBubble({
         />
 
         {msg.provenanceNote ? (
-          <View style={[aiStyles.provenanceBox, { backgroundColor: "#FFF8EC", borderColor: "#CA922B33" }]}>
-            <Ionicons name="information-circle-outline" size={12} color="#CA922B" style={{ marginTop: 1 }} />
-            <Text style={[aiStyles.provenanceText, { color: "#3A1F0E99" }]}>{msg.provenanceNote}</Text>
+          <View
+            style={[
+              aiStyles.provenanceBox,
+              { backgroundColor: "#FFF8EC", borderColor: "#CA922B33" },
+            ]}
+          >
+            <Ionicons
+              name="information-circle-outline"
+              size={12}
+              color="#CA922B"
+              style={{ marginTop: 1 }}
+            />
+            <Text style={[aiStyles.provenanceText, { color: "#3A1F0E99" }]}>
+              {msg.provenanceNote}
+            </Text>
           </View>
         ) : null}
 
         {/* Quiet attribution — present only when the server found a material
             source limitation for the answer. Kept below the response content. */}
         {msg.sourceNote ? (
-          <Text style={[aiStyles.sourceNoteText, { color: colors.mutedForeground }]}>
+          <Text
+            style={[aiStyles.sourceNoteText, { color: colors.mutedForeground }]}
+          >
             {msg.sourceNote}
           </Text>
         ) : null}
 
         {msg.communityPerspective ? (
-          <View style={[aiStyles.communityPerspectiveBox, { backgroundColor: "#FFF8EC", borderColor: "#CA922B33" }]}>
-            <Ionicons name="people-outline" size={13} color={GOLD} style={{ marginTop: 1 }} />
+          <View
+            style={[
+              aiStyles.communityPerspectiveBox,
+              { backgroundColor: "#FFF8EC", borderColor: "#CA922B33" },
+            ]}
+          >
+            <Ionicons
+              name="people-outline"
+              size={13}
+              color={GOLD}
+              style={{ marginTop: 1 }}
+            />
             <View style={{ flex: 1 }}>
-              <Text style={[aiStyles.communityPerspectiveTitle, { color: GOLD }]}>{msg.communityPerspective.label}</Text>
-              <Text style={[aiStyles.communityPerspectiveText, { color: "#3A1F0E99" }]}>
-                Recent public discussion about {msg.communityPerspective.topics.map((topic) => `#${topic}`).join(", ")} was considered as unverified perspective, not as evidence or a recommendation.
+              <Text
+                style={[aiStyles.communityPerspectiveTitle, { color: GOLD }]}
+              >
+                {msg.communityPerspective.label}
+              </Text>
+              <Text
+                style={[
+                  aiStyles.communityPerspectiveText,
+                  { color: "#3A1F0E99" },
+                ]}
+              >
+                Recent public discussion about{" "}
+                {msg.communityPerspective.topics
+                  .map((topic) => `#${topic}`)
+                  .join(", ")}{" "}
+                was considered as unverified perspective, not as evidence or a
+                recommendation.
               </Text>
             </View>
           </View>
         ) : null}
 
-        {msg.sourceContext && !msg.resultView && msg.sources && msg.sources.length > 0 ? (
-          <View testID="kinfolk-source-context" style={[aiStyles.sourceContextBox, { backgroundColor: "#FFF8EC", borderColor: "#CA922B33" }]}>
+        {msg.sourceContext &&
+        !msg.resultView &&
+        msg.sources &&
+        msg.sources.length > 0 ? (
+          <View
+            testID="kinfolk-source-context"
+            style={[
+              aiStyles.sourceContextBox,
+              { backgroundColor: "#FFF8EC", borderColor: "#CA922B33" },
+            ]}
+          >
             <Text style={[aiStyles.sourceContextText, { color: "#3A1F0E99" }]}>
-              <Text style={[aiStyles.sourceContextLabel, { color: "#3A1F0E" }]}>Why these sources fit: </Text>
+              <Text style={[aiStyles.sourceContextLabel, { color: "#3A1F0E" }]}>
+                Why these sources fit:{" "}
+              </Text>
               {msg.sourceContext}
             </Text>
           </View>
@@ -1098,20 +2247,43 @@ function AiMessageBubble({
 
         {!msg.resultView && msg.sources && msg.sources.length > 0 && (
           <View style={[aiStyles.sourcesBox, { borderColor: colors.border }]}>
-            <Text style={[aiStyles.sourcesTitle, { color: colors.mutedForeground }]}>Sources</Text>
+            <Text
+              style={[aiStyles.sourcesTitle, { color: colors.mutedForeground }]}
+            >
+              Sources
+            </Text>
             {msg.sources.slice(0, 5).map((source, index) => (
-              <View key={`${source.url}-${index}`} style={aiStyles.sourceActionRow}>
-                <TouchableOpacity onPress={() => void openExternalUrl(source.url, { kind: "web" })} style={[aiStyles.sourceRow, { flex: 1 }]}>
+              <View
+                key={`${source.url}-${index}`}
+                style={aiStyles.sourceActionRow}
+              >
+                <TouchableOpacity
+                  onPress={() =>
+                    void openExternalUrl(source.url, { kind: "web" })
+                  }
+                  style={[aiStyles.sourceRow, { flex: 1 }]}
+                >
                   <Ionicons name="open-outline" size={12} color={GOLD} />
-                  <Text numberOfLines={2} style={[aiStyles.sourceLink, { color: GOLD }]}>{source.title}</Text>
+                  <Text
+                    numberOfLines={2}
+                    style={[aiStyles.sourceLink, { color: GOLD }]}
+                  >
+                    {source.title}
+                  </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  onPress={() => onQuickReply(`Summarize the linked article “${source.title}” accurately, using this exact source: ${source.url}`)}
+                  onPress={() =>
+                    onQuickReply(
+                      `Summarize the linked article “${source.title}” accurately, using this exact source: ${source.url}`,
+                    )
+                  }
                   style={[aiStyles.sourceSummaryButton, { borderColor: GOLD }]}
                   accessibilityRole="button"
                   accessibilityLabel={`Ask Kinfolk to summarize ${source.title}`}
                 >
-                  <Text style={[aiStyles.sourceSummaryText, { color: GOLD }]}>Summarize</Text>
+                  <Text style={[aiStyles.sourceSummaryText, { color: GOLD }]}>
+                    Summarize
+                  </Text>
                 </TouchableOpacity>
               </View>
             ))}
@@ -1127,61 +2299,293 @@ function AiMessageBubble({
 }
 
 const aiStyles = StyleSheet.create({
-  wrapper: { flexDirection: "row", alignItems: "flex-start", marginBottom: 16, paddingHorizontal: 12 },
+  wrapper: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    marginBottom: 16,
+    paddingHorizontal: 12,
+  },
   avatarCol: { marginRight: 8, paddingTop: 2 },
-  avatar: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  avatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   contentCol: { flex: 1, minWidth: 0 },
-  bubble: { borderRadius: 16, borderTopLeftRadius: 4, padding: 12, borderWidth: 1, marginBottom: 8, minWidth: 0 },
-  bubbleText: { fontFamily: "Inter_400Regular", fontSize: 14, lineHeight: 20, flexShrink: 1 },
-  copyBtn: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 4, marginTop: 8, paddingVertical: 3, paddingHorizontal: 2 },
+  bubble: {
+    borderRadius: 16,
+    borderTopLeftRadius: 4,
+    padding: 12,
+    borderWidth: 1,
+    marginBottom: 8,
+    minWidth: 0,
+  },
+  bubbleText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    lineHeight: 20,
+    flexShrink: 1,
+  },
+  copyBtn: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 8,
+    paddingVertical: 3,
+    paddingHorizontal: 2,
+  },
   copyLabel: { fontFamily: "Inter_500Medium", fontSize: 11 },
   speakBtn: { alignSelf: "flex-end", marginTop: 6, padding: 4 },
   recsContainer: { marginBottom: 8 },
-  destBar: { flexDirection: "row", alignItems: "flex-start", gap: 6, borderRadius: 12, borderWidth: 1, padding: 10, marginBottom: 8, flexWrap: "wrap" },
+  destBar: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 10,
+    marginBottom: 8,
+    flexWrap: "wrap",
+  },
   destText: { fontFamily: "Inter_700Bold", fontSize: 14 },
-  destSummary: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, flex: 1 },
-  sectionHeader: { flexDirection: "row", alignItems: "center", gap: 6, paddingVertical: 8, borderBottomWidth: 1, marginBottom: 8 },
+  destSummary: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    lineHeight: 17,
+    flex: 1,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    marginBottom: 8,
+  },
   sectionIcon: { fontSize: 14 },
   sectionTitle: { fontFamily: "Inter_600SemiBold", fontSize: 13, flex: 1 },
   safetyBox: { borderRadius: 12, borderWidth: 1, padding: 10, marginBottom: 8 },
-  safetyRow: { flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 8 },
-  safetyNum: { width: 20, height: 20, borderRadius: 10, alignItems: "center", justifyContent: "center", marginTop: 1 },
+  safetyRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    marginBottom: 8,
+  },
+  safetyNum: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 1,
+  },
   safetyNumText: { fontFamily: "Inter_700Bold", fontSize: 10, color: "#fff" },
-  safetyText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, flex: 1 },
-  insightRow: { flexDirection: "row", alignItems: "flex-start", gap: 8, marginBottom: 6 },
-  insightText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, flex: 1 },
-  clarificationCard: { borderRadius: 14, borderWidth: 1, padding: 12, marginBottom: 8 },
-  clarificationQuestion: { fontFamily: "Inter_700Bold", fontSize: 13, lineHeight: 18 },
-  clarificationExplanation: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
+  safetyText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    lineHeight: 17,
+    flex: 1,
+  },
+  insightRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    marginBottom: 6,
+  },
+  insightText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    lineHeight: 17,
+    flex: 1,
+  },
+  clarificationCard: {
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 8,
+  },
+  clarificationQuestion: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  clarificationExplanation: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    lineHeight: 16,
+  },
   clarificationOptions: { gap: 7 },
-  clarificationOption: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 11, paddingVertical: 9 },
-  clarificationOptionText: { fontFamily: "Inter_600SemiBold", fontSize: 12, lineHeight: 16 },
-  clarificationSkip: { fontFamily: "Inter_600SemiBold", fontSize: 11, textAlign: "center", paddingVertical: 5 },
+  clarificationOption: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+  },
+  clarificationOptionText: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
+    lineHeight: 16,
+  },
+  clarificationSkip: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+    textAlign: "center",
+    paddingVertical: 5,
+  },
   chipsScroll: { marginBottom: 8 },
-  chip: { minHeight: 40, maxWidth: 280, justifyContent: "center", borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 7, marginRight: 8 },
-  chipText: { fontFamily: "Inter_500Medium", fontSize: 12, lineHeight: 17, textAlign: "center", includeFontPadding: false },
-  provenanceBox: { flexDirection: "row", alignItems: "flex-start", gap: 6, borderWidth: 1, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 7, marginTop: 6, marginBottom: 4 },
-  provenanceText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 15, flex: 1 },
-  sourceNoteText: { borderTopWidth: 1, borderTopColor: "#3A1F0E14", marginTop: 8, paddingTop: 7, fontFamily: "Inter_400Regular", fontSize: 10, fontStyle: "italic", lineHeight: 14 },
-  sourceContextBox: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 8, marginTop: 6, marginBottom: 6 },
-  sourceContextText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
+  chip: {
+    minHeight: 40,
+    maxWidth: 280,
+    justifyContent: "center",
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    marginRight: 8,
+  },
+  chipText: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    lineHeight: 17,
+    textAlign: "center",
+    includeFontPadding: false,
+  },
+  provenanceBox: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    marginTop: 6,
+    marginBottom: 4,
+  },
+  provenanceText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    lineHeight: 15,
+    flex: 1,
+  },
+  sourceNoteText: {
+    borderTopWidth: 1,
+    borderTopColor: "#3A1F0E14",
+    marginTop: 8,
+    paddingTop: 7,
+    fontFamily: "Inter_400Regular",
+    fontSize: 10,
+    fontStyle: "italic",
+    lineHeight: 14,
+  },
+  sourceContextBox: {
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    marginTop: 6,
+    marginBottom: 6,
+  },
+  sourceContextText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    lineHeight: 16,
+  },
   sourceContextLabel: { fontFamily: "Inter_700Bold" },
-  communityPerspectiveBox: { flexDirection: "row", gap: 7, borderWidth: 1, borderRadius: 10, marginTop: 8, padding: 9 },
-  communityPerspectiveTitle: { fontFamily: "Inter_700Bold", fontSize: 10, letterSpacing: 0.4, textTransform: "uppercase" },
-  communityPerspectiveText: { fontFamily: "Inter_400Regular", fontSize: 10, lineHeight: 14, marginTop: 2 },
-  sourcesBox: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 8, paddingTop: 8, gap: 6 },
-  sourcesTitle: { fontFamily: "Inter_700Bold", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8 },
-  sourceActionRow: { flexDirection: "row", alignItems: "center", gap: 8, minWidth: 0 },
-  sourceRow: { flexDirection: "row", alignItems: "flex-start", gap: 6, minWidth: 0 },
-  sourceLink: { flex: 1, flexShrink: 1, fontFamily: "Inter_600SemiBold", fontSize: 11, lineHeight: 15 },
-  sourceSummaryButton: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 8, paddingVertical: 5 },
+  communityPerspectiveBox: {
+    flexDirection: "row",
+    gap: 7,
+    borderWidth: 1,
+    borderRadius: 10,
+    marginTop: 8,
+    padding: 9,
+  },
+  communityPerspectiveTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 10,
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
+  communityPerspectiveText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 10,
+    lineHeight: 14,
+    marginTop: 2,
+  },
+  sourcesBox: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginTop: 8,
+    paddingTop: 8,
+    gap: 6,
+  },
+  sourcesTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+  },
+  sourceActionRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    minWidth: 0,
+  },
+  sourceRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 6,
+    minWidth: 0,
+  },
+  sourceLink: {
+    flex: 1,
+    flexShrink: 1,
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  sourceSummaryButton: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
   sourceSummaryText: { fontFamily: "Inter_600SemiBold", fontSize: 10 },
-  reviewedResourcesBox: { borderRadius: 12, borderWidth: 1, padding: 10, marginTop: 8, gap: 8, minWidth: 0 },
-  reviewedResourcesTitle: { fontFamily: "Inter_700Bold", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.5 },
+  reviewedResourcesBox: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 10,
+    marginTop: 8,
+    gap: 8,
+    minWidth: 0,
+  },
+  reviewedResourcesTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
   reviewedResourceCard: { gap: 3, paddingVertical: 2, minWidth: 0 },
-  reviewedResourceLink: { fontFamily: "Inter_600SemiBold", fontSize: 12, lineHeight: 17, textDecorationLine: "underline", flexShrink: 1 },
-  reviewedResourceDescription: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16, flexShrink: 1 },
-  reviewedResourceSafety: { fontFamily: "Inter_500Medium", fontSize: 10, lineHeight: 15, flexShrink: 1 },
+  reviewedResourceLink: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 12,
+    lineHeight: 17,
+    textDecorationLine: "underline",
+    flexShrink: 1,
+  },
+  reviewedResourceDescription: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    lineHeight: 16,
+    flexShrink: 1,
+  },
+  reviewedResourceSafety: {
+    fontFamily: "Inter_500Medium",
+    fontSize: 10,
+    lineHeight: 15,
+    flexShrink: 1,
+  },
   timestamp: { fontFamily: "Inter_400Regular", fontSize: 10 },
 });
 
@@ -1198,19 +2602,34 @@ function SmartPromotionCard({
   colors: ReturnType<typeof useColors>;
 }) {
   return (
-    <View style={[spStyles.card, { backgroundColor: colors.card, borderColor: GOLD + "55" }]}>
+    <View
+      style={[
+        spStyles.card,
+        { backgroundColor: colors.card, borderColor: GOLD + "55" },
+      ]}
+    >
       <View style={[spStyles.goldBar, { backgroundColor: GOLD }]} />
       <View style={spStyles.content}>
         <View style={spStyles.headerRow}>
           <View style={[spStyles.badge, { backgroundColor: GOLD + "22" }]}>
-            <Text style={[spStyles.badgeText, { color: GOLD }]}>✦ Smart Pick for You</Text>
+            <Text style={[spStyles.badgeText, { color: GOLD }]}>
+              ✦ Smart Pick for You
+            </Text>
           </View>
-          <TouchableOpacity activeOpacity={0.85} onPress={onDismiss} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={onDismiss}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons name="close" size={16} color={colors.mutedForeground} />
           </TouchableOpacity>
         </View>
-        <Text style={[spStyles.headline, { color: colors.text }]}>{promo.headline}</Text>
-        <Text style={[spStyles.body, { color: colors.mutedForeground }]}>{promo.body}</Text>
+        <Text style={[spStyles.headline, { color: colors.text }]}>
+          {promo.headline}
+        </Text>
+        <Text style={[spStyles.body, { color: colors.mutedForeground }]}>
+          {promo.body}
+        </Text>
         <TouchableOpacity
           style={[spStyles.ctaBtn, { backgroundColor: GOLD }]}
           onPress={() => onCta(promo.ctaQuery)}
@@ -1225,42 +2644,103 @@ function SmartPromotionCard({
 }
 
 const spStyles = StyleSheet.create({
-  card:      { flexDirection: "row", borderRadius: 14, borderWidth: 1.5, marginTop: 6, marginBottom: 6, overflow: "hidden" },
-  goldBar:   { width: 4 },
-  content:   { flex: 1, padding: 12 },
-  headerRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 },
-  badge:     { borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
+  card: {
+    flexDirection: "row",
+    borderRadius: 14,
+    borderWidth: 1.5,
+    marginTop: 6,
+    marginBottom: 6,
+    overflow: "hidden",
+  },
+  goldBar: { width: 4 },
+  content: { flex: 1, padding: 12 },
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 6,
+  },
+  badge: { borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
   badgeText: { fontFamily: "Inter_600SemiBold", fontSize: 10 },
-  headline:  { fontFamily: "Inter_700Bold", fontSize: 14, marginBottom: 4 },
-  body:      { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, marginBottom: 10 },
-  ctaBtn:    { flexDirection: "row", alignItems: "center", gap: 6, borderRadius: 8, paddingVertical: 8, paddingHorizontal: 14, alignSelf: "flex-start" },
-  ctaText:   { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" },
+  headline: { fontFamily: "Inter_700Bold", fontSize: 14, marginBottom: 4 },
+  body: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 10,
+  },
+  ctaBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    alignSelf: "flex-start",
+  },
+  ctaText: { fontFamily: "Inter_600SemiBold", fontSize: 13, color: "#fff" },
 });
 
 // ─── Sub-component: User Message ─────────────────────────────────────────────
-function UserMessageBubble({ msg, colors }: { msg: ChatMessage; colors: ReturnType<typeof useColors> }) {
+function UserMessageBubble({
+  msg,
+  colors,
+}: {
+  msg: ChatMessage;
+  colors: ReturnType<typeof useColors>;
+}) {
   return (
     <View style={umStyles.wrapper}>
       <View style={[umStyles.bubble, { backgroundColor: colors.primary }]}>
-        {msg.imageUrls && msg.imageUrls.length > 0 && <View style={umStyles.imageRow}>{msg.imageUrls.map((url) => <Image key={url} source={{ uri: url }} style={umStyles.image} accessibilityLabel="Image shared with Kinfolk" />)}</View>}
+        {msg.imageUrls && msg.imageUrls.length > 0 && (
+          <View style={umStyles.imageRow}>
+            {msg.imageUrls.map((url) => (
+              <Image
+                key={url}
+                source={{ uri: url }}
+                style={umStyles.image}
+                accessibilityLabel="Image shared with Kinfolk"
+              />
+            ))}
+          </View>
+        )}
         <Text style={umStyles.text}>{msg.content}</Text>
       </View>
-      <Text style={[umStyles.timestamp, { color: colors.mutedForeground }]}>{formatTime(msg.timestamp)}</Text>
+      <Text style={[umStyles.timestamp, { color: colors.mutedForeground }]}>
+        {formatTime(msg.timestamp)}
+      </Text>
     </View>
   );
 }
 
 const umStyles = StyleSheet.create({
   wrapper: { alignItems: "flex-end", marginBottom: 16, paddingHorizontal: 12 },
-  bubble: { borderRadius: 16, borderBottomRightRadius: 4, paddingHorizontal: 14, paddingVertical: 10, maxWidth: "80%" },
+  bubble: {
+    borderRadius: 16,
+    borderBottomRightRadius: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    maxWidth: "80%",
+  },
   imageRow: { flexDirection: "row", gap: 6, marginBottom: 8 },
   image: { width: 120, height: 100, borderRadius: 10 },
-  text: { fontFamily: "Inter_400Regular", fontSize: 14, color: "#FFFFFF", lineHeight: 20 },
+  text: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    color: "#FFFFFF",
+    lineHeight: 20,
+  },
   timestamp: { fontFamily: "Inter_400Regular", fontSize: 10, marginTop: 4 },
 });
 
 // ─── Sub-component: Typing indicator ─────────────────────────────────────────
-function TypingIndicator({ colors, elapsedSeconds }: { colors: ReturnType<typeof useColors>; elapsedSeconds: number }) {
+function TypingIndicator({
+  colors,
+  elapsedSeconds,
+}: {
+  colors: ReturnType<typeof useColors>;
+  elapsedSeconds: number;
+}) {
   const [dot1] = useState(() => new Animated.Value(0));
   const [dot2] = useState(() => new Animated.Value(0));
   const [dot3] = useState(() => new Animated.Value(0));
@@ -1269,25 +2749,53 @@ function TypingIndicator({ colors, elapsedSeconds }: { colors: ReturnType<typeof
       Animated.loop(
         Animated.sequence([
           Animated.delay(delay),
-          Animated.timing(d, { toValue: -5, duration: 300, useNativeDriver: true }),
-          Animated.timing(d, { toValue: 0, duration: 300, useNativeDriver: true }),
+          Animated.timing(d, {
+            toValue: -5,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(d, {
+            toValue: 0,
+            duration: 300,
+            useNativeDriver: true,
+          }),
           Animated.delay(600),
         ]),
       );
     const a1 = anim(dot1, 0);
     const a2 = anim(dot2, 150);
     const a3 = anim(dot3, 300);
-    a1.start(); a2.start(); a3.start();
-    return () => { a1.stop(); a2.stop(); a3.stop(); };
+    a1.start();
+    a2.start();
+    a3.start();
+    return () => {
+      a1.stop();
+      a2.stop();
+      a3.stop();
+    };
   }, [dot1, dot2, dot3]);
   return (
     <View style={tyStyles.wrapper}>
       <View style={[tyStyles.avatar, { backgroundColor: colors.primary }]}>
         <Ionicons name="sparkles" size={12} color="#fff" />
       </View>
-      <View style={[tyStyles.bubble, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View
+        style={[
+          tyStyles.bubble,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+      >
         {[dot1, dot2, dot3].map((d, i) => (
-          <Animated.View key={i} style={[tyStyles.dot, { backgroundColor: colors.mutedForeground, transform: [{ translateY: d }] }]} />
+          <Animated.View
+            key={i}
+            style={[
+              tyStyles.dot,
+              {
+                backgroundColor: colors.mutedForeground,
+                transform: [{ translateY: d }],
+              },
+            ]}
+          />
         ))}
         <Text
           testID="kinfolk-working-indicator"
@@ -1301,16 +2809,38 @@ function TypingIndicator({ colors, elapsedSeconds }: { colors: ReturnType<typeof
   );
 }
 const tyStyles = StyleSheet.create({
-  wrapper: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, marginBottom: 16 },
-  avatar: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
-  bubble: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 16, borderTopLeftRadius: 4, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1 },
+  wrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  bubble: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderRadius: 16,
+    borderTopLeftRadius: 4,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+  },
   dot: { width: 7, height: 7, borderRadius: 4 },
   status: { fontFamily: "Inter_400Regular", fontSize: 12, marginLeft: 3 },
 });
 
 // ─── Sub-component: Welcome Screen ───────────────────────────────────────────
 function WelcomeScreen({
-  colors, onChipPress,
+  colors,
+  onChipPress,
 }: {
   colors: ReturnType<typeof useColors>;
   onChipPress: (t: string) => void;
@@ -1318,74 +2848,155 @@ function WelcomeScreen({
   const headline = WELCOME_HEADLINE;
   const [showMorePrompts, setShowMorePrompts] = useState(false);
   const [showMorePaths, setShowMorePaths] = useState(false);
-  const visiblePrompts = showMorePrompts ? WELCOME_CHIPS : WELCOME_CHIPS.slice(0, 3);
+  const visiblePrompts = showMorePrompts
+    ? WELCOME_CHIPS
+    : WELCOME_CHIPS.slice(0, 3);
   const visiblePaths = showMorePaths ? LIFE_CHIPS : LIFE_CHIPS.slice(0, 4);
-
 
   return (
     <View testID="kinfolk-conversation-welcome" style={wsStyles.container}>
-      <View style={[wsStyles.introCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-        <View style={[wsStyles.iconWrap, { backgroundColor: colors.primary + "18" }]}>
+      <View
+        style={[
+          wsStyles.introCard,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+      >
+        <View
+          style={[
+            wsStyles.iconWrap,
+            { backgroundColor: colors.primary + "18" },
+          ]}
+        >
           <Ionicons name="sparkles" size={22} color={colors.primary} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[wsStyles.eyebrow, { color: colors.primary }]}>START A CONVERSATION</Text>
-          <Text style={[wsStyles.title, { color: colors.text }]}>{headline}</Text>
-          <Text style={[wsStyles.sub, { color: colors.mutedForeground }]}>Ask a question, weigh a decision, or find your next useful step.</Text>
+          <Text style={[wsStyles.eyebrow, { color: colors.primary }]}>
+            START A CONVERSATION
+          </Text>
+          <Text style={[wsStyles.title, { color: colors.text }]}>
+            {headline}
+          </Text>
+          <Text style={[wsStyles.sub, { color: colors.mutedForeground }]}>
+            Ask a question, weigh a decision, or find your next useful step.
+          </Text>
         </View>
       </View>
 
       <View style={[wsStyles.pathSection, { borderTopColor: colors.border }]}>
-        <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground }]}>Start here</Text>
+        <Text
+          style={[wsStyles.sectionLabel, { color: colors.mutedForeground }]}
+        >
+          Start here
+        </Text>
         {visiblePaths.map((c) => (
           <TouchableOpacity
             key={c.label}
-            style={[wsStyles.lifePath, { backgroundColor: colors.card, borderColor: colors.border }]}
+            style={[
+              wsStyles.lifePath,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
             onPress={() => onChipPress(c.prompt)}
             activeOpacity={0.75}
           >
             <Text style={wsStyles.lifePathEmoji}>{c.emoji}</Text>
-            <Text style={[wsStyles.lifePathText, { color: colors.text }]}>{c.label}</Text>
-            <Ionicons name="arrow-forward" size={15} color={colors.mutedForeground} />
+            <Text style={[wsStyles.lifePathText, { color: colors.text }]}>
+              {c.label}
+            </Text>
+            <Ionicons
+              name="arrow-forward"
+              size={15}
+              color={colors.mutedForeground}
+            />
           </TouchableOpacity>
         ))}
-        <TouchableOpacity onPress={() => setShowMorePaths((visible) => !visible)} activeOpacity={0.75} style={wsStyles.morePromptsBtn}>
-          <Text style={[wsStyles.morePromptsText, { color: colors.primary }]}>{showMorePaths ? "Show fewer paths" : "More ways Kinfolk can help"}</Text>
-          <Ionicons name={showMorePaths ? "chevron-up" : "chevron-down"} size={14} color={colors.primary} />
+        <TouchableOpacity
+          onPress={() => setShowMorePaths((visible) => !visible)}
+          activeOpacity={0.75}
+          style={wsStyles.morePromptsBtn}
+        >
+          <Text style={[wsStyles.morePromptsText, { color: colors.primary }]}>
+            {showMorePaths ? "Show fewer paths" : "More ways Kinfolk can help"}
+          </Text>
+          <Ionicons
+            name={showMorePaths ? "chevron-up" : "chevron-down"}
+            size={14}
+            color={colors.primary}
+          />
         </TouchableOpacity>
       </View>
 
       <View style={[wsStyles.promptSection, { borderTopColor: colors.border }]}>
-        <Text style={[wsStyles.sectionLabel, { color: colors.mutedForeground }]}>Try a specific question</Text>
+        <Text
+          style={[wsStyles.sectionLabel, { color: colors.mutedForeground }]}
+        >
+          Try a specific question
+        </Text>
         {visiblePrompts.map((c) => (
           <TouchableOpacity
             key={c}
-            style={[wsStyles.promptChip, { backgroundColor: colors.card, borderColor: colors.border }]}
+            style={[
+              wsStyles.promptChip,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
             onPress={() => onChipPress(c)}
             activeOpacity={0.7}
           >
-            <Ionicons name="chatbubble-outline" size={14} color={colors.primary} />
-            <Text style={[wsStyles.promptText, { color: colors.text }]}>{c}</Text>
-            <Ionicons name="arrow-forward" size={14} color={colors.mutedForeground} />
+            <Ionicons
+              name="chatbubble-outline"
+              size={14}
+              color={colors.primary}
+            />
+            <Text style={[wsStyles.promptText, { color: colors.text }]}>
+              {c}
+            </Text>
+            <Ionicons
+              name="arrow-forward"
+              size={14}
+              color={colors.mutedForeground}
+            />
           </TouchableOpacity>
         ))}
-        <TouchableOpacity onPress={() => setShowMorePrompts((visible) => !visible)} activeOpacity={0.75} style={wsStyles.morePromptsBtn}>
-          <Text style={[wsStyles.morePromptsText, { color: colors.primary }]}>{showMorePrompts ? "Show fewer prompts" : "More ways to start"}</Text>
-          <Ionicons name={showMorePrompts ? "chevron-up" : "chevron-down"} size={14} color={colors.primary} />
+        <TouchableOpacity
+          onPress={() => setShowMorePrompts((visible) => !visible)}
+          activeOpacity={0.75}
+          style={wsStyles.morePromptsBtn}
+        >
+          <Text style={[wsStyles.morePromptsText, { color: colors.primary }]}>
+            {showMorePrompts ? "Show fewer prompts" : "More ways to start"}
+          </Text>
+          <Ionicons
+            name={showMorePrompts ? "chevron-up" : "chevron-down"}
+            size={14}
+            color={colors.primary}
+          />
         </TouchableOpacity>
       </View>
 
       {/* Existing journal path remains available as a secondary destination, not a competing primary task. */}
       <TouchableOpacity
-        style={[wsStyles.journalCard, { backgroundColor: colors.primary + "12", borderColor: colors.primary + "22" }]}
-        onPress={() => { router.push("/journals" as never); }}
+        style={[
+          wsStyles.journalCard,
+          {
+            backgroundColor: colors.primary + "12",
+            borderColor: colors.primary + "22",
+          },
+        ]}
+        onPress={() => {
+          router.push("/journals" as never);
+        }}
         activeOpacity={0.85}
         accessibilityLabel="Open Trip Journals"
       >
         <Text style={wsStyles.journalEmoji}>🗺️</Text>
         <View style={{ flex: 1 }}>
-          <Text style={[wsStyles.journalTitle, { color: colors.text }]}>Open Trip Journals</Text>
-          <Text style={[wsStyles.journalSub, { color: colors.mutedForeground }]}>{getDailyQuoteText("diaspora", 2)}</Text>
+          <Text style={[wsStyles.journalTitle, { color: colors.text }]}>
+            Open Trip Journals
+          </Text>
+          <Text
+            style={[wsStyles.journalSub, { color: colors.mutedForeground }]}
+          >
+            {getDailyQuoteText("diaspora", 2)}
+          </Text>
         </View>
         <Ionicons name="arrow-forward" size={16} color={colors.primary} />
       </TouchableOpacity>
@@ -1394,22 +3005,94 @@ function WelcomeScreen({
 }
 const wsStyles = StyleSheet.create({
   container: { paddingHorizontal: 16, paddingTop: 22, paddingBottom: 18 },
-  introCard: { flexDirection: "row", alignItems: "flex-start", gap: 12, borderRadius: 20, borderWidth: 1, padding: 16, marginBottom: 22 },
-  iconWrap: { width: 44, height: 44, borderRadius: 15, alignItems: "center", justifyContent: "center" },
-  eyebrow: { fontFamily: "Inter_700Bold", fontSize: 10, letterSpacing: 1, marginBottom: 5 },
-  title: { fontFamily: "Inter_700Bold", fontSize: 21, lineHeight: 27, marginBottom: 5 },
+  introCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 22,
+  },
+  iconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  eyebrow: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 10,
+    letterSpacing: 1,
+    marginBottom: 5,
+  },
+  title: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 21,
+    lineHeight: 27,
+    marginBottom: 5,
+  },
   sub: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19 },
-  sectionLabel: { fontFamily: "Inter_700Bold", fontSize: 10, textTransform: "uppercase", letterSpacing: 0.8, marginBottom: 10 },
-  pathSection: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 18, paddingTop: 18 },
-  lifePath: { alignItems: "center", borderRadius: 14, borderWidth: 1, flexDirection: "row", gap: 10, marginBottom: 8, paddingHorizontal: 13, paddingVertical: 12 },
+  sectionLabel: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 10,
+    textTransform: "uppercase",
+    letterSpacing: 0.8,
+    marginBottom: 10,
+  },
+  pathSection: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginTop: 18,
+    paddingTop: 18,
+  },
+  lifePath: {
+    alignItems: "center",
+    borderRadius: 14,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 8,
+    paddingHorizontal: 13,
+    paddingVertical: 12,
+  },
   lifePathEmoji: { fontSize: 17 },
   lifePathText: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 13 },
-  promptChip: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, borderWidth: 1, padding: 13, marginBottom: 8, width: "100%" },
+  promptChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 13,
+    marginBottom: 8,
+    width: "100%",
+  },
   promptText: { fontFamily: "Inter_400Regular", fontSize: 13, flex: 1 },
-  promptSection: { borderTopWidth: StyleSheet.hairlineWidth, marginTop: 18, paddingTop: 18 },
-  morePromptsBtn: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 4, paddingVertical: 5, paddingHorizontal: 2 },
+  promptSection: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginTop: 18,
+    paddingTop: 18,
+  },
+  morePromptsBtn: {
+    alignSelf: "flex-start",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingVertical: 5,
+    paddingHorizontal: 2,
+  },
   morePromptsText: { fontFamily: "Inter_700Bold", fontSize: 12 },
-  journalCard: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 14, borderWidth: 1, padding: 13, marginTop: 18, width: "100%" },
+  journalCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 13,
+    marginTop: 18,
+    width: "100%",
+  },
   journalEmoji: { fontSize: 21 },
   journalTitle: { fontFamily: "Inter_700Bold", fontSize: 13, marginBottom: 2 },
   journalSub: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
@@ -1417,7 +3100,10 @@ const wsStyles = StyleSheet.create({
 
 // ─── Sub-component: Taste Profile Sheet ─────────────────────────────────────
 function TasteProfileSheet({
-  visible, onClose, onRetakeQuiz, colors,
+  visible,
+  onClose,
+  onRetakeQuiz,
+  colors,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -1428,28 +3114,56 @@ function TasteProfileSheet({
   const { subscription } = useMembership();
   const isPaid = !!subscription;
 
-  const [favCats, setFavCats] = useState<string[]>(preferences?.favoriteCategories ?? []);
+  const [favCats, setFavCats] = useState<string[]>(
+    preferences?.favoriteCategories ?? [],
+  );
   const [specificInterestInput, setSpecificInterestInput] = useState("");
-  const [recommendationLifeStage, setRecommendationLifeStage] = useState<"unspecified" | "18_39" | "40_64" | "65_plus">(preferences?.recommendationLifeStage ?? "unspecified");
-  const [avoidCats, setAvoidCats] = useState<string[]>(preferences?.avoidCategories ?? []);
+  const [recommendationLifeStage, setRecommendationLifeStage] = useState<
+    "unspecified" | "18_39" | "40_64" | "65_plus"
+  >(preferences?.recommendationLifeStage ?? "unspecified");
+  const [avoidCats, setAvoidCats] = useState<string[]>(
+    preferences?.avoidCategories ?? [],
+  );
   const [budget, setBudget] = useState(preferences?.budgetRange ?? "any");
-  const [tripStyles, setTripStyles] = useState<string[]>(preferences?.tripStyle ?? []);
-  const [companion, setCompanion] = useState(preferences?.travelCompanion ?? "solo");
-  const [commStyle, setCommStyle] = useState(preferences?.communicationStyle ?? "friendly");
+  const [tripStyles, setTripStyles] = useState<string[]>(
+    preferences?.tripStyle ?? [],
+  );
+  const [companion, setCompanion] = useState(
+    preferences?.travelCompanion ?? "solo",
+  );
+  const [commStyle, setCommStyle] = useState(
+    preferences?.communicationStyle ?? "friendly",
+  );
   const [emojiLvl, setEmojiLvl] = useState(preferences?.emojiLevel ?? "some");
   const [humor, setHumor] = useState(preferences?.humorLevel ?? "light");
-  const [culturalInt, setCulturalInt] = useState<string[]>((preferences?.culturalInterests ?? []) as string[]);
+  const [culturalInt, setCulturalInt] = useState<string[]>(
+    (preferences?.culturalInterests ?? []) as string[],
+  );
   const [kbyg, setKbyg] = useState(preferences?.knowBeforeYouGo !== false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (preferences) {
-      queueMicrotask(() => { setFavCats(preferences.favoriteCategories ?? []); });
-      queueMicrotask(() => { setRecommendationLifeStage(preferences.recommendationLifeStage ?? "unspecified"); });
-      queueMicrotask(() => { setAvoidCats(preferences.avoidCategories ?? []); });
-      queueMicrotask(() => { setBudget(preferences.budgetRange ?? "any"); });
-      queueMicrotask(() => { setTripStyles(preferences.tripStyle ?? []); });
-      queueMicrotask(() => { setCompanion(preferences.travelCompanion ?? "solo"); });
+      queueMicrotask(() => {
+        setFavCats(preferences.favoriteCategories ?? []);
+      });
+      queueMicrotask(() => {
+        setRecommendationLifeStage(
+          preferences.recommendationLifeStage ?? "unspecified",
+        );
+      });
+      queueMicrotask(() => {
+        setAvoidCats(preferences.avoidCategories ?? []);
+      });
+      queueMicrotask(() => {
+        setBudget(preferences.budgetRange ?? "any");
+      });
+      queueMicrotask(() => {
+        setTripStyles(preferences.tripStyle ?? []);
+      });
+      queueMicrotask(() => {
+        setCompanion(preferences.travelCompanion ?? "solo");
+      });
       queueMicrotask(() => {
         setCommStyle(preferences.communicationStyle ?? "friendly");
         setEmojiLvl(preferences.emojiLevel ?? "some");
@@ -1468,11 +3182,13 @@ function TasteProfileSheet({
     setSaving(true);
     const specificInterests = specificInterestInput
       .split(/[,\n]/)
-      .map(value => value.trim())
-      .filter(value => value.length >= 2 && value.length <= 80);
+      .map((value) => value.trim())
+      .filter((value) => value.length >= 2 && value.length <= 80);
     const saved = await update({
       recommendationLifeStage,
-      favoriteCategories: [...new Set([...favCats, ...specificInterests])].slice(0, 50),
+      favoriteCategories: [
+        ...new Set([...favCats, ...specificInterests]),
+      ].slice(0, 50),
       avoidCategories: avoidCats,
       budgetRange: budget,
       tripStyle: tripStyles,
@@ -1488,129 +3204,415 @@ function TasteProfileSheet({
       setSpecificInterestInput("");
       onClose();
     } else {
-      Alert.alert("Preferences not saved", "Kinfolk could not save those preferences. Please try again.");
+      Alert.alert(
+        "Preferences not saved",
+        "Kinfolk could not save those preferences. Please try again.",
+      );
     }
   }
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={[tpStyles.container, { backgroundColor: colors.background }]}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <View
+        style={[tpStyles.container, { backgroundColor: colors.background }]}
+      >
         <View style={[tpStyles.header, { borderBottomColor: colors.border }]}>
-          <Text style={[tpStyles.title, { color: colors.text }]}>Your Taste Profile</Text>
-          <TouchableOpacity activeOpacity={0.85} onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Text style={[tpStyles.title, { color: colors.text }]}>
+            Your Taste Profile
+          </Text>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={onClose}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons name="close" size={22} color={colors.text} />
           </TouchableOpacity>
         </View>
         <ScrollView
-        keyboardDismissMode="on-drag" style={{ flex: 1 }} contentContainerStyle={tpStyles.scroll} showsVerticalScrollIndicator={false}>
-          <View style={[tpStyles.profileBadge, { backgroundColor: colors.primary + "14", borderColor: colors.primary + "30" }]}>
+          keyboardDismissMode="on-drag"
+          style={{ flex: 1 }}
+          contentContainerStyle={tpStyles.scroll}
+          showsVerticalScrollIndicator={false}
+        >
+          <View
+            style={[
+              tpStyles.profileBadge,
+              {
+                backgroundColor: colors.primary + "14",
+                borderColor: colors.primary + "30",
+              },
+            ]}
+          >
             <Ionicons name="sparkles" size={16} color={colors.primary} />
-            <Text style={[tpStyles.profileBadgeText, { color: colors.primary }]}>
-              KinfolkAI™ uses your profile to personalize every recommendation. The more you share, the better it gets.
+            <Text
+              style={[tpStyles.profileBadgeText, { color: colors.primary }]}
+            >
+              KinfolkAI™ uses your profile to personalize every recommendation.
+              The more you share, the better it gets.
             </Text>
           </View>
 
           {/* ── Travel Preferences ───────────────────────────────────────── */}
-          <Text style={[tpStyles.sectionLabel, { color: colors.text }]}>What do you love?</Text>
-          <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>KinfolkAI will prioritize these in recommendations</Text>
+          <Text style={[tpStyles.sectionLabel, { color: colors.text }]}>
+            What do you love?
+          </Text>
+          <Text
+            style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}
+          >
+            KinfolkAI will prioritize these in recommendations
+          </Text>
           <View style={tpStyles.chips}>
             {ALL_CATEGORIES.map((c) => {
               const sel = favCats.includes(c);
               return (
-                <TouchableOpacity activeOpacity={0.85} key={c} style={[tpStyles.chip, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(favCats, c, setFavCats)}>
-                  <Text style={[tpStyles.chipText, { color: sel ? colors.primaryForeground : colors.text }]}>{c}</Text>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  key={c}
+                  style={[
+                    tpStyles.chip,
+                    {
+                      backgroundColor: sel ? colors.primary : colors.card,
+                      borderColor: sel ? colors.primary : colors.border,
+                    },
+                  ]}
+                  onPress={() => toggleArr(favCats, c, setFavCats)}
+                >
+                  <Text
+                    style={[
+                      tpStyles.chipText,
+                      { color: sel ? colors.primaryForeground : colors.text },
+                    ]}
+                  >
+                    {c}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
           </View>
 
-          <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Anything specific?</Text>
-          <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>Add interests such as author events, candle making, or board games. Separate them with commas.</Text>
+          <Text
+            style={[
+              tpStyles.sectionLabel,
+              { color: colors.text, marginTop: 20 },
+            ]}
+          >
+            Anything specific?
+          </Text>
+          <Text
+            style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}
+          >
+            Add interests such as author events, candle making, or board games.
+            Separate them with commas.
+          </Text>
           <TextInput
             value={specificInterestInput}
             onChangeText={setSpecificInterestInput}
             placeholder="author events, candle making, board games"
             placeholderTextColor={colors.mutedForeground}
-            style={[tpStyles.specificInput, { color: colors.text, backgroundColor: colors.card, borderColor: colors.border }]}
+            style={[
+              tpStyles.specificInput,
+              {
+                color: colors.text,
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+              },
+            ]}
           />
           <View style={tpStyles.chips}>
-            {favCats.filter(category => !ALL_CATEGORIES.includes(category)).map(category => (
-              <TouchableOpacity activeOpacity={0.85} key={category}
-                accessibilityRole="button"
-                accessibilityLabel={`Remove ${category}`}
-                style={[tpStyles.chip, { backgroundColor: colors.primary, borderColor: colors.primary }]}
-                onPress={() => setFavCats(current => current.filter(value => value !== category))}>
-                <Text style={[tpStyles.chipText, { color: colors.primaryForeground }]}>{category} ×</Text>
-              </TouchableOpacity>
-            ))}
+            {favCats
+              .filter((category) => !ALL_CATEGORIES.includes(category))
+              .map((category) => (
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  key={category}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Remove ${category}`}
+                  style={[
+                    tpStyles.chip,
+                    {
+                      backgroundColor: colors.primary,
+                      borderColor: colors.primary,
+                    },
+                  ]}
+                  onPress={() =>
+                    setFavCats((current) =>
+                      current.filter((value) => value !== category),
+                    )
+                  }
+                >
+                  <Text
+                    style={[
+                      tpStyles.chipText,
+                      { color: colors.primaryForeground },
+                    ]}
+                  >
+                    {category} ×
+                  </Text>
+                </TouchableOpacity>
+              ))}
           </View>
-          <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>Private taste data. Add only what you want Kinfolk to use, and remove saved items by tapping their chips.</Text>
+          <Text
+            style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}
+          >
+            Private taste data. Add only what you want Kinfolk to use, and
+            remove saved items by tapping their chips.
+          </Text>
 
-          <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Recommendation life stage (optional)</Text>
+          <Text
+            style={[
+              tpStyles.sectionLabel,
+              { color: colors.text, marginTop: 20 },
+            ]}
+          >
+            Recommendation life stage (optional)
+          </Text>
           <View style={tpStyles.optionRow}>
-            {RECOMMENDATION_LIFE_STAGES.map(option => (
-              <TouchableOpacity activeOpacity={0.85} key={option.id}
+            {RECOMMENDATION_LIFE_STAGES.map((option) => (
+              <TouchableOpacity
+                activeOpacity={0.85}
+                key={option.id}
                 accessibilityRole="button"
-                accessibilityState={{ selected: recommendationLifeStage === option.id }}
-                style={[tpStyles.optionBtn, { backgroundColor: recommendationLifeStage === option.id ? colors.primary : colors.card, borderColor: recommendationLifeStage === option.id ? colors.primary : colors.border }]}
-                onPress={() => setRecommendationLifeStage(option.id)}>
-                <Text style={[tpStyles.optionText, { color: recommendationLifeStage === option.id ? colors.primaryForeground : colors.text }]}>{option.label}</Text>
+                accessibilityState={{
+                  selected: recommendationLifeStage === option.id,
+                }}
+                style={[
+                  tpStyles.optionBtn,
+                  {
+                    backgroundColor:
+                      recommendationLifeStage === option.id
+                        ? colors.primary
+                        : colors.card,
+                    borderColor:
+                      recommendationLifeStage === option.id
+                        ? colors.primary
+                        : colors.border,
+                  },
+                ]}
+                onPress={() => setRecommendationLifeStage(option.id)}
+              >
+                <Text
+                  style={[
+                    tpStyles.optionText,
+                    {
+                      color:
+                        recommendationLifeStage === option.id
+                          ? colors.primaryForeground
+                          : colors.text,
+                    },
+                  ]}
+                >
+                  {option.label}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
-          <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>Used only when life stage matters. Kinfolk does not collect your birth date here or infer health, income, mobility, or family status. “Prefer not to say” opts out.</Text>
+          <Text
+            style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}
+          >
+            Used only when life stage matters. Kinfolk does not collect your
+            birth date here or infer health, income, mobility, or family status.
+            “Prefer not to say” opts out.
+          </Text>
 
-          <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>What do you want to avoid?</Text>
-          <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>We&apos;ll skip these unless you ask</Text>
+          <Text
+            style={[
+              tpStyles.sectionLabel,
+              { color: colors.text, marginTop: 20 },
+            ]}
+          >
+            What do you want to avoid?
+          </Text>
+          <Text
+            style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}
+          >
+            We&apos;ll skip these unless you ask
+          </Text>
           <View style={tpStyles.chips}>
             {AVOID_CATEGORIES.map((c) => {
               const sel = avoidCats.includes(c);
               return (
-                <TouchableOpacity activeOpacity={0.85} key={c} style={[tpStyles.chip, { backgroundColor: sel ? "#DC262614" : colors.card, borderColor: sel ? "#DC2626" : colors.border }]} onPress={() => toggleArr(avoidCats, c, setAvoidCats)}>
-                  <Text style={[tpStyles.chipText, { color: sel ? "#DC2626" : colors.text }]}>{c}</Text>
+                <TouchableOpacity
+                  activeOpacity={0.85}
+                  key={c}
+                  style={[
+                    tpStyles.chip,
+                    {
+                      backgroundColor: sel ? "#DC262614" : colors.card,
+                      borderColor: sel ? "#DC2626" : colors.border,
+                    },
+                  ]}
+                  onPress={() => toggleArr(avoidCats, c, setAvoidCats)}
+                >
+                  <Text
+                    style={[
+                      tpStyles.chipText,
+                      { color: sel ? "#DC2626" : colors.text },
+                    ]}
+                  >
+                    {c}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
           </View>
 
-          <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Budget range</Text>
+          <Text
+            style={[
+              tpStyles.sectionLabel,
+              { color: colors.text, marginTop: 20 },
+            ]}
+          >
+            Budget range
+          </Text>
           <View style={tpStyles.optionRow}>
             {BUDGET_OPTIONS.map((b) => (
-              <TouchableOpacity activeOpacity={0.85} key={b.id} style={[tpStyles.optionBtn, { backgroundColor: budget === b.id ? colors.primary : colors.card, borderColor: budget === b.id ? colors.primary : colors.border }]} onPress={() => setBudget(b.id)}>
-                <Text style={[tpStyles.optionText, { color: budget === b.id ? colors.primaryForeground : colors.text }]}>{b.label}</Text>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                key={b.id}
+                style={[
+                  tpStyles.optionBtn,
+                  {
+                    backgroundColor:
+                      budget === b.id ? colors.primary : colors.card,
+                    borderColor:
+                      budget === b.id ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={() => setBudget(b.id)}
+              >
+                <Text
+                  style={[
+                    tpStyles.optionText,
+                    {
+                      color:
+                        budget === b.id
+                          ? colors.primaryForeground
+                          : colors.text,
+                    },
+                  ]}
+                >
+                  {b.label}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>How do you travel?</Text>
-          <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>Choose every option that fits you — you can select more than one.</Text>
+          <Text
+            style={[
+              tpStyles.sectionLabel,
+              { color: colors.text, marginTop: 20 },
+            ]}
+          >
+            How do you travel?
+          </Text>
+          <Text
+            style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}
+          >
+            Choose every option that fits you — you can select more than one.
+          </Text>
           <View style={tpStyles.optionRow}>
             {TRIP_STYLES.map((s) => {
               const sel = tripStyles.includes(s.id);
               return (
-                <TouchableOpacity accessibilityRole="checkbox" accessibilityState={{ checked: sel }} activeOpacity={0.85} key={s.id} style={[tpStyles.optionBtn, { backgroundColor: sel ? colors.primary : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(tripStyles, s.id, setTripStyles)}>
-                  <Text style={[tpStyles.optionText, { color: sel ? colors.primaryForeground : colors.text }]}>{s.label}</Text>
+                <TouchableOpacity
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: sel }}
+                  activeOpacity={0.85}
+                  key={s.id}
+                  style={[
+                    tpStyles.optionBtn,
+                    {
+                      backgroundColor: sel ? colors.primary : colors.card,
+                      borderColor: sel ? colors.primary : colors.border,
+                    },
+                  ]}
+                  onPress={() => toggleArr(tripStyles, s.id, setTripStyles)}
+                >
+                  <Text
+                    style={[
+                      tpStyles.optionText,
+                      { color: sel ? colors.primaryForeground : colors.text },
+                    ]}
+                  >
+                    {s.label}
+                  </Text>
                 </TouchableOpacity>
               );
             })}
           </View>
 
-          <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Who&apos;s coming with you?</Text>
+          <Text
+            style={[
+              tpStyles.sectionLabel,
+              { color: colors.text, marginTop: 20 },
+            ]}
+          >
+            Who&apos;s coming with you?
+          </Text>
           <View style={tpStyles.optionRow}>
             {COMPANION_OPTIONS.map((c) => (
-              <TouchableOpacity activeOpacity={0.85} key={c.id} style={[tpStyles.optionBtn, { backgroundColor: companion === c.id ? colors.primary : colors.card, borderColor: companion === c.id ? colors.primary : colors.border }]} onPress={() => setCompanion(c.id)}>
-                <Text style={[tpStyles.optionText, { color: companion === c.id ? colors.primaryForeground : colors.text }]}>{c.label}</Text>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                key={c.id}
+                style={[
+                  tpStyles.optionBtn,
+                  {
+                    backgroundColor:
+                      companion === c.id ? colors.primary : colors.card,
+                    borderColor:
+                      companion === c.id ? colors.primary : colors.border,
+                  },
+                ]}
+                onPress={() => setCompanion(c.id)}
+              >
+                <Text
+                  style={[
+                    tpStyles.optionText,
+                    {
+                      color:
+                        companion === c.id
+                          ? colors.primaryForeground
+                          : colors.text,
+                    },
+                  ]}
+                >
+                  {c.label}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
 
           {/* ── Kinfolk Voices™ — Home Mode Customization ────────────────── */}
-          <View style={[tpStyles.voicesDivider, { borderTopColor: colors.border }]} />
-          <View style={[tpStyles.voicesHeader, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "25" }]}>
+          <View
+            style={[tpStyles.voicesDivider, { borderTopColor: colors.border }]}
+          />
+          <View
+            style={[
+              tpStyles.voicesHeader,
+              {
+                backgroundColor: colors.primary + "10",
+                borderColor: colors.primary + "25",
+              },
+            ]}
+          >
             <Text style={tpStyles.voicesHeaderIcon}>🏠</Text>
             <View style={{ flex: 1 }}>
-              <Text style={[tpStyles.voicesHeaderTitle, { color: colors.text }]}>Kinfolk Voices™ — Home Mode</Text>
-              <Text style={[tpStyles.voicesHeaderSub, { color: colors.mutedForeground }]}>
+              <Text
+                style={[tpStyles.voicesHeaderTitle, { color: colors.text }]}
+              >
+                Kinfolk Voices™ — Home Mode
+              </Text>
+              <Text
+                style={[
+                  tpStyles.voicesHeaderSub,
+                  { color: colors.mutedForeground },
+                ]}
+              >
                 {isPaid
                   ? "Customize how KinfolkAI sounds when you tap 🏠 Home in the chat"
                   : "Upgrade to Explorer+ to personalize your Home voice and unlock all 4 Kinfolk Voices™"}
@@ -1620,62 +3622,216 @@ function TasteProfileSheet({
 
           {isPaid ? (
             <>
-              <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Communication style</Text>
-              <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>How should KinfolkAI talk to you when Home mode is active?</Text>
+              <Text
+                style={[
+                  tpStyles.sectionLabel,
+                  { color: colors.text, marginTop: 20 },
+                ]}
+              >
+                Communication style
+              </Text>
+              <Text
+                style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}
+              >
+                How should KinfolkAI talk to you when Home mode is active?
+              </Text>
               <View style={{ gap: 8 }}>
                 {COMM_STYLES.map((cs) => {
                   const sel = commStyle === cs.id;
                   return (
-                    <TouchableOpacity activeOpacity={0.85}
+                    <TouchableOpacity
+                      activeOpacity={0.85}
                       key={cs.id}
-                      style={[tpStyles.commCard, { backgroundColor: sel ? colors.primary + "12" : colors.card, borderColor: sel ? colors.primary : colors.border }]}
+                      style={[
+                        tpStyles.commCard,
+                        {
+                          backgroundColor: sel
+                            ? colors.primary + "12"
+                            : colors.card,
+                          borderColor: sel ? colors.primary : colors.border,
+                        },
+                      ]}
                       onPress={() => setCommStyle(cs.id)}
                     >
                       <View style={tpStyles.commCardTop}>
-                        <Text style={[tpStyles.commCardLabel, { color: colors.text }]}>{cs.label}</Text>
-                        {sel && <Ionicons name="checkmark-circle" size={16} color={colors.primary} />}
+                        <Text
+                          style={[
+                            tpStyles.commCardLabel,
+                            { color: colors.text },
+                          ]}
+                        >
+                          {cs.label}
+                        </Text>
+                        {sel && (
+                          <Ionicons
+                            name="checkmark-circle"
+                            size={16}
+                            color={colors.primary}
+                          />
+                        )}
                       </View>
-                      <Text style={[tpStyles.commCardExample, { color: colors.mutedForeground }]}>{cs.example}</Text>
+                      <Text
+                        style={[
+                          tpStyles.commCardExample,
+                          { color: colors.mutedForeground },
+                        ]}
+                      >
+                        {cs.example}
+                      </Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
 
-              <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Emoji level</Text>
+              <Text
+                style={[
+                  tpStyles.sectionLabel,
+                  { color: colors.text, marginTop: 20 },
+                ]}
+              >
+                Emoji level
+              </Text>
               <View style={tpStyles.optionRow}>
                 {EMOJI_LEVELS.map((e) => (
-                  <TouchableOpacity activeOpacity={0.85} key={e.id} style={[tpStyles.optionBtn, { backgroundColor: emojiLvl === e.id ? colors.primary : colors.card, borderColor: emojiLvl === e.id ? colors.primary : colors.border }]} onPress={() => setEmojiLvl(e.id)}>
-                    <Text style={[tpStyles.optionText, { color: emojiLvl === e.id ? colors.primaryForeground : colors.text }]}>{e.label}</Text>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    key={e.id}
+                    style={[
+                      tpStyles.optionBtn,
+                      {
+                        backgroundColor:
+                          emojiLvl === e.id ? colors.primary : colors.card,
+                        borderColor:
+                          emojiLvl === e.id ? colors.primary : colors.border,
+                      },
+                    ]}
+                    onPress={() => setEmojiLvl(e.id)}
+                  >
+                    <Text
+                      style={[
+                        tpStyles.optionText,
+                        {
+                          color:
+                            emojiLvl === e.id
+                              ? colors.primaryForeground
+                              : colors.text,
+                        },
+                      ]}
+                    >
+                      {e.label}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
-              <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 16 }]}>Humor</Text>
+              <Text
+                style={[
+                  tpStyles.sectionLabel,
+                  { color: colors.text, marginTop: 16 },
+                ]}
+              >
+                Humor
+              </Text>
               <View style={tpStyles.optionRow}>
                 {HUMOR_LEVELS.map((h) => (
-                  <TouchableOpacity activeOpacity={0.85} key={h.id} style={[tpStyles.optionBtn, { backgroundColor: humor === h.id ? colors.primary : colors.card, borderColor: humor === h.id ? colors.primary : colors.border }]} onPress={() => setHumor(h.id)}>
-                    <Text style={[tpStyles.optionText, { color: humor === h.id ? colors.primaryForeground : colors.text }]}>{h.label}</Text>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    key={h.id}
+                    style={[
+                      tpStyles.optionBtn,
+                      {
+                        backgroundColor:
+                          humor === h.id ? colors.primary : colors.card,
+                        borderColor:
+                          humor === h.id ? colors.primary : colors.border,
+                      },
+                    ]}
+                    onPress={() => setHumor(h.id)}
+                  >
+                    <Text
+                      style={[
+                        tpStyles.optionText,
+                        {
+                          color:
+                            humor === h.id
+                              ? colors.primaryForeground
+                              : colors.text,
+                        },
+                      ]}
+                    >
+                      {h.label}
+                    </Text>
                   </TouchableOpacity>
                 ))}
               </View>
 
-              <Text style={[tpStyles.sectionLabel, { color: colors.text, marginTop: 20 }]}>Cultural interests</Text>
-              <Text style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}>KinfolkAI weaves these into recommendations when relevant</Text>
+              <Text
+                style={[
+                  tpStyles.sectionLabel,
+                  { color: colors.text, marginTop: 20 },
+                ]}
+              >
+                Cultural interests
+              </Text>
+              <Text
+                style={[tpStyles.sectionSub, { color: colors.mutedForeground }]}
+              >
+                KinfolkAI weaves these into recommendations when relevant
+              </Text>
               <View style={tpStyles.chips}>
                 {CULTURAL_INTERESTS_LIST.map((c) => {
                   const sel = culturalInt.includes(c);
                   return (
-                    <TouchableOpacity activeOpacity={0.85} key={c} style={[tpStyles.chip, { backgroundColor: sel ? colors.primary + "18" : colors.card, borderColor: sel ? colors.primary : colors.border }]} onPress={() => toggleArr(culturalInt, c, setCulturalInt)}>
-                      <Text style={[tpStyles.chipText, { color: sel ? colors.primary : colors.text }]}>{c}</Text>
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      key={c}
+                      style={[
+                        tpStyles.chip,
+                        {
+                          backgroundColor: sel
+                            ? colors.primary + "18"
+                            : colors.card,
+                          borderColor: sel ? colors.primary : colors.border,
+                        },
+                      ]}
+                      onPress={() => toggleArr(culturalInt, c, setCulturalInt)}
+                    >
+                      <Text
+                        style={[
+                          tpStyles.chipText,
+                          { color: sel ? colors.primary : colors.text },
+                        ]}
+                      >
+                        {c}
+                      </Text>
                     </TouchableOpacity>
                   );
                 })}
               </View>
 
-              <View style={[tpStyles.kbygRow, { backgroundColor: colors.card, borderColor: colors.border, marginTop: 20 }]}>
+              <View
+                style={[
+                  tpStyles.kbygRow,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: colors.border,
+                    marginTop: 20,
+                  },
+                ]}
+              >
                 <View style={{ flex: 1 }}>
-                  <Text style={[tpStyles.kbygTitle, { color: colors.text }]}>📍 Know Before You Go</Text>
-                  <Text style={[tpStyles.kbygDesc, { color: colors.mutedForeground }]}>KinfolkAI adds atmosphere, parking, best time, and a community insider tip to each place recommendation</Text>
+                  <Text style={[tpStyles.kbygTitle, { color: colors.text }]}>
+                    📍 Know Before You Go
+                  </Text>
+                  <Text
+                    style={[
+                      tpStyles.kbygDesc,
+                      { color: colors.mutedForeground },
+                    ]}
+                  >
+                    KinfolkAI adds atmosphere, parking, best time, and a
+                    community insider tip to each place recommendation
+                  </Text>
                 </View>
                 <Switch
                   value={kbyg}
@@ -1687,12 +3843,17 @@ function TasteProfileSheet({
             </>
           ) : (
             <TouchableOpacity
-              style={[tpStyles.upgradeBtn, { backgroundColor: GOLD + "18", borderColor: GOLD + "40" }]}
+              style={[
+                tpStyles.upgradeBtn,
+                { backgroundColor: GOLD + "18", borderColor: GOLD + "40" },
+              ]}
               onPress={onClose}
               activeOpacity={0.8}
             >
               <Ionicons name="star" size={16} color={GOLD} />
-              <Text style={[tpStyles.upgradeBtnText, { color: GOLD }]}>Upgrade to Explorer+ to personalize your Home voice</Text>
+              <Text style={[tpStyles.upgradeBtnText, { color: GOLD }]}>
+                Upgrade to Explorer+ to personalize your Home voice
+              </Text>
             </TouchableOpacity>
           )}
         </ScrollView>
@@ -1700,17 +3861,51 @@ function TasteProfileSheet({
         {onRetakeQuiz && (
           <TouchableOpacity
             style={[tpStyles.retakeBtn, { borderColor: colors.border }]}
-            onPress={() => { onClose(); void resetKinfolkOnboarding().then(onRetakeQuiz); }}
+            onPress={() => {
+              onClose();
+              void resetKinfolkOnboarding().then(onRetakeQuiz);
+            }}
             activeOpacity={0.7}
           >
             <Ionicons name="refresh" size={14} color={colors.mutedForeground} />
-            <Text style={[tpStyles.retakeBtnText, { color: colors.mutedForeground }]}>Retake KinfolkAI™ setup quiz</Text>
+            <Text
+              style={[
+                tpStyles.retakeBtnText,
+                { color: colors.mutedForeground },
+              ]}
+            >
+              Retake KinfolkAI™ setup quiz
+            </Text>
           </TouchableOpacity>
         )}
-        <View style={[tpStyles.footer, { borderTopColor: colors.border, backgroundColor: colors.background }]}>
-          <TouchableOpacity activeOpacity={0.85} style={[tpStyles.saveBtn, { backgroundColor: colors.primary }]} onPress={handleSave} disabled={saving}>
-            <Ionicons name="checkmark-circle" size={18} color={colors.primaryForeground} />
-            <Text style={[tpStyles.saveBtnText, { color: colors.primaryForeground }]}>{saving ? "Saving…" : "Save My Profile"}</Text>
+        <View
+          style={[
+            tpStyles.footer,
+            {
+              borderTopColor: colors.border,
+              backgroundColor: colors.background,
+            },
+          ]}
+        >
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={[tpStyles.saveBtn, { backgroundColor: colors.primary }]}
+            onPress={handleSave}
+            disabled={saving}
+          >
+            <Ionicons
+              name="checkmark-circle"
+              size={18}
+              color={colors.primaryForeground}
+            />
+            <Text
+              style={[
+                tpStyles.saveBtnText,
+                { color: colors.primaryForeground },
+              ]}
+            >
+              {saving ? "Saving…" : "Save My Profile"}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -1719,113 +3914,437 @@ function TasteProfileSheet({
 }
 const tpStyles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 20, borderBottomWidth: 1 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 20,
+    borderBottomWidth: 1,
+  },
   title: { fontFamily: "Inter_700Bold", fontSize: 20 },
   scroll: { padding: 20, paddingBottom: 36 },
-  profileBadge: { flexDirection: "row", alignItems: "flex-start", gap: 8, borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 20 },
-  profileBadgeText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, flex: 1 },
+  profileBadge: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+    marginBottom: 20,
+  },
+  profileBadgeText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    lineHeight: 18,
+    flex: 1,
+  },
   sectionLabel: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 4 },
-  sectionSub: { fontFamily: "Inter_400Regular", fontSize: 12, marginBottom: 10 },
-  specificInput: { borderRadius: 12, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 13, marginBottom: 8 },
+  sectionSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    marginBottom: 10,
+  },
+  specificInput: {
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    marginBottom: 8,
+  },
   chips: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  chip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 7 },
+  chip: {
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
   chipText: { fontFamily: "Inter_400Regular", fontSize: 13 },
   optionRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
-  optionBtn: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, paddingVertical: 8 },
+  optionBtn: {
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
   optionText: { fontFamily: "Inter_400Regular", fontSize: 13 },
   voicesDivider: { borderTopWidth: 1, marginTop: 28, marginBottom: 20 },
-  voicesHeader: { flexDirection: "row", alignItems: "flex-start", gap: 10, borderRadius: 14, borderWidth: 1, padding: 14, marginBottom: 4 },
+  voicesHeader: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    padding: 14,
+    marginBottom: 4,
+  },
   voicesHeaderIcon: { fontSize: 22, marginTop: 2 },
-  voicesHeaderTitle: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 4 },
-  voicesHeaderSub: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  voicesHeaderTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 15,
+    marginBottom: 4,
+  },
+  voicesHeaderSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    lineHeight: 17,
+  },
   commCard: { borderRadius: 12, borderWidth: 1, padding: 12 },
-  commCardTop: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 4 },
+  commCardTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 4,
+  },
   commCardLabel: { fontFamily: "Inter_700Bold", fontSize: 14 },
-  commCardExample: { fontFamily: "Inter_400Regular", fontSize: 12, fontStyle: "italic" },
-  kbygRow: { flexDirection: "row", alignItems: "center", gap: 12, borderRadius: 12, borderWidth: 1, padding: 14 },
+  commCardExample: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    fontStyle: "italic",
+  },
+  kbygRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 14,
+  },
   kbygTitle: { fontFamily: "Inter_700Bold", fontSize: 14, marginBottom: 4 },
   kbygDesc: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 16 },
-  upgradeBtn: { flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 12, borderWidth: 1, padding: 14, marginTop: 16 },
+  upgradeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 14,
+    marginTop: 16,
+  },
   upgradeBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 13, flex: 1 },
-  retakeBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginHorizontal: 20, marginBottom: 12, paddingVertical: 12, borderRadius: 10, borderWidth: 1 },
+  retakeBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
   retakeBtnText: { fontFamily: "Inter_400Regular", fontSize: 13 },
   footer: { padding: 16, borderTopWidth: 1 },
-  saveBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, borderRadius: 14, padding: 16 },
+  saveBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    borderRadius: 14,
+    padding: 16,
+  },
   saveBtnText: { fontFamily: "Inter_700Bold", fontSize: 16 },
 });
 
 // ─── Sub-component: Session History Drawer ───────────────────────────────────
 function SessionHistoryDrawer({
-  visible, sessions, onClose, onSelect, onNew, continuityEnabled, onToggleContinuity,
-  onLoadView, onOrganize, error, onRetry, colors,
+  visible,
+  sessions,
+  onClose,
+  onSelect,
+  onNew,
+  continuityEnabled,
+  onToggleContinuity,
+  onLoadView,
+  onOrganize,
+  error,
+  onRetry,
+  colors,
 }: {
   visible: boolean;
-  sessions: { id: string; title: string | null; destination: string | null; createdAt: string; isPinned?: boolean }[];
+  sessions: {
+    id: string;
+    title: string | null;
+    destination: string | null;
+    createdAt: string;
+    isPinned?: boolean;
+  }[];
   onClose: () => void;
   onSelect: (id: string) => Promise<void>;
   onNew: () => void;
   continuityEnabled: boolean;
   onToggleContinuity: (enabled: boolean) => void;
   onLoadView: (view: "active" | "archived") => void;
-  onOrganize: (id: string, action: "archive" | "restore" | "pin" | "unpin") => void;
+  onOrganize: (
+    id: string,
+    action: "archive" | "restore" | "pin" | "unpin",
+  ) => void;
   error: string | null;
   onRetry: () => void;
   colors: ReturnType<typeof useColors>;
 }) {
-  const [historyView, setHistoryView] = useState<"active" | "archived">("active");
+  const [historyView, setHistoryView] = useState<"active" | "archived">(
+    "active",
+  );
 
   useEffect(() => {
     if (visible && continuityEnabled) onLoadView(historyView);
   }, [visible, continuityEnabled, historyView, onLoadView]);
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={[shStyles.container, { backgroundColor: colors.background }]}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <View
+        style={[shStyles.container, { backgroundColor: colors.background }]}
+      >
         <View style={[shStyles.header, { borderBottomColor: colors.border }]}>
-          <Text style={[shStyles.title, { color: colors.text }]}>Conversation History</Text>
-          <TouchableOpacity activeOpacity={0.85} onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <Text style={[shStyles.title, { color: colors.text }]}>
+            Conversation History
+          </Text>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={onClose}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons name="close" size={22} color={colors.text} />
           </TouchableOpacity>
         </View>
         <TouchableOpacity
-          style={[shStyles.newBtn, { backgroundColor: colors.primary + "14", borderColor: colors.primary + "30" }]}
-          onPress={() => { onNew(); onClose(); }}
+          style={[
+            shStyles.newBtn,
+            {
+              backgroundColor: colors.primary + "14",
+              borderColor: colors.primary + "30",
+            },
+          ]}
+          onPress={() => {
+            onNew();
+            onClose();
+          }}
           activeOpacity={0.8}
         >
-          <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
-          <Text style={[shStyles.newBtnText, { color: colors.primary }]}>Start New Conversation</Text>
+          <Ionicons
+            name="add-circle-outline"
+            size={18}
+            color={colors.primary}
+          />
+          <Text style={[shStyles.newBtnText, { color: colors.primary }]}>
+            Start New Conversation
+          </Text>
         </TouchableOpacity>
-        <View style={[shStyles.continuityCard, { backgroundColor: colors.primary + "10", borderColor: colors.primary + "30" }]}>
-          <Text style={[shStyles.continuityTitle, { color: colors.text }]}>{continuityEnabled ? "Kinfolk continuity is on" : "Kinfolk continuity is paused"}</Text>
-          <Text style={[shStyles.continuityText, { color: colors.mutedForeground }]}>{continuityEnabled ? "Your saved conversations and approved memories may be used only for your future Kinfolk chats." : "Past chats are stored but not shown to or used by Kinfolk until you turn continuity on."}</Text>
-          <TouchableOpacity activeOpacity={0.82} style={[shStyles.continuityButton, { backgroundColor: continuityEnabled ? colors.card : colors.primary, borderColor: colors.primary }]} onPress={() => onToggleContinuity(!continuityEnabled)}>
-            <Text style={[shStyles.continuityButtonText, { color: continuityEnabled ? colors.primary : colors.primaryForeground }]}>{continuityEnabled ? "Pause continuity" : "Turn on continuity"}</Text>
+        <View
+          style={[
+            shStyles.continuityCard,
+            {
+              backgroundColor: colors.primary + "10",
+              borderColor: colors.primary + "30",
+            },
+          ]}
+        >
+          <Text style={[shStyles.continuityTitle, { color: colors.text }]}>
+            {continuityEnabled
+              ? "Kinfolk continuity is on"
+              : "Kinfolk continuity is paused"}
+          </Text>
+          <Text
+            style={[shStyles.continuityText, { color: colors.mutedForeground }]}
+          >
+            {continuityEnabled
+              ? "Your saved conversations and approved memories may be used only for your future Kinfolk chats."
+              : "Past chats are stored but not shown to or used by Kinfolk until you turn continuity on."}
+          </Text>
+          <TouchableOpacity
+            activeOpacity={0.82}
+            style={[
+              shStyles.continuityButton,
+              {
+                backgroundColor: continuityEnabled
+                  ? colors.card
+                  : colors.primary,
+                borderColor: colors.primary,
+              },
+            ]}
+            onPress={() => onToggleContinuity(!continuityEnabled)}
+          >
+            <Text
+              style={[
+                shStyles.continuityButtonText,
+                {
+                  color: continuityEnabled
+                    ? colors.primary
+                    : colors.primaryForeground,
+                },
+              ]}
+            >
+              {continuityEnabled ? "Pause continuity" : "Turn on continuity"}
+            </Text>
           </TouchableOpacity>
         </View>
-        {continuityEnabled && <View style={[shStyles.viewToggle, { backgroundColor: colors.secondary }]}>
-          {(["active", "archived"] as const).map((view) => <TouchableOpacity key={view} activeOpacity={0.8} onPress={() => setHistoryView(view)} style={[shStyles.viewToggleButton, historyView === view && { backgroundColor: colors.card }]}><Text style={[shStyles.viewToggleText, { color: historyView === view ? colors.primary : colors.mutedForeground }]}>{view === "active" ? "Conversations" : "Archive"}</Text></TouchableOpacity>)}
-        </View>}
-        <ScrollView
-        keyboardDismissMode="on-drag" style={{ flex: 1 }}>
+        {continuityEnabled && (
+          <View
+            style={[shStyles.viewToggle, { backgroundColor: colors.secondary }]}
+          >
+            {(["active", "archived"] as const).map((view) => (
+              <TouchableOpacity
+                key={view}
+                activeOpacity={0.8}
+                onPress={() => setHistoryView(view)}
+                style={[
+                  shStyles.viewToggleButton,
+                  historyView === view && { backgroundColor: colors.card },
+                ]}
+              >
+                <Text
+                  style={[
+                    shStyles.viewToggleText,
+                    {
+                      color:
+                        historyView === view
+                          ? colors.primary
+                          : colors.mutedForeground,
+                    },
+                  ]}
+                >
+                  {view === "active" ? "Conversations" : "Archive"}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+        <ScrollView keyboardDismissMode="on-drag" style={{ flex: 1 }}>
           {!continuityEnabled ? (
-            <Text style={[shStyles.empty, { color: colors.mutedForeground }]}>Turn on continuity to see or use saved conversations.</Text>
+            <Text style={[shStyles.empty, { color: colors.mutedForeground }]}>
+              Turn on continuity to see or use saved conversations.
+            </Text>
           ) : error ? (
-            <View style={{ alignItems: "center", paddingTop: 40, paddingHorizontal: 24 }}><Text style={[shStyles.empty, { color: "#B42318", paddingTop: 0 }]}>{error}</Text><TouchableOpacity onPress={onRetry} style={[shStyles.continuityButton, { backgroundColor: colors.primary, borderColor: colors.primary, marginTop: 12 }]}><Text style={[shStyles.continuityButtonText, { color: colors.primaryForeground }]}>Retry</Text></TouchableOpacity></View>
+            <View
+              style={{
+                alignItems: "center",
+                paddingTop: 40,
+                paddingHorizontal: 24,
+              }}
+            >
+              <Text
+                style={[shStyles.empty, { color: "#B42318", paddingTop: 0 }]}
+              >
+                {error}
+              </Text>
+              <TouchableOpacity
+                onPress={onRetry}
+                style={[
+                  shStyles.continuityButton,
+                  {
+                    backgroundColor: colors.primary,
+                    borderColor: colors.primary,
+                    marginTop: 12,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    shStyles.continuityButtonText,
+                    { color: colors.primaryForeground },
+                  ]}
+                >
+                  Retry
+                </Text>
+              </TouchableOpacity>
+            </View>
           ) : sessions.length === 0 ? (
-            <Text style={[shStyles.empty, { color: colors.mutedForeground }]}>{historyView === "archived" ? "Nothing archived yet" : "No past conversations yet"}</Text>
+            <Text style={[shStyles.empty, { color: colors.mutedForeground }]}>
+              {historyView === "archived"
+                ? "Nothing archived yet"
+                : "No past conversations yet"}
+            </Text>
           ) : (
             sessions.map((s) => (
-              <View key={s.id} style={[shStyles.item, { borderBottomColor: colors.border }]}>
-                <TouchableOpacity style={{ flexDirection: "row", alignItems: "center", gap: 12, flex: 1 }} onPress={() => { void onSelect(s.id); }} activeOpacity={0.7}>
-                  <Ionicons name={s.isPinned ? "pin" : "chatbubble-outline"} size={16} color={s.isPinned ? colors.primary : colors.mutedForeground} />
+              <View
+                key={s.id}
+                style={[shStyles.item, { borderBottomColor: colors.border }]}
+              >
+                <TouchableOpacity
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 12,
+                    flex: 1,
+                  }}
+                  onPress={() => {
+                    void onSelect(s.id);
+                  }}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons
+                    name={s.isPinned ? "pin" : "chatbubble-outline"}
+                    size={16}
+                    color={s.isPinned ? colors.primary : colors.mutedForeground}
+                  />
                   <View style={{ flex: 1 }}>
-                    <Text style={[shStyles.itemTitle, { color: colors.text }]} numberOfLines={1}>{s.title ?? s.destination ?? "Conversation"}</Text>
-                    <Text style={[shStyles.itemDate, { color: colors.mutedForeground }]}>{new Date(s.createdAt).toLocaleDateString()}</Text>
+                    <Text
+                      style={[shStyles.itemTitle, { color: colors.text }]}
+                      numberOfLines={1}
+                    >
+                      {s.title ?? s.destination ?? "Conversation"}
+                    </Text>
+                    <Text
+                      style={[
+                        shStyles.itemDate,
+                        { color: colors.mutedForeground },
+                      ]}
+                    >
+                      {new Date(s.createdAt).toLocaleDateString()}
+                    </Text>
                   </View>
-                  <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
+                  <Ionicons
+                    name="chevron-forward"
+                    size={16}
+                    color={colors.mutedForeground}
+                  />
                 </TouchableOpacity>
-                {historyView === "active" && <TouchableOpacity accessibilityLabel={s.isPinned ? "Unpin conversation" : "Pin conversation"} onPress={() => onOrganize(s.id, s.isPinned ? "unpin" : "pin")}><Ionicons name="pin-outline" size={17} color={colors.mutedForeground} /></TouchableOpacity>}
-                <TouchableOpacity accessibilityLabel={historyView === "active" ? "Archive conversation" : "Restore conversation"} onPress={() => onOrganize(s.id, historyView === "active" ? "archive" : "restore")}><Ionicons name={historyView === "active" ? "archive-outline" : "refresh-outline"} size={17} color={colors.mutedForeground} /></TouchableOpacity>
+                {historyView === "active" && (
+                  <TouchableOpacity
+                    accessibilityLabel={
+                      s.isPinned ? "Unpin conversation" : "Pin conversation"
+                    }
+                    onPress={() =>
+                      onOrganize(s.id, s.isPinned ? "unpin" : "pin")
+                    }
+                  >
+                    <Ionicons
+                      name="pin-outline"
+                      size={17}
+                      color={colors.mutedForeground}
+                    />
+                  </TouchableOpacity>
+                )}
+                <TouchableOpacity
+                  accessibilityLabel={
+                    historyView === "active"
+                      ? "Archive conversation"
+                      : "Restore conversation"
+                  }
+                  onPress={() =>
+                    onOrganize(
+                      s.id,
+                      historyView === "active" ? "archive" : "restore",
+                    )
+                  }
+                >
+                  <Ionicons
+                    name={
+                      historyView === "active"
+                        ? "archive-outline"
+                        : "refresh-outline"
+                    }
+                    size={17}
+                    color={colors.mutedForeground}
+                  />
+                </TouchableOpacity>
               </View>
             ))
           )}
@@ -1836,21 +4355,80 @@ function SessionHistoryDrawer({
 }
 const shStyles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 20, borderBottomWidth: 1 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 20,
+    borderBottomWidth: 1,
+  },
   title: { fontFamily: "Inter_700Bold", fontSize: 20 },
-  newBtn: { flexDirection: "row", alignItems: "center", gap: 10, margin: 16, borderRadius: 12, borderWidth: 1, padding: 14 },
+  newBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    margin: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 14,
+  },
   newBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
-  empty: { fontFamily: "Inter_400Regular", fontSize: 14, textAlign: "center", paddingTop: 40 },
-  item: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1 },
+  empty: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    textAlign: "center",
+    paddingTop: 40,
+  },
+  item: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+  },
   itemTitle: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   itemDate: { fontFamily: "Inter_400Regular", fontSize: 12 },
-  continuityCard: { marginHorizontal: 16, marginBottom: 10, borderRadius: 12, borderWidth: 1, padding: 12 },
-  continuityTitle: { fontFamily: "Inter_700Bold", fontSize: 13, marginBottom: 4 },
-  continuityText: { fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 },
-  continuityButton: { alignSelf: "flex-start", borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 7, marginTop: 10 },
+  continuityCard: {
+    marginHorizontal: 16,
+    marginBottom: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 12,
+  },
+  continuityTitle: {
+    fontFamily: "Inter_700Bold",
+    fontSize: 13,
+    marginBottom: 4,
+  },
+  continuityText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 11,
+    lineHeight: 16,
+  },
+  continuityButton: {
+    alignSelf: "flex-start",
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    marginTop: 10,
+  },
   continuityButtonText: { fontFamily: "Inter_700Bold", fontSize: 11 },
-  viewToggle: { flexDirection: "row", gap: 4, borderRadius: 9, padding: 4, marginHorizontal: 16, marginBottom: 8 },
-  viewToggleButton: { flex: 1, paddingVertical: 7, alignItems: "center", borderRadius: 6 },
+  viewToggle: {
+    flexDirection: "row",
+    gap: 4,
+    borderRadius: 9,
+    padding: 4,
+    marginHorizontal: 16,
+    marginBottom: 8,
+  },
+  viewToggleButton: {
+    flex: 1,
+    paddingVertical: 7,
+    alignItems: "center",
+    borderRadius: 6,
+  },
   viewToggleText: { fontFamily: "Inter_700Bold", fontSize: 11 },
 });
 
@@ -1869,12 +4447,16 @@ type TrackedFlight = {
 };
 
 function getFlightApiBase(): string {
-  if (process.env.EXPO_PUBLIC_DOMAIN) return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
+  if (process.env.EXPO_PUBLIC_DOMAIN)
+    return `https://${process.env.EXPO_PUBLIC_DOMAIN}`;
   return "";
 }
 
 function FlightTrackerModal({
-  visible, onClose, isAuthenticated, colors,
+  visible,
+  onClose,
+  isAuthenticated,
+  colors,
 }: {
   visible: boolean;
   onClose: () => void;
@@ -1904,11 +4486,19 @@ function FlightTrackerModal({
         const data = (await res.json()) as { flights: TrackedFlight[] };
         setFlights(data.flights ?? []);
       }
-    } catch { /* noop */ }
-    finally { setLoading(false); }
+    } catch {
+      /* noop */
+    } finally {
+      setLoading(false);
+    }
   }, [isAuthenticated]);
 
-  useEffect(() => { if (visible) queueMicrotask(() => { void loadFlights(); }); }, [visible, loadFlights]);
+  useEffect(() => {
+    if (visible)
+      queueMicrotask(() => {
+        void loadFlights();
+      });
+  }, [visible, loadFlights]);
 
   const handleAdd = async () => {
     if (!flightNum.trim() || !depDate.trim()) {
@@ -1921,7 +4511,10 @@ function FlightTrackerModal({
       const base = getFlightApiBase();
       const res = await fetch(`${base}/api/travel/flights`, {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({
           flightNumber: flightNum.trim(),
           departureDate: depDate.trim(),
@@ -1931,13 +4524,19 @@ function FlightTrackerModal({
         }),
       });
       if (res.ok) {
-        setFlightNum(""); setDepDate(""); setOrigin(""); setDest(""); setAirline("");
+        setFlightNum("");
+        setDepDate("");
+        setOrigin("");
+        setDest("");
+        setAirline("");
         setShowAddForm(false);
         void loadFlights();
       } else {
         Alert.alert("Error", "Failed to add flight.");
       }
-    } finally { setAdding(false); }
+    } finally {
+      setAdding(false);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -1959,46 +4558,105 @@ function FlightTrackerModal({
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <View style={[ftStyles.container, { backgroundColor: colors.background }]}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <View
+        style={[ftStyles.container, { backgroundColor: colors.background }]}
+      >
         <View style={[ftStyles.header, { borderBottomColor: colors.border }]}>
           <View style={ftStyles.headerLeft}>
-            <Ionicons name="airplane-outline" size={20} color={colors.primary} />
-            <Text style={[ftStyles.title, { color: colors.foreground }]}>Flight Tracker</Text>
+            <Ionicons
+              name="airplane-outline"
+              size={20}
+              color={colors.primary}
+            />
+            <Text style={[ftStyles.title, { color: colors.foreground }]}>
+              Flight Tracker
+            </Text>
           </View>
-          <TouchableOpacity activeOpacity={0.85} onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={onClose}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
             <Ionicons name="close" size={22} color={colors.foreground} />
           </TouchableOpacity>
         </View>
 
         {!isAuthenticated ? (
           <View style={ftStyles.emptyWrap}>
-            <Ionicons name="airplane-outline" size={40} color={colors.mutedForeground} />
-            <Text style={[ftStyles.emptyText, { color: colors.mutedForeground }]}>Sign in to track your flights</Text>
+            <Ionicons
+              name="airplane-outline"
+              size={40}
+              color={colors.mutedForeground}
+            />
+            <Text
+              style={[ftStyles.emptyText, { color: colors.mutedForeground }]}
+            >
+              Sign in to track your flights
+            </Text>
           </View>
         ) : (
           <ScrollView
-        keyboardDismissMode="on-drag" style={{ flex: 1 }} contentContainerStyle={ftStyles.scroll}>
-            <Text style={[ftStyles.subtitle, { color: colors.mutedForeground }]}>
-              Save flight numbers from your travel plans. We check status and alert you to delays.
+            keyboardDismissMode="on-drag"
+            style={{ flex: 1 }}
+            contentContainerStyle={ftStyles.scroll}
+          >
+            <Text
+              style={[ftStyles.subtitle, { color: colors.mutedForeground }]}
+            >
+              Save flight numbers from your travel plans. We check status and
+              alert you to delays.
             </Text>
 
             {!showAddForm && (
               <TouchableOpacity
-                style={[ftStyles.addBtn, { backgroundColor: colors.primary + "14", borderColor: colors.primary + "30" }]}
+                style={[
+                  ftStyles.addBtn,
+                  {
+                    backgroundColor: colors.primary + "14",
+                    borderColor: colors.primary + "30",
+                  },
+                ]}
                 onPress={() => setShowAddForm(true)}
                 activeOpacity={0.8}
               >
-                <Ionicons name="add-circle-outline" size={18} color={colors.primary} />
-                <Text style={[ftStyles.addBtnText, { color: colors.primary }]}>Track a Flight</Text>
+                <Ionicons
+                  name="add-circle-outline"
+                  size={18}
+                  color={colors.primary}
+                />
+                <Text style={[ftStyles.addBtnText, { color: colors.primary }]}>
+                  Track a Flight
+                </Text>
               </TouchableOpacity>
             )}
 
             {showAddForm && (
-              <View style={[ftStyles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Text style={[ftStyles.formTitle, { color: colors.foreground }]}>Add Flight</Text>
+              <View
+                style={[
+                  ftStyles.formCard,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
+              >
+                <Text
+                  style={[ftStyles.formTitle, { color: colors.foreground }]}
+                >
+                  Add Flight
+                </Text>
                 <TextInput
-                  style={[ftStyles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+                  style={[
+                    ftStyles.input,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                      color: colors.foreground,
+                    },
+                  ]}
                   placeholder="Flight # (e.g. AA1234)"
                   placeholderTextColor={colors.mutedForeground}
                   value={flightNum}
@@ -2006,7 +4664,14 @@ function FlightTrackerModal({
                   autoCapitalize="characters"
                 />
                 <TextInput
-                  style={[ftStyles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+                  style={[
+                    ftStyles.input,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                      color: colors.foreground,
+                    },
+                  ]}
                   placeholder="Departure Date (YYYY-MM-DD)"
                   placeholderTextColor={colors.mutedForeground}
                   value={depDate}
@@ -2014,7 +4679,15 @@ function FlightTrackerModal({
                 />
                 <View style={ftStyles.row}>
                   <TextInput
-                    style={[ftStyles.input, ftStyles.halfInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+                    style={[
+                      ftStyles.input,
+                      ftStyles.halfInput,
+                      {
+                        backgroundColor: colors.background,
+                        borderColor: colors.border,
+                        color: colors.foreground,
+                      },
+                    ]}
                     placeholder="From (ATL)"
                     placeholderTextColor={colors.mutedForeground}
                     value={origin}
@@ -2022,7 +4695,15 @@ function FlightTrackerModal({
                     autoCapitalize="characters"
                   />
                   <TextInput
-                    style={[ftStyles.input, ftStyles.halfInput, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+                    style={[
+                      ftStyles.input,
+                      ftStyles.halfInput,
+                      {
+                        backgroundColor: colors.background,
+                        borderColor: colors.border,
+                        color: colors.foreground,
+                      },
+                    ]}
                     placeholder="To (IAH)"
                     placeholderTextColor={colors.mutedForeground}
                     value={dest}
@@ -2031,59 +4712,178 @@ function FlightTrackerModal({
                   />
                 </View>
                 <TextInput
-                  style={[ftStyles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.foreground }]}
+                  style={[
+                    ftStyles.input,
+                    {
+                      backgroundColor: colors.background,
+                      borderColor: colors.border,
+                      color: colors.foreground,
+                    },
+                  ]}
                   placeholder="Airline (optional)"
                   placeholderTextColor={colors.mutedForeground}
                   value={airline}
                   onChangeText={setAirline}
                 />
                 <View style={ftStyles.formActions}>
-                  <TouchableOpacity activeOpacity={0.85} style={[ftStyles.cancelBtn, { borderColor: colors.border }]} onPress={() => setShowAddForm(false)}>
-                    <Text style={[ftStyles.cancelBtnText, { color: colors.mutedForeground }]}>Cancel</Text>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    style={[ftStyles.cancelBtn, { borderColor: colors.border }]}
+                    onPress={() => setShowAddForm(false)}
+                  >
+                    <Text
+                      style={[
+                        ftStyles.cancelBtnText,
+                        { color: colors.mutedForeground },
+                      ]}
+                    >
+                      Cancel
+                    </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity activeOpacity={0.85} style={[ftStyles.saveFlightBtn, { backgroundColor: colors.primary }]} onPress={() => void handleAdd()} disabled={adding}>
-                    <Text style={[ftStyles.saveFlightBtnText, { color: colors.primaryForeground }]}>{adding ? "Saving…" : "Save Flight"}</Text>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    style={[
+                      ftStyles.saveFlightBtn,
+                      { backgroundColor: colors.primary },
+                    ]}
+                    onPress={() => void handleAdd()}
+                    disabled={adding}
+                  >
+                    <Text
+                      style={[
+                        ftStyles.saveFlightBtnText,
+                        { color: colors.primaryForeground },
+                      ]}
+                    >
+                      {adding ? "Saving…" : "Save Flight"}
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
             )}
 
             {loading ? (
-              <ActivityIndicator style={{ marginTop: 24 }} color={colors.primary} />
+              <ActivityIndicator
+                style={{ marginTop: 24 }}
+                color={colors.primary}
+              />
             ) : flights.length === 0 && !showAddForm ? (
               <View style={ftStyles.emptyWrap}>
-                <Ionicons name="airplane-outline" size={40} color={colors.mutedForeground} />
-                <Text style={[ftStyles.emptyText, { color: colors.mutedForeground }]}>No flights tracked yet</Text>
-                <Text style={[ftStyles.emptySub, { color: colors.mutedForeground }]}>
-                  Add flight numbers from your travel plans to receive delay alerts
+                <Ionicons
+                  name="airplane-outline"
+                  size={40}
+                  color={colors.mutedForeground}
+                />
+                <Text
+                  style={[
+                    ftStyles.emptyText,
+                    { color: colors.mutedForeground },
+                  ]}
+                >
+                  No flights tracked yet
+                </Text>
+                <Text
+                  style={[ftStyles.emptySub, { color: colors.mutedForeground }]}
+                >
+                  Add flight numbers from your travel plans to receive delay
+                  alerts
                 </Text>
               </View>
             ) : (
               flights.map((f) => (
-                <View key={f.id} style={[ftStyles.flightCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                  <View style={[ftStyles.flightIcon, { backgroundColor: colors.primary + "14" }]}>
-                    <Ionicons name="airplane" size={18} color={colors.primary} />
+                <View
+                  key={f.id}
+                  style={[
+                    ftStyles.flightCard,
+                    {
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      ftStyles.flightIcon,
+                      { backgroundColor: colors.primary + "14" },
+                    ]}
+                  >
+                    <Ionicons
+                      name="airplane"
+                      size={18}
+                      color={colors.primary}
+                    />
                   </View>
                   <View style={{ flex: 1 }}>
                     <View style={ftStyles.flightTop}>
-                      <Text style={[ftStyles.flightNum, { color: colors.foreground }]}>{f.flight_number}</Text>
-                      {f.airline && <Text style={[ftStyles.flightAirline, { color: colors.mutedForeground }]}> · {f.airline}</Text>}
+                      <Text
+                        style={[
+                          ftStyles.flightNum,
+                          { color: colors.foreground },
+                        ]}
+                      >
+                        {f.flight_number}
+                      </Text>
+                      {f.airline && (
+                        <Text
+                          style={[
+                            ftStyles.flightAirline,
+                            { color: colors.mutedForeground },
+                          ]}
+                        >
+                          {" "}
+                          · {f.airline}
+                        </Text>
+                      )}
                     </View>
-                    <Text style={[ftStyles.flightMeta, { color: colors.mutedForeground }]}>
+                    <Text
+                      style={[
+                        ftStyles.flightMeta,
+                        { color: colors.mutedForeground },
+                      ]}
+                    >
                       {f.departure_date}
-                      {f.origin && f.destination ? ` · ${f.origin} → ${f.destination}` : f.origin ? ` · from ${f.origin}` : f.destination ? ` · to ${f.destination}` : ""}
+                      {f.origin && f.destination
+                        ? ` · ${f.origin} → ${f.destination}`
+                        : f.origin
+                          ? ` · from ${f.origin}`
+                          : f.destination
+                            ? ` · to ${f.destination}`
+                            : ""}
                     </Text>
                     {f.status && f.status !== "upcoming" && (
-                      <View style={[ftStyles.statusBadge, { backgroundColor: statusColor(f.status) + "18" }]}>
-                        <View style={[ftStyles.statusDot, { backgroundColor: statusColor(f.status) }]} />
-                        <Text style={[ftStyles.statusText, { color: statusColor(f.status) }]}>
+                      <View
+                        style={[
+                          ftStyles.statusBadge,
+                          { backgroundColor: statusColor(f.status) + "18" },
+                        ]}
+                      >
+                        <View
+                          style={[
+                            ftStyles.statusDot,
+                            { backgroundColor: statusColor(f.status) },
+                          ]}
+                        />
+                        <Text
+                          style={[
+                            ftStyles.statusText,
+                            { color: statusColor(f.status) },
+                          ]}
+                        >
                           {f.statusMessage ?? f.status}
                         </Text>
                       </View>
                     )}
                   </View>
-                  <TouchableOpacity activeOpacity={0.85} onPress={() => void handleDelete(f.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Ionicons name="trash-outline" size={18} color={colors.mutedForeground} />
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => void handleDelete(f.id)}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Ionicons
+                      name="trash-outline"
+                      size={18}
+                      color={colors.mutedForeground}
+                    />
                   </TouchableOpacity>
                 </View>
               ))
@@ -2097,33 +4897,102 @@ function FlightTrackerModal({
 
 const ftStyles = StyleSheet.create({
   container: { flex: 1 },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 20, borderBottomWidth: 1 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 20,
+    borderBottomWidth: 1,
+  },
   headerLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
   title: { fontFamily: "Inter_700Bold", fontSize: 20 },
-  subtitle: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 19, marginBottom: 4 },
+  subtitle: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: 4,
+  },
   scroll: { padding: 16, gap: 12 },
-  addBtn: { flexDirection: "row", alignItems: "center", gap: 10, borderRadius: 12, borderWidth: 1, padding: 14 },
+  addBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 14,
+  },
   addBtnText: { fontFamily: "Inter_600SemiBold", fontSize: 14 },
   formCard: { borderRadius: 16, borderWidth: 1, padding: 16, gap: 10 },
   formTitle: { fontFamily: "Inter_700Bold", fontSize: 15, marginBottom: 2 },
-  input: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 14 },
+  input: {
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+  },
   row: { flexDirection: "row", gap: 10 },
   halfInput: { flex: 1 },
   formActions: { flexDirection: "row", gap: 10, marginTop: 2 },
-  cancelBtn: { flex: 1, borderRadius: 10, borderWidth: 1, paddingVertical: 11, alignItems: "center" },
+  cancelBtn: {
+    flex: 1,
+    borderRadius: 10,
+    borderWidth: 1,
+    paddingVertical: 11,
+    alignItems: "center",
+  },
   cancelBtnText: { fontFamily: "Inter_500Medium", fontSize: 14 },
-  saveFlightBtn: { flex: 2, borderRadius: 10, paddingVertical: 11, alignItems: "center" },
+  saveFlightBtn: {
+    flex: 2,
+    borderRadius: 10,
+    paddingVertical: 11,
+    alignItems: "center",
+  },
   saveFlightBtnText: { fontFamily: "Inter_700Bold", fontSize: 14 },
   emptyWrap: { alignItems: "center", gap: 10, paddingVertical: 32 },
   emptyText: { fontFamily: "Inter_500Medium", fontSize: 15 },
-  emptySub: { fontFamily: "Inter_400Regular", fontSize: 13, textAlign: "center", paddingHorizontal: 20 },
-  flightCard: { flexDirection: "row", alignItems: "flex-start", gap: 12, padding: 14, borderRadius: 16, borderWidth: 1 },
-  flightIcon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  flightTop: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", marginBottom: 3 },
+  emptySub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
+  flightCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    padding: 14,
+    borderRadius: 16,
+    borderWidth: 1,
+  },
+  flightIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  flightTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    marginBottom: 3,
+  },
   flightNum: { fontFamily: "Inter_700Bold", fontSize: 16 },
   flightAirline: { fontFamily: "Inter_400Regular", fontSize: 13 },
   flightMeta: { fontFamily: "Inter_400Regular", fontSize: 12 },
-  statusBadge: { flexDirection: "row", alignItems: "center", gap: 5, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, marginTop: 5, alignSelf: "flex-start" },
+  statusBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginTop: 5,
+    alignSelf: "flex-start",
+  },
   statusDot: { width: 6, height: 6, borderRadius: 3 },
   statusText: { fontFamily: "Inter_500Medium", fontSize: 11 },
 });
@@ -2139,9 +5008,40 @@ export default function TravelScreen() {
   const insets = useSafeAreaInsets();
   const topPad = Platform.OS === "web" ? 67 : Math.max(insets.top, 44);
 
-  const { messages, sessionId, conversationHandoff, isLoading, requestStartedAt: kinfolkRequestStartedAt, sessions, sessionError, kinfolkContinuityEnabled, kinfolkContinuityDisclosureRequired, queriesUsed, queriesLimit, sendMessage, interruptCurrentReply, submitFeedback, loadSessions, loadKinfolkContinuity, setKinfolkContinuity, organizeSession, loadSession, startNewSession, confirmTaskAction, dismissTaskAction, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, useOneTimeDeliveryInstruction } = useKinfolk();
+  const {
+    messages,
+    sessionId,
+    conversationHandoff,
+    isLoading,
+    requestStartedAt: kinfolkRequestStartedAt,
+    sessions,
+    sessionError,
+    kinfolkContinuityEnabled,
+    kinfolkContinuityDisclosureRequired,
+    queriesUsed,
+    queriesLimit,
+    sendMessage,
+    interruptCurrentReply,
+    submitFeedback,
+    loadSessions,
+    loadKinfolkContinuity,
+    setKinfolkContinuity,
+    organizeSession,
+    loadSession,
+    startNewSession,
+    confirmTaskAction,
+    dismissTaskAction,
+    dismissSensitiveMemoryDraft,
+    dismissInlineMemoryConsent,
+    useOneTimeDeliveryInstruction,
+  } = useKinfolk();
   const { preferences, update: updatePreferences } = useUserPreferences();
-  const { addItem, removeItem, load: loadWishlist, items: wishlistItems } = useWishlist();
+  const {
+    addItem,
+    removeItem,
+    load: loadWishlist,
+    items: wishlistItems,
+  } = useWishlist();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const { subscription } = useMembership();
 
@@ -2149,44 +5049,76 @@ export default function TravelScreen() {
   const [inputText, setInputText] = useState(searchHandoff?.trim() ?? "");
   const primaryVoiceSource = useKinfolkVoiceSource({
     isAuthenticated,
-    regionalFlavor: typeof preferences?.regionalFlavor === "string"
-      ? preferences.regionalFlavor
-      : "off",
+    regionalFlavor:
+      typeof preferences?.regionalFlavor === "string"
+        ? preferences.regionalFlavor
+        : "off",
   });
   const [exactRadiusOrigin, setExactRadiusOrigin] = useState("");
   const [kinfolkWorkingSeconds, setKinfolkWorkingSeconds] = useState(0);
-  const [voiceMode, setVoiceMode] = useState<"community" | "professor" | "business_manager" | "best_friend">("community");
-  const [kinfolkImages, setKinfolkImages] = useState<Array<{ assetId: string; previewUri: string }>>([]);
+  const [voiceMode, setVoiceMode] = useState<
+    "community" | "professor" | "business_manager" | "best_friend"
+  >("community");
+  const [kinfolkImages, setKinfolkImages] = useState<
+    Array<{ assetId: string; previewUri: string }>
+  >([]);
   const [uploadingKinfolkImage, setUploadingKinfolkImage] = useState(false);
-  const [kinfolkDocument, setKinfolkDocument] = useState<{ assetId: string; displayName: string } | null>(null);
-  const [uploadingKinfolkDocument, setUploadingKinfolkDocument] = useState(false);
+  const [kinfolkDocument, setKinfolkDocument] = useState<{
+    assetId: string;
+    displayName: string;
+  } | null>(null);
+  const [uploadingKinfolkDocument, setUploadingKinfolkDocument] =
+    useState(false);
   const [showImageCreation, setShowImageCreation] = useState(false);
   const [imageCreationBrief, setImageCreationBrief] = useState("");
-  const [providerDisclosureAccepted, setProviderDisclosureAccepted] = useState(false);
-  const [noRealPersonOrPrivateInfoConfirmed, setNoRealPersonOrPrivateInfoConfirmed] = useState(false);
+  const [providerDisclosureAccepted, setProviderDisclosureAccepted] =
+    useState(false);
+  const [
+    noRealPersonOrPrivateInfoConfirmed,
+    setNoRealPersonOrPrivateInfoConfirmed,
+  ] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
-  const [imageCreationError, setImageCreationError] = useState<string | null>(null);
-  const [generatedImage, setGeneratedImage] = useState<{ dataUrl: string; label: string } | null>(null);
+  const [imageCreationError, setImageCreationError] = useState<string | null>(
+    null,
+  );
+  const [generatedImage, setGeneratedImage] = useState<{
+    dataUrl: string;
+    label: string;
+  } | null>(null);
   const [showImageEdit, setShowImageEdit] = useState(false);
   const [imageEditInstruction, setImageEditInstruction] = useState("");
   const [imageEditConsent, setImageEditConsent] = useState(false);
   const [editingImage, setEditingImage] = useState(false);
   const [imageEditError, setImageEditError] = useState<string | null>(null);
-  const [editedImage, setEditedImage] = useState<{ dataUrl: string; label: string } | null>(null);
-  const [editSourceAssetId, setEditSourceAssetId] = useState<string | null>(null);
-  const [includeCommunityPerspective, setIncludeCommunityPerspective] = useState(false);
+  const [editedImage, setEditedImage] = useState<{
+    dataUrl: string;
+    label: string;
+  } | null>(null);
+  const [editSourceAssetId, setEditSourceAssetId] = useState<string | null>(
+    null,
+  );
+  const [includeCommunityPerspective, setIncludeCommunityPerspective] =
+    useState(false);
   const [voiceOutput, setVoiceOutput] = useState(false);
   const [showComposerControls, setShowComposerControls] = useState(false);
   const appStateRef = useRef(AppState.currentState);
   const voiceOutputRef = useRef(false);
   const pendingAutoSpeechRef = useRef<VoicePlaybackRequest | null>(null);
   const queuedVoicePlaybackRef = useRef<VoicePlaybackRequest | null>(null);
-  const [voiceAudioUri, setVoiceAudioUri] = useState<string | undefined>(undefined);
+  // The API synthesizes every speech chunk. Keep the complete local sequence
+  // rather than playing only the backward-compatible first `audio` field.
+  const activeVoicePlaybackRef = useRef<VoicePlaybackRequest | null>(null);
+  const pendingVoiceClipFilesRef = useRef<FileSystem.File[]>([]);
+  const [voiceAudioUri, setVoiceAudioUri] = useState<string | undefined>(
+    undefined,
+  );
   const voiceAudioFileRef = useRef<FileSystem.File | null>(null);
   const [playingVoice, setPlayingVoice] = useState(false);
   // TTS has separate receipt, playback, and completion stages. Keep this
   // visible so a member never has to guess whether Listen failed or is loading.
-  const [voiceOutputStatus, setVoiceOutputStatus] = useState<string | null>(null);
+  const [voiceOutputStatus, setVoiceOutputStatus] = useState<string | null>(
+    null,
+  );
   const [spokenVoiceText, setSpokenVoiceText] = useState<{
     messageId: string;
     content: string;
@@ -2194,12 +5126,14 @@ export default function TravelScreen() {
   } | null>(null);
   const serverVoicePlayer = useAudioPlayer(voiceAudioUri);
   const serverVoicePlayerStatus = useAudioPlayerStatus(serverVoicePlayer);
-  const autoSpeechGuardRef = useRef(createVoicePlaybackGuard(
-    // The output toggle governs auto-play; manual Listen remains available.
-    // The factory invokes this predicate only from effects/events.
-    // eslint-disable-next-line react-hooks/refs
-    () => appStateRef.current === "active",
-  ));
+  const autoSpeechGuardRef = useRef(
+    createVoicePlaybackGuard(
+      // The output toggle governs auto-play; manual Listen remains available.
+      // The factory invokes this predicate only from effects/events.
+      // eslint-disable-next-line react-hooks/refs
+      () => appStateRef.current === "active",
+    ),
+  );
   const [showProfile, setShowProfile] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -2208,7 +5142,14 @@ export default function TravelScreen() {
   const [compareSelected, setCompareSelected] = useState<TravelBusiness[]>([]);
   const [showFlights, setShowFlights] = useState(false);
   const [showHeaderActions, setShowHeaderActions] = useState(false);
-  const { flatListRef, isAtBottom, onUserSend, onScroll: onChatScroll, onContentSizeChange: onChatContentSizeChange, scrollToBottom } = useKinfolkChatScroll();
+  const {
+    flatListRef,
+    isAtBottom,
+    onUserSend,
+    onScroll: onChatScroll,
+    onContentSizeChange: onChatContentSizeChange,
+    scrollToBottom,
+  } = useKinfolkChatScroll();
   const [kinfolkOk, setKinfolkOk] = useState<boolean | null>(null); // null = checking
 
   useEffect(() => {
@@ -2216,7 +5157,10 @@ export default function TravelScreen() {
       setKinfolkWorkingSeconds(0);
       return;
     }
-    const updateElapsed = () => setKinfolkWorkingSeconds(kinfolkWorkingElapsedSeconds(kinfolkRequestStartedAt));
+    const updateElapsed = () =>
+      setKinfolkWorkingSeconds(
+        kinfolkWorkingElapsedSeconds(kinfolkRequestStartedAt),
+      );
     updateElapsed();
     const ticker = setInterval(updateElapsed, 250);
     return () => clearInterval(ticker);
@@ -2237,10 +5181,14 @@ export default function TravelScreen() {
     void loadKinfolkContinuity();
   }, [isAuthenticated, loadSessions, loadKinfolkContinuity]);
 
-  useEffect(() => { void loadWishlist(); }, [loadWishlist]);
+  useEffect(() => {
+    void loadWishlist();
+  }, [loadWishlist]);
 
   useEffect(() => {
-    void shouldShowKinfolkOnboarding().then((show) => { if (show) setShowOnboarding(true); });
+    void shouldShowKinfolkOnboarding().then((show) => {
+      if (show) setShowOnboarding(true);
+    });
   }, []);
 
   // ── KinfolkAI health check ─────────────────────────────────────────────────
@@ -2249,8 +5197,12 @@ export default function TravelScreen() {
   useEffect(() => {
     void (async () => {
       try {
-        const base = process.env.EXPO_PUBLIC_DOMAIN ? `https://${process.env.EXPO_PUBLIC_DOMAIN}` : "";
-        const r = await fetch(`${base}/api/kinfolk/health`, { signal: AbortSignal.timeout(8000) });
+        const base = process.env.EXPO_PUBLIC_DOMAIN
+          ? `https://${process.env.EXPO_PUBLIC_DOMAIN}`
+          : "";
+        const r = await fetch(`${base}/api/kinfolk/health`, {
+          signal: AbortSignal.timeout(8000),
+        });
         setKinfolkOk(r.ok);
       } catch {
         setKinfolkOk(false);
@@ -2260,114 +5212,184 @@ export default function TravelScreen() {
 
   // Scroll is managed entirely by useKinfolkChatScroll — no direct scrollToEnd here.
 
-  const stopServerVoice = useCallback((reason: string) => {
-    pendingAutoSpeechRef.current = null;
-    queuedVoicePlaybackRef.current = null;
-    autoSpeechGuardRef.current.invalidate(reason);
-    if (serverVoicePlayer.playing || serverVoicePlayer.isLoaded) serverVoicePlayer.pause();
-    const temporaryFile = voiceAudioFileRef.current;
-    voiceAudioFileRef.current = null;
-    if (temporaryFile?.exists) {
-      try { temporaryFile.delete(); } catch { /* local playback cleanup is best effort */ }
-    }
-    setVoiceAudioUri(undefined);
-    setPlayingVoice(false);
-    setVoiceOutputStatus(null);
-    setSpokenVoiceText(null);
-  }, [serverVoicePlayer]);
-
-  const playServerVoice = useCallback(async (
-    content: string,
-    source: "auto" | "manual",
-    messageId: string,
-  ) => {
-    if (!content.trim() || appStateRef.current !== "active") return;
-    // Clear the prior source before fetching the next response. A reused native
-    // player can otherwise report the old file as loaded and try to play it.
-    stopServerVoice(`new_${source}_voice_request`);
-    const request = autoSpeechGuardRef.current.begin();
-    let queued = false;
-    let temporaryFile: FileSystem.File | null = null;
-    setPlayingVoice(true);
-    setSpokenVoiceText(null);
-    setVoiceOutputStatus("Preparing voice…");
-    try {
-      const token = await SecureStore.getItemAsync("auth_session_token");
-      const response = await fetch(`${getApiBase()}/api/kinfolk/speak`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ text: content, mode: voiceMode, requestId: `${source}-${Date.now()}` }),
-        signal: request.signal,
-      });
-      if (!autoSpeechGuardRef.current.canPlay(request)) return;
-      if (response.status === 401) {
-        Alert.alert("Sign in required", "Sign in to listen to Kinfolk's spoken replies.");
-        return;
-      }
-      if (response.status === 429) {
-        Alert.alert("Voice time used", "Your Kinfolk Voice allowance is used for this period. Text replies remain available.");
-        return;
-      }
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({})) as { message?: string };
-        throw new Error(payload.message ?? "Kinfolk could not create audio right now.");
-      }
-      const payload = await response.json() as {
-        audio?: string;
-        format?: string;
-        contentType?: string;
-        bytes?: number;
-        spokenText?: string;
-      };
-      if (
-        !payload.audio
-        || !["wav", "mp3", "m4a"].includes(payload.format ?? "")
-        || typeof payload.bytes !== "number"
-        || payload.bytes < 256
-        || !payload.contentType?.startsWith("audio/")
-        || !payload.spokenText?.trim()
-      ) throw new Error("Kinfolk did not return playable audio.");
-      if (!autoSpeechGuardRef.current.canPlay(request)) return;
-      setSpokenVoiceText({ messageId, content: payload.spokenText, phase: "preparing" });
-      temporaryFile = new FileSystem.File(
-        FileSystem.Paths.cache,
-        `kinfolk-primary-${Date.now()}.${payload.format}`,
-      );
-      temporaryFile.write(payload.audio, { encoding: FileSystem.EncodingType.Base64 });
-      if (!autoSpeechGuardRef.current.canPlay(request)) {
-        if (temporaryFile.exists) temporaryFile.delete();
-        return;
-      }
-      voiceAudioFileRef.current = temporaryFile;
-      queuedVoicePlaybackRef.current = request;
-      setVoiceAudioUri(temporaryFile.uri);
-      queued = true;
-    } catch (cause) {
-      if (request.signal.aborted) return;
-      const message = cause instanceof Error ? cause.message : "Kinfolk audio could not start.";
-      setVoiceOutputStatus("Voice unavailable — try Listen again.");
-      setSpokenVoiceText(null);
-      Alert.alert("Voice playback unavailable", `${message} You can still read the reply and try Listen again.`);
-    } finally {
-      if (!queued) {
+  const stopServerVoice = useCallback(
+    (reason: string) => {
+      pendingAutoSpeechRef.current = null;
+      queuedVoicePlaybackRef.current = null;
+      activeVoicePlaybackRef.current = null;
+      autoSpeechGuardRef.current.invalidate(reason);
+      if (serverVoicePlayer.playing || serverVoicePlayer.isLoaded)
+        serverVoicePlayer.pause();
+      const temporaryFiles = [
+        voiceAudioFileRef.current,
+        ...pendingVoiceClipFilesRef.current,
+      ];
+      voiceAudioFileRef.current = null;
+      pendingVoiceClipFilesRef.current = [];
+      temporaryFiles.forEach((temporaryFile) => {
         if (temporaryFile?.exists) {
-          try { temporaryFile.delete(); } catch { /* local playback cleanup is best effort */ }
+          try {
+            temporaryFile.delete();
+          } catch {
+            /* local playback cleanup is best effort */
+          }
         }
-        autoSpeechGuardRef.current.finish(request);
-        setPlayingVoice(false);
+      });
+      setVoiceAudioUri(undefined);
+      setPlayingVoice(false);
+      setVoiceOutputStatus(null);
+      setSpokenVoiceText(null);
+    },
+    [serverVoicePlayer],
+  );
+
+  const playServerVoice = useCallback(
+    async (content: string, source: "auto" | "manual", messageId: string) => {
+      if (!content.trim() || appStateRef.current !== "active") return;
+      // Clear the prior source before fetching the next response. A reused native
+      // player can otherwise report the old file as loaded and try to play it.
+      stopServerVoice(`new_${source}_voice_request`);
+      const request = autoSpeechGuardRef.current.begin();
+      let queued = false;
+      let temporaryFiles: FileSystem.File[] = [];
+      setPlayingVoice(true);
+      setSpokenVoiceText(null);
+      setVoiceOutputStatus("Preparing voice…");
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const response = await fetch(`${getApiBase()}/api/kinfolk/speak`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            text: content,
+            mode: voiceMode,
+            requestId: `${source}-${Date.now()}`,
+          }),
+          signal: request.signal,
+        });
+        if (!autoSpeechGuardRef.current.canPlay(request)) return;
+        if (response.status === 401) {
+          Alert.alert(
+            "Sign in required",
+            "Sign in to listen to Kinfolk's spoken replies.",
+          );
+          return;
+        }
+        if (response.status === 429) {
+          Alert.alert(
+            "Voice time used",
+            "Your Kinfolk Voice allowance is used for this period. Text replies remain available.",
+          );
+          return;
+        }
+        if (!response.ok) {
+          const payload = (await response.json().catch(() => ({}))) as {
+            message?: string;
+          };
+          throw new Error(
+            payload.message ?? "Kinfolk could not create audio right now.",
+          );
+        }
+        const payload = (await response.json()) as {
+          audio?: string;
+          format?: string;
+          contentType?: string;
+          bytes?: number;
+          spokenText?: string;
+          clips?: Array<{ audio?: string; spokenText?: string }>;
+        };
+        if (
+          !payload.audio ||
+          !["wav", "mp3", "m4a"].includes(payload.format ?? "") ||
+          typeof payload.bytes !== "number" ||
+          payload.bytes < 256 ||
+          !payload.contentType?.startsWith("audio/") ||
+          !payload.spokenText?.trim()
+        )
+          throw new Error("Kinfolk did not return playable audio.");
+        if (!autoSpeechGuardRef.current.canPlay(request)) return;
+        const clips =
+          Array.isArray(payload.clips) && payload.clips.length > 0
+            ? payload.clips
+            : [{ audio: payload.audio, spokenText: payload.spokenText }];
+        if (
+          clips.some((clip) => !clip.audio?.trim() || !clip.spokenText?.trim())
+        ) {
+          throw new Error(
+            "Kinfolk did not return audio for the full visible response.",
+          );
+        }
+        setSpokenVoiceText({
+          messageId,
+          content: payload.spokenText,
+          phase: "preparing",
+        });
+        temporaryFiles = clips.map((clip, index) => {
+          const file = new FileSystem.File(
+            FileSystem.Paths.cache,
+            `kinfolk-primary-${Date.now()}-${index}.${payload.format}`,
+          );
+          file.write(clip.audio!, { encoding: FileSystem.EncodingType.Base64 });
+          return file;
+        });
+        if (!autoSpeechGuardRef.current.canPlay(request)) {
+          temporaryFiles.forEach((file) => {
+            if (file.exists) file.delete();
+          });
+          return;
+        }
+        const [firstFile, ...remainingFiles] = temporaryFiles;
+        if (!firstFile)
+          throw new Error("Kinfolk did not return playable audio.");
+        voiceAudioFileRef.current = firstFile;
+        pendingVoiceClipFilesRef.current = remainingFiles;
+        activeVoicePlaybackRef.current = request;
+        queuedVoicePlaybackRef.current = request;
+        setVoiceAudioUri(firstFile.uri);
+        queued = true;
+      } catch (cause) {
+        if (request.signal.aborted) return;
+        const message =
+          cause instanceof Error
+            ? cause.message
+            : "Kinfolk audio could not start.";
+        setVoiceOutputStatus("Voice unavailable — try Listen again.");
         setSpokenVoiceText(null);
+        Alert.alert(
+          "Voice playback unavailable",
+          `${message} You can still read the reply and try Listen again.`,
+        );
+      } finally {
+        if (!queued) {
+          temporaryFiles.forEach((temporaryFile) => {
+            if (temporaryFile.exists) {
+              try {
+                temporaryFile.delete();
+              } catch {
+                /* local playback cleanup is best effort */
+              }
+            }
+          });
+          autoSpeechGuardRef.current.finish(request);
+          setPlayingVoice(false);
+          setSpokenVoiceText(null);
+        }
       }
-    }
-  }, [stopServerVoice, voiceMode]);
+    },
+    [stopServerVoice, voiceMode],
+  );
 
   // Do not call play() until the local server-owned WAV has fully loaded.
   useEffect(() => {
     const request = queuedVoicePlaybackRef.current;
     if (!voiceAudioUri || !request || !serverVoicePlayerStatus.isLoaded) return;
-    if (!autoSpeechGuardRef.current.canPlay(request) || appStateRef.current !== "active") {
+    if (
+      !autoSpeechGuardRef.current.canPlay(request) ||
+      appStateRef.current !== "active"
+    ) {
       stopServerVoice("playback_not_allowed");
       return;
     }
@@ -2385,37 +5407,84 @@ export default function TravelScreen() {
         serverVoicePlayer.volume = 1;
         serverVoicePlayer.play();
         setVoiceOutputStatus("Speaking…");
-        setSpokenVoiceText((current) => current ? { ...current, phase: "playing" } : current);
+        setSpokenVoiceText((current) =>
+          current ? { ...current, phase: "playing" } : current,
+        );
         queuedVoicePlaybackRef.current = null;
-        autoSpeechGuardRef.current.finish(request);
       } catch {
         if (!cancelled) {
           setVoiceOutputStatus("Voice unavailable — try Listen again.");
-          Alert.alert("Voice playback unavailable", "Kinfolk created audio but your device could not play it. Check volume and try Listen again.");
+          Alert.alert(
+            "Voice playback unavailable",
+            "Kinfolk created audio but your device could not play it. Check volume and try Listen again.",
+          );
           stopServerVoice("playback_start_failed");
         }
       }
     })();
-    return () => { cancelled = true; };
-  }, [serverVoicePlayer, serverVoicePlayerStatus.isLoaded, stopServerVoice, voiceAudioUri]);
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    serverVoicePlayer,
+    serverVoicePlayerStatus.isLoaded,
+    stopServerVoice,
+    voiceAudioUri,
+  ]);
 
   useEffect(() => {
     if (serverVoicePlayerStatus.error && playingVoice) {
       setVoiceOutputStatus("Voice unavailable — try Listen again.");
-      Alert.alert("Voice playback unavailable", "Kinfolk audio could not play on this device. Check volume and try again.");
+      Alert.alert(
+        "Voice playback unavailable",
+        "Kinfolk audio could not play on this device. Check volume and try again.",
+      );
       stopServerVoice("playback_error");
     }
   }, [playingVoice, serverVoicePlayerStatus.error, stopServerVoice]);
 
   useEffect(() => {
-    if (playingVoice && serverVoicePlayerStatus.didJustFinish && !queuedVoicePlaybackRef.current) {
-      setVoiceOutputStatus("Voice finished. Tap Listen to play it again.");
-      setSpokenVoiceText((current) => current ? { ...current, phase: "finished" } : current);
+    if (
+      playingVoice &&
+      serverVoicePlayerStatus.didJustFinish &&
+      !queuedVoicePlaybackRef.current
+    ) {
       const temporaryFile = voiceAudioFileRef.current;
       voiceAudioFileRef.current = null;
       if (temporaryFile?.exists) {
-        try { temporaryFile.delete(); } catch { /* local playback cleanup is best effort */ }
+        try {
+          temporaryFile.delete();
+        } catch {
+          /* local playback cleanup is best effort */
+        }
       }
+      const nextFile = pendingVoiceClipFilesRef.current.shift();
+      const request = activeVoicePlaybackRef.current;
+      if (nextFile && request && autoSpeechGuardRef.current.canPlay(request)) {
+        // Load and play the next server-issued clip automatically. No visible
+        // suffix is silently skipped when an answer crosses a TTS chunk.
+        voiceAudioFileRef.current = nextFile;
+        queuedVoicePlaybackRef.current = request;
+        setVoiceOutputStatus("Continuing voice…");
+        setVoiceAudioUri(nextFile.uri);
+        return;
+      }
+      pendingVoiceClipFilesRef.current.forEach((file) => {
+        if (file.exists) {
+          try {
+            file.delete();
+          } catch {
+            /* local playback cleanup is best effort */
+          }
+        }
+      });
+      pendingVoiceClipFilesRef.current = [];
+      activeVoicePlaybackRef.current = null;
+      if (request) autoSpeechGuardRef.current.finish(request);
+      setVoiceOutputStatus("Voice finished. Tap Listen to play it again.");
+      setSpokenVoiceText((current) =>
+        current ? { ...current, phase: "finished" } : current,
+      );
       setVoiceAudioUri(undefined);
       const timer = setTimeout(() => setPlayingVoice(false), 0);
       return () => clearTimeout(timer);
@@ -2435,7 +5504,13 @@ export default function TravelScreen() {
     if (!voiceOutput || isLoading) return;
     const request = pendingAutoSpeechRef.current;
     const last = messages[messages.length - 1];
-    if (!request || !last || last.role !== "assistant" || !autoSpeechGuardRef.current.canPlay(request)) return;
+    if (
+      !request ||
+      !last ||
+      last.role !== "assistant" ||
+      !autoSpeechGuardRef.current.canPlay(request)
+    )
+      return;
     pendingAutoSpeechRef.current = null;
     void playServerVoice(last.content, "auto", last.id);
   }, [messages, isLoading, playServerVoice, voiceOutput]);
@@ -2456,55 +5531,110 @@ export default function TravelScreen() {
     };
   }, [stopServerVoice]);
 
-  const speakManually = useCallback((messageId: string, content: string) => {
-    if (playingVoice) {
-      stopServerVoice("manual_stop");
-      return;
-    }
-    void playServerVoice(content, "manual", messageId);
-  }, [playServerVoice, playingVoice, stopServerVoice]);
+  const speakManually = useCallback(
+    (messageId: string, content: string) => {
+      if (playingVoice) {
+        stopServerVoice("manual_stop");
+        return;
+      }
+      void playServerVoice(content, "manual", messageId);
+    },
+    [playServerVoice, playingVoice, stopServerVoice],
+  );
 
   const interruptKinfolk = useCallback(() => {
     interruptCurrentReply();
     stopServerVoice("member_interrupt");
   }, [interruptCurrentReply, stopServerVoice]);
 
-  const uploadKinfolkImage = useCallback(async (asset: ImagePicker.ImagePickerAsset) => {
-    setUploadingKinfolkImage(true);
-    try {
-      const token = await SecureStore.getItemAsync("auth_session_token");
-      const form = new FormData();
-      form.append("file", { uri: asset.uri, name: asset.fileName ?? `kinfolk-${Date.now()}.jpg`, type: asset.mimeType ?? "image/jpeg" } as never);
-      form.append("kinfolkVisionConsent", "true");
-      const response = await fetch(`${getApiBase()}/api/media/upload?purpose=kinfolk_question`, { method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {}, body: form });
-      const body = await response.json().catch(() => ({})) as { assetId?: string; error?: string };
-      if (!response.ok || !body.assetId) throw new Error(body.error ?? "Could not prepare that private image.");
-      setKinfolkImages((items) => items.some((item) => item.assetId === body.assetId)
-        ? items
-        : [...items, { assetId: body.assetId!, previewUri: asset.uri }].slice(0, 2));
-    } catch (cause) { Alert.alert("Image upload failed", cause instanceof Error ? cause.message : "Please try again."); }
-    finally { setUploadingKinfolkImage(false); }
-  }, []);
+  const uploadKinfolkImage = useCallback(
+    async (asset: ImagePicker.ImagePickerAsset) => {
+      setUploadingKinfolkImage(true);
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const form = new FormData();
+        form.append("file", {
+          uri: asset.uri,
+          name: asset.fileName ?? `kinfolk-${Date.now()}.jpg`,
+          type: asset.mimeType ?? "image/jpeg",
+        } as never);
+        form.append("kinfolkVisionConsent", "true");
+        const response = await fetch(
+          `${getApiBase()}/api/media/upload?purpose=kinfolk_question`,
+          {
+            method: "POST",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+            body: form,
+          },
+        );
+        const body = (await response.json().catch(() => ({}))) as {
+          assetId?: string;
+          error?: string;
+        };
+        if (!response.ok || !body.assetId)
+          throw new Error(
+            body.error ?? "Could not prepare that private image.",
+          );
+        setKinfolkImages((items) =>
+          items.some((item) => item.assetId === body.assetId)
+            ? items
+            : [
+                ...items,
+                { assetId: body.assetId!, previewUri: asset.uri },
+              ].slice(0, 2),
+        );
+      } catch (cause) {
+        Alert.alert(
+          "Image upload failed",
+          cause instanceof Error ? cause.message : "Please try again.",
+        );
+      } finally {
+        setUploadingKinfolkImage(false);
+      }
+    },
+    [],
+  );
 
-  const removeKinfolkImage = useCallback(async (attachment: { assetId: string; previewUri: string }) => {
-    setKinfolkImages((items) => items.filter((item) => item.assetId !== attachment.assetId));
-    try {
-      const token = await SecureStore.getItemAsync("auth_session_token");
-      const response = await fetch(`${getApiBase()}/api/media/kinfolk-question/${encodeURIComponent(attachment.assetId)}`, {
-        method: "DELETE",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!response.ok) throw new Error("private image deletion deferred");
-    } catch {
-      Alert.alert("Private image removal", "The image was removed from this screen and will expire shortly from private processing.");
-    }
-  }, []);
+  const removeKinfolkImage = useCallback(
+    async (attachment: { assetId: string; previewUri: string }) => {
+      setKinfolkImages((items) =>
+        items.filter((item) => item.assetId !== attachment.assetId),
+      );
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const response = await fetch(
+          `${getApiBase()}/api/media/kinfolk-question/${encodeURIComponent(attachment.assetId)}`,
+          {
+            method: "DELETE",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          },
+        );
+        if (!response.ok) throw new Error("private image deletion deferred");
+      } catch {
+        Alert.alert(
+          "Private image removal",
+          "The image was removed from this screen and will expire shortly from private processing.",
+        );
+      }
+    },
+    [],
+  );
 
   const pickKinfolkImage = useCallback(async () => {
     if (uploadingKinfolkImage || kinfolkImages.length >= 2) return;
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) { Alert.alert("Photo access needed", "Allow photo access to ask Kinfolk about an image. You can still type any question."); return; }
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], quality: 0.82, allowsMultipleSelection: false });
+    if (!permission.granted) {
+      Alert.alert(
+        "Photo access needed",
+        "Allow photo access to ask Kinfolk about an image. You can still type any question.",
+      );
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ["images"],
+      quality: 0.82,
+      allowsMultipleSelection: false,
+    });
     const asset = result.assets?.[0];
     if (result.canceled || !asset) return;
     Alert.alert(
@@ -2512,56 +5642,110 @@ export default function TravelScreen() {
       "Kinfolk will review this image only to answer your current question. It is sent to Kinfolk’s AI provider for that answer, is not used to train Kinfolk, is not saved as memory, and is deleted after the answer. If interrupted, the private upload expires within 15 minutes.",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Use image for this answer", onPress: () => void uploadKinfolkImage(asset) },
+        {
+          text: "Use image for this answer",
+          onPress: () => void uploadKinfolkImage(asset),
+        },
       ],
     );
   }, [kinfolkImages.length, uploadingKinfolkImage, uploadKinfolkImage]);
 
   const prepareEditedImageForAnotherEdit = useCallback(async () => {
     if (!editedImage) return;
-    try { const base64 = editedImage.dataUrl.split(",", 2)[1]; if (!base64) throw new Error("missing session image"); const file = new FileSystem.File(FileSystem.Paths.cache, `kinfolk-edit-${Date.now()}.png`); file.write(base64, { encoding: FileSystem.EncodingType.Base64 }); await uploadKinfolkImage({ uri: file.uri, fileName: "kinfolk-private-edit.png", mimeType: "image/png" } as ImagePicker.ImagePickerAsset); if (file.exists) file.delete(); setEditedImage(null); Alert.alert("Private image ready", "Choose Edit image to request the next edit."); }
-    catch { Alert.alert("Could not prepare image", "Please add the result again as a private image before editing it."); }
+    try {
+      const base64 = editedImage.dataUrl.split(",", 2)[1];
+      if (!base64) throw new Error("missing session image");
+      const file = new FileSystem.File(
+        FileSystem.Paths.cache,
+        `kinfolk-edit-${Date.now()}.png`,
+      );
+      file.write(base64, { encoding: FileSystem.EncodingType.Base64 });
+      await uploadKinfolkImage({
+        uri: file.uri,
+        fileName: "kinfolk-private-edit.png",
+        mimeType: "image/png",
+      } as ImagePicker.ImagePickerAsset);
+      if (file.exists) file.delete();
+      setEditedImage(null);
+      Alert.alert(
+        "Private image ready",
+        "Choose Edit image to request the next edit.",
+      );
+    } catch {
+      Alert.alert(
+        "Could not prepare image",
+        "Please add the result again as a private image before editing it.",
+      );
+    }
   }, [editedImage, uploadKinfolkImage]);
 
-  const uploadKinfolkDocument = useCallback(async (asset: DocumentPicker.DocumentPickerAsset) => {
-    setUploadingKinfolkDocument(true);
-    try {
-      const token = await SecureStore.getItemAsync("auth_session_token");
-      if (!token) throw new Error("Please sign in again before adding a private PDF.");
-      const form = new FormData();
-      form.append("file", {
-        uri: asset.uri,
-        name: asset.name || `kinfolk-${Date.now()}.pdf`,
-        type: "application/pdf",
-      } as never);
-      form.append("kinfolkDocumentConsent", "true");
-      const response = await fetch(`${getApiBase()}/api/media/upload?purpose=kinfolk_question_document`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-        body: form,
-      });
-      const body = await response.json().catch(() => ({})) as { assetId?: string; error?: string };
-      if (!response.ok || !body.assetId) throw new Error(body.error ?? "Could not prepare that private PDF.");
-      setKinfolkDocument({ assetId: body.assetId, displayName: asset.name || "Private PDF" });
-    } catch (cause) {
-      Alert.alert("PDF upload failed", cause instanceof Error ? cause.message : "Please try again.");
-    } finally {
-      setUploadingKinfolkDocument(false);
-    }
-  }, []);
-  const removeKinfolkDocument = useCallback(async (attachment: { assetId: string; displayName: string }) => {
-    setKinfolkDocument((current) => current?.assetId === attachment.assetId ? null : current);
-    try {
-      const token = await SecureStore.getItemAsync("auth_session_token");
-      const response = await fetch(`${getApiBase()}/api/media/kinfolk-question-document/${encodeURIComponent(attachment.assetId)}`, {
-        method: "DELETE",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
-      if (!response.ok) throw new Error("private document deletion deferred");
-    } catch {
-      Alert.alert("Private PDF removal", "The PDF was removed from this screen and will expire shortly from private processing.");
-    }
-  }, []);
+  const uploadKinfolkDocument = useCallback(
+    async (asset: DocumentPicker.DocumentPickerAsset) => {
+      setUploadingKinfolkDocument(true);
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        if (!token)
+          throw new Error("Please sign in again before adding a private PDF.");
+        const form = new FormData();
+        form.append("file", {
+          uri: asset.uri,
+          name: asset.name || `kinfolk-${Date.now()}.pdf`,
+          type: "application/pdf",
+        } as never);
+        form.append("kinfolkDocumentConsent", "true");
+        const response = await fetch(
+          `${getApiBase()}/api/media/upload?purpose=kinfolk_question_document`,
+          {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+            body: form,
+          },
+        );
+        const body = (await response.json().catch(() => ({}))) as {
+          assetId?: string;
+          error?: string;
+        };
+        if (!response.ok || !body.assetId)
+          throw new Error(body.error ?? "Could not prepare that private PDF.");
+        setKinfolkDocument({
+          assetId: body.assetId,
+          displayName: asset.name || "Private PDF",
+        });
+      } catch (cause) {
+        Alert.alert(
+          "PDF upload failed",
+          cause instanceof Error ? cause.message : "Please try again.",
+        );
+      } finally {
+        setUploadingKinfolkDocument(false);
+      }
+    },
+    [],
+  );
+  const removeKinfolkDocument = useCallback(
+    async (attachment: { assetId: string; displayName: string }) => {
+      setKinfolkDocument((current) =>
+        current?.assetId === attachment.assetId ? null : current,
+      );
+      try {
+        const token = await SecureStore.getItemAsync("auth_session_token");
+        const response = await fetch(
+          `${getApiBase()}/api/media/kinfolk-question-document/${encodeURIComponent(attachment.assetId)}`,
+          {
+            method: "DELETE",
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          },
+        );
+        if (!response.ok) throw new Error("private document deletion deferred");
+      } catch {
+        Alert.alert(
+          "Private PDF removal",
+          "The PDF was removed from this screen and will expire shortly from private processing.",
+        );
+      }
+    },
+    [],
+  );
   const pickKinfolkDocument = useCallback(async () => {
     if (uploadingKinfolkDocument || kinfolkDocument) return;
     const result = await DocumentPicker.getDocumentAsync({
@@ -2572,11 +5756,17 @@ export default function TravelScreen() {
     const asset = result.assets?.[0];
     if (result.canceled || !asset) return;
     if (asset.mimeType && asset.mimeType !== "application/pdf") {
-      Alert.alert("PDF required", "Kinfolk document questions currently accept PDFs only.");
+      Alert.alert(
+        "PDF required",
+        "Kinfolk document questions currently accept PDFs only.",
+      );
       return;
     }
     if (typeof asset.size === "number" && asset.size > 2 * 1024 * 1024) {
-      Alert.alert("PDF is too large", "Private Kinfolk PDFs must be under 2 MB.");
+      Alert.alert(
+        "PDF is too large",
+        "Private Kinfolk PDFs must be under 2 MB.",
+      );
       return;
     }
     Alert.alert(
@@ -2584,7 +5774,10 @@ export default function TravelScreen() {
       "Kinfolk will read the PDF text only to answer your current question. It is sent to Kinfolk’s AI provider for that answer, is not used to train Kinfolk, is not saved as memory, and is deleted after the answer. If interrupted, the private upload expires within 15 minutes.",
       [
         { text: "Cancel", style: "cancel" },
-        { text: "Use PDF for this answer", onPress: () => void uploadKinfolkDocument(asset) },
+        {
+          text: "Use PDF for this answer",
+          onPress: () => void uploadKinfolkDocument(asset),
+        },
       ],
     );
   }, [kinfolkDocument, uploadingKinfolkDocument, uploadKinfolkDocument]);
@@ -2592,47 +5785,117 @@ export default function TravelScreen() {
   const createKinfolkImage = useCallback(async () => {
     if (generatingImage) return;
     if (!isAuthenticated) {
-      Alert.alert("Sign in to create a visual", "Create or sign in to make an original Kinfolk visual.");
+      Alert.alert(
+        "Sign in to create a visual",
+        "Create or sign in to make an original Kinfolk visual.",
+      );
       return;
     }
     setGeneratingImage(true);
     setImageCreationError(null);
     try {
       const token = await SecureStore.getItemAsync("auth_session_token");
-      const response = await fetch(`${getApiBase()}/api/kinfolk/images/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-        body: JSON.stringify({
-          brief: imageCreationBrief,
-          providerDisclosureAccepted,
-          noRealPersonOrPrivateInfoConfirmed,
-        }),
+      const response = await fetch(
+        `${getApiBase()}/api/kinfolk/images/generate`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            brief: imageCreationBrief,
+            providerDisclosureAccepted,
+            noRealPersonOrPrivateInfoConfirmed,
+          }),
+        },
+      );
+      const body = (await response.json().catch(() => ({}))) as {
+        imageDataUrl?: string;
+        contentLabel?: string;
+        error?: string;
+      };
+      if (!response.ok || !body.imageDataUrl)
+        throw new Error(
+          body.error ?? "Kinfolk could not create that visual right now.",
+        );
+      setGeneratedImage({
+        dataUrl: body.imageDataUrl,
+        label: body.contentLabel ?? "AI-generated visual",
       });
-      const body = await response.json().catch(() => ({})) as { imageDataUrl?: string; contentLabel?: string; error?: string };
-      if (!response.ok || !body.imageDataUrl) throw new Error(body.error ?? "Kinfolk could not create that visual right now.");
-      setGeneratedImage({ dataUrl: body.imageDataUrl, label: body.contentLabel ?? "AI-generated visual" });
       setShowImageCreation(false);
       setImageCreationBrief("");
       setProviderDisclosureAccepted(false);
       setNoRealPersonOrPrivateInfoConfirmed(false);
     } catch (cause) {
-      setImageCreationError(cause instanceof Error ? cause.message : "Kinfolk could not create that visual right now.");
+      setImageCreationError(
+        cause instanceof Error
+          ? cause.message
+          : "Kinfolk could not create that visual right now.",
+      );
     } finally {
       setGeneratingImage(false);
     }
-  }, [generatingImage, imageCreationBrief, isAuthenticated, noRealPersonOrPrivateInfoConfirmed, providerDisclosureAccepted]);
+  }, [
+    generatingImage,
+    imageCreationBrief,
+    isAuthenticated,
+    noRealPersonOrPrivateInfoConfirmed,
+    providerDisclosureAccepted,
+  ]);
 
   const editKinfolkImage = useCallback(async () => {
     if (!editSourceAssetId || editingImage) return;
-    setEditingImage(true); setImageEditError(null);
-    try { const token = await SecureStore.getItemAsync("auth_session_token"); const response = await fetch(`${getApiBase()}/api/kinfolk/images/edit`, { method: "POST", headers: { "Content-Type": "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) }, body: JSON.stringify({ imageAssetId: editSourceAssetId, instruction: imageEditInstruction, providerDisclosureAccepted: imageEditConsent, editConsentAccepted: imageEditConsent }) }); const body = await response.json().catch(() => ({})) as { imageDataUrl?: string; contentLabel?: string; error?: string }; if (!response.ok || !body.imageDataUrl) throw new Error(body.error ?? "Kinfolk could not edit that image right now."); setEditedImage({ dataUrl: body.imageDataUrl, label: body.contentLabel ?? "AI-edited visual" }); setShowImageEdit(false); setImageEditConsent(false); setImageEditInstruction(""); }
-    catch (cause) { setImageEditError(cause instanceof Error ? cause.message : "Kinfolk could not edit that image right now."); }
-    finally { setEditingImage(false); }
+    setEditingImage(true);
+    setImageEditError(null);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const response = await fetch(`${getApiBase()}/api/kinfolk/images/edit`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          imageAssetId: editSourceAssetId,
+          instruction: imageEditInstruction,
+          providerDisclosureAccepted: imageEditConsent,
+          editConsentAccepted: imageEditConsent,
+        }),
+      });
+      const body = (await response.json().catch(() => ({}))) as {
+        imageDataUrl?: string;
+        contentLabel?: string;
+        error?: string;
+      };
+      if (!response.ok || !body.imageDataUrl)
+        throw new Error(
+          body.error ?? "Kinfolk could not edit that image right now.",
+        );
+      setEditedImage({
+        dataUrl: body.imageDataUrl,
+        label: body.contentLabel ?? "AI-edited visual",
+      });
+      setShowImageEdit(false);
+      setImageEditConsent(false);
+      setImageEditInstruction("");
+    } catch (cause) {
+      setImageEditError(
+        cause instanceof Error
+          ? cause.message
+          : "Kinfolk could not edit that image right now.",
+      );
+    } finally {
+      setEditingImage(false);
+    }
   }, [editSourceAssetId, editingImage, imageEditConsent, imageEditInstruction]);
 
   const startPrimaryVoiceSource = useCallback(async () => {
     if (authLoading) {
-      Alert.alert("Restoring secure sign-in", "Please wait a moment before recording a Kinfolk question.");
+      Alert.alert(
+        "Restoring secure sign-in",
+        "Please wait a moment before recording a Kinfolk question.",
+      );
       return;
     }
     // The server-owned reply player can hold the native audio session. Stop it
@@ -2646,84 +5909,135 @@ export default function TravelScreen() {
     // chat turn—the member must still review and explicitly press Send.
     setInputText(transcript);
   }, []);
-  const handleSend = useCallback(async (text?: string) => {
-    const msg = (text ?? inputText).trim();
-    if (!msg) return;
-    if (authLoading) {
-      Alert.alert("Restoring secure sign-in", "Please wait a moment before sending Kinfolk a message.");
-      return;
-    }
-    if (!isAuthenticated) {
-      Alert.alert(
-        "Sign in to ask Kinfolk",
-        "Create or sign in to a free account to start a Kinfolk conversation and keep control of your preferences.",
-        [
-          { text: "Not now", style: "cancel" },
-          { text: "Sign in", onPress: () => router.push("/login" as never) },
-        ],
+  const handleSend = useCallback(
+    async (text?: string) => {
+      const msg = (text ?? inputText).trim();
+      if (!msg) return;
+      if (authLoading) {
+        Alert.alert(
+          "Restoring secure sign-in",
+          "Please wait a moment before sending Kinfolk a message.",
+        );
+        return;
+      }
+      if (!isAuthenticated) {
+        Alert.alert(
+          "Sign in to ask Kinfolk",
+          "Create or sign in to a free account to start a Kinfolk conversation and keep control of your preferences.",
+          [
+            { text: "Not now", style: "cancel" },
+            { text: "Sign in", onPress: () => router.push("/login" as never) },
+          ],
+        );
+        return;
+      }
+      // A typed follow-up should never wait behind a speaking or loading turn.
+      // The hook cancels the old request; this stops any server-owned playback.
+      stopServerVoice("member_new_turn");
+      const attachedImagePreviews = kinfolkImages.map(
+        (attachment) => attachment.previewUri,
       );
-      return;
-    }
-    // A typed follow-up should never wait behind a speaking or loading turn.
-    // The hook cancels the old request; this stops any server-owned playback.
-    stopServerVoice("member_new_turn");
-    const attachedImagePreviews = kinfolkImages.map((attachment) => attachment.previewUri);
-    const attachedImageAssetIds = kinfolkImages.map((attachment) => attachment.assetId);
-    const attachedDocumentAssetIds = kinfolkDocument ? [kinfolkDocument.assetId] : [];
-    const publicOrigin = exactRadiusOrigin.trim();
-    onUserSend(); // scroll to bottom, suppress jump button for this send
-    armAutoSpeech();
-    const accepted = await sendMessage(msg, {
+      const attachedImageAssetIds = kinfolkImages.map(
+        (attachment) => attachment.assetId,
+      );
+      const attachedDocumentAssetIds = kinfolkDocument
+        ? [kinfolkDocument.assetId]
+        : [];
+      const publicOrigin = exactRadiusOrigin.trim();
+      onUserSend(); // scroll to bottom, suppress jump button for this send
+      armAutoSpeech();
+      const accepted = await sendMessage(msg, {
+        voiceMode,
+        imageUrls: attachedImagePreviews,
+        imageAssetIds: attachedImageAssetIds,
+        imageVisionConsent: attachedImageAssetIds.length > 0,
+        documentAssetIds: attachedDocumentAssetIds,
+        documentProcessingConsent: attachedDocumentAssetIds.length > 0,
+        includeCommunityPerspective,
+        publicOrigin: publicOrigin || undefined,
+      });
+      if (accepted) {
+        setInputText("");
+        // The origin is one-turn public context only. It is never shown in the
+        // conversation, attached to memory, or kept in the composer after send.
+        setExactRadiusOrigin("");
+        setKinfolkImages([]);
+        setKinfolkDocument(null);
+        setIncludeCommunityPerspective(false);
+        Keyboard.dismiss();
+      }
+    },
+    [
+      inputText,
       voiceMode,
-      imageUrls: attachedImagePreviews,
-      imageAssetIds: attachedImageAssetIds,
-      imageVisionConsent: attachedImageAssetIds.length > 0,
-      documentAssetIds: attachedDocumentAssetIds,
-      documentProcessingConsent: attachedDocumentAssetIds.length > 0,
+      sendMessage,
+      isAuthenticated,
+      authLoading,
+      onUserSend,
+      kinfolkImages,
+      kinfolkDocument,
       includeCommunityPerspective,
-      publicOrigin: publicOrigin || undefined,
-    });
-    if (accepted) {
-      setInputText("");
-      // The origin is one-turn public context only. It is never shown in the
-      // conversation, attached to memory, or kept in the composer after send.
-      setExactRadiusOrigin("");
-      setKinfolkImages([]);
-      setKinfolkDocument(null);
-      setIncludeCommunityPerspective(false);
-      Keyboard.dismiss();
-    }
-  }, [inputText, voiceMode, sendMessage, isAuthenticated, authLoading, onUserSend, kinfolkImages, kinfolkDocument, includeCommunityPerspective, armAutoSpeech, stopServerVoice, exactRadiusOrigin]);
+      armAutoSpeech,
+      stopServerVoice,
+      exactRadiusOrigin,
+    ],
+  );
 
-  const handleFeedback = useCallback((msgId: string, name: string, cat: string, city: string, r: "like" | "dislike") => {
-    void submitFeedback(msgId, name, cat, city, r);
-  }, [submitFeedback]);
+  const handleFeedback = useCallback(
+    (
+      msgId: string,
+      name: string,
+      cat: string,
+      city: string,
+      r: "like" | "dislike",
+    ) => {
+      void submitFeedback(msgId, name, cat, city, r);
+    },
+    [submitFeedback],
+  );
 
-  const handleConfirmTaskAction = useCallback(async (msgId: string, action: TaskAction) => {
-    const result = await confirmTaskAction(msgId, action);
-    if (result.kind === "saved") {
-      Alert.alert(
-        "Added to My Lists",
-        `"${action.list?.name ?? (action.type === "create_task" ? "Reminder" : "My List")}" is ready in your lists.`,
-        [
-          { text: "View Lists", onPress: () => router.push("/kinfolk-tasks" as any) },
-          { text: "OK", style: "cancel" },
-        ],
-      );
-    } else {
-      Alert.alert(
-        result.kind === "uncertain" ? "Save needs review" : "Reminder not saved",
-        result.message,
-        result.kind === "uncertain"
-          ? [{ text: "Review My Lists", onPress: () => router.push("/kinfolk-tasks" as any) }, { text: "OK", style: "cancel" }]
-          : [{ text: "OK", style: "cancel" }],
-      );
-    }
-  }, [confirmTaskAction]);
+  const handleConfirmTaskAction = useCallback(
+    async (msgId: string, action: TaskAction) => {
+      const result = await confirmTaskAction(msgId, action);
+      if (result.kind === "saved") {
+        Alert.alert(
+          "Added to My Lists",
+          `"${action.list?.name ?? (action.type === "create_task" ? "Reminder" : "My List")}" is ready in your lists.`,
+          [
+            {
+              text: "View Lists",
+              onPress: () => router.push("/kinfolk-tasks" as any),
+            },
+            { text: "OK", style: "cancel" },
+          ],
+        );
+      } else {
+        Alert.alert(
+          result.kind === "uncertain"
+            ? "Save needs review"
+            : "Reminder not saved",
+          result.message,
+          result.kind === "uncertain"
+            ? [
+                {
+                  text: "Review My Lists",
+                  onPress: () => router.push("/kinfolk-tasks" as any),
+                },
+                { text: "OK", style: "cancel" },
+              ]
+            : [{ text: "OK", style: "cancel" }],
+        );
+      }
+    },
+    [confirmTaskAction],
+  );
 
-  const handleDismissTaskAction = useCallback((msgId: string) => {
-    dismissTaskAction(msgId);
-  }, [dismissTaskAction]);
+  const handleDismissTaskAction = useCallback(
+    (msgId: string) => {
+      dismissTaskAction(msgId);
+    },
+    [dismissTaskAction],
+  );
 
   const handleReviewTaskLists = useCallback(() => {
     router.push("/kinfolk-tasks" as any);
@@ -2740,32 +6054,51 @@ export default function TravelScreen() {
     [compareSelected],
   );
 
-  const handleWishlist = useCallback((biz: TravelBusiness, city: string, add: boolean, itemId: string | null) => {
-    if (add) {
-      if (!isAuthenticated) {
-        Alert.alert(
-          "Sign in to save spots",
-          "Create a free account to build your \"Trips I'd Love\" wishlist.",
-          [
-            { text: "Not now", style: "cancel" },
-            { text: "Sign in", onPress: () => router.push("/login" as any) },
-          ]
-        );
-        return;
+  const handleWishlist = useCallback(
+    (
+      biz: TravelBusiness,
+      city: string,
+      add: boolean,
+      itemId: string | null,
+    ) => {
+      if (add) {
+        if (!isAuthenticated) {
+          Alert.alert(
+            "Sign in to save spots",
+            'Create a free account to build your "Trips I\'d Love" wishlist.',
+            [
+              { text: "Not now", style: "cancel" },
+              { text: "Sign in", onPress: () => router.push("/login" as any) },
+            ],
+          );
+          return;
+        }
+        void addItem({
+          businessName: biz.name,
+          category: biz.category,
+          city,
+          neighborhood: biz.neighborhood,
+          description: biz.description,
+          mustTry: biz.mustTry,
+          sessionId,
+        });
+      } else if (itemId) {
+        void removeItem(itemId);
       }
-      void addItem({ businessName: biz.name, category: biz.category, city, neighborhood: biz.neighborhood, description: biz.description, mustTry: biz.mustTry, sessionId });
-    } else if (itemId) {
-      void removeItem(itemId);
-    }
-  }, [addItem, removeItem, sessionId, isAuthenticated]);
+    },
+    [addItem, removeItem, sessionId, isAuthenticated],
+  );
 
-  const handleHistorySelect = useCallback(async (id: string) => {
-    const loaded = await loadSession(id);
-    if (loaded) {
-      setShowHistory(false);
-      void loadSessions();
-    }
-  }, [loadSession, loadSessions]);
+  const handleHistorySelect = useCallback(
+    async (id: string) => {
+      const loaded = await loadSession(id);
+      if (loaded) {
+        setShowHistory(false);
+        void loadSessions();
+      }
+    },
+    [loadSession, loadSessions],
+  );
 
   const handleNewSession = useCallback(() => {
     startNewSession();
@@ -2787,59 +6120,95 @@ export default function TravelScreen() {
     setCompareMode(false);
     setCompareSelected([]);
     const list = selected
-      .map((b, i) => `${i + 1}. ${b.name} (${b.category}${b.neighborhood ? `, ${b.neighborhood}` : ""}) — ${b.description}. Must try: ${b.mustTry}`)
+      .map(
+        (b, i) =>
+          `${i + 1}. ${b.name} (${b.category}${b.neighborhood ? `, ${b.neighborhood}` : ""}) — ${b.description}. Must try: ${b.mustTry}`,
+      )
       .join("\n");
     const prompt = `Compare these ${selected.length} spots and tell me which is the best fit for me based on my taste profile and everything I've rated:\n\n${list}\n\nPick one winner and explain why it's the right call for me.`;
     armAutoSpeech();
     await sendMessage(prompt, { voiceMode });
   }, [compareSelected, sendMessage, voiceMode, armAutoSpeech]);
 
-  const hasProfile = preferences && (
-    (preferences.favoriteCategories?.length ?? 0) > 0 ||
-    (preferences.tripStyle?.length ?? 0) > 0
-  );
+  const hasProfile =
+    preferences &&
+    ((preferences.favoriteCategories?.length ?? 0) > 0 ||
+      (preferences.tripStyle?.length ?? 0) > 0);
 
-  const renderMessage = useCallback(({ item }: { item: ChatMessage }) => {
-    if (item.role === "user") {
-      return <UserMessageBubble msg={item} colors={colors} />;
-    }
-    return (
-      <View>
-        <AiMessageBubble
-          msg={item}
-          onFeedback={handleFeedback}
-          onQuickReply={(t) => void handleSend(t)}
-          onWishlist={handleWishlist}
-          wishlistedNames={wishlistedNames}
-          compareMode={compareMode}
-          compareSelectedNames={compareSelectedNamesSet}
-          onCompareToggle={handleCompareToggle}
-          onConfirmTaskAction={handleConfirmTaskAction}
-          onDismissTaskAction={handleDismissTaskAction}
-          onReviewTaskLists={handleReviewTaskLists}
-          onSpeak={speakManually}
-          spokenVoiceText={spokenVoiceText}
-          colors={colors}
-        />
-        {item.memoryUse && <KinfolkMemoryUseNotice memoryUse={item.memoryUse} />}
-        {item.inlineMemoryConsent && <KinfolkInlineMemoryConsent
-          message={item.inlineMemoryConsent.message}
-          plan={item.inlineMemoryConsent.plan}
-          sessionId={item.inlineMemoryConsent.sessionId}
-          onSaved={() => { dismissInlineMemoryConsent(item.id); void loadKinfolkContinuity(); }}
-          onDismiss={() => dismissInlineMemoryConsent(item.id)}
-          onUseOnce={(instruction) => { useOneTimeDeliveryInstruction(instruction); dismissInlineMemoryConsent(item.id); }}
-        />}
-        {item.sensitiveMemoryDraft && <KinfolkSensitiveMemoryConfirmation
-          content={item.sensitiveMemoryDraft.content}
-          purpose={item.sensitiveMemoryDraft.purpose}
-          sessionId={item.sensitiveMemoryDraft.sessionId}
-          onSaved={() => dismissSensitiveMemoryDraft(item.id)}
-          onDismiss={() => dismissSensitiveMemoryDraft(item.id)}
-        />}
-      </View>
-    );
-  }, [colors, handleFeedback, handleSend, handleWishlist, wishlistedNames, compareMode, compareSelectedNamesSet, handleCompareToggle, handleConfirmTaskAction, handleDismissTaskAction, handleReviewTaskLists, speakManually, spokenVoiceText, dismissSensitiveMemoryDraft, dismissInlineMemoryConsent, loadKinfolkContinuity, useOneTimeDeliveryInstruction]);
+  const renderMessage = useCallback(
+    ({ item }: { item: ChatMessage }) => {
+      if (item.role === "user") {
+        return <UserMessageBubble msg={item} colors={colors} />;
+      }
+      return (
+        <View>
+          <AiMessageBubble
+            msg={item}
+            onFeedback={handleFeedback}
+            onQuickReply={(t) => void handleSend(t)}
+            onWishlist={handleWishlist}
+            wishlistedNames={wishlistedNames}
+            compareMode={compareMode}
+            compareSelectedNames={compareSelectedNamesSet}
+            onCompareToggle={handleCompareToggle}
+            onConfirmTaskAction={handleConfirmTaskAction}
+            onDismissTaskAction={handleDismissTaskAction}
+            onReviewTaskLists={handleReviewTaskLists}
+            onSpeak={speakManually}
+            spokenVoiceText={spokenVoiceText}
+            colors={colors}
+          />
+          {item.memoryUse && (
+            <KinfolkMemoryUseNotice memoryUse={item.memoryUse} />
+          )}
+          {item.inlineMemoryConsent && (
+            <KinfolkInlineMemoryConsent
+              message={item.inlineMemoryConsent.message}
+              plan={item.inlineMemoryConsent.plan}
+              sessionId={item.inlineMemoryConsent.sessionId}
+              onSaved={() => {
+                dismissInlineMemoryConsent(item.id);
+                void loadKinfolkContinuity();
+              }}
+              onDismiss={() => dismissInlineMemoryConsent(item.id)}
+              onUseOnce={(instruction) => {
+                useOneTimeDeliveryInstruction(instruction);
+                dismissInlineMemoryConsent(item.id);
+              }}
+            />
+          )}
+          {item.sensitiveMemoryDraft && (
+            <KinfolkSensitiveMemoryConfirmation
+              content={item.sensitiveMemoryDraft.content}
+              purpose={item.sensitiveMemoryDraft.purpose}
+              sessionId={item.sensitiveMemoryDraft.sessionId}
+              onSaved={() => dismissSensitiveMemoryDraft(item.id)}
+              onDismiss={() => dismissSensitiveMemoryDraft(item.id)}
+            />
+          )}
+        </View>
+      );
+    },
+    [
+      colors,
+      handleFeedback,
+      handleSend,
+      handleWishlist,
+      wishlistedNames,
+      compareMode,
+      compareSelectedNamesSet,
+      handleCompareToggle,
+      handleConfirmTaskAction,
+      handleDismissTaskAction,
+      handleReviewTaskLists,
+      speakManually,
+      spokenVoiceText,
+      dismissSensitiveMemoryDraft,
+      dismissInlineMemoryConsent,
+      loadKinfolkContinuity,
+      useOneTimeDeliveryInstruction,
+    ],
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: colors.background }]}>
@@ -2850,112 +6219,320 @@ export default function TravelScreen() {
       />
       <KinfolkContinuityDisclosure
         visible={isAuthenticated && kinfolkContinuityDisclosureRequired}
-        onChoose={(decision) => setKinfolkContinuity(decision === "accepted", decision)}
+        onChoose={(decision) =>
+          setKinfolkContinuity(decision === "accepted", decision)
+        }
       />
 
       {/* Premium upsell banner — shown for non-premium, non-trial members */}
-      {isAuthenticated && subscription && subscription.status !== "active" && subscription.status !== "trialing" && (
-        <TouchableOpacity
-          activeOpacity={0.88}
-          onPress={() => router.push("/membership" as any)}
-          style={[styles.premiumBanner, { paddingTop: topPad }]}
-          accessibilityRole="button"
-          accessibilityLabel="Upgrade to KinfolkAI Premium — tap to learn more"
-        >
-          <Ionicons name="star" size={14} color="#C9922B" />
-          <Text style={styles.premiumBannerText}>
-            {" "}Upgrade to Premium for unlimited KinfolkAI conversations
-          </Text>
-          <Ionicons name="chevron-forward" size={14} color="#C9922B" />
-        </TouchableOpacity>
-      )}
+      {isAuthenticated &&
+        subscription &&
+        subscription.status !== "active" &&
+        subscription.status !== "trialing" && (
+          <TouchableOpacity
+            activeOpacity={0.88}
+            onPress={() => router.push("/membership" as any)}
+            style={[styles.premiumBanner, { paddingTop: topPad }]}
+            accessibilityRole="button"
+            accessibilityLabel="Upgrade to KinfolkAI Premium — tap to learn more"
+          >
+            <Ionicons name="star" size={14} color="#C9922B" />
+            <Text style={styles.premiumBannerText}>
+              {" "}
+              Upgrade to Premium for unlimited KinfolkAI conversations
+            </Text>
+            <Ionicons name="chevron-forward" size={14} color="#C9922B" />
+          </TouchableOpacity>
+        )}
 
       {/* Header */}
-        <View style={[styles.header, { paddingTop: topPad + 10, backgroundColor: colors.primary }]}>
-          <TouchableOpacity activeOpacity={0.85} style={styles.headerBtn} onPress={() => router.canGoBack() ? router.back() : router.replace("/(tabs)" as never)} accessibilityRole="button" accessibilityLabel="Return to the app" hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="arrow-back" size={22} color={colors.primaryForeground} />
-          </TouchableOpacity>
-          <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle} numberOfLines={1}>KinfolkAI™</Text>
-          <Text style={styles.headerSub} numberOfLines={1}>Your personal life companion</Text>
-          </View>
-          <View style={styles.headerActions}>
-          <TouchableOpacity activeOpacity={0.85}
-            style={[styles.headerIconBtn, showHeaderActions && { backgroundColor: "#ffffff30" }]}
+      <View
+        style={[
+          styles.header,
+          { paddingTop: topPad + 10, backgroundColor: colors.primary },
+        ]}
+      >
+        <TouchableOpacity
+          activeOpacity={0.85}
+          style={styles.headerBtn}
+          onPress={() =>
+            router.canGoBack()
+              ? router.back()
+              : router.replace("/(tabs)" as never)
+          }
+          accessibilityRole="button"
+          accessibilityLabel="Return to the app"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons
+            name="arrow-back"
+            size={22}
+            color={colors.primaryForeground}
+          />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            KinfolkAI™
+          </Text>
+          <Text style={styles.headerSub} numberOfLines={1}>
+            Your personal life companion
+          </Text>
+        </View>
+        <View style={styles.headerActions}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            style={[
+              styles.headerIconBtn,
+              showHeaderActions && { backgroundColor: "#ffffff30" },
+            ]}
             onPress={() => setShowHeaderActions((visible) => !visible)}
             accessibilityRole="button"
             accessibilityState={{ expanded: showHeaderActions }}
             accessibilityLabel="Open Kinfolk conversation actions"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name={showHeaderActions ? "close" : "ellipsis-horizontal"} size={22} color={colors.primaryForeground} />
+            <Ionicons
+              name={showHeaderActions ? "close" : "ellipsis-horizontal"}
+              size={22}
+              color={colors.primaryForeground}
+            />
           </TouchableOpacity>
         </View>
       </View>
 
       {showHeaderActions && (
-        <View style={[styles.headerActionRail, { backgroundColor: colors.primary, borderTopColor: "#ffffff22" }]}>
-          <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); setShowProfile(true); }} accessibilityLabel="Open Kinfolk profile">
-            <Ionicons name="person-circle-outline" size={15} color={colors.primaryForeground} />
-            <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>Profile</Text>
+        <View
+          style={[
+            styles.headerActionRail,
+            { backgroundColor: colors.primary, borderTopColor: "#ffffff22" },
+          ]}
+        >
+          <TouchableOpacity
+            activeOpacity={0.82}
+            style={styles.headerAction}
+            onPress={() => {
+              setShowHeaderActions(false);
+              setShowProfile(true);
+            }}
+            accessibilityLabel="Open Kinfolk profile"
+          >
+            <Ionicons
+              name="person-circle-outline"
+              size={15}
+              color={colors.primaryForeground}
+            />
+            <Text
+              style={[
+                styles.headerActionText,
+                { color: colors.primaryForeground },
+              ]}
+            >
+              Profile
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); router.push("/wishlist" as any); }} accessibilityLabel="Open saved places">
-            <Ionicons name={wishlistItems.length > 0 ? "bookmark" : "bookmark-outline"} size={15} color={colors.primaryForeground} />
-            <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>Saved</Text>
+          <TouchableOpacity
+            activeOpacity={0.82}
+            style={styles.headerAction}
+            onPress={() => {
+              setShowHeaderActions(false);
+              router.push("/wishlist" as any);
+            }}
+            accessibilityLabel="Open saved places"
+          >
+            <Ionicons
+              name={wishlistItems.length > 0 ? "bookmark" : "bookmark-outline"}
+              size={15}
+              color={colors.primaryForeground}
+            />
+            <Text
+              style={[
+                styles.headerActionText,
+                { color: colors.primaryForeground },
+              ]}
+            >
+              Saved
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); setCompareMode((value) => !value); setCompareSelected([]); }} accessibilityLabel="Toggle comparison mode">
-            <Ionicons name="scale-outline" size={15} color={colors.primaryForeground} />
-            <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>{compareMode ? "Stop compare" : "Compare"}</Text>
+          <TouchableOpacity
+            activeOpacity={0.82}
+            style={styles.headerAction}
+            onPress={() => {
+              setShowHeaderActions(false);
+              setCompareMode((value) => !value);
+              setCompareSelected([]);
+            }}
+            accessibilityLabel="Toggle comparison mode"
+          >
+            <Ionicons
+              name="scale-outline"
+              size={15}
+              color={colors.primaryForeground}
+            />
+            <Text
+              style={[
+                styles.headerActionText,
+                { color: colors.primaryForeground },
+              ]}
+            >
+              {compareMode ? "Stop compare" : "Compare"}
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); setShowFlights(true); }} accessibilityLabel="Open flight tracker">
-            <Ionicons name="airplane-outline" size={15} color={colors.primaryForeground} />
-            <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>Flights</Text>
+          <TouchableOpacity
+            activeOpacity={0.82}
+            style={styles.headerAction}
+            onPress={() => {
+              setShowHeaderActions(false);
+              setShowFlights(true);
+            }}
+            accessibilityLabel="Open flight tracker"
+          >
+            <Ionicons
+              name="airplane-outline"
+              size={15}
+              color={colors.primaryForeground}
+            />
+            <Text
+              style={[
+                styles.headerActionText,
+                { color: colors.primaryForeground },
+              ]}
+            >
+              Flights
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); void loadSessions(); setShowHistory(true); }} accessibilityLabel="Open conversation history">
-            <Ionicons name="time-outline" size={15} color={colors.primaryForeground} />
-            <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>History</Text>
+          <TouchableOpacity
+            activeOpacity={0.82}
+            style={styles.headerAction}
+            onPress={() => {
+              setShowHeaderActions(false);
+              void loadSessions();
+              setShowHistory(true);
+            }}
+            accessibilityLabel="Open conversation history"
+          >
+            <Ionicons
+              name="time-outline"
+              size={15}
+              color={colors.primaryForeground}
+            />
+            <Text
+              style={[
+                styles.headerActionText,
+                { color: colors.primaryForeground },
+              ]}
+            >
+              History
+            </Text>
           </TouchableOpacity>
           {messages.length > 0 && (
-            <TouchableOpacity activeOpacity={0.82} style={styles.headerAction} onPress={() => { setShowHeaderActions(false); handleNewSession(); }} accessibilityLabel="Start a new Kinfolk conversation">
+            <TouchableOpacity
+              activeOpacity={0.82}
+              style={styles.headerAction}
+              onPress={() => {
+                setShowHeaderActions(false);
+                handleNewSession();
+              }}
+              accessibilityLabel="Start a new Kinfolk conversation"
+            >
               <Ionicons name="add" size={15} color={colors.primaryForeground} />
-              <Text style={[styles.headerActionText, { color: colors.primaryForeground }]}>New</Text>
+              <Text
+                style={[
+                  styles.headerActionText,
+                  { color: colors.primaryForeground },
+                ]}
+              >
+                New
+              </Text>
             </TouchableOpacity>
           )}
         </View>
       )}
 
       {isAuthenticated && (
-        <View style={[styles.conversationModeRail, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <View
+          style={[
+            styles.conversationModeRail,
+            { backgroundColor: colors.card, borderBottomColor: colors.border },
+          ]}
+        >
           <View style={styles.conversationModeHeading}>
-            <Ionicons name="chatbubble-ellipses-outline" size={14} color={colors.primary} />
-            <Text style={[styles.conversationModeLabel, { color: colors.foreground }]}>Conversation Mode</Text>
-            <Text style={[styles.conversationModeHint, { color: colors.mutedForeground }]}>Style only</Text>
+            <Ionicons
+              name="chatbubble-ellipses-outline"
+              size={14}
+              color={colors.primary}
+            />
+            <Text
+              style={[
+                styles.conversationModeLabel,
+                { color: colors.foreground },
+              ]}
+            >
+              Conversation Mode
+            </Text>
+            <Text
+              style={[
+                styles.conversationModeHint,
+                { color: colors.mutedForeground },
+              ]}
+            >
+              Style only
+            </Text>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.conversationModeOptions}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.conversationModeOptions}
+          >
             {KINFOLK_VOICES.map((mode) => {
               const selected = voiceMode === mode.id;
-              return <TouchableOpacity
-                key={mode.id}
-                activeOpacity={0.82}
-                accessibilityRole="radio"
-                accessibilityState={{ selected }}
-                accessibilityLabel={`Use ${mode.label} conversation mode`}
-                style={[styles.conversationModeChip, { borderColor: selected ? colors.primary : colors.border, backgroundColor: selected ? colors.primary + "16" : colors.background }]}
-                onPress={() => {
-                  if (selected) return;
-                  const previous = voiceMode;
-                  setVoiceMode(mode.id);
-                  void updatePreferences({ personalityMode: mode.id }).then((saved) => {
-                    if (!saved) {
-                      setVoiceMode(previous);
-                      Alert.alert("Conversation Mode was not changed", "Please try again. Your saved memories and voice were left unchanged.");
-                    }
-                  });
-                }}
-              >
-                <Text style={styles.conversationModeEmoji}>{mode.icon}</Text>
-                <Text style={[styles.conversationModeChipText, { color: selected ? colors.primary : colors.mutedForeground }]}>{mode.label}</Text>
-              </TouchableOpacity>;
+              return (
+                <TouchableOpacity
+                  key={mode.id}
+                  activeOpacity={0.82}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`Use ${mode.label} conversation mode`}
+                  style={[
+                    styles.conversationModeChip,
+                    {
+                      borderColor: selected ? colors.primary : colors.border,
+                      backgroundColor: selected
+                        ? colors.primary + "16"
+                        : colors.background,
+                    },
+                  ]}
+                  onPress={() => {
+                    if (selected) return;
+                    const previous = voiceMode;
+                    setVoiceMode(mode.id);
+                    void updatePreferences({ personalityMode: mode.id }).then(
+                      (saved) => {
+                        if (!saved) {
+                          setVoiceMode(previous);
+                          Alert.alert(
+                            "Conversation Mode was not changed",
+                            "Please try again. Your saved memories and voice were left unchanged.",
+                          );
+                        }
+                      },
+                    );
+                  }}
+                >
+                  <Text style={styles.conversationModeEmoji}>{mode.icon}</Text>
+                  <Text
+                    style={[
+                      styles.conversationModeChipText,
+                      {
+                        color: selected
+                          ? colors.primary
+                          : colors.mutedForeground,
+                      },
+                    ]}
+                  >
+                    {mode.label}
+                  </Text>
+                </TouchableOpacity>
+              );
             })}
           </ScrollView>
         </View>
@@ -2963,50 +6540,108 @@ export default function TravelScreen() {
 
       {/* Personalization banner */}
       {hasProfile && messages.length === 0 && (
-        <View style={[styles.personalBanner, { backgroundColor: colors.primary + "12", borderBottomColor: colors.primary + "25" }]}>
+        <View
+          style={[
+            styles.personalBanner,
+            {
+              backgroundColor: colors.primary + "12",
+              borderBottomColor: colors.primary + "25",
+            },
+          ]}
+        >
           <Ionicons name="sparkles" size={14} color={colors.primary} />
           <Text style={[styles.personalBannerText, { color: colors.primary }]}>
-            Your taste profile is active — recommendations are personalized to you
+            Your taste profile is active — recommendations are personalized to
+            you
           </Text>
         </View>
       )}
 
       {/* Free-tier query counter — shown after first query when user is on free plan */}
-      {isAuthenticated && queriesUsed !== null && queriesUsed > 0 &&
-        (!subscription || (subscription.status !== "active" && subscription.status !== "trialing")) && (
-        <TouchableOpacity
-          activeOpacity={0.85}
-          onPress={() => router.push("/membership" as any)}
-          style={[styles.queryCounter, {
-            backgroundColor: queriesUsed >= queriesLimit - 1 ? "#DC262612" : colors.secondary,
-            borderBottomColor: queriesUsed >= queriesLimit - 1 ? "#DC262630" : colors.border,
-          }]}
-        >
-          <Ionicons
-            name={queriesUsed >= queriesLimit - 1 ? "warning-outline" : "flash-outline"}
-            size={13}
-            color={queriesUsed >= queriesLimit - 1 ? "#DC2626" : colors.mutedForeground}
-          />
-          <Text style={[styles.queryCounterText, { color: queriesUsed >= queriesLimit - 1 ? "#DC2626" : colors.mutedForeground }]}>
-            {queriesUsed} of {queriesLimit} free chats used this month
-            {queriesUsed >= queriesLimit - 1 ? " — last one!" : " — Upgrade for unlimited"}
-          </Text>
-          <Ionicons name="chevron-forward" size={13} color={queriesUsed >= queriesLimit - 1 ? "#DC2626" : colors.mutedForeground} />
-        </TouchableOpacity>
-      )}
+      {isAuthenticated &&
+        queriesUsed !== null &&
+        queriesUsed > 0 &&
+        (!subscription ||
+          (subscription.status !== "active" &&
+            subscription.status !== "trialing")) && (
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => router.push("/membership" as any)}
+            style={[
+              styles.queryCounter,
+              {
+                backgroundColor:
+                  queriesUsed >= queriesLimit - 1
+                    ? "#DC262612"
+                    : colors.secondary,
+                borderBottomColor:
+                  queriesUsed >= queriesLimit - 1 ? "#DC262630" : colors.border,
+              },
+            ]}
+          >
+            <Ionicons
+              name={
+                queriesUsed >= queriesLimit - 1
+                  ? "warning-outline"
+                  : "flash-outline"
+              }
+              size={13}
+              color={
+                queriesUsed >= queriesLimit - 1
+                  ? "#DC2626"
+                  : colors.mutedForeground
+              }
+            />
+            <Text
+              style={[
+                styles.queryCounterText,
+                {
+                  color:
+                    queriesUsed >= queriesLimit - 1
+                      ? "#DC2626"
+                      : colors.mutedForeground,
+                },
+              ]}
+            >
+              {queriesUsed} of {queriesLimit} free chats used this month
+              {queriesUsed >= queriesLimit - 1
+                ? " — last one!"
+                : " — Upgrade for unlimited"}
+            </Text>
+            <Ionicons
+              name="chevron-forward"
+              size={13}
+              color={
+                queriesUsed >= queriesLimit - 1
+                  ? "#DC2626"
+                  : colors.mutedForeground
+              }
+            />
+          </TouchableOpacity>
+        )}
 
       {/* KinfolkAI status banner — shown when the AI backend is unreachable */}
       {kinfolkOk === false && (
-        <View style={[styles.aiDownBanner, { backgroundColor: "#FEF3C7", borderBottomColor: "#F59E0B30" }]}>
+        <View
+          style={[
+            styles.aiDownBanner,
+            { backgroundColor: "#FEF3C7", borderBottomColor: "#F59E0B30" },
+          ]}
+        >
           <Ionicons name="warning-outline" size={14} color="#92400E" />
           <Text style={[styles.aiDownBannerText, { color: "#92400E" }]}>
-            KinfolkAI is temporarily unavailable. Our team has been notified. Business search and all other features are working normally.
+            KinfolkAI is temporarily unavailable. Our team has been notified.
+            Business search and all other features are working normally.
           </Text>
         </View>
       )}
 
       {/* Chat area */}
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined} keyboardVerticalOffset={0}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={0}
+      >
         <FlatList
           keyboardDismissMode="on-drag"
           keyboardShouldPersistTaps="handled"
@@ -3015,23 +6650,64 @@ export default function TravelScreen() {
           data={messages}
           keyExtractor={(item) => item.id}
           renderItem={renderMessage}
-          contentContainerStyle={[styles.chatContent, { paddingBottom: Math.max(insets.bottom, 24) }]}
-          ListHeaderComponent={(
+          contentContainerStyle={[
+            styles.chatContent,
+            { paddingBottom: Math.max(insets.bottom, 24) },
+          ]}
+          ListHeaderComponent={
             <View>
               {conversationHandoff && (
-                <View testID="kinfolk-conversation-handoff" style={{ marginHorizontal: 16, marginBottom: 10, padding: 12, borderRadius: 12, borderWidth: 1, borderColor: `${colors.primary}50`, backgroundColor: colors.secondary }}>
-                  <Text style={{ color: colors.primary, fontWeight: "700", fontSize: 13 }}>
-                    {conversationHandoff.state === "resumed" ? "Conversation resumed" : "Conversation saved"}
+                <View
+                  testID="kinfolk-conversation-handoff"
+                  style={{
+                    marginHorizontal: 16,
+                    marginBottom: 10,
+                    padding: 12,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: `${colors.primary}50`,
+                    backgroundColor: colors.secondary,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: colors.primary,
+                      fontWeight: "700",
+                      fontSize: 13,
+                    }}
+                  >
+                    {conversationHandoff.state === "resumed"
+                      ? "Conversation resumed"
+                      : "Conversation saved"}
                   </Text>
-                  <Text style={{ color: colors.foreground, marginTop: 4, fontSize: 12, lineHeight: 18 }}>{conversationHandoff.summary}</Text>
+                  <Text
+                    style={{
+                      color: colors.foreground,
+                      marginTop: 4,
+                      fontSize: 12,
+                      lineHeight: 18,
+                    }}
+                  >
+                    {conversationHandoff.summary}
+                  </Text>
                 </View>
               )}
               {messages.length === 0 && (
-                <WelcomeScreen colors={colors} onChipPress={(t) => void handleSend(t)} />
+                <WelcomeScreen
+                  colors={colors}
+                  onChipPress={(t) => void handleSend(t)}
+                />
               )}
             </View>
-          )}
-          ListFooterComponent={isLoading && kinfolkRequestStartedAt !== null ? <TypingIndicator colors={colors} elapsedSeconds={kinfolkWorkingSeconds} /> : null}
+          }
+          ListFooterComponent={
+            isLoading && kinfolkRequestStartedAt !== null ? (
+              <TypingIndicator
+                colors={colors}
+                elapsedSeconds={kinfolkWorkingSeconds}
+              />
+            ) : null
+          }
           showsVerticalScrollIndicator={false}
           onScroll={onChatScroll}
           scrollEventThrottle={16}
@@ -3045,35 +6721,94 @@ export default function TravelScreen() {
             onPress={() => scrollToBottom(true)}
             activeOpacity={0.85}
           >
-            <Ionicons name="chevron-down" size={14} color={colors.primaryForeground} />
-            <Text style={[jumpStyles.label, { color: colors.primaryForeground }]}>Jump to latest</Text>
+            <Ionicons
+              name="chevron-down"
+              size={14}
+              color={colors.primaryForeground}
+            />
+            <Text
+              style={[jumpStyles.label, { color: colors.primaryForeground }]}
+            >
+              Jump to latest
+            </Text>
           </TouchableOpacity>
         )}
 
         {/* Compare bar */}
         {compareMode && (
-          <View style={[styles.compareBar, { backgroundColor: colors.card, borderTopColor: colors.border, borderBottomColor: colors.border }]}>
-            <Ionicons name="scale-outline" size={15} color={compareSelected.length >= 2 ? colors.primary : colors.mutedForeground} />
-            <Text style={[styles.compareBarText, { color: compareSelected.length >= 2 ? colors.foreground : colors.mutedForeground }]}>
+          <View
+            style={[
+              styles.compareBar,
+              {
+                backgroundColor: colors.card,
+                borderTopColor: colors.border,
+                borderBottomColor: colors.border,
+              },
+            ]}
+          >
+            <Ionicons
+              name="scale-outline"
+              size={15}
+              color={
+                compareSelected.length >= 2
+                  ? colors.primary
+                  : colors.mutedForeground
+              }
+            />
+            <Text
+              style={[
+                styles.compareBarText,
+                {
+                  color:
+                    compareSelected.length >= 2
+                      ? colors.foreground
+                      : colors.mutedForeground,
+                },
+              ]}
+            >
               {compareSelected.length === 0
                 ? "Tap spots below to compare (up to 3)"
                 : compareSelected.length === 1
                   ? "1 of 3 selected — pick at least one more"
                   : `${compareSelected.length} of 3 selected`}
             </Text>
-            <TouchableOpacity activeOpacity={0.85}
-              style={[styles.compareGoBtn, { backgroundColor: compareSelected.length >= 2 ? colors.primary : colors.border }]}
+            <TouchableOpacity
+              activeOpacity={0.85}
+              style={[
+                styles.compareGoBtn,
+                {
+                  backgroundColor:
+                    compareSelected.length >= 2
+                      ? colors.primary
+                      : colors.border,
+                },
+              ]}
               onPress={() => void handleCompare()}
               disabled={compareSelected.length < 2}
             >
-              <Text style={[styles.compareGoBtnText, { color: compareSelected.length >= 2 ? colors.primaryForeground : colors.mutedForeground }]}>
+              <Text
+                style={[
+                  styles.compareGoBtnText,
+                  {
+                    color:
+                      compareSelected.length >= 2
+                        ? colors.primaryForeground
+                        : colors.mutedForeground,
+                  },
+                ]}
+              >
                 Compare →
               </Text>
             </TouchableOpacity>
           </View>
         )}
 
-        <View style={[styles.composerSettingsRow, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+        <View
+          style={[
+            styles.composerSettingsRow,
+            { backgroundColor: colors.card, borderTopColor: colors.border },
+          ]}
+        >
           <TouchableOpacity
             activeOpacity={0.82}
             onPress={() => setShowComposerControls((visible) => !visible)}
@@ -3083,52 +6818,231 @@ export default function TravelScreen() {
             accessibilityLabel="Open Kinfolk memory and privacy controls"
           >
             <View style={styles.composerSettingsLeading}>
-              <Ionicons name="options-outline" size={16} color={colors.primary} />
-              <Text style={[styles.composerSettingsTitle, { color: colors.foreground }]}>Memory & privacy</Text>
-              <Text style={[styles.composerSettingsSummary, { color: colors.mutedForeground }]}>
+              <Ionicons
+                name="options-outline"
+                size={16}
+                color={colors.primary}
+              />
+              <Text
+                style={[
+                  styles.composerSettingsTitle,
+                  { color: colors.foreground },
+                ]}
+              >
+                Memory & privacy
+              </Text>
+              <Text
+                style={[
+                  styles.composerSettingsSummary,
+                  { color: colors.mutedForeground },
+                ]}
+              >
                 Review or turn off memory anytime
               </Text>
             </View>
-            <Ionicons name={showComposerControls ? "chevron-up" : "chevron-down"} size={17} color={colors.mutedForeground} />
+            <Ionicons
+              name={showComposerControls ? "chevron-up" : "chevron-down"}
+              size={17}
+              color={colors.mutedForeground}
+            />
           </TouchableOpacity>
           <TouchableOpacity
             activeOpacity={0.82}
             onPress={() => router.push("/kinfolk-settings" as any)}
-            style={[styles.composerSettingsLink, { borderColor: colors.border }]}
+            style={[
+              styles.composerSettingsLink,
+              { borderColor: colors.border },
+            ]}
             accessibilityRole="button"
             accessibilityLabel="Open KinfolkAI Settings"
           >
-            <Text style={[styles.composerSettingsLinkText, { color: colors.primary }]}>Settings</Text>
-            <Ionicons name="settings-outline" size={15} color={colors.primary} />
+            <Text
+              style={[
+                styles.composerSettingsLinkText,
+                { color: colors.primary },
+              ]}
+            >
+              Settings
+            </Text>
+            <Ionicons
+              name="settings-outline"
+              size={15}
+              color={colors.primary}
+            />
           </TouchableOpacity>
         </View>
 
-        {showComposerControls && <>
-        <View style={{ paddingHorizontal: 14, paddingVertical: 8, backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, gap: 7 }}>
-          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "flex-end" }}>
-            <TouchableOpacity accessibilityLabel="Manage private Kinfolk memory" onPress={() => router.push("/kinfolk-memory" as any)}><Text style={{ fontFamily: "Inter_700Bold", fontSize: 11, color: colors.primary }}>Manage memory</Text></TouchableOpacity>
-          </View>
-          <TouchableOpacity
-            activeOpacity={0.8}
-            onPress={() => setIncludeCommunityPerspective((value) => !value)}
-            style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: includeCommunityPerspective }}
-            accessibilityLabel="Use approved public Community posts"
-          >
-            <Ionicons name={includeCommunityPerspective ? "checkbox" : "square-outline"} size={18} color={includeCommunityPerspective ? colors.primary : colors.mutedForeground} />
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: "Inter_500Medium", fontSize: 11, color: colors.mutedForeground }}>Use approved public Community posts</Text>
-              <Text style={{ fontFamily: "Inter_400Regular", fontSize: 10, color: colors.mutedForeground, marginTop: 1 }}>This does not share your chat. Community content is perspective, never evidence or a recommendation.</Text>
+        {showComposerControls && (
+          <>
+            <View
+              style={{
+                paddingHorizontal: 14,
+                paddingVertical: 8,
+                backgroundColor: colors.card,
+                borderTopWidth: StyleSheet.hairlineWidth,
+                borderTopColor: colors.border,
+                gap: 7,
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "flex-end",
+                }}
+              >
+                <TouchableOpacity
+                  accessibilityLabel="Manage private Kinfolk memory"
+                  onPress={() => router.push("/kinfolk-memory" as any)}
+                >
+                  <Text
+                    style={{
+                      fontFamily: "Inter_700Bold",
+                      fontSize: 11,
+                      color: colors.primary,
+                    }}
+                  >
+                    Manage memory
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                activeOpacity={0.8}
+                onPress={() =>
+                  setIncludeCommunityPerspective((value) => !value)
+                }
+                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: includeCommunityPerspective }}
+                accessibilityLabel="Use approved public Community posts"
+              >
+                <Ionicons
+                  name={
+                    includeCommunityPerspective ? "checkbox" : "square-outline"
+                  }
+                  size={18}
+                  color={
+                    includeCommunityPerspective
+                      ? colors.primary
+                      : colors.mutedForeground
+                  }
+                />
+                <View style={{ flex: 1 }}>
+                  <Text
+                    style={{
+                      fontFamily: "Inter_500Medium",
+                      fontSize: 11,
+                      color: colors.mutedForeground,
+                    }}
+                  >
+                    Use approved public Community posts
+                  </Text>
+                  <Text
+                    style={{
+                      fontFamily: "Inter_400Regular",
+                      fontSize: 10,
+                      color: colors.mutedForeground,
+                      marginTop: 1,
+                    }}
+                  >
+                    This does not share your chat. Community content is
+                    perspective, never evidence or a recommendation.
+                  </Text>
+                </View>
+              </TouchableOpacity>
+              {kinfolkImages.length > 0 && (
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  style={{ marginTop: 8 }}
+                >
+                  {kinfolkImages.map((attachment) => (
+                    <View key={attachment.assetId} style={{ marginRight: 8 }}>
+                      <Image
+                        source={{ uri: attachment.previewUri }}
+                        style={{ width: 74, height: 74, borderRadius: 12 }}
+                        accessibilityLabel="Ready to ask Kinfolk about"
+                      />
+                      <TouchableOpacity
+                        onPress={() => void removeKinfolkImage(attachment)}
+                        accessibilityLabel="Remove private image"
+                        style={{
+                          position: "absolute",
+                          top: -4,
+                          right: -4,
+                          backgroundColor: colors.primary,
+                          borderRadius: 12,
+                          padding: 3,
+                        }}
+                      >
+                        <Ionicons
+                          name="close"
+                          size={12}
+                          color={colors.primaryForeground}
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </ScrollView>
+              )}
+              {kinfolkDocument ? (
+                <View
+                  style={{
+                    marginTop: 8,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 8,
+                    borderRadius: 10,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    paddingHorizontal: 10,
+                    paddingVertical: 8,
+                  }}
+                  accessibilityLabel="Private PDF ready for this Kinfolk question"
+                >
+                  <Ionicons
+                    name="document-text-outline"
+                    size={18}
+                    color={colors.primary}
+                  />
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      flex: 1,
+                      fontFamily: "Inter_500Medium",
+                      fontSize: 11,
+                      color: colors.text,
+                    }}
+                  >
+                    {kinfolkDocument.displayName}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => void removeKinfolkDocument(kinfolkDocument)}
+                    accessibilityLabel="Remove private PDF"
+                  >
+                    <Ionicons
+                      name="close-circle-outline"
+                      size={19}
+                      color={colors.mutedForeground}
+                    />
+                  </TouchableOpacity>
+                </View>
+              ) : null}
             </View>
-          </TouchableOpacity>
-          {kinfolkImages.length > 0 && <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>{kinfolkImages.map((attachment) => <View key={attachment.assetId} style={{ marginRight: 8 }}><Image source={{ uri: attachment.previewUri }} style={{ width: 74, height: 74, borderRadius: 12 }} accessibilityLabel="Ready to ask Kinfolk about" /><TouchableOpacity onPress={() => void removeKinfolkImage(attachment)} accessibilityLabel="Remove private image" style={{ position: "absolute", top: -4, right: -4, backgroundColor: colors.primary, borderRadius: 12, padding: 3 }}><Ionicons name="close" size={12} color={colors.primaryForeground} /></TouchableOpacity></View>)}</ScrollView>}
-          {kinfolkDocument ? <View style={{ marginTop: 8, flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 10, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 10, paddingVertical: 8 }} accessibilityLabel="Private PDF ready for this Kinfolk question"><Ionicons name="document-text-outline" size={18} color={colors.primary} /><Text numberOfLines={1} style={{ flex: 1, fontFamily: "Inter_500Medium", fontSize: 11, color: colors.text }}>{kinfolkDocument.displayName}</Text><TouchableOpacity onPress={() => void removeKinfolkDocument(kinfolkDocument)} accessibilityLabel="Remove private PDF"><Ionicons name="close-circle-outline" size={19} color={colors.mutedForeground} /></TouchableOpacity></View> : null}
-        </View>
-        </>}
+          </>
+        )}
 
-        {Platform.OS !== "web" && (showComposerControls || primaryVoiceSource.state.phase !== "idle") ? (
-          <View style={{ backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingHorizontal: 14, paddingTop: 10 }}>
+        {Platform.OS !== "web" &&
+        (showComposerControls || primaryVoiceSource.state.phase !== "idle") ? (
+          <View
+            style={{
+              backgroundColor: colors.card,
+              borderTopWidth: StyleSheet.hairlineWidth,
+              borderTopColor: colors.border,
+              paddingHorizontal: 14,
+              paddingTop: 10,
+            }}
+          >
             <KinfolkVoiceSourceControls
               source={primaryVoiceSource}
               onUseTranscript={addPrimaryVoiceTranscriptToDraft}
@@ -3137,14 +7051,49 @@ export default function TravelScreen() {
           </View>
         ) : null}
         {voiceOutputStatus ? (
-          <View style={[styles.voiceInputStatus, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-            <Ionicons name={playingVoice ? "volume-high-outline" : "volume-medium-outline"} size={15} color={colors.primary} />
-            <Text style={[styles.voiceInputStatusText, { color: colors.mutedForeground }]}>{voiceOutputStatus}</Text>
+          <View
+            style={[
+              styles.voiceInputStatus,
+              { backgroundColor: colors.card, borderTopColor: colors.border },
+            ]}
+          >
+            <Ionicons
+              name={
+                playingVoice ? "volume-high-outline" : "volume-medium-outline"
+              }
+              size={15}
+              color={colors.primary}
+            />
+            <Text
+              style={[
+                styles.voiceInputStatusText,
+                { color: colors.mutedForeground },
+              ]}
+            >
+              {voiceOutputStatus}
+            </Text>
           </View>
         ) : null}
-        {/\b(?:within|under|inside|less than|no more than|up to)\s+\d{1,3}\s*(?:mi|miles?)\b|\b\d{1,3}[ -]?mile\s+radius\b/i.test(inputText) ? (
-          <View style={{ backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingHorizontal: 16, paddingTop: 10 }}>
-            <Text style={{ color: colors.text, fontFamily: "Inter_600SemiBold", fontSize: 12, marginBottom: 5 }}>
+        {/\b(?:within|under|inside|less than|no more than|up to)\s+\d{1,3}\s*(?:mi|miles?)\b|\b\d{1,3}[ -]?mile\s+radius\b/i.test(
+          inputText,
+        ) ? (
+          <View
+            style={{
+              backgroundColor: colors.card,
+              borderTopWidth: StyleSheet.hairlineWidth,
+              borderTopColor: colors.border,
+              paddingHorizontal: 16,
+              paddingTop: 10,
+            }}
+          >
+            <Text
+              style={{
+                color: colors.text,
+                fontFamily: "Inter_600SemiBold",
+                fontSize: 12,
+                marginBottom: 5,
+              }}
+            >
               Exact-radius origin (public place only)
             </Text>
             <TextInput
@@ -3154,60 +7103,310 @@ export default function TravelScreen() {
               placeholder="Hotel, venue, or transit station in the city"
               placeholderTextColor={colors.mutedForeground}
               accessibilityLabel="Exact-radius public origin"
-              style={{ height: 42, borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.background, color: colors.text, paddingHorizontal: 12, fontFamily: "Inter_400Regular", fontSize: 13 }}
+              style={{
+                height: 42,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.background,
+                color: colors.text,
+                paddingHorizontal: 12,
+                fontFamily: "Inter_400Regular",
+                fontSize: 13,
+              }}
             />
-            <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 10, lineHeight: 14, marginTop: 5 }}>
-              Used only to verify this straight-line distance. It is not saved to Kinfolk memory or your profile.
+            <Text
+              style={{
+                color: colors.mutedForeground,
+                fontFamily: "Inter_400Regular",
+                fontSize: 10,
+                lineHeight: 14,
+                marginTop: 5,
+              }}
+            >
+              Used only to verify this straight-line distance. It is not saved
+              to Kinfolk memory or your profile.
             </Text>
           </View>
         ) : null}
 
         {/* Input row */}
-        {editedImage ? (<View style={{ backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingHorizontal: 16, paddingVertical: 10 }}><View style={{ flexDirection: "row", justifyContent: "space-between", gap: 8 }}><View style={{ flex: 1 }}><Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 12 }}>{editedImage.label}</Text><Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 10 }}>Session-only private result. It is not posted or added to Kinfolk memory.</Text></View><TouchableOpacity onPress={() => setEditedImage(null)} accessibilityLabel="Remove edited image"><Ionicons name="close-circle-outline" size={21} color={colors.mutedForeground} /></TouchableOpacity></View><Image source={{ uri: editedImage.dataUrl }} resizeMode="contain" accessibilityLabel="AI-edited private image" style={{ width: "100%", height: 220, borderRadius: 14, backgroundColor: colors.background }} /><TouchableOpacity onPress={() => void prepareEditedImageForAnotherEdit()} accessibilityLabel="Prepare edited image for another private edit"><Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold", fontSize: 11, marginTop: 8 }}>Edit this result again</Text></TouchableOpacity></View>) : null}
-                {generatedImage ? (
-          <View style={{ backgroundColor: colors.card, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingHorizontal: 16, paddingVertical: 10 }}>
-            <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: 7 }}>
+        {editedImage ? (
+          <View
+            style={{
+              backgroundColor: colors.card,
+              borderTopWidth: StyleSheet.hairlineWidth,
+              borderTopColor: colors.border,
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                gap: 8,
+              }}
+            >
               <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 12 }}>{generatedImage.label}</Text>
-                <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 10, lineHeight: 14, marginTop: 2 }}>Created for this session only. It is not saved, posted, or added to Kinfolk memory.</Text>
+                <Text
+                  style={{
+                    color: colors.text,
+                    fontFamily: "Inter_700Bold",
+                    fontSize: 12,
+                  }}
+                >
+                  {editedImage.label}
+                </Text>
+                <Text
+                  style={{
+                    color: colors.mutedForeground,
+                    fontFamily: "Inter_400Regular",
+                    fontSize: 10,
+                  }}
+                >
+                  Session-only private result. It is not posted or added to
+                  Kinfolk memory.
+                </Text>
               </View>
-              <TouchableOpacity onPress={() => setGeneratedImage(null)} accessibilityLabel="Dismiss generated visual" hitSlop={8}><Ionicons name="close-circle-outline" size={21} color={colors.mutedForeground} /></TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setEditedImage(null)}
+                accessibilityLabel="Remove edited image"
+              >
+                <Ionicons
+                  name="close-circle-outline"
+                  size={21}
+                  color={colors.mutedForeground}
+                />
+              </TouchableOpacity>
             </View>
-            <Image source={{ uri: generatedImage.dataUrl }} resizeMode="contain" accessibilityLabel="AI-generated decorative visual" style={{ width: "100%", height: 220, borderRadius: 14, backgroundColor: colors.background }} />
+            <Image
+              source={{ uri: editedImage.dataUrl }}
+              resizeMode="contain"
+              accessibilityLabel="AI-edited private image"
+              style={{
+                width: "100%",
+                height: 220,
+                borderRadius: 14,
+                backgroundColor: colors.background,
+              }}
+            />
+            <TouchableOpacity
+              onPress={() => void prepareEditedImageForAnotherEdit()}
+              accessibilityLabel="Prepare edited image for another private edit"
+            >
+              <Text
+                style={{
+                  color: colors.primary,
+                  fontFamily: "Inter_600SemiBold",
+                  fontSize: 11,
+                  marginTop: 8,
+                }}
+              >
+                Edit this result again
+              </Text>
+            </TouchableOpacity>
           </View>
         ) : null}
-        <View style={[styles.inputWrapper, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: insets.bottom + 8 }]}>
+        {generatedImage ? (
+          <View
+            style={{
+              backgroundColor: colors.card,
+              borderTopWidth: StyleSheet.hairlineWidth,
+              borderTopColor: colors.border,
+              paddingHorizontal: 16,
+              paddingVertical: 10,
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 10,
+                marginBottom: 7,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text
+                  style={{
+                    color: colors.text,
+                    fontFamily: "Inter_700Bold",
+                    fontSize: 12,
+                  }}
+                >
+                  {generatedImage.label}
+                </Text>
+                <Text
+                  style={{
+                    color: colors.mutedForeground,
+                    fontFamily: "Inter_400Regular",
+                    fontSize: 10,
+                    lineHeight: 14,
+                    marginTop: 2,
+                  }}
+                >
+                  Created for this session only. It is not saved, posted, or
+                  added to Kinfolk memory.
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setGeneratedImage(null)}
+                accessibilityLabel="Dismiss generated visual"
+                hitSlop={8}
+              >
+                <Ionicons
+                  name="close-circle-outline"
+                  size={21}
+                  color={colors.mutedForeground}
+                />
+              </TouchableOpacity>
+            </View>
+            <Image
+              source={{ uri: generatedImage.dataUrl }}
+              resizeMode="contain"
+              accessibilityLabel="AI-generated decorative visual"
+              style={{
+                width: "100%",
+                height: 220,
+                borderRadius: 14,
+                backgroundColor: colors.background,
+              }}
+            />
+          </View>
+        ) : null}
+        <View
+          style={[
+            styles.inputWrapper,
+            {
+              backgroundColor: colors.card,
+              borderTopColor: colors.border,
+              paddingBottom: insets.bottom + 8,
+            },
+          ]}
+        >
           <TouchableOpacity
-            style={[styles.voiceOutputBtn, { backgroundColor: colors.background, borderColor: colors.border, opacity: isLoading ? 0.4 : 1 }]}
-            onPress={() => { setShowImageCreation(true); setImageCreationError(null); }}
+            style={[
+              styles.voiceOutputBtn,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+                opacity: isLoading ? 0.4 : 1,
+              },
+            ]}
+            onPress={() => {
+              setShowImageCreation(true);
+              setImageCreationError(null);
+            }}
             disabled={isLoading}
             accessibilityLabel="Create an original Kinfolk visual"
             activeOpacity={0.75}
           >
-            <Ionicons name="sparkles-outline" size={18} color={colors.mutedForeground} />
+            <Ionicons
+              name="sparkles-outline"
+              size={18}
+              color={colors.mutedForeground}
+            />
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.voiceOutputBtn, { backgroundColor: colors.background, borderColor: colors.border, opacity: kinfolkImages.length ? 1 : 0.4 }]} onPress={() => { const source = kinfolkImages[0]; if (!source) { Alert.alert("Add a private image", "Choose an image before asking Kinfolk to edit it."); return; } setEditSourceAssetId(source.assetId); setImageEditError(null); setShowImageEdit(true); }} disabled={!kinfolkImages.length || isLoading} accessibilityLabel="Edit a private image"><Ionicons name="color-wand-outline" size={18} color={colors.mutedForeground} /></TouchableOpacity>
-                    <TouchableOpacity
-            style={[styles.voiceOutputBtn, { backgroundColor: colors.background, borderColor: colors.border, opacity: uploadingKinfolkImage || kinfolkImages.length >= 2 ? 0.4 : 1 }]}
+          <TouchableOpacity
+            style={[
+              styles.voiceOutputBtn,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+                opacity: kinfolkImages.length ? 1 : 0.4,
+              },
+            ]}
+            onPress={() => {
+              const source = kinfolkImages[0];
+              if (!source) {
+                Alert.alert(
+                  "Add a private image",
+                  "Choose an image before asking Kinfolk to edit it.",
+                );
+                return;
+              }
+              setEditSourceAssetId(source.assetId);
+              setImageEditError(null);
+              setShowImageEdit(true);
+            }}
+            disabled={!kinfolkImages.length || isLoading}
+            accessibilityLabel="Edit a private image"
+          >
+            <Ionicons
+              name="color-wand-outline"
+              size={18}
+              color={colors.mutedForeground}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.voiceOutputBtn,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+                opacity:
+                  uploadingKinfolkImage || kinfolkImages.length >= 2 ? 0.4 : 1,
+              },
+            ]}
             onPress={() => void pickKinfolkImage()}
-            disabled={uploadingKinfolkImage || kinfolkImages.length >= 2 || isLoading}
+            disabled={
+              uploadingKinfolkImage || kinfolkImages.length >= 2 || isLoading
+            }
             accessibilityLabel="Add an image for Kinfolk"
             activeOpacity={0.75}
           >
-            {uploadingKinfolkImage ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="image-outline" size={18} color={colors.mutedForeground} />}
+            {uploadingKinfolkImage ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Ionicons
+                name="image-outline"
+                size={18}
+                color={colors.mutedForeground}
+              />
+            )}
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.voiceOutputBtn, { backgroundColor: colors.background, borderColor: colors.border, opacity: uploadingKinfolkDocument || kinfolkDocument ? 0.4 : 1 }]}
+            style={[
+              styles.voiceOutputBtn,
+              {
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+                opacity: uploadingKinfolkDocument || kinfolkDocument ? 0.4 : 1,
+              },
+            ]}
             onPress={() => void pickKinfolkDocument()}
-            disabled={uploadingKinfolkDocument || Boolean(kinfolkDocument) || isLoading}
-            accessibilityLabel={kinfolkDocument ? "One private PDF is ready for this Kinfolk question" : "Add a private PDF for Kinfolk"}
+            disabled={
+              uploadingKinfolkDocument || Boolean(kinfolkDocument) || isLoading
+            }
+            accessibilityLabel={
+              kinfolkDocument
+                ? "One private PDF is ready for this Kinfolk question"
+                : "Add a private PDF for Kinfolk"
+            }
             activeOpacity={0.75}
           >
-            {uploadingKinfolkDocument ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name="document-text-outline" size={18} color={colors.mutedForeground} />}
+            {uploadingKinfolkDocument ? (
+              <ActivityIndicator size="small" color={colors.primary} />
+            ) : (
+              <Ionicons
+                name="document-text-outline"
+                size={18}
+                color={colors.mutedForeground}
+              />
+            )}
           </TouchableOpacity>
           {Platform.OS !== "web" ? (
             <TouchableOpacity
-              style={[styles.voiceOutputBtn, { backgroundColor: voiceOutput ? colors.primary : colors.background, borderColor: voiceOutput ? colors.primary : colors.border }]}
+              style={[
+                styles.voiceOutputBtn,
+                {
+                  backgroundColor: voiceOutput
+                    ? colors.primary
+                    : colors.background,
+                  borderColor: voiceOutput ? colors.primary : colors.border,
+                },
+              ]}
               onPress={() => {
                 const nextVoiceOutput = !voiceOutputRef.current;
                 voiceOutputRef.current = nextVoiceOutput;
@@ -3218,27 +7417,91 @@ export default function TravelScreen() {
                   armAutoSpeech();
                 }
               }}
-              accessibilityLabel={voiceOutput ? "Turn off automatic Kinfolk spoken replies" : "Turn on automatic Kinfolk spoken replies"}
+              accessibilityLabel={
+                voiceOutput
+                  ? "Turn off automatic Kinfolk spoken replies"
+                  : "Turn on automatic Kinfolk spoken replies"
+              }
               activeOpacity={0.75}
             >
-              <Ionicons name={voiceOutput ? "volume-high" : "volume-mute-outline"} size={18} color={voiceOutput ? colors.primaryForeground : colors.mutedForeground} />
+              <Ionicons
+                name={voiceOutput ? "volume-high" : "volume-mute-outline"}
+                size={18}
+                color={
+                  voiceOutput ? PRIMARY_ACTION_INK : colors.mutedForeground
+                }
+              />
             </TouchableOpacity>
           ) : null}
           {Platform.OS !== "web" ? (
             <TouchableOpacity
-              style={[styles.voiceOutputBtn, { backgroundColor: primaryVoiceSource.state.phase === "recording" ? "#B42318" : colors.background, borderColor: primaryVoiceSource.state.phase === "recording" ? "#B42318" : colors.border, opacity: isLoading || authLoading || (!primaryVoiceSource.canStart && !primaryVoiceSource.canStop) ? 0.55 : 1 }]}
-              onPress={() => void (primaryVoiceSource.canStop ? primaryVoiceSource.stop() : startPrimaryVoiceSource())}
-              disabled={isLoading || authLoading || (!primaryVoiceSource.canStart && !primaryVoiceSource.canStop)}
+              style={[
+                styles.voiceOutputBtn,
+                {
+                  backgroundColor:
+                    primaryVoiceSource.state.phase === "recording"
+                      ? "#B42318"
+                      : colors.background,
+                  borderColor:
+                    primaryVoiceSource.state.phase === "recording"
+                      ? "#B42318"
+                      : colors.border,
+                  opacity:
+                    isLoading ||
+                    authLoading ||
+                    (!primaryVoiceSource.canStart &&
+                      !primaryVoiceSource.canStop)
+                      ? 0.55
+                      : 1,
+                },
+              ]}
+              onPress={() =>
+                void (primaryVoiceSource.canStop
+                  ? primaryVoiceSource.stop()
+                  : startPrimaryVoiceSource())
+              }
+              disabled={
+                isLoading ||
+                authLoading ||
+                (!primaryVoiceSource.canStart && !primaryVoiceSource.canStop)
+              }
               accessibilityRole="button"
-              accessibilityLabel={primaryVoiceSource.canStop ? "Stop recording for Kinfolk" : "Record a voice question for Kinfolk, 60 second maximum"}
-              accessibilityState={{ busy: primaryVoiceSource.state.phase === "uploading" || primaryVoiceSource.state.phase === "stopping", selected: primaryVoiceSource.state.phase === "recording" }}
+              accessibilityLabel={
+                primaryVoiceSource.canStop
+                  ? "Stop recording for Kinfolk"
+                  : "Record a voice question for Kinfolk, 60 second maximum"
+              }
+              accessibilityState={{
+                busy:
+                  primaryVoiceSource.state.phase === "uploading" ||
+                  primaryVoiceSource.state.phase === "stopping",
+                selected: primaryVoiceSource.state.phase === "recording",
+              }}
               activeOpacity={0.75}
             >
-              {primaryVoiceSource.state.phase === "uploading" || primaryVoiceSource.state.phase === "stopping" ? <ActivityIndicator size="small" color={colors.primary} /> : <Ionicons name={primaryVoiceSource.canStop ? "stop" : "mic-outline"} size={18} color={primaryVoiceSource.canStop ? "#fff" : colors.mutedForeground} />}
+              {primaryVoiceSource.state.phase === "uploading" ||
+              primaryVoiceSource.state.phase === "stopping" ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Ionicons
+                  name={primaryVoiceSource.canStop ? "stop" : "mic-outline"}
+                  size={18}
+                  color={
+                    primaryVoiceSource.canStop ? "#fff" : colors.mutedForeground
+                  }
+                />
+              )}
             </TouchableOpacity>
           ) : null}
           <TextInput
-            style={[styles.input, { color: colors.text, backgroundColor: colors.background, borderColor: colors.border }]}
+            style={[
+              styles.input,
+              {
+                color: colors.text,
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+              },
+            ]}
             placeholder="Or tell me anything…"
             placeholderTextColor={colors.mutedForeground}
             value={inputText}
@@ -3250,9 +7513,12 @@ export default function TravelScreen() {
             onFocus={() => scrollToBottom(true)}
             editable={!uploadingKinfolkImage && !uploadingKinfolkDocument}
           />
-          {(isLoading || playingVoice) ? (
+          {isLoading || playingVoice ? (
             <Pressable
-              style={[styles.interruptBtn, { borderColor: "#B42318", backgroundColor: "#B4231814" }]}
+              style={[
+                styles.interruptBtn,
+                { borderColor: "#B42318", backgroundColor: "#B4231814" },
+              ]}
               onPress={interruptKinfolk}
               accessibilityRole="button"
               accessibilityLabel="Stop Kinfolk so I can finish my thought"
@@ -3262,12 +7528,39 @@ export default function TravelScreen() {
             </Pressable>
           ) : null}
           <Pressable
-            style={[styles.sendBtn, { backgroundColor: inputText.trim() && !uploadingKinfolkImage && !uploadingKinfolkDocument && !authLoading ? colors.primary : colors.border }]}
+            style={[
+              styles.sendBtn,
+              {
+                backgroundColor:
+                  inputText.trim() &&
+                  !uploadingKinfolkImage &&
+                  !uploadingKinfolkDocument &&
+                  !authLoading
+                    ? colors.primary
+                    : colors.border,
+              },
+            ]}
             onPress={() => void handleSend()}
-            disabled={!inputText.trim() || uploadingKinfolkImage || uploadingKinfolkDocument || authLoading}
+            disabled={
+              !inputText.trim() ||
+              uploadingKinfolkImage ||
+              uploadingKinfolkDocument ||
+              authLoading
+            }
             accessibilityLabel="Send message to Kinfolk"
           >
-            <Ionicons name="arrow-up" size={20} color={inputText.trim() && !uploadingKinfolkImage && !uploadingKinfolkDocument && !authLoading ? colors.primaryForeground : "#fff"} />
+            <Ionicons
+              name="arrow-up"
+              size={20}
+              color={
+                inputText.trim() &&
+                !uploadingKinfolkImage &&
+                !uploadingKinfolkDocument &&
+                !authLoading
+                  ? PRIMARY_ACTION_INK
+                  : colors.mutedForeground
+              }
+            />
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -3288,11 +7581,19 @@ export default function TravelScreen() {
         onSelect={handleHistorySelect}
         onNew={handleNewSession}
         continuityEnabled={kinfolkContinuityEnabled}
-        onToggleContinuity={(enabled) => { void setKinfolkContinuity(enabled); }}
-        onLoadView={(view) => { void loadSessions(view); }}
-        onOrganize={(id, action) => { void organizeSession(id, action); }}
+        onToggleContinuity={(enabled) => {
+          void setKinfolkContinuity(enabled);
+        }}
+        onLoadView={(view) => {
+          void loadSessions(view);
+        }}
+        onOrganize={(id, action) => {
+          void organizeSession(id, action);
+        }}
         error={sessionError}
-        onRetry={() => { void loadSessions(); }}
+        onRetry={() => {
+          void loadSessions();
+        }}
         colors={colors}
       />
 
@@ -3310,17 +7611,216 @@ export default function TravelScreen() {
         colors={colors}
       />
 
-      <Modal visible={showImageEdit} transparent animationType="slide" onRequestClose={() => setShowImageEdit(false)}><View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#00000066" }}><View style={{ borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.card, padding: 20, paddingBottom: Math.max(insets.bottom, 18) }}><Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 17 }}>Edit a private image</Text><Text style={{ color: colors.mutedForeground, fontSize: 12, lineHeight: 18, marginTop: 5 }}>Your selected private image and instruction are sent once to Kinfolk’s configured image provider. The result stays in this session and is not added to memory.</Text><TextInput value={imageEditInstruction} onChangeText={setImageEditInstruction} multiline maxLength={800} placeholder="Example: Change the background to a garden." placeholderTextColor={colors.mutedForeground} accessibilityLabel="Describe the image edit" style={{ minHeight: 92, marginTop: 16, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.background, color: colors.text, padding: 12 }} /><TouchableOpacity onPress={() => setImageEditConsent((value) => !value)} accessibilityRole="checkbox" accessibilityState={{ checked: imageEditConsent }} accessibilityLabel="Confirm image editing provider disclosure" style={{ flexDirection: "row", gap: 9, marginTop: 14 }}><Ionicons name={imageEditConsent ? "checkbox" : "square-outline"} size={20} color={imageEditConsent ? colors.primary : colors.mutedForeground} /><Text style={{ flex: 1, color: colors.mutedForeground, fontSize: 11 }}>I consent to send this private image and instruction once to Kinfolk’s configured image provider. The session-only result is not saved to memory.</Text></TouchableOpacity>{imageEditError ? <Text accessibilityRole="alert" style={{ color: "#B42318", marginTop: 8 }}>{imageEditError}</Text> : null}<View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}><TouchableOpacity onPress={() => setShowImageEdit(false)} style={{ flex: 1, minHeight: 44, borderWidth: 1, borderColor: colors.border, borderRadius: 12, alignItems: "center", justifyContent: "center" }}><Text style={{ color: colors.text }}>Cancel</Text></TouchableOpacity><TouchableOpacity onPress={() => void editKinfolkImage()} disabled={editingImage || !imageEditConsent || imageEditInstruction.trim().length < 4} style={{ flex: 1, minHeight: 44, borderRadius: 12, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", opacity: editingImage || !imageEditConsent || imageEditInstruction.trim().length < 4 ? .45 : 1 }}><Text style={{ color: colors.primaryForeground }}>{editingImage ? "Editing…" : "Edit image"}</Text></TouchableOpacity></View></View></View></Modal>
+      <Modal
+        visible={showImageEdit}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowImageEdit(false)}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "flex-end",
+            backgroundColor: "#00000066",
+          }}
+        >
+          <View
+            style={{
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              backgroundColor: colors.card,
+              padding: 20,
+              paddingBottom: Math.max(insets.bottom, 18),
+            }}
+          >
+            <Text
+              style={{
+                color: colors.text,
+                fontFamily: "Inter_700Bold",
+                fontSize: 17,
+              }}
+            >
+              Edit a private image
+            </Text>
+            <Text
+              style={{
+                color: colors.mutedForeground,
+                fontSize: 12,
+                lineHeight: 18,
+                marginTop: 5,
+              }}
+            >
+              Your selected private image and instruction are sent once to
+              Kinfolk’s configured image provider. The result stays in this
+              session and is not added to memory.
+            </Text>
+            <TextInput
+              value={imageEditInstruction}
+              onChangeText={setImageEditInstruction}
+              multiline
+              maxLength={800}
+              placeholder="Example: Change the background to a garden."
+              placeholderTextColor={colors.mutedForeground}
+              accessibilityLabel="Describe the image edit"
+              style={{
+                minHeight: 92,
+                marginTop: 16,
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 12,
+                backgroundColor: colors.background,
+                color: colors.text,
+                padding: 12,
+              }}
+            />
+            <TouchableOpacity
+              onPress={() => setImageEditConsent((value) => !value)}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: imageEditConsent }}
+              accessibilityLabel="Confirm image editing provider disclosure"
+              style={{ flexDirection: "row", gap: 9, marginTop: 14 }}
+            >
+              <Ionicons
+                name={imageEditConsent ? "checkbox" : "square-outline"}
+                size={20}
+                color={
+                  imageEditConsent ? colors.primary : colors.mutedForeground
+                }
+              />
+              <Text
+                style={{ flex: 1, color: colors.mutedForeground, fontSize: 11 }}
+              >
+                I consent to send this private image and instruction once to
+                Kinfolk’s configured image provider. The session-only result is
+                not saved to memory.
+              </Text>
+            </TouchableOpacity>
+            {imageEditError ? (
+              <Text
+                accessibilityRole="alert"
+                style={{ color: "#B42318", marginTop: 8 }}
+              >
+                {imageEditError}
+              </Text>
+            ) : null}
+            <View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}>
+              <TouchableOpacity
+                onPress={() => setShowImageEdit(false)}
+                style={{
+                  flex: 1,
+                  minHeight: 44,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  borderRadius: 12,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text style={{ color: colors.text }}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => void editKinfolkImage()}
+                disabled={
+                  editingImage ||
+                  !imageEditConsent ||
+                  imageEditInstruction.trim().length < 4
+                }
+                style={{
+                  flex: 1,
+                  minHeight: 44,
+                  borderRadius: 12,
+                  backgroundColor: colors.primary,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  opacity:
+                    editingImage ||
+                    !imageEditConsent ||
+                    imageEditInstruction.trim().length < 4
+                      ? 0.45
+                      : 1,
+                }}
+              >
+                <Text style={{ color: colors.primaryForeground }}>
+                  {editingImage ? "Editing…" : "Edit image"}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
-            <Modal visible={showImageCreation} transparent animationType="slide" onRequestClose={() => { setShowImageCreation(false); setImageCreationError(null); }}>
-        <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#00000066" }}>
-          <View style={{ maxHeight: "88%", borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: colors.card, paddingHorizontal: 20, paddingTop: 18, paddingBottom: Math.max(insets.bottom, 18) }}>
-            <View style={{ flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
+      <Modal
+        visible={showImageCreation}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setShowImageCreation(false);
+          setImageCreationError(null);
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "flex-end",
+            backgroundColor: "#00000066",
+          }}
+        >
+          <View
+            style={{
+              maxHeight: "88%",
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              backgroundColor: colors.card,
+              paddingHorizontal: 20,
+              paddingTop: 18,
+              paddingBottom: Math.max(insets.bottom, 18),
+            }}
+          >
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "flex-start",
+                justifyContent: "space-between",
+                gap: 10,
+              }}
+            >
               <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 17 }}>Create an original visual</Text>
-                <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 18, marginTop: 5 }}>Kinfolk can create a decorative illustration—not a person, realistic photo, logo, document, or text-bearing flyer.</Text>
+                <Text
+                  style={{
+                    color: colors.text,
+                    fontFamily: "Inter_700Bold",
+                    fontSize: 17,
+                  }}
+                >
+                  Create an original visual
+                </Text>
+                <Text
+                  style={{
+                    color: colors.mutedForeground,
+                    fontFamily: "Inter_400Regular",
+                    fontSize: 12,
+                    lineHeight: 18,
+                    marginTop: 5,
+                  }}
+                >
+                  Kinfolk can create a decorative illustration—not a person,
+                  realistic photo, logo, document, or text-bearing flyer.
+                </Text>
               </View>
-              <TouchableOpacity onPress={() => { setShowImageCreation(false); setImageCreationError(null); }} accessibilityLabel="Close image creation" hitSlop={8}><Ionicons name="close" size={22} color={colors.mutedForeground} /></TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowImageCreation(false);
+                  setImageCreationError(null);
+                }}
+                accessibilityLabel="Close image creation"
+                hitSlop={8}
+              >
+                <Ionicons
+                  name="close"
+                  size={22}
+                  color={colors.mutedForeground}
+                />
+              </TouchableOpacity>
             </View>
             <TextInput
               value={imageCreationBrief}
@@ -3330,33 +7830,179 @@ export default function TravelScreen() {
               placeholder="Example: A warm abstract storefront-inspired pattern in gold, terracotta, and deep green."
               placeholderTextColor={colors.mutedForeground}
               accessibilityLabel="Describe the original visual"
-              style={{ minHeight: 92, marginTop: 16, borderWidth: 1, borderColor: colors.border, borderRadius: 12, backgroundColor: colors.background, color: colors.text, padding: 12, fontFamily: "Inter_400Regular", fontSize: 13, textAlignVertical: "top" }}
+              style={{
+                minHeight: 92,
+                marginTop: 16,
+                borderWidth: 1,
+                borderColor: colors.border,
+                borderRadius: 12,
+                backgroundColor: colors.background,
+                color: colors.text,
+                padding: 12,
+                fontFamily: "Inter_400Regular",
+                fontSize: 13,
+                textAlignVertical: "top",
+              }}
             />
             <TouchableOpacity
               onPress={() => setProviderDisclosureAccepted((value) => !value)}
               accessibilityRole="checkbox"
               accessibilityState={{ checked: providerDisclosureAccepted }}
               accessibilityLabel="Confirm image provider disclosure"
-              style={{ flexDirection: "row", alignItems: "flex-start", gap: 9, marginTop: 14 }}
+              style={{
+                flexDirection: "row",
+                alignItems: "flex-start",
+                gap: 9,
+                marginTop: 14,
+              }}
             >
-              <Ionicons name={providerDisclosureAccepted ? "checkbox" : "square-outline"} size={20} color={providerDisclosureAccepted ? colors.primary : colors.mutedForeground} />
-              <Text style={{ flex: 1, color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 }}>I understand this brief is sent once to Kinfolk’s configured image provider. The result stays in this session and is not saved to Kinfolk memory.</Text>
+              <Ionicons
+                name={
+                  providerDisclosureAccepted ? "checkbox" : "square-outline"
+                }
+                size={20}
+                color={
+                  providerDisclosureAccepted
+                    ? colors.primary
+                    : colors.mutedForeground
+                }
+              />
+              <Text
+                style={{
+                  flex: 1,
+                  color: colors.mutedForeground,
+                  fontFamily: "Inter_400Regular",
+                  fontSize: 11,
+                  lineHeight: 16,
+                }}
+              >
+                I understand this brief is sent once to Kinfolk’s configured
+                image provider. The result stays in this session and is not
+                saved to Kinfolk memory.
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => setNoRealPersonOrPrivateInfoConfirmed((value) => !value)}
+              onPress={() =>
+                setNoRealPersonOrPrivateInfoConfirmed((value) => !value)
+              }
               accessibilityRole="checkbox"
-              accessibilityState={{ checked: noRealPersonOrPrivateInfoConfirmed }}
+              accessibilityState={{
+                checked: noRealPersonOrPrivateInfoConfirmed,
+              }}
               accessibilityLabel="Confirm no real person or private information"
-              style={{ flexDirection: "row", alignItems: "flex-start", gap: 9, marginTop: 11 }}
+              style={{
+                flexDirection: "row",
+                alignItems: "flex-start",
+                gap: 9,
+                marginTop: 11,
+              }}
             >
-              <Ionicons name={noRealPersonOrPrivateInfoConfirmed ? "checkbox" : "square-outline"} size={20} color={noRealPersonOrPrivateInfoConfirmed ? colors.primary : colors.mutedForeground} />
-              <Text style={{ flex: 1, color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 11, lineHeight: 16 }}>My request contains no real person, personal image, private information, or real-world claim.</Text>
+              <Ionicons
+                name={
+                  noRealPersonOrPrivateInfoConfirmed
+                    ? "checkbox"
+                    : "square-outline"
+                }
+                size={20}
+                color={
+                  noRealPersonOrPrivateInfoConfirmed
+                    ? colors.primary
+                    : colors.mutedForeground
+                }
+              />
+              <Text
+                style={{
+                  flex: 1,
+                  color: colors.mutedForeground,
+                  fontFamily: "Inter_400Regular",
+                  fontSize: 11,
+                  lineHeight: 16,
+                }}
+              >
+                My request contains no real person, personal image, private
+                information, or real-world claim.
+              </Text>
             </TouchableOpacity>
-            {imageCreationError ? <Text accessibilityRole="alert" style={{ color: "#B42318", fontFamily: "Inter_500Medium", fontSize: 12, lineHeight: 17, marginTop: 10 }}>{imageCreationError}</Text> : null}
+            {imageCreationError ? (
+              <Text
+                accessibilityRole="alert"
+                style={{
+                  color: "#B42318",
+                  fontFamily: "Inter_500Medium",
+                  fontSize: 12,
+                  lineHeight: 17,
+                  marginTop: 10,
+                }}
+              >
+                {imageCreationError}
+              </Text>
+            ) : null}
             <View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}>
-              <TouchableOpacity onPress={() => { setShowImageCreation(false); setImageCreationError(null); }} style={{ flex: 1, minHeight: 44, borderRadius: 12, borderWidth: 1, borderColor: colors.border, alignItems: "center", justifyContent: "center" }}><Text style={{ color: colors.text, fontFamily: "Inter_700Bold", fontSize: 13 }}>Cancel</Text></TouchableOpacity>
-              <TouchableOpacity onPress={() => void createKinfolkImage()} disabled={generatingImage || imageCreationBrief.trim().length < 12 || !providerDisclosureAccepted || !noRealPersonOrPrivateInfoConfirmed} style={{ flex: 1, minHeight: 44, borderRadius: 12, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", opacity: generatingImage || imageCreationBrief.trim().length < 12 || !providerDisclosureAccepted || !noRealPersonOrPrivateInfoConfirmed ? 0.45 : 1 }}>
-                {generatingImage ? <ActivityIndicator size="small" color={colors.primaryForeground} /> : <Text style={{ color: colors.primaryForeground, fontFamily: "Inter_700Bold", fontSize: 13 }}>Create visual</Text>}
+              <TouchableOpacity
+                onPress={() => {
+                  setShowImageCreation(false);
+                  setImageCreationError(null);
+                }}
+                style={{
+                  flex: 1,
+                  minHeight: 44,
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: colors.border,
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Text
+                  style={{
+                    color: colors.text,
+                    fontFamily: "Inter_700Bold",
+                    fontSize: 13,
+                  }}
+                >
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => void createKinfolkImage()}
+                disabled={
+                  generatingImage ||
+                  imageCreationBrief.trim().length < 12 ||
+                  !providerDisclosureAccepted ||
+                  !noRealPersonOrPrivateInfoConfirmed
+                }
+                style={{
+                  flex: 1,
+                  minHeight: 44,
+                  borderRadius: 12,
+                  backgroundColor: colors.primary,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  opacity:
+                    generatingImage ||
+                    imageCreationBrief.trim().length < 12 ||
+                    !providerDisclosureAccepted ||
+                    !noRealPersonOrPrivateInfoConfirmed
+                      ? 0.45
+                      : 1,
+                }}
+              >
+                {generatingImage ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={colors.primaryForeground}
+                  />
+                ) : (
+                  <Text
+                    style={{
+                      color: colors.primaryForeground,
+                      fontFamily: "Inter_700Bold",
+                      fontSize: 13,
+                    }}
+                  >
+                    Create visual
+                  </Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -3369,69 +8015,299 @@ export default function TravelScreen() {
 // ─── Root Styles ─────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingBottom: 12, gap: 8 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    gap: 8,
+  },
   headerBtn: { padding: 4 },
   headerCenter: { flex: 1, minWidth: 0 },
   headerTitle: { fontFamily: "Inter_700Bold", fontSize: 18, color: "#FFFFFF" },
-  headerSub: { fontFamily: "Inter_400Regular", fontSize: 12, color: "#ffffff99" },
-  conversationModeRail: { borderBottomWidth: StyleSheet.hairlineWidth, paddingTop: 8 },
-  conversationModeHeading: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingBottom: 7 },
+  headerSub: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: "#ffffff99",
+  },
+  conversationModeRail: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    paddingTop: 8,
+  },
+  conversationModeHeading: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingBottom: 7,
+  },
   conversationModeLabel: { fontFamily: "Inter_700Bold", fontSize: 11 },
   conversationModeHint: { fontFamily: "Inter_400Regular", fontSize: 10 },
   conversationModeOptions: { paddingHorizontal: 14, paddingBottom: 10, gap: 7 },
-  conversationModeChip: { flexDirection: "row", alignItems: "center", gap: 5, borderWidth: 1, borderRadius: 18, paddingHorizontal: 10, paddingVertical: 7 },
+  conversationModeChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderWidth: 1,
+    borderRadius: 18,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
   conversationModeEmoji: { fontSize: 12 },
   conversationModeChipText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
   headerActions: { flexDirection: "row", alignItems: "center", gap: 4 },
   headerIconBtn: { padding: 6, borderRadius: 20 },
-  headerActionRail: { flexDirection: "row", flexWrap: "wrap", gap: 7, paddingHorizontal: 16, paddingBottom: 11, paddingTop: 1, borderTopWidth: StyleSheet.hairlineWidth },
-  headerAction: { flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 16, backgroundColor: "#ffffff18", paddingHorizontal: 9, paddingVertical: 6 },
+  headerActionRail: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 7,
+    paddingHorizontal: 16,
+    paddingBottom: 11,
+    paddingTop: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  headerAction: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderRadius: 16,
+    backgroundColor: "#ffffff18",
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+  },
   headerActionText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
-  premiumBanner: { flexDirection: "row", alignItems: "center", gap: 4, paddingHorizontal: 16, paddingVertical: 10, backgroundColor: "#C9922B18", borderBottomWidth: 1, borderBottomColor: "#C9922B40" },
-  premiumBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, color: "#C9922B", flex: 1 },
-  personalBanner: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
+  premiumBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: "#C9922B18",
+    borderBottomWidth: 1,
+    borderBottomColor: "#C9922B40",
+  },
+  premiumBannerText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    color: "#C9922B",
+    flex: 1,
+  },
+  personalBanner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
   personalBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1 },
-  queryCounter: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderBottomWidth: 1 },
+  queryCounter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+  },
   queryCounterText: { fontFamily: "Inter_400Regular", fontSize: 11, flex: 1 },
-  aiDownBanner: { flexDirection: "row", alignItems: "flex-start", gap: 8, paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1 },
-  aiDownBannerText: { fontFamily: "Inter_400Regular", fontSize: 12, flex: 1, lineHeight: 18 },
+  aiDownBanner: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+  },
+  aiDownBannerText: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    flex: 1,
+    lineHeight: 18,
+  },
   chatContent: { paddingTop: 16, paddingBottom: 24, flexGrow: 1 },
-  compareBar: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, paddingVertical: 10, borderTopWidth: 1, borderBottomWidth: 1 },
+  compareBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+  },
   compareBarText: { flex: 1, fontFamily: "Inter_400Regular", fontSize: 13 },
   compareGoBtn: { borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8 },
   compareGoBtnText: { fontFamily: "Inter_700Bold", fontSize: 13 },
-  composerSettingsRow: { flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, paddingVertical: 8, borderTopWidth: 1 },
-  composerSettingsToggle: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  composerSettingsLeading: { flexDirection: "row", alignItems: "center", gap: 7, flex: 1 },
+  composerSettingsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+  },
+  composerSettingsToggle: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  composerSettingsLeading: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    flex: 1,
+  },
   composerSettingsTitle: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
   composerSettingsSummary: { fontFamily: "Inter_400Regular", fontSize: 11 },
-  composerSettingsLink: { flexDirection: "row", alignItems: "center", gap: 4, borderWidth: 1, borderRadius: 14, paddingHorizontal: 9, paddingVertical: 6 },
+  composerSettingsLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 9,
+    paddingVertical: 6,
+  },
   composerSettingsLinkText: { fontFamily: "Inter_700Bold", fontSize: 11 },
-  voicesBar: { flexDirection: "row", alignItems: "center", gap: 8, paddingLeft: 14, paddingRight: 8, paddingVertical: 8, borderTopWidth: 1 },
-  voicesBarLabel: { fontFamily: "Inter_600SemiBold", fontSize: 10, letterSpacing: 0.4, textTransform: "uppercase" },
+  voicesBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingLeft: 14,
+    paddingRight: 8,
+    paddingVertical: 8,
+    borderTopWidth: 1,
+  },
+  voicesBarLabel: {
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 10,
+    letterSpacing: 0.4,
+    textTransform: "uppercase",
+  },
   voicesPills: { flexDirection: "row", gap: 6, paddingVertical: 2 },
-  voicePill: { flexDirection: "row", alignItems: "center", gap: 4, borderRadius: 20, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
+  voicePill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
   voicePillIcon: { fontSize: 13 },
   voicePillLabel: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
-  voiceInputStatus: { flexDirection: "row", alignItems: "center", gap: 8, borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 8 },
-  voiceInputStatusText: { flex: 1, fontFamily: "Inter_500Medium", fontSize: 12, lineHeight: 17 },
-  voiceMeaningReview: { gap: 8, borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, paddingTop: 10 },
-  voiceMeaningSuggestion: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
-  voiceMeaningClarification: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17 },
+  voiceInputStatus: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+  },
+  voiceInputStatusText: {
+    flex: 1,
+    fontFamily: "Inter_500Medium",
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  voiceMeaningReview: {
+    gap: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 16,
+    paddingTop: 10,
+  },
+  voiceMeaningSuggestion: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  voiceMeaningClarification: {
+    fontFamily: "Inter_400Regular",
+    fontSize: 12,
+    lineHeight: 17,
+  },
   voiceMeaningActions: { flexDirection: "row", gap: 8, paddingBottom: 2 },
-  voiceMeaningButton: { borderRadius: 14, paddingHorizontal: 10, paddingVertical: 7 },
-  voiceMeaningButtonText: { color: "#FFF", fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  voiceMeaningButton: {
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+  },
+  voiceMeaningButtonText: {
+    color: "#FFF",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+  },
   voiceMeaningKeepText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
-  voiceCancelButton: { borderWidth: 1, borderColor: "#FCA5A5", borderRadius: 14, paddingHorizontal: 10, paddingVertical: 5 },
-  voiceCancelButtonText: { color: "#B42318", fontFamily: "Inter_600SemiBold", fontSize: 11 },
-  inputWrapper: { flexDirection: "row", alignItems: "flex-end", gap: 8, paddingHorizontal: 12, paddingTop: 10, borderTopWidth: 1 },
-  input: { flex: 1, borderRadius: 22, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 10, fontFamily: "Inter_400Regular", fontSize: 14, maxHeight: 120, lineHeight: 20 },
-  voiceOutputBtn: { width: 36, height: 36, borderRadius: 18, alignItems: "center", justifyContent: "center", borderWidth: 1, marginBottom: 2 },
-  interruptBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", borderWidth: 1, marginBottom: 2 },
-  sendBtn: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 2 },
+  voiceCancelButton: {
+    borderWidth: 1,
+    borderColor: "#FCA5A5",
+    borderRadius: 14,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  voiceCancelButtonText: {
+    color: "#B42318",
+    fontFamily: "Inter_600SemiBold",
+    fontSize: 11,
+  },
+  inputWrapper: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+  },
+  input: {
+    flex: 1,
+    borderRadius: 22,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    maxHeight: 120,
+    lineHeight: 20,
+  },
+  voiceOutputBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    marginBottom: 2,
+  },
+  interruptBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    marginBottom: 2,
+  },
+  sendBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 2,
+  },
 });
 
 const jumpStyles = StyleSheet.create({
-  btn: { flexDirection: "row", alignItems: "center", gap: 5, alignSelf: "center", borderRadius: 20, paddingHorizontal: 14, paddingVertical: 7, marginBottom: 6, marginTop: 2 },
+  btn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    alignSelf: "center",
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    marginBottom: 6,
+    marginTop: 2,
+  },
   label: { fontFamily: "Inter_600SemiBold", fontSize: 12 },
 });

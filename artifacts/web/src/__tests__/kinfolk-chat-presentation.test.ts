@@ -194,6 +194,9 @@ describe("Kinfolk chat presentation", () => {
     expect(travelPageSource).toContain("KinfolkInlineMemoryConsent");
     expect(travelPageSource).toContain("memoryConsentPlan?: KinfolkInlineMemoryConsentPlan | null");
     expect(travelPageSource).toContain("inlineMemoryConsent: data.memoryConsentPlan");
+    expect(inlineMemoryConsentSource).toContain("const [sensitiveConsent, setSensitiveConsent]");
+    expect(inlineMemoryConsentSource).toContain("sensitiveConsent: savingSensitive");
+    expect(inlineMemoryConsentSource).toContain("I separately confirm these selected sensitive details");
   });
 
   it("keeps a one-time delivery choice browser-local until exactly one successful request", () => {
@@ -213,11 +216,16 @@ describe("Kinfolk chat presentation", () => {
     expect(inlineMemoryConsentSource).toContain("const saveAll = () => {");
     expect(inlineMemoryConsentSource).toContain("if (plan.sensitive.length > 0)");
     expect(inlineMemoryConsentSource).toContain("setSelected(allItems.map((item) => item.id));");
-    expect(inlineMemoryConsentSource).toContain("I agree to save the selected sensitive details for relevant use.");
+    expect(inlineMemoryConsentSource).toContain(
+      "I separately confirm these selected sensitive details may be",
+    );
+    expect(inlineMemoryConsentSource).toContain(
+      "saved privately for relevant Kinfolk use.",
+    );
     expect(inlineMemoryConsentSource).toContain("selectedSensitive && (!sensitiveConsent || !sensitivePassword)");
     expect(inlineMemoryConsentSource).toContain("sensitive-memory-vault/reauth");
     expect(inlineMemoryConsentSource).toContain("Confirm your password before saving a sensitive detail.");
-    expect(inlineMemoryConsentSource).toContain("sensitiveConsent: true");
+    expect(inlineMemoryConsentSource).toContain("sensitiveConsent: savingSensitive");
     expect(inlineMemoryConsentSource).not.toContain(
       "onClick={() => void save(allItems.map((item) => item.id))}",
     );
