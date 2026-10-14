@@ -62,6 +62,7 @@ import {
 import { KinfolkSensitiveMemoryConfirmation } from "@/components/KinfolkSensitiveMemoryConfirmation";
 import { KinfolkInlineMemoryConsent, type KinfolkInlineMemoryConsentPlan } from "@/components/KinfolkInlineMemoryConsent";
 import { KinfolkMemoryUseNotice, type KinfolkMemoryUse } from "@/components/KinfolkMemoryUseNotice";
+import { KinfolkLifelongCompanionSheet } from "@/components/KinfolkLifelongCompanionSheet";
 import {
   KinfolkContextualPresentation,
   type KinfolkContextualVisual,
@@ -437,6 +438,7 @@ export function AIChatWidget() {
   const [kinfolkImages, setKinfolkImages] = useState<KinfolkQuestionImage[]>([]);
   const [uploadingKinfolkImage, setUploadingKinfolkImage] = useState(false);
   const [showImageEdit, setShowImageEdit] = useState(false);
+  const [showCompanionIdentity, setShowCompanionIdentity] = useState(false);
   const [imageEditInstruction, setImageEditInstruction] = useState("");
   const [imageEditConsent, setImageEditConsent] = useState(false);
   const [editingImage, setEditingImage] = useState(false);
@@ -1417,6 +1419,10 @@ export function AIChatWidget() {
         </Animated.View>
       )}
 
+      <KinfolkLifelongCompanionSheet
+        visible={showCompanionIdentity}
+        onClose={() => setShowCompanionIdentity(false)}
+      />
       <Modal visible={showImageEdit} transparent animationType="slide" onRequestClose={() => setShowImageEdit(false)}><View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#00000066" }}><View style={{ backgroundColor: colors.card, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 18 }}><Text style={{ color: colors.text, fontWeight: "700", fontSize: 16 }}>Edit a private image</Text><Text style={{ color: colors.mutedForeground, fontSize: 11, marginTop: 5 }}>Your selected private image and instruction are sent once to Kinfolk’s configured image provider. The session-only result is not added to memory.</Text><TextInput value={imageEditInstruction} onChangeText={setImageEditInstruction} multiline maxLength={800} placeholder="Example: Change the background to a garden." placeholderTextColor={colors.mutedForeground} accessibilityLabel="Describe the image edit" style={{ minHeight: 86, borderWidth: 1, borderColor: colors.border, borderRadius: 12, marginTop: 12, color: colors.text, padding: 10 }} /><TouchableOpacity onPress={() => setImageEditConsent((value) => !value)} accessibilityRole="checkbox" accessibilityState={{ checked: imageEditConsent }} accessibilityLabel="Confirm image editing provider disclosure" style={{ flexDirection: "row", gap: 8, marginTop: 12 }}><Feather name={imageEditConsent ? "check-square" : "square"} size={18} color={colors.primary} /><Text style={{ flex: 1, color: colors.mutedForeground, fontSize: 10 }}>I consent to send this image and instruction once to Kinfolk’s configured image provider. It is not saved to memory.</Text></TouchableOpacity>{imageEditError ? <Text accessibilityRole="alert" style={{ color: "#B42318", marginTop: 8 }}>{imageEditError}</Text> : null}<View style={{ flexDirection: "row", gap: 8, marginTop: 14 }}><TouchableOpacity onPress={() => setShowImageEdit(false)} style={{ flex: 1, minHeight: 42, borderWidth: 1, borderColor: colors.border, borderRadius: 10, alignItems: "center", justifyContent: "center" }}><Text style={{ color: colors.text }}>Cancel</Text></TouchableOpacity><TouchableOpacity onPress={() => void editWidgetKinfolkImage()} disabled={editingImage || !imageEditConsent || imageEditInstruction.trim().length < 4} style={{ flex: 1, minHeight: 42, backgroundColor: colors.primary, borderRadius: 10, alignItems: "center", justifyContent: "center", opacity: editingImage || !imageEditConsent || imageEditInstruction.trim().length < 4 ? .45 : 1 }}><Text style={{ color: colors.primaryForeground }}>{editingImage ? "Editing…" : "Edit image"}</Text></TouchableOpacity></View></View></View></Modal>
             <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setWidgetOpen(false)}>
         <KeyboardAvoidingView
@@ -1431,7 +1437,7 @@ export function AIChatWidget() {
               </View>
               <View>
                 <Text style={[styles.modalTitle, { color: colors.foreground }]}>KinfolkAI™</Text>
-                <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>Helping you navigate what matters most.</Text>
+                <Text style={[styles.modalSub, { color: colors.mutedForeground }]}>Your lifelong cultural companion.</Text>
               </View>
             </View>
             <View style={styles.headerActions}>
@@ -1451,6 +1457,15 @@ export function AIChatWidget() {
               >
                 <Feather name="maximize-2" size={14} color={colors.primary} />
                 <Text style={[styles.tasksBtnTxt, { color: colors.primary }]}>Full chat</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowCompanionIdentity(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Learn about Kinfolk as a lifelong cultural companion"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                style={[styles.minimizeBtn, { backgroundColor: colors.muted, borderColor: colors.border }]}
+              >
+                <Feather name="info" size={15} color={colors.mutedForeground} />
               </TouchableOpacity>
               {Platform.OS !== "web" ? (
                 <TouchableOpacity

@@ -58,6 +58,7 @@ import { KinfolkContextualPresentation } from "@/components/KinfolkContextualPre
 import { KinfolkAnswerText } from "@/components/KinfolkAnswerText";
 import { KinfolkVoiceSourceControls } from "@/components/KinfolkVoiceSourceControls";
 import { useKinfolkVoiceSource } from "@/hooks/useKinfolkVoiceSource";
+import { KinfolkLifelongCompanionSheet } from "@/components/KinfolkLifelongCompanionSheet";
 // ─── Constants ───────────────────────────────────────────────────────────────
 const GOLD = "#C9922B";
 
@@ -2208,6 +2209,7 @@ export default function TravelScreen() {
   const [compareSelected, setCompareSelected] = useState<TravelBusiness[]>([]);
   const [showFlights, setShowFlights] = useState(false);
   const [showHeaderActions, setShowHeaderActions] = useState(false);
+  const [showCompanionIdentity, setShowCompanionIdentity] = useState(false);
   const { flatListRef, isAtBottom, onUserSend, onScroll: onChatScroll, onContentSizeChange: onChatContentSizeChange, scrollToBottom } = useKinfolkChatScroll();
   const [kinfolkOk, setKinfolkOk] = useState<boolean | null>(null); // null = checking
 
@@ -2852,6 +2854,10 @@ export default function TravelScreen() {
         visible={isAuthenticated && kinfolkContinuityDisclosureRequired}
         onChoose={(decision) => setKinfolkContinuity(decision === "accepted", decision)}
       />
+      <KinfolkLifelongCompanionSheet
+        visible={showCompanionIdentity}
+        onClose={() => setShowCompanionIdentity(false)}
+      />
 
       {/* Premium upsell banner — shown for non-premium, non-trial members */}
       {isAuthenticated && subscription && subscription.status !== "active" && subscription.status !== "trialing" && (
@@ -2877,9 +2883,18 @@ export default function TravelScreen() {
           </TouchableOpacity>
           <View style={styles.headerCenter}>
           <Text style={styles.headerTitle} numberOfLines={1}>KinfolkAI™</Text>
-          <Text style={styles.headerSub} numberOfLines={1}>Your personal life companion</Text>
+          <Text style={styles.headerSub} numberOfLines={1}>Your lifelong cultural companion</Text>
           </View>
           <View style={styles.headerActions}>
+          <TouchableOpacity activeOpacity={0.85}
+            style={styles.headerIconBtn}
+            onPress={() => setShowCompanionIdentity(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Learn about Kinfolk as a lifelong cultural companion"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons name="information-circle-outline" size={21} color={colors.primaryForeground} />
+          </TouchableOpacity>
           <TouchableOpacity activeOpacity={0.85}
             style={[styles.headerIconBtn, showHeaderActions && { backgroundColor: "#ffffff30" }]}
             onPress={() => setShowHeaderActions((visible) => !visible)}

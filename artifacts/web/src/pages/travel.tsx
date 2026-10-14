@@ -50,6 +50,7 @@ import {
   type KinfolkStaffDemoExperience,
   type KinfolkStructuredContent,
 } from "@/components/kinfolk/KinfolkChatPresentation";
+import { KinfolkLifelongCompanionIdentity } from "@/components/kinfolk/KinfolkLifelongCompanionIdentity";
 import {
   AAVE_LEVEL_OPTIONS,
   composerValueFromTranscript,
@@ -2750,6 +2751,7 @@ function TravelPage() {
                           ? "Bring a question, a decision, or a place you want to understand better."
                           : KINFOLK_DEFAULT_GREETING_BODY}
                       </p>
+                      <KinfolkLifelongCompanionIdentity />
                       {prefsLoaded && !hasPrefs && (
                         <button onClick={() => setShowPrefs(true)} className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#FFF8EC] px-3 py-1.5 text-xs font-semibold text-[#8D5C17] transition-colors hover:bg-[#CA922B]/10">
                           <Settings size={12} /> Set a taste profile for personalized picks
