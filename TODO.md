@@ -42,4 +42,4 @@ This checklist records the founder-approved Kinfolk Journeys source implementati
 
 - [x] Add focused tests for isolation/authorization contracts, private document boundaries, consent/revoke/expiry/reconnect/delete, OAuth state/PKCE/provider validation, duplicate imports, confirmed-commitment immutability, provider failure, no-invention behavior, retention expiry, and Web/mobile parity contracts.
 - [x] Run focused API/Web/mobile tests and typechecks after implementation.
-- [ ] Prepare the source-only release packet with exact commit, changed files, review-only migration, feature matrix, provider setup requirements, privacy/security/retention review, rollback plan, and the smallest next approval after the source commit is created.
+- [x] Prepare the source-only release packet with exact commit, changed files, review-only migration, feature matrix, provider setup requirements, privacy/security/retention review, rollback plan, and the smallest next approval.
