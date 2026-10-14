@@ -8555,9 +8555,11 @@ async function tryAnswerDeterministicBusinessDiscovery(input: {
       : null;
   // A private preference is considered applied only when it supplied a
   // controlled metadata-ranking term and a completed governed catalog returned
-  // at least one eligible business. Empty, degraded, or evidence-limited paths
-  // never claim personalization.
+  // at least one actionable business card. Empty, degraded, or evidence-limited
+  // paths—including candidates that cannot be presented to the member—never
+  // claim personalization.
   const governedDiscoveryHasUsableRecommendation =
+    resultView.cards.length > 0 &&
     platformCount > 0 &&
     discoveryResult.discovery.platformStatus === "completed" &&
     !noResultOffer;

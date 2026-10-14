@@ -24,4 +24,10 @@ describe("governed no-result route contract", () => {
     expect(route).toContain("allowAllPublicPlaces: explicitAllPlacesExpansion");
     expect(route).not.toContain("updatePreferences({ preferredOwnershipTypes: []");
   });
+
+  it("does not claim a saved preference was applied when the governed query has no actionable card", () => {
+    expect(route).toContain("const governedDiscoveryHasUsableRecommendation =");
+    expect(route).toContain("resultView.cards.length > 0");
+    expect(route).toContain("memoryUse: directPrivateMemoryUseDecision.memberFacingUse");
+  });
 });
