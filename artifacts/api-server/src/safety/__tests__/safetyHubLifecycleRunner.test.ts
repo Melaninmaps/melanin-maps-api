@@ -148,7 +148,9 @@ describe("Safety Hub lifecycle reconciliation", () => {
     expect(cron).toContain('router.post("/cron/safety-hub-lifecycle"');
     expect(cron).toContain("if (!verifyCronSecret(req, res)) return;");
     expect(cron).toContain("runSafetyHubLifecycleReconciliation()");
-    expect(directions).toContain("AND sr.withdrawn_at IS NULL");
-    expect(directions).toContain("AND sr.display_expires_at > NOW()");
+    expect(directions).toContain('router.post("/directions/safety-context"');
+    expect(directions).toContain("res.status(410)");
+    expect(directions).toContain("Safety does not use route or device location.");
+    expect(directions).not.toContain("pool.query");
   });
 });
