@@ -31,10 +31,12 @@ import {
   SOCIAL_FIELDS,
   buildKinfolkCurrentCityDuplicatePlan,
   buildPhiladelphiaKinfolkCurrentDuplicatePlan,
+  hasStoredMapPin,
   type ApprovedDuplicateConsolidation,
   type DuplicateReconciliationPlan,
   type KinfolkCurrentBusinessRecord,
   type KinfolkCurrentCityScope,
+  type ManualReviewDuplicate,
   type ProfileFieldReceipt,
   type SocialField,
 } from "../businesses/philadelphiaKinfolkCurrentDuplicateReconciliation";
@@ -117,6 +119,31 @@ export type KinfolkCurrentCityDuplicateInventory = Readonly<{
  */
 export type KinfolkCurrentCityManualReviewReport = Readonly<{
   totalCurrentKinfolkRowsRead: number;
+  summary: {
+    totalManualReviewCases: number;
+    structurallyBlockedCases: number;
+    evidenceReviewCandidates: number;
+  };
+  evidenceReviewCandidates: Array<{
+    city: string;
+    state: string;
+    label: string;
+    manualCase: ManualReviewDuplicate;
+    profiles: Array<{
+      id: string;
+      name: string;
+      address: string | null;
+      phone: string | null;
+      website: string | null;
+      instagram: string | null;
+      facebook: string | null;
+      tiktok: string | null;
+      twitter: string | null;
+      youtube: string | null;
+      pinterest: string | null;
+      hasStoredMapPin: boolean;
+    }>;
+  }>;
   manualReviewCases: Array<{
     city: string;
     state: string;
@@ -223,6 +250,34 @@ function summaryFor(
       (count, candidate) => count + candidate.transfers.length,
       0,
     ),
+  };
+}
+
+function requiresManualLocationOrGroupDecision(
+  reasons: readonly string[],
+): boolean {
+  return reasons.some(
+    (reason) =>
+      reason.includes("stored map coordinates") ||
+      reason.includes("stored map pin") ||
+      reason.includes("current records share this normalized name"),
+  );
+}
+
+function manualReviewProfile(record: KinfolkCurrentBusinessRecord) {
+  return {
+    id: record.id,
+    name: record.name,
+    address: record.address,
+    phone: record.phone,
+    website: record.website,
+    instagram: record.instagram,
+    facebook: record.facebook,
+    tiktok: record.tiktok,
+    twitter: record.twitter,
+    youtube: record.youtube,
+    pinterest: record.pinterest,
+    hasStoredMapPin: hasStoredMapPin(record),
   };
 }
 
@@ -356,6 +411,7 @@ export async function listKinfolkCurrentCityDuplicateInventory(): Promise<Kinfol
 
 export async function listKinfolkCurrentCityManualReviewReport(): Promise<KinfolkCurrentCityManualReviewReport> {
   const { records, receiptsByBusinessId } = await loadCurrentKinfolkRecords();
+  const recordsById = new Map(records.map((record) => [record.id, record]));
   const scopes = new Map<string, KinfolkCurrentCityScope>();
   for (const record of records) {
     const city = record.city?.trim() ?? "";
@@ -382,7 +438,40 @@ export async function listKinfolkCurrentCityManualReviewReport(): Promise<Kinfol
     })
     .filter((city) => city.cases.length > 0)
     .sort((left, right) => left.label.localeCompare(right.label));
-  return { totalCurrentKinfolkRowsRead: records.length, manualReviewCases };
+  const evidenceReviewCandidates = manualReviewCases.flatMap((city) =>
+    city.cases
+      .filter(
+        (manualCase) =>
+          !requiresManualLocationOrGroupDecision(manualCase.reasons),
+      )
+      .map((manualCase) => ({
+        city: city.city,
+        state: city.state,
+        label: city.label,
+        manualCase,
+        profiles: manualCase.businessIds
+          .map((id) => recordsById.get(id))
+          .filter((record): record is KinfolkCurrentBusinessRecord =>
+            Boolean(record),
+          )
+          .map(manualReviewProfile),
+      })),
+  );
+  const totalManualReviewCases = manualReviewCases.reduce(
+    (count, city) => count + city.cases.length,
+    0,
+  );
+  return {
+    totalCurrentKinfolkRowsRead: records.length,
+    summary: {
+      totalManualReviewCases,
+      structurallyBlockedCases:
+        totalManualReviewCases - evidenceReviewCandidates.length,
+      evidenceReviewCandidates: evidenceReviewCandidates.length,
+    },
+    evidenceReviewCandidates,
+    manualReviewCases,
+  };
 }
 
 export async function buildPhiladelphiaKinfolkCurrentDuplicateManifest(): Promise<PhiladelphiaKinfolkCurrentDuplicateManifest> {

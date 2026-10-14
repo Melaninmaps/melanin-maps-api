@@ -47,6 +47,9 @@ describe("Kinfolk Current city duplicate reconciliation", () => {
       "export async function listKinfolkCurrentCityManualReviewReport",
     );
     expect(reconciler).toContain("cases: plan.manualReview");
+    expect(reconciler).toContain("evidenceReviewCandidates");
+    expect(reconciler).toContain("requiresManualLocationOrGroupDecision");
+    expect(reconciler).toContain("hasStoredMapPin: hasStoredMapPin(record)");
     expect(reconciler).not.toContain("ManualReviewReport().then");
   });
 });
