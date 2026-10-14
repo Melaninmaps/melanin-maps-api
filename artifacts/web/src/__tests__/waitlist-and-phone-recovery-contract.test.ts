@@ -52,4 +52,20 @@ describe("web waitlist and password recovery contract", () => {
     expect(admin).toContain("permanentlyDeleteSelectedUsers");
     expect(admin).toContain("waitlistSearchRef.current");
   });
+
+  it("keeps moderation dashboards searchable and bulk-actionable", () => {
+    const admin = source("../pages/admin.tsx");
+    for (const marker of [
+      "Search every review field",
+      "Select all filtered pending reviews",
+      "applySelectedReviewAction",
+      "Search every report field",
+      "applySelectedReportAction",
+      "deleteReport",
+      "Permanently delete report",
+      "Search every member field",
+    ]) {
+      expect(admin).toContain(marker);
+    }
+  });
 });

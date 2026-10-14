@@ -78,4 +78,24 @@ router.patch("/admin/content-reports/:id", async (req: any, res: Response): Prom
   }
 });
 
+router.delete("/admin/content-reports/:id", async (req: any, res: Response): Promise<void> => {
+  const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? "").split(",").map((e) => e.trim()).filter(Boolean);
+  if (!req.user?.email || !ADMIN_EMAILS.includes(req.user.email)) {
+    res.status(403).json({ error: "Forbidden" }); return;
+  }
+
+  try {
+    const [deleted] = await db
+      .delete(contentReportsTable)
+      .where(eq(contentReportsTable.id, req.params.id))
+      .returning({ id: contentReportsTable.id });
+    if (!deleted) { res.status(404).json({ error: "Report not found" }); return; }
+    req.log?.info({ deletedReportId: deleted.id, by: req.user.id }, "Admin deleted content report");
+    res.json({ ok: true, deleted });
+  } catch (err: any) {
+    req.log.error({ err }, "Failed to delete content report");
+    res.status(500).json({ error: "Failed to delete report" });
+  }
+});
+
 export default router;

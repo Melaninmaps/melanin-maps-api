@@ -941,6 +941,14 @@ export default function Admin() {
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
   const [reports, setReports] = useState<ContentReportRow[]>([]);
+  const [reviewSearch, setReviewSearch] = useState("");
+  const [reviewStatusFilter, setReviewStatusFilter] = useState("all");
+  const [selectedReviewIds, setSelectedReviewIds] = useState<Set<string>>(new Set());
+  const [reviewBulkUpdating, setReviewBulkUpdating] = useState(false);
+  const [reportSearch, setReportSearch] = useState("");
+  const [reportStatusFilter, setReportStatusFilter] = useState("all");
+  const [selectedReportIds, setSelectedReportIds] = useState<Set<string>>(new Set());
+  const [reportBulkUpdating, setReportBulkUpdating] = useState(false);
   const [challengeApps, setChallengeApps] = useState<ChallengeApplicationRow[]>(
     [],
   );
@@ -2363,6 +2371,142 @@ export default function Admin() {
     });
     await loadReviews();
     setUpdating(null);
+  };
+
+  const applySelectedReviewAction = async (action: "approve" | "reject" | "delete") => {
+    const ids = Array.from(selectedReviewIds);
+    if (ids.length === 0) return;
+    const label = action === "approve" ? "publish" : action === "reject" ? "reject and permanently remove" : "permanently delete";
+    if (!window.confirm(`${label.charAt(0).toUpperCase()}${label.slice(1)} ${ids.length} selected review${ids.length === 1 ? "" : "s"}?`)) return;
+    setReviewBulkUpdating(true);
+    try {
+      const responses = await Promise.all(
+        ids.map((id) =>
+          fetch(
+            action === "delete"
+              ? `${BASE}api/admin/reviews/${id}`
+              : `${BASE}api/admin/reviews/${id}/decision`,
+            {
+              method: action === "delete" ? "DELETE" : "PATCH",
+              credentials: "include",
+              headers: action === "delete" ? undefined : { "Content-Type": "application/json" },
+              body: action === "delete" ? undefined : JSON.stringify({ action }),
+            },
+          ),
+        ),
+      );
+      const failed = responses.find((response) => !response.ok);
+      if (failed) {
+        const body = (await failed.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? "Some review updates could not be saved.");
+      }
+      setSelectedReviewIds(new Set());
+      await loadReviews();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "The selected review updates could not be saved.");
+    } finally {
+      setReviewBulkUpdating(false);
+    }
+  };
+
+  const updateReportStatus = async (id: string, status: string) => {
+    setUpdating(`${id}-${status}`);
+    try {
+      const response = await fetch(`${BASE}api/admin/content-reports/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status }),
+      });
+      const body = (await response.json().catch(() => ({}))) as { error?: string; report?: ContentReportRow };
+      if (!response.ok) throw new Error(body.error ?? "The report status could not be saved.");
+      setReports((previous) => previous.map((report) => report.id === id ? { ...report, status: body.report?.status ?? status } : report));
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "The report status could not be saved.");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const deleteReport = async (id: string) => {
+    if (!window.confirm("Permanently delete this content report? This cannot be undone.")) return;
+    setUpdating(`${id}-delete`);
+    try {
+      const response = await fetch(`${BASE}api/admin/content-reports/${id}`, { method: "DELETE", credentials: "include" });
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(body.error ?? "The report could not be deleted.");
+      setReports((previous) => previous.filter((report) => report.id !== id));
+      setSelectedReportIds((previous) => {
+        const next = new Set(previous);
+        next.delete(id);
+        return next;
+      });
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "The report could not be deleted.");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const applySelectedReportAction = async (action: "pending" | "reviewed" | "dismissed" | "actioned" | "delete") => {
+    const ids = Array.from(selectedReportIds);
+    if (ids.length === 0) return;
+    const label = action === "delete" ? "permanently delete" : `mark ${action}`;
+    if (!window.confirm(`${label.charAt(0).toUpperCase()}${label.slice(1)} ${ids.length} selected report${ids.length === 1 ? "" : "s"}?`)) return;
+    setReportBulkUpdating(true);
+    try {
+      const responses = await Promise.all(
+        ids.map((id) =>
+          fetch(`${BASE}api/admin/content-reports/${id}`, {
+            method: action === "delete" ? "DELETE" : "PATCH",
+            headers: action === "delete" ? undefined : { "Content-Type": "application/json" },
+            credentials: "include",
+            body: action === "delete" ? undefined : JSON.stringify({ status: action }),
+          }),
+        ),
+      );
+      const failed = responses.find((response) => !response.ok);
+      if (failed) {
+        const body = (await failed.json().catch(() => ({}))) as { error?: string };
+        throw new Error(body.error ?? "Some report updates could not be saved.");
+      }
+      setSelectedReportIds(new Set());
+      await loadReports();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "The selected report updates could not be saved.");
+    } finally {
+      setReportBulkUpdating(false);
+    }
+  };
+
+  const reviewMatchesFilters = (review: AdminReview) => {
+    const needle = reviewSearch.trim().toLowerCase();
+    const haystack = [
+      review.id,
+      review.businessId,
+      review.businessName,
+      review.authorName,
+      review.rating,
+      review.status,
+      review.text,
+      review.createdAt,
+    ].join(" ").toLowerCase();
+    return (!needle || haystack.includes(needle)) && (reviewStatusFilter === "all" || review.status === reviewStatusFilter);
+  };
+
+  const reportMatchesFilters = (report: ContentReportRow) => {
+    const needle = reportSearch.trim().toLowerCase();
+    const haystack = [
+      report.id,
+      report.reporterId,
+      report.targetType,
+      report.targetId,
+      report.reason,
+      report.description,
+      report.status,
+      report.createdAt,
+    ].join(" ").toLowerCase();
+    return (!needle || haystack.includes(needle)) && (reportStatusFilter === "all" || report.status === reportStatusFilter);
   };
 
   const bulkUpdate = async (status: string) => {
@@ -4729,17 +4873,14 @@ Selected: ${summary}`);
                 type="text"
                 value={memberSearch}
                 onChange={(e) => setMemberSearch(e.target.value)}
-                placeholder="Search by email or name…"
+                placeholder="Search every member field…"
                 className="border border-[#3A1F0E]/15 rounded-xl px-4 py-2 text-sm focus:outline-none focus:border-[#CA922B] w-64 bg-white"
               />
             </div>
             {members.filter(
               (m) =>
                 !memberSearch ||
-                m.email?.toLowerCase().includes(memberSearch.toLowerCase()) ||
-                `${m.firstName ?? ""} ${m.lastName ?? ""}`
-                  .toLowerCase()
-                  .includes(memberSearch.toLowerCase()),
+                JSON.stringify(m).toLowerCase().includes(memberSearch.toLowerCase()),
             ).length === 0 ? (
               <div className="text-center py-20 text-[#3A1F0E]/40">
                 <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
@@ -4772,12 +4913,7 @@ Selected: ${summary}`);
                       .filter(
                         (m) =>
                           !memberSearch ||
-                          m.email
-                            ?.toLowerCase()
-                            .includes(memberSearch.toLowerCase()) ||
-                          `${m.firstName ?? ""} ${m.lastName ?? ""}`
-                            .toLowerCase()
-                            .includes(memberSearch.toLowerCase()),
+                          JSON.stringify(m).toLowerCase().includes(memberSearch.toLowerCase()),
                       )
                       .map((m, i) => (
                         <tr
@@ -5972,10 +6108,72 @@ Selected: ${summary}`);
           </div>
         ) : tab === "reviews" ? (
           <div className="space-y-8">
+            <div className="rounded-2xl border border-[#3A1F0E]/10 bg-white p-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/55">
+                    Search every review field
+                    <input
+                      type="search"
+                      value={reviewSearch}
+                      onChange={(event) => setReviewSearch(event.target.value)}
+                      placeholder="Author, business, text, ID, status…"
+                      className="mt-1 block w-72 rounded-xl border border-[#3A1F0E]/15 px-3 py-2 text-sm focus:border-[#CA922B] focus:outline-none"
+                    />
+                  </label>
+                  <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/55">
+                    Status
+                    <select
+                      value={reviewStatusFilter}
+                      onChange={(event) => setReviewStatusFilter(event.target.value)}
+                      className="mt-1 block w-full rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm focus:border-[#CA922B] focus:outline-none"
+                    >
+                      <option value="all">All statuses</option>
+                      {Array.from(new Set(reviews.map((review) => review.status))).sort().map((status) => (
+                        <option key={status} value={status}>{status.replaceAll("_", " ")}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedReviewIds(new Set(reviews.filter(reviewMatchesFilters).map((review) => review.id)))}
+                    className="rounded-lg border border-[#3A1F0E]/15 px-3 py-2 text-xs font-bold text-[#3A1F0E]/70 hover:border-[#CA922B]/50"
+                  >
+                    Select filtered
+                  </button>
+                  <button
+                    type="button"
+                    disabled={selectedReviewIds.size === 0 || reviewBulkUpdating}
+                    onClick={() => void applySelectedReviewAction("approve")}
+                    className="rounded-lg bg-green-600 px-3 py-2 text-xs font-bold text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Publish selected
+                  </button>
+                  <button
+                    type="button"
+                    disabled={selectedReviewIds.size === 0 || reviewBulkUpdating}
+                    onClick={() => void applySelectedReviewAction("reject")}
+                    className="rounded-lg border border-orange-200 px-3 py-2 text-xs font-bold text-orange-700 hover:bg-orange-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Reject selected
+                  </button>
+                  <button
+                    type="button"
+                    disabled={selectedReviewIds.size === 0 || reviewBulkUpdating}
+                    onClick={() => void applySelectedReviewAction("delete")}
+                    className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Delete selected ({selectedReviewIds.size})
+                  </button>
+                </div>
+              </div>
+            </div>
             {/* ── Pending Moderation Queue ── */}
             {(() => {
               const pending = reviews.filter(
-                (r) => r.status === "pending_review",
+                (r) => reviewMatchesFilters(r) && r.status === "pending_review",
               );
               return (
                 <div>
@@ -6005,6 +6203,18 @@ Selected: ${summary}`);
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-orange-100 bg-orange-50">
+                            <th className="px-4 py-3">
+                              <input
+                                type="checkbox"
+                                aria-label="Select all filtered pending reviews"
+                                checked={pending.length > 0 && pending.every((review) => selectedReviewIds.has(review.id))}
+                                onChange={(event) => setSelectedReviewIds((previous) => {
+                                  const next = new Set(previous);
+                                  pending.forEach((review) => event.target.checked ? next.add(review.id) : next.delete(review.id));
+                                  return next;
+                                })}
+                              />
+                            </th>
                             <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-orange-700/70">
                               Author
                             </th>
@@ -6031,6 +6241,18 @@ Selected: ${summary}`);
                               key={review.id}
                               className={`border-b border-orange-50 hover:bg-orange-50/40 transition-colors ${i % 2 === 0 ? "" : "bg-orange-50/20"}`}
                             >
+                              <td className="px-4 py-3">
+                                <input
+                                  type="checkbox"
+                                  aria-label={`Select review ${review.id}`}
+                                  checked={selectedReviewIds.has(review.id)}
+                                  onChange={() => setSelectedReviewIds((previous) => {
+                                    const next = new Set(previous);
+                                    next.has(review.id) ? next.delete(review.id) : next.add(review.id);
+                                    return next;
+                                  })}
+                                />
+                              </td>
                               <td className="px-4 py-3 font-medium text-[#3A1F0E]">
                                 {review.authorName ?? (
                                   <span className="text-[#3A1F0E]/30">—</span>
@@ -6120,7 +6342,7 @@ Selected: ${summary}`);
             {/* ── All Published Reviews ── */}
             {(() => {
               const published = reviews.filter(
-                (r) => r.status !== "pending_review",
+                (r) => reviewMatchesFilters(r) && r.status !== "pending_review",
               );
               return (
                 <div>
@@ -6137,6 +6359,18 @@ Selected: ${summary}`);
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
+                            <th className="px-4 py-3">
+                              <input
+                                type="checkbox"
+                                aria-label="Select all filtered published reviews"
+                                checked={published.length > 0 && published.every((review) => selectedReviewIds.has(review.id))}
+                                onChange={(event) => setSelectedReviewIds((previous) => {
+                                  const next = new Set(previous);
+                                  published.forEach((review) => event.target.checked ? next.add(review.id) : next.delete(review.id));
+                                  return next;
+                                })}
+                              />
+                            </th>
                             <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                               Author
                             </th>
@@ -6166,6 +6400,18 @@ Selected: ${summary}`);
                               key={review.id}
                               className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}
                             >
+                              <td className="px-4 py-3">
+                                <input
+                                  type="checkbox"
+                                  aria-label={`Select review ${review.id}`}
+                                  checked={selectedReviewIds.has(review.id)}
+                                  onChange={() => setSelectedReviewIds((previous) => {
+                                    const next = new Set(previous);
+                                    next.has(review.id) ? next.delete(review.id) : next.add(review.id);
+                                    return next;
+                                  })}
+                                />
+                              </td>
                               <td className="px-4 py-3 font-medium text-[#3A1F0E]">
                                 {review.authorName ?? (
                                   <span className="text-[#3A1F0E]/30">—</span>
@@ -6243,23 +6489,87 @@ Selected: ${summary}`);
           </div>
         ) : (
           <div>
-            <h2 className="text-xl font-serif font-bold text-[#3A1F0E] mb-4">
-              Content Reports
-              <span className="ml-3 text-sm font-sans font-normal text-[#3A1F0E]/50">
-                ({reports.length} total,{" "}
-                {reports.filter((r) => r.status === "pending").length} pending)
-              </span>
-            </h2>
-            {reports.length === 0 ? (
+            <div className="mb-4 rounded-2xl border border-[#3A1F0E]/10 bg-white p-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+                <div>
+                  <h2 className="text-xl font-serif font-bold text-[#3A1F0E]">
+                    Content Reports
+                    <span className="ml-3 text-sm font-sans font-normal text-[#3A1F0E]/50">
+                      ({reports.filter(reportMatchesFilters).length} shown of {reports.length} total)
+                    </span>
+                  </h2>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <input
+                      type="search"
+                      value={reportSearch}
+                      onChange={(event) => setReportSearch(event.target.value)}
+                      placeholder="Search every report field…"
+                      className="w-72 rounded-xl border border-[#3A1F0E]/15 px-3 py-2 text-sm focus:border-[#CA922B] focus:outline-none"
+                    />
+                    <select
+                      value={reportStatusFilter}
+                      onChange={(event) => setReportStatusFilter(event.target.value)}
+                      className="rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm focus:border-[#CA922B] focus:outline-none"
+                    >
+                      <option value="all">All statuses</option>
+                      {Array.from(new Set(reports.map((report) => report.status))).sort().map((status) => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedReportIds(new Set(reports.filter(reportMatchesFilters).map((report) => report.id)))}
+                    className="rounded-lg border border-[#3A1F0E]/15 px-3 py-2 text-xs font-bold text-[#3A1F0E]/70 hover:border-[#CA922B]/50"
+                  >
+                    Select filtered
+                  </button>
+                  {(["pending", "reviewed", "dismissed", "actioned"] as const).map((status) => (
+                    <button
+                      key={status}
+                      type="button"
+                      disabled={selectedReportIds.size === 0 || reportBulkUpdating}
+                      onClick={() => void applySelectedReportAction(status)}
+                      className="rounded-lg border border-[#3A1F0E]/15 px-3 py-2 text-xs font-bold text-[#3A1F0E]/70 hover:border-[#CA922B]/50 disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      Mark {status}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    disabled={selectedReportIds.size === 0 || reportBulkUpdating}
+                    onClick={() => void applySelectedReportAction("delete")}
+                    className="rounded-lg border border-red-200 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Delete selected ({selectedReportIds.size})
+                  </button>
+                </div>
+              </div>
+            </div>
+            {reports.filter(reportMatchesFilters).length === 0 ? (
               <div className="text-center py-20 text-[#3A1F0E]/40">
                 <Flag className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                <p>No content reports yet.</p>
+                <p>No content reports match these filters.</p>
               </div>
             ) : (
               <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
+                      <th className="px-4 py-3">
+                        <input
+                          type="checkbox"
+                          aria-label="Select all filtered reports"
+                          checked={reports.filter(reportMatchesFilters).length > 0 && reports.filter(reportMatchesFilters).every((report) => selectedReportIds.has(report.id))}
+                          onChange={(event) => setSelectedReportIds((previous) => {
+                            const next = new Set(previous);
+                            reports.filter(reportMatchesFilters).forEach((report) => event.target.checked ? next.add(report.id) : next.delete(report.id));
+                            return next;
+                          })}
+                        />
+                      </th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                         Type
                       </th>
@@ -6284,11 +6594,23 @@ Selected: ${summary}`);
                     </tr>
                   </thead>
                   <tbody>
-                    {reports.map((report, i) => (
+                    {reports.filter(reportMatchesFilters).map((report, i) => (
                       <tr
                         key={report.id}
                         className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}
                       >
+                        <td className="px-4 py-3">
+                          <input
+                            type="checkbox"
+                            aria-label={`Select report ${report.id}`}
+                            checked={selectedReportIds.has(report.id)}
+                            onChange={() => setSelectedReportIds((previous) => {
+                              const next = new Set(previous);
+                              next.has(report.id) ? next.delete(report.id) : next.add(report.id);
+                              return next;
+                            })}
+                          />
+                        </td>
                         <td className="px-4 py-3">
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#3A1F0E]/10 text-[#3A1F0E] text-xs font-bold capitalize">
                             {report.targetType}
@@ -6342,75 +6664,30 @@ Selected: ${summary}`);
                           )}
                         </td>
                         <td className="px-4 py-3">
-                          {report.status === "pending" && (
-                            <div className="flex gap-1">
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={updating === report.id + "-dismiss"}
-                                onClick={async () => {
-                                  setUpdating(report.id + "-dismiss");
-                                  await fetch(
-                                    `${BASE}api/admin/content-reports/${report.id}`,
-                                    {
-                                      method: "PATCH",
-                                      headers: {
-                                        "Content-Type": "application/json",
-                                      },
-                                      credentials: "include",
-                                      body: JSON.stringify({
-                                        status: "dismissed",
-                                      }),
-                                    },
-                                  );
-                                  setReports((prev) =>
-                                    prev.map((r) =>
-                                      r.id === report.id
-                                        ? { ...r, status: "dismissed" }
-                                        : r,
-                                    ),
-                                  );
-                                  setUpdating(null);
-                                }}
-                                className="h-7 px-2 rounded-full text-xs border-[#3A1F0E]/20 text-[#3A1F0E]/60 hover:bg-[#3A1F0E]/5"
-                                title="Dismiss"
-                              >
-                                <X className="w-3 h-3" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                disabled={updating === report.id + "-action"}
-                                onClick={async () => {
-                                  setUpdating(report.id + "-action");
-                                  await fetch(
-                                    `${BASE}api/admin/content-reports/${report.id}`,
-                                    {
-                                      method: "PATCH",
-                                      headers: {
-                                        "Content-Type": "application/json",
-                                      },
-                                      credentials: "include",
-                                      body: JSON.stringify({
-                                        status: "actioned",
-                                      }),
-                                    },
-                                  );
-                                  setReports((prev) =>
-                                    prev.map((r) =>
-                                      r.id === report.id
-                                        ? { ...r, status: "actioned" }
-                                        : r,
-                                    ),
-                                  );
-                                  setUpdating(null);
-                                }}
-                                className="h-7 px-2 rounded-full text-xs bg-green-600 hover:bg-green-700 text-white"
-                                title="Mark actioned"
-                              >
-                                <Check className="w-3 h-3" />
-                              </Button>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={report.status}
+                              aria-label={`Change status for report ${report.id}`}
+                              disabled={updating?.startsWith(`${report.id}-`)}
+                              onChange={(event) => void updateReportStatus(report.id, event.target.value)}
+                              className="h-7 rounded-lg border border-[#3A1F0E]/15 bg-white px-2 text-xs"
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="reviewed">Reviewed</option>
+                              <option value="dismissed">Dismissed</option>
+                              <option value="actioned">Actioned</option>
+                            </select>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={updating === `${report.id}-delete`}
+                              onClick={() => void deleteReport(report.id)}
+                              className="h-7 px-2 rounded-full text-xs border-red-200 text-red-600 hover:bg-red-50"
+                              title="Permanently delete report"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
