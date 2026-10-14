@@ -40,4 +40,16 @@ describe("web waitlist and password recovery contract", () => {
     expect(reset).toContain('"/api/auth/phone/reset-password"');
     expect(reset).toContain("Verified phone number");
   });
+
+  it("keeps administrator waitlist and account cleanup searchable and actionable", () => {
+    const admin = source("../pages/admin.tsx");
+    expect(admin).toContain("Search every visible field");
+    expect(admin).toContain("editWaitlistEntry");
+    expect(admin).toContain("permanentlyDeleteWaitlistEntries");
+    expect(admin).toContain("Search name, email, ID");
+    expect(admin).toContain("bulkUpdateUsers");
+    expect(admin).toContain("permanentlyDeleteUser");
+    expect(admin).toContain("permanentlyDeleteSelectedUsers");
+    expect(admin).toContain("waitlistSearchRef.current");
+  });
 });
