@@ -54,7 +54,7 @@ export declare const culturalPassportMomentsTable: import("drizzle-orm/pg-core")
             tableName: "cultural_passport_moments";
             dataType: "string";
             columnType: "PgVarchar";
-            data: "place" | "event" | "food" | "music" | "story" | "community_voice" | "learning";
+            data: "event" | "place" | "food" | "music" | "story" | "community_voice" | "learning";
             driverParam: string;
             notNull: true;
             hasDefault: false;
@@ -67,7 +67,7 @@ export declare const culturalPassportMomentsTable: import("drizzle-orm/pg-core")
             generated: undefined;
         }, {}, {
             length: 40;
-            $type: "place" | "event" | "food" | "music" | "story" | "community_voice" | "learning";
+            $type: "event" | "place" | "food" | "music" | "story" | "community_voice" | "learning";
         }>;
         title: import("drizzle-orm/pg-core").PgColumn<{
             name: "title";

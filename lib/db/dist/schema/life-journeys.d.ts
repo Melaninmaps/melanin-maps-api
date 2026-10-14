@@ -142,7 +142,7 @@ export declare const lifeJourneysTable: import("drizzle-orm/pg-core").PgTableWit
             tableName: "life_journeys";
             dataType: "string";
             columnType: "PgVarchar";
-            data: "active" | "paused" | "completed";
+            data: "active" | "completed" | "paused";
             driverParam: string;
             notNull: true;
             hasDefault: true;

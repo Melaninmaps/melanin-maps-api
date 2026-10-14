@@ -1848,8 +1848,10 @@ export declare const SAFETY_REPORT_CATEGORIES: readonly ["safety", "sundown", "d
 export declare const SAFETY_REPORT_SEVERITIES: readonly ["low", "medium", "high", "critical"];
 export declare const ROUTING_TYPES: readonly ["private", "moderation", "priority"];
 export declare const insertSafetyReportSchema: z.ZodObject<{
-    reporterId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    reporterName: z.ZodOptional<z.ZodString>;
+    description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    targetType: z.ZodOptional<z.ZodString>;
+    targetId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    targetName: z.ZodString;
     category: z.ZodEnum<{
         business: "business";
         safety: "safety";
@@ -1859,16 +1861,14 @@ export declare const insertSafetyReportSchema: z.ZodObject<{
         positive: "positive";
         police: "police";
     }>;
+    reporterId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
+    reporterName: z.ZodOptional<z.ZodString>;
     encounterType: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    targetType: z.ZodOptional<z.ZodString>;
-    targetId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    targetName: z.ZodString;
     incidentCity: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     incidentRegion: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     incidentArea: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     incidentLocationSource: z.ZodOptional<z.ZodString>;
     incidentLocationPrecision: z.ZodOptional<z.ZodString>;
-    description: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     severity: z.ZodDefault<z.ZodEnum<{
         medium: "medium";
         low: "low";

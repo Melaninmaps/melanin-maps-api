@@ -286,9 +286,9 @@ export declare const insertBusinessOwnerLinkSchema: z.ZodObject<{
     updatedAt: z.ZodOptional<z.ZodDate>;
     userId: z.ZodString;
     status: z.ZodOptional<z.ZodString>;
+    approvedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
     businessId: z.ZodString;
     revokedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
-    approvedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
     verifiedAt: z.ZodOptional<z.ZodNullable<z.ZodDate>>;
     claimId: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     approvedBy: z.ZodOptional<z.ZodNullable<z.ZodString>>;

@@ -1,4 +1,9 @@
 import { z } from "zod/v4";
+/**
+ * Legacy physical user_lat/user_lng columns are intentionally not mapped here.
+ * They remain retained in existing databases for non-destructive audit purposes,
+ * but application code cannot select, return, or write them.
+ */
 export declare const checkInsTable: import("drizzle-orm/pg-core").PgTableWithColumns<{
     name: "check_ins";
     schema: undefined;
@@ -77,40 +82,6 @@ export declare const checkInsTable: import("drizzle-orm/pg-core").PgTableWithCol
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        userLat: import("drizzle-orm/pg-core").PgColumn<{
-            name: "user_lat";
-            tableName: "check_ins";
-            dataType: "string";
-            columnType: "PgNumeric";
-            data: string;
-            driverParam: string;
-            notNull: false;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
-        userLng: import("drizzle-orm/pg-core").PgColumn<{
-            name: "user_lng";
-            tableName: "check_ins";
-            dataType: "string";
-            columnType: "PgNumeric";
-            data: string;
-            driverParam: string;
-            notNull: false;
-            hasDefault: false;
-            isPrimaryKey: false;
-            isAutoincrement: false;
-            hasRuntimeDefault: false;
-            enumValues: undefined;
-            baseColumn: never;
-            identity: undefined;
-            generated: undefined;
-        }, {}, {}>;
         verifiedLocation: import("drizzle-orm/pg-core").PgColumn<{
             name: "verified_location";
             tableName: "check_ins";
@@ -134,8 +105,6 @@ export declare const checkInsTable: import("drizzle-orm/pg-core").PgTableWithCol
 export declare const insertCheckInSchema: z.ZodObject<{
     userId: z.ZodString;
     businessId: z.ZodString;
-    userLat: z.ZodOptional<z.ZodNullable<z.ZodString>>;
-    userLng: z.ZodOptional<z.ZodNullable<z.ZodString>>;
     verifiedLocation: z.ZodOptional<z.ZodBoolean>;
 }, {
     out: {};
@@ -208,40 +177,6 @@ export declare const selectCheckInSchema: import("drizzle-zod").BuildSchema<"sel
         driverParam: string;
         notNull: true;
         hasDefault: true;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    userLat: import("drizzle-orm/pg-core").PgColumn<{
-        name: "user_lat";
-        tableName: "check_ins";
-        dataType: "string";
-        columnType: "PgNumeric";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
-        isPrimaryKey: false;
-        isAutoincrement: false;
-        hasRuntimeDefault: false;
-        enumValues: undefined;
-        baseColumn: never;
-        identity: undefined;
-        generated: undefined;
-    }, {}, {}>;
-    userLng: import("drizzle-orm/pg-core").PgColumn<{
-        name: "user_lng";
-        tableName: "check_ins";
-        dataType: "string";
-        columnType: "PgNumeric";
-        data: string;
-        driverParam: string;
-        notNull: false;
-        hasDefault: false;
         isPrimaryKey: false;
         isAutoincrement: false;
         hasRuntimeDefault: false;

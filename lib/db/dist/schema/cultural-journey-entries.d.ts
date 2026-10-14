@@ -138,6 +138,42 @@ export declare const culturalJourneyEntriesTable: import("drizzle-orm/pg-core").
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        encryptedReflection: import("drizzle-orm/pg-core").PgColumn<{
+            name: "encrypted_reflection";
+            tableName: "cultural_journey_entries";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        reflectionEncryptionKeyId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "reflection_encryption_key_id";
+            tableName: "cultural_journey_entries";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 64;
+        }>;
         memberConfirmedAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "member_confirmed_at";
             tableName: "cultural_journey_entries";

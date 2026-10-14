@@ -40,11 +40,28 @@ export declare const travelFlights: import("drizzle-orm/pg-core").PgTableWithCol
         }, {}, {
             length: 255;
         }>;
+        tripId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "trip_id";
+            tableName: "travel_flights";
+            dataType: "string";
+            columnType: "PgUUID";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         flightNumber: import("drizzle-orm/pg-core").PgColumn<{
             name: "flight_number";
             tableName: "travel_flights";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "PgText";
             data: string;
             driverParam: string;
             notNull: true;
@@ -56,13 +73,81 @@ export declare const travelFlights: import("drizzle-orm/pg-core").PgTableWithCol
             baseColumn: never;
             identity: undefined;
             generated: undefined;
+        }, {}, {}>;
+        encryptedFlightNumber: import("drizzle-orm/pg-core").PgColumn<{
+            name: "encrypted_flight_number";
+            tableName: "travel_flights";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        flightNumberEncryptionKeyId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "flight_number_encryption_key_id";
+            tableName: "travel_flights";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
         }, {}, {
-            length: 20;
+            length: 64;
         }>;
         airline: import("drizzle-orm/pg-core").PgColumn<{
             name: "airline";
             tableName: "travel_flights";
             dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        encryptedAirline: import("drizzle-orm/pg-core").PgColumn<{
+            name: "encrypted_airline";
+            tableName: "travel_flights";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        airlineEncryptionKeyId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "airline_encryption_key_id";
+            tableName: "travel_flights";
+            dataType: "string";
             columnType: "PgVarchar";
             data: string;
             driverParam: string;
@@ -76,13 +161,13 @@ export declare const travelFlights: import("drizzle-orm/pg-core").PgTableWithCol
             identity: undefined;
             generated: undefined;
         }, {}, {
-            length: 100;
+            length: 64;
         }>;
         departureDate: import("drizzle-orm/pg-core").PgColumn<{
             name: "departure_date";
             tableName: "travel_flights";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "PgText";
             data: string;
             driverParam: string;
             notNull: true;
@@ -94,14 +179,48 @@ export declare const travelFlights: import("drizzle-orm/pg-core").PgTableWithCol
             baseColumn: never;
             identity: undefined;
             generated: undefined;
+        }, {}, {}>;
+        encryptedDepartureDate: import("drizzle-orm/pg-core").PgColumn<{
+            name: "encrypted_departure_date";
+            tableName: "travel_flights";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        departureDateEncryptionKeyId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "departure_date_encryption_key_id";
+            tableName: "travel_flights";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
         }, {}, {
-            length: 10;
+            length: 64;
         }>;
         origin: import("drizzle-orm/pg-core").PgColumn<{
             name: "origin";
             tableName: "travel_flights";
             dataType: "string";
-            columnType: "PgVarchar";
+            columnType: "PgText";
             data: string;
             driverParam: string;
             notNull: false;
@@ -113,11 +232,26 @@ export declare const travelFlights: import("drizzle-orm/pg-core").PgTableWithCol
             baseColumn: never;
             identity: undefined;
             generated: undefined;
-        }, {}, {
-            length: 10;
-        }>;
-        destination: import("drizzle-orm/pg-core").PgColumn<{
-            name: "destination";
+        }, {}, {}>;
+        encryptedOrigin: import("drizzle-orm/pg-core").PgColumn<{
+            name: "encrypted_origin";
+            tableName: "travel_flights";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        originEncryptionKeyId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "origin_encryption_key_id";
             tableName: "travel_flights";
             dataType: "string";
             columnType: "PgVarchar";
@@ -133,7 +267,60 @@ export declare const travelFlights: import("drizzle-orm/pg-core").PgTableWithCol
             identity: undefined;
             generated: undefined;
         }, {}, {
-            length: 10;
+            length: 64;
+        }>;
+        destination: import("drizzle-orm/pg-core").PgColumn<{
+            name: "destination";
+            tableName: "travel_flights";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        encryptedDestination: import("drizzle-orm/pg-core").PgColumn<{
+            name: "encrypted_destination";
+            tableName: "travel_flights";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        destinationEncryptionKeyId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "destination_encryption_key_id";
+            tableName: "travel_flights";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 64;
         }>;
         notes: import("drizzle-orm/pg-core").PgColumn<{
             name: "notes";
@@ -152,6 +339,59 @@ export declare const travelFlights: import("drizzle-orm/pg-core").PgTableWithCol
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
+        encryptedNotes: import("drizzle-orm/pg-core").PgColumn<{
+            name: "encrypted_notes";
+            tableName: "travel_flights";
+            dataType: "string";
+            columnType: "PgText";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        notesEncryptionKeyId: import("drizzle-orm/pg-core").PgColumn<{
+            name: "notes_encryption_key_id";
+            tableName: "travel_flights";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 64;
+        }>;
+        memberConfirmedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "member_confirmed_at";
+            tableName: "travel_flights";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
         createdAt: import("drizzle-orm/pg-core").PgColumn<{
             name: "created_at";
             tableName: "travel_flights";
@@ -161,6 +401,23 @@ export declare const travelFlights: import("drizzle-orm/pg-core").PgTableWithCol
             driverParam: string;
             notNull: true;
             hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        updatedAt: import("drizzle-orm/pg-core").PgColumn<{
+            name: "updated_at";
+            tableName: "travel_flights";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: false;
+            hasDefault: false;
             isPrimaryKey: false;
             isAutoincrement: false;
             hasRuntimeDefault: false;

@@ -303,7 +303,7 @@ export declare const userSettingsTable: import("drizzle-orm/pg-core").PgTableWit
             tableName: "user_settings";
             dataType: "string";
             columnType: "PgVarchar";
-            data: "public" | "community" | "private";
+            data: "community" | "private" | "public";
             driverParam: string;
             notNull: true;
             hasDefault: true;
@@ -954,7 +954,7 @@ export declare const insertUserSettingsSchema: import("drizzle-zod").BuildSchema
         tableName: "user_settings";
         dataType: "string";
         columnType: "PgVarchar";
-        data: "public" | "community" | "private";
+        data: "community" | "private" | "public";
         driverParam: string;
         notNull: true;
         hasDefault: true;
@@ -1603,7 +1603,7 @@ export declare const selectUserSettingsSchema: import("drizzle-zod").BuildSchema
         tableName: "user_settings";
         dataType: "string";
         columnType: "PgVarchar";
-        data: "public" | "community" | "private";
+        data: "community" | "private" | "public";
         driverParam: string;
         notNull: true;
         hasDefault: true;
