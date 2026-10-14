@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import * as FileSystem from "expo-file-system";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
@@ -1085,8 +1086,8 @@ export function AIChatWidget() {
           {...restorePanResponder.panHandlers}
         >
           <TouchableOpacity onPress={restorePill} style={styles.restoreTabInner} activeOpacity={0.85}>
-            <Text style={styles.restoreTabIcon}>✦</Text>
-            <Text style={styles.restoreTabTxt}>KA</Text>
+            <Image source={require("@/assets/images/icon.png")} style={styles.restoreBrandMark} contentFit="contain" accessibilityLabel="Mapping With Melanin" />
+            <Text style={styles.restoreTabTxt}>Kinfolk</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -1111,7 +1112,7 @@ export function AIChatWidget() {
             activeOpacity={0.88}
           >
             <View style={[styles.fabIconWrap, { backgroundColor: colors.primary }]}>
-              <Text style={styles.fabIconTxt}>✦</Text>
+              <Image source={require("@/assets/images/icon.png")} style={styles.fabBrandMark} contentFit="contain" accessibilityLabel="Mapping With Melanin" />
             </View>
             <View style={styles.fabTextWrap}>
               <Text style={styles.fabTitle}>KinfolkAI™</Text>
@@ -1130,7 +1131,7 @@ export function AIChatWidget() {
           <View style={[styles.modalHeader, { paddingTop: Platform.OS === "web" ? 24 : insets.top + 12, borderBottomColor: colors.border }]}>
             <View style={styles.modalHeaderLeft}>
               <View style={[styles.avatarDot, { backgroundColor: colors.primary }]}>
-                <Text style={styles.avatarTxt}>KA</Text>
+                <Image source={require("@/assets/images/icon.png")} style={styles.headerBrandMark} contentFit="contain" accessibilityLabel="Mapping With Melanin" />
               </View>
               <View>
                 <Text style={[styles.modalTitle, { color: colors.foreground }]}>KinfolkAI™</Text>
@@ -1217,7 +1218,7 @@ export function AIChatWidget() {
                 <View style={[styles.msgRow, item.fromUser && styles.msgRowUser]}>
                   {!item.fromUser && (
                     <View style={[styles.msgAvatar, { backgroundColor: colors.primary }]}>
-                      <Text style={styles.msgAvatarTxt}>KA</Text>
+                      <Image source={require("@/assets/images/icon.png")} style={styles.messageBrandMark} contentFit="contain" accessibilityLabel="Mapping With Melanin" />
                     </View>
                   )}
                   <View style={[
@@ -1473,7 +1474,7 @@ export function AIChatWidget() {
             ListFooterComponent={typing ? (
               <View style={[styles.msgRow]}>
                 <View style={[styles.msgAvatar, { backgroundColor: colors.primary }]}>
-                  <Text style={styles.msgAvatarTxt}>KA</Text>
+                  <Image source={require("@/assets/images/icon.png")} style={styles.messageBrandMark} contentFit="contain" accessibilityLabel="Mapping With Melanin" />
                 </View>
                 <View style={[styles.bubble, { backgroundColor: colors.card, borderColor: colors.border, borderWidth: 1, borderBottomLeftRadius: 4 }]}>
                   <Text style={[styles.typingDots, { color: colors.mutedForeground }]}>●  ●  ●</Text>
@@ -1731,7 +1732,7 @@ const styles = StyleSheet.create({
     width: 34, height: 34, borderRadius: 17,
     alignItems: "center", justifyContent: "center",
   },
-  fabIconTxt: { fontSize: 15, color: "#FAF1E4" },
+  fabBrandMark: { width: 25, height: 25 },
   fabTextWrap: { gap: 1 },
   fabTitle: { fontSize: 13, fontFamily: "Inter_700Bold", color: "#3B1F0E" },
   fabSub: { fontSize: 11, fontFamily: "Inter_400Regular", color: "#8B6F4E" },
@@ -1745,8 +1746,8 @@ const styles = StyleSheet.create({
     paddingVertical: 12, paddingHorizontal: 10,
     alignItems: "center", justifyContent: "center", gap: 2,
   },
-  restoreTabIcon: { fontSize: 14, color: "#FAF1E4" },
-  restoreTabTxt: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#FAF1E4", letterSpacing: 0.5 },
+  restoreBrandMark: { width: 22, height: 22 },
+  restoreTabTxt: { fontSize: 8, fontFamily: "Inter_700Bold", color: "#FAF1E4", letterSpacing: 0.25 },
   modal: { flex: 1 },
   modalHeader: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
@@ -1761,15 +1762,15 @@ const styles = StyleSheet.create({
   },
   tasksBtnTxt: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
   avatarDot: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
-  avatarTxt: { fontSize: 11, fontFamily: "Inter_700Bold", color: "#FFF" },
+  headerBrandMark: { width: 30, height: 30 },
   modalTitle: { fontSize: 16, fontFamily: "Inter_700Bold" },
   modalSub: { fontSize: 11, fontFamily: "Inter_400Regular", marginTop: 1 },
   msgList: { padding: 16, gap: 12 },
   msgRow: { flexDirection: "row", alignItems: "flex-end", gap: 8 },
   msgRowUser: { justifyContent: "flex-end" },
   msgAvatar: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", flexShrink: 0 },
-  msgAvatarTxt: { fontSize: 9, fontFamily: "Inter_700Bold", color: "#FFF" },
-  bubble: { maxWidth: "78%", padding: 12, borderRadius: 16 },
+  messageBrandMark: { width: 21, height: 21 },
+  bubble: { maxWidth: "78%", padding: 12, borderRadius: 16, shadowColor: "#3A1F0E", shadowOpacity: 0.035, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
   bubbleTxt: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 },
   typingDots: { fontSize: 10, letterSpacing: 4 },
   taskCreatedBadge: {

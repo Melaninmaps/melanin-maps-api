@@ -1,4 +1,5 @@
 import { Feather } from "@expo/vector-icons";
+import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import * as SecureStore from "expo-secure-store";
@@ -307,7 +308,7 @@ export default function KinfolkSettingsScreen() {
             <Feather name="arrow-left" size={22} color={colors.foreground} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: colors.foreground }]}>KinfolkAI™</Text>
-          <View style={{ width: 40 }} />
+          <Image source={require("@/assets/images/logo-transparent.png")} style={styles.headerBrandMark} contentFit="contain" accessibilityLabel="Mapping With Melanin" />
         </View>
         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
           <ActivityIndicator size="large" color={colors.primary} />
@@ -327,7 +328,7 @@ export default function KinfolkSettingsScreen() {
           <Feather name="arrow-left" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>KinfolkAI™</Text>
-        <View style={{ width: 40 }} />
+        <Image source={require("@/assets/images/logo-transparent.png")} style={styles.headerBrandMark} contentFit="contain" accessibilityLabel="Mapping With Melanin" />
       </View>
 
       <ScrollView
@@ -612,6 +613,7 @@ const styles = StyleSheet.create({
   },
   back: { width: 40, height: 40, alignItems: "flex-start", justifyContent: "center" },
   headerTitle: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  headerBrandMark: { width: 40, height: 40 },
   scroll: { paddingHorizontal: 20 },
   hero: {
     alignItems: "center", padding: 24, borderRadius: 20, borderWidth: 1,

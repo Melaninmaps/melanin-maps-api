@@ -12,6 +12,7 @@
     "build": "node scripts/build.js",
     "serve": "node server/serve.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "verify:kinfolk-layout": "node scripts/verify-kinfolk-layout.mjs",
     "prebuild:ios": "node scripts/pre-build-check.js ios --source-gate && node scripts/verify-ios-app-review-config.js",
     "prebuild:android": "node scripts/pre-build-check.js android --source-gate",
     "audit": "node scripts/audit.js",
