@@ -3,19 +3,19 @@
     "name": "Mapping With Melanin",
     "slug": "mobile",
     "version": "1.1.10",
-    "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
-    "scheme": "mappingwithmelanin",
-    "userInterfaceStyle": "automatic",
-    "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.melaninmaps.app",
-      "buildNumber": "139",
-      "associatedDomains": [
-        "applinks:mappingwithmelanin.com"
-      ],
-      "entitlements": {
-        "com.apple.developer.applesignin": [
+   "orientation": "portrait",
+   "icon": "./assets/images/icon.png",
+   "scheme": "mappingwithmelanin",
+   "userInterfaceStyle": "automatic",
+   "ios": {
+     "supportsTablet": true,
+     "bundleIdentifier": "com.melaninmaps.app",
+      "buildNumber": "140",
+     "associatedDomains": [
+       "applinks:mappingwithmelanin.com"
+     ],
+     "entitlements": {
+       "com.apple.developer.applesignin": [
           "Default"
         ]
       },
