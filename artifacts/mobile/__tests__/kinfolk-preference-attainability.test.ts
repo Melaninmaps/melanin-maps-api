@@ -10,57 +10,45 @@ const kinfolkSettings = readFileSync(new URL("../components/KinfolkSettingsContr
 const identityOnboarding = readFileSync(new URL("../app/onboarding/identity.tsx", import.meta.url), "utf8");
 
 describe("mobile Kinfolk preference attainability", () => {
-  it("carries a closed voluntary life-stage field through hook, onboarding, and editor", () => {
-    for (const source of [onboarding, tasteProfile, hook]) {
+  it("keeps voluntary life-stage preferences in the hook and independent editor, not initial setup", () => {
+    for (const source of [tasteProfile, hook]) {
       expect(source).toContain("recommendationLifeStage");
       expect(source).toContain("unspecified");
     }
-    expect(onboarding).toContain("Prefer not to say");
+    expect(onboarding).not.toContain("recommendationLifeStage");
     expect(tasteProfile).toContain("Prefer not to say");
     expect(hook).toContain('"18_39", "40_64", "65_plus"');
   });
 
-  it("asks for optional private identity and community context before taste preferences", () => {
-    expect(onboarding).toContain("Start with what you choose to share");
-    expect(onboarding).toContain("Sex assigned at birth");
-    expect(onboarding).toContain("Gender identity");
-    expect(onboarding).toContain("Culture & community");
-    expect(onboarding).toContain("Black history & culture");
-    expect(onboarding).toContain("LGBTQ+ community");
-    expect(onboarding).toContain("Veteran community");
-    expect(onboarding).toContain("Everything on this page is optional, private, editable");
-    expect(onboarding).toContain("allowMedicallyRelevantContext");
-    expect(onboarding).toContain("communities: communityContexts");
+  it("does not collect identity or community context in initial Kinfolk setup", () => {
+    for (const field of ["Sex assigned at birth", "Gender identity", "Culture & community", "allowMedicallyRelevantContext", "identity-context", "communities:"]) {
+      expect(onboarding).not.toContain(field);
+    }
+    expect(onboarding).toContain("No sensitive or current-life details are requested here");
     expect(hook).toContain("personalizationContextCompleted");
   });
 
-  it("requires a separate opt-in before a selected community becomes a research default", () => {
-    const toggleStart = onboarding.indexOf("function toggleCommunityContext");
-    const toggleEnd = onboarding.indexOf("async function saveOptionalIdentityContext", toggleStart);
-    const toggle = onboarding.slice(toggleStart, toggleEnd);
-
-    expect(onboarding).toContain("const [useMemberContextByDefault, setUseMemberContextByDefault] = useState(false)");
-    expect(toggle).not.toContain("setUseMemberContextByDefault");
-    expect(onboarding).toContain("Use the context I selected as my private default");
-    expect(onboarding).toContain("onPress={() => setUseMemberContextByDefault((enabled) => !enabled)}");
-    expect(onboarding).toContain("useMemberContextByDefault,");
+  it("leaves independent member-context defaults untouched", () => {
+    expect(onboarding).not.toContain("useMemberContextByDefault");
+    expect(kinfolkSettings).toContain("Edit explicit profile details");
+    expect(hook).toContain("useMemberContextByDefault: false");
   });
 
-  it("uses one vertical, section-based setup instead of a carousel or stepper", () => {
+  it("uses a compact modal stepper instead of the all-at-once form", () => {
     expect(onboarding).toContain('animationType="fade"');
     expect(onboarding).toContain("Optional Kinfolk setup");
-    expect(onboarding).toContain("const showAllSections = true");
-    expect(onboarding).not.toContain('animationType="slide"');
-    expect(onboarding).not.toContain("setStep(");
-    expect(onboarding).not.toContain("totalSteps");
+    expect(onboarding).not.toContain("showAllSections");
+    expect(onboarding).toContain("buildOnboardingSteps(draft)");
+    expect(onboarding).toContain("setStepId(");
+    expect(onboarding).toContain("totalSteps = steps.length");
   });
 
-  it("supports bounded specific interests and keeps failed saves visible", () => {
-    expect(onboarding).toMatch(/author events, candle making, board games/);
+  it("keeps specific interests editable later and failed setup saves visible", () => {
     expect(tasteProfile).toMatch(/author events, candle making, board games/);
     expect(onboarding).toContain("Nothing was marked complete; please try again.");
     expect(tasteProfile).toContain("Preferences not saved");
-    expect(onboarding).toContain("if (saved) await markKinfolkOnboardingDone()");
+    expect(onboarding).toContain("buildOnboardingPayload(currentDraft), update, markKinfolkOnboardingDone");
+    expect(onboarding).toContain("if (saved) onComplete()");
   });
 
   it("uses API-valid communication and humor values in the editor", () => {

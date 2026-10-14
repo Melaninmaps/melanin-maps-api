@@ -5,39 +5,35 @@ const onboarding = readFileSync(new URL("../components/KinfolkOnboarding.tsx", i
 const kinfolkPage = readFileSync(new URL("../pages/travel.tsx", import.meta.url), "utf8");
 const ageAssuranceHook = readFileSync(new URL("../hooks/useAgeAssurance.ts", import.meta.url), "utf8");
 const supportPreferences = readFileSync(new URL("../features/profile/BusinessSupportPreferences.tsx", import.meta.url), "utf8");
+const flow = readFileSync(new URL("../lib/kinfolk-onboarding.ts", import.meta.url), "utf8");
 
 describe("web Kinfolk preference attainability", () => {
-  it("uses API-valid budget, companion, communication, and personality values", () => {
-    expect(onboarding).toContain('{ value: "mid", label: "Moderate"');
-    expect(onboarding).toContain('{ value: "luxury", label: "Upscale"');
-    expect(onboarding).toContain('{ value: "any", label: "Mix it up"');
-    expect(onboarding).not.toContain('{ value: "moderate"');
-    expect(onboarding).toContain('communicationStyle: personalizationLevel');
-    expect(onboarding).toMatch(/const personalityMode =[\s\S]+atmosphereMode === "cultural"[\s\S]+"cultural_curator"/);
+  it("uses API-valid explicit ordinary preferences without assigning a default personality", () => {
+    expect(flow).toContain('{ value: "mid", label: "Moderate"');
+    expect(flow).toContain('{ value: "luxury", label: "Upscale"');
+    expect(flow).toContain('{ value: "any", label: "Mix it up"');
+    expect(flow).not.toContain('{ value: "moderate"');
+    expect(flow).toContain("payload.communicationStyle = draft.responseStyle");
+    expect(flow).not.toContain("personalityMode");
   });
 
-  it("lets new and returning members edit specific interests and voluntary life stage", () => {
-    for (const source of [onboarding, kinfolkPage]) {
-      expect(source).toContain("recommendationLifeStage");
-      expect(source).toContain("Prefer not to say");
-      expect(source).toContain("18–39");
-      expect(source).toContain("40–64");
-      expect(source).toContain("65+");
-      expect(source).toMatch(/author events, candle making, board games/);
-      expect(source).toMatch(/does not collect your\s+birth date/);
-    }
+  it("keeps specific interests and voluntary life stage attainable in the independent editor", () => {
+    expect(onboarding).not.toContain("recommendationLifeStage");
+    for (const field of ["recommendationLifeStage", "Prefer not to say", "18–39", "40–64", "65+"]) expect(kinfolkPage).toContain(field);
+    expect(kinfolkPage).toMatch(/author events, candle making, board games/);
+    expect(kinfolkPage).toMatch(/does not collect your\s+birth date/);
+    expect(onboarding).toContain("editable later in Kinfolk Settings and Taste Profile");
   });
 
-  it("provides an attainable no-DOB 18+ self-attestation before adult brackets enable", () => {
+  it("preserves no-DOB self-attestation in settings, not the initial Kinfolk path", () => {
     expect(ageAssuranceHook).toContain("api/age-assurance");
     expect(ageAssuranceHook).toContain("JSON.stringify({ ageBand: band, attested: true })");
     expect(ageAssuranceHook).not.toMatch(/dateOfBirth|date_of_birth|birthDate/);
-    for (const source of [onboarding, kinfolkPage]) {
-      expect(source).toContain('ageAssurance.attest("18_plus")');
-      expect(source).toContain('ageAssurance.ageBand !== "18_plus"');
-      expect(source).toContain("I confirm I am 18 or older");
-      expect(source).toContain("youth-protected");
-    }
+    expect(onboarding).not.toContain("ageAssurance");
+    expect(kinfolkPage).toContain('ageAssurance.attest("18_plus")');
+    expect(kinfolkPage).toContain('ageAssurance.ageBand !== "18_plus"');
+    expect(kinfolkPage).toContain("I confirm I am 18 or older");
+    expect(kinfolkPage).toContain("youth-protected");
   });
 
   it("does not mark onboarding complete after a failed preference save", () => {
@@ -47,13 +43,9 @@ describe("web Kinfolk preference attainability", () => {
     expect(onboarding).not.toContain("Non-blocking — mark complete even if pref save fails");
   });
 
-  it("uses ordered primary and optional secondary Support Lens dropdowns in onboarding and profile settings", () => {
-    for (const source of [onboarding, supportPreferences]) {
-      expect(source).toContain("Primary support choice");
-      expect(source).toContain("Additional profile badge");
-      expect(source).toContain("SUPPORT_LENS_PRIMARY_OPTIONS");
-      expect(source).toContain("SUPPORT_LENS_SECONDARY_OPTIONS");
-      expect(source).toContain("Black / African American-Owned is first");
-    }
+  it("preserves ordered Support Lens editing in profile settings without collecting it initially", () => {
+    for (const field of ["Primary support choice", "Additional profile badge", "SUPPORT_LENS_PRIMARY_OPTIONS", "SUPPORT_LENS_SECONDARY_OPTIONS", "Black / African American-Owned is first"]) expect(supportPreferences).toContain(field);
+    expect(onboarding).not.toContain("Support Lens");
+    expect(onboarding).not.toContain("SUPPORT_LENS");
   });
 });

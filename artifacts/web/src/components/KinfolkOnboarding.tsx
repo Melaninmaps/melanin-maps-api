@@ -1,24 +1,11 @@
-import { useState, useCallback, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronRight, ChevronLeft, Check } from "lucide-react";
 import {
-  X,
-  ChevronRight,
-  ChevronLeft,
-  Check,
-  MapPin,
-  Heart,
-  Coffee,
-  Users,
-  Briefcase,
-  Leaf,
-  Zap,
-} from "lucide-react";
-import { useAgeAssurance } from "@/hooks/useAgeAssurance";
-import {
-  replaceSelectedSupportLensOption,
-  selectedSupportLensOption,
-  SUPPORT_LENS_PRIMARY_OPTIONS,
-  SUPPORT_LENS_SECONDARY_OPTIONS,
-} from "@workspace/constants";
+  BEAUTY_OPTIONS, BUDGET_OPTIONS, COMPANION_OPTIONS, INTEREST_OPTIONS,
+  PURPOSE_OPTIONS, RESPONSE_OPTIONS, TRIP_OPTIONS, buildOnboardingPayload,
+  buildOnboardingSteps, completeOnboarding, emptyOnboardingDraft, skipOnboardingPrompt,
+  type OnboardingDraft, type OnboardingPreferences, type OnboardingStep,
+} from "@/lib/kinfolk-onboarding";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -26,113 +13,6 @@ interface Props {
   firstName?: string | null;
   onComplete: () => void;
 }
-
-// ── Option lists ───────────────────────────────────────────────────────────
-
-const PURPOSES = [
-  "Places to go",
-  "Services",
-  "Safety information",
-  "Culture",
-  "Resources",
-  "Something else",
-];
-
-const CATEGORIES = [
-  "Restaurants & Dining",
-  "Beauty & Wellness",
-  "Arts & Entertainment",
-  "Shopping & Retail",
-  "Faith & Spiritual",
-  "Fitness & Health",
-  "Nightlife & Music",
-  "Education & Learning",
-  "Professional Services",
-  "Community Organizations",
-  "Cultural Sites",
-  "Family Activities",
-];
-
-const AVOID = [
-  "Crowded venues",
-  "Chain restaurants",
-  "Tourist traps",
-  "Loud nightlife",
-  "Far from transit",
-  "Cash-only places",
-  "No outdoor seating",
-  "Nothing to avoid",
-];
-
-const BUDGET_OPTIONS = [
-  { value: "budget", label: "Budget-friendly", sub: "$ deals & hidden gems" },
-  { value: "mid", label: "Moderate", sub: "$$ everyday quality" },
-  { value: "luxury", label: "Upscale", sub: "$$$ elevated experiences" },
-  { value: "any", label: "Mix it up", sub: "Depends on the occasion" },
-];
-
-const STYLE_OPTIONS = [
-  { value: "solo", label: "Solo", sub: "Built around my pace" },
-  { value: "couple", label: "Couple", sub: "Time with a partner" },
-  { value: "family", label: "Family", sub: "Family-friendly planning" },
-  {
-    value: "group",
-    label: "Friend group",
-    sub: "Something the group can enjoy",
-  },
-  { value: "business", label: "Work trip", sub: "Useful around work plans" },
-  { value: "spiritual", label: "Spiritual", sub: "Reflective and meaningful" },
-];
-
-const COMPANION_OPTIONS = [
-  { value: "solo", label: "Solo" },
-  { value: "partner", label: "Partner / Spouse" },
-  { value: "friends", label: "Friends" },
-  { value: "family", label: "Family" },
-  { value: "colleagues", label: "Colleagues" },
-];
-
-const RECOMMENDATION_LIFE_STAGES = [
-  { value: "unspecified" as const, label: "Prefer not to say" },
-  { value: "18_39" as const, label: "18–39" },
-  { value: "40_64" as const, label: "40–64" },
-  { value: "65_plus" as const, label: "65+" },
-];
-
-const ATMOSPHERE_OPTIONS = [
-  { value: "explorer", label: "Adventurous & new" },
-  { value: "cozy", label: "Cozy & intimate" },
-  { value: "vibrant", label: "Vibrant & social" },
-  { value: "cultural", label: "Cultural & meaningful" },
-  { value: "relaxed", label: "Relaxed & low-key" },
-  { value: "upscale", label: "Elevated & refined" },
-];
-
-const LIFESTYLE_OPTIONS = [
-  "Childcare & Early Education",
-  "Mental wellness",
-  "Physical health & fitness",
-  "Financial literacy",
-  "Legal aid",
-  "Immigration services",
-  "Housing & real estate",
-  "Career & workforce",
-  "Faith services",
-  "Senior care",
-  "Disability services",
-  "Substance recovery",
-];
-
-const PERSONALIZATION_OPTIONS = [
-  { value: "detailed", label: "High — learn everything about my taste" },
-  {
-    value: "friendly",
-    label: "Balanced — blend my prefs with community signals",
-  },
-  { value: "concise", label: "Light — keep it simple, not too personalized" },
-];
-
-// ── Helpers ────────────────────────────────────────────────────────────────
 
 function Chip({
   label,
@@ -147,6 +27,7 @@ function Chip({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={selected}
       className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all ${
         selected
           ? "bg-[#CA922B] text-white border-[#CA922B]"
@@ -173,6 +54,7 @@ function CardOption({
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={selected}
       className={`w-full flex items-center gap-3 p-4 rounded-2xl border text-left transition-all ${
         selected
           ? "border-[#CA922B] bg-[#CA922B]/8"
@@ -194,821 +76,150 @@ function CardOption({
   );
 }
 
-// ── Main component ─────────────────────────────────────────────────────────
-
 export function KinfolkOnboarding({ firstName, onComplete }: Props) {
-  const ageAssurance = useAgeAssurance(true);
-  const [step, setStep] = useState(0);
+  const [draft, setDraft] = useState(emptyOnboardingDraft);
+  const [stepId, setStepId] = useState<OnboardingStep>("welcome");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-
-  // Accumulated answers
-  const [homeCity, setHomeCity] = useState("");
-  const [favoriteCities, setFavoriteCities] = useState("");
-  const [purposes, setPurposes] = useState<string[]>([]);
-  const [favoriteCategories, setFavoriteCategories] = useState<string[]>([]);
-  const [specificInterests, setSpecificInterests] = useState("");
-  const [recommendationLifeStage, setRecommendationLifeStage] = useState<
-    "unspecified" | "18_39" | "40_64" | "65_plus"
-  >("unspecified");
-  const [avoidCategories, setAvoidCategories] = useState<string[]>([]);
-  const [budgetRange, setBudgetRange] = useState("");
-  const [tripStyle, setTripStyle] = useState<string[]>([]);
-  const [travelCompanion, setTravelCompanion] = useState("");
-  const [atmosphereMode, setAtmosphereMode] = useState("");
-  const [ownershipPrefs, setOwnershipPrefs] = useState<string[]>([]);
-  const [communities, setCommunities] = useState("");
-  const [cultures, setCultures] = useState("");
-  const [preferredLanguages, setPreferredLanguages] = useState("");
-  const [isBusinessOwner, setIsBusinessOwner] = useState(false);
-  const [isCommunityOrg, setIsCommunityOrg] = useState(false);
-  const [dietaryNotes, setDietaryNotes] = useState("");
-  const [lifestyleServices, setLifestyleServices] = useState<string[]>([]);
-  const [personalizationLevel, setPersonalizationLevel] = useState("friendly");
+  const [retryFullSkip, setRetryFullSkip] = useState(false);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const headingRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
-    if (ageAssurance.ageBand !== "18_plus")
-      setRecommendationLifeStage("unspecified");
-  }, [ageAssurance.ageBand]);
+    const previousFocus = document.activeElement;
+    return () => { if (previousFocus instanceof HTMLElement) previousFocus.focus(); };
+  }, []);
+  useEffect(() => { headingRef.current?.focus(); }, [stepId]);
 
-  const TOTAL_STEPS = 15;
+  const steps = buildOnboardingSteps(draft);
+  const step = steps.indexOf(stepId);
+  const totalSteps = steps.length;
+  const isLast = step === totalSteps - 1;
+  const change = (patch: Partial<OnboardingDraft>) => setDraft(current => ({ ...current, ...patch }));
+  const toggle = (values: string[], value: string) => values.includes(value) ? values.filter(item => item !== value) : [...values, value];
 
-  const toggle = useCallback(
-    (arr: string[], val: string, set: (v: string[]) => void) => {
-      set(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
-    },
-    [],
-  );
+  async function savePreferences(payload: OnboardingPreferences): Promise<boolean> {
+    const preferencesResponse = await fetch(`${BASE}api/kinfolk/preferences`, {
+      method: "PUT", credentials: "include", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!preferencesResponse.ok) throw new Error("PREFERENCE_SAVE_FAILED");
+    return true;
+  }
 
-  const primarySupportChoice = selectedSupportLensOption(ownershipPrefs, SUPPORT_LENS_PRIMARY_OPTIONS);
-  const secondarySupportChoice = selectedSupportLensOption(ownershipPrefs, SUPPORT_LENS_SECONDARY_OPTIONS);
-  const replaceSupportChoice = (
-    options: readonly { id: string; label: string }[],
-    nextId: string | null,
-  ) => setOwnershipPrefs((current) => replaceSelectedSupportLensOption(current, options, nextId));
+  async function confirmCompletion(): Promise<boolean> {
+    const profileResponse = await fetch(`${BASE}api/auth/user/setup`, {
+      method: "PATCH", credentials: "include", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ profileSetupComplete: true }),
+    });
+    if (!profileResponse.ok) throw new Error("PROFILE_SAVE_FAILED");
+    return true;
+  }
 
-  const saveAndComplete = useCallback(async () => {
+  async function finish(currentDraft: OnboardingDraft, fullSkip = false) {
+    if (saving) return;
     setSaving(true);
     setSaveError(null);
-    try {
-      const cityList = favoriteCities
-        .split(",")
-        .map((c) => c.trim())
-        .filter(Boolean);
-      const specificInterestList = specificInterests
-        .split(/[,\n]/)
-        .map((value) => value.trim())
-        .filter((value) => value.length >= 2 && value.length <= 80);
-      const preferenceList = (value: string) =>
-        [
-          ...new Set(
-            value
-              .split(/[,\n]/)
-              .map((item) => item.trim())
-              .filter((item) => item.length >= 2 && item.length <= 100),
-          ),
-        ].slice(0, 25);
-      const savedCommunities = preferenceList(communities);
-      const savedCultures = preferenceList(cultures);
-      const savedLanguages = preferenceList(preferredLanguages);
-      const savedCategories = [
-        ...new Set([...favoriteCategories, ...specificInterestList]),
-      ].slice(0, 50);
-      const personalityMode =
-        atmosphereMode === "cultural"
-          ? "cultural_curator"
-          : atmosphereMode === "explorer"
-            ? "neighborhood_guide"
-            : "community";
+    setRetryFullSkip(fullSkip);
+    const saved = await completeOnboarding(buildOnboardingPayload(currentDraft), savePreferences, confirmCompletion);
+    setSaving(false);
+    if (saved) onComplete();
+    else setSaveError("Kinfolk could not finish setup. Nothing was marked complete; please try again. Your draft is still here.");
+  }
 
-      // Save preferences first. Profile setup is not marked complete if this fails.
-      const preferencesResponse = await fetch(
-        `${BASE}api/kinfolk/preferences`,
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            recommendationLifeStage,
-            favoriteCities: cityList.length > 0 ? cityList : undefined,
-            favoriteCategories:
-              savedCategories.length > 0 ? savedCategories : undefined,
-            avoidCategories:
-              avoidCategories.length > 0 ? avoidCategories : undefined,
-            budgetRange: budgetRange || undefined,
-            tripStyle: tripStyle.length > 0 ? tripStyle : undefined,
-            travelCompanion: travelCompanion || undefined,
-            personalityMode,
-            lifestyleServices:
-              lifestyleServices.length > 0 ? lifestyleServices : undefined,
-            dietaryNotes: dietaryNotes.trim() || undefined,
-            communicationStyle: personalizationLevel,
-            communities: savedCommunities,
-            cultures: savedCultures,
-            preferredLanguages: savedLanguages,
-            preferredOwnershipTypes: ownershipPrefs,
-            supportLensMode: ownershipPrefs.length > 0
-              ? "strict_documented_designations"
-              : "all_businesses",
-          }),
-        },
-      );
-      if (!preferencesResponse.ok) throw new Error("PREFERENCE_SAVE_FAILED");
+  // Full skip confirms profile completion only; it cannot clear saved preferences.
+  const skipAll = () => void finish(emptyOnboardingDraft(), true);
 
-      const profileResponse = await fetch(`${BASE}api/auth/user/setup`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          homeCity: homeCity.trim() || undefined,
-          isBusinessOwner,
-          isCommunityOrganizer: isCommunityOrg,
-          culturalInterests: purposes,
-          preferredOwnershipTypes: ownershipPrefs,
-          profileSetupComplete: true,
-        }),
-      });
-      if (!profileResponse.ok) throw new Error("PROFILE_SAVE_FAILED");
-      onComplete();
-    } catch {
-      setSaveError(
-        "Kinfolk could not save your preferences. Nothing was marked complete; please try again.",
-      );
-    } finally {
-      setSaving(false);
-    }
-  }, [
-    homeCity,
-    favoriteCities,
-    purposes,
-    favoriteCategories,
-    specificInterests,
-    recommendationLifeStage,
-    avoidCategories,
-    budgetRange,
-    tripStyle,
-    travelCompanion,
-    atmosphereMode,
-    ownershipPrefs,
-    communities,
-    cultures,
-    preferredLanguages,
-    isBusinessOwner,
-    isCommunityOrg,
-    dietaryNotes,
-    lifestyleServices,
-    personalizationLevel,
-    onComplete,
-  ]);
+  function advance(skip = false) {
+    const nextDraft = skip ? skipOnboardingPrompt(draft, stepId) : draft;
+    setDraft(nextDraft);
+    const nextSteps = buildOnboardingSteps(nextDraft);
+    const index = nextSteps.indexOf(stepId);
+    if (index >= nextSteps.length - 1) void finish(nextDraft);
+    else setStepId(nextSteps[index + 1]);
+  }
 
-  const skipAll = useCallback(async () => {
-    setSaving(true);
-    try {
-      await fetch(`${BASE}api/kinfolk/preferences`, {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          preferredOwnershipTypes: [],
-          ownershipTypes: [],
-          supportLensMode: "all_businesses",
-        }),
-      });
-      await fetch(`${BASE}api/auth/user/setup`, {
-        method: "PATCH",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profileSetupComplete: true }),
-      });
-    } finally {
-      setSaving(false);
-      onComplete();
-    }
-  }, [onComplete]);
+  function chips<T extends string>(items: readonly { value: T; label: string }[], selected: readonly string[], onSelect: (value: T) => void) {
+    return <div className="flex flex-wrap gap-2">{items.map(option => <Chip key={option.value} label={option.label} selected={selected.includes(option.value)} onClick={() => onSelect(option.value)} />)}</div>;
+  }
+  function cards<T extends string>(items: readonly { value: T; label: string; sub?: string }[], selected: readonly string[], onSelect: (value: T) => void) {
+    return <div className="flex flex-col gap-3">{items.map(option => <CardOption key={option.value} label={option.label} sub={option.sub} selected={selected.includes(option.value)} onClick={() => onSelect(option.value)} />)}</div>;
+  }
 
-  const next = () => {
-    if (step >= TOTAL_STEPS - 1) {
-      saveAndComplete();
-      return;
-    }
-    setStep((s) => s + 1);
+  const titles: Record<OnboardingStep, string> = {
+    welcome: `Welcome${firstName ? `, ${firstName}` : ""}`, interests: "What do you like to discover?",
+    use_cases: "What would you like help finding?", budget: "What's your budget vibe?",
+    response_style: "How should Kinfolk respond?", beauty_services: "Which beauty services interest you?",
+    travel_style: "How would you like to explore?", family_planning: "Family-friendly planning?",
+    ready: "You're ready to ask Kinfolk",
   };
-  const back = () => setStep((s) => Math.max(0, s - 1));
 
-  const progress = ((step + 1) / TOTAL_STEPS) * 100;
-  const isLast = step === TOTAL_STEPS - 1;
-
-  // ── Step content ───────────────────────────────────────────────────────
-
-  const steps: {
-    title: string;
-    subtitle?: string;
-    content: React.ReactNode;
-  }[] = [
-    // Step 0 — Welcome
-    {
-      title: `Welcome${firstName ? `, ${firstName}` : ""}`,
-      subtitle:
-        "Kinfolk is your personal guide to the community. A few quick questions help us get things right from day one.",
-      content: (
-        <div className="flex flex-col items-center gap-5 py-4">
-          <div className="w-20 h-20 rounded-full bg-[#CA922B]/15 flex items-center justify-center">
-            <span className="text-4xl">✦</span>
-          </div>
-          <div className="bg-[#2B1507] rounded-2xl px-5 py-4 max-w-xs text-center">
-            <p className="text-[#F5EBD8]/90 text-sm leading-relaxed italic">
-              "I learn through your saves, searches, and experiences — not just
-              what you tell me now. Answer what feels right. Skip what doesn't.
-              Nothing here is permanent."
-            </p>
-            <p className="text-[#CA922B] text-xs font-bold mt-2">— Kinfolk</p>
-          </div>
-          <p className="text-xs text-[#3A1F0E]/50 text-center">
-            15 short questions · Skip any time · Edit later in Profile
-          </p>
-        </div>
-      ),
-    },
-
-    // Step 1 — Home city
-    {
-      title: "Where do you call home?",
-      subtitle: "Kinfolk prioritizes local community knowledge here first.",
-      content: (
-        <div className="flex flex-col gap-3">
-          <div className="relative">
-            <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#CA922B]" />
-            <input
-              value={homeCity}
-              onChange={(e) => setHomeCity(e.target.value)}
-              placeholder="e.g. Philadelphia, PA"
-              className="w-full pl-10 pr-4 py-4 rounded-2xl border border-[#E8DDD0] bg-white text-[#2B1507] text-sm focus:outline-none focus:border-[#CA922B] placeholder:text-[#3A1F0E]/30"
-            />
-          </div>
-          <p className="text-xs text-[#3A1F0E]/40 pl-1">
-            City and state, country, or neighborhood
-          </p>
-        </div>
-      ),
-    },
-
-    // Step 2 — Other cities you care about
-    {
-      title: "Any other cities on your radar?",
-      subtitle: "Places you travel to, came from, or keep up with.",
-      content: (
-        <div className="flex flex-col gap-3">
-          <textarea
-            value={favoriteCities}
-            onChange={(e) => setFavoriteCities(e.target.value)}
-            placeholder="e.g. Atlanta, GA · Kingston, Jamaica · Chicago, IL"
-            rows={3}
-            className="w-full px-4 py-3 rounded-2xl border border-[#E8DDD0] bg-white text-[#2B1507] text-sm focus:outline-none focus:border-[#CA922B] resize-none placeholder:text-[#3A1F0E]/30"
-          />
-          <p className="text-xs text-[#3A1F0E]/40 pl-1">
-            Separate by comma · International cities welcome
-          </p>
-        </div>
-      ),
-    },
-
-    // Step 3 — First-visit intent
-    {
-      title: "What would you like help finding?",
-      subtitle:
-        "Choose anything that sounds useful. You can skip this and get a useful answer right away.",
-      content: (
-        <div className="flex flex-wrap gap-2">
-          {PURPOSES.map((p) => (
-            <Chip
-              key={p}
-              label={p}
-              selected={purposes.includes(p)}
-              onClick={() => toggle(purposes, p, setPurposes)}
-            />
-          ))}
-        </div>
-      ),
-    },
-
-    // Step 4 — Favorite categories
-    {
-      title: "What do you most like to discover?",
-      subtitle: "Kinfolk will emphasize these in your recommendations.",
-      content: (
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {CATEGORIES.map((c) => (
-              <Chip
-                key={c}
-                label={c}
-                selected={favoriteCategories.includes(c)}
-                onClick={() =>
-                  toggle(favoriteCategories, c, setFavoriteCategories)
-                }
-              />
-            ))}
-          </div>
-          <div>
-            <label
-              htmlFor="kinfolk-specific-interests"
-              className="block text-xs font-bold text-[#2B1507] mb-1"
-            >
-              Anything specific?
-            </label>
-            <textarea
-              id="kinfolk-specific-interests"
-              value={specificInterests}
-              onChange={(event) => setSpecificInterests(event.target.value)}
-              rows={2}
-              placeholder="e.g. author events, candle making, board games"
-              className="w-full px-4 py-3 rounded-2xl border border-[#E8DDD0] bg-white text-[#2B1507] text-sm focus:outline-none focus:border-[#CA922B] resize-none placeholder:text-[#3A1F0E]/30"
-            />
-            <p className="mt-1 text-xs text-[#3A1F0E]/45">
-              Separate items with commas. This is private taste data and can be
-              removed later.
-            </p>
-          </div>
-          <div>
-            <p className="text-xs font-bold text-[#2B1507] mb-2">
-              Recommendation life stage (optional)
-            </p>
-            {ageAssurance.loading ? (
-              <p className="mb-2 text-xs text-[#3A1F0E]/50">
-                Checking your age-safety setting…
-              </p>
-            ) : ageAssurance.ageBand === "unknown" ? (
-              <div className="mb-3 rounded-xl border border-[#E8DDD0] bg-[#FAF6EF] p-3">
-                <p className="text-xs leading-relaxed text-[#3A1F0E]/70">
-                  Adult brackets require a one-time 18+ self-attestation. We
-                  store only the range, never your birth date.
-                </p>
-                <button
-                  type="button"
-                  disabled={ageAssurance.saving}
-                  onClick={() => void ageAssurance.attest("18_plus")}
-                  className="mt-2 rounded-full bg-[#2B1507] px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
-                >
-                  {ageAssurance.saving
-                    ? "Saving…"
-                    : "I confirm I am 18 or older"}
-                </button>
-              </div>
-            ) : ageAssurance.ageBand === "18_plus" ? (
-              <p className="mb-2 text-xs font-semibold text-emerald-700">
-                18+ self-attestation confirmed.
-              </p>
-            ) : (
-              <p className="mb-2 text-xs leading-relaxed text-[#3A1F0E]/60">
-                This account remains youth-protected, so adult recommendation
-                brackets are unavailable.
-              </p>
-            )}
-            {ageAssurance.error && (
-              <p role="alert" className="mb-2 text-xs text-red-700">
-                {ageAssurance.error}
-              </p>
-            )}
-            <div className="flex flex-wrap gap-2">
-              {RECOMMENDATION_LIFE_STAGES.map((option) => {
-                const disabled =
-                  option.value !== "unspecified" &&
-                  ageAssurance.ageBand !== "18_plus";
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    disabled={disabled}
-                    aria-pressed={recommendationLifeStage === option.value}
-                    onClick={() => setRecommendationLifeStage(option.value)}
-                    className={`px-4 py-2 rounded-full text-sm font-semibold border transition-all disabled:cursor-not-allowed disabled:opacity-40 ${recommendationLifeStage === option.value ? "bg-[#CA922B] text-white border-[#CA922B]" : "bg-white text-[#2B1507] border-[#E8DDD0] hover:border-[#CA922B]/60"}`}
-                  >
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="mt-2 text-xs leading-relaxed text-[#3A1F0E]/45">
-              Used only when life stage matters. This does not collect your
-              birth date or infer health, income, mobility, or family status.
-              Choose “Prefer not to say” to opt out.
-            </p>
-          </div>
-        </div>
-      ),
-    },
-
-    // Step 5 — Things to avoid
-    {
-      title: "Anything you usually skip?",
-      subtitle: "Optional — helps Kinfolk filter smarter.",
-      content: (
-        <div className="flex flex-wrap gap-2">
-          {AVOID.map((a) => (
-            <Chip
-              key={a}
-              label={a}
-              selected={avoidCategories.includes(a)}
-              onClick={() => toggle(avoidCategories, a, setAvoidCategories)}
-            />
-          ))}
-        </div>
-      ),
-    },
-
-    // Step 6 — Budget
-    {
-      title: "What's your usual budget?",
-      content: (
-        <div className="flex flex-col gap-3">
-          {BUDGET_OPTIONS.map((o) => (
-            <CardOption
-              key={o.value}
-              label={o.label}
-              sub={o.sub}
-              selected={budgetRange === o.value}
-              onClick={() => setBudgetRange(o.value)}
-            />
-          ))}
-        </div>
-      ),
-    },
-
-    // Step 7 — Discovery style
-    {
-      title: "How do you like to explore?",
-      content: (
-        <div className="flex flex-col gap-3">
-          {STYLE_OPTIONS.map((o) => (
-            <CardOption
-              key={o.value}
-              label={o.label}
-              sub={o.sub}
-              selected={tripStyle.includes(o.value)}
-              onClick={() => toggle(tripStyle, o.value, setTripStyle)}
-            />
-          ))}
-        </div>
-      ),
-    },
-
-    // Step 8 — Who you go with
-    {
-      title: "Who do you usually go out with?",
-      content: (
-        <div className="flex flex-wrap gap-2">
-          {COMPANION_OPTIONS.map((c) => (
-            <Chip
-              key={c.value}
-              label={c.label}
-              selected={travelCompanion === c.value}
-              onClick={() => setTravelCompanion(c.value)}
-            />
-          ))}
-        </div>
-      ),
-    },
-
-    // Step 9 — Atmosphere
-    {
-      title: "What kind of atmosphere fits you?",
-      subtitle: "Pick the vibe that feels most like you.",
-      content: (
-        <div className="grid grid-cols-2 gap-3">
-          {ATMOSPHERE_OPTIONS.map((o) => (
-            <button
-              key={o.value}
-              type="button"
-              onClick={() => setAtmosphereMode(o.value)}
-              className={`p-4 rounded-2xl border text-sm font-semibold text-left transition-all ${
-                atmosphereMode === o.value
-                  ? "border-[#CA922B] bg-[#CA922B]/8 text-[#2B1507]"
-                  : "border-[#E8DDD0] bg-white text-[#2B1507] hover:border-[#CA922B]/40"
-              }`}
-            >
-              {o.label}
-            </button>
-          ))}
-        </div>
-      ),
-    },
-
-    // Step 10 — Optional member context and support interests
-    {
-      title: "Help us make this feel built with you in mind",
-      subtitle:
-        "Optional and private. Kinfolk never guesses who you are; share only what you want it to consider.",
-      content: (
-        <div className="space-y-4">
-          <label className="block">
-            <span className="block text-xs font-bold text-[#2B1507] mb-1">
-              Communities (optional)
-            </span>
-            <textarea
-              value={communities}
-              onChange={(event) => setCommunities(event.target.value)}
-              rows={2}
-              placeholder="e.g. Black woman, foundationally Black American, military family"
-              className="w-full px-4 py-3 rounded-2xl border border-[#E8DDD0] bg-white text-[#2B1507] text-sm focus:outline-none focus:border-[#CA922B] resize-none placeholder:text-[#3A1F0E]/30"
-            />
-          </label>
-          <label className="block">
-            <span className="block text-xs font-bold text-[#2B1507] mb-1">
-              Cultures or traditions (optional)
-            </span>
-            <textarea
-              value={cultures}
-              onChange={(event) => setCultures(event.target.value)}
-              rows={2}
-              placeholder="e.g. Haitian, Dominican, Gullah Geechee, Caribbean"
-              className="w-full px-4 py-3 rounded-2xl border border-[#E8DDD0] bg-white text-[#2B1507] text-sm focus:outline-none focus:border-[#CA922B] resize-none placeholder:text-[#3A1F0E]/30"
-            />
-          </label>
-          <label className="block">
-            <span className="block text-xs font-bold text-[#2B1507] mb-1">
-              Languages (optional)
-            </span>
-            <textarea
-              value={preferredLanguages}
-              onChange={(event) => setPreferredLanguages(event.target.value)}
-              rows={2}
-              placeholder="e.g. English, Spanish, Haitian Creole, ASL"
-              className="w-full px-4 py-3 rounded-2xl border border-[#E8DDD0] bg-white text-[#2B1507] text-sm focus:outline-none focus:border-[#CA922B] resize-none placeholder:text-[#3A1F0E]/30"
-            />
-          </label>
-          <div>
-            <p className="text-xs font-bold text-[#2B1507] mb-2">
-              Businesses you may want to support
-            </p>
-            <div className="space-y-3 rounded-2xl border border-[#E8DDD0] bg-[#FAF6EF] p-3">
-              <label className="block">
-                <span className="mb-1 block text-xs font-bold text-[#2B1507]">Primary support choice</span>
-                <span className="mb-2 block text-xs leading-5 text-[#3A1F0E]/55">Black / African American-Owned is first, Foundational Black American-Owned is second, and Latino / Hispanic-Owned is third.</span>
-                <select
-                  value={primarySupportChoice ?? ""}
-                  onChange={(event) => replaceSupportChoice(SUPPORT_LENS_PRIMARY_OPTIONS, event.target.value || null)}
-                  className="min-h-11 w-full rounded-xl border border-[#E8DDD0] bg-white px-3 text-sm font-semibold text-[#2B1507] focus:border-[#CA922B] focus:outline-none focus:ring-2 focus:ring-[#CA922B]/20"
-                >
-                  <option value="">No primary choice</option>
-                  {SUPPORT_LENS_PRIMARY_OPTIONS.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
-                </select>
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-xs font-bold text-[#2B1507]">Additional profile badge <span className="font-normal text-[#3A1F0E]/55">optional</span></span>
-                <span className="mb-2 block text-xs leading-5 text-[#3A1F0E]/55">Choose one additional criterion, including Divine Nine-Affiliated or Veteran-Owned.</span>
-                <select
-                  value={secondarySupportChoice ?? ""}
-                  onChange={(event) => replaceSupportChoice(SUPPORT_LENS_SECONDARY_OPTIONS, event.target.value || null)}
-                  className="min-h-11 w-full rounded-xl border border-[#E8DDD0] bg-white px-3 text-sm font-semibold text-[#2B1507] focus:border-[#CA922B] focus:outline-none focus:ring-2 focus:ring-[#CA922B]/20"
-                >
-                  <option value="">No secondary criterion</option>
-                  {SUPPORT_LENS_SECONDARY_OPTIONS.map((option) => <option key={option.id} value={option.id}>{option.label}</option>)}
-                </select>
-              </label>
-            </div>
-          </div>
-          <p className="text-xs leading-relaxed text-[#3A1F0E]/45">
-            Your Support Lens is optional and private. It never says who you
-            are or removes anyone from MWM. A primary and secondary choice match
-            every documented designation; you can change, clear, or broaden it any time.
-          </p>
-        </div>
-      ),
-    },
-
-    // Step 11 — Community roles
-    {
-      title: "Are you part of the community in these ways?",
-      subtitle:
-        "This unlocks relevant tools — nothing is shared publicly without your choice.",
-      content: (
-        <div className="flex flex-col gap-3">
-          {[
-            {
-              label: "I own or operate a business",
-              sub: "Unlocks your business dashboard",
-              val: "biz",
-            },
-            {
-              label: "I organize community events or programs",
-              sub: "Connects you with organizer tools",
-              val: "org",
-            },
-          ].map((item) => (
-            <button
-              key={item.val}
-              type="button"
-              onClick={() => {
-                if (item.val === "biz") setIsBusinessOwner((b) => !b);
-                else setIsCommunityOrg((o) => !o);
-              }}
-              className={`flex items-center gap-3 p-4 rounded-2xl border text-left transition-all ${
-                (item.val === "biz" ? isBusinessOwner : isCommunityOrg)
-                  ? "border-[#CA922B] bg-[#CA922B]/8"
-                  : "border-[#E8DDD0] bg-white hover:border-[#CA922B]/40"
-              }`}
-            >
-              <div
-                className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                  (item.val === "biz" ? isBusinessOwner : isCommunityOrg)
-                    ? "border-[#CA922B] bg-[#CA922B]"
-                    : "border-[#E8DDD0]"
-                }`}
-              >
-                {(item.val === "biz" ? isBusinessOwner : isCommunityOrg) && (
-                  <Check className="w-3 h-3 text-white" />
-                )}
-              </div>
-              <div>
-                <p className="font-semibold text-[#2B1507] text-sm">
-                  {item.label}
-                </p>
-                <p className="text-xs text-[#3A1F0E]/50 mt-0.5">{item.sub}</p>
-              </div>
-            </button>
-          ))}
-          <p className="text-xs text-[#3A1F0E]/40 pl-1">
-            Neither applies? Just tap Next.
-          </p>
-        </div>
-      ),
-    },
-
-    // Step 12 — Dietary (optional)
-    {
-      title: "Any dietary preferences?",
-      subtitle: "Optional — helps Kinfolk suggest compatible dining.",
-      content: (
-        <div className="flex flex-col gap-3">
-          <textarea
-            value={dietaryNotes}
-            onChange={(e) => setDietaryNotes(e.target.value)}
-            placeholder="e.g. vegan, halal, gluten-free, no pork…"
-            rows={3}
-            className="w-full px-4 py-3 rounded-2xl border border-[#E8DDD0] bg-white text-[#2B1507] text-sm focus:outline-none focus:border-[#CA922B] resize-none placeholder:text-[#3A1F0E]/30"
-          />
-          <p className="text-xs text-[#3A1F0E]/40 pl-1">
-            This stays private — Kinfolk uses it only when suggesting food
-          </p>
-        </div>
-      ),
-    },
-
-    // Step 13 — Lifestyle services
-    {
-      title: "Any community services important to you?",
-      subtitle: "Optional — Kinfolk surfaces relevant providers.",
-      content: (
-        <div className="flex flex-wrap gap-2">
-          {LIFESTYLE_OPTIONS.map((l) => (
-            <Chip
-              key={l}
-              label={l}
-              selected={lifestyleServices.includes(l)}
-              onClick={() => toggle(lifestyleServices, l, setLifestyleServices)}
-            />
-          ))}
-        </div>
-      ),
-    },
-
-    // Step 14 — Personalization level
-    {
-      title: "How much should Kinfolk personalize?",
-      subtitle: "You can always adjust this in your profile.",
-      content: (
-        <div className="flex flex-col gap-3">
-          {PERSONALIZATION_OPTIONS.map((o) => (
-            <CardOption
-              key={o.value}
-              label={o.label}
-              selected={personalizationLevel === o.value}
-              onClick={() => setPersonalizationLevel(o.value)}
-            />
-          ))}
-        </div>
-      ),
-    },
-  ];
-
-  const currentStep = steps[step];
-  const isSupportStep = step === 10;
+  function content() {
+    switch (stepId) {
+      case "welcome": return <div className="flex flex-col items-center gap-5 py-4">
+        <div className="w-20 h-20 rounded-full bg-[#CA922B]/15 flex items-center justify-center"><span className="text-4xl" aria-hidden="true">✦</span></div>
+        <p className="text-sm text-[#3A1F0E]/60 text-center">A few taps can help with recommendations. Share only ordinary preferences you want to use.</p>
+      </div>;
+      case "interests": return chips(INTEREST_OPTIONS.map(value => ({ value, label: value })), draft.interests, value => change({ interests: toggle(draft.interests, value) }));
+      case "use_cases": return chips(PURPOSE_OPTIONS.map(value => ({ value, label: value })), draft.purposes, value => change({ purposes: toggle(draft.purposes, value) }));
+      case "budget": return cards(BUDGET_OPTIONS, [draft.budget], value => change({ budget: value }));
+      case "response_style": return cards(RESPONSE_OPTIONS, [draft.responseStyle], value => change({ responseStyle: value }));
+      case "beauty_services": return chips(BEAUTY_OPTIONS, draft.beautyServices, value => change({ beautyServices: toggle(draft.beautyServices, value) }));
+      case "travel_style": return <div className="space-y-4">
+        <p className="text-sm font-semibold text-[#2B1507]">Trip style — choose any</p>
+        {chips(TRIP_OPTIONS, draft.tripStyles, value => change({ tripStyles: toggle(draft.tripStyles, value) }))}
+        <p className="text-sm font-semibold text-[#2B1507]">Preferred company — optional</p>
+        {chips(COMPANION_OPTIONS, [draft.travelCompanion], value => change({ travelCompanion: value }))}
+      </div>;
+      case "family_planning": return <div className="space-y-4">
+        <p className="text-sm text-[#3A1F0E]/60">This is only a planning preference, not a statement about your family or whether you have children.</p>
+        {chips([{ value: "family", label: "Include family-friendly options" }], draft.familyFriendly ? ["family"] : [], () => change({ familyFriendly: !draft.familyFriendly }))}
+        <p className="text-sm font-semibold text-[#2B1507]">Preferred company — optional</p>
+        {draft.travelCompanion ? <p className="text-xs text-[#3A1F0E]/60">Choosing company here replaces the earlier company preference. Skip to keep that choice.</p> : null}
+        {chips(COMPANION_OPTIONS, [draft.familyCompanion], value => change({ familyCompanion: value }))}
+      </div>;
+      case "ready": return <p className="text-sm text-[#3A1F0E]/60">Start with a local find or a place to explore whenever you're ready. No location is needed in this setup.</p>;
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-[#2B1507]/85 backdrop-blur-sm p-4">
-      <div className="w-full max-w-lg bg-[#FAF6EF] rounded-3xl shadow-2xl flex flex-col max-h-[90dvh]">
-        {/* Header */}
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="kinfolk-setup-title"
+        onKeyDown={event => {
+          if (event.key !== "Tab") return;
+          const buttons = Array.from(dialogRef.current?.querySelectorAll<HTMLButtonElement>("button:not(:disabled)") ?? []);
+          const first = buttons[0];
+          const last = buttons[buttons.length - 1];
+          if (!first) { event.preventDefault(); return; }
+          if (event.shiftKey && (document.activeElement === first || document.activeElement === headingRef.current)) { event.preventDefault(); last.focus(); }
+          else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+        }}
+        className="w-full max-w-lg bg-[#FAF6EF] rounded-3xl shadow-2xl flex flex-col max-h-[90dvh]">
         <div className="px-6 pt-6 pb-4 shrink-0">
-          {/* Progress */}
-          <div className="flex items-center gap-3 mb-5">
-            <div className="flex-1 h-1.5 bg-[#E8DDD0] rounded-full overflow-hidden">
-              <div
-                className="h-full bg-[#CA922B] rounded-full transition-all duration-300"
-                style={{ width: `${progress}%` }}
-              />
+          <p className="text-xs font-bold text-[#2B1507]">Optional Kinfolk setup</p>
+          <p className="text-xs text-[#3A1F0E]/60 mt-2">Every prompt is optional and editable later in Kinfolk Settings and Taste Profile. Skipping keeps your existing preferences.</p>
+          <p className="text-xs text-[#3A1F0E]/60 mt-2">No sensitive or current-life details are requested here. Kinfolk does not infer identity or life status from your answers or activity. These preferences are not public profile information.</p>
+          <div className="flex items-center gap-3 my-4">
+            <div role="progressbar" aria-label="Kinfolk setup progress" aria-valuemin={1} aria-valuemax={totalSteps} aria-valuenow={step + 1} aria-valuetext={`${step + 1} of ${totalSteps}`} className="flex-1 h-1.5 bg-[#E8DDD0] rounded-full overflow-hidden">
+              <div className="h-full bg-[#CA922B] rounded-full transition-all duration-300" style={{ width: `${((step + 1) / totalSteps) * 100}%` }} />
             </div>
-            <span className="text-xs font-bold text-[#3A1F0E]/40 shrink-0">
-              {step + 1} / {TOTAL_STEPS}
-            </span>
-            <button
-              onClick={skipAll}
-              disabled={saving}
-              className="text-xs text-[#3A1F0E]/40 hover:text-[#3A1F0E]/70 font-medium transition-colors shrink-0 ml-1"
-            >
-              Skip all
-            </button>
+            <span aria-live="polite" className="text-xs font-bold text-[#3A1F0E]/50">{step + 1} of {totalSteps}</span>
+            <button type="button" onClick={skipAll} disabled={saving} className="text-xs text-[#3A1F0E]/60 font-medium">Skip all</button>
           </div>
-
-          <h2 className="font-serif font-bold text-xl text-[#2B1507] leading-snug">
-            {currentStep.title}
-          </h2>
-          {currentStep.subtitle && (
-            <p className="text-sm text-[#3A1F0E]/55 mt-1 leading-relaxed">
-              {currentStep.subtitle}
-            </p>
-          )}
+          <h2 ref={headingRef} tabIndex={-1} id="kinfolk-setup-title" className="font-serif font-bold text-xl text-[#2B1507] leading-snug">{titles[stepId]}</h2>
         </div>
-
-        {/* Scrollable content */}
-        <div className="flex-1 overflow-y-auto px-6 pb-2">
-          {currentStep.content}
-        </div>
-
-        {saveError && (
-          <div
-            role="alert"
-            className="mx-6 mb-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-          >
-            {saveError}
-          </div>
-        )}
-
-        {/* Footer */}
+        <fieldset disabled={saving} aria-label={titles[stepId]} className="flex-1 min-h-0 overflow-y-auto px-6 pb-4">{content()}</fieldset>
+        {saveError && <div role="alert" className="mx-6 mb-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {saveError}
+          <button type="button" disabled={saving} onClick={() => void finish(retryFullSkip ? emptyOnboardingDraft() : draft, retryFullSkip)} className="block mt-2 font-bold underline">Retry</button>
+        </div>}
         <div className="px-6 py-5 shrink-0 border-t border-[#E8DDD0]/60 flex items-center gap-3">
-          {step > 0 && (
-            <button
-              onClick={back}
-              disabled={saving}
-              className="flex items-center gap-1 px-4 py-3 rounded-full border border-[#E8DDD0] text-[#2B1507] text-sm font-semibold hover:border-[#CA922B]/60 transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              Back
-            </button>
-          )}
+          <button type="button" onClick={() => setStepId(steps[step - 1])} disabled={saving || step === 0} className="flex items-center gap-1 px-4 py-3 rounded-full border border-[#E8DDD0] text-[#2B1507] text-sm font-semibold disabled:opacity-40"><ChevronLeft className="w-4 h-4" aria-hidden="true" />Back</button>
           <div className="flex-1" />
-          {!isLast && !isSupportStep && (
-            <button
-              onClick={() => setStep((s) => s + 1)}
-              disabled={saving}
-              className="text-sm text-[#3A1F0E]/40 hover:text-[#3A1F0E]/70 font-medium transition-colors"
-            >
-              Skip
-            </button>
-          )}
-          {isSupportStep ? (
-            <div className="grid grid-cols-3 gap-2 w-full">
-              <button
-                onClick={next}
-                disabled={saving}
-                className="px-3 py-3 rounded-full bg-[#CA922B] text-white font-bold text-xs"
-              >
-                Save Support Lens
-              </button>
-              <button
-                onClick={() => { setOwnershipPrefs([]); void next(); }}
-                disabled={saving}
-                className="px-3 py-3 rounded-full border border-[#CA922B] text-[#2B1507] font-bold text-xs"
-              >
-                Show all businesses equally
-              </button>
-              <button
-                onClick={() => { setOwnershipPrefs([]); setStep((s) => s + 1); }}
-                disabled={saving}
-                className="px-3 py-3 rounded-full border border-[#E8DDD0] text-[#2B1507] font-bold text-xs"
-              >
-                Skip for now
-              </button>
-            </div>
-          ) : <button
-            onClick={next}
-            disabled={saving}
-            className="flex items-center gap-2 px-6 py-3 bg-[#CA922B] text-white rounded-full font-bold text-sm hover:bg-[#B38024] transition-colors disabled:opacity-50"
-          >
-            {saving ? (
-              <span className="flex items-center gap-2">
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Saving…
-              </span>
-            ) : isLast ? (
-              <>
-                <Check className="w-4 h-4" /> Let's go
-              </>
-            ) : (
-              <>
-                Next <ChevronRight className="w-4 h-4" />
-              </>
-            )}
-          </button>}
+          <button type="button" onClick={() => advance(true)} disabled={saving} className="text-sm text-[#3A1F0E]/60 font-medium">Skip for now</button>
+          <button type="button" onClick={() => advance()} disabled={saving} className="flex items-center gap-2 px-6 py-3 bg-[#CA922B] text-white rounded-full font-bold text-sm hover:bg-[#B38024] disabled:opacity-50">
+            {saving ? "Saving…" : isLast ? <><Check className="w-4 h-4" aria-hidden="true" />Save setup</> : <>Continue<ChevronRight className="w-4 h-4" aria-hidden="true" /></>}
+          </button>
         </div>
       </div>
     </div>
