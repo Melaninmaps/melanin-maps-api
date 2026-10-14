@@ -16,9 +16,9 @@ const businessesRoute = readFileSync(
 );
 
 describe("administrator public-discovery removal governance", () => {
-  it("requires a written administrator reason and records reversible removal state", () => {
+  it("records a reversible removal state with an automatic administrator audit note", () => {
     expect(adminRoute).toContain('"/admin/businesses/:id/listing-status"');
-    expect(adminRoute).toContain("A 3–1,000 character administrator reason is required");
+    expect(adminRoute).toContain('|| "Administrator lifecycle update"');
     expect(adminRoute).toContain("remove_public_discovery");
     expect(adminRoute).toContain("restore_public_discovery");
     expect(adminRoute).toContain("business_listing_status_audit_events");
@@ -28,11 +28,12 @@ describe("administrator public-discovery removal governance", () => {
     expect(adminRoute).toContain("featured: false");
   });
 
-  it("keeps ordinary removal reversible and allows only audited vault deletion", () => {
+  it("keeps ordinary removal reversible and records any confirmed deletion", () => {
     expect(startupMigrations).toContain("ensureBusinessListingStatusAuditSchema");
     expect(startupMigrations).toContain("business_listing_status_audit_events");
     expect(adminRoute).toContain("business_permanent_deletion_audit_events");
-    expect(adminRoute).toContain("Permanent deletion is allowed only for records already in Archive vault or Duplicate vault.");
+    expect(adminRoute).toContain("Administrator-confirmed permanent deletion");
+    expect(adminRoute).not.toContain("Permanent deletion is allowed only for records already in Archive vault or Duplicate vault.");
     expect(adminRoute).toContain('DELETE FROM businesses WHERE id = ANY($1::text[])');
     expect(adminRoute).toContain("Deliberately no CASCADE");
   });
@@ -47,10 +48,9 @@ describe("administrator public-discovery removal governance", () => {
   });
 
   it("keeps archived records out of all public directory search paths", () => {
-    expect(businessesRoute).not.toContain("function directNameLookupVisibilityCondition");
-    expect(businessesRoute).not.toContain("usedExplicitPublicLookup");
-    expect(businessesRoute).not.toContain("directConditions.push(");
+    expect(businessesRoute).toContain("function publicBusinessVisibilityCondition");
+    expect(businessesRoute).toContain("public.business_record_is_public");
     expect(businessesRoute).toContain("conditions.push(publicVisibilityCondition)");
-    expect(businessesRoute).toContain("conditions.push(defaultDiscoveryCondition)");
+    expect(businessesRoute).not.toContain("directConditions.push(");
   });
 });
