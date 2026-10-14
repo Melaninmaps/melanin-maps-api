@@ -147,4 +147,10 @@ describe("admin dashboard section selector", () => {
     expect(admin).not.toContain("Kinfolk context:");
     expect(admin).not.toContain("{biz.intakeBatchReference} ·");
   });
+
+  it("routes Reports to its own moderation surface instead of the business inventory fallback", () => {
+    expect(admin).toContain('tab === "businesses" || tab === "kinfolk-catalog"');
+    expect(admin).toContain('tab === "reports" ? (');
+    expect(admin).not.toContain('tab !== "reviews" && tab !== "biz-review"');
+  });
 });

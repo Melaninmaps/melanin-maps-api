@@ -5099,7 +5099,7 @@ Selected: ${summary}`);
               </div>
             )}
           </div>
-        ) : tab !== "reviews" && tab !== "biz-review" ? (
+        ) : tab === "businesses" || tab === "kinfolk-catalog" ? (
           <div>
             <div className="mb-5 flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
               <div>
@@ -6487,7 +6487,7 @@ Selected: ${summary}`);
               );
             })()}
           </div>
-        ) : (
+        ) : tab === "reports" ? (
           <div>
             <div className="mb-4 rounded-2xl border border-[#3A1F0E]/10 bg-white p-4">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -6696,7 +6696,7 @@ Selected: ${summary}`);
               </div>
             )}
           </div>
-        )}
+        ) : null}
 
         {/* ── Challenges tab ─────────────────────────────────────────────── */}
         {tab === "challenges" && (
