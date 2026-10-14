@@ -54,7 +54,6 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
         body: JSON.stringify({
           ownerName: ownerName.trim(),
           businessEmail: email.trim(),
-          claimantPhone: phone.trim() || null,
           role,
           officialUrl: website.trim() || null,
           socialHandle: instagram.replace("@", "").trim() || null,
@@ -142,7 +141,7 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
                 autoCapitalize="none"
               />
 
-              <Text style={[styles.label, { color: colors.text }]}>Private review phone (optional)</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Phone (optional)</Text>
               <TextInput
                 style={[styles.input, { color: colors.text, backgroundColor: colors.card, borderColor: colors.border }]}
                 placeholder="(555) 000-0000"
@@ -151,7 +150,6 @@ export function ClaimBusinessModal({ visible, businessId, businessName, onClose 
                 onChangeText={setPhone}
                 keyboardType="phone-pad"
               />
-              <Text style={[styles.helperText, { color: colors.mutedForeground }]}>Private to claim review; never added to the public listing.</Text>
 
               <Text style={[styles.label, { color: colors.text }]}>Your role</Text>
               <View style={styles.roleRow}>
@@ -266,7 +264,6 @@ const styles = StyleSheet.create({
   infoBadgeText: { fontFamily: "Inter_400Regular", fontSize: 13, lineHeight: 18, flex: 1 },
   label: { fontFamily: "Inter_600SemiBold", fontSize: 14, marginBottom: 6, marginTop: 16 },
   input: { borderRadius: 10, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 12, fontFamily: "Inter_400Regular", fontSize: 14 },
-  helperText: { fontFamily: "Inter_400Regular", fontSize: 12, lineHeight: 17, marginTop: 6 },
   textArea: { height: 100, textAlignVertical: "top" },
   roleRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   roleChip: { borderRadius: 20, borderWidth: 1, paddingHorizontal: 14, paddingVertical: 8 },
