@@ -227,15 +227,26 @@
     (() => {
       const demo = document.querySelector('[data-demo]');
       const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const activate = (key, scroll = false) => {
+      const mobilePreview = window.matchMedia('(max-width: 860px)');
+      const scrollToPhone = () => demo.querySelector('.phone-column')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      const activate = (key) => {
         demo.querySelectorAll('[data-screen]').forEach((screen) => screen.classList.toggle('active', screen.dataset.screen === key));
         demo.querySelectorAll('[data-beat]').forEach((beat) => beat.classList.toggle('active', beat.dataset.beat === key));
         demo.querySelectorAll('[data-go]').forEach((button) => button.setAttribute('aria-current', button.dataset.go === key ? 'step' : 'false'));
-        if (scroll) demo.querySelector(`[data-beat="${key}"]`)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
       };
-      demo.querySelectorAll('[data-go]').forEach((button) => button.addEventListener('click', () => activate(button.dataset.go, true)));
-      demo.querySelectorAll('[data-next]').forEach((button) => button.addEventListener('click', () => activate(button.dataset.next, true)));
-      demo.querySelector('[data-restart]')?.addEventListener('click', () => activate('understand', true));
+      demo.querySelectorAll('[data-go]').forEach((button) => button.addEventListener('click', () => {
+        activate(button.dataset.go);
+        if (mobilePreview.matches) scrollToPhone();
+        else demo.querySelector(`[data-beat="${button.dataset.go}"]`)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+      }));
+      demo.querySelectorAll('[data-next]').forEach((button) => button.addEventListener('click', () => {
+        activate(button.dataset.next);
+        if (!mobilePreview.matches) demo.querySelector(`[data-beat="${button.dataset.next}"]`)?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+      }));
+      demo.querySelector('[data-restart]')?.addEventListener('click', () => {
+        activate('understand');
+        if (!mobilePreview.matches) demo.querySelector('[data-beat="understand"]')?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+      });
       demo.querySelectorAll('[data-flash]').forEach((button) => button.addEventListener('click', () => {
         demo.querySelectorAll('[data-flash]').forEach((option) => option.classList.toggle('selected', option === button));
         const answer = document.querySelector('#flash-answer');
@@ -275,10 +286,12 @@
         button.textContent = 'Copied locally';
         window.setTimeout(() => { button.textContent = original; }, 1700);
       });
-      const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
-        if (entry.isIntersecting) activate(entry.target.dataset.beat);
-      }), { threshold:.57, rootMargin:'-12% 0px -12% 0px' });
-      demo.querySelectorAll('[data-beat]').forEach((beat) => observer.observe(beat));
+      if (!mobilePreview.matches) {
+        const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
+          if (entry.isIntersecting) activate(entry.target.dataset.beat);
+        }), { threshold:.57, rootMargin:'-12% 0px -12% 0px' });
+        demo.querySelectorAll('[data-beat]').forEach((beat) => observer.observe(beat));
+      }
     })();
   </script>
 </body>
