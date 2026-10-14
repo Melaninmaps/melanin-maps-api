@@ -193,3 +193,20 @@ The final integrator must add or identify **one server-side authorized-context c
 ## 10. Updated final-integration boundary
 
 Before any final merge, the final integrator must reconcile this cross-feature intelligence requirement with the source modules above. The current branch contributes private Journeys, governed Connected Apps scaffolding, provider readiness boundaries, and safe source interfaces. It does **not** prove that general Kinfolk chat can reason across authorized connected data, and it must not be presented as doing so until the synthetic acceptance suite passes.
+
+## 11. Accepted individual-task closure
+
+**Founder acceptance recorded:** 2026-10-14
+**Task status:** **INTEGRATION-READY** — not founder-complete, released, staged, deployed, provider-active, or available in a native build.
+
+The final integrator must preserve this branch, its source/test history, review-only migrations, and every privacy boundary above. The following are mandatory final-integration requirements, not optional enhancements:
+
+1. General Kinfolk chat must retrieve only **relevant, authorized** Journey and Connected Apps context.
+2. Kinfolk must correlate commitments across authorized sources, including a changed flight arrival and a concert/event schedule.
+3. Any approved health connection must provide privacy-protected record understanding through general chat, distinguish record facts from educational explanation, and never diagnose or alter care instructions.
+4. Journey imports must have conflict-safe/idempotent confirmation, member correction/rejection controls, and an explicitly designed private image-understanding boundary where image extraction is required.
+5. Reminders, proactive alerts, and provider monitoring must integrate with the shared notification/event infrastructure; stored preferences or pending watches are not monitoring.
+6. Final integration must preserve the most complete compatible Journey/calendar implementation across independent workstreams rather than replace it with a thinner duplicate.
+7. The synthetic cross-feature acceptance cases in Section 9 must pass before any connected-data intelligence is described as operational.
+
+No additional work is assigned to this independent branch unless the final integrator identifies a specific regression attributable to it.
