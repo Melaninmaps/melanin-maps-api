@@ -1,120 +1,96 @@
 import { Router, type IRouter, type Request, type Response } from "express";
-import { openai } from "@workspace/integrations-openai-ai-server";
-import { db, businessesTable } from "@workspace/db";
-import { eq, ilike, or, and, isNotNull } from "drizzle-orm";
+import { pool } from "@workspace/db";
+import { getCachedPrefs } from "../kinfolk/preference-cache";
+import { getMemberAgeBand } from "../lib/audience-policy";
+import {
+  createGovernedKinfolkBusinessRepository,
+  type GovernedKinfolkBusiness,
+} from "../kinfolk/governedBusinessRepository";
+import { rankTravelCatalogForMember } from "../kinfolk/itinerary-response";
+import {
+  buildGovernedTravelPlannerResponse,
+  parseGovernedTravelPlannerRequest,
+} from "../kinfolk/travel-planner-governance";
 
 const router: IRouter = Router();
+const governedBusinessRepository = createGovernedKinfolkBusinessRepository(pool);
+
+function requireMemberId(req: Request, res: Response): string | null {
+  if (!req.user?.id) {
+    res.status(401).json({ error: "Authentication required", code: "AUTH_REQUIRED" });
+    return null;
+  }
+  return req.user.id;
+}
 
 // ─── POST /api/travel-planner/generate ────────────────────────────────────────
+//
+// This legacy mobile endpoint intentionally delegates to the same deterministic,
+// governed itinerary policy as primary Kinfolk. It never invokes a model, reads
+// the legacy ungoverned businesses table, invents a venue, or claims current
+// safety information.
 router.post("/travel-planner/generate", async (req: Request, res: Response) => {
-  const { destination, days, style, interests } = req.body as {
-    destination?: string;
-    days?: number;
-    style?: string;
-    interests?: string[];
-  };
+  const memberId = requireMemberId(req, res);
+  if (!memberId) return;
 
-  if (!destination || !days) {
-    res.status(400).json({ error: "destination and days are required" });
+  const request = parseGovernedTravelPlannerRequest(
+    req.body && typeof req.body === "object" ? req.body as Record<string, unknown> : {},
+  );
+  if (!request) {
+    res.status(400).json({ error: "A valid destination is required." });
     return;
   }
 
-  const tripDays = Math.min(Math.max(Number(days) || 3, 1), 14);
-  const travelStyle = style ?? "mid-range";
-  const interestList = (interests ?? []).join(", ") || "food, culture, history, music";
-
   try {
-    // Pull minority-owned businesses in or near the destination city
-    const citySlug = destination.split(",")[0].trim();
-    const localBusinesses = await db
-      .select({
-        name: businessesTable.name,
-        category: businessesTable.category,
-        address: businessesTable.address,
-        city: businessesTable.city,
-        description: businessesTable.description,
-      })
-      .from(businessesTable)
-      .where(
-        and(
-          or(
-            ilike(businessesTable.city, `%${citySlug}%`),
-            ilike(businessesTable.address, `%${citySlug}%`),
-          ),
-          isNotNull(businessesTable.name),
-        ),
-      )
-      .limit(40);
+    const [prefs, ageBand] = await Promise.all([
+      getCachedPrefs(memberId),
+      getMemberAgeBand(memberId),
+    ]);
 
-    const bizContext = localBusinesses.length > 0
-      ? `\n\nminority-owned businesses in the database for ${destination}:\n` +
-        localBusinesses.map((b) => `- ${b.name} (${b.category ?? "Business"}): ${b.address ?? ""}`).join("\n")
-      : "";
-
-    const systemPrompt = `You are KinfolkAI, the travel planning assistant for Mapping With Melanin — a platform celebrating Black culture and minority-owned businesses. You create itineraries that center Black culture, history, food, art, and community.
-
-Your itineraries:
-- Prioritize minority-owned restaurants, hotels, barbershops, spas, galleries, and experiences
-- Include culturally significant landmarks and historically Black neighborhoods
-- Note safety context naturally and respectfully (not fear-based)
-- Feel authentic, warm, and knowledgeable — like advice from a well-traveled friend
-- Match the requested travel style: budget, mid-range, or luxury
-
-CRITICAL: Return ONLY valid JSON matching this exact structure, no extra text:
-{
-  "destination": string,
-  "totalDays": number,
-  "overview": string (2-3 sentences painting the picture),
-  "highlights": string[] (3-5 must-do bullet points),
-  "days": [
-    {
-      "day": number,
-      "theme": string (one evocative phrase for the day),
-      "activities": [
-        {
-          "time": string,
-          "title": string,
-          "description": string (1-2 sentences),
-          "type": "breakfast"|"lunch"|"dinner"|"attraction"|"shopping"|"experience"|"rest"|"nightlife",
-          "businessName": string | null,
-          "businessType": string | null,
-          "tip": string | null (insider tip, optional),
-          "isBlackOwned": boolean
-        }
-      ]
+    let catalog: GovernedKinfolkBusiness[] = [];
+    if (request.cityScope) {
+      try {
+        catalog = await governedBusinessRepository.findDestinationCatalog(
+          request.cityScope,
+          30,
+        );
+      } catch (error) {
+        // A catalog outage must degrade to a no-listing plan rather than fall
+        // back to broad search, an ungoverned table, or an invented venue.
+        req.log.warn({ error }, "governed travel planner catalog unavailable");
+      }
     }
-  ],
-  "safetyNote": string (1-2 sentences, positive framing),
-  "packingTips": string[] (3-4 practical tips)
-}${bizContext}`;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        { role: "system", content: systemPrompt },
-        {
-          role: "user",
-          content: `Plan a ${tripDays}-day ${travelStyle} trip to ${destination}. My interests: ${interestList}. Weave in as many minority-owned businesses and cultural experiences as possible. Make it feel like insider knowledge.`,
-        },
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.85,
-      max_tokens: 4000,
+    const rankedCatalog = rankTravelCatalogForMember({
+      catalog,
+      message: [request.destination, request.style, ...request.interests].join(" "),
+      profile: {
+        ageBand,
+        favoriteCategories: prefs?.favoriteCategories,
+        tripStyle: prefs?.tripStyle,
+        culturalInterests: prefs?.culturalInterests,
+        lifestyleServices: prefs?.lifestyleServices,
+        avoidCategories: prefs?.avoidCategories,
+        budgetRange: prefs?.budgetRange,
+        travelCompanion: prefs?.travelCompanion,
+        dietaryNotes: prefs?.dietaryNotes,
+      },
     });
 
-    const raw = completion.choices[0]?.message?.content ?? "{}";
-    let itinerary: unknown;
-    try {
-      itinerary = JSON.parse(raw);
-    } catch {
-      res.status(500).json({ error: "Failed to parse itinerary response" });
-      return;
-    }
-
-    res.json({ itinerary, localBusinessCount: localBusinesses.length });
-  } catch (err) {
-    req.log.error({ err }, "travel planner generate error");
-    res.status(500).json({ error: "Failed to generate itinerary" });
+    const itinerary = buildGovernedTravelPlannerResponse({
+      request,
+      catalog: rankedCatalog,
+    });
+    res.status(200).json({
+      itinerary,
+      localBusinessCount: rankedCatalog.length,
+      directoryCoverage: request.cityScope && rankedCatalog.length > 0
+        ? "governed_catalog"
+        : "no_eligible_catalog",
+    });
+  } catch (error) {
+    req.log.error({ error }, "governed travel planner generation error");
+    res.status(500).json({ error: "Unable to prepare a travel plan right now." });
   }
 });
 
