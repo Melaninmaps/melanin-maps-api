@@ -1604,6 +1604,42 @@ router.get("/admin/businesses/kinfolk-current/city-duplicate-manual-review-repor
   try {
     const report = await listKinfolkCurrentCityManualReviewReport();
     res.set("Cache-Control", "no-store");
+    if (req.query.triage === "true") {
+      const requestedOffset = Number(req.query.offset ?? 0);
+      const requestedLimit = Number(req.query.limit ?? 2);
+      const offset = Number.isInteger(requestedOffset) && requestedOffset >= 0
+        ? requestedOffset
+        : 0;
+      const limit = Number.isInteger(requestedLimit)
+        ? Math.min(Math.max(requestedLimit, 1), 5)
+        : 2;
+      const candidates = report.evidenceReviewCandidates.slice(
+        offset,
+        offset + limit,
+      );
+      res.json({
+        dryRun: true,
+        totalCurrentKinfolkRowsRead: report.totalCurrentKinfolkRowsRead,
+        summary: report.summary,
+        evidenceReviewCandidates: candidates,
+        pagination: {
+          offset,
+          limit,
+          returned: candidates.length,
+          total: report.evidenceReviewCandidates.length,
+          nextOffset:
+            offset + candidates.length < report.evidenceReviewCandidates.length
+              ? offset + candidates.length
+              : null,
+        },
+        safeguards: [
+          "This report is read-only and cannot apply a duplicate consolidation.",
+          "The compact triage is limited to cases that do not require a map-pin choice or multi-record grouping decision.",
+          "A future write still requires a fresh city-scoped plan and matching stale-record guard.",
+        ],
+      });
+      return;
+    }
     res.json({
       dryRun: true,
       ...report,

@@ -50,6 +50,9 @@ describe("Kinfolk Current city duplicate reconciliation", () => {
     expect(reconciler).toContain("evidenceReviewCandidates");
     expect(reconciler).toContain("requiresManualLocationOrGroupDecision");
     expect(reconciler).toContain("hasStoredMapPin: hasStoredMapPin(record)");
+    expect(adminRoute).toContain('req.query.triage === "true"');
+    expect(adminRoute).toContain("report.evidenceReviewCandidates.slice");
+    expect(adminRoute).toContain("The compact triage is limited to cases");
     expect(reconciler).not.toContain("ManualReviewReport().then");
   });
 });
