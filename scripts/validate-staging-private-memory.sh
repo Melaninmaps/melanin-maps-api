@@ -20,7 +20,10 @@ fi
 run_id="${KINFOLK_STAGING_RUN_ID:-$(date +%s)-$RANDOM}"
 email="kinfolk-safety-contact-memory-${run_id//[^a-zA-Z0-9-]/-}@example.test"
 password="FixtureMemory-${run_id//[^a-zA-Z0-9]/}-Validation"
-username="kinfolkmemory${run_id//[^a-zA-Z0-9]/}"
+# The public registration route limits usernames to 30 characters. A timestamp-
+# based run identifier can exceed that limit, so derive a fixed-size disposable
+# username without placing the original run identifier in request data.
+username="kinfolkmem$(printf '%s' "$run_id" | sha256sum | cut -c1-12)"
 work="$(mktemp -d)"
 token=""
 baseline_memory_ids="$work/baseline-memory-ids.txt"

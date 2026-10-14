@@ -14,10 +14,16 @@ describe("isolated governed discovery bootstrap", () => {
     const end = source.indexOf("export const COMMUNITY_PUBLICATION_REQUIRED_COLUMNS", start);
     const bootstrap = source.slice(start, end);
 
+    expect(bootstrap).toContain('"business_member_feedback_table_v1"');
+    expect(bootstrap).toContain('"business_member_feedback_index_v1"');
     expect(bootstrap).toContain('"business_profile_evidence_receipts_v1"');
     expect(bootstrap).toContain('"business_discovery_eligibility_v1"');
     expect(bootstrap).toContain('"business_discovery_eligibility_audit_events_v1"');
     expect(bootstrap).toContain('"founder_source_presence_publication_v1"');
+    expect(bootstrap).toContain('"founder_source_receipt_integrity_review_v1"');
+    expect(bootstrap).toContain(
+      "SELECT business_id, member_id, kind, key, status FROM business_member_feedback LIMIT 0",
+    );
     expect(bootstrap).toContain(
       "SELECT business_id, source_record_key FROM business_source_directory_receipts LIMIT 0",
     );
