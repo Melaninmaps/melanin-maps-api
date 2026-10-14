@@ -134,3 +134,32 @@ No broad suite was run, because the direction was to keep the work bounded to th
 ## 10. Current boundary
 
 This branch is ready for founder source review and a later **separate** migration/deployment approval. Railway’s later production listing showed an external deployment `c865a111-f976-4a97-81d0-9b8f38f6f920` from `manus/philadelphia-kinfolk-duplicate-reconciliation` / `e3b5966`; it was not started by this work and contains no Journeys commit. `/api/version` continues to report stale `b7d614ad` / `c990d8de` metadata, so use Railway deployment records plus live acceptance rather than that endpoint to identify the active application source. This remains not a claim that member calendars, emails, flight providers, health records, bank accounts, social accounts, files, Wallet passes or notifications are live today. Those external connections remain intentionally disabled until their independent technical, legal, privacy, security and deployment gates are satisfied.
+
+
+## 11. Build 136 remediation reconciliation — source-only
+
+**Reconciliation commit:** `b4db8af440819b02bc8a33390a8db04ea1d00f37` — `merge: reconcile Kinfolk remediation with Journeys source`
+**Branch:** `feature/kinfolk-journeys-source-implementation-20261014`
+**Merge parents:** Journeys/Connected Apps source `68ed9358…`; Build 136 remediation candidate `00a190ea2c3e7d57578fbdb7c5220b47f594280c`
+**GitHub branch verification:** `origin/feature/kinfolk-journeys-source-implementation-20261014` resolves to `b4db8af…`.
+
+This reconciliation retains the Journeys/Connected Apps route contribution (`buildContextualConnectedAppsPrompt` and the returned optional `connectedAppsPrompt`) while integrating the remediation candidate's bounded current-itinerary gate, native locality/map safeguards, compact chat presentation coverage, and multi-clip server-owned voice playback handling.
+
+The native result intentionally keeps **one guarded, member-reviewed transcription flow** (`useKinfolkVoiceSource`) and removes the obsolete parallel recorder state. The server-owned reply player retains every validated clip, cleans up each temporary audio file, visibly retains the complete spoken text, and completes only after the final clip.
+
+### Reconciliation validation
+
+| Surface | Command / focused contract | Result |
+|---|---|---|
+| API | `kinfolk-route-wiring`, `memory-consent-route-contract`, `itinerary-eligibility` | **3 files / 63 tests passed** |
+| API | `pnpm run typecheck` | Passed |
+| Web | `kinfolk-chat-presentation` | **1 file / 25 tests passed** |
+| Web | `pnpm run typecheck` | Passed |
+| Native | `community-map-voice-regressions`, `map-business-scope`, `kinfolk-business-demo` | **3 files / 34 tests passed** |
+| Native | `pnpm exec tsc --noEmit -p tsconfig.json` | Passed |
+| Shared DB | `pnpm exec tsc -b tsconfig.json` | Passed |
+| Merge hygiene | `git diff --check` and source-anchor review | Passed |
+
+The Web consent contract now tests the stronger separate-confirmation wording and continues to require both the sensitive checkbox and sensitive-memory-vault password reauthentication. The server still rejects selected sensitive-memory writes without `sensitiveConsent === true` before any private-memory write.
+
+**Unchanged production boundary:** this was a source merge and GitHub branch push only. No Railway deployment, production migration, provider credential or OAuth registration, live provider connection, member-data import, database write, native build/TestFlight upload, directory/map mutation, or configuration change occurred. The two Journeys/Connected Apps migrations remain unapplied and every provider remains unavailable until the approvals in Section 8 are completed. Workspace storage after validation: **16 GiB free** (15 GiB warning threshold and 10 GiB hard floor remain in force).
