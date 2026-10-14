@@ -127,6 +127,8 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(philadelphiaDuplicateReconciler).toContain("export async function buildPhiladelphiaKinfolkCurrentDuplicateManifest");
     expect(philadelphiaDuplicateReconciler).toContain("export async function applyPhiladelphiaKinfolkCurrentDuplicateManifest");
     expect(philadelphiaDuplicateReconciler).toContain("if (invokedAsCli)");
+    expect(philadelphiaDuplicateReconciler).toContain("Only an explicit TypeScript script invocation");
+    expect(philadelphiaDuplicateReconciler).not.toContain("fileURLToPath");
   });
 
   it("lets administrators combine multiple normalized city selections without mutating source cities", () => {

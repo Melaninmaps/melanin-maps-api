@@ -24,8 +24,7 @@
 
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { dirname } from "node:path";
 import { pool } from "@workspace/db";
 import {
   PHILADELPHIA_KINFOLK_DUPLICATE_RECONCILIATION_POLICY_VERSION,
@@ -609,9 +608,13 @@ async function main(): Promise<void> {
   );
 }
 
-const invokedAsCli =
-  Boolean(process.argv[1]) &&
-  resolve(process.argv[1]!) === fileURLToPath(import.meta.url);
+// This module is imported by the API route. Bundling folds its import.meta.url
+// into the server entrypoint, so comparing it to process.argv[1] would execute
+// a dry run during API startup. Only an explicit TypeScript script invocation
+// can execute the command-line entrypoint.
+const invokedAsCli = /(?:^|\/)reconcilePhiladelphiaKinfolkCurrentDuplicates\.ts$/.test(
+  process.argv[1] ?? "",
+);
 
 if (invokedAsCli) {
   main()
