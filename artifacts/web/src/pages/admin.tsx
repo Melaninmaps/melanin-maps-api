@@ -46,6 +46,8 @@ import {
   Archive,
   RotateCcw,
   MapPinned,
+  Search,
+  Pencil,
 } from "lucide-react";
 import { AdminAddBusiness } from "@/components/AdminAddBusiness";
 import { AdminEditBusiness } from "@/components/AdminEditBusiness";
@@ -257,10 +259,12 @@ const INTAKE_COHORT_LABELS: Record<Exclude<IntakeCohort, "all">, string> = {
 type WaitlistEntry = {
   id: string;
   firstName: string | null;
+  lastName?: string | null;
   email: string;
   city: string | null;
   state: string | null;
   isBusinessOwner: boolean;
+  websiteUrl?: string | null;
   status: string;
   referralCode: string | null;
   referredBy: string | null;
@@ -928,6 +932,11 @@ export default function Admin() {
   const [usersRetainedTotal, setUsersRetainedTotal] = useState(0);
   const [hiddenUserCount, setHiddenUserCount] = useState(0);
   const [showHiddenUsers, setShowHiddenUsers] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+  const [userAccessFilter, setUserAccessFilter] = useState<"all" | "pending" | "approved" | "hidden" | "suspended">("all");
+  const [userRoleFilter, setUserRoleFilter] = useState<"all" | "user" | "tester" | "admin">("all");
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const [bulkUserUpdating, setBulkUserUpdating] = useState(false);
   const [businesses, setBusinesses] = useState<AdminBusiness[]>([]);
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [reviews, setReviews] = useState<AdminReview[]>([]);
@@ -1054,6 +1063,7 @@ export default function Admin() {
   });
   const businessInventoryRequestId = useRef(0);
   const refreshTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const waitlistSearchRef = useRef("");
   const [health, setHealth] = useState<HealthData | null>(null);
   const [healthLoading, setHealthLoading] = useState(false);
   const [healthNextRefresh, setHealthNextRefresh] = useState<number | null>(
@@ -1200,6 +1210,8 @@ export default function Admin() {
     };
   }, [auth?.user, authLoading]);
 
+  waitlistSearchRef.current = search;
+
   useEffect(() => {
     businessInventoryQueryRef.current = {
       page: businessInventoryPage,
@@ -1240,6 +1252,7 @@ export default function Admin() {
       status = "all",
       syntheticOnly = showSyntheticWaitlist,
       city = waitlistCityFilter,
+      searchTerm = waitlistSearchRef.current,
     ) => {
       setWaitlistLoading(true);
       const params = new URLSearchParams({
@@ -1249,6 +1262,7 @@ export default function Admin() {
       if (status !== "all") params.set("status", status);
       if (syntheticOnly) params.set("synthetic", "only");
       if (city !== "all") params.set("city", city);
+      if (searchTerm.trim()) params.set("search", searchTerm.trim());
       return fetch(`${BASE}api/admin/waitlist?${params}`, {
         credentials: "include",
       })
@@ -1809,6 +1823,17 @@ export default function Admin() {
   };
 
   useEffect(() => {
+    if (!isAdmin || tab !== "waitlist") return;
+    const timer = window.setTimeout(() => {
+      setWaitlistPage(1);
+      setSelected(new Set());
+      setSelectAllFiltered(false);
+      void loadWaitlist(1, statusFilter, showSyntheticWaitlist, waitlistCityFilter, search);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [isAdmin, loadWaitlist, search, showSyntheticWaitlist, statusFilter, tab, waitlistCityFilter]);
+
+  useEffect(() => {
     if (!isAdmin) return;
     if (tab === "leaderboard" && leaderboard.length === 0) loadLeaderboard();
   }, [tab, isAdmin, leaderboard.length, loadLeaderboard]);
@@ -1932,6 +1957,64 @@ export default function Admin() {
       );
     } finally {
       setAccessReconciling(false);
+    }
+  };
+
+  const editWaitlistEntry = async (entry: WaitlistEntry) => {
+    const email = window.prompt("Email address:", entry.email);
+    if (email === null) return;
+    const firstName = window.prompt("First name (leave blank to clear):", entry.firstName ?? "");
+    if (firstName === null) return;
+    const lastName = window.prompt("Last name (leave blank to clear):", entry.lastName ?? "");
+    if (lastName === null) return;
+    const city = window.prompt("City (leave blank to clear):", entry.city ?? "");
+    if (city === null) return;
+    const state = window.prompt("State / region (leave blank to clear):", entry.state ?? "");
+    if (state === null) return;
+    const websiteUrl = window.prompt("Website (leave blank to clear):", entry.websiteUrl ?? "");
+    if (websiteUrl === null) return;
+    const notes = window.prompt("Admin notes (leave blank to clear):", entry.notes ?? "");
+    if (notes === null) return;
+    const isBusinessOwner = window.confirm("Is this waitlist entry a business owner? Select Cancel for a community member.");
+    setUpdating(`${entry.id}-edit`);
+    try {
+      const response = await fetch(`${BASE}api/admin/waitlist/${entry.id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, firstName, lastName, city, state, websiteUrl, notes, isBusinessOwner }),
+      });
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(body.error ?? "The waitlist record was not saved.");
+      await loadWaitlist(waitlistPage, statusFilter, showSyntheticWaitlist, waitlistCityFilter);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "The waitlist record was not saved.");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const permanentlyDeleteWaitlistEntries = async (ids: string[]) => {
+    if (ids.length === 0) return;
+    if (window.prompt(`Permanently delete ${ids.length} selected standalone waitlist record${ids.length === 1 ? "" : "s"}? Type DELETE to continue.`) !== "DELETE") return;
+    setBulkUpdating(true);
+    try {
+      const response = await fetch(`${BASE}api/admin/waitlist/bulk-delete`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
+      });
+      const body = (await response.json().catch(() => ({}))) as { error?: string; deletedIds?: string[]; heldIds?: string[]; missingIds?: string[] };
+      if (!response.ok) throw new Error(body.error ?? "The permanent waitlist cleanup was not saved.");
+      setSelected(new Set());
+      setSelectAllFiltered(false);
+      await loadWaitlist(waitlistPage, statusFilter, showSyntheticWaitlist, waitlistCityFilter);
+      if ((body.heldIds?.length ?? 0) > 0) window.alert(`${body.deletedIds?.length ?? 0} record(s) deleted. ${body.heldIds?.length ?? 0} record(s) have a registered account or contribution and remain available for review.`);
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "The permanent waitlist cleanup was not saved.");
+    } finally {
+      setBulkUpdating(false);
     }
   };
 
@@ -2125,11 +2208,7 @@ export default function Admin() {
       suspend: "Administrator suspended account during controlled rollout",
       restore: "Administrator restored account during controlled rollout",
     } as const;
-    const reason = window.prompt(
-      `Why should this account be ${labels[action]}? This is reversible and preserves the account and its records. You can keep the recorded default reason or replace it.`,
-      defaultReasons[action],
-    )?.trim();
-    if (!reason) return;
+    const reason = defaultReasons[action];
     if (!window.confirm(`Confirm: ${labels[action]} for this account?`)) return;
     setUpdating(`${user.id}-lifecycle`);
     try {
@@ -2147,6 +2226,111 @@ export default function Admin() {
       await loadUsers();
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const editUserDetails = async (user: AdminUser) => {
+    const firstName = window.prompt("First name (leave blank to clear):", user.firstName ?? "");
+    if (firstName === null) return;
+    const lastName = window.prompt("Last name (leave blank to clear):", user.lastName ?? "");
+    if (lastName === null) return;
+    const email = window.prompt("Email address:", user.email ?? "");
+    if (email === null) return;
+    setUpdating(`${user.id}-edit`);
+    try {
+      const detailsResponse = await fetch(`${BASE}api/admin/users/${user.id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ firstName, lastName }),
+      });
+      const detailsBody = (await detailsResponse.json().catch(() => ({}))) as { error?: string };
+      if (!detailsResponse.ok) throw new Error(detailsBody.error ?? "Could not save the account name.");
+      if (email.trim() && email.trim().toLowerCase() !== (user.email ?? "").trim().toLowerCase()) {
+        const emailResponse = await fetch(`${BASE}api/admin/users/${user.id}/email`, {
+          method: "PATCH",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim() }),
+        });
+        const emailBody = (await emailResponse.json().catch(() => ({}))) as { error?: string };
+        if (!emailResponse.ok) throw new Error(emailBody.error ?? "Could not save the email address.");
+      }
+      await loadUsers();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "The account changes were not saved.");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const permanentlyDeleteUser = async (user: AdminUser) => {
+    if (window.prompt(`Permanently delete ${user.email ?? user.id}? Type DELETE to continue.`) !== "DELETE") return;
+    setUpdating(`${user.id}-delete`);
+    try {
+      const response = await fetch(`${BASE}api/admin/users/${user.id}`, { method: "DELETE", credentials: "include" });
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(body.error ?? "The account could not be deleted.");
+      setSelectedUserIds((previous) => {
+        const next = new Set(previous);
+        next.delete(user.id);
+        return next;
+      });
+      await loadUsers();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "The account could not be deleted.");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const permanentlyDeleteSelectedUsers = async () => {
+    if (selectedUserIds.size === 0) return;
+    const count = selectedUserIds.size;
+    if (window.prompt(`Permanently delete ${count} selected account${count === 1 ? "" : "s"}? Type DELETE to continue.`) !== "DELETE") return;
+    setBulkUserUpdating(true);
+    try {
+      const response = await fetch(`${BASE}api/admin/users/bulk-delete`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedUserIds) }),
+      });
+      const body = (await response.json().catch(() => ({}))) as { error?: string; deletedIds?: string[]; heldIds?: string[] };
+      if (!response.ok) throw new Error(body.error ?? "The selected accounts could not be deleted.");
+      setSelectedUserIds(new Set(body.heldIds ?? []));
+      await loadUsers();
+      if ((body.heldIds?.length ?? 0) > 0) {
+        window.alert(`${body.deletedIds?.length ?? 0} account(s) permanently deleted. ${body.heldIds?.length ?? 0} owner-linked account(s) remain selected for review.`);
+      }
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "The selected accounts could not be deleted.");
+    } finally {
+      setBulkUserUpdating(false);
+    }
+  };
+
+  const bulkUpdateUsers = async (
+    action: "approve" | "revoke" | "make_tester" | "make_user" | "hide" | "suspend" | "restore",
+  ) => {
+    if (selectedUserIds.size === 0) return;
+    if (!window.confirm(`Apply “${action.replaceAll("_", " ")}” to ${selectedUserIds.size} selected account${selectedUserIds.size === 1 ? "" : "s"}?`)) return;
+    setBulkUserUpdating(true);
+    try {
+      const response = await fetch(`${BASE}api/admin/users/bulk`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: Array.from(selectedUserIds), action }),
+      });
+      const body = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(body.error ?? "The bulk account update was not saved.");
+      setSelectedUserIds(new Set());
+      await loadUsers();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "The bulk account update was not saved.");
+    } finally {
+      setBulkUserUpdating(false);
     }
   };
 
@@ -2230,11 +2414,11 @@ export default function Admin() {
   };
 
   const toggleSelectAll = () => {
-    if (selectAllFiltered || selected.size === waitlist.length) {
+    if (selectAllFiltered || selected.size === filteredWaitlist.length) {
       setSelected(new Set());
       setSelectAllFiltered(false);
     } else {
-      setSelected(new Set(waitlist.map((e) => e.id)));
+      setSelected(new Set(filteredWaitlist.map((e) => e.id)));
     }
   };
 
@@ -2797,11 +2981,37 @@ Selected: ${summary}`);
     return (
       !q ||
       e.email.toLowerCase().includes(q) ||
+      (e.firstName ?? "").toLowerCase().includes(q) ||
+      (e.lastName ?? "").toLowerCase().includes(q) ||
       (e.city ?? "").toLowerCase().includes(q) ||
+      (e.state ?? "").toLowerCase().includes(q) ||
+      (e.websiteUrl ?? "").toLowerCase().includes(q) ||
+      e.status.toLowerCase().includes(q) ||
       (e.referralCode ?? "").toLowerCase().includes(q) ||
       (e.referredBy ?? "").toLowerCase().includes(q)
     );
   });
+
+  const normalizedUserSearch = userSearch.trim().toLowerCase();
+  const visibleUsers = users.filter((user) => {
+    const access = user.accountStatus === "hidden"
+      ? "hidden"
+      : user.accountStatus === "suspended"
+        ? "suspended"
+        : user.approved
+          ? "approved"
+          : "pending";
+    const haystack = [user.id, user.email, user.firstName, user.lastName, user.role, user.testerStatus]
+      .filter((value): value is string => Boolean(value))
+      .join(" ")
+      .toLowerCase();
+    return (userAccessFilter === "all" || access === userAccessFilter)
+      && (userRoleFilter === "all" || user.role === userRoleFilter)
+      && (!normalizedUserSearch || haystack.includes(normalizedUserSearch));
+  });
+  const selectableUsers = visibleUsers.filter(
+    (user) => user.role !== "admin" && !PROTECTED_ADMIN_EMAILS.has((user.email ?? "").trim().toLowerCase()),
+  );
 
   const tabs: {
     id: Tab;
@@ -3407,6 +3617,17 @@ Selected: ${summary}`);
               >
                 Reset All
               </Button>
+              {!selectAllFiltered && (
+                <Button
+                  size="sm"
+                  onClick={() => permanentlyDeleteWaitlistEntries(Array.from(selected))}
+                  disabled={bulkUpdating}
+                  variant="outline"
+                  className="h-7 px-4 rounded-full border-red-300/70 text-red-100 hover:bg-red-950/30 text-xs"
+                >
+                  <Trash2 className="w-3 h-3 mr-1" /> Permanently delete selected
+                </Button>
+              )}
               <button
                 onClick={() => {
                   setSelected(new Set());
@@ -3845,6 +4066,10 @@ Selected: ${summary}`);
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                  <label className="flex items-center gap-2 rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-1.5 text-xs text-[#3A1F0E]/70">
+                    <Search className="h-3.5 w-3.5 text-[#CA922B]" />
+                    <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search every visible field…" className="w-44 bg-transparent outline-none" aria-label="Search waitlist records" />
+                  </label>
                   <button
                     onClick={() => handleSyntheticWaitlistFilter(false)}
                     className={`rounded-lg px-3 py-1.5 text-xs font-bold ${!showSyntheticWaitlist ? "bg-[#2B1507] text-white" : "border border-[#3A1F0E]/15 text-[#3A1F0E]/60 hover:bg-[#FAF6EF]"}`}
@@ -3982,8 +4207,8 @@ Selected: ${summary}`);
                           <input
                             type="checkbox"
                             checked={
-                              (selected.size === waitlist.length &&
-                                waitlist.length > 0) ||
+                              (selected.size === filteredWaitlist.length &&
+                                filteredWaitlist.length > 0) ||
                               selectAllFiltered
                             }
                             onChange={toggleSelectAll}
@@ -4023,7 +4248,7 @@ Selected: ${summary}`);
                       </tr>
                     </thead>
                     <tbody>
-                      {waitlist.map((entry, i) => {
+                      {filteredWaitlist.map((entry, i) => {
                         const refCount =
                           referralCounts[entry.referralCode ?? ""] ?? 0;
                         return (
@@ -4205,11 +4430,29 @@ Selected: ${summary}`);
                                 <Button
                                   size="sm"
                                   variant="outline"
+                                  onClick={() => editWaitlistEntry(entry)}
+                                  disabled={updating === entry.id + "-edit"}
+                                  className="h-7 px-3 rounded-full text-xs"
+                                >
+                                  <Pencil className="w-3 h-3 mr-1" /> Edit
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
                                   onClick={() => removeStandaloneWaitlistEntry(entry)}
                                   disabled={updating === entry.id + "-remove"}
                                   className="h-7 px-3 rounded-full border-[#3A1F0E]/15 text-[#3A1F0E]/55 hover:bg-red-50 hover:text-red-700 text-xs"
                                 >
                                   <Trash2 className="w-3 h-3 mr-1" /> Archive
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => permanentlyDeleteWaitlistEntries([entry.id])}
+                                  disabled={bulkUpdating}
+                                  className="h-7 px-3 rounded-full border-red-200 text-red-700 hover:bg-red-50 text-xs"
+                                >
+                                  <Trash2 className="w-3 h-3 mr-1" /> Delete
                                 </Button>
                               </div>
                             </td>
@@ -4231,33 +4474,64 @@ Selected: ${summary}`);
           <MetricsTab metrics={metrics} loading={metricsLoading} />
         ) : tab === "users" ? (
           <div>
-            <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+            <div className="flex items-start justify-between gap-3 flex-wrap mb-4">
               <div>
                 <h2 className="text-xl font-serif font-bold text-[#3A1F0E]">
-                  Registered Users ({users.length} shown of {usersRetainedTotal} retained)
+                  Registered Users ({visibleUsers.length} shown of {usersRetainedTotal} retained)
                 </h2>
                 <p className="text-xs text-[#3A1F0E]/55 mt-1">
-                  Hide keeps the account and activity for records; suspend also revokes access. Neither action deletes data.
+                  Search all retained account fields, review status or role, and apply direct actions to the selected non-administrator accounts.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => setShowHiddenUsers((visible) => !visible)}
-                className="text-xs font-bold px-3 py-2 rounded-xl border border-[#3A1F0E]/15 bg-white text-[#3A1F0E]/70 hover:border-[#CA922B]/50"
-              >
-                {showHiddenUsers ? "Return to active view" : `View hidden accounts (${hiddenUserCount})`}
-              </button>
+              <div className="flex flex-wrap items-center justify-end gap-2">
+                <label className="flex items-center gap-2 rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-xs text-[#3A1F0E]/70">
+                  <Search className="h-3.5 w-3.5 text-[#CA922B]" />
+                  <input value={userSearch} onChange={(event) => setUserSearch(event.target.value)} placeholder="Search name, email, ID…" className="w-44 bg-transparent outline-none" />
+                </label>
+                <select value={userAccessFilter} onChange={(event) => setUserAccessFilter(event.target.value as typeof userAccessFilter)} className="rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-xs font-semibold text-[#3A1F0E]" aria-label="Filter registered users by access">
+                  <option value="all">All access</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="hidden">Hidden</option><option value="suspended">Suspended</option>
+                </select>
+                <select value={userRoleFilter} onChange={(event) => setUserRoleFilter(event.target.value as typeof userRoleFilter)} className="rounded-xl border border-[#3A1F0E]/15 bg-white px-3 py-2 text-xs font-semibold text-[#3A1F0E]" aria-label="Filter registered users by role">
+                  <option value="all">All roles</option><option value="user">Member</option><option value="tester">Tester</option><option value="admin">Administrator</option>
+                </select>
+                <button type="button" onClick={() => setShowHiddenUsers((visible) => !visible)} className="text-xs font-bold px-3 py-2 rounded-xl border border-[#3A1F0E]/15 bg-white text-[#3A1F0E]/70 hover:border-[#CA922B]/50">
+                  {showHiddenUsers ? "Active view" : `All including hidden (${hiddenUserCount})`}
+                </button>
+              </div>
             </div>
-            {users.length === 0 ? (
+            {visibleUsers.length === 0 ? (
               <div className="text-center py-20 text-[#3A1F0E]/40">
                 <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
-                <p>No registered users yet.</p>
+                <p>No registered users match these controls.</p>
               </div>
             ) : (
               <div className="bg-white rounded-2xl border border-[#3A1F0E]/10 overflow-hidden">
+                {selectedUserIds.size > 0 && (
+                  <div className="flex flex-wrap items-center gap-2 border-b border-[#3A1F0E]/10 bg-[#2B1507] px-4 py-3 text-xs text-white">
+                    <span className="mr-2 font-bold text-[#F7CE72]">{selectedUserIds.size} selected</span>
+                    <Button size="sm" onClick={() => bulkUpdateUsers("approve")} disabled={bulkUserUpdating} className="h-7 bg-green-600 px-3 text-xs hover:bg-green-700">Approve</Button>
+                    <Button size="sm" onClick={() => bulkUpdateUsers("revoke")} disabled={bulkUserUpdating} variant="outline" className="h-7 border-white/40 px-3 text-xs text-white hover:bg-white/10">Revoke approval</Button>
+                    <Button size="sm" onClick={() => bulkUpdateUsers("make_tester")} disabled={bulkUserUpdating} variant="outline" className="h-7 border-purple-300/60 px-3 text-xs text-purple-100 hover:bg-white/10">Make tester</Button>
+                    <Button size="sm" onClick={() => bulkUpdateUsers("make_user")} disabled={bulkUserUpdating} variant="outline" className="h-7 border-white/40 px-3 text-xs text-white hover:bg-white/10">Remove tester</Button>
+                    <Button size="sm" onClick={() => bulkUpdateUsers("hide")} disabled={bulkUserUpdating} variant="outline" className="h-7 border-white/40 px-3 text-xs text-white hover:bg-white/10">Hide</Button>
+                    <Button size="sm" onClick={() => bulkUpdateUsers("suspend")} disabled={bulkUserUpdating} variant="outline" className="h-7 border-red-300/70 px-3 text-xs text-red-100 hover:bg-red-950/30">Suspend</Button>
+                    <Button size="sm" onClick={() => bulkUpdateUsers("restore")} disabled={bulkUserUpdating} variant="outline" className="h-7 border-green-300/70 px-3 text-xs text-green-100 hover:bg-green-950/30">Restore</Button>
+                    <Button size="sm" onClick={() => void permanentlyDeleteSelectedUsers()} disabled={bulkUserUpdating} variant="outline" className="h-7 border-red-300/70 px-3 text-xs text-red-100 hover:bg-red-950/30">Permanently delete</Button>
+                    <button type="button" onClick={() => setSelectedUserIds(new Set())} className="ml-auto text-xs font-semibold text-white/80 hover:text-white">Clear selection</button>
+                  </div>
+                )}
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-[#3A1F0E]/10 bg-[#FAF6EF]">
+                      <th className="w-10 px-3 py-3">
+                        <input
+                          type="checkbox"
+                          aria-label="Select displayed non-administrator accounts"
+                          checked={selectableUsers.length > 0 && selectableUsers.every((user) => selectedUserIds.has(user.id))}
+                          onChange={() => setSelectedUserIds((previous) => selectableUsers.every((user) => previous.has(user.id)) ? new Set() : new Set(selectableUsers.map((user) => user.id)))}
+                          className="rounded accent-[#CA922B]"
+                        />
+                      </th>
                       <th className="text-left px-4 py-3 text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/50">
                         User
                       </th>
@@ -4279,11 +4553,26 @@ Selected: ${summary}`);
                     </tr>
                   </thead>
                   <tbody>
-                    {users.map((user, i) => (
+                    {visibleUsers.map((user, i) => (
                       <tr
                         key={user.id}
                         className={`border-b border-[#3A1F0E]/5 hover:bg-[#FAF6EF]/50 transition-colors ${i % 2 === 0 ? "" : "bg-[#FAF6EF]/30"}`}
                       >
+                        <td className="px-3 py-3">
+                          {user.role !== "admin" && !PROTECTED_ADMIN_EMAILS.has((user.email ?? "").trim().toLowerCase()) && (
+                            <input
+                              type="checkbox"
+                              aria-label={`Select ${user.email ?? user.id}`}
+                              checked={selectedUserIds.has(user.id)}
+                              onChange={() => setSelectedUserIds((previous) => {
+                                const next = new Set(previous);
+                                next.has(user.id) ? next.delete(user.id) : next.add(user.id);
+                                return next;
+                              })}
+                              className="rounded accent-[#CA922B]"
+                            />
+                          )}
+                        </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-[#CA922B]/20 flex items-center justify-center text-[#CA922B] font-bold text-sm shrink-0 overflow-hidden">
@@ -4408,6 +4697,16 @@ Selected: ${summary}`);
                               <Button size="sm" onClick={() => updateUser(user.id, true)} disabled={updating === user.id} className="h-7 px-3 rounded-full text-xs bg-green-600 hover:bg-green-700 text-white">
                                 <Check className="w-3 h-3 mr-1" /> Approve
                               </Button>
+                            )}
+                            {user.role !== "admin" && !PROTECTED_ADMIN_EMAILS.has((user.email ?? "").trim().toLowerCase()) && (
+                              <>
+                                <Button size="sm" variant="outline" onClick={() => editUserDetails(user)} disabled={updating === `${user.id}-edit`} className="h-7 px-3 rounded-full text-xs">
+                                  <Pencil className="mr-1 h-3 w-3" /> Edit
+                                </Button>
+                                <Button size="sm" variant="outline" onClick={() => permanentlyDeleteUser(user)} disabled={updating === `${user.id}-delete`} className="h-7 rounded-full border-red-200 px-3 text-xs text-red-700 hover:bg-red-50">
+                                  <Trash2 className="mr-1 h-3 w-3" /> Delete
+                                </Button>
+                              </>
                             )}
                           </div>
                         </td>
