@@ -32,7 +32,7 @@ describe("Kinfolk audit repairs on mobile", () => {
       fileURLToPath(new URL("../hooks/useKinfolk.ts", import.meta.url)),
       "utf8",
     );
-    expect(widget).toContain("if (!isAuthenticated) {");
+    expect(widget).toContain("if (!isAuthenticated || !user?.id) {");
     expect(widget).toContain('"Sign in to ask Kinfolk"');
     expect(widget).toContain("if (!token) {");
     expect(widget).toContain("void refreshUser()");
@@ -55,7 +55,7 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(hook).toContain("createKinfolkClientTrace");
     expect(hook).toContain("kinfolkTraceReference(clientTrace)");
     expect(hook).toContain('import { useAuth } from "@/lib/auth";');
-    expect(hook).toContain("const { refreshUser } = useAuth();");
+    expect(hook).toContain("const { refreshUser, user } = useAuth();");
     expect(hook).toContain('content: "Your Kinfolk session needs to be refreshed. Please sign in again before sending your question."');
     expect(hook).toContain("} else if (res.status === 401) {");
     expect(hook).toContain('content: "Your Kinfolk session expired. Please sign in again, then resend your question."');
@@ -74,7 +74,7 @@ describe("Kinfolk audit repairs on mobile", () => {
     expect(widget).toContain("accessibilityRole=\"radio\"");
     expect(widget).toContain("void saveVoiceMode(v.id)");
     expect(widget).toContain("JSON.stringify({ personalityMode: nextMode })");
-    expect(widget).toContain("sendToKinfolk(text, token, voiceMode");
+    expect(widget).toContain("sendToKinfolk(text, user.id, token, voiceMode");
   });
 
   it("keeps native voice controls off web and uses one visible cancel-safe 60-second source lifecycle", () => {
