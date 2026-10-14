@@ -184,15 +184,6 @@ export function KinfolkCurrentCityDuplicateReconciliation({
 
   const apply = async () => {
     if (!preview || preview.summary.approvedConsolidations === 0) return;
-    const names = preview.approved
-      .map((candidate) => candidate.businessName)
-      .join(", ");
-    if (
-      !window.confirm(
-        `Apply ${preview.summary.approvedConsolidations} safe duplicate consolidation${preview.summary.approvedConsolidations === 1 ? "" : "s"} for ${preview.scope.label}? The retained profile keeps its map pin; ${preview.summary.socialFieldsToCopy} reviewed missing social profile${preview.summary.socialFieldsToCopy === 1 ? "" : "s"} will be copied; each duplicate remains recoverable in the Duplicate vault. Approved: ${names}. ${preview.summary.manualReviewCases} uncertain case${preview.summary.manualReviewCases === 1 ? "" : "s"} remain unchanged.`,
-      )
-    )
-      return;
     setApplying(true);
     setMessage(null);
     try {
