@@ -8,7 +8,7 @@ The runner has one hard-coded inventory of eleven October 14 migration files and
 
 1. The founder has authorized the live isolated-staging execution after reviewing the runner commit and receipt.
 2. The checkout is clean and the runner source has `49b7dfbbe454a8f7058be429da938d1c24ed2e0a` as an ancestor. The only files changed since that source base must be the runner, its test, and this runbook.
-3. Railway CLI is available and authenticated with the existing authorized Railway account. Railway documents that `railway run` injects the selected service's variables into a local command, while its `--project`, `--environment`, and `--service` flags target a particular service. The runner independently verifies the resulting Railway project, environment, service, repository, and branch identifiers before it opens a database connection.
+3. Railway CLI is available and authenticated with the existing authorized Railway account. Railway documents that `railway run` injects the selected service's variables into a local command, while its `--project`, `--environment`, and `--service` flags target a particular service. The runner independently verifies the injected project, environment, and service identifiers before it opens a database connection. Railway one-off commands do not inject Git repository or branch metadata; the source candidate is instead fail-closed by the runner's clean local Git lineage check and its fixed migration filename/SHA-256 manifest. Verify the service's connected branch through the read-only Railway service preflight before each separately authorized execution.
 4. The service provides `DATABASE_URL` and the existing sensitive-memory encryption key identifiers. No value is printed.
 
 ## Dry run first

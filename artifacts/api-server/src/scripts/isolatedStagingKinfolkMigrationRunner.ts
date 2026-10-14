@@ -19,9 +19,6 @@ export const ISOLATED_STAGING_TARGET = {
   environmentName: "staging",
   serviceId: "7c02d801-6273-4e77-aea3-1db8bd86be18",
   serviceName: "kinfolk-memory-api-staging",
-  gitBranch: "staging/kinfolk-full-candidate-20261014",
-  gitRepository: "melanin-maps-api",
-  gitOwner: "Melaninmaps",
 } as const;
 
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
@@ -255,6 +252,9 @@ export function parseMigrationRunnerArguments(args: readonly string[]): Migratio
 }
 
 export function assertIsolatedStagingTarget(env: NodeJS.ProcessEnv): void {
+  // `railway run` injects selected project/environment/service identity, but
+  // not its Git-source metadata. Exact source provenance remains separately
+  // fail-closed through assertAuthorizedSourceLineage and the fixed manifest.
   const expected: ReadonlyArray<readonly [string, string]> = [
     ["RAILWAY_PROJECT_ID", ISOLATED_STAGING_TARGET.projectId],
     ["RAILWAY_PROJECT_NAME", ISOLATED_STAGING_TARGET.projectName],
@@ -262,9 +262,6 @@ export function assertIsolatedStagingTarget(env: NodeJS.ProcessEnv): void {
     ["RAILWAY_ENVIRONMENT_NAME", ISOLATED_STAGING_TARGET.environmentName],
     ["RAILWAY_SERVICE_ID", ISOLATED_STAGING_TARGET.serviceId],
     ["RAILWAY_SERVICE_NAME", ISOLATED_STAGING_TARGET.serviceName],
-    ["RAILWAY_GIT_BRANCH", ISOLATED_STAGING_TARGET.gitBranch],
-    ["RAILWAY_GIT_REPO_NAME", ISOLATED_STAGING_TARGET.gitRepository],
-    ["RAILWAY_GIT_REPO_OWNER", ISOLATED_STAGING_TARGET.gitOwner],
   ];
 
   if (expected.some(([key, value]) => env[key] !== value)) {

@@ -58,9 +58,6 @@ const validEnvironment: NodeJS.ProcessEnv = {
   RAILWAY_ENVIRONMENT_NAME: ISOLATED_STAGING_TARGET.environmentName,
   RAILWAY_SERVICE_ID: ISOLATED_STAGING_TARGET.serviceId,
   RAILWAY_SERVICE_NAME: ISOLATED_STAGING_TARGET.serviceName,
-  RAILWAY_GIT_BRANCH: ISOLATED_STAGING_TARGET.gitBranch,
-  RAILWAY_GIT_REPO_NAME: ISOLATED_STAGING_TARGET.gitRepository,
-  RAILWAY_GIT_REPO_OWNER: ISOLATED_STAGING_TARGET.gitOwner,
   DATABASE_URL: "postgresql://redacted",
   KINFOLK_SENSITIVE_MEMORY_ENCRYPTION_KEY: "configured",
   KINFOLK_SENSITIVE_MEMORY_ENCRYPTION_KEY_ID: "configured-key-id",
@@ -105,8 +102,11 @@ describe("isolated staging Kinfolk migration runner", () => {
     expect(() => parseMigrationRunnerArguments(["--migration", "other.sql"])).toThrowError(IsolatedStagingMigrationRunnerError);
   });
 
-  it("rejects production, unknown, missing-key, and non-authorized source targets", () => {
+  it("accepts Railway CLI's service identity without unavailable Git metadata", () => {
     assertIsolatedStagingTarget(validEnvironment);
+  });
+
+  it("rejects production, unknown, missing-key, and non-authorized source targets", () => {
     expect(() => assertIsolatedStagingTarget({
       ...validEnvironment,
       RAILWAY_ENVIRONMENT_NAME: "production",
