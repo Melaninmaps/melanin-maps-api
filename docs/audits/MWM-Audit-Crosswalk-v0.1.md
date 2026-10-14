@@ -61,11 +61,18 @@
 | Maps API key exposure | `GET /api/maps/js-key` delivers key server-side. | Key delivered to client browser on request — still exposed in browser DevTools network tab. No domain restriction confirmed. API key restrictions (HTTP referrer lock) not verified. | WS-05 | ⚠️ |
 | Coordinate validation | `numeric(10, 7)` type in schema. NaN check in `/community-alerts/nearby`. | No explicit rejection of `lat: 0, lng: 0` (Gulf of Guinea). Businesses with failed geocoding could publish at origin. No boundary check (lat must be -90 to 90, lng -180 to 180). | WS-05 | ⚠️ |
 | Safety-overlay accuracy | Safety scores displayed on map. | Safety overlay sourced from community reports without confidence threshold gate. Low-evidence overlays not distinguished from high-evidence ones. | WS-06 | ⚠️ |
-| Pin clustering failures | Map pins exist. | Clustering behavior at zoom levels not verified. Overlapping pins at same coordinate not handled. | WS-05 | ❌ |
+| Pin clustering failures | The production Map API returned pins in the live viewport and the live Web map rendered real clusters; cluster selection expanded to contained pins and a selected pin opened a business preview. Candidate `9f7fe119` restores a useful Philadelphia fallback (`39.9526,-75.1652`, zoom 12) when no GPS or saved-home location is available, preserves paged viewport loading, and replaces only the stock cluster visual with an MWM-branded count marker. | The candidate is **not deployed**. A post-deploy Web acceptance pass remains required for default local view, Philadelphia/Houston marker or cluster visibility, profile navigation, and directions. Overlapping-coordinate behavior remains governed by the clusterer rather than separately normalized. | WS-05 | ⚠️ |
 | Offline handling | Map loads from Google Maps JS API. | No offline fallback. Map fails silently if API unavailable. `gm_authFailure` handler exists on web but no member-facing explanation. | WS-05 | ⚠️ |
 | Location permission consent screen | Mobile permission flow exists. | No pre-permission explanation screen before system prompt on iOS/Android. Permission denied state not gracefully handled in all map contexts. | WS-05 | ⚠️ |
 | Location data retention / deletion | `location_shares` has cascade delete on user delete. | No retention schedule. Location history not purged on schedule. User cannot delete location history without deleting account. | WS-05 | ❌ |
 | Service-area / home-based business | Business type field exists. | Home-based businesses still require lat/lng coordinate. No "service area" model. Home address would be published as pin. | WS-05 | ❌ |
+
+### October 14, 2026 — Map interaction repair evidence (candidate only)
+
+- **Root cause:** the deployed location-less fallback starts at continental-US scale. The pin API and clusterer are operational, but a member without GPS or a saved home area first sees country-scale count clusters rather than immediately useful local businesses.
+- **Candidate:** `9f7fe1194017ef67608adb728de73634b11208b2` (`fix(web): restore local map fallback and branded clusters`). It changes only four Web files; it does not alter business records, eligibility, coordinates, map-pin data, credentials, API behavior, or mobile code.
+- **Regression evidence:** all six Web map test files passed (**22 tests**) and Web TypeScript typecheck passed. Coverage includes fallback policy, paged viewport-pin retrieval, clustering contract, pin-to-profile navigation source contract, exact directory handoff, and map discovery-card behavior.
+- **Live read-only evidence before this candidate:** the actual Web map displayed count clusters; selecting a cluster zoomed to real individual pin controls; selecting `Safety First Pest Control` opened its in-map business preview. This verifies the data-to-marker and marker-to-preview paths, but is not post-deploy acceptance of the local fallback candidate.
 
 ---
 
