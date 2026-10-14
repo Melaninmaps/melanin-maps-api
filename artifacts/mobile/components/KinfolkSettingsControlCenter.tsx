@@ -18,6 +18,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { KinfolkContinuityDisclosure } from "@/components/KinfolkContinuityDisclosure";
+import { KinfolkBehavioralEvidenceControl } from "@/components/KinfolkBehavioralEvidenceControl";
 import { SupportLensDropdowns } from "@/components/SupportLensDropdowns";
 import { useColors } from "@/hooks/useColors";
 import { useUnsavedKinfolkExitGuard } from "@/hooks/useUnsavedKinfolkExitGuard";
@@ -391,6 +392,8 @@ export default function KinfolkSettingsControlCenter() {
         <Line colors={colors} />
         <Toggle colors={colors} icon="cpu" title="Personalised suggestions" value={draft.personalizedSuggestions} disabled={saving} detail={draft.personalizedSuggestions ? "Active — explicit profile preferences can tailor suggestions." : "Paused — Kinfolk gives general suggestions without your profile preferences."} onChange={(personalizedSuggestions) => replaceDraft({ ...draft, personalizedSuggestions })} />
       </View>
+
+      <KinfolkBehavioralEvidenceControl />
 
       <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>EXPLICIT PROFILE DETAILS</Text>
       <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>

@@ -32,6 +32,15 @@ import { parseKinfolkClientTrace } from "../kinfolk/client-request-trace";
 import crypto from "crypto";
 import { currentChapterPromptForRequest } from "../kinfolk/current-chapter-runtime";
 import {
+  buildBehavioralEvidencePrompt,
+  parseBehavioralFeedbackSignal,
+} from "../kinfolk/behavioral-evidence-policy";
+import {
+  loadActiveBehavioralEvidenceForPrompt,
+  recordBehavioralFeedbackSignal,
+  revokeBehavioralFeedbackSignal,
+} from "../kinfolk/behavioral-evidence-runtime";
+import {
   db,
   pool,
   getPoolStats,
@@ -5410,13 +5419,24 @@ router.put("/kinfolk/response-feedback", async (req: Request, res: Response) => 
 
   try {
     await client.query("BEGIN");
-    const existing = await client.query<{ id: string; revoked_at: string | null }>(
-      `SELECT id, revoked_at
+    const existing = await client.query<{
+      id: string;
+      revoked_at: string | null;
+      reaction: unknown;
+      intent_class: unknown;
+    }>(
+      `SELECT id, revoked_at, reaction, intent_class
          FROM kinfolk_response_feedback
         WHERE user_id = $1 AND message_id = $2
         FOR UPDATE`,
       [req.user.id, messageId.trim()],
     );
+    const priorBehavioralSignal = existing.rows[0]
+      ? parseBehavioralFeedbackSignal({
+          reaction: existing.rows[0].reaction,
+          intentClass: existing.rows[0].intent_class,
+        })
+      : null;
 
     if (!existing.rows[0]) {
       const recent = await client.query<{ count: string }>(
@@ -5471,6 +5491,23 @@ router.put("/kinfolk/response-feedback", async (req: Request, res: Response) => 
 
     await reconcileCanonicalCommunityNeedInsights(client);
     await client.query("COMMIT");
+    // Behavioral evidence is a separately consented, strictly broad layer. It
+    // runs only after normal feedback succeeds and cannot change that result.
+    // It reads neither the feedback note nor any session/message text.
+    try {
+      if (priorBehavioralSignal) {
+        await revokeBehavioralFeedbackSignal(req.user.id, priorBehavioralSignal);
+      }
+      await recordBehavioralFeedbackSignal(
+        req.user.id,
+        parseBehavioralFeedbackSignal({ reaction, intentClass }),
+      );
+    } catch (error) {
+      req.log.warn(
+        safeKinfolkErrorMetadata(error),
+        "Kinfolk behavioral evidence recording unavailable after response feedback",
+      );
+    }
     res.json({ ok: true, reaction, topicKey: aggregateTopic, automaticallyChangesKinfolk: false });
   } catch (err) {
     await client.query("ROLLBACK").catch(() => undefined);
@@ -5498,11 +5535,15 @@ router.delete("/kinfolk/response-feedback/:messageId", async (req: Request, res:
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
-    const result = await client.query<{ id: string }>(
+    const result = await client.query<{
+      id: string;
+      reaction: unknown;
+      intent_class: unknown;
+    }>(
       `UPDATE kinfolk_response_feedback
           SET revoked_at = NOW(), note = NULL, topic_key = NULL, session_id = NULL, updated_at = NOW()
         WHERE user_id = $1 AND message_id = $2 AND revoked_at IS NULL
-      RETURNING id`,
+      RETURNING id, reaction, intent_class`,
       [req.user.id, messageId],
     );
     if (!result.rows[0]) {
@@ -5511,6 +5552,22 @@ router.delete("/kinfolk/response-feedback/:messageId", async (req: Request, res:
     }
     await reconcileCanonicalCommunityNeedInsights(client);
     await client.query("COMMIT");
+    // Retire only the matching fixed-key aggregate. The ledger contains no
+    // message/session/note data, so feedback revocation remains private.
+    try {
+      await revokeBehavioralFeedbackSignal(
+        req.user.id,
+        parseBehavioralFeedbackSignal({
+          reaction: result.rows[0].reaction,
+          intentClass: result.rows[0].intent_class,
+        }),
+      );
+    } catch (error) {
+      req.log.warn(
+        safeKinfolkErrorMetadata(error),
+        "Kinfolk behavioral evidence reconciliation unavailable after feedback revoke",
+      );
+    }
     res.json({ ok: true, revoked: true, automaticallyChangesKinfolk: false });
   } catch (err) {
     await client.query("ROLLBACK").catch(() => undefined);
@@ -13130,6 +13187,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       clientTimeZone,
       destinationLocalTimeContext,
     });
+    // This separate, revocable layer is queried only after the authoritative
+    // intent is known. The runtime fails closed on every schema/query issue and
+    // reads only owner + fixed broad signal key; it never reads chat content.
+    const activeBehavioralEvidence = req.user?.id
+      ? await loadActiveBehavioralEvidenceForPrompt(req.user.id, intentClass)
+      : [];
+    const behavioralEvidencePrompt = buildBehavioralEvidencePrompt(
+      intentClass,
+      activeBehavioralEvidence,
+    );
     const baseSystemPrompt =
       buildSystemPrompt({
         prefs,
@@ -13349,7 +13416,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
       : "";
     const systemPromptWithLibrary = (
       leanGeneralChat
-        ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${temporalContext}\n\n${responseDepthPrompt}${privateMemoryPromptSuffix}`
+        ? `${buildLeanGeneralChatPrompt(conversationVoiceMode)}\n\n${temporalContext}\n\n${responseDepthPrompt}${privateMemoryPromptSuffix}${behavioralEvidencePrompt ? `\n\n${behavioralEvidencePrompt}` : ""}`
         : (!contextualHighConsequence && libraryGroundingBlock
             ? `${systemPrompt}\n\n${libraryGroundingBlock}`
             : systemPrompt) +
@@ -13357,7 +13424,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           (visionSafetyBlock ? `\n\n${visionSafetyBlock}` : "") +
           (documentSafetyBlock ? `\n\n${documentSafetyBlock}` : "") +
           (contextualEvidenceDataBlock ? `\n\n${contextualEvidenceDataBlock}` : "") +
-          privateMemoryPromptSuffix
+          privateMemoryPromptSuffix +
+          (behavioralEvidencePrompt ? `\n\n${behavioralEvidencePrompt}` : "")
     ) + (temporarySensitiveContextPrompt
       ? `\n\n${temporarySensitiveContextPrompt}`
       : "");

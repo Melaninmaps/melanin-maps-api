@@ -10,6 +10,7 @@ import {
 import { KinfolkMemoryManager } from "./KinfolkMemoryManager";
 import { PrivatePlacesSettings } from "./PrivatePlacesSettings";
 import { TemporaryStaysSettings } from "./TemporaryStaysSettings";
+import { KinfolkBehavioralEvidenceManager } from "./KinfolkBehavioralEvidenceManager";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -507,6 +508,7 @@ export function KinfolkExperienceSettings() {
             </button>
           </section>
 
+          <KinfolkBehavioralEvidenceManager />
           <PrivatePlacesSettings />
           <TemporaryStaysSettings />
         </div>

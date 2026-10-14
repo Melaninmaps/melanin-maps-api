@@ -2727,8 +2727,8 @@ export default function Profile() {
                   <div className="text-center py-6">
                     <Sparkles className="w-8 h-8 text-[#CA922B]/30 mx-auto mb-3" />
                     <p className="text-sm text-[#3A1F0E]/50 mb-4">
-                      Kinfolk doesn't know much about you yet. The more you
-                      chat, the better it knows you.
+                      Kinfolk does not automatically learn from chatting.
+                      Choose what it can use in Kinfolk Settings.
                     </p>
                     <Link href="/travel">
                       <Button className="rounded-full bg-[#CA922B] hover:bg-[#B38024] text-white px-6 h-10 text-sm">

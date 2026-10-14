@@ -31,6 +31,7 @@ import kinfolkRouter, { probeKinfolkAI } from "./kinfolk";
 import kinfolkPrivatePlacesRouter from "./kinfolk-private-places";
 import kinfolkTemporaryStaysRouter from "./kinfolk-temporary-stays";
 import kinfolkCurrentChaptersRouter from "./kinfolk-current-chapters";
+import kinfolkBehavioralEvidenceRouter from "./kinfolk-behavioral-evidence";
 import wishlistRouter from "./wishlist";
 import claimsRouter from "./claims";
 import canonicalMwmOwnerAttachmentRouter from "./canonical-mwm-owner-attachment";
@@ -305,6 +306,7 @@ router.use(kinfolkPrivatePlacesRouter);
 // separate member-only table and never a business-ingestion path.
 router.use(kinfolkTemporaryStaysRouter);
 router.use(kinfolkCurrentChaptersRouter);
+router.use(kinfolkBehavioralEvidenceRouter);
 router.use(kinfolkTasksRouter);
 router.use(wishlistRouter);
 router.use(claimsRouter);
