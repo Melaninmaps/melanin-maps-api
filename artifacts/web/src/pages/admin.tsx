@@ -56,6 +56,7 @@ import { KinfolkCatalogCohort } from "@/components/KinfolkCatalogCohort";
 import { AdminFeedbackTab } from "@/components/AdminFeedbackTab";
 import { AdminAccessLedger } from "@/components/AdminAccessLedger";
 import { AdminBusinessVideoContributions } from "@/components/AdminBusinessVideoContributions";
+import { PhiladelphiaKinfolkDuplicateReconciliation } from "@/components/PhiladelphiaKinfolkDuplicateReconciliation";
 import AdminBusinessReview from "@/pages/admin-business-review";
 import FounderDirectoryImports from "@/pages/founder-directory-imports";
 import {
@@ -5332,6 +5333,10 @@ Selected: ${summary}`);
                 All retained records are visible together in All businesses. A row’s status shows whether it is live, archived, or a confirmed duplicate. Archive, restore, and duplicate-review actions remain protected so reviewing the complete inventory does not change any listing.
               </p>
             </div>
+
+            <PhiladelphiaKinfolkDuplicateReconciliation
+              onApplied={() => loadBusinesses()}
+            />
 
             <section className="mb-4 rounded-2xl border border-[#CA922B]/30 bg-[#FFF9EF] p-4" aria-label="Founder source directory intake">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">

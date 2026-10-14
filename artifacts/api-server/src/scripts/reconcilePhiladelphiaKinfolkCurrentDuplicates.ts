@@ -25,6 +25,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { pool } from "@workspace/db";
 import {
   PHILADELPHIA_KINFOLK_DUPLICATE_RECONCILIATION_POLICY_VERSION,
@@ -37,7 +38,8 @@ import {
   type SocialField,
 } from "../businesses/philadelphiaKinfolkCurrentDuplicateReconciliation";
 
-const APPLY_CONFIRMATION = "MERGE PHILADELPHIA KINFOLK CURRENT DUPLICATES";
+export const PHILADELPHIA_KINFOLK_DUPLICATE_APPLY_CONFIRMATION =
+  "MERGE PHILADELPHIA KINFOLK CURRENT DUPLICATES";
 const CHANGE_NOTE =
   "Consolidated a confirmed Philadelphia Kinfolk Current duplicate while preserving the canonical map pin and copying only audited official social profiles.";
 const MERGE_REASON =
@@ -81,7 +83,7 @@ type Arguments = {
   confirmation: string | null;
 };
 
-type Manifest = {
+export type PhiladelphiaKinfolkCurrentDuplicateManifest = {
   manifestVersion: 1;
   generatedAt: string;
   mode: "dry_run";
@@ -117,9 +119,9 @@ function parseArguments(): Arguments {
       throw new Error("--apply requires --manifest <reviewed-dry-run.json>");
     if (!actor || actor.length > 255)
       throw new Error("--apply requires a valid --actor <named-admin-user-id>");
-    if (confirmation !== APPLY_CONFIRMATION) {
+    if (confirmation !== PHILADELPHIA_KINFOLK_DUPLICATE_APPLY_CONFIRMATION) {
       throw new Error(
-        `--apply requires --confirm ${JSON.stringify(APPLY_CONFIRMATION)}`,
+        `--apply requires --confirm ${JSON.stringify(PHILADELPHIA_KINFOLK_DUPLICATE_APPLY_CONFIRMATION)}`,
       );
     }
   }
@@ -243,7 +245,7 @@ async function loadCurrentKinfolkRecords(): Promise<{
   return { records, receiptsByBusinessId };
 }
 
-async function buildManifest(): Promise<Manifest> {
+export async function buildPhiladelphiaKinfolkCurrentDuplicateManifest(): Promise<PhiladelphiaKinfolkCurrentDuplicateManifest> {
   const { records, receiptsByBusinessId } = await loadCurrentKinfolkRecords();
   const plan = buildPhiladelphiaKinfolkCurrentDuplicatePlan(
     records,
@@ -280,7 +282,10 @@ function pickSocials(
   ) as Record<SocialField, string | null>;
 }
 
-async function applyPlan(manifest: Manifest, actor: string): Promise<void> {
+export async function applyPhiladelphiaKinfolkCurrentDuplicateManifest(
+  manifest: PhiladelphiaKinfolkCurrentDuplicateManifest,
+  actor: string,
+): Promise<void> {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -494,7 +499,7 @@ async function applyPlan(manifest: Manifest, actor: string): Promise<void> {
           candidate.duplicateId,
           candidate.canonicalId,
           actor,
-          APPLY_CONFIRMATION,
+          PHILADELPHIA_KINFOLK_DUPLICATE_APPLY_CONFIRMATION,
           MERGE_REASON,
           JSON.stringify({
             policyVersion:
@@ -534,7 +539,10 @@ async function applyPlan(manifest: Manifest, actor: string): Promise<void> {
   }
 }
 
-async function writeManifest(path: string, manifest: Manifest): Promise<void> {
+async function writeManifest(
+  path: string,
+  manifest: PhiladelphiaKinfolkCurrentDuplicateManifest,
+): Promise<void> {
   await mkdir(dirname(path), { recursive: true });
   await writeFile(path, `${JSON.stringify(manifest, null, 2)}\n`);
 }
@@ -545,7 +553,7 @@ async function main(): Promise<void> {
       "DATABASE_URL is required; the script must run within the private API service environment.",
     );
   const args = parseArguments();
-  const current = await buildManifest();
+  const current = await buildPhiladelphiaKinfolkCurrentDuplicateManifest();
 
   if (!args.apply) {
     await writeManifest(args.out, current);
@@ -557,7 +565,7 @@ async function main(): Promise<void> {
 
   const reviewed = JSON.parse(
     await readFile(args.manifest!, "utf8"),
-  ) as Manifest;
+  ) as PhiladelphiaKinfolkCurrentDuplicateManifest;
   if (
     reviewed.manifestVersion !== 1 ||
     reviewed.mode !== "dry_run" ||
@@ -580,7 +588,7 @@ async function main(): Promise<void> {
     );
   }
 
-  await applyPlan(reviewed, args.actor!);
+  await applyPhiladelphiaKinfolkCurrentDuplicateManifest(reviewed, args.actor!);
   process.stdout.write(
     `${JSON.stringify(
       {
@@ -601,11 +609,17 @@ async function main(): Promise<void> {
   );
 }
 
-main()
-  .catch((error) => {
-    console.error(error instanceof Error ? error.stack : String(error));
-    process.exitCode = 1;
-  })
-  .finally(async () => {
-    await pool.end().catch(() => undefined);
-  });
+const invokedAsCli =
+  Boolean(process.argv[1]) &&
+  resolve(process.argv[1]!) === fileURLToPath(import.meta.url);
+
+if (invokedAsCli) {
+  main()
+    .catch((error) => {
+      console.error(error instanceof Error ? error.stack : String(error));
+      process.exitCode = 1;
+    })
+    .finally(async () => {
+      await pool.end().catch(() => undefined);
+    });
+}

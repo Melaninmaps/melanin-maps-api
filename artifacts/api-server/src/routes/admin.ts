@@ -55,6 +55,10 @@ import {
 import { buildMinnesotaLegacyCanonicalReconciliations } from "../directoryIntake/mnBlackDirectoryLegacyCanonicalReconciliation";
 import { CITY_SAFETY_SOURCE_REGISTRY } from "../kinfolk/city-safety-briefing-v1";
 import {
+  applyPhiladelphiaKinfolkCurrentDuplicateManifest,
+  buildPhiladelphiaKinfolkCurrentDuplicateManifest,
+} from "../scripts/reconcilePhiladelphiaKinfolkCurrentDuplicates";
+import {
   isDirectoryPublicDiscoveryRemovalReasonCode,
   publicDiscoveryRemovalActionForReason,
   publicDiscoveryRemovalStateForReason,
@@ -1417,6 +1421,79 @@ router.post("/admin/access/reconcile-retained", async (req: Request, res: Respon
   } catch (err) {
     req.log?.error({ err }, "Failed to reconcile retained account access");
     res.status(500).json({ error: "Retained access reconciliation failed." });
+  }
+});
+
+// The offline reconciliation policy is available through the authenticated
+// dashboard so founders do not need a terminal or database credentials. Every
+// apply recomputes the plan and rejects stale previews.
+router.post("/admin/businesses/philadelphia-kinfolk-current/duplicate-reconciliation", async (req: Request, res: Response) => {
+  if (!isAdmin(req)) {
+    res.status(403).json({ error: "Forbidden" });
+    return;
+  }
+  try {
+    const manifest = await buildPhiladelphiaKinfolkCurrentDuplicateManifest();
+    const approved = manifest.plan.approved.map((candidate) => ({
+      businessName: candidate.businessName,
+      socialFields: candidate.transfers.map((transfer) => transfer.field),
+      identityReasons: candidate.identityReasons,
+    }));
+    if (req.body?.apply !== true) {
+      res.json({
+        dryRun: true,
+        requiresExplicitApply: true,
+        policyVersion: manifest.policyVersion,
+        planHash: manifest.planHash,
+        scope: manifest.scope,
+        summary: manifest.summary,
+        approved,
+        safeguards: [
+          "Only records with one preserved map pin, high-confidence duplicate identity evidence, and no conflicting official values are eligible.",
+          "The server rejects an apply if the reviewed plan changes or either record becomes stale.",
+          "Every applied duplicate remains recoverable in the Duplicate vault with immutable audit and source-receipt records.",
+        ],
+      });
+      return;
+    }
+    const expectedPlanHash = typeof req.body?.planHash === "string" ? req.body.planHash : "";
+    if (!expectedPlanHash) {
+      res.status(400).json({ error: "A reviewed reconciliation plan is required." });
+      return;
+    }
+    if (expectedPlanHash !== manifest.planHash) {
+      res.status(409).json({
+        error: "The duplicate plan changed after review. Refresh the dashboard preview before applying any consolidation.",
+      });
+      return;
+    }
+    if (manifest.plan.approved.length === 0) {
+      res.status(409).json({ error: "No safe automatic consolidations remain. Manual-review records were left unchanged." });
+      return;
+    }
+    if (!req.user?.id) {
+      res.status(401).json({ error: "A signed-in administrator is required." });
+      return;
+    }
+    await applyPhiladelphiaKinfolkCurrentDuplicateManifest(manifest, req.user.id);
+    req.log?.info({
+      event: "ADMIN_PHILADELPHIA_KINFOLK_DUPLICATES_RECONCILED",
+      consolidatedRecords: manifest.plan.approved.length,
+      copiedSocialFields: manifest.summary.socialFieldsToCopy,
+      manualReviewCasesLeftUntouched: manifest.summary.manualReviewCases,
+      by: req.user.id,
+    }, "applied guarded Philadelphia Kinfolk Current duplicate reconciliation");
+    res.json({
+      dryRun: false,
+      policyVersion: manifest.policyVersion,
+      planHash: manifest.planHash,
+      consolidatedRecords: manifest.plan.approved.length,
+      copiedSocialFields: manifest.summary.socialFieldsToCopy,
+      manualReviewCasesLeftUntouched: manifest.summary.manualReviewCases,
+    });
+  } catch (err) {
+    req.log?.error({ err }, "POST /admin/businesses/philadelphia-kinfolk-current/duplicate-reconciliation error");
+    res.status(500).json({ error: "The duplicate reconciliation did not complete. No partial consolidation was saved." });
   }
 });
 

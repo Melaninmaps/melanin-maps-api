@@ -20,6 +20,8 @@ const publicBusinessDetail = source("../../../web/src/pages/business-detail.tsx"
 const mobileBusinessHook = source("../../../mobile/hooks/useBusinesses.ts");
 const publicDirectory = source("../../../web/src/pages/businesses.tsx");
 const directoryAssembly = source("../../../../scripts/assemble-source-backed-directory-candidates.ts");
+const philadelphiaDuplicateDashboard = source("../../../web/src/components/PhiladelphiaKinfolkDuplicateReconciliation.tsx");
+const philadelphiaDuplicateReconciler = source("../scripts/reconcilePhiladelphiaKinfolkCurrentDuplicates.ts");
 
 describe("administrator full-inventory and reversible duplicate controls", () => {
   it("returns one server-filtered page instead of sending the full inventory to the browser", () => {
@@ -112,6 +114,19 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminScreen).toContain("Added on or before");
     expect(adminScreen).toContain("Archive selected");
     expect(adminScreen).toContain("api/admin/businesses/listing-status");
+  });
+
+  it("offers the guarded Philadelphia pin-and-social reconciliation without a terminal", () => {
+    expect(adminRoute).toContain("/admin/businesses/philadelphia-kinfolk-current/duplicate-reconciliation");
+    expect(adminRoute).toContain("expectedPlanHash !== manifest.planHash");
+    expect(adminRoute).toContain("Manual-review records were left unchanged");
+    expect(adminScreen).toContain("PhiladelphiaKinfolkDuplicateReconciliation");
+    expect(philadelphiaDuplicateDashboard).toContain("No-terminal duplicate cleanup");
+    expect(philadelphiaDuplicateDashboard).toContain("Apply safe cleanup");
+    expect(philadelphiaDuplicateDashboard).toContain("planHash: preview.planHash");
+    expect(philadelphiaDuplicateReconciler).toContain("export async function buildPhiladelphiaKinfolkCurrentDuplicateManifest");
+    expect(philadelphiaDuplicateReconciler).toContain("export async function applyPhiladelphiaKinfolkCurrentDuplicateManifest");
+    expect(philadelphiaDuplicateReconciler).toContain("if (invokedAsCli)");
   });
 
   it("lets administrators combine multiple normalized city selections without mutating source cities", () => {
