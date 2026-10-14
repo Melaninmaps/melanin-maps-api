@@ -10,4 +10,4 @@ cmds = [
 ]
 
 [start]
-cmd = "pnpm --filter @workspace/api-server run start"
+cmd = "node scripts/bootstrap-isolated-member-business-staging.cjs"
