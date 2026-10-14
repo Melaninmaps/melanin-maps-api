@@ -147,4 +147,4 @@ Publish the accepted review suite as a **separate Railway preview service**, nev
 
 ## Scope boundary
 
-This prototype changes only the local isolated founder-review preview. It does not change the live `/preview` route, native onboarding, business tiers, APIs, claims, Safety implementation, database data, Railway, deployment, or production content.
+This prototype changes only the isolated founder-review preview and its dedicated Railway preview service. It does not change the live `/preview` route, native onboarding, business tiers, APIs, claims, Safety implementation, database data, any existing Railway service, custom domain, deployment, or production content.
