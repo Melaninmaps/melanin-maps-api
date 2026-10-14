@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { getWebToken, syncTokenToCookie } from "@/lib/webAuth";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
+import { readAdminJsonObject } from "@/lib/adminResponse";
 import { BUSINESS_CATEGORY_TAXONOMY } from "@workspace/constants";
 import { Button } from "@/components/ui/button";
 import {
@@ -1386,27 +1387,31 @@ export default function Admin() {
     const requestId = ++businessInventoryRequestId.current;
     setBusinessInventoryLoading(true);
     return fetch(`${BASE}api/admin/businesses?${params}`, { credentials: "include" })
-      .then((r) => r.json())
+      .then(async (response) => {
+        const data = await readAdminJsonObject(response, "Business inventory");
+        if (!Array.isArray(data.businesses)) {
+          throw new Error("Business inventory returned an invalid response.");
+        }
+        return data;
+      })
       .then((data) => {
         if (requestId !== businessInventoryRequestId.current) return;
+        const appliedFilters = data.appliedFilters as {
+          cities?: unknown;
+          sourceBatch?: unknown;
+        } | undefined;
         const expectedCities = normalizedCityFilterValues(cityValues);
-        const appliedCities = normalizedCityFilterValues(data?.appliedFilters?.cities);
+        const appliedCities = normalizedCityFilterValues(appliedFilters?.cities);
         if (
-          !Array.isArray(data?.appliedFilters?.cities)
+          !Array.isArray(appliedFilters?.cities)
           || expectedCities.length !== appliedCities.length
           || expectedCities.some((city, index) => city !== appliedCities[index])
         ) {
-          setBusinesses([]);
-          setBusinessInventoryFilteredTotal(0);
-          setBusinessInventoryTotalPages(1);
-          setBusinessInventoryFilterError("The inventory response did not confirm the city filter, so no mismatched businesses were shown. Refresh and try the filter again.");
+          setBusinessInventoryFilterError("The inventory response did not confirm the city filter, so the requested filter was not applied. The previously confirmed inventory remains visible; refresh and try again.");
           return;
         }
-        if (String(data?.appliedFilters?.sourceBatch ?? "") !== sourceBatchValue) {
-          setBusinesses([]);
-          setBusinessInventoryFilteredTotal(0);
-          setBusinessInventoryTotalPages(1);
-          setBusinessInventoryFilterError("The inventory response did not confirm the source-batch filter, so no mismatched businesses were shown. Refresh and try the filter again.");
+        if (String(appliedFilters?.sourceBatch ?? "") !== sourceBatchValue) {
+          setBusinessInventoryFilterError("The inventory response did not confirm the source-batch filter, so the requested filter was not applied. The previously confirmed inventory remains visible; refresh and try again.");
           return;
         }
         const responseBusinesses: AdminBusiness[] = Array.isArray(data.businesses)
@@ -1418,10 +1423,7 @@ export default function Admin() {
               normalizedCityFilterValues([business?.city])[0] ?? "",
             ));
         if (cityScopedBusinesses.length !== responseBusinesses.length) {
-          setBusinesses(cityScopedBusinesses);
-          setBusinessInventoryFilteredTotal(cityScopedBusinesses.length);
-          setBusinessInventoryTotalPages(1);
-          setBusinessInventoryFilterError("The inventory response contained businesses outside the selected city scope, so those rows were withheld. Refresh after the filter repair finishes.");
+          setBusinessInventoryFilterError("The inventory response contained businesses outside the selected city scope, so the requested filter was not applied. The previously confirmed inventory remains visible; refresh and try again.");
           return;
         }
         setBusinessInventoryFilterError(null);
@@ -1487,6 +1489,13 @@ export default function Admin() {
           Array.isArray(data.intakeCohortOptions) ? data.intakeCohortOptions : [],
         );
         setLastRefreshed(new Date());
+      })
+      .catch((error) => {
+        if (requestId !== businessInventoryRequestId.current) return;
+        const detail = error instanceof Error && error.message
+          ? error.message
+          : "Business inventory could not be loaded.";
+        setBusinessInventoryFilterError(`${detail} The previously confirmed inventory remains visible; refresh and try again.`);
       })
       .finally(() => {
         if (requestId === businessInventoryRequestId.current) {
