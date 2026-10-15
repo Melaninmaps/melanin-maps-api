@@ -17,7 +17,8 @@ describe("Expo Organization Transparency intake", () => {
     const screen = source("../app/organization-transparency/submit.tsx");
     expect(screen).toContain("/api/community/organizations");
     expect(screen).toContain("not searchable, pinnable, recommended by");
-    expect(screen).toContain("Kinfolk, or promoted until separately approved.");
+    expect(screen).toContain("Kinfolk, or");
+    expect(screen).toContain("promoted until separately approved.");
     expect(screen).toContain(
       "Searchability, map placement, Kinfolk use, promotion, and",
     );
@@ -48,5 +49,27 @@ describe("Expo Organization Transparency intake", () => {
     ]) {
       expect(screen).toContain(id);
     }
+  });
+
+  it("keeps the native profile experience flow structured, location-attributed, and moderation-first", () => {
+    const screen = source("../app/organization-transparency/[id].tsx");
+    expect(screen).toContain("/api/organizations/${encodeURIComponent(id)}");
+    expect(screen).toContain("organizationLocationId: locationId");
+    expect(screen).toContain("pseudonymous_public");
+    expect(screen).toContain("private_to_moderators");
+    expect(screen).toContain("No stars or universal score");
+    expect(screen).toContain("organization-experience-submit");
+  });
+
+  it("provides member status recovery and a bounded appeal path without publishing automatically", () => {
+    const screen = source("../app/organization-transparency/activity.tsx");
+    expect(screen).toContain("/api/community/organizations/mine");
+    expect(screen).toContain(
+      "/api/organization-experiences/${encodeURIComponent(item.experienceId)}/appeals",
+    );
+    expect(screen).toContain(
+      "This does not publish or alter the original experience by itself.",
+    );
+    expect(screen).toContain("organization-transparency-activity");
   });
 });

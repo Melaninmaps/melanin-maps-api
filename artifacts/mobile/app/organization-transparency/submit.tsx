@@ -2,7 +2,7 @@ import { Feather } from "@expo/vector-icons";
 import * as Crypto from "expo-crypto";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -167,6 +167,7 @@ export default function OrganizationTransparencySubmitScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { amend } = useLocalSearchParams<{ amend?: string }>();
   const [legalName, setLegalName] = useState("");
   const [city, setCity] = useState("");
   const [state, setState] = useState("");
@@ -239,9 +240,11 @@ export default function OrganizationTransparencySubmitScreen() {
     setSubmitting(true);
     try {
       const response = await fetch(
-        `${getApiBase()}/api/community/organizations`,
+        amend
+          ? `${getApiBase()}/api/community/organizations/${encodeURIComponent(amend)}`
+          : `${getApiBase()}/api/community/organizations`,
         {
-          method: "POST",
+          method: amend ? "PATCH" : "POST",
           headers: {
             ...(await authorizedHeaders()),
             "Idempotency-Key": requestId,
@@ -298,7 +301,7 @@ export default function OrganizationTransparencySubmitScreen() {
           <Feather name="arrow-left" size={21} color={colors.foreground} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.foreground }]}>
-          Add an organization
+          {amend ? "Resubmit correction" : "Add an organization"}
         </Text>
         <View style={styles.backButton} />
       </View>
@@ -326,9 +329,11 @@ export default function OrganizationTransparencySubmitScreen() {
                 Submitted for review
               </Text>
               <Text style={[styles.copy, { color: colors.mutedForeground }]}>
-                Your organization and location are pending factual and duplicate
-                review. They are not searchable, pinnable, recommended by
-                Kinfolk, or promoted until separately approved.
+                {amend
+                  ? "Your corrected organization and location are back in factual review. "
+                  : "Your organization and location are pending factual and duplicate review. "}
+                They are not searchable, pinnable, recommended by Kinfolk, or
+                promoted until separately approved.
               </Text>
               <TouchableOpacity
                 onPress={() => router.back()}
@@ -562,7 +567,9 @@ export default function OrganizationTransparencySubmitScreen() {
                         { color: colors.primaryForeground },
                       ]}
                     >
-                      Submit for factual review
+                      {amend
+                        ? "Resubmit correction for review"
+                        : "Submit for factual review"}
                     </Text>
                     <Feather
                       name="arrow-right"

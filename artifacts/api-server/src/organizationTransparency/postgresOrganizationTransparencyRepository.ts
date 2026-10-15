@@ -148,11 +148,13 @@ export type OrganizationModerationDecision = Readonly<{
   promotionStatus: SurfaceStatus;
   experienceStatus: SurfaceStatus;
   reason: string;
+  evidenceReceiptUrls?: readonly string[];
 }>;
 
 export type ExperienceAppealDecision = Readonly<{
   disposition: "reopen" | "decline";
   reason: string;
+  evidenceReceiptUrls?: readonly string[];
 }>;
 
 export interface OrganizationTransparencyRepository {
@@ -181,9 +183,7 @@ export interface OrganizationTransparencyRepository {
     limit: number;
   }): Promise<PublicOrganizationProfile[]>;
   listPublicLocations(organizationId: string): Promise<OrganizationLocation[]>;
-  getOrganizationForExperience(
-    organizationId: string,
-  ): Promise<{
+  getOrganizationForExperience(organizationId: string): Promise<{
     organizationType: OrganizationType;
     experienceStatus: SurfaceStatus;
   } | null>;
@@ -205,9 +205,7 @@ export interface OrganizationTransparencyRepository {
     organizationId: string,
     limit: number,
   ): Promise<PublicOrganizationExperience[]>;
-  listMemberActivity(
-    memberId: string,
-  ): Promise<{
+  listMemberActivity(memberId: string): Promise<{
     organizations: MemberOrganizationStatus[];
     experiences: MemberExperienceStatus[];
   }>;
@@ -665,9 +663,7 @@ export class PostgresOrganizationTransparencyRepository implements OrganizationT
     }));
   }
 
-  async getOrganizationForExperience(
-    organizationId: string,
-  ): Promise<{
+  async getOrganizationForExperience(organizationId: string): Promise<{
     organizationType: OrganizationType;
     experienceStatus: SurfaceStatus;
   } | null> {
@@ -831,9 +827,7 @@ export class PostgresOrganizationTransparencyRepository implements OrganizationT
     }));
   }
 
-  async listMemberActivity(
-    memberId: string,
-  ): Promise<{
+  async listMemberActivity(memberId: string): Promise<{
     organizations: MemberOrganizationStatus[];
     experiences: MemberExperienceStatus[];
   }> {

@@ -11,6 +11,7 @@ export type ExperienceReviewDisposition =
 export type ExperienceReviewDecision = Readonly<{
   disposition: ExperienceReviewDisposition;
   reason: string;
+  evidenceReceiptUrls?: readonly string[];
 }>;
 
 export type ExperienceReviewResult = Readonly<{

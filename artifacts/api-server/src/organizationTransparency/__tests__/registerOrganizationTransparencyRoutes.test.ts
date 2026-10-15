@@ -38,66 +38,52 @@ function makeRepository(): OrganizationTransparencyRepository {
       country: "USA",
     }),
     listPublicOrganizations: vi.fn().mockResolvedValue([]),
-    listPublicLocations: vi
-      .fn()
-      .mockResolvedValue([
-        {
-          id: "loc-1",
-          organizationId: "org-1",
-          name: null,
-          city: "Philadelphia",
-          state: "PA",
-          country: "USA",
-          isPrimary: true,
-        },
-      ]),
-    getOrganizationForExperience: vi
-      .fn()
-      .mockResolvedValue({
-        organizationType: "employer",
-        experienceStatus: "eligible",
-      }),
-    createExperience: vi
-      .fn()
-      .mockResolvedValue({
-        experienceId: "exp-1",
-        status: "pending_moderation",
-      }),
+    listPublicLocations: vi.fn().mockResolvedValue([
+      {
+        id: "loc-1",
+        organizationId: "org-1",
+        name: null,
+        city: "Philadelphia",
+        state: "PA",
+        country: "USA",
+        isPrimary: true,
+      },
+    ]),
+    getOrganizationForExperience: vi.fn().mockResolvedValue({
+      organizationType: "employer",
+      experienceStatus: "eligible",
+    }),
+    createExperience: vi.fn().mockResolvedValue({
+      experienceId: "exp-1",
+      status: "pending_moderation",
+    }),
     findExperienceByClientRequest: vi.fn().mockResolvedValue(null),
-    getExperienceSummary: vi
-      .fn()
-      .mockResolvedValue({
-        totalPublished: 0,
-        categoryCounts: {},
-        relationshipCounts: {},
-      }),
+    getExperienceSummary: vi.fn().mockResolvedValue({
+      totalPublished: 0,
+      categoryCounts: {},
+      relationshipCounts: {},
+    }),
     listPublicExperiences: vi.fn().mockResolvedValue([]),
     listMemberActivity: vi
       .fn()
       .mockResolvedValue({ organizations: [], experiences: [] }),
-    createExperienceAppeal: vi
-      .fn()
-      .mockResolvedValue({
-        appealId: "appeal-1",
-        status: "pending_moderation",
-        created: true,
-      }),
+    createExperienceAppeal: vi.fn().mockResolvedValue({
+      appealId: "appeal-1",
+      status: "pending_moderation",
+      created: true,
+    }),
     listReviewQueue: vi.fn().mockResolvedValue([]),
     applyExperienceReview: vi.fn().mockResolvedValue(null),
     applyExperienceAppealDecision: vi.fn().mockResolvedValue(null),
-    createOwnerClaim: vi
-      .fn()
-      .mockResolvedValue({
-        claimId: "claim-1",
-        status: "pending_verification",
-      }),
+    createOwnerClaim: vi.fn().mockResolvedValue({
+      claimId: "claim-1",
+      status: "pending_verification",
+    }),
     hasApprovedOwnerClaim: vi.fn().mockResolvedValue(false),
-    createOwnerAction: vi
-      .fn()
-      .mockResolvedValue({
-        actionId: "action-1",
-        status: "pending_moderation",
-      }),
+    createOwnerAction: vi.fn().mockResolvedValue({
+      actionId: "action-1",
+      status: "pending_moderation",
+    }),
     applyModerationDecision: vi.fn().mockResolvedValue(null),
   };
 }

@@ -59,12 +59,10 @@ function requiredNamedAdministrator(
   const memberId = requiredMemberId(req, res);
   if (!memberId) return null;
   if (!isNamedAdmin(req)) {
-    res
-      .status(403)
-      .json({
-        error: "Named administrator access required",
-        code: "ADMIN_REQUIRED",
-      });
+    res.status(403).json({
+      error: "Named administrator access required",
+      code: "ADMIN_REQUIRED",
+    });
     return null;
   }
   return memberId;
@@ -89,6 +87,40 @@ function statusValue<T extends readonly string[]>(
   if (typeof value !== "string" || !allowed.includes(value))
     throw new Error(`${field} is invalid`);
   return value as T[number];
+}
+
+function evidenceReceiptUrls(value: unknown): string[] {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > 8) {
+    throw new Error(
+      "evidenceReceiptUrls must contain up to eight public https URLs",
+    );
+  }
+  return value.map((item) => {
+    if (typeof item !== "string" || item.length > 1024) {
+      throw new Error("evidenceReceiptUrls must contain public https URLs");
+    }
+    let parsed: URL;
+    try {
+      parsed = new URL(item);
+    } catch {
+      throw new Error("evidenceReceiptUrls must contain public https URLs");
+    }
+    const host = parsed.hostname.toLowerCase();
+    if (
+      parsed.protocol !== "https:" ||
+      !host ||
+      parsed.username ||
+      parsed.password ||
+      host === "localhost" ||
+      host.endsWith(".local") ||
+      host.endsWith(".internal") ||
+      /^10\.|^127\.|^192\.168\.|^172\.(?:1[6-9]|2\d|3[01])\./.test(host)
+    ) {
+      throw new Error("evidenceReceiptUrls must contain public https URLs");
+    }
+    return parsed.toString();
+  });
 }
 
 export function parseOrganizationModerationDecision(
@@ -185,6 +217,7 @@ export function parseOrganizationModerationDecision(
     promotionStatus,
     experienceStatus,
     reason,
+    evidenceReceiptUrls: evidenceReceiptUrls(body.evidenceReceiptUrls),
   };
 }
 
@@ -201,7 +234,11 @@ function parseExperienceReviewDecision(
   );
   const reason = queryText(body.reason, 2_000);
   if (!reason) throw new Error("reason is required");
-  return { disposition, reason };
+  return {
+    disposition,
+    reason,
+    evidenceReceiptUrls: evidenceReceiptUrls(body.evidenceReceiptUrls),
+  };
 }
 
 function parseExperienceAppealDecision(
@@ -217,18 +254,20 @@ function parseExperienceAppealDecision(
   );
   const reason = queryText(body.reason, 2_000);
   if (!reason) throw new Error("reason is required");
-  return { disposition, reason };
+  return {
+    disposition,
+    reason,
+    evidenceReceiptUrls: evidenceReceiptUrls(body.evidenceReceiptUrls),
+  };
 }
 
 function errorResponse(error: unknown, res: Response): boolean {
   if (error instanceof DuplicateOrganizationSubmissionError) {
-    res
-      .status(409)
-      .json({
-        error: error.message,
-        code: error.code,
-        organizationId: error.organizationId,
-      });
+    res.status(409).json({
+      error: error.message,
+      code: error.code,
+      organizationId: error.organizationId,
+    });
     return true;
   }
   if (error instanceof OrganizationExperienceSafetyError) {
@@ -329,43 +368,37 @@ export function registerOrganizationTransparencyRoutes(
             input.clientRequestId,
           );
           if (existing) {
-            res
-              .status(200)
-              .json({
-                ...existing,
-                factualStatus: "pending_moderation",
-                duplicateRetry: true,
-                message:
-                  "This organization submission is already saved for factual and duplicate review.",
-              });
+            res.status(200).json({
+              ...existing,
+              factualStatus: "pending_moderation",
+              duplicateRetry: true,
+              message:
+                "This organization submission is already saved for factual and duplicate review.",
+            });
             return;
           }
         }
         const duplicates = await repository.findDuplicateCandidates(input);
         if (duplicates.length > 0) {
-          res
-            .status(409)
-            .json({
-              error:
-                "A matching organization may already exist. Choose the existing organization or request a factual correction.",
-              code: "POSSIBLE_DUPLICATE_ORGANIZATION",
-              candidates: duplicates,
-            });
+          res.status(409).json({
+            error:
+              "A matching organization may already exist. Choose the existing organization or request a factual correction.",
+            code: "POSSIBLE_DUPLICATE_ORGANIZATION",
+            candidates: duplicates,
+          });
           return;
         }
         const created = await repository.createMemberSubmission(
           input,
           memberId,
         );
-        res
-          .status(201)
-          .json({
-            ...created,
-            factualStatus: "pending_moderation",
-            duplicateRetry: false,
-            message:
-              "Organization submitted for factual and duplicate review. It is not searchable, pinnable, recommended, or promotable until separately approved.",
-          });
+        res.status(201).json({
+          ...created,
+          factualStatus: "pending_moderation",
+          duplicateRetry: false,
+          message:
+            "Organization submitted for factual and duplicate review. It is not searchable, pinnable, recommended, or promotable until separately approved.",
+        });
       } catch (error) {
         if (errorResponse(error, res)) return;
         const message =
@@ -412,13 +445,11 @@ export function registerOrganizationTransparencyRoutes(
           memberId,
         );
         if (!amended) {
-          res
-            .status(409)
-            .json({
-              error:
-                "Only your own organization submission awaiting a correction can be updated.",
-              code: "ORGANIZATION_SUBMISSION_NOT_AMENDABLE",
-            });
+          res.status(409).json({
+            error:
+              "Only your own organization submission awaiting a correction can be updated.",
+            code: "ORGANIZATION_SUBMISSION_NOT_AMENDABLE",
+          });
           return;
         }
         res.json({
@@ -429,15 +460,13 @@ export function registerOrganizationTransparencyRoutes(
         });
       } catch (error) {
         if (errorResponse(error, res)) return;
-        res
-          .status(400)
-          .json({
-            error:
-              error instanceof Error
-                ? error.message
-                : "Invalid organization correction",
-            code: "INVALID_ORGANIZATION_CORRECTION",
-          });
+        res.status(400).json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Invalid organization correction",
+          code: "INVALID_ORGANIZATION_CORRECTION",
+        });
       }
     },
   );
@@ -527,21 +556,17 @@ export function registerOrganizationTransparencyRoutes(
         const organization =
           await repository.getOrganizationForExperience(organizationId);
         if (!organization) {
-          res
-            .status(404)
-            .json({
-              error:
-                "Organization not found or not approved for member experiences",
-            });
+          res.status(404).json({
+            error:
+              "Organization not found or not approved for member experiences",
+          });
           return;
         }
         if (organization.experienceStatus !== "eligible") {
-          res
-            .status(409)
-            .json({
-              error: "Member experiences are not open for this organization",
-              code: "EXPERIENCE_SURFACE_NOT_ELIGIBLE",
-            });
+          res.status(409).json({
+            error: "Member experiences are not open for this organization",
+            code: "EXPERIENCE_SURFACE_NOT_ELIGIBLE",
+          });
           return;
         }
         const body = (req.body ?? {}) as Record<string, unknown>;
@@ -560,14 +585,11 @@ export function registerOrganizationTransparencyRoutes(
             input.clientRequestId,
           );
           if (existing) {
-            res
-              .status(200)
-              .json({
-                experience: existing,
-                duplicateRetry: true,
-                message:
-                  "This experience is already in the moderation workflow.",
-              });
+            res.status(200).json({
+              experience: existing,
+              duplicateRetry: true,
+              message: "This experience is already in the moderation workflow.",
+            });
             return;
           }
         }
@@ -579,15 +601,13 @@ export function registerOrganizationTransparencyRoutes(
           !locationId ||
           !locations.some((location) => location.id === locationId)
         ) {
-          res
-            .status(400)
-            .json({
-              error:
-                locations.length > 1
-                  ? "Choose the organization location your experience concerns."
-                  : "The selected organization location is not available for member experiences.",
-              code: "ORGANIZATION_EXPERIENCE_LOCATION_REQUIRED",
-            });
+          res.status(400).json({
+            error:
+              locations.length > 1
+                ? "Choose the organization location your experience concerns."
+                : "The selected organization location is not available for member experiences.",
+            code: "ORGANIZATION_EXPERIENCE_LOCATION_REQUIRED",
+          });
           return;
         }
         const assessment = assessOrganizationExperienceNarrative(
@@ -608,25 +628,21 @@ export function registerOrganizationTransparencyRoutes(
           memberId,
           assessment.moderationFlags,
         );
-        res
-          .status(201)
-          .json({
-            experience,
-            duplicateRetry: false,
-            message:
-              "Experience received for moderation. It will not publish as a rating, ownership claim, clinical-quality claim, or promotion signal.",
-          });
+        res.status(201).json({
+          experience,
+          duplicateRetry: false,
+          message:
+            "Experience received for moderation. It will not publish as a rating, ownership claim, clinical-quality claim, or promotion signal.",
+        });
       } catch (error) {
         if (errorResponse(error, res)) return;
-        res
-          .status(400)
-          .json({
-            error:
-              error instanceof Error
-                ? error.message
-                : "Invalid organization experience",
-            code: "INVALID_ORGANIZATION_EXPERIENCE",
-          });
+        res.status(400).json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Invalid organization experience",
+          code: "INVALID_ORGANIZATION_EXPERIENCE",
+        });
       }
     },
   );
@@ -649,25 +665,21 @@ export function registerOrganizationTransparencyRoutes(
           memberId,
           { ...input, body: assessment.normalizedNarrative ?? input.body },
         );
-        res
-          .status(appeal.created ? 201 : 200)
-          .json({
-            appeal,
-            message: appeal.created
-              ? "Your appeal is with a reviewer. It does not change the original publication status by itself."
-              : "Your existing appeal is already with a reviewer.",
-          });
+        res.status(appeal.created ? 201 : 200).json({
+          appeal,
+          message: appeal.created
+            ? "Your appeal is with a reviewer. It does not change the original publication status by itself."
+            : "Your existing appeal is already with a reviewer.",
+        });
       } catch (error) {
         if (errorResponse(error, res)) return;
-        res
-          .status(400)
-          .json({
-            error:
-              error instanceof Error
-                ? error.message
-                : "Invalid organization experience appeal",
-            code: "INVALID_ORGANIZATION_EXPERIENCE_APPEAL",
-          });
+        res.status(400).json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Invalid organization experience appeal",
+          code: "INVALID_ORGANIZATION_EXPERIENCE_APPEAL",
+        });
       }
     },
   );
@@ -690,13 +702,11 @@ export function registerOrganizationTransparencyRoutes(
           memberId,
           note,
         );
-        res
-          .status(201)
-          .json({
-            claim,
-            message:
-              "Claim received for verification. Approval grants correction, public-response, and dispute workflows only; it does not grant suppression, deletion, promotion, or Kinfolk eligibility.",
-          });
+        res.status(201).json({
+          claim,
+          message:
+            "Claim received for verification. Approval grants correction, public-response, and dispute workflows only; it does not grant suppression, deletion, promotion, or Kinfolk eligibility.",
+        });
       } catch (error) {
         req.log?.error({ error }, "organization owner claim failed");
         res.status(500).json({ error: "Unable to record organization claim" });
@@ -716,12 +726,10 @@ export function registerOrganizationTransparencyRoutes(
         if (
           !(await repository.hasApprovedOwnerClaim(organizationId, memberId))
         ) {
-          res
-            .status(403)
-            .json({
-              error: "An approved organization owner claim is required",
-              code: "OWNER_CLAIM_REQUIRED",
-            });
+          res.status(403).json({
+            error: "An approved organization owner claim is required",
+            code: "OWNER_CLAIM_REQUIRED",
+          });
           return;
         }
         const input = validateOrganizationOwnerAction(req.body);
@@ -734,22 +742,18 @@ export function registerOrganizationTransparencyRoutes(
           organizationId,
           memberId,
         );
-        res
-          .status(201)
-          .json({
-            action,
-            message:
-              "Owner action received for moderation. It does not alter or remove a member experience.",
-          });
+        res.status(201).json({
+          action,
+          message:
+            "Owner action received for moderation. It does not alter or remove a member experience.",
+        });
       } catch (error) {
         if (errorResponse(error, res)) return;
-        res
-          .status(400)
-          .json({
-            error:
-              error instanceof Error ? error.message : "Invalid owner action",
-            code: "INVALID_OWNER_ACTION",
-          });
+        res.status(400).json({
+          error:
+            error instanceof Error ? error.message : "Invalid owner action",
+          code: "INVALID_OWNER_ACTION",
+        });
       }
     },
   );
@@ -797,15 +801,13 @@ export function registerOrganizationTransparencyRoutes(
           auditReason: decision.reason,
         });
       } catch (error) {
-        res
-          .status(400)
-          .json({
-            error:
-              error instanceof Error
-                ? error.message
-                : "Invalid moderation decision",
-            code: "INVALID_ORGANIZATION_MODERATION",
-          });
+        res.status(400).json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Invalid moderation decision",
+          code: "INVALID_ORGANIZATION_MODERATION",
+        });
       }
     },
   );
@@ -824,12 +826,10 @@ export function registerOrganizationTransparencyRoutes(
           decision,
         );
         if (!result) {
-          res
-            .status(409)
-            .json({
-              error: "Experience is no longer awaiting moderation",
-              code: "EXPERIENCE_ALREADY_DECIDED",
-            });
+          res.status(409).json({
+            error: "Experience is no longer awaiting moderation",
+            code: "EXPERIENCE_ALREADY_DECIDED",
+          });
           return;
         }
         res.json({
@@ -840,15 +840,13 @@ export function registerOrganizationTransparencyRoutes(
               : "Experience retained outside public view.",
         });
       } catch (error) {
-        res
-          .status(400)
-          .json({
-            error:
-              error instanceof Error
-                ? error.message
-                : "Invalid experience moderation decision",
-            code: "INVALID_EXPERIENCE_MODERATION",
-          });
+        res.status(400).json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Invalid experience moderation decision",
+          code: "INVALID_EXPERIENCE_MODERATION",
+        });
       }
     },
   );
@@ -867,12 +865,10 @@ export function registerOrganizationTransparencyRoutes(
           decision,
         );
         if (!result) {
-          res
-            .status(409)
-            .json({
-              error: "Appeal is no longer awaiting review",
-              code: "APPEAL_ALREADY_DECIDED",
-            });
+          res.status(409).json({
+            error: "Appeal is no longer awaiting review",
+            code: "APPEAL_ALREADY_DECIDED",
+          });
           return;
         }
         res.json({
@@ -883,15 +879,13 @@ export function registerOrganizationTransparencyRoutes(
               : "Appeal declined; the original experience remains unchanged.",
         });
       } catch (error) {
-        res
-          .status(400)
-          .json({
-            error:
-              error instanceof Error
-                ? error.message
-                : "Invalid experience appeal decision",
-            code: "INVALID_EXPERIENCE_APPEAL_DECISION",
-          });
+        res.status(400).json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Invalid experience appeal decision",
+          code: "INVALID_EXPERIENCE_APPEAL_DECISION",
+        });
       }
     },
   );
