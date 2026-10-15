@@ -160,6 +160,47 @@ async function existingCandidates(candidates: readonly SourceBackedDirectoryCand
 type SourceTargetMutationState = "mutable" | "kinfolk_current" | "deleted";
 
 /**
+ * Explicit-release mode deliberately skips general startup migrations. This
+ * narrow, administrator-only publication preflight applies only the constraint
+ * needed by this founder-authorized source-reconciliation workflow; it never
+ * enables startup publishers, seeds, or workers.
+ */
+async function ensureFounderSourceEligibilityConstraint(client: { query: Function }): Promise<void> {
+  const existing = await client.query(
+    `SELECT pg_get_constraintdef(constraint_row.oid) AS definition
+       FROM pg_constraint AS constraint_row
+      WHERE constraint_row.conrelid = 'public.business_discovery_eligibility'::regclass
+        AND constraint_row.conname = 'business_discovery_eligibility_check'`,
+  );
+  const definition = String(existing.rows[0]?.definition ?? "");
+  if (definition.includes(FOUNDER_SOURCE_DIRECTORY_DISCOVERY_POLICY_VERSION)) return;
+  await client.query(
+    `ALTER TABLE business_discovery_eligibility
+       DROP CONSTRAINT IF EXISTS business_discovery_eligibility_check;
+     ALTER TABLE business_discovery_eligibility
+       ADD CONSTRAINT business_discovery_eligibility_check
+       CHECK (
+         eligibility_status <> 'qualified' OR (
+           ownership_evidence_id IS NOT NULL
+           AND jsonb_array_length(ownership_designations) > 0
+           AND ownership_source_expires_at IS NOT NULL
+           AND review_after IS NOT NULL
+           AND (
+             official_website_evidence_id IS NOT NULL
+             OR official_social_evidence_id IS NOT NULL
+             OR (
+               policy_version = '${FOUNDER_SOURCE_DIRECTORY_DISCOVERY_POLICY_VERSION}'
+               AND identity_evidence_id IS NOT NULL
+             )
+           )
+         )
+       ) NOT VALID;
+     ALTER TABLE business_discovery_eligibility
+       VALIDATE CONSTRAINT business_discovery_eligibility_check;`,
+  );
+}
+
+/**
  * Locks an existing profile immediately before mutation. This is intentionally
  * a live check: a concurrent Kinfolk Current workflow wins and this source
  * reconciliation skips the profile instead of overwriting its public state.
@@ -700,6 +741,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
       }));
       const client = await pool.connect();
       try {
+        await ensureFounderSourceEligibilityConstraint(client);
         await client.query("BEGIN");
         await client.query(
           `INSERT INTO founder_source_publication_batches
