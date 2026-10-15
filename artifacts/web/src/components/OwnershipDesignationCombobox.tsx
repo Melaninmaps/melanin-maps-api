@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { Check, ChevronDown, Search, X } from "lucide-react";
-import { filterOwnershipDesignationSearchOptions } from "@workspace/constants";
+import {
+  filterOwnershipDesignationSearchOptions,
+  ownershipDesignationDisplayLabel,
+} from "@workspace/constants";
 
 export type OwnershipDesignationOption = {
   value: string;
@@ -54,7 +57,10 @@ export function OwnershipDesignationCombobox({
   }
 
   const selectedOptions = values
-    .map((value) => options.find((option) => option.value === value) ?? { value, label: value });
+    .map((value) => options.find((option) => option.value === value) ?? {
+      value,
+      label: ownershipDesignationDisplayLabel(value),
+    });
 
   return (
     <div className="space-y-2">

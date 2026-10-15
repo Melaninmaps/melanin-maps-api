@@ -1,6 +1,10 @@
 import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
+import {
+  ownershipDesignationBadgeLabel,
+  ownershipDesignationFilterId,
+} from "@workspace/constants";
 
 export type OwnershipType =
   | "black-owned"
@@ -23,7 +27,7 @@ interface BadgeConfig {
 
 const BADGE_CONFIG: Record<OwnershipType, BadgeConfig> = {
   "black-owned": {
-    label: "Black Owned",
+    label: "Black-Owned",
     emoji: "✊🏾",
     bg: "#1A0A00",
     accent: "#CA922B",
@@ -84,16 +88,26 @@ const BADGE_CONFIG: Record<OwnershipType, BadgeConfig> = {
   },
 };
 
+function badgeConfigFor(type: string): BadgeConfig | undefined {
+  return BADGE_CONFIG[type as OwnershipType]
+    ?? (ownershipDesignationFilterId(type) === "black-african-american"
+      ? BADGE_CONFIG["black-owned"]
+      : undefined);
+}
+
 interface SingleBadgeProps {
-  type: OwnershipType;
+  type: string;
   verified?: boolean;
   size?: "sm" | "md";
 }
 
 export function OwnershipBadge({ type, verified = false, size = "sm" }: SingleBadgeProps) {
-  const config = BADGE_CONFIG[type];
+  const config = badgeConfigFor(type);
   if (!config) return null;
   const isMd = size === "md";
+  const label = ownershipDesignationFilterId(type) === "black-african-american"
+    ? ownershipDesignationBadgeLabel(type)
+    : config.label;
 
   return (
     <View
@@ -105,7 +119,7 @@ export function OwnershipBadge({ type, verified = false, size = "sm" }: SingleBa
     >
       <Text style={isMd ? styles.emojiMd : styles.emojiSm}>{config.emoji}</Text>
       <Text style={[styles.label, isMd ? styles.labelMd : styles.labelSm, { color: config.accent }]}>
-        {config.label}
+        {label}
       </Text>
       {verified && (
         <View style={[styles.verifiedPill, { backgroundColor: config.accent }]}>

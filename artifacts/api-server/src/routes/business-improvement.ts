@@ -2,6 +2,7 @@ import { Router, type IRouter, type Request, type Response } from "express";
 import { openai } from "@workspace/integrations-openai-ai-server";
 import { db, usersTable, businessesTable, businessImprovementPlansTable } from "@workspace/db";
 import { pool } from "@workspace/db";
+import { ownershipDesignationDisplayLabel } from "@workspace/constants";
 import { eq, desc } from "drizzle-orm";
 
 const router: IRouter = Router();
@@ -157,7 +158,7 @@ router.post("/business-improvement", async (req: Request, res: Response) => {
       const designations = (row.ownership_designations as string[] | null) ?? [];
       const ownershipLabel = row.black_owned
         ? "Black-Owned"
-        : designations[0] ?? "Minority-Owned";
+        : ownershipDesignationDisplayLabel(designations[0] ?? "Minority-Owned");
       return {
         id: row.id as string,
         name: row.name as string,
@@ -177,7 +178,9 @@ router.post("/business-improvement", async (req: Request, res: Response) => {
     const expandedProviders = expandedRows.map((r) => {
       const p = toProvider(r, false);
       const designations = (r.ownership_designations as string[] | null) ?? [];
-      const label = r.black_owned ? "Black-Owned" : designations[0] ?? "Minority-Owned";
+      const label = r.black_owned
+        ? "Black-Owned"
+        : ownershipDesignationDisplayLabel(designations[0] ?? "Minority-Owned");
       p.expandNote = `We expanded the search — ${p.name} is ${label} and comes highly recommended`;
       return p;
     });

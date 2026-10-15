@@ -12,6 +12,7 @@ import {
 import type { ChatCompletionCreateParamsNonStreaming } from "openai/resources/chat/completions";
 import {
   OWNERSHIP_FILTER_OPTIONS,
+  ownershipDesignationDisplayLabel,
   ownershipDesignationFilterId,
   extractExplicitOwnershipDesignationFilterIds,
   normalizeOwnershipDesignationFilterIds,
@@ -6529,7 +6530,9 @@ async function tryAnswerAuthoritativeWeather(input: {
 }
 
 function memberFacingDesignationLabel(id: string): string {
-  if (id === "black-african-american") return "Black-owned";
+  if (ownershipDesignationFilterId(id) === "black-african-american") {
+    return ownershipDesignationDisplayLabel(id);
+  }
   if (id === "foundational-black-american") return "Foundational Black American-owned";
   const label = OWNERSHIP_FILTER_OPTIONS.find((option) => option.id === id)?.label;
   return label?.replace(/-Owned$/u, "-owned") ?? "community-owned";
