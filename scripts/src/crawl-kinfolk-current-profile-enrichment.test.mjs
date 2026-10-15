@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   extractOfficialSocialLinks,
   extractPageText,
+  inputRecords,
   selectRelevantInternalUrls,
 } from "./crawl-kinfolk-current-profile-enrichment.mjs";
 
@@ -42,4 +43,37 @@ test("removes scripts and markup from source text without inventing facts", () =
   assert.match(text, /Example Studio/);
   assert.match(text, /Open Tuesday through Saturday/);
   assert.doesNotMatch(text, /window\.secret/);
+});
+
+test("selects a verified official social profile when no active website is available", () => {
+  const records = inputRecords(`${JSON.stringify({
+    businessId: "social-only-1",
+    businessName: "Example Studio",
+    city: "Philadelphia",
+    state: "PA",
+    website: { classification: "MISSING", normalizedUrl: null },
+    social: {
+      instagram: {
+        classification: "KEEP_ACTIVE_SOCIAL",
+        normalizedUrl: "https://www.instagram.com/example_studio/",
+        reason: "Public profile matches the business.",
+      },
+    },
+  })}\n`);
+  assert.deepEqual(records, [{
+    businessId: "social-only-1",
+    businessName: "Example Studio",
+    city: "Philadelphia",
+    state: "PA",
+    website: null,
+    sourceUrl: "https://www.instagram.com/example_studio/",
+    sourceKind: "social",
+    sourceSnapshot: {},
+    currentSnapshotHash: null,
+    verifiedPresenceEvidence: {
+      classification: "KEEP_ACTIVE_SOCIAL",
+      reason: "Public profile matches the business.",
+      checkedAt: null,
+    },
+  }]);
 });
