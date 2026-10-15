@@ -40,4 +40,11 @@ describe("founder-source ownership for current public profiles", () => {
     expect(route).toContain("const newCandidates = (request.currentOnly || request.existingOnly ? [] : plannedCreates)");
     expect(route).toContain("!request.currentOnly || Boolean(match.existingBusinessId && kinfolkCurrentIds.has(match.existingBusinessId))");
   });
+
+  it("scopes the read-only receipt audit to the requested ownership source", () => {
+    expect(route).toContain('app.get("/api/admin/founder-source-publication/receipts"');
+    expect(route).toContain('ownershipScope must be black or latino.');
+    expect(route).toContain(".filter((candidate) => matchesRequestedOwnershipScope(candidate, ownershipScope))");
+    expect(route).toContain("requestedOwnershipScope: ownershipScope");
+  });
 });
