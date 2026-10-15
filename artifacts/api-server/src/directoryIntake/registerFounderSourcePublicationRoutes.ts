@@ -358,6 +358,67 @@ async function recordSourceReceiptAndEligibility(
   };
 }
 
+/**
+ * Adds only documented ownership data to an already-current public profile.
+ * It intentionally does not change the profile's Kinfolk membership, website,
+ * social links, lifecycle state, map position, or discovery decision.
+ */
+async function recordCurrentProfileSourceOwnership(
+  client: { query: Function },
+  candidate: SourceBackedDirectoryCandidate,
+  businessId: string,
+): Promise<boolean> {
+  if (!candidate.ownershipDesignations.length) return false;
+  const presence = founderSourcePresence(candidate);
+  const receiptHash = hash(JSON.stringify({
+    sourceRecordKey: candidate.sourceRecordKey,
+    sourceUrl: candidate.sourceUrl,
+    sourceListingUrl: candidate.sourceListingUrl,
+    ownershipDesignations: candidate.ownershipDesignations,
+    ownershipEvidence: candidate.ownershipEvidence,
+  }));
+  await client.query(
+    `INSERT INTO business_source_directory_receipts (
+       business_id, source_record_key, source_batch, source_label, source_url, source_listing_url,
+       observed_at, ownership_designations, ownership_evidence, official_website_url, official_socials, receipt_sha256
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7::timestamptz, $8::jsonb, $9, $10, $11::jsonb, $12)
+     ON CONFLICT (business_id, source_record_key) DO UPDATE SET
+       source_batch = EXCLUDED.source_batch, source_label = EXCLUDED.source_label,
+       source_url = EXCLUDED.source_url, source_listing_url = EXCLUDED.source_listing_url,
+       observed_at = EXCLUDED.observed_at, ownership_designations = EXCLUDED.ownership_designations,
+       ownership_evidence = EXCLUDED.ownership_evidence, official_website_url = EXCLUDED.official_website_url,
+       official_socials = EXCLUDED.official_socials, receipt_sha256 = EXCLUDED.receipt_sha256`,
+    [
+      businessId, candidate.sourceRecordKey, candidate.batch, candidate.sourceLabel, candidate.sourceUrl,
+      candidate.sourceListingUrl, founderSourceObservedAt(candidate.batch),
+      JSON.stringify(candidate.ownershipDesignations), candidate.ownershipEvidence,
+      presence.officialWebsite, JSON.stringify(presence.officialSocials), receiptHash,
+    ],
+  );
+  await upsertEvidence(client, businessId, "ownership", candidate, {
+    ownershipDesignations: candidate.ownershipDesignations,
+    ownershipEvidence: candidate.ownershipEvidence,
+  });
+  await client.query(
+    `UPDATE businesses SET
+       ownership_designations = (
+         SELECT COALESCE(jsonb_agg(DISTINCT value), '[]'::jsonb)
+           FROM jsonb_array_elements_text(
+             COALESCE(ownership_designations, '[]'::jsonb) || $2::jsonb
+           ) AS value
+       ),
+       black_owned = COALESCE(black_owned, false) OR $3,
+       updated_at = now()
+     WHERE id = $1`,
+    [
+      businessId,
+      JSON.stringify(candidate.ownershipDesignations),
+      candidate.ownershipDesignations.includes(BLACK_OWNERSHIP_DESIGNATION),
+    ],
+  );
+  return true;
+}
+
 async function queueDuplicate(
   client: { query: Function },
   candidate: SourceBackedDirectoryCandidate,
@@ -714,8 +775,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
       const candidateMatches = plan.duplicateMatches
         .filter((match) => selectedKeys.has(match.candidate.sourceRecordKey));
       const protectedMatches = candidateMatches.filter((match) =>
-        Boolean(match.existingBusinessId && kinfolkCurrentIds.has(match.existingBusinessId))
-          || Boolean(match.existingBusinessId && deletedIds.has(match.existingBusinessId)),
+        Boolean(match.existingBusinessId && deletedIds.has(match.existingBusinessId)),
       );
       const canonicalProfileHolds = request.existingOnly
         ? [
@@ -792,10 +852,9 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
         }
 
         const seenExisting = new Set<string>();
-        let liveKinfolkCurrentExcluded = protectedMatches
-          .filter((match) => Boolean(match.existingBusinessId && kinfolkCurrentIds.has(match.existingBusinessId))).length;
         let liveDeletedExcluded = protectedMatches
           .filter((match) => Boolean(match.existingBusinessId && deletedIds.has(match.existingBusinessId))).length;
+        const sourceOwnedCurrentProfiles = new Set<string>();
         for (const duplicate of duplicateMatches) {
           const businessId = duplicate.existingBusinessId
             ?? (duplicate.matchedSourceReceiptKey ? businessByReceipt.get(duplicate.matchedSourceReceiptKey) ?? null : null);
@@ -803,7 +862,10 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           if (duplicate.existingBusinessId) {
             const state = await sourceTargetMutationState(client, businessId);
             if (state === "kinfolk_current") {
-              liveKinfolkCurrentExcluded += 1;
+              if (await recordCurrentProfileSourceOwnership(client, duplicate.candidate, businessId)) {
+                sourceOwnedCurrentProfiles.add(businessId);
+                await queueDuplicate(client, duplicate.candidate, businessId, duplicate.reason);
+              }
               continue;
             }
             if (state === "deleted") {
@@ -891,7 +953,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           officialSocialOnlyProfiles: socialOnlyCount,
           mapPinnedProfiles: 0,
           noOfficialPresenceRequired: targets.filter((target) => !target.presence.hasOfficialPresence).length,
-          kinfolkCurrentExcluded: liveKinfolkCurrentExcluded,
+          kinfolkCurrentOwnershipEnriched: sourceOwnedCurrentProfiles.size,
           deletedExcluded: liveDeletedExcluded,
           ownershipDesignationHolds: ownershipDesignationHoldCount,
           publicationState: "published_unclaimed_source_documented",
@@ -909,7 +971,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           batchKey,
           manifest: afterManifest,
           nextCursor: nextSourceReceiptCursor(scope, selected),
-          message: "Founder-source profiles were published unclaimed with source-documented ownership labels; Kinfolk Current and deleted records were excluded and no address-only map pins were created.",
+          message: "Founder-source ownership labels were applied without changing Kinfolk membership, website or social fields, lifecycle state, or map pins.",
         });
       } catch (error) {
         await client.query("ROLLBACK").catch(() => undefined);
