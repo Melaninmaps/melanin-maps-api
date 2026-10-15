@@ -74,3 +74,17 @@ docs/directory-operations/kinfolk-current-official-discovery-2026-10-15/checkpoi
 docs/directory-operations/kinfolk-current-official-discovery-2026-10-15/summary.json
 docs/directory-operations/kinfolk-current-official-discovery-2026-10-15/legacy-receipt-recheck/
 docs/directory-operations/kinfolk-current-official-discovery-2026-10-15/REPORT.md
+
+# The full official-site enrichment crawl and LLM extraction receipts stay in
+# the authoritative workspace while running. A compact signed archive and a
+# human-readable completion record will be committed after validation.
+docs/directory-operations/kinfolk-current-profile-enrichment-2026-10-15/crawl-cache.json
+docs/directory-operations/kinfolk-current-profile-enrichment-2026-10-15/checkpoint.json
+docs/directory-operations/kinfolk-current-profile-enrichment-2026-10-15/profile-enrichment-pages.jsonl
+docs/directory-operations/kinfolk-current-profile-enrichment-2026-10-15/summary.json
+docs/directory-operations/kinfolk-current-profile-enrichment-2026-10-15/REPORT.md
+docs/directory-operations/kinfolk-current-profile-enrichment-2026-10-15/extraction-cache.json
+docs/directory-operations/kinfolk-current-profile-enrichment-2026-10-15/extraction-checkpoint.json
+docs/directory-operations/kinfolk-current-profile-enrichment-2026-10-15/profile-enrichment-proposals.jsonl
+docs/directory-operations/kinfolk-current-profile-enrichment-2026-10-15/extraction-summary.json
+docs/directory-operations/kinfolk-current-profile-enrichment-2026-10-15/EXTRACTION_REPORT.md

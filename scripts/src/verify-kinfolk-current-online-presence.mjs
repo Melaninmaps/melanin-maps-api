@@ -297,7 +297,8 @@ function errorKind(error) {
   return "request_error";
 }
 
-export async function probePublicUrl(normalizedUrl, { dnsCache, timeoutMs }) {
+export async function probePublicUrl(normalizedUrl, options) {
+  const { dnsCache, timeoutMs } = options;
   const redirectChain = [];
   let current = normalizedUrl;
   for (let step = 0; step < 9; step += 1) {
@@ -351,7 +352,13 @@ export async function probePublicUrl(normalizedUrl, { dnsCache, timeoutMs }) {
       if (!response.ok) {
         return { state: "transient", reason: `http_${response.status}`, requestedUrl: normalizedUrl, finalUrl: current, redirectChain, httpStatus: response.status, contentType, checkedAt: new Date().toISOString() };
       }
-      const html = /(?:text\/html|application\/xhtml\+xml|text\/plain)/i.test(contentType) ? await readLimitedText(response) : "";
+      const includeHtml = options.includeHtml === true;
+      const maxHtmlBytes = Number.isInteger(options.maxHtmlBytes)
+        ? Math.min(Math.max(options.maxHtmlBytes, 16_000), 500_000)
+        : 120_000;
+      const html = /(?:text\/html|application\/xhtml\+xml|text\/plain)/i.test(contentType)
+        ? await readLimitedText(response, maxHtmlBytes)
+        : "";
       const document = extractDocumentEvidence(html);
       const markers = PARKED_MARKERS.filter((marker) => marker.test(`${document.title} ${document.ogTitle} ${document.h1} ${document.textSample}`)).map(String);
       return {
@@ -365,6 +372,7 @@ export async function probePublicUrl(normalizedUrl, { dnsCache, timeoutMs }) {
         checkedAt: new Date().toISOString(),
         document,
         contentSignals: markers.length ? ["parked_or_suspended"] : [],
+        ...(includeHtml ? { html } : {}),
       };
     } catch (error) {
       const kind = errorKind(error);

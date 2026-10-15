@@ -62,6 +62,7 @@ import {
   mapPinViewportScope,
 } from "../businesses/mapPinViewport";
 import {
+  kinfolkCurrentSqlPredicate,
   mwmDiasporaPromotionSqlPredicate,
   mwmPublicDirectorySqlPredicate,
 } from "../businesses/mwmCoreDiscoveryPolicy";
@@ -80,6 +81,11 @@ import {
   normalizeBusinessIdentityPart,
   validateAdminBusinessProfilePatch,
 } from "../businesses/adminBusinessProfilePolicy";
+import {
+  isEmptyProfileEnrichmentField,
+  parseKinfolkCurrentProfileEnrichmentManifest,
+  type KinfolkCurrentProfileEnrichmentCandidate,
+} from "../businesses/kinfolkCurrentProfileEnrichment";
 import { isAdmin as hasAdminAccess } from "../lib/adminAuth";
 import {
   BUSINESS_IMAGE_ELIGIBILITY_POLICY_VERSION,
@@ -4414,6 +4420,214 @@ router.patch("/admin/businesses/:id/profile", async (req: Request, res: Response
   } finally {
     client.release();
   }
+});
+
+function normalizedProfileEnrichmentIdentityPart(value: string | null | undefined): string {
+  return String(value ?? "").trim().replace(/\s+/g, " ").toLocaleLowerCase();
+}
+
+function normalizedProfileEnrichmentWebsite(value: string | null | undefined): string | null {
+  const raw = String(value ?? "").trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    url.hash = "";
+    url.hostname = url.hostname.toLocaleLowerCase();
+    if (url.pathname === "/") url.pathname = "";
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return raw.toLocaleLowerCase().replace(/\/$/, "");
+  }
+}
+
+function profileEnrichmentIdentityMatches(
+  existing: AdminBusinessProfileRow,
+  candidate: KinfolkCurrentProfileEnrichmentCandidate,
+): boolean {
+  return normalizedProfileEnrichmentIdentityPart(existing.name) === normalizedProfileEnrichmentIdentityPart(candidate.expectedIdentity.name)
+    && normalizedProfileEnrichmentIdentityPart(existing.city) === normalizedProfileEnrichmentIdentityPart(candidate.expectedIdentity.city)
+    && normalizedProfileEnrichmentIdentityPart(existing.state) === normalizedProfileEnrichmentIdentityPart(candidate.expectedIdentity.state)
+    && normalizedProfileEnrichmentWebsite(existing.website) === normalizedProfileEnrichmentWebsite(candidate.expectedIdentity.website);
+}
+
+// POST /admin/businesses/kinfolk-current/profile-enrichment-apply — apply up to
+// 100 source-receipted, first-party facts. This is intentionally a fill-only
+// path: it never changes business identity, addresses, ownership, listing
+// lifecycle, Kinfolk membership, map coordinates, media, prices, or an existing
+// profile value. Each row is freshly locked and checked before its own atomic
+// update, so a changed source snapshot is skipped rather than overwritten.
+router.post("/admin/businesses/kinfolk-current/profile-enrichment-apply", async (req: Request, res: Response) => {
+  if (!hasAdminAccess(req)) {
+    res.status(403).json({ error: "Admin required" });
+    return;
+  }
+  let manifest;
+  try {
+    manifest = parseKinfolkCurrentProfileEnrichmentManifest((req.body as { manifest?: unknown })?.manifest ?? req.body);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : "Invalid profile enrichment manifest" });
+    return;
+  }
+
+  const results: Array<{ businessId: string; status: "applied" | "skipped"; reason: string; changedFields?: string[] }> = [];
+  for (const candidate of manifest.candidates) {
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN ISOLATION LEVEL SERIALIZABLE");
+      const scope = await client.query<{ is_current: boolean }>(
+        `SELECT ${kinfolkCurrentSqlPredicate("b.id")} AS is_current
+           FROM businesses AS b
+          WHERE b.id = $1
+          FOR UPDATE`,
+        [candidate.businessId],
+      );
+      if (!scope.rows[0]?.is_current) {
+        await client.query("ROLLBACK");
+        results.push({ businessId: candidate.businessId, status: "skipped", reason: "Business is no longer in the current Kinfolk Current catalog." });
+        continue;
+      }
+      const review = await client.query<{ state: string }>(
+        `SELECT state FROM kinfolk_current_online_presence_reviews
+          WHERE business_id = $1 AND state = 'queued'
+          FOR UPDATE`,
+        [candidate.businessId],
+      );
+      if (review.rows.length > 0) {
+        await client.query("ROLLBACK");
+        results.push({ businessId: candidate.businessId, status: "skipped", reason: "Business is in the dedicated Kinfolk Current Delete Review queue." });
+        continue;
+      }
+      const existingResult = await client.query<AdminBusinessProfileRow>(`${ADMIN_PROFILE_SELECT} FOR UPDATE`, [candidate.businessId]);
+      const existing = existingResult.rows[0];
+      if (!existing) {
+        await client.query("ROLLBACK");
+        results.push({ businessId: candidate.businessId, status: "skipped", reason: "Business no longer exists." });
+        continue;
+      }
+      if (!["live_unclaimed", "live_claimed"].includes(existing.listing_status ?? "")) {
+        await client.query("ROLLBACK");
+        results.push({ businessId: candidate.businessId, status: "skipped", reason: "Business is not currently publicly listed." });
+        continue;
+      }
+      if (!profileEnrichmentIdentityMatches(existing, candidate)) {
+        await client.query("ROLLBACK");
+        results.push({ businessId: candidate.businessId, status: "skipped", reason: "Current business identity or official website differs from the reviewed source snapshot." });
+        continue;
+      }
+
+      const fillOnlyPatch = Object.fromEntries(Object.entries(candidate.patch).filter(([field]) => {
+        const existingValue = field === "tags" ? existing.tags : existing[field as keyof AdminBusinessProfileRow];
+        return isEmptyProfileEnrichmentField(field as "description" | "hours" | "phone" | "tags", existingValue);
+      }));
+      if (Object.keys(fillOnlyPatch).length === 0) {
+        await client.query("ROLLBACK");
+        results.push({ businessId: candidate.businessId, status: "skipped", reason: "All proposed profile fields are already populated; this fill-only workflow will not overwrite them." });
+        continue;
+      }
+      const receiptFieldForPatchField: Record<string, string> = { description: "description", hours: "hours", phone: "phone", tags: "service_tags" };
+      const sourceReceipts = candidate.receipts
+        .filter((receipt) => Object.prototype.hasOwnProperty.call(fillOnlyPatch, receipt.field === "service_tags" ? "tags" : receipt.field))
+        .map((receipt) => ({
+          ...receipt,
+          identityMatch: true,
+          identityMatchSignal: "business_name" as const,
+        }));
+      if (sourceReceipts.length !== Object.keys(fillOnlyPatch).length || Object.entries(fillOnlyPatch).some(([field]) => !sourceReceipts.some((receipt) => receipt.field === receiptFieldForPatchField[field]))) {
+        await client.query("ROLLBACK");
+        results.push({ businessId: candidate.businessId, status: "skipped", reason: "The reviewed manifest is missing a source receipt for a fillable profile field." });
+        continue;
+      }
+      const validated = validateAdminBusinessProfilePatch({
+        ...fillOnlyPatch,
+        sourceReceipts,
+        changeNote: `Official-site Kinfolk Current profile enrichment (${manifest.batchId}; ${manifest.contentFingerprint.slice(0, 12)})`,
+      }, {
+        name: existing.name,
+        description: existing.description,
+        address: existing.address,
+        city: existing.city,
+        state: existing.state,
+        phone: existing.phone,
+        website: existing.website,
+        hours: existing.hours,
+        priceRange: existing.price_range,
+        instagram: existing.instagram,
+        tiktok: existing.tiktok,
+        facebook: existing.facebook,
+        twitter: existing.twitter,
+        youtube: existing.youtube,
+        pinterest: existing.pinterest,
+        category: existing.category,
+        subcategory: existing.subcategory,
+        tags: existing.tags,
+        vibes: existing.vibes,
+        ownershipDesignations: existing.ownership_designations,
+      });
+      if (validated.locationChanged || validated.changedColumns.some((field) => !["description", "hours", "phone", "tags"].includes(field))) {
+        await client.query("ROLLBACK");
+        results.push({ businessId: candidate.businessId, status: "skipped", reason: "Manifest attempted a profile field outside the fill-only enrichment boundary." });
+        continue;
+      }
+      if (validated.changedColumns.length === 0) {
+        await client.query("ROLLBACK");
+        results.push({ businessId: candidate.businessId, status: "skipped", reason: "No current profile field requires this source-backed enrichment." });
+        continue;
+      }
+      const patch = Object.fromEntries(Object.entries(validated.patch).filter(([column]) => validated.changedColumns.includes(column)));
+      const allowedColumns: Record<string, string> = { description: "description", hours: "hours", phone: "phone", tags: "tags" };
+      const entries = Object.entries(patch).map(([key, value]) => [key, adminProfileUpdateSqlBinding(key, value)] as const);
+      const setClauses = entries.map(([key, binding], index) => `${allowedColumns[key]} = $${index + 1}${binding.jsonb ? "::jsonb" : ""}`).join(", ");
+      const update = await client.query<AdminBusinessProfileRow>(
+        `UPDATE businesses SET ${setClauses}, updated_at = NOW() WHERE id = $${entries.length + 1}
+         RETURNING id, name, description, address, city, state, latitude, longitude,
+           phone, website, hours, price_range, instagram, tiktok, facebook, twitter, youtube, pinterest,
+           ownership_designations, vibes, tags, category, subcategory, photos, listing_status,
+           COALESCE(is_duplicate, false) AS is_duplicate`,
+        [...entries.map(([, binding]) => binding.value), candidate.businessId],
+      );
+      const updated = update.rows[0];
+      for (const receipt of validated.fieldReceipts) {
+        await client.query(
+          `INSERT INTO business_profile_field_receipts
+             (id, business_id, field_name, source_url, source_label, observed_at, confidence, note, observed_value, actor_user_id)
+           VALUES ($1, $2, $3, $4, $5, $6::date, $7, $8, $9::jsonb, $10)`,
+          [
+            randomUUID(), candidate.businessId, receipt.field, receipt.sourceUrl, receipt.sourceLabel,
+            receipt.observedAt, receipt.confidence, receipt.note,
+            JSON.stringify(validated.receiptObservedValues[receipt.field]), req.user?.id ?? null,
+          ],
+        );
+      }
+      await client.query(
+        `INSERT INTO business_admin_profile_edit_audit_events
+           (id, business_id, actor_user_id, change_note, changed_fields, before_state, after_state)
+         VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7::jsonb)`,
+        [
+          randomUUID(), candidate.businessId, req.user?.id ?? null, validated.changeNote,
+          JSON.stringify(validated.changedColumns), JSON.stringify(toAdminBusinessProfile(existing)), JSON.stringify(toAdminBusinessProfile(updated)),
+        ],
+      );
+      await client.query("COMMIT");
+      results.push({ businessId: candidate.businessId, status: "applied", reason: "Source-backed empty profile fields were saved with audit and field receipts.", changedFields: validated.changedColumns });
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      req.log.error({ error, businessId: candidate.businessId, batchId: manifest.batchId }, "Kinfolk Current profile enrichment candidate failed");
+      results.push({ businessId: candidate.businessId, status: "skipped", reason: "Database validation failed; this candidate was not changed." });
+    } finally {
+      client.release();
+    }
+  }
+  const applied = results.filter((result) => result.status === "applied");
+  req.log.info({ batchId: manifest.batchId, fingerprint: manifest.contentFingerprint, candidateCount: manifest.candidates.length, appliedCount: applied.length }, "Completed Kinfolk Current fill-only profile enrichment batch");
+  res.json({
+    ok: true,
+    batchId: manifest.batchId,
+    contentFingerprint: manifest.contentFingerprint,
+    candidateCount: manifest.candidates.length,
+    appliedCount: applied.length,
+    skippedCount: results.length - applied.length,
+    results,
+  });
 });
 
 // ─── POST /admin/seed-known-businesses ────────────────────────────────────────

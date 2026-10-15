@@ -53,6 +53,7 @@ import {
 import { AdminAddBusiness } from "@/components/AdminAddBusiness";
 import { AdminEditBusiness } from "@/components/AdminEditBusiness";
 import { KinfolkCatalogCohort } from "@/components/KinfolkCatalogCohort";
+import { KinfolkCurrentProfileEnrichment } from "@/components/KinfolkCurrentProfileEnrichment";
 import { AdminFeedbackTab } from "@/components/AdminFeedbackTab";
 import { AdminAccessLedger } from "@/components/AdminAccessLedger";
 import { AdminBusinessVideoContributions } from "@/components/AdminBusinessVideoContributions";
@@ -5863,6 +5864,12 @@ Selected: ${summary}`,
                 ? `Reconciliation ledger: ${businessReconciliationAccountedTotal.toLocaleString()} of ${businessInventoryTotal.toLocaleString()} inventory records are explicitly accounted for. Filter by a concrete reason code before taking a reconciliation action.`
                 : "Reconciliation ledger migration is pending. Existing inventory remains visible, but reconciliation filters intentionally return no records until the ledger is available."}
             </p>
+
+            {kinfolkCurrentCohortSelected && bizStatusFilter !== "kinfolk_current_delete_review" && (
+              <div className="mb-4">
+                <KinfolkCurrentProfileEnrichment onApplied={() => { void loadBusinesses({}); }} />
+              </div>
+            )}
 
             {bizStatusFilter === "permanently_closed" && (
               <div className="mb-4 bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-700">
