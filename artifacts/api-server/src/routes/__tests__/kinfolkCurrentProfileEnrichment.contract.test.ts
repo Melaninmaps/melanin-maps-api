@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const source = readFileSync(fileURLToPath(new URL("../businesses.ts", import.meta.url)), "utf8");
+const appSource = readFileSync(fileURLToPath(new URL("../../app.ts", import.meta.url)), "utf8");
 const route = source.slice(
   source.indexOf("async function applyProfileEnrichmentManifest"),
   source.indexOf("// ─── POST /admin/seed-known-businesses"),
@@ -45,5 +46,10 @@ describe("source-receipted profile enrichment route", () => {
   it("keeps the legacy Current endpoint as an alias to the same audited handler", () => {
     expect(source).toContain('router.post("/admin/businesses/profile-enrichment-apply", applyProfileEnrichmentManifest)');
     expect(source).toContain('router.post("/admin/businesses/kinfolk-current/profile-enrichment-apply", applyProfileEnrichmentManifest)');
+  });
+
+  it("accepts receipt-bearing approved batches above Express's global default only at the protected apply route", () => {
+    expect(appSource).toContain('"/api/admin/businesses/profile-enrichment-apply"');
+    expect(appSource).toContain('express.json({ limit: "512kb" })');
   });
 });
