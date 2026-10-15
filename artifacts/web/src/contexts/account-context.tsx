@@ -9,6 +9,7 @@ import {
 } from "react";
 import { useGetCurrentAuthUser } from "@workspace/api-client-react";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
+import { setAccountContextForTransport } from "@/lib/account-context-transport";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -88,6 +89,7 @@ export function AccountContextProvider({ children }: { children: ReactNode }) {
       setBusinessContexts([]);
       setCanUseAdminContext(false);
       setActiveContextState(PERSONAL_CONTEXT);
+      setAccountContextForTransport(PERSONAL_CONTEXT);
       setLoading(false);
       return;
     }
@@ -124,11 +126,13 @@ export function AccountContextProvider({ children }: { children: ReactNode }) {
         const nextCanUseAdmin = payload.canUseAdminContext === true;
         setBusinessContexts(nextBusinesses);
         setCanUseAdminContext(nextCanUseAdmin);
-        setActiveContextState((current) =>
-          isPermittedContext(current, nextBusinesses, nextCanUseAdmin)
+        setActiveContextState((current) => {
+          const next = isPermittedContext(current, nextBusinesses, nextCanUseAdmin)
             ? current
-            : PERSONAL_CONTEXT,
-        );
+            : PERSONAL_CONTEXT;
+          setAccountContextForTransport(next);
+          return next;
+        });
       })
       .catch(() => {
         if (controller.signal.aborted) return;
@@ -136,6 +140,7 @@ export function AccountContextProvider({ children }: { children: ReactNode }) {
         setBusinessContexts([]);
         setCanUseAdminContext(false);
         setActiveContextState(PERSONAL_CONTEXT);
+        setAccountContextForTransport(PERSONAL_CONTEXT);
       })
       .finally(() => {
         if (!controller.signal.aborted) setLoading(false);
@@ -151,6 +156,7 @@ export function AccountContextProvider({ children }: { children: ReactNode }) {
         ? businessContexts.find((business) => business.businessId === candidate.businessId) ?? PERSONAL_CONTEXT
         : candidate;
       setActiveContextState(resolved);
+      setAccountContextForTransport(resolved);
       if (typeof window !== "undefined") {
         window.dispatchEvent(
           new CustomEvent("mwm-account-context-change", { detail: resolved }),

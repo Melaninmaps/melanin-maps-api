@@ -1,4 +1,5 @@
 import { getWebToken } from "@/lib/webAuth";
+import { accountContextHeaderValue } from "@/lib/account-context-transport";
 
 /**
  * Fetch a same-origin API route with both browser authentication mechanisms.
@@ -23,6 +24,13 @@ export async function authenticatedFetch(
   if (!headers.has("authorization")) {
     const token = getWebToken();
     if (token) headers.set("authorization", `Bearer ${token}`);
+  }
+
+  // The server resolves this again for every protected request. The value is
+  // in-memory only and defaults to Personal, so a page refresh can never
+  // silently reuse a previously selected business or Admin workspace.
+  if (!headers.has("x-mwm-account-context")) {
+    headers.set("x-mwm-account-context", accountContextHeaderValue());
   }
 
   return fetch(input, {

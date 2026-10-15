@@ -17,12 +17,14 @@ describe("owner-scoped managed business read contract", () => {
     const route = managedBusinessRoute();
 
     expect(route).toContain('router.get("/businesses/mine/managed"');
-    expect(route).toContain(".where(approvedBusinessManagementPredicate(String(userId)))");
-    expect(route).toContain("managementRole: businessManagementRoleSelection(String(userId))");
-    expect(route).toContain(".orderBy(asc(businessesTable.name), asc(businessesTable.id))");
+    expect(route).toContain("FROM business_owner_links bol");
+    expect(route).toContain('bol.role AS "managementRole"');
+    expect(route).toContain("AND bol.role IN ('owner', 'manager')");
+    expect(route).toContain("AND bol.status = 'approved'");
+    expect(route).toContain("AND bol.revoked_at IS NULL");
+    expect(route).toContain("ORDER BY b.name ASC, b.id ASC");
     expect(route).toContain("res.json({ businesses });");
-    expect(route).not.toContain(".limit(");
-    expect(route).not.toMatch(/\.(?:insert|update|delete)\(/);
+    expect(route).not.toMatch(/\b(?:INSERT|UPDATE|DELETE)\b/);
 
     expect(businessRoutes).toContain("bol.role = 'owner'");
     expect(businessRoutes).toContain("bol.status = 'approved'");

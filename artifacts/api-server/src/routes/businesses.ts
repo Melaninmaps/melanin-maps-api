@@ -1656,20 +1656,31 @@ router.get("/businesses/mine/managed", async (req: any, res: Response) => {
       return;
     }
 
-    const businesses = await db
-      .select({
-        id: businessesTable.id,
-        name: businessesTable.name,
-        category: businessesTable.category,
-        city: businessesTable.city,
-        state: businessesTable.state,
-        verified: businessesTable.verified,
-        status: businessesTable.status,
-        managementRole: businessManagementRoleSelection(String(userId)),
-      })
-      .from(businessesTable)
-      .where(approvedBusinessManagementPredicate(String(userId)))
-      .orderBy(asc(businessesTable.name), asc(businessesTable.id));
+    // Resolve the relationship directly instead of relying on a correlated
+    // select expression. The same approved/unrevoked link that authorizes the
+    // listing determines the returned role, so an approved owner can never be
+    // rendered as a manager because a subselect was evaluated ambiguously.
+    const { rows: businesses } = await pool.query<{
+      id: string;
+      name: string;
+      category: string | null;
+      city: string | null;
+      state: string | null;
+      verified: boolean | null;
+      status: string | null;
+      managementRole: "owner" | "manager";
+    }>(
+      `SELECT b.id, b.name, b.category, b.city, b.state, b.verified, b.status,
+              bol.role AS "managementRole"
+         FROM business_owner_links bol
+         JOIN businesses b ON b.id = bol.business_id
+        WHERE bol.user_id = $1
+          AND bol.role IN ('owner', 'manager')
+          AND bol.status = 'approved'
+          AND bol.revoked_at IS NULL
+        ORDER BY b.name ASC, b.id ASC`,
+      [String(userId)],
+    );
 
     res.json({ businesses });
   } catch (err) {
