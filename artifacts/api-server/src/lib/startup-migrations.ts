@@ -5808,6 +5808,35 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
         ON founder_source_identity_review_queue (status, created_at);`,
   },
   {
+    // Founder-authorized ownership directories may document Black ownership even
+    // when the directory does not retain a website or social profile. Keep the
+    // source identity receipt mandatory for that narrow eligibility lane while
+    // preserving the presence requirement for every other qualified record.
+    name: "founder_source_directory_eligibility_without_presence_v1",
+    sql: `ALTER TABLE business_discovery_eligibility
+      DROP CONSTRAINT IF EXISTS business_discovery_eligibility_check;
+      ALTER TABLE business_discovery_eligibility
+      ADD CONSTRAINT business_discovery_eligibility_check
+      CHECK (
+        eligibility_status <> 'qualified' OR (
+          ownership_evidence_id IS NOT NULL
+          AND jsonb_array_length(ownership_designations) > 0
+          AND ownership_source_expires_at IS NOT NULL
+          AND review_after IS NOT NULL
+          AND (
+            official_website_evidence_id IS NOT NULL
+            OR official_social_evidence_id IS NOT NULL
+            OR (
+              policy_version = 'founder_source_directory_ownership_v1'
+              AND identity_evidence_id IS NOT NULL
+            )
+          )
+        )
+      ) NOT VALID;
+      ALTER TABLE business_discovery_eligibility
+      VALIDATE CONSTRAINT business_discovery_eligibility_check;`,
+  },
+  {
     // Every retained business receives a concrete reconciliation record. This
     // ledger is a system of record for evidence-based review—not a publication
     // switch—and the initial backfill changes no business profile or listing
