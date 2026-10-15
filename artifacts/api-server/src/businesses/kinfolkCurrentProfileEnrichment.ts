@@ -14,7 +14,11 @@ export const PROFILE_ENRICHMENT_FIELDS = [
   "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest",
 ] as const;
 
-export type ProfileEnrichmentScope = "kinfolk_current" | "non_kinfolk_current";
+/**
+ * `non_kinfolk_current_all` permits the same additive, audited field enrichment
+ * for retained staged records without changing their lifecycle or visibility.
+ */
+export type ProfileEnrichmentScope = "kinfolk_current" | "non_kinfolk_current" | "non_kinfolk_current_all";
 export type EnrichmentPatchField = (typeof PROFILE_ENRICHMENT_FIELDS)[number];
 export type EnrichmentPatchMode = "fill" | "append" | "replace_generic_directory";
 type ReceiptField = Extract<
@@ -240,7 +244,9 @@ export function parseProfileEnrichmentManifest(input: unknown): ParsedProfileEnr
     return { ...legacy, scope: "kinfolk_current" };
   }
   if (input.version !== PROFILE_ENRICHMENT_MANIFEST_VERSION) throw new Error("Unsupported profile enrichment manifest version");
-  if (input.scope !== "kinfolk_current" && input.scope !== "non_kinfolk_current") throw new Error("manifest scope must be kinfolk_current or non_kinfolk_current");
+  if (input.scope !== "kinfolk_current" && input.scope !== "non_kinfolk_current" && input.scope !== "non_kinfolk_current_all") {
+    throw new Error("manifest scope must be kinfolk_current, non_kinfolk_current, or non_kinfolk_current_all");
+  }
   const { batchId, generatedAt, contentFingerprint } = parseMetadata(input);
   if (!Array.isArray(input.candidates)) throw new Error("manifest candidates are required");
   const candidates = input.candidates.map((candidate) => parseCandidate(candidate, PROFILE_ENRICHMENT_FIELDS));
