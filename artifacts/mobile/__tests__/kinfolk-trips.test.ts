@@ -29,7 +29,7 @@ describe("native account-backed private Trips", () => {
   it("labels legacy local data truthfully and declares no automatic cross-feature integration", () => {
     expect(screen).toContain("Older device-only Saved Trips, if any, remain in this device");
     expect(screen).toContain("They were not moved to your account or deleted.");
-    for (const boundary of ["chat/memory", "profile, discovery/Map/Directory/Community/Safety", "flights, hotels, events, documents, tasks/reminders, analytics, or", "exact address, location, or coordinates"]) {
+    for (const boundary of ["chat/memory", "profile, discovery/Map/Directory/Community/Safety", "calendar, hotels, events, documents, tasks/reminders, analytics, or", "exact address, location, or coordinates"]) {
       expect(screen).toContain(boundary);
     }
   });

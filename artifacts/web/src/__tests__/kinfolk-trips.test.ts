@@ -27,7 +27,7 @@ describe("Web private Trip management", () => {
   });
 
   it("states default non-use, no exact location collection, and keeps ciphertext/key fields out of the UI", () => {
-    for (const boundary of ["not automatically used in Kinfolk chat or memory", "profile, discovery, Map, Directory, Community, Safety", "No exact address, location, or coordinates", "Flights, hotels, events, documents, calendars, and sharing"]) {
+    for (const boundary of ["not automatically used in Kinfolk chat or memory", "profile, discovery, Map, Directory, Community, Safety", "No exact address, location, or coordinates", "providers, analytics, reminders, or sharing"]) {
       expect(page).toContain(boundary);
     }
     for (const secret of ["ciphertext", "encryption key IDs", "fingerprints"]) expect(page).toContain(secret);

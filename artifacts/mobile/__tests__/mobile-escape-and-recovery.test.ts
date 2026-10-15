@@ -77,7 +77,7 @@ describe("mobile dismissal and recovery contracts", () => {
   it("holds primary Kinfolk actions while the member session restores", () => {
     expect(travelSource).toContain("isLoading: authLoading");
     expect(travelSource).toContain('Alert.alert("Restoring secure sign-in"');
-    expect(travelSource).toContain("disabled={!inputText.trim() || uploadingKinfolkImage || authLoading}");
+    expect(travelSource).toContain("disabled={!inputText.trim() || uploadingKinfolkImage || uploadingKinfolkDocument || authLoading}");
     expect(travelSource).toContain("disabled={authLoading}");
   });
 

@@ -41,16 +41,16 @@ describe("Kinfolk private image schema bootstrap", () => {
       "const isPrivateImageTurn = verifiedImageUrls.length > 0;",
     );
     expect(kinfolkRoute).toContain(
-      "!isPrivateImageTurn &&\n      (contextualIntelligenceEnabled || citedResearchRequired);",
+      "!isPrivateQuestionAttachment &&\n      (contextualIntelligenceEnabled || citedResearchRequired);",
     );
     expect(kinfolkRoute).toContain(
-      "if (!isPrivateImageTurn && (lensEligible || isEntityQuery))",
+      "if (!isPrivateQuestionAttachment && (lensEligible || isEntityQuery))",
     );
     expect(kinfolkRoute).toContain(
-      "const libraryTopic = isPrivateImageTurn\n      ? null",
+      "const libraryTopic = isPrivateQuestionAttachment\n      ? null",
     );
     expect(kinfolkRoute).toContain(
-      "const memberFacingSources = isPrivateImageTurn\n      ? []",
+      "const memberFacingSources = isPrivateQuestionAttachment\n      ? []",
     );
     expect(kinfolkRoute).toContain('state: "not_needed" as const');
   });
