@@ -2,6 +2,13 @@ import { pool } from "@workspace/db";
 import { documentedDiscoveryEligibilitySqlPredicate } from "../businesses/documentedDiscoveryEligibility";
 import { getMemberAgeBand, type AgeBand } from "../lib/audience-policy";
 import { isUpcomingOneOffEventDate } from "../lib/public-event-visibility";
+import {
+  businessMeetsInterestDiscoveryConstraints,
+  DEFAULT_INTEREST_DISCOVERY_CONSTRAINTS,
+  eventMeetsInterestDiscoveryConstraints,
+  getInterestDiscoveryConstraints,
+  type InterestDiscoveryConstraints,
+} from "./interest-recommendation-constraints";
 
 /**
  * Kinfolk Interest Intelligence is deliberately separate from private memory.
@@ -24,12 +31,14 @@ export const SAFE_INTEREST_CATEGORIES = [
 export type SafeInterestCategory = (typeof SAFE_INTEREST_CATEGORIES)[number];
 export type InterestState = "tentative" | "confirmed" | "paused" | "dismissed";
 export type InterestSource = "explicit" | "conversation_pattern" | "discovery_pattern";
-export type RecommendationFeedback = "interested" | "not_interested" | "hide";
+export type RecommendationFeedback = "interested" | "not_interested" | "hide" | "more_like_this" | "wrong_assumption" | "hide_category" | "stop_recommending_topic";
 
 export type InterestSettings = {
   interestRecognitionEnabled: boolean;
   proactiveDiscoveryEnabled: boolean;
   interestNotificationsEnabled: boolean;
+  externalOpportunityDiscoveryEnabled: boolean;
+  externalOpportunityDiscoveryFrequency: "manual" | "daily" | "weekly";
 };
 
 export type MemberInterest = {
@@ -50,7 +59,7 @@ export type MemberInterest = {
 
 export type InterestRecommendation = {
   id: number;
-  resourceType: "business" | "event";
+  resourceType: "business" | "event" | "external_opportunity";
   resource: {
     id: string;
     title: string;
@@ -60,17 +69,23 @@ export type InterestRecommendation = {
     imageUrl: string | null;
     detailPath: string;
     startsOn?: string;
+    sourceUrl?: string;
+    sourceHost?: string;
+    sourceProvider?: string;
+    verificationState?: "source_confirmed";
   };
   interestLabel: string;
   reason: string;
   source: "interest" | "circle";
-  actions: Array<"save" | "share" | "not_interested" | "circle">;
+  actions: Array<"save" | "share" | "not_interested" | "circle" | "more_like_this" | "wrong_assumption" | "hide_category" | "stop_recommending_topic">;
 };
 
 const DEFAULT_SETTINGS: InterestSettings = {
   interestRecognitionEnabled: false,
   proactiveDiscoveryEnabled: false,
   interestNotificationsEnabled: false,
+  externalOpportunityDiscoveryEnabled: false,
+  externalOpportunityDiscoveryFrequency: "manual",
 };
 
 const SENSITIVE_OR_THIRD_PARTY_CONTEXT = /\b(?:baby|pregnan(?:t|cy)|parent(?:ing)?|child(?:ren)?|kid(?:s)?|son|daughter|caregiv(?:er|ing)|disab(?:led|ility)|diagnos(?:is|ed)|medical|health|wellness|therap(?:y|ist)|medication|allerg(?:y|ies)|mental\s+health|religion|politic(?:s|al)|race|ethnic|sexual(?:ity)?|gender|trans|immigra|citizen(?:ship)?|credit|debt|income|for\s+(?:my|a|someone|somebody|their|the)\s+(?:friend|family|partner|client|child|baby|parent|coworker|student)|on\s+behalf\s+of)\b/i;
@@ -155,8 +170,11 @@ export async function getInterestSettings(userId: string): Promise<InterestSetti
     interest_recognition_enabled: boolean | null;
     proactive_discovery_enabled: boolean | null;
     interest_notifications_enabled: boolean | null;
+    external_opportunity_discovery_enabled: boolean | null;
+    external_opportunity_discovery_frequency: string | null;
   }>(
-    `SELECT interest_recognition_enabled, proactive_discovery_enabled, interest_notifications_enabled
+    `SELECT interest_recognition_enabled, proactive_discovery_enabled, interest_notifications_enabled,
+            external_opportunity_discovery_enabled, external_opportunity_discovery_frequency
        FROM user_preferences
       WHERE user_id = $1
       LIMIT 1`,
@@ -168,6 +186,10 @@ export async function getInterestSettings(userId: string): Promise<InterestSetti
     interestRecognitionEnabled: row.interest_recognition_enabled === true,
     proactiveDiscoveryEnabled: row.proactive_discovery_enabled === true,
     interestNotificationsEnabled: row.interest_notifications_enabled === true,
+    externalOpportunityDiscoveryEnabled: row.external_opportunity_discovery_enabled === true,
+    externalOpportunityDiscoveryFrequency: row.external_opportunity_discovery_frequency === "daily" || row.external_opportunity_discovery_frequency === "weekly"
+      ? row.external_opportunity_discovery_frequency
+      : "manual",
   };
 }
 
@@ -189,22 +211,35 @@ export async function updateInterestSettings(
       typeof patch.interestNotificationsEnabled === "boolean"
         ? patch.interestNotificationsEnabled
         : current.interestNotificationsEnabled,
+    externalOpportunityDiscoveryEnabled:
+      typeof patch.externalOpportunityDiscoveryEnabled === "boolean"
+        ? patch.externalOpportunityDiscoveryEnabled
+        : current.externalOpportunityDiscoveryEnabled,
+    externalOpportunityDiscoveryFrequency:
+      patch.externalOpportunityDiscoveryFrequency === "daily" || patch.externalOpportunityDiscoveryFrequency === "weekly" || patch.externalOpportunityDiscoveryFrequency === "manual"
+        ? patch.externalOpportunityDiscoveryFrequency
+        : current.externalOpportunityDiscoveryFrequency,
   };
   await pool.query(
     `INSERT INTO user_preferences (
        user_id, interest_recognition_enabled, proactive_discovery_enabled,
-       interest_notifications_enabled, updated_at
-     ) VALUES ($1, $2, $3, $4, NOW())
+       interest_notifications_enabled, external_opportunity_discovery_enabled,
+       external_opportunity_discovery_frequency, updated_at
+     ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
      ON CONFLICT (user_id) DO UPDATE SET
        interest_recognition_enabled = EXCLUDED.interest_recognition_enabled,
        proactive_discovery_enabled = EXCLUDED.proactive_discovery_enabled,
        interest_notifications_enabled = EXCLUDED.interest_notifications_enabled,
+       external_opportunity_discovery_enabled = EXCLUDED.external_opportunity_discovery_enabled,
+       external_opportunity_discovery_frequency = EXCLUDED.external_opportunity_discovery_frequency,
        updated_at = NOW()`,
     [
       userId,
       next.interestRecognitionEnabled,
       next.proactiveDiscoveryEnabled,
       next.interestNotificationsEnabled,
+      next.externalOpportunityDiscoveryEnabled,
+      next.externalOpportunityDiscoveryFrequency,
     ],
   );
   return next;
@@ -392,6 +427,40 @@ function matchesTerms(haystack: string, terms: readonly string[]): boolean {
   return terms.some((term) => normalized.includes(term));
 }
 
+function normalizedFeedbackScope(value: unknown): string {
+  return typeof value === "string"
+    ? value.trim().toLocaleLowerCase("en-US").replace(/\s+/g, " ").slice(0, 100)
+    : "";
+}
+
+type InterestFeedbackPolicy = {
+  boostedCategories: Set<string>;
+  hiddenCategories: Set<string>;
+  stoppedTopics: Set<string>;
+};
+
+async function getInterestFeedbackPolicy(userId: string): Promise<InterestFeedbackPolicy> {
+  const result = await pool.query<{ scope_type: string; scope_value: string }>(
+    `SELECT scope_type, scope_value
+       FROM kinfolk_interest_feedback_scopes
+      WHERE user_id = $1`,
+    [userId],
+  );
+  const policy: InterestFeedbackPolicy = {
+    boostedCategories: new Set(),
+    hiddenCategories: new Set(),
+    stoppedTopics: new Set(),
+  };
+  for (const row of result.rows) {
+    const value = normalizedFeedbackScope(row.scope_value);
+    if (!value) continue;
+    if (row.scope_type === "boost_category") policy.boostedCategories.add(value);
+    if (row.scope_type === "hide_category") policy.hiddenCategories.add(value);
+    if (row.scope_type === "stop_topic") policy.stoppedTopics.add(value);
+  }
+  return policy;
+}
+
 function ageAllowsEvent(row: { audience_rating: string | null }, ageBand: AgeBand): boolean {
   const rating = String(row.audience_rating ?? "everyone").toLocaleLowerCase("en-US");
   if (ageBand !== "18_plus" && /(18|21|adult)/.test(rating)) return false;
@@ -408,6 +477,11 @@ type PublicBusinessRow = {
   image_url: string | null;
   description: string | null;
   tags: unknown;
+  price_range: string | null;
+  audience_type: string | null;
+  environment_tags: unknown;
+  amenity_tags: unknown;
+  accessibility_features: unknown;
 };
 
 type PublicEventRow = {
@@ -420,12 +494,14 @@ type PublicEventRow = {
   description: string | null;
   date: string;
   audience_rating: string | null;
+  price: string | null;
 };
 
 async function persistRecommendation(input: {
   userId: string;
-  resourceType: "business" | "event";
+  resourceType: "business" | "event" | "external_opportunity";
   resourceId: string;
+  resourceCategory: string | null;
   interestLabel: string;
   source: "interest" | "circle";
   reason: string;
@@ -433,10 +509,11 @@ async function persistRecommendation(input: {
 }): Promise<{ id: number; status: string }> {
   const result = await pool.query<{ id: number; status: string }>(
     `INSERT INTO kinfolk_interest_recommendations (
-       user_id, resource_type, resource_id, interest_label, source, reason,
+       user_id, resource_type, resource_id, resource_category, interest_label, source, reason,
        rank, status, expires_at, created_at, updated_at
-     ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'shown', NOW() + INTERVAL '21 days', NOW(), NOW())
+     ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'shown', NOW() + INTERVAL '21 days', NOW(), NOW())
      ON CONFLICT (user_id, resource_type, resource_id) DO UPDATE SET
+       resource_category = EXCLUDED.resource_category,
        interest_label = EXCLUDED.interest_label,
        source = EXCLUDED.source,
        reason = EXCLUDED.reason,
@@ -448,6 +525,7 @@ async function persistRecommendation(input: {
       input.userId,
       input.resourceType,
       input.resourceId,
+      input.resourceCategory,
       input.interestLabel,
       input.source,
       input.reason,
@@ -462,27 +540,32 @@ async function buildRecommendationsForLabels(input: {
   labels: Array<{ label: string; category: SafeInterestCategory }>;
   source: "interest" | "circle";
   ageBand: AgeBand;
+  constraints?: InterestDiscoveryConstraints;
 }): Promise<InterestRecommendation[]> {
   if (!input.labels.length || input.ageBand === "under_13") return [];
-  const [savedResult, businessResult, eventResult] = await Promise.all([
+  const constraints = input.constraints ?? DEFAULT_INTEREST_DISCOVERY_CONSTRAINTS;
+  const [savedResult, businessResult, eventResult, feedbackPolicy] = await Promise.all([
     pool.query<{ business_id: string }>(
       `SELECT business_id FROM saved_places WHERE user_id = $1`,
       [input.userId],
     ),
     pool.query<PublicBusinessRow>(
-      `SELECT b.id, b.name, b.category, b.subcategory, b.city, b.state, b.image_url, b.description, b.tags
+      `SELECT b.id, b.name, b.category, b.subcategory, b.city, b.state, b.image_url, b.description, b.tags,
+              b.price_range, bi.audience_type, bi.environment_tags, bi.amenity_tags, bi.accessibility_features
          FROM businesses b
+         LEFT JOIN business_identity bi ON bi.business_id = b.id
         WHERE ${documentedDiscoveryEligibilitySqlPredicate("b.id", "discovery")}
         ORDER BY b.featured DESC, b.confidence_score DESC, b.rating DESC
         LIMIT 60`,
     ),
     pool.query<PublicEventRow>(
-      `SELECT id, title, category, city, state, description, date, audience_rating
+      `SELECT id, title, category, city, state, description, date, audience_rating, price
          FROM events
         WHERE status = 'active'
         ORDER BY featured DESC, date ASC
         LIMIT 40`,
     ),
+    getInterestFeedbackPolicy(input.userId),
   ]);
   const savedIds = new Set(savedResult.rows.map((row) => row.business_id));
   const candidates: Array<{
@@ -492,9 +575,12 @@ async function buildRecommendationsForLabels(input: {
   }> = [];
 
   for (const interest of input.labels) {
+    if (feedbackPolicy.stoppedTopics.has(normalizedFeedbackScope(interest.label))) continue;
     const terms = recommendationTerms(interest.label, interest.category);
     for (const business of businessResult.rows) {
       if (savedIds.has(business.id) || candidates.some((candidate) => candidate.resourceType === "business" && candidate.resource.id === business.id)) continue;
+      if (feedbackPolicy.hiddenCategories.has(normalizedFeedbackScope(business.category))) continue;
+      if (!businessMeetsInterestDiscoveryConstraints(business, constraints)) continue;
       const text = [business.name, business.category, business.subcategory, business.description, JSON.stringify(business.tags ?? [])].filter(Boolean).join(" ");
       if (!matchesTerms(text, terms)) continue;
       candidates.push({
@@ -514,6 +600,8 @@ async function buildRecommendationsForLabels(input: {
     }
     for (const event of eventResult.rows) {
       if (!isUpcomingOneOffEventDate(event.date) || !ageAllowsEvent(event, input.ageBand)) continue;
+      if (feedbackPolicy.hiddenCategories.has(normalizedFeedbackScope(event.category))) continue;
+      if (!eventMeetsInterestDiscoveryConstraints(event, constraints)) continue;
       if (candidates.some((candidate) => candidate.resourceType === "event" && candidate.resource.id === event.id)) continue;
       const text = [event.title, event.category, event.description].filter(Boolean).join(" ");
       if (!matchesTerms(text, terms)) continue;
@@ -535,6 +623,11 @@ async function buildRecommendationsForLabels(input: {
     }
   }
 
+  candidates.sort((left, right) => {
+    const leftBoost = feedbackPolicy.boostedCategories.has(normalizedFeedbackScope(left.resource.category)) ? 1 : 0;
+    const rightBoost = feedbackPolicy.boostedCategories.has(normalizedFeedbackScope(right.resource.category)) ? 1 : 0;
+    return rightBoost - leftBoost;
+  });
   const shown: InterestRecommendation[] = [];
   for (const [index, candidate] of candidates.slice(0, 5).entries()) {
     const reason = input.source === "circle"
@@ -544,6 +637,7 @@ async function buildRecommendationsForLabels(input: {
       userId: input.userId,
       resourceType: candidate.resourceType,
       resourceId: candidate.resource.id,
+      resourceCategory: candidate.resource.category,
       interestLabel: candidate.interestLabel,
       source: input.source,
       reason,
@@ -558,8 +652,8 @@ async function buildRecommendationsForLabels(input: {
       reason,
       source: input.source,
       actions: candidate.resourceType === "business"
-        ? ["save", "share", "not_interested", "circle"]
-        : ["share", "not_interested"],
+        ? ["save", "share", "not_interested", "circle", "more_like_this", "wrong_assumption", "hide_category", "stop_recommending_topic"]
+        : ["share", "not_interested", "circle", "more_like_this", "wrong_assumption", "hide_category", "stop_recommending_topic"],
     });
   }
   return shown;
@@ -567,13 +661,15 @@ async function buildRecommendationsForLabels(input: {
 
 export async function getInterestIntelligenceForMember(userId: string): Promise<{
   settings: InterestSettings;
+  constraints: InterestDiscoveryConstraints;
   interests: MemberInterest[];
   recommendations: InterestRecommendation[];
   ageBand: AgeBand;
   disclosure: string;
 }> {
-  const [settings, interests, ageBand, preferenceResult] = await Promise.all([
+  const [settings, constraints, interests, ageBand, preferenceResult] = await Promise.all([
     getInterestSettings(userId),
+    getInterestDiscoveryConstraints(userId),
     listMemberInterests(userId),
     getMemberAgeBand(userId),
     pool.query<{ favorite_categories: unknown }>(
@@ -584,6 +680,7 @@ export async function getInterestIntelligenceForMember(userId: string): Promise<
   if (!settings.proactiveDiscoveryEnabled) {
     return {
       settings,
+      constraints,
       interests,
       recommendations: [],
       ageBand,
@@ -605,9 +702,11 @@ export async function getInterestIntelligenceForMember(userId: string): Promise<
     labels: active.slice(0, 8),
     source: "interest",
     ageBand,
+    constraints,
   });
   return {
     settings,
+    constraints,
     interests,
     recommendations,
     ageBand,
@@ -619,18 +718,44 @@ export async function recordRecommendationFeedback(input: {
   userId: string;
   recommendationId: number;
   feedback: RecommendationFeedback;
-}): Promise<boolean> {
-  const recommendation = await pool.query<{ id: number }>(
-    `SELECT id FROM kinfolk_interest_recommendations WHERE id = $1 AND user_id = $2 LIMIT 1`,
+}): Promise<{ found: boolean; effect: "saved" | "dismissed" | "boosted_category" | "hidden_category" | "stopped_topic" }> {
+  const recommendation = await pool.query<{ id: number; resource_category: string | null; interest_label: string }>(
+    `SELECT id, resource_category, interest_label
+       FROM kinfolk_interest_recommendations WHERE id = $1 AND user_id = $2 LIMIT 1`,
     [input.recommendationId, input.userId],
   );
-  if (!recommendation.rows[0]) return false;
+  const row = recommendation.rows[0];
+  if (!row) return { found: false, effect: "dismissed" };
   await pool.query(
     `INSERT INTO kinfolk_interest_recommendation_feedback (user_id, recommendation_id, feedback, created_at)
      VALUES ($1, $2, $3, NOW())
      ON CONFLICT (user_id, recommendation_id) DO UPDATE SET feedback = EXCLUDED.feedback, created_at = NOW()`,
     [input.userId, input.recommendationId, input.feedback],
   );
+  const category = normalizedFeedbackScope(row.resource_category);
+  const topic = normalizedFeedbackScope(row.interest_label);
+  if (input.feedback === "more_like_this" && category) {
+    await pool.query(
+      `INSERT INTO kinfolk_interest_feedback_scopes (user_id, scope_type, scope_value, created_at)
+       VALUES ($1, 'boost_category', $2, NOW()) ON CONFLICT DO NOTHING`,
+      [input.userId, category],
+    );
+  }
+  if (input.feedback === "hide_category" && category) {
+    await pool.query(
+      `INSERT INTO kinfolk_interest_feedback_scopes (user_id, scope_type, scope_value, created_at)
+       VALUES ($1, 'hide_category', $2, NOW()) ON CONFLICT DO NOTHING`,
+      [input.userId, category],
+    );
+  }
+  if (input.feedback === "stop_recommending_topic" && topic) {
+    await pool.query(
+      `INSERT INTO kinfolk_interest_feedback_scopes (user_id, scope_type, scope_value, created_at)
+       VALUES ($1, 'stop_topic', $2, NOW()) ON CONFLICT DO NOTHING`,
+      [input.userId, topic],
+    );
+  }
+  const status = input.feedback === "interested" ? "saved" : input.feedback === "more_like_this" ? "shown" : "dismissed";
   await pool.query(
     `UPDATE kinfolk_interest_recommendations
         SET status = $3, updated_at = NOW()
@@ -638,10 +763,13 @@ export async function recordRecommendationFeedback(input: {
     [
       input.recommendationId,
       input.userId,
-      input.feedback === "interested" ? "saved" : "dismissed",
+      status,
     ],
   );
-  return true;
+  if (input.feedback === "more_like_this") return { found: true, effect: "boosted_category" };
+  if (input.feedback === "hide_category") return { found: true, effect: "hidden_category" };
+  if (input.feedback === "stop_recommending_topic") return { found: true, effect: "stopped_topic" };
+  return { found: true, effect: input.feedback === "interested" ? "saved" : "dismissed" };
 }
 
 async function assertCircleMembership(circleId: number, userId: string): Promise<boolean> {
@@ -669,6 +797,67 @@ export async function shareConfirmedInterestWithCircle(input: {
      VALUES ($1, $2, $3, NOW())
      ON CONFLICT (circle_id, user_id, interest_id) DO NOTHING`,
     [input.circleId, input.userId, input.interestId],
+  );
+  return "shared";
+}
+
+/**
+ * A member-approved card is written into the existing Circle suggestion table,
+ * so Circle voting and planning use their normal routes. Nothing is shared
+ * automatically and no unshared interest or behavioural context is exposed.
+ */
+export async function shareRecommendedOpportunityWithCircle(input: {
+  userId: string;
+  circleId: number;
+  recommendationId: number;
+}): Promise<"shared" | "already_shared" | "not_member" | "missing"> {
+  if (!(await assertCircleMembership(input.circleId, input.userId))) return "not_member";
+  const existing = await pool.query<{ id: number }>(
+    `SELECT id FROM kinfolk_circle_opportunity_shares
+      WHERE circle_id = $1 AND user_id = $2 AND recommendation_id = $3 LIMIT 1`,
+    [input.circleId, input.userId, input.recommendationId],
+  );
+  if (existing.rows[0]) return "already_shared";
+  const recommendation = await pool.query<{ resource_type: string; resource_id: string }>(
+    `SELECT resource_type, resource_id FROM kinfolk_interest_recommendations
+      WHERE id = $1 AND user_id = $2 AND status IN ('shown', 'saved') AND expires_at > NOW() LIMIT 1`,
+    [input.recommendationId, input.userId],
+  );
+  const row = recommendation.rows[0];
+  if (!row) return "missing";
+
+  let placeName: string | null = null;
+  let placeType = "activity";
+  let businessId: string | null = null;
+  if (row.resource_type === "business") {
+    const business = await pool.query<{ name: string }>(`SELECT name FROM businesses WHERE id = $1 LIMIT 1`, [row.resource_id]);
+    placeName = business.rows[0]?.name ?? null;
+    placeType = "business";
+    businessId = row.resource_id;
+  } else if (row.resource_type === "event") {
+    const event = await pool.query<{ title: string }>(`SELECT title FROM events WHERE id = $1 AND status = 'active' LIMIT 1`, [row.resource_id]);
+    placeName = event.rows[0]?.title ?? null;
+    placeType = "event";
+  } else if (row.resource_type === "external_opportunity") {
+    const opportunity = await pool.query<{ title: string }>(
+      `SELECT title FROM kinfolk_external_opportunities
+        WHERE id = $1 AND user_id = $2 AND verification_state = 'source_confirmed' AND starts_on > NOW() AND expires_at > NOW() LIMIT 1`,
+      [row.resource_id, input.userId],
+    );
+    placeName = opportunity.rows[0]?.title ?? null;
+    placeType = "external_opportunity";
+  }
+  if (!placeName) return "missing";
+  const suggestion = await pool.query<{ id: number }>(
+    `INSERT INTO circle_suggestions (circle_id, user_id, business_id, place_name, place_type, note, upvotes, created_at)
+     VALUES ($1, $2, $3, $4, $5, 'Shared from a member-approved Kinfolk discovery.', 0, NOW())
+     RETURNING id`,
+    [input.circleId, input.userId, businessId, placeName, placeType],
+  );
+  await pool.query(
+    `INSERT INTO kinfolk_circle_opportunity_shares (circle_id, user_id, recommendation_id, suggestion_id, created_at)
+     VALUES ($1, $2, $3, $4, NOW()) ON CONFLICT DO NOTHING`,
+    [input.circleId, input.userId, input.recommendationId, suggestion.rows[0].id],
   );
   return "shared";
 }

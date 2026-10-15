@@ -1,15 +1,17 @@
 import {
   boolean,
   integer,
+  jsonb,
   pgTable,
   serial,
   text,
   timestamp,
   unique,
+  uuid,
   varchar,
 } from "drizzle-orm/pg-core";
 import { usersTable } from "./auth";
-import { kinfolkCircles } from "./circles";
+import { circleSuggestions, kinfolkCircles } from "./circles";
 
 /**
  * Member-controlled, non-sensitive interest records used only by the governed
@@ -62,6 +64,7 @@ export const kinfolkInterestRecommendationsTable = pgTable(
     userId: varchar("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
     resourceType: varchar("resource_type", { length: 32 }).notNull(),
     resourceId: varchar("resource_id", { length: 255 }).notNull(),
+    resourceCategory: varchar("resource_category", { length: 100 }),
     interestLabel: varchar("interest_label", { length: 100 }).notNull(),
     source: varchar("source", { length: 32 }).notNull().default("interest"),
     reason: text("reason").notNull(),
@@ -88,6 +91,76 @@ export const kinfolkCircleInterestSharesTable = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [unique("kinfolk_circle_interest_share_unique").on(table.circleId, table.userId, table.interestId)],
+);
+
+/** Explicit hard requirements for this separate recommendation surface only. */
+export const kinfolkInterestDiscoveryConstraintsTable = pgTable(
+  "kinfolk_interest_discovery_constraints",
+  {
+    userId: varchar("user_id").primaryKey().references(() => usersTable.id, { onDelete: "cascade" }),
+    crowdPreference: varchar("crowd_preference", { length: 32 }).notNull().default("any"),
+    accessibilityRequirements: jsonb("accessibility_requirements").$type<string[]>().notNull().default([]),
+    maximumPrice: varchar("maximum_price", { length: 8 }).notNull().default("any"),
+    agePreference: varchar("age_preference", { length: 24 }).notNull().default("member_default"),
+    excludedCategories: jsonb("excluded_categories").$type<string[]>().notNull().default([]),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+);
+
+/** Compact scopes make feedback effective without changing a broad profile silently. */
+export const kinfolkInterestFeedbackScopesTable = pgTable(
+  "kinfolk_interest_feedback_scopes",
+  {
+    id: serial("id").primaryKey(),
+    userId: varchar("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+    scopeType: varchar("scope_type", { length: 32 }).notNull(),
+    scopeValue: varchar("scope_value", { length: 100 }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [unique("kinfolk_interest_feedback_scope_unique").on(table.userId, table.scopeType, table.scopeValue)],
+);
+
+/**
+ * A citation-backed external opportunity is separate from an MWM listing. It
+ * stores source identity and freshness metadata, not a personal search query,
+ * raw response, or any assertion that MWM verified the opportunity.
+ */
+export const kinfolkExternalOpportunitiesTable = pgTable(
+  "kinfolk_external_opportunities",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: varchar("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+    interestLabel: varchar("interest_label", { length: 100 }).notNull(),
+    category: varchar("category", { length: 64 }).notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    city: varchar("city", { length: 100 }).notNull(),
+    state: varchar("state", { length: 2 }).notNull(),
+    canonicalUrl: text("canonical_url").notNull(),
+    sourceHost: varchar("source_host", { length: 255 }).notNull(),
+    sourceProvider: varchar("source_provider", { length: 32 }).notNull(),
+    sourcePublishedAt: timestamp("source_published_at", { withTimezone: true }),
+    startsOn: timestamp("starts_on", { withTimezone: true }).notNull(),
+    verificationState: varchar("verification_state", { length: 32 }).notNull().default("source_confirmed"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [unique("kinfolk_external_opportunities_member_source_unique").on(table.userId, table.canonicalUrl)],
+);
+
+/** An opportunity becomes a real existing Circle suggestion only after approval. */
+export const kinfolkCircleOpportunitySharesTable = pgTable(
+  "kinfolk_circle_opportunity_shares",
+  {
+    id: serial("id").primaryKey(),
+    circleId: integer("circle_id").notNull().references(() => kinfolkCircles.id, { onDelete: "cascade" }),
+    userId: varchar("user_id").notNull().references(() => usersTable.id, { onDelete: "cascade" }),
+    recommendationId: integer("recommendation_id").notNull().references(() => kinfolkInterestRecommendationsTable.id, { onDelete: "cascade" }),
+    suggestionId: integer("suggestion_id").notNull().references(() => circleSuggestions.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [unique("kinfolk_circle_opportunity_share_unique").on(table.circleId, table.userId, table.recommendationId)],
 );
 
 export type KinfolkMemberInterest = typeof kinfolkMemberInterestsTable.$inferSelect;

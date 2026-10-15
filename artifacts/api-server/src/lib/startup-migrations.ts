@@ -6610,6 +6610,100 @@ CREATE TABLE IF NOT EXISTS user_identity_context (
         ON kinfolk_circle_interest_shares (circle_id, created_at DESC);
     `,
   },
+  {
+    // Completion-stage additions retain the original consent boundary while
+    // making hard requirements, source-backed external opportunities, scoped
+    // feedback, and actual Circle suggestions reviewable and reversible.
+    name: "kinfolk_interest_intelligence_completion_v2",
+    sql: `
+      ALTER TABLE user_preferences
+        ADD COLUMN IF NOT EXISTS external_opportunity_discovery_enabled BOOLEAN NOT NULL DEFAULT FALSE,
+        ADD COLUMN IF NOT EXISTS external_opportunity_discovery_frequency VARCHAR(16) NOT NULL DEFAULT 'manual';
+      ALTER TABLE kinfolk_interest_recommendations
+        ADD COLUMN IF NOT EXISTS resource_category VARCHAR(100);
+      ALTER TABLE kinfolk_interest_recommendations
+        DROP CONSTRAINT IF EXISTS kinfolk_interest_recommendations_resource_type_check;
+      ALTER TABLE kinfolk_interest_recommendations
+        ADD CONSTRAINT kinfolk_interest_recommendations_resource_type_check
+          CHECK (resource_type IN ('business', 'event', 'external_opportunity')) NOT VALID;
+      ALTER TABLE kinfolk_interest_recommendation_feedback
+        DROP CONSTRAINT IF EXISTS kinfolk_interest_recommendation_feedback_feedback_check;
+      ALTER TABLE kinfolk_interest_recommendation_feedback
+        ADD CONSTRAINT kinfolk_interest_recommendation_feedback_feedback_check
+          CHECK (feedback IN ('interested', 'not_interested', 'hide', 'more_like_this', 'wrong_assumption', 'hide_category', 'stop_recommending_topic')) NOT VALID;
+
+      CREATE TABLE IF NOT EXISTS kinfolk_interest_discovery_constraints (
+        user_id VARCHAR PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+        crowd_preference VARCHAR(32) NOT NULL DEFAULT 'any'
+          CHECK (crowd_preference IN ('any', 'quiet_or_low_sensory')),
+        accessibility_requirements JSONB NOT NULL DEFAULT '[]'::jsonb,
+        maximum_price VARCHAR(8) NOT NULL DEFAULT 'any'
+          CHECK (maximum_price IN ('any', '$', '$$', '$$$', '$$$$')),
+        age_preference VARCHAR(24) NOT NULL DEFAULT 'member_default'
+          CHECK (age_preference IN ('member_default', 'all_ages')),
+        excluded_categories JSONB NOT NULL DEFAULT '[]'::jsonb,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS kinfolk_interest_feedback_scopes (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        scope_type VARCHAR(32) NOT NULL CHECK (scope_type IN ('boost_category', 'hide_category', 'stop_topic')),
+        scope_value VARCHAR(100) NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (user_id, scope_type, scope_value)
+      );
+      CREATE INDEX IF NOT EXISTS kinfolk_interest_feedback_scopes_member_idx
+        ON kinfolk_interest_feedback_scopes (user_id, scope_type, created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS kinfolk_external_opportunity_discovery_runs (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        city VARCHAR(100) NOT NULL,
+        state VARCHAR(2) NOT NULL,
+        requested_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        provider_state VARCHAR(24) NOT NULL,
+        provider VARCHAR(32),
+        result_count INTEGER NOT NULL DEFAULT 0 CHECK (result_count >= 0)
+      );
+      CREATE INDEX IF NOT EXISTS kinfolk_external_opportunity_runs_member_place_idx
+        ON kinfolk_external_opportunity_discovery_runs (user_id, city, state, requested_at DESC);
+
+      CREATE TABLE IF NOT EXISTS kinfolk_external_opportunities (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        interest_label VARCHAR(100) NOT NULL,
+        category VARCHAR(64) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        city VARCHAR(100) NOT NULL,
+        state VARCHAR(2) NOT NULL,
+        canonical_url TEXT NOT NULL,
+        source_host VARCHAR(255) NOT NULL,
+        source_provider VARCHAR(32) NOT NULL,
+        source_published_at TIMESTAMPTZ,
+        starts_on TIMESTAMPTZ NOT NULL,
+        verification_state VARCHAR(32) NOT NULL DEFAULT 'source_confirmed'
+          CHECK (verification_state IN ('source_confirmed', 'expired', 'withdrawn')),
+        expires_at TIMESTAMPTZ NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (user_id, canonical_url)
+      );
+      CREATE INDEX IF NOT EXISTS kinfolk_external_opportunities_member_active_idx
+        ON kinfolk_external_opportunities (user_id, verification_state, starts_on, expires_at DESC);
+
+      CREATE TABLE IF NOT EXISTS kinfolk_circle_opportunity_shares (
+        id SERIAL PRIMARY KEY,
+        circle_id INTEGER NOT NULL REFERENCES kinfolk_circles(id) ON DELETE CASCADE,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        recommendation_id INTEGER NOT NULL REFERENCES kinfolk_interest_recommendations(id) ON DELETE CASCADE,
+        suggestion_id INTEGER NOT NULL REFERENCES circle_suggestions(id) ON DELETE CASCADE,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (circle_id, user_id, recommendation_id)
+      );
+    `,
+  },
 ];
 
 /**
@@ -7692,6 +7786,7 @@ export async function ensureKinfolkFeedbackFlywheelSchema(logger?: Logger): Prom
 // schema is established before the route reads or writes a preference.
 const KINFOLK_INTEREST_INTELLIGENCE_SCHEMA_MIGRATIONS = new Set([
   "kinfolk_interest_intelligence_v1",
+  "kinfolk_interest_intelligence_completion_v2",
 ]);
 let kinfolkInterestIntelligenceSchemaReady: Promise<void> | null = null;
 
@@ -7710,10 +7805,14 @@ export async function ensureKinfolkInterestIntelligenceSchema(logger?: Logger): 
       await pool.query(migration.sql);
     }
     await Promise.all([
-      pool.query("SELECT interest_recognition_enabled, proactive_discovery_enabled FROM user_preferences LIMIT 0"),
+      pool.query("SELECT interest_recognition_enabled, proactive_discovery_enabled, external_opportunity_discovery_enabled FROM user_preferences LIMIT 0"),
       pool.query("SELECT id, user_id, label, state FROM kinfolk_member_interests LIMIT 0"),
-      pool.query("SELECT id, user_id, resource_type, resource_id FROM kinfolk_interest_recommendations LIMIT 0"),
+      pool.query("SELECT id, user_id, resource_type, resource_id, resource_category FROM kinfolk_interest_recommendations LIMIT 0"),
       pool.query("SELECT circle_id, user_id, interest_id FROM kinfolk_circle_interest_shares LIMIT 0"),
+      pool.query("SELECT user_id, crowd_preference, accessibility_requirements FROM kinfolk_interest_discovery_constraints LIMIT 0"),
+      pool.query("SELECT user_id, scope_type, scope_value FROM kinfolk_interest_feedback_scopes LIMIT 0"),
+      pool.query("SELECT id, user_id, canonical_url, starts_on FROM kinfolk_external_opportunities LIMIT 0"),
+      pool.query("SELECT circle_id, recommendation_id, suggestion_id FROM kinfolk_circle_opportunity_shares LIMIT 0"),
     ]);
     log("Kinfolk interest intelligence schema is ready");
   })();

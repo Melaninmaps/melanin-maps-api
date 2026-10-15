@@ -4,24 +4,27 @@ import { Bookmark, Compass, Share2, ThumbsDown } from "lucide-react";
 const BASE = import.meta.env.BASE_URL;
 type Recommendation = {
   id: number;
-  resourceType: "business" | "event";
-  resource: { id: string; title: string; category: string | null; city: string | null; state: string | null; detailPath: string; startsOn?: string };
+  resourceType: "business" | "event" | "external_opportunity";
+  resource: { id: string; title: string; category: string | null; city: string | null; state: string | null; detailPath: string; startsOn?: string; sourceUrl?: string; sourceHost?: string; verificationState?: "source_confirmed" };
   interestLabel: string;
   reason: string;
-  actions: Array<"save" | "share" | "not_interested" | "circle">;
+  actions: Array<"save" | "share" | "not_interested" | "circle" | "more_like_this" | "wrong_assumption" | "hide_category" | "stop_recommending_topic">;
 };
+type Circle = { id: number; name: string };
 
 /** A compact, member-controlled web counterpart to the native For You cards. */
 export function KinfolkInterestDiscoveryFeed() {
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [circles, setCircles] = useState<Circle[]>([]);
+  const [selectedCircle, setSelectedCircle] = useState<Record<number, string>>({});
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetch(`${BASE}api/kinfolk/interest-intelligence`, { credentials: "include", cache: "no-store" });
-      const payload = await response.json().catch(() => ({})) as { recommendations?: Recommendation[] };
-      setRecommendations(response.ok && Array.isArray(payload.recommendations) ? payload.recommendations : []);
+      const payload = await response.json().catch(() => ({})) as { recommendations?: Recommendation[]; externalOpportunities?: Recommendation[] };
+      setRecommendations(response.ok ? [...(Array.isArray(payload.recommendations) ? payload.recommendations : []), ...(Array.isArray(payload.externalOpportunities) ? payload.externalOpportunities : [])] : []);
     } finally { setLoading(false); }
   }, []);
 
@@ -32,7 +35,14 @@ export function KinfolkInterestDiscoveryFeed() {
     return () => window.removeEventListener("kinfolk-interest-intelligence-updated", refresh);
   }, [load]);
 
-  const feedback = async (recommendation: Recommendation, value: "interested" | "not_interested") => {
+  useEffect(() => {
+    void fetch(`${BASE}api/circles`, { credentials: "include" })
+      .then(async (response) => response.ok ? response.json() as Promise<{ circles?: Circle[] }> : {})
+      .then((payload) => { const data = payload as { circles?: Circle[] }; setCircles(Array.isArray(data.circles) ? data.circles : []); })
+      .catch(() => setCircles([]));
+  }, []);
+
+  const feedback = async (recommendation: Recommendation, value: "interested" | "not_interested" | "more_like_this" | "wrong_assumption" | "hide_category" | "stop_recommending_topic") => {
     setRecommendations((current) => current.filter((item) => item.id !== recommendation.id));
     await fetch(`${BASE}api/kinfolk/interest-intelligence/recommendations/${recommendation.id}/feedback`, {
       method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ feedback: value }),
@@ -51,10 +61,16 @@ export function KinfolkInterestDiscoveryFeed() {
     const place = [recommendation.resource.city, recommendation.resource.state].filter(Boolean).join(", ");
     if (navigator.share) await navigator.share({ title: recommendation.resource.title, text: `${recommendation.resource.title}${place ? ` — ${place}` : ""}\n${recommendation.reason}` }).catch(() => undefined);
   };
+  const shareWithCircle = async (recommendation: Recommendation) => {
+    const circleId = Number(selectedCircle[recommendation.id]);
+    if (!Number.isSafeInteger(circleId) || circleId < 1) return;
+    const response = await fetch(`${BASE}api/kinfolk/circles/${circleId}/recommendations/${recommendation.id}/share`, { method: "POST", credentials: "include" });
+    if (response.ok) setSelectedCircle((current) => ({ ...current, [recommendation.id]: "" }));
+  };
 
   if (loading || !recommendations.length) return null;
   return <section className="mb-6 rounded-3xl border border-[#CA922B]/25 bg-gradient-to-br from-[#FFF8EC] to-white p-5" data-testid="kinfolk-interest-discovery-feed">
     <div className="flex items-start justify-between gap-4"><div><p className="flex items-center gap-2 text-sm font-bold text-[#2B1507]"><Compass className="h-4 w-4 text-[#CA922B]" />For You</p><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/55">From interests you confirmed or explicitly saved—never raw chat or search text.</p></div><a href="#kinfolk-interest-intelligence-manager" className="shrink-0 text-xs font-bold text-[#8D5C17] hover:underline">Manage</a></div>
-    <div className="mt-4 grid gap-3 sm:grid-cols-2">{recommendations.map((recommendation) => <article key={recommendation.id} className="rounded-2xl border border-[#3A1F0E]/10 bg-white p-4"><p className="text-sm font-bold text-[#2B1507]">{recommendation.resource.title}</p><p className="mt-1 text-xs text-[#3A1F0E]/55">{[recommendation.resource.category, recommendation.resource.city, recommendation.resource.state].filter(Boolean).join(" · ")}</p><p className="mt-2 text-xs leading-5 text-[#3A1F0E]/65">{recommendation.reason}</p><div className="mt-3 flex flex-wrap items-center gap-3"><a href={recommendation.resource.detailPath} className="rounded-lg bg-[#2B1507] px-3 py-1.5 text-xs font-bold text-white">View</a>{recommendation.actions.includes("save") && <button type="button" onClick={() => void save(recommendation)} className="inline-flex items-center gap-1 text-xs font-bold text-[#8D5C17]"><Bookmark className="h-3.5 w-3.5" />Save</button>}<button type="button" onClick={() => void share(recommendation)} className="inline-flex items-center gap-1 text-xs font-bold text-[#8D5C17]"><Share2 className="h-3.5 w-3.5" />Share</button><button type="button" onClick={() => void feedback(recommendation, "not_interested")} className="inline-flex items-center gap-1 text-xs font-bold text-[#3A1F0E]/55"><ThumbsDown className="h-3.5 w-3.5" />Not interested</button></div></article>)}</div>
+    <div className="mt-4 grid gap-3 sm:grid-cols-2">{recommendations.map((recommendation) => <article key={recommendation.id} className="rounded-2xl border border-[#3A1F0E]/10 bg-white p-4"><p className="text-sm font-bold text-[#2B1507]">{recommendation.resource.title}</p><p className="mt-1 text-xs text-[#3A1F0E]/55">{[recommendation.resource.category, recommendation.resource.city, recommendation.resource.state].filter(Boolean).join(" · ")}</p>{recommendation.resource.verificationState === "source_confirmed" && <p className="mt-2 text-xs font-semibold text-[#8D5C17]">Source-confirmed external opportunity — not an MWM-verified listing.</p>}<p className="mt-2 text-xs leading-5 text-[#3A1F0E]/65">{recommendation.reason}</p><div className="mt-3 flex flex-wrap items-center gap-3"><a href={recommendation.resource.detailPath} target={recommendation.resourceType === "external_opportunity" ? "_blank" : undefined} rel={recommendation.resourceType === "external_opportunity" ? "noreferrer" : undefined} className="rounded-lg bg-[#2B1507] px-3 py-1.5 text-xs font-bold text-white">View</a>{recommendation.actions.includes("save") && <button type="button" onClick={() => void save(recommendation)} className="inline-flex items-center gap-1 text-xs font-bold text-[#8D5C17]"><Bookmark className="h-3.5 w-3.5" />Save</button>}<button type="button" onClick={() => void share(recommendation)} className="inline-flex items-center gap-1 text-xs font-bold text-[#8D5C17]"><Share2 className="h-3.5 w-3.5" />Share</button>{recommendation.actions.includes("circle") && circles.length > 0 && <><select aria-label={`Choose Circle for ${recommendation.resource.title}`} value={selectedCircle[recommendation.id] ?? ""} onChange={(event) => setSelectedCircle((current) => ({ ...current, [recommendation.id]: event.target.value }))} className="rounded-lg border border-[#3A1F0E]/15 px-2 py-1 text-xs"><option value="">Add to Circle…</option>{circles.map((circle) => <option key={circle.id} value={circle.id}>{circle.name}</option>)}</select><button type="button" disabled={!selectedCircle[recommendation.id]} onClick={() => void shareWithCircle(recommendation)} className="text-xs font-bold text-[#8D5C17] disabled:opacity-45">Add</button></>}<button type="button" onClick={() => void feedback(recommendation, "more_like_this")} className="text-xs font-bold text-[#8D5C17]">More like this</button><button type="button" onClick={() => void feedback(recommendation, "wrong_assumption")} className="text-xs font-bold text-[#3A1F0E]/55">Wrong assumption</button><button type="button" onClick={() => void feedback(recommendation, "hide_category")} className="text-xs font-bold text-[#3A1F0E]/55">Hide category</button><button type="button" onClick={() => void feedback(recommendation, "stop_recommending_topic")} className="text-xs font-bold text-[#3A1F0E]/55">Stop topic</button><button type="button" onClick={() => void feedback(recommendation, "not_interested")} className="inline-flex items-center gap-1 text-xs font-bold text-[#3A1F0E]/55"><ThumbsDown className="h-3.5 w-3.5" />Not interested</button></div></article>)}</div>
   </section>;
 }

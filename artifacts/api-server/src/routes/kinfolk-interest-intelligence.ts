@@ -6,17 +6,30 @@ import {
   getInterestIntelligenceForMember,
   isSafeInterestCategory,
   recordRecommendationFeedback,
+  shareRecommendedOpportunityWithCircle,
   shareConfirmedInterestWithCircle,
   updateInterestSettings,
   updateInterestState,
   type InterestState,
   type RecommendationFeedback,
 } from "../kinfolk/interest-intelligence-service";
+import {
+  isAccessibilityRequirement,
+  isAgePreference,
+  isCrowdPreference,
+  isMaximumPrice,
+  normalizeExcludedCategories,
+  updateInterestDiscoveryConstraints,
+} from "../kinfolk/interest-recommendation-constraints";
+import {
+  discoverExternalOpportunitiesForMember,
+  listExternalOpportunityRecommendations,
+} from "../kinfolk/external-opportunity-discovery";
 import { ensureKinfolkInterestIntelligenceSchema } from "../lib/startup-migrations";
 
 const router = Router();
 const STATES: readonly InterestState[] = ["tentative", "confirmed", "paused", "dismissed"];
-const FEEDBACK: readonly RecommendationFeedback[] = ["interested", "not_interested", "hide"];
+const FEEDBACK: readonly RecommendationFeedback[] = ["interested", "not_interested", "hide", "more_like_this", "wrong_assumption", "hide_category", "stop_recommending_topic"];
 
 function userId(req: Request): string | null {
   return typeof req.user?.id === "string" && req.user.id ? req.user.id : null;
@@ -61,9 +74,12 @@ router.get("/kinfolk/interest-intelligence", async (req: Request, res: Response)
   const id = requireMember(req, res);
   if (!id) return;
   try {
-    const payload = await getInterestIntelligenceForMember(id);
+    const [payload, externalOpportunities] = await Promise.all([
+      getInterestIntelligenceForMember(id),
+      listExternalOpportunityRecommendations(id),
+    ]);
     res.set("Cache-Control", "no-store");
-    res.json(payload);
+    res.json({ ...payload, externalOpportunities });
   } catch (error) {
     req.log.error({ errorName: error instanceof Error ? error.name : "unknown" }, "Kinfolk interest intelligence unavailable");
     unavailable(res);
@@ -77,9 +93,12 @@ router.put("/kinfolk/interest-intelligence/settings", async (req: Request, res: 
   const id = requireMember(req, res);
   if (!id) return;
   const body = (req.body ?? {}) as Record<string, unknown>;
-  const allowedKeys = ["interestRecognitionEnabled", "proactiveDiscoveryEnabled", "interestNotificationsEnabled"];
-  if (!allowedKeys.some((key) => Object.prototype.hasOwnProperty.call(body, key)) || allowedKeys.some((key) => body[key] !== undefined && typeof body[key] !== "boolean")) {
-    res.status(400).json({ error: "Provide one or more boolean interest settings." });
+  const booleanKeys = ["interestRecognitionEnabled", "proactiveDiscoveryEnabled", "interestNotificationsEnabled", "externalOpportunityDiscoveryEnabled"];
+  const hasFrequency = Object.prototype.hasOwnProperty.call(body, "externalOpportunityDiscoveryFrequency");
+  if ((!booleanKeys.some((key) => Object.prototype.hasOwnProperty.call(body, key)) && !hasFrequency)
+    || booleanKeys.some((key) => body[key] !== undefined && typeof body[key] !== "boolean")
+    || (hasFrequency && !["manual", "daily", "weekly"].includes(String(body.externalOpportunityDiscoveryFrequency)))) {
+    res.status(400).json({ error: "Provide boolean interest settings and an optional manual, daily, or weekly research frequency." });
     return;
   }
   try {
@@ -88,6 +107,69 @@ router.put("/kinfolk/interest-intelligence/settings", async (req: Request, res: 
     res.json({ settings });
   } catch (error) {
     req.log.error({ errorName: error instanceof Error ? error.name : "unknown" }, "Kinfolk interest settings unavailable");
+    unavailable(res);
+  }
+});
+
+// Explicit, scoped hard requirements. These are never inferred from behaviour.
+router.put("/kinfolk/interest-intelligence/constraints", async (req: Request, res: Response) => {
+  const id = requireMember(req, res);
+  if (!id) return;
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  if ((body.crowdPreference !== undefined && !isCrowdPreference(body.crowdPreference))
+    || (body.maximumPrice !== undefined && !isMaximumPrice(body.maximumPrice))
+    || (body.agePreference !== undefined && !isAgePreference(body.agePreference))
+    || (body.accessibilityRequirements !== undefined && (!Array.isArray(body.accessibilityRequirements) || body.accessibilityRequirements.some((value) => !isAccessibilityRequirement(value))))
+    || (body.excludedCategories !== undefined && !Array.isArray(body.excludedCategories))) {
+    res.status(400).json({ error: "Provide supported, explicit discovery requirements only." });
+    return;
+  }
+  try {
+    const constraints = await updateInterestDiscoveryConstraints(id, {
+      crowdPreference: body.crowdPreference as never,
+      maximumPrice: body.maximumPrice as never,
+      agePreference: body.agePreference as never,
+      accessibilityRequirements: body.accessibilityRequirements as never,
+      excludedCategories: normalizeExcludedCategories(body.excludedCategories),
+    });
+    res.set("Cache-Control", "no-store");
+    res.json({ constraints });
+  } catch (error) {
+    req.log.error({ errorName: error instanceof Error ? error.name : "unknown" }, "Kinfolk interest constraints unavailable");
+    unavailable(res);
+  }
+});
+
+// This is member-requested research only. It starts no schedule, notification,
+// external delivery, or background collection on its own.
+router.post("/kinfolk/interest-intelligence/external-opportunities/discover", async (req: Request, res: Response) => {
+  const id = requireMember(req, res);
+  if (!id) return;
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const city = typeof body.city === "string" ? body.city.trim().slice(0, 100) : "";
+  const state = typeof body.state === "string" ? body.state.trim().toUpperCase() : "";
+  if (!city || !/^[A-Z]{2}$/.test(state)) {
+    res.status(400).json({ error: "Choose a city and two-letter state for source-backed opportunity research." });
+    return;
+  }
+  try {
+    const result = await discoverExternalOpportunitiesForMember({ userId: id, city, state });
+    if (result.state === "disabled") {
+      res.status(409).json({ error: "Turn on source-backed opportunity discovery before requesting external research.", code: "EXTERNAL_OPPORTUNITY_DISCOVERY_DISABLED" });
+      return;
+    }
+    if (result.state === "rate_limited") {
+      res.status(429).json({ error: "That research frequency is active. Try again after the selected interval.", retryAfterSeconds: result.retryAfterSeconds });
+      return;
+    }
+    if (result.state === "unavailable") {
+      res.status(503).json({ error: "Source-backed research is currently unavailable. No uncited fallback was used.", code: "EXTERNAL_OPPORTUNITY_RESEARCH_UNAVAILABLE" });
+      return;
+    }
+    res.set("Cache-Control", "no-store");
+    res.json({ ...result, disclosure: "Results require an approved citation and a future date. They are source-confirmed opportunities, not MWM-verified listings." });
+  } catch (error) {
+    req.log.error({ errorName: error instanceof Error ? error.name : "unknown" }, "Kinfolk external opportunity discovery unavailable");
     unavailable(res);
   }
 });
@@ -164,9 +246,9 @@ router.post("/kinfolk/interest-intelligence/recommendations/:recommendationId/fe
     return;
   }
   try {
-    const found = await recordRecommendationFeedback({ userId: id, recommendationId, feedback: feedback as RecommendationFeedback });
-    if (!found) { res.status(404).json({ error: "Recommendation not found." }); return; }
-    res.json({ ok: true, automaticallyChangesInterestProfile: false });
+    const outcome = await recordRecommendationFeedback({ userId: id, recommendationId, feedback: feedback as RecommendationFeedback });
+    if (!outcome.found) { res.status(404).json({ error: "Recommendation not found." }); return; }
+    res.json({ ok: true, effect: outcome.effect, automaticallyChangesInterestProfile: false });
   } catch (error) {
     req.log.error({ errorName: error instanceof Error ? error.name : "unknown" }, "Kinfolk recommendation feedback unavailable");
     unavailable(res);
@@ -175,6 +257,23 @@ router.post("/kinfolk/interest-intelligence/recommendations/:recommendationId/fe
 
 // Explicit Circle sharing routes. They disclose neither a member identity nor
 // any unshared interest, save, search, profile, or private-memory information.
+router.post("/kinfolk/circles/:circleId/recommendations/:recommendationId/share", async (req: Request, res: Response) => {
+  const id = requireMember(req, res);
+  const circleId = interestId(req.params.circleId);
+  const recommendationId = interestId(req.params.recommendationId);
+  if (!id) return;
+  if (!circleId || !recommendationId) { res.status(400).json({ error: "Invalid Circle or recommendation id." }); return; }
+  try {
+    const outcome = await shareRecommendedOpportunityWithCircle({ userId: id, circleId, recommendationId });
+    if (outcome === "not_member") { res.status(403).json({ error: "Circle membership is required." }); return; }
+    if (outcome === "missing") { res.status(404).json({ error: "An active, member-approved recommendation is required." }); return; }
+    res.status(outcome === "already_shared" ? 200 : 201).json({ ok: true, outcome, destination: "circle_suggestions", automaticSharing: false });
+  } catch (error) {
+    req.log.error({ errorName: error instanceof Error ? error.name : "unknown" }, "Kinfolk Circle opportunity share unavailable");
+    unavailable(res);
+  }
+});
+
 router.post("/kinfolk/circles/:circleId/interests/:interestId/share", async (req: Request, res: Response) => {
   const id = requireMember(req, res);
   const circleId = interestId(req.params.circleId);
