@@ -53,6 +53,16 @@ const SOCIAL_PROFILE_ACTIONS = [
   { icon: "compass" as const, label: "My Passport", detail: "Private moments you choose to keep", route: "/passport" as const },
 ];
 
+type ManagedBusiness = {
+  id: string;
+  name: string;
+  category: string;
+  city: string;
+  state: string;
+  verified: boolean;
+  status: string;
+};
+
 const INDUSTRIES = [
   "Technology & Software",
   "Healthcare & Wellness",
@@ -79,6 +89,88 @@ function getInitials(firstName?: string | null, lastName?: string | null): strin
   const f = firstName?.[0] ?? "";
   const l = lastName?.[0] ?? "";
   return (f + l).toUpperCase() || "?";
+}
+
+function MyBusinessAccessCard({
+  colors,
+  isAuthenticated,
+  router,
+}: {
+  colors: ReturnType<typeof useColors>;
+  isAuthenticated: boolean;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const [businesses, setBusinesses] = useState<ManagedBusiness[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    if (!isAuthenticated) {
+      setBusinesses([]);
+      setError(null);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const token = await SecureStore.getItemAsync("auth_session_token");
+      const response = await fetch(`${getApiBase()}/api/businesses/mine/managed`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        businesses?: ManagedBusiness[];
+        error?: string;
+      };
+      if (!response.ok || !Array.isArray(payload.businesses)) {
+        throw new Error(payload.error ?? "Your business access could not load.");
+      }
+      setBusinesses(payload.businesses);
+    } catch (cause) {
+      setBusinesses([]);
+      setError(cause instanceof Error ? cause.message : "Your business access could not load.");
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => { void load(); }, [load]);
+
+  if (!isAuthenticated || (!loading && !error && businesses.length === 0)) return null;
+
+  return (
+    <View style={{ marginHorizontal: 16, marginTop: 12, borderRadius: 16, borderWidth: 1, borderColor: colors.primary + "45", backgroundColor: colors.card, padding: 14 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: colors.primary + "16", alignItems: "center", justifyContent: "center" }}>
+          <Feather name="briefcase" size={18} color={colors.primary} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold", fontSize: 16 }}>My Business</Text>
+          <Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 }}>Approved businesses connected to this account</Text>
+        </View>
+      </View>
+      {loading ? <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 14 }}><ActivityIndicator size="small" color={colors.primary} /><Text style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 13 }}>Checking your business access…</Text></View> : null}
+      {error ? (
+        <View style={{ marginTop: 14, borderRadius: 10, backgroundColor: "#FEF2F2", padding: 10 }}>
+          <Text style={{ color: "#991B1B", fontFamily: "Inter_500Medium", fontSize: 13 }}>{error}</Text>
+          <TouchableOpacity onPress={() => { void load(); }} style={{ marginTop: 8, alignSelf: "flex-start" }}><Text style={{ color: "#991B1B", fontFamily: "Inter_600SemiBold", fontSize: 13 }}>Try again</Text></TouchableOpacity>
+        </View>
+      ) : null}
+      {businesses.map((business) => (
+        <TouchableOpacity
+          key={business.id}
+          activeOpacity={0.8}
+          onPress={() => router.push("/business-owner" as any)}
+          style={{ marginTop: 12, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderRadius: 10, borderWidth: 1, borderColor: colors.border, backgroundColor: colors.secondary, padding: 12 }}
+        >
+          <View style={{ flex: 1, paddingRight: 8 }}>
+            <Text numberOfLines={1} style={{ color: colors.foreground, fontFamily: "Inter_600SemiBold", fontSize: 14 }}>{business.name}</Text>
+            <Text numberOfLines={1} style={{ color: colors.mutedForeground, fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 }}>{business.city}, {business.state} · {business.category}</Text>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}><Text style={{ color: colors.primary, fontFamily: "Inter_600SemiBold", fontSize: 12 }}>Manage</Text><Feather name="chevron-right" size={16} color={colors.primary} /></View>
+        </TouchableOpacity>
+      ))}
+    </View>
+  );
 }
 
 function PrivacyToggleCard({
@@ -1017,6 +1109,7 @@ export default function ProfileScreen() {
               />
             </ProfileSurfaceBoundary>
           ) : null}
+          <MyBusinessAccessCard colors={colors} isAuthenticated={isAuthenticated} router={router} />
           {false && <View style={[styles.profileCard, { backgroundColor: colors.card, shadowColor: colors.foreground }]}>
             <TouchableOpacity onPress={pickProfileImage} activeOpacity={0.8} style={styles.avatarWrap} disabled={uploadingAvatar}>
               {localAvatarUri || user?.profileImageUrl ? (

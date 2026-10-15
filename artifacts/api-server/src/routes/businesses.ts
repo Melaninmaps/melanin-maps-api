@@ -1599,6 +1599,7 @@ router.get("/businesses/mine/managed", async (req: any, res: Response) => {
         city: businessesTable.city,
         state: businessesTable.state,
         verified: businessesTable.verified,
+        status: businessesTable.status,
       })
       .from(businessesTable)
       .where(approvedOwnerPredicate(String(userId)))

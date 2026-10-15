@@ -19,6 +19,7 @@ describe("owner-scoped managed business read contract", () => {
     expect(route).toContain('router.get("/businesses/mine/managed"');
     expect(route).toContain(".where(approvedOwnerPredicate(String(userId)))");
     expect(route).toContain(".orderBy(asc(businessesTable.name), asc(businessesTable.id))");
+    expect(route).toContain("status: businessesTable.status");
     expect(route).toContain("res.json({ businesses });");
     expect(route).not.toContain(".limit(");
     expect(route).not.toMatch(/\.(?:insert|update|delete)\(/);

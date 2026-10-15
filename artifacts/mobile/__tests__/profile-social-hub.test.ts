@@ -93,4 +93,14 @@ describe("mobile social profile hub", () => {
     expect(bioIndex).toBeGreaterThan(nameIndex);
     expect(badgeIndex).toBeGreaterThan(bioIndex);
   });
+
+  it("shows member-owned business access from the approved managed-business endpoint", () => {
+    expect(profile).toContain("function MyBusinessAccessCard");
+    expect(profile).toContain('api/businesses/mine/managed');
+    expect(profile).toContain("Approved businesses connected to this account");
+    expect(profile).toContain("Checking your business access…");
+    expect(profile).toContain("Your business access could not load.");
+    expect(profile).toContain('router.push("/business-owner" as any)');
+    expect(profile).toContain("<MyBusinessAccessCard");
+  });
 });

@@ -1,6 +1,6 @@
 import { Router, type IRouter, type Request, type Response } from "express";
 import { db, businessesTable, businessPromotionsTable } from "@workspace/db";
-import { and, desc, eq, gt } from "drizzle-orm";
+import { and, desc, eq, gt, sql } from "drizzle-orm";
 import { getUncachableStripeClient } from "../stripeClient";
 import { logger } from "../lib/logger";
 
@@ -14,13 +14,68 @@ function requireAuth(req: Request, res: Response): string | null {
   return req.user.id;
 }
 
-async function getOwnedBusiness(userId: string) {
-  const [business] = await db
+type OwnedBusinessSelection = {
+  business: typeof businessesTable.$inferSelect | null;
+  selectionRequired: boolean;
+};
+
+function requestedBusinessId(req: Request): string | null {
+  const queryValue = typeof req.query.businessId === "string" ? req.query.businessId : null;
+  const bodyValue = typeof (req.body as Record<string, unknown> | undefined)?.businessId === "string"
+    ? String((req.body as Record<string, unknown>).businessId)
+    : null;
+  const value = bodyValue ?? queryValue;
+  return value?.trim() || null;
+}
+
+/**
+ * Promotion activity is available only through an approved, unrevoked owner
+ * relationship. Legacy `submitted_by_id` is not an ownership authorization.
+ * When a member manages multiple businesses, an explicit businessId is required.
+ */
+async function getOwnedBusiness(
+  userId: string,
+  businessId: string | null,
+): Promise<OwnedBusinessSelection> {
+  const approvedOwner = sql<boolean>`EXISTS (
+    SELECT 1 FROM business_owner_links bol
+    WHERE bol.business_id = ${businessesTable.id}
+      AND bol.user_id = ${userId}
+      AND bol.role = 'owner'
+      AND bol.status = 'approved'
+      AND bol.revoked_at IS NULL
+  )`;
+  const filters = businessId
+    ? and(eq(businessesTable.id, businessId), approvedOwner)
+    : approvedOwner;
+  const businesses = await db
     .select()
     .from(businessesTable)
-    .where(eq(businessesTable.submittedById, userId))
-    .limit(1);
-  return business ?? null;
+    .where(filters)
+    .limit(businessId ? 1 : 2);
+
+  if (!businessId && businesses.length > 1) {
+    return { business: null, selectionRequired: true };
+  }
+  return { business: businesses[0] ?? null, selectionRequired: false };
+}
+
+function requireOwnedBusiness(
+  res: Response,
+  selection: OwnedBusinessSelection,
+) {
+  if (selection.selectionRequired) {
+    res.status(409).json({
+      error: "Select the business you want to manage.",
+      code: "BUSINESS_SELECTION_REQUIRED",
+    });
+    return null;
+  }
+  if (!selection.business) {
+    res.status(404).json({ error: "No approved business found for this account." });
+    return null;
+  }
+  return selection.business;
 }
 
 // ─── Tool catalogue ───────────────────────────────────────────────────────────
@@ -338,11 +393,9 @@ router.get("/businesses/mine/growth-center/eligibility", async (req: Request, re
   if (!userId) return;
 
   try {
-    const business = await getOwnedBusiness(userId);
-    if (!business) {
-      res.status(404).json({ error: "No business found for your account." });
-      return;
-    }
+    const selection = await getOwnedBusiness(userId, requestedBusinessId(req));
+    const business = requireOwnedBusiness(res, selection);
+    if (!business) return;
 
     const eligibility = checkEligibility(business);
     res.json({
@@ -368,11 +421,9 @@ router.get("/businesses/mine/growth-tools", async (req: Request, res: Response) 
   if (!userId) return;
 
   try {
-    const business = await getOwnedBusiness(userId);
-    if (!business) {
-      res.status(404).json({ error: "No business found for your account." });
-      return;
-    }
+    const selection = await getOwnedBusiness(userId, requestedBusinessId(req));
+    const business = requireOwnedBusiness(res, selection);
+    if (!business) return;
 
     const now = new Date();
     const activePromotions = await db
@@ -426,11 +477,9 @@ router.post("/businesses/mine/growth-tools/checkout", async (req: Request, res: 
   if (!userId) return;
 
   try {
-    const business = await getOwnedBusiness(userId);
-    if (!business) {
-      res.status(404).json({ error: "No business found for your account." });
-      return;
-    }
+    const selection = await getOwnedBusiness(userId, requestedBusinessId(req));
+    const business = requireOwnedBusiness(res, selection);
+    if (!business) return;
 
     const eligibility = checkEligibility(business);
     if (!eligibility.eligible) {
@@ -538,11 +587,9 @@ router.post("/businesses/mine/growth-center/spotlight", async (req: Request, res
   if (!userId) return;
 
   try {
-    const business = await getOwnedBusiness(userId);
-    if (!business) {
-      res.status(404).json({ error: "No business found for your account." });
-      return;
-    }
+    const selection = await getOwnedBusiness(userId, requestedBusinessId(req));
+    const business = requireOwnedBusiness(res, selection);
+    if (!business) return;
 
     const { note } = req.body as { note?: string };
 
@@ -576,11 +623,9 @@ router.post("/businesses/mine/promote", async (req: Request, res: Response) => {
   if (!userId) return;
 
   try {
-    const business = await getOwnedBusiness(userId);
-    if (!business) {
-      res.status(404).json({ error: "No business found for your account." });
-      return;
-    }
+    const selection = await getOwnedBusiness(userId, requestedBusinessId(req));
+    const business = requireOwnedBusiness(res, selection);
+    if (!business) return;
 
     const alreadyPromoted = business.promotedUntil && business.promotedUntil > new Date();
     if (alreadyPromoted) {
@@ -649,11 +694,9 @@ router.get("/businesses/mine/promote/status", async (req: Request, res: Response
   if (!userId) return;
 
   try {
-    const business = await getOwnedBusiness(userId);
-    if (!business) {
-      res.status(404).json({ error: "No business found." });
-      return;
-    }
+    const selection = await getOwnedBusiness(userId, requestedBusinessId(req));
+    const business = requireOwnedBusiness(res, selection);
+    if (!business) return;
 
     const isActive = !!(business.promotedUntil && business.promotedUntil > new Date());
     res.json({ isPromoted: isActive, promotedUntil: business.promotedUntil ?? null });

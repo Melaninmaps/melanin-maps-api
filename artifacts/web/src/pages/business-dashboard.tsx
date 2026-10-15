@@ -12,6 +12,8 @@ import { BusinessOwnershipEditor } from "@/features/businesses/BusinessOwnership
 import { BusinessExperienceEditor } from "@/features/businesses/BusinessExperienceEditor";
 import { BusinessVoiceProfileEditor } from "@/features/businesses/BusinessVoiceProfileEditor";
 import { BusinessCulturalTeachingEditor } from "@/features/businesses/BusinessCulturalTeachingEditor";
+import { ManagedBusinessProfileEditor } from "@/features/businesses/ManagedBusinessProfileEditor";
+import { authenticatedFetch } from "@/lib/authenticatedFetch";
 
 const BASE = import.meta.env.BASE_URL;
 
@@ -24,7 +26,8 @@ type Review = { id: string; rating: number; text: string | null; wouldReturnAlon
 type PromotionType = "priority_search" | "category_featured" | "city_featured" | "cultural_spotlight" | "event_featured";
 type Promotion = { id: string; type: PromotionType; status: string; endsAt?: string | null };
 type ToolConfig = { type: PromotionType; name: string; description: string; priceCents: number; priceDisplay: string; durationDays: number; icon: string; tagline: string };
-type GrowthData = { activePromotions: Promotion[]; pendingPromotions: Promotion[]; catalogue: ToolConfig[] };
+type GrowthEligibility = { eligible: boolean; reasons: string[]; warnings: string[] };
+type GrowthData = { activePromotions: Promotion[]; pendingPromotions: Promotion[]; catalogue: ToolConfig[]; eligibility: GrowthEligibility };
 type CommunityNeedInsight = { id: string; topicKey: string; topicLabel: string; memberCount: number; threshold: number; firstReachedAt: string };
 type GlobalRec = {
   id: string; country: string; city: string | null; businessName: string;
@@ -87,16 +90,19 @@ export default function BusinessDashboard() {
   const params = new URLSearchParams(search);
   const justActivated = params.get("growth_tool_activated") === "1";
   const activatedTool = params.get("tool");
+  const requestedBusinessId = params.get("businessId");
 
   const [businesses, setBusinesses] = useState<BusinessSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [user, setUser] = useState<{ id?: string; email?: string } | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"overview" | "promote" | "global">(justActivated ? "promote" : "overview");
   const [growthData, setGrowthData] = useState<GrowthData | null>(null);
   const [growthLoading, setGrowthLoading] = useState(false);
+  const [growthError, setGrowthError] = useState<string | null>(null);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const [globalRecs, setGlobalRecs] = useState<GlobalRec[]>([]);
   const [globalLoading, setGlobalLoading] = useState(false);
@@ -112,12 +118,13 @@ export default function BusinessDashboard() {
   const [gConnection, setGConnection] = useState("");
   const [gSubmitting, setGSubmitting] = useState(false);
   const [gSuccess, setGSuccess] = useState(false);
+  const [editingProfile, setEditingProfile] = useState(false);
 
   useEffect(() => {
     // `/auth/user` must not be served from a 304 cache response: fetch() has
     // no JSON body to parse for a revalidated 304, which falsely rendered a
     // signed-in owner as signed out in this dashboard.
-    fetch(`${BASE}api/auth/user`, { credentials: "include", cache: "no-store" })
+    authenticatedFetch(`${BASE}api/auth/user`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => setUser(d?.user ?? null))
       .catch(() => setUser(null))
@@ -125,18 +132,36 @@ export default function BusinessDashboard() {
     // The dashboard is explicitly multi-business. Do not call the legacy
     // single-business endpoint: it correctly fails closed when a member has
     // more than one approved owner relationship.
-    fetch(`${BASE}api/businesses/mine/managed`, { credentials: "include" }).then((r) => r.json()).then((d) => {
-      const list = Array.isArray(d.businesses) ? d.businesses : [];
-      setBusinesses(list);
-      if (list.length) setSelectedId(list[0].id);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, []);
+    setLoading(true);
+    setLoadError(null);
+    authenticatedFetch(`${BASE}api/businesses/mine/managed`)
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(payload.error ?? "Your managed businesses could not load.");
+        }
+        return payload;
+      })
+      .then((d) => {
+        const list = Array.isArray(d.businesses) ? d.businesses as BusinessSummary[] : [];
+        setBusinesses(list);
+        const requested = requestedBusinessId && list.some((business) => business.id === requestedBusinessId)
+          ? requestedBusinessId
+          : list[0]?.id ?? null;
+        setSelectedId(requested);
+      })
+      .catch((error) => {
+        setBusinesses([]);
+        setSelectedId(null);
+        setLoadError(error instanceof Error ? error.message : "Your managed businesses could not load.");
+      })
+      .finally(() => setLoading(false));
+  }, [requestedBusinessId]);
 
   useEffect(() => {
     if (!selectedId) return;
-    fetch(`${BASE}api/reviews?businessId=${selectedId}`, { credentials: "include" }).then((r) => r.json()).then((d) => setReviews(d.reviews ?? [])).catch(() => {});
-    fetch(`${BASE}api/businesses/${selectedId}/kinfolk-community-needs`, { credentials: "include" })
+    authenticatedFetch(`${BASE}api/reviews?businessId=${encodeURIComponent(selectedId)}`).then((r) => r.json()).then((d) => setReviews(d.reviews ?? [])).catch(() => setReviews([]));
+    authenticatedFetch(`${BASE}api/businesses/${encodeURIComponent(selectedId)}/kinfolk-community-needs`)
       .then((r) => r.ok ? r.json() : { insights: [] })
       .then((d: { insights?: CommunityNeedInsight[] }) => setCommunityNeeds(d.insights ?? []))
       .catch(() => setCommunityNeeds([]));
@@ -145,14 +170,26 @@ export default function BusinessDashboard() {
   useEffect(() => {
     if (activeTab !== "promote" || !selectedId) return;
     setGrowthLoading(true);
-    fetch(`${BASE}api/businesses/mine/growth-tools`, { credentials: "include" })
-      .then((r) => r.json()).then((d) => setGrowthData(d as GrowthData)).catch(() => {}).finally(() => setGrowthLoading(false));
+    setGrowthData(null);
+    setGrowthError(null);
+    authenticatedFetch(`${BASE}api/businesses/mine/growth-tools?businessId=${encodeURIComponent(selectedId)}`)
+      .then(async (response) => {
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error ?? "Promotion tools could not load.");
+        return payload as GrowthData;
+      })
+      .then((data) => setGrowthData(data))
+      .catch((error) => {
+        setGrowthData(null);
+        setGrowthError(error instanceof Error ? error.message : "Promotion tools could not load.");
+      })
+      .finally(() => setGrowthLoading(false));
   }, [activeTab, selectedId]);
 
   useEffect(() => {
     if (activeTab !== "global") return;
     setGlobalLoading(true);
-    fetch(`${BASE}api/global-recommendations/mine`, { credentials: "include" })
+    authenticatedFetch(`${BASE}api/global-recommendations/mine`)
       .then((r) => r.json())
       .then((d: { recommendations?: GlobalRec[]; badge?: string }) => {
         setGlobalRecs(d.recommendations ?? []);
@@ -166,8 +203,8 @@ export default function BusinessDashboard() {
     if (!gCountry.trim() || !gName.trim()) return;
     setGSubmitting(true);
     try {
-      const res = await fetch(`${BASE}api/global-recommendations`, {
-        method: "POST", credentials: "include",
+      const res = await authenticatedFetch(`${BASE}api/global-recommendations`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ country: gCountry, city: gCity || undefined, businessName: gName, website: gWebsite || undefined, type: gType, reason: gReason || undefined, personalConnection: gConnection || undefined }),
       });
@@ -185,12 +222,13 @@ export default function BusinessDashboard() {
   }
 
   async function handleCheckout(type: PromotionType) {
+    if (!selectedId || !growthData?.eligibility.eligible) return;
     setCheckoutLoading(type);
     try {
-      const res = await fetch(`${BASE}api/businesses/mine/growth-tools/checkout`, {
-        method: "POST", credentials: "include",
+      const res = await authenticatedFetch(`${BASE}api/businesses/mine/growth-tools/checkout`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type }),
+        body: JSON.stringify({ type, businessId: selectedId }),
       });
       const data = await res.json() as { checkoutUrl?: string; error?: string };
       if (data.checkoutUrl) {
@@ -254,6 +292,12 @@ export default function BusinessDashboard() {
           <div className="lg:col-span-1">
             <p className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-3">Your Businesses</p>
             {loading && <div className="space-y-3">{[1,2].map((i) => <div key={i} className="h-20 bg-white rounded-2xl animate-pulse" />)}</div>}
+            {!loading && loadError && (
+              <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-800" role="alert">
+                <AlertCircle className="mb-2 h-5 w-5" />
+                <p>{loadError}</p>
+              </div>
+            )}
             {!loading && businesses.length === 0 && (
               <div className="bg-white rounded-2xl p-6 border border-[#3A1F0E]/10 text-center">
                 <Building2 className="w-8 h-8 text-[#3A1F0E]/20 mx-auto mb-2" />
@@ -265,7 +309,7 @@ export default function BusinessDashboard() {
               </div>
             )}
             {businesses.slice(0, 10).map((b) => (
-              <button key={b.id} onClick={() => setSelectedId(b.id === selectedId ? null : b.id)}
+              <button key={b.id} onClick={() => { setSelectedId(b.id); setEditingProfile(false); }}
                 className={`w-full text-left bg-white rounded-2xl p-5 border mb-3 transition-all ${selectedId === b.id ? "border-[#CA922B] shadow-[0_0_0_2px_rgba(202,146,43,0.2)]" : "border-[#3A1F0E]/10 hover:border-[#CA922B]/40"}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
@@ -279,11 +323,17 @@ export default function BusinessDashboard() {
                 </div>
               </button>
             ))}
-            <Link href="/verify-business">
-              <Button variant="outline" size="sm" className="w-full rounded-full mt-2 border-[#CA922B]/40 text-[#CA922B] hover:bg-[#CA922B]/5 text-xs font-bold">
-                <Shield className="w-3 h-3 mr-1" /> Apply for Verification
-              </Button>
-            </Link>
+            {selected && !selected.verified ? (
+              <Link href={`/verify-business?businessId=${encodeURIComponent(selected.id)}`}>
+                <Button variant="outline" size="sm" className="w-full rounded-full mt-2 border-[#CA922B]/40 text-[#CA922B] hover:bg-[#CA922B]/5 text-xs font-bold">
+                  <Shield className="w-3 h-3 mr-1" /> Apply for Verification
+                </Button>
+              </Link>
+            ) : selected?.verified ? (
+              <div className="mt-2 rounded-full border border-green-200 bg-green-50 px-3 py-2 text-center text-xs font-bold text-green-800">
+                <CheckCircle2 className="mr-1 inline h-3.5 w-3.5" /> Verification complete
+              </div>
+            ) : null}
           </div>
 
           {/* Right: detail panel */}
@@ -347,11 +397,9 @@ export default function BusinessDashboard() {
                             <Eye className="w-3 h-3 mr-1" /> View Public Listing
                           </Button>
                         </Link>
-                        <Link href={`/for-business-owners?claim=${selected.id}`}>
-                          <Button size="sm" variant="outline" className="rounded-full border-[#CA922B]/40 text-[#CA922B] text-xs font-bold">
-                            <Edit3 className="w-3 h-3 mr-1" /> Edit Profile
-                          </Button>
-                        </Link>
+                        <Button size="sm" variant="outline" onClick={() => setEditingProfile(true)} className="rounded-full border-[#CA922B]/40 text-[#CA922B] text-xs font-bold">
+                          <Edit3 className="w-3 h-3 mr-1" /> Edit Profile
+                        </Button>
                         <button onClick={() => setActiveTab("promote")}
                           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-[#2D7A4F]/40 text-[#2D7A4F] text-xs font-bold hover:bg-[#2D7A4F]/5 transition-colors">
                           <TrendingUp className="w-3 h-3" /> Promote My Business
@@ -365,6 +413,13 @@ export default function BusinessDashboard() {
                         )}
                       </div>
                     </div>
+
+                    {editingProfile && (
+                      <ManagedBusinessProfileEditor
+                        businessId={selected.id}
+                        onClose={() => setEditingProfile(false)}
+                      />
+                    )}
 
                     <BusinessOwnershipEditor businessId={selected.id} />
                     <BusinessExperienceEditor business={selected} />
@@ -441,8 +496,34 @@ export default function BusinessDashboard() {
                       </div>
                     )}
 
+                    {growthError && (
+                      <div className="flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-800" role="alert">
+                        <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
+                        <p>{growthError}</p>
+                      </div>
+                    )}
+
+                    {growthData && !growthData.eligibility.eligible && (
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5" role="status">
+                        <div className="flex items-start gap-3">
+                          <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-amber-800" />
+                          <div>
+                            <p className="font-bold text-amber-950">Promotions are unavailable for this listing</p>
+                            <p className="mt-1 text-sm leading-6 text-amber-900">{growthData.eligibility.reasons.join(" ")}</p>
+                            <p className="mt-2 text-xs leading-5 text-amber-800">No payment or promotion request can be started until this listing is eligible.</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {growthData && growthData.eligibility.warnings.length > 0 && (
+                      <div className="rounded-2xl border border-[#CA922B]/25 bg-[#FFF8E8] p-4 text-sm text-[#6A3B1E]">
+                        {growthData.eligibility.warnings.join(" ")}
+                      </div>
+                    )}
+
                     {/* Active promotions */}
-                    {growthData && growthData.activePromotions.length > 0 && (
+                    {growthData && growthData.eligibility.eligible && growthData.activePromotions.length > 0 && (
                       <div className="bg-white rounded-2xl border border-[#2D7A4F]/30 overflow-hidden">
                         <div className="flex items-center gap-2 px-5 py-3.5 bg-[#2D7A4F]/8 border-b border-[#2D7A4F]/20">
                           <span className="px-2 py-0.5 rounded-full bg-[#2D7A4F] text-white text-[10px] font-bold uppercase tracking-wider">Active</span>
@@ -470,7 +551,7 @@ export default function BusinessDashboard() {
                     )}
 
                     {/* Pending promotions */}
-                    {growthData && growthData.pendingPromotions.length > 0 && (
+                    {growthData && growthData.eligibility.eligible && growthData.pendingPromotions.length > 0 && (
                       <div className="bg-white rounded-2xl border border-[#CA922B]/30 overflow-hidden">
                         <div className="flex items-center gap-2 px-5 py-3.5 bg-[#CA922B]/8 border-b border-[#CA922B]/20">
                           <Clock className="w-4 h-4 text-[#CA922B]" />
@@ -494,7 +575,7 @@ export default function BusinessDashboard() {
                     )}
 
                     {/* Promotion catalogue */}
-                    {growthData && (
+                    {growthData && growthData.eligibility.eligible && (
                       <div>
                         <p className="text-xs font-bold text-[#3A1F0E]/50 uppercase tracking-wider mb-4">Choose a Boost</p>
                         <div className="space-y-3">
