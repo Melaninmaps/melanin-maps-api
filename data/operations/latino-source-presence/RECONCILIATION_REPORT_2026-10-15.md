@@ -13,6 +13,19 @@ All **3,336** records in the retained documented Latino / Hispanic ownership sou
 
 Every eligible existing exact-match, non-Kinfolk Current profile in these pages received the member-facing ownership designation **`Latino / Hispanic-Owned`**, with its retained source receipt. Kinfolk Current profiles were excluded both in the request plan and during the transaction-time recheck, as required by the documented handoff.
 
+## Source-documented online presence
+
+The retained source registry supplies an official website or social URL for some Hispanic-source records. These are **source-documented links**, not a claim that each destination was live-verified in this pass.
+
+| Source batch | Hispanic-source records | Records with one or more documented social links | Records with documented website | Social-only records |
+|---|---:|---:|---:|---:|
+| Founder city directories | 3,139 | 690 (22.0%) | 1,876 (59.8%) | 240 |
+| Retained directory sources | 155 | 76 (49.0%) | 100 (64.5%) | 1 |
+| Minneapolis directory sources | 42 | 4 (9.5%) | 4 (9.5%) | 0 |
+| **Total** | **3,336** | **770 (23.1%)** | **1,980 (59.4%)** | **241** |
+
+The 770 records with documented social links include **665 Instagram**, **605 Facebook**, **52 TikTok**, and **449 YouTube** links. These platform counts overlap because one business can have more than one social link. The registry did not contain any source-documented X/Twitter or Pinterest links in this Hispanic-source scope.
+
 ## Website and social follow-up
 
 The post-reconciliation receipt audit was run against each of the three documented batches with `ownershipScope=latino`. It retained only profiles that were all of the following: active mapping, exact normalized name/city/state match, `status=active`, not archived, and not Kinfolk Current.
