@@ -1896,6 +1896,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       is_duplicate: boolean;
       deletion_hold_state: "pending" | "blocked" | null;
       deletion_hold_delete_after: string | null;
+      description: string | null;
+      hours: string | null;
+      tags: string[] | null;
       phone: string | null;
       website: string | null;
       instagram: string | null;
@@ -1932,7 +1935,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
        `SELECT id, name, category, subcategory, city, businesses.state AS state, verified, black_owned, ownership_designations, status,
               listing_status, is_duplicate, deletion_hold.state AS deletion_hold_state,
               deletion_hold.delete_after AS deletion_hold_delete_after,
-              phone, website, instagram, tiktok, facebook, twitter, youtube, pinterest,
+              description, hours, tags, phone, website, instagram, tiktok, facebook, twitter, youtube, pinterest,
               to_jsonb(businesses)->>'website_cleanup_status' AS website_cleanup_status,
               CASE WHEN NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL AND EXISTS (
                 SELECT 1 FROM business_discovery_eligibility social_only_eligibility
@@ -2097,6 +2100,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       deletionHoldDeleteAfter: b.deletion_hold_delete_after,
       kinfolkCurrentDeleteReview: b.kinfolk_current_delete_review,
       kinfolkCurrentDeleteReviewQueuedAt: b.kinfolk_current_delete_review_queued_at,
+      description: b.description,
+      hours: b.hours,
+      serviceTags: Array.isArray(b.tags) ? b.tags : [],
       phone: b.phone,
       website: b.website,
       instagram: b.instagram,
