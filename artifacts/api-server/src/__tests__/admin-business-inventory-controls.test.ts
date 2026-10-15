@@ -291,6 +291,7 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
       "COALESCE(description, '') ILIKE",
       "COALESCE(tags::text, '') ILIKE",
       "COALESCE(vibes::text, '') ILIKE",
+      "COALESCE(ownership_designations::text, '') ILIKE",
       "COALESCE(website, '') ILIKE",
       "COALESCE(instagram, '') ILIKE",
       "COALESCE(tiktok, '') ILIKE",
