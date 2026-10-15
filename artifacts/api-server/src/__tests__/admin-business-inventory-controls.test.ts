@@ -40,6 +40,14 @@ describe("administrator full-inventory and reversible duplicate controls", () =>
     expect(adminRoute).not.toContain("ORDER BY created_at DESC\n       LIMIT 500");
   });
 
+  it("qualifies the business state projection when deletion holds are joined", () => {
+    expect(adminRoute).toContain(
+      "SELECT id, name, category, subcategory, city, businesses.state AS state, verified",
+    );
+    expect(adminRoute).toContain("LEFT JOIN business_deletion_holds deletion_hold");
+    expect(adminRoute).toContain("deletion_hold.state AS deletion_hold_state");
+  });
+
   it("keeps an incomplete additive metadata migration from hiding the full inventory", () => {
     expect(adminRoute).toContain("to_jsonb(businesses)->>'research_source_label'");
     expect(adminRoute).toContain("to_jsonb(businesses)->>'kinfolk_recommendation_reason'");

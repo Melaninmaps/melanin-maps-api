@@ -1854,7 +1854,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       intake_cohort: "protected_historical_cohort" | "user_national_master" | "other_inventory";
       manus_created: boolean;
       }>(
-       `SELECT id, name, category, subcategory, city, state, verified, black_owned, ownership_designations, status,
+       `SELECT id, name, category, subcategory, city, businesses.state AS state, verified, black_owned, ownership_designations, status,
               listing_status, is_duplicate, deletion_hold.state AS deletion_hold_state,
               deletion_hold.delete_after AS deletion_hold_delete_after,
               phone, website, instagram, tiktok, facebook, twitter, youtube, pinterest,
