@@ -23,4 +23,14 @@ describe("public map physical-location visibility", () => {
     expect(source).not.toContain("to_jsonb(public.public_businesses)");
     expect(source).not.toMatch(/map-pins[\s\S]{0,800}postal_code/i);
   });
+
+  it("uses the canonical eligible public collection for both map counts and preview records", () => {
+    // The shared public view excludes hidden, duplicate, archived/delete-review,
+    // and otherwise non-public records before clustering can count a marker.
+    expect(source).toContain("FROM public.public_businesses AS public_businesses");
+    expect(source).toContain('documentedDiscoveryEligibilitySqlPredicate("public_businesses.id", "map")');
+    expect(source).toContain("COALESCE(name, '') NOT ILIKE '%[demo]%'");
+    expect(source).toContain("COALESCE(description, '') NOT ILIKE '%[demo]%'");
+    expect(source).toContain("website, instagram, facebook, tiktok, listing_status");
+  });
 });

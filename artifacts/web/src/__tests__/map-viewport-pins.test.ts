@@ -23,6 +23,8 @@ describe("web map viewport pin retrieval", () => {
     expect(mapSource).toContain("marker.setMap(null)");
     expect(mapSource).toContain("markersRef.current.delete(id)");
     expect(mapSource).toContain('import { MarkerClusterer } from "@googlemaps/markerclusterer"');
-    expect(mapSource).toContain("new MarkerClusterer({ map, markers })");
+    expect(mapSource).toContain("const clusterer = new MarkerClusterer({");
+    expect(mapSource).toContain("onClusterClick: (_event: unknown, cluster: { markers: GMarker[] }) => {");
+    expect(mapSource).toContain("openClusterResults(cluster);");
   });
 });

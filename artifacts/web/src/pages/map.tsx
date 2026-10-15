@@ -14,6 +14,11 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { MarkerClusterer } from "@googlemaps/markerclusterer";
 import { LocalBusinessResults } from "@/features/map/LocalBusinessResults";
 import { applyLocalMapViewport, type MapViewportAdapter } from "@/features/map/applyLocalMapViewport";
+import {
+  clusterBusinessKey,
+  paginateClusterBusinesses,
+  uniqueClusterBusinesses,
+} from "@/features/map/clusterBusinessResults";
 import { parseLocalMapSearch } from "@/features/map/parseLocalMapSearch";
 import { parseBusinessMapSearchPhrase } from "@/features/map/parseBusinessMapSearchPhrase";
 import AddPlaceModal from "@/components/AddPlaceModal";
@@ -63,6 +68,10 @@ type BizWithCoords = {
   category?: string | null;
   city?: string | null;
   state?: string | null;
+  website?: string | null;
+  instagram?: string | null;
+  facebook?: string | null;
+  tiktok?: string | null;
   imageUrl?: string | null;
   latitude?: string | number | null;
   longitude?: string | number | null;
@@ -253,6 +262,7 @@ export default function MapPage() {
   const mapDivRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<GMap>(null);
   const markersRef = useRef<Map<string, GMarker>>(new Map());
+  const markerBusinessesRef = useRef<Map<GMarker, BizWithCoords>>(new Map());
   const markerClustererRef = useRef<MarkerClusterer | null>(null);
   const infoWindowRef = useRef<GInfoWindow>(null);
   const directionsRendererRef = useRef<any>(null);
@@ -273,6 +283,11 @@ export default function MapPage() {
   const [gmLoaded, setGmLoaded] = useState(false);
   const [ready, setReady] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
+  const [selectedCluster, setSelectedCluster] = useState<{
+    key: string;
+    businesses: BizWithCoords[];
+  } | null>(null);
+  const [clusterPage, setClusterPage] = useState(0);
   const [search, setSearch] = useState("");
   const [apiKeyError, setApiKeyError] = useState(false);
   const [isPaidMember, setIsPaidMember] = useState(false);
@@ -1471,6 +1486,8 @@ export default function MapPage() {
 
   const selectBusiness = useCallback((id: string, biz: BizWithCoords, marker?: GMarker) => {
     setSelected(id);
+    setSelectedCluster(null);
+    setClusterPage(0);
     setSidebarOpen(true);
     setLegendFilter(null); // switch sidebar to business view
     const g = (window as any).google?.maps;
@@ -1496,16 +1513,40 @@ export default function MapPage() {
     });
 
     const isDemo = biz.description?.startsWith("[DEMO]") ?? false;
+    const publicContacts = [
+      ["Website", safePublicUrl(biz.website)],
+      ["Instagram", safePublicUrl(biz.instagram)],
+      ["Facebook", safePublicUrl(biz.facebook)],
+      ["TikTok", safePublicUrl(biz.tiktok)],
+    ].filter((contact): contact is [string, string] => Boolean(contact[1]));
+    const contactLinks = publicContacts.map(([label, href]) =>
+      `<a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none">${escapeHtml(label)}</a>`,
+    ).join(`<span style="color:#3A1F0E55;padding:0 4px">·</span>`);
     infoWindowRef.current?.setContent(
       `<div style="font-family:serif;padding:4px 2px;min-width:160px">
-        <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px">${biz.name ?? ""}</div>
+        <div style="font-weight:bold;font-size:14px;color:#2B1507;margin-bottom:2px">${escapeHtml(biz.name ?? "")}</div>
         ${isDemo ? `<div style="display:inline-block;font-size:9px;font-weight:900;letter-spacing:0.08em;text-transform:uppercase;background:#fef3c7;color:#b45309;border:1px solid #fcd34d;border-radius:4px;padding:1px 6px;margin-bottom:4px">Demo Listing</div>` : ""}
-        <div style="font-size:12px;color:#CA922B;font-weight:600;margin-bottom:2px">${biz.category ?? ""}</div>
-        <div style="font-size:11px;color:#3A1F0E80">${biz.city ?? ""}, ${biz.state ?? ""}</div>
-        <a href="/businesses/${biz.id}" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none;margin-top:4px;display:block">View Business →</a>
+        <div style="font-size:12px;color:#CA922B;font-weight:600;margin-bottom:2px">${escapeHtml(biz.category ?? "")}</div>
+        <div style="font-size:11px;color:#3A1F0E80">${escapeHtml(biz.city ?? "")}, ${escapeHtml(biz.state ?? "")}</div>
+        ${contactLinks ? `<div style="margin-top:5px">${contactLinks}</div>` : ""}
+        <a href="/businesses/${encodeURIComponent(biz.id)}" style="font-size:11px;color:#CA922B;font-weight:bold;text-decoration:none;margin-top:5px;display:block">View Business →</a>
       </div>`
     );
     infoWindowRef.current?.open(mapRef.current, m);
+  }, []);
+
+  const openClusterResults = useCallback((cluster: { markers: GMarker[] }) => {
+    const clusterBusinesses = uniqueClusterBusinesses(
+      cluster.markers.map((marker) => markerBusinessesRef.current.get(marker)),
+    );
+    if (clusterBusinesses.length === 0) return;
+    const key = clusterBusinessKey(clusterBusinesses);
+    setSelected(null);
+    setSelectedCluster({ key, businesses: clusterBusinesses });
+    setClusterPage(0);
+    setSidebarOpen(true);
+    setLegendFilter(null);
+    infoWindowRef.current?.close();
   }, []);
 
   // Reconcile the marker layer when a debounced viewport request completes.
@@ -1519,11 +1560,16 @@ export default function MapPage() {
     markersRef.current.forEach((marker, id) => {
       if (!visibleIds.has(id)) {
         marker.setMap(null);
+        markerBusinessesRef.current.delete(marker);
         markersRef.current.delete(id);
       }
     });
     businesses.forEach((biz) => {
-      if (markersRef.current.has(biz.id)) return;
+      const existingMarker = markersRef.current.get(biz.id);
+      if (existingMarker) {
+        markerBusinessesRef.current.set(existingMarker, biz);
+        return;
+      }
       const lat = Number(biz.latitude);
       const lng = Number(biz.longitude);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
@@ -1536,11 +1582,14 @@ export default function MapPage() {
       });
       marker.addListener("click", () => selectBusiness(biz.id, biz, marker));
       markersRef.current.set(biz.id, marker);
+      markerBusinessesRef.current.set(marker, biz);
     });
   }, [businesses, ready, selectBusiness]);
 
   const resetView = useCallback(() => {
     setSelected(null);
+    setSelectedCluster(null);
+    setClusterPage(0);
     clearRoute();
     const g = (window as any).google?.maps;
     if (!g || !mapRef.current) return;
@@ -1573,6 +1622,21 @@ export default function MapPage() {
     setRouteInfo(null);
     setRoutingBizId(null);
   }, []);
+
+  const zoomToSelectedCluster = useCallback(() => {
+    const g = (window as any).google?.maps;
+    const map = mapRef.current;
+    if (!selectedCluster || !g || !map) return;
+    const bounds = new g.LatLngBounds();
+    selectedCluster.businesses.forEach((business) => {
+      const latitude = Number(business.latitude);
+      const longitude = Number(business.longitude);
+      if (Number.isFinite(latitude) && Number.isFinite(longitude)) {
+        bounds.extend({ lat: latitude, lng: longitude });
+      }
+    });
+    if (!bounds.isEmpty()) map.fitBounds(bounds, { top: 84, right: 32, bottom: 48, left: 352 });
+  }, [selectedCluster]);
 
   const handleDirections = useCallback((biz: BizWithCoords, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1624,8 +1688,9 @@ export default function MapPage() {
   // search. The clusterer keeps dense city viewports responsive without
   // replacing any individual business marker or its profile action.
   useEffect(() => {
+    const g = (window as any).google?.maps;
     const map = mapRef.current;
-    if (!map) return;
+    if (!g || !map) return;
     const localSearchIntent = parseLocalMapSearch(search);
     const localSearchOwnsPins = businessSearchActive && (
       detectedLocation !== null || (userCoords !== null && localSearchIntent.usesDeviceLocation === true)
@@ -1646,13 +1711,46 @@ export default function MapPage() {
       .filter(([id]) => activeIds.has(id))
       .map(([, marker]) => marker);
     if (markers.length === 0) return;
-    const clusterer = new MarkerClusterer({ map, markers });
+    const clusterer = new MarkerClusterer({
+      map,
+      markers,
+      renderer: {
+        render(cluster: { count: number; position: unknown; markers: GMarker[] }) {
+          const key = clusterBusinessKey(uniqueClusterBusinesses(
+            cluster.markers.map((marker) => markerBusinessesRef.current.get(marker)),
+          ));
+          const isSelectedCluster = key === selectedCluster?.key;
+          return new g.Marker({
+            position: cluster.position,
+            title: `${cluster.count} eligible ${cluster.count === 1 ? "business" : "businesses"}${isSelectedCluster ? " selected" : ""}`,
+            label: {
+              text: String(cluster.count),
+              color: "#FFFFFF",
+              fontSize: isSelectedCluster ? "14px" : "12px",
+              fontWeight: "700",
+            },
+            icon: {
+              path: g.SymbolPath.CIRCLE,
+              scale: isSelectedCluster ? 18 : 15,
+              fillColor: isSelectedCluster ? "#2B1507" : "#CA922B",
+              fillOpacity: 1,
+              strokeColor: isSelectedCluster ? "#CA922B" : "#2B1507",
+              strokeWeight: isSelectedCluster ? 4 : 2.5,
+            },
+            zIndex: 1000 + cluster.count,
+          });
+        },
+      },
+      onClusterClick: (_event: unknown, cluster: { markers: GMarker[] }) => {
+        openClusterResults(cluster);
+      },
+    });
     markerClustererRef.current = clusterer;
     return () => {
       clusterer.clearMarkers();
       if (markerClustererRef.current === clusterer) markerClustererRef.current = null;
     };
-  }, [businesses, displayedBusinessResults, isDiscoveryFilterActive, legendFilter, businessSearchActive, detectedLocation, userCoords, search]);
+  }, [businesses, displayedBusinessResults, isDiscoveryFilterActive, legendFilter, businessSearchActive, detectedLocation, userCoords, search, openClusterResults, selectedCluster?.key]);
 
   // ── Sidebar ─────────────────────────────────────────────────────────────
   const activeCulturalSites = legendFilter && legendFilter !== "business"
@@ -1739,6 +1837,10 @@ export default function MapPage() {
     // Content when a cultural legend filter is active
     const showingCultural = legendFilter && legendFilter !== "business";
     const showingDestinations = legendFilter === "destinations";
+    const showingCluster = selectedCluster !== null;
+    const paginatedCluster = selectedCluster
+      ? paginateClusterBusinesses(selectedCluster.businesses, clusterPage)
+      : { items: [] as BizWithCoords[], page: 0, pageCount: 1 };
 
     return (
       <div className="h-full w-full flex flex-col border-r border-[#3A1F0E]/10 bg-white overflow-hidden">
@@ -1746,10 +1848,17 @@ export default function MapPage() {
         <div className="p-4 border-b border-[#3A1F0E]/8 shrink-0">
           <div className="flex items-center justify-between mb-3">
             <h1 className="font-serif font-bold text-[#2B1507] text-lg">
-              {showingCultural ? legendTileLabel : "Explore the Map"}
+              {showingCluster
+                ? `${selectedCluster.businesses.length} ${selectedCluster.businesses.length === 1 ? "Business" : "Businesses"} Here`
+                : showingCultural ? legendTileLabel : "Explore the Map"}
             </h1>
             <button
-              onClick={() => { setSidebarOpen(false); setLegendFilter(null); }}
+              onClick={() => {
+                setSidebarOpen(false);
+                setLegendFilter(null);
+                setSelectedCluster(null);
+                setClusterPage(0);
+              }}
               className="w-7 h-7 rounded-full bg-[#3A1F0E]/6 flex items-center justify-center hover:bg-[#3A1F0E]/12 transition-colors"
               aria-label="Close panel"
             >
@@ -1758,7 +1867,7 @@ export default function MapPage() {
           </div>
 
           {/* Search — only shown in business view */}
-          {!showingCultural && (
+          {!showingCultural && !showingCluster && (
             <>
               <div className="relative mb-3">
                 <button
@@ -1815,6 +1924,29 @@ export default function MapPage() {
               </button>
             </>
           )}
+          {showingCluster && (
+            <div className="space-y-2">
+              <p className="text-xs leading-relaxed text-[#3A1F0E]/65">
+                These are the eligible MWM businesses represented by the selected numbered marker. The map stays in place while you browse.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={zoomToSelectedCluster}
+                  className="text-xs font-bold text-[#CA922B] hover:underline"
+                >
+                  Zoom to pins
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedCluster(null); setClusterPage(0); }}
+                  className="text-xs font-bold text-[#3A1F0E]/65 hover:underline"
+                >
+                  Back to map
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
         {showingDestinations && (
@@ -1824,7 +1956,7 @@ export default function MapPage() {
         )}
 
         {/* Browser location is explicit: a saved home area is never shown as live GPS. */}
-        {!showingCultural && !userCoords && geoLocationStatus !== "idle" && geoLocationStatus !== "granted" && (
+        {!showingCultural && !showingCluster && !userCoords && geoLocationStatus !== "idle" && geoLocationStatus !== "granted" && (
           <div className="px-4 py-3 border-b border-[#3A1F0E]/6 bg-[#FFFCF6] shrink-0" role="status" aria-live="polite">
             <p className="text-[11px] leading-relaxed text-[#3A1F0E]/75">
               {geoLocationMessage ?? "Your location is not available yet. Search a city or try again."}
@@ -1844,7 +1976,7 @@ export default function MapPage() {
           </div>
         )}
 
-        {!showingCultural && activeLocalScope && (
+        {!showingCultural && !showingCluster && activeLocalScope && (
           <section
             aria-label="Around you map discovery"
             data-testid="map-discovery-card"
@@ -1951,7 +2083,7 @@ export default function MapPage() {
         )}
 
         {/* Nearby radius — available for precise location, profile locality, or an explicit place search. */}
-        {!showingCultural && activeLocalScope && (
+        {!showingCultural && !showingCluster && activeLocalScope && (
           <div className="px-4 py-2 border-b border-[#3A1F0E]/6 shrink-0 flex items-center gap-2 flex-wrap">
             <span className="text-[10px] font-bold uppercase tracking-wider text-[#3A1F0E]/40">Near Me</span>
             {[5, 10, 25, 50].map((r) => (
@@ -1975,17 +2107,19 @@ export default function MapPage() {
           <span>
             {showingCultural
               ? `${activeCulturalSites.length} ${showingDestinations ? (activeCulturalSites.length === 1 ? "destination" : "destinations") : (activeCulturalSites.length === 1 ? "site" : "sites")}`
+              : showingCluster
+                ? `${selectedCluster.businesses.length} ${selectedCluster.businesses.length === 1 ? "eligible business" : "eligible businesses"}`
               : businessSearchActive
                 ? (() => {
                     const n = displayedBusinessResults.length;
                     return `${n} ${n === 1 ? "result" : "results"}`;
                   })()
                 : "Search businesses, heritage, and more"}
-            {nearMeRadius !== null && !showingCultural && businessSearchActive && (
+            {nearMeRadius !== null && !showingCultural && !showingCluster && businessSearchActive && (
               <span className="ml-1.5 text-[#CA922B] font-bold">within {nearMeRadius} mi</span>
             )}
           </span>
-          {selected && !showingCultural && (
+          {(selected || showingCluster) && !showingCultural && (
             <button onClick={resetView} className="text-[#CA922B] font-bold hover:underline">Reset view</button>
           )}
         </div>
@@ -2049,6 +2183,53 @@ export default function MapPage() {
                 );
               })
             )
+          ) : showingCluster ? (
+            <div>
+              {paginatedCluster.items.map((biz) => (
+                <div
+                  key={biz.id}
+                  onClick={() => !apiKeyError && selectBusiness(biz.id, biz)}
+                  className="p-4 border-b border-[#3A1F0E]/6 transition-colors flex gap-3 cursor-pointer hover:bg-[#FAF6EF]"
+                >
+                  <div className="w-10 h-10 rounded-full shrink-0 bg-[#CA922B]/15 flex items-center justify-center">
+                    <MapPin className="w-4 h-4 text-[#CA922B]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-bold text-[#2B1507] text-sm leading-tight truncate">{biz.name}</div>
+                    <div className="text-[10px] font-bold uppercase tracking-wider text-[#CA922B] mt-0.5">{biz.category ?? "Business"}</div>
+                    <div className="text-xs text-[#3A1F0E]/50 mt-0.5 truncate">{biz.city}{biz.city && biz.state ? ", " : ""}{biz.state}</div>
+                  </div>
+                  <Link
+                    href={`/businesses/${biz.id}`}
+                    onClick={(event) => event.stopPropagation()}
+                    className="shrink-0 self-center text-[10px] font-bold text-[#CA922B] hover:underline"
+                  >
+                    View profile →
+                  </Link>
+                </div>
+              ))}
+              {paginatedCluster.pageCount > 1 && (
+                <div className="sticky bottom-0 flex items-center justify-between gap-3 border-t border-[#3A1F0E]/10 bg-white px-4 py-3 text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setClusterPage((page) => Math.max(0, page - 1))}
+                    disabled={paginatedCluster.page === 0}
+                    className="font-bold text-[#CA922B] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Previous
+                  </button>
+                  <span className="text-[#3A1F0E]/60">Page {paginatedCluster.page + 1} of {paginatedCluster.pageCount}</span>
+                  <button
+                    type="button"
+                    onClick={() => setClusterPage((page) => Math.min(paginatedCluster.pageCount - 1, page + 1))}
+                    disabled={paginatedCluster.page + 1 === paginatedCluster.pageCount}
+                    className="font-bold text-[#CA922B] disabled:cursor-not-allowed disabled:opacity-40"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </div>
           ) : (
             // ── Universal Search results ──
             (isLoading || universalLoading) ? (
@@ -2480,8 +2661,10 @@ export default function MapPage() {
         {sidebarOpen && (
           <aside
             data-testid="map-sidebar-overlay"
-            className="absolute inset-y-0 left-0 z-20 w-80 max-w-[calc(100%-3.5rem)] shadow-2xl"
-            aria-label="Map search and results"
+            className={selectedCluster
+              ? "absolute inset-x-0 bottom-0 z-20 max-h-[min(72%,32rem)] rounded-t-3xl shadow-2xl sm:inset-y-0 sm:left-0 sm:w-96 sm:max-w-[calc(100%-3.5rem)] sm:rounded-none"
+              : "absolute inset-y-0 left-0 z-20 w-80 max-w-[calc(100%-3.5rem)] shadow-2xl"}
+            aria-label={selectedCluster ? "Cluster business results" : "Map search and results"}
           >
             {renderSidebar()}
           </aside>

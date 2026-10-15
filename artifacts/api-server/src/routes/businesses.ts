@@ -630,6 +630,10 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
       city: string | null;
       state: string | null;
       country: string | null;
+      website: string | null;
+      instagram: string | null;
+      facebook: string | null;
+      tiktok: string | null;
       listing_status: string | null;
       total_in_viewport?: string;
     };
@@ -664,7 +668,7 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
       const { rows: candidateRows } = await pool.query<MapPinRow>(`
         WITH scoped_pins AS (
           SELECT id, name, latitude, longitude, category, subcategory,
-                 city, state, country, listing_status,
+                 city, state, country, website, instagram, facebook, tiktok, listing_status,
                  COUNT(*) OVER()::integer AS total_in_viewport
           FROM public.public_businesses AS public_businesses
           WHERE latitude IS NOT NULL
@@ -710,7 +714,7 @@ router.get("/businesses/map-pins", async (req: Request, res: Response) => {
     // never included — the view enforces is_duplicate=false + live listing_status.
     const { rows } = await pool.query<MapPinRow>(`
       SELECT id, name, latitude, longitude, category, subcategory,
-             city, state, country, listing_status
+             city, state, country, website, instagram, facebook, tiktok, listing_status
       FROM public.public_businesses AS public_businesses
       WHERE latitude IS NOT NULL
         AND longitude IS NOT NULL

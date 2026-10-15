@@ -3038,6 +3038,32 @@ export function FullMapView({
             {selectedBusiness.state}
           </Text>
 
+          {[
+            { label: "Website", url: selectedBusiness.website },
+            { label: "Instagram", url: selectedBusiness.instagram },
+            { label: "Facebook", url: selectedBusiness.facebook },
+            { label: "TikTok", url: selectedBusiness.tiktok },
+          ].filter((contact): contact is { label: string; url: string } => Boolean(contact.url)).length > 0 && (
+            <View style={s.cardContactRow}>
+              {[
+                { label: "Website", url: selectedBusiness.website },
+                { label: "Instagram", url: selectedBusiness.instagram },
+                { label: "Facebook", url: selectedBusiness.facebook },
+                { label: "TikTok", url: selectedBusiness.tiktok },
+              ].filter((contact): contact is { label: string; url: string } => Boolean(contact.url)).map((contact) => (
+                <TouchableOpacity
+                  key={contact.label}
+                  onPress={() => void openExternalUrl(contact.url)}
+                  accessibilityLabel={`Open ${contact.label} for ${selectedBusiness.name}`}
+                  style={[s.cardContactLink, { borderColor: GOLD }]}
+                >
+                  <Feather name="external-link" size={12} color={GOLD} />
+                  <Text style={[s.cardContactText, { color: GOLD }]}>{contact.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
           <View style={s.cardRow}>
             {selectedBusiness.reviewCount > 0 ? (
               <View style={s.cardMeta}>
@@ -3672,6 +3698,23 @@ const s = StyleSheet.create({
     marginBottom: 3,
   },
   cardSub: { fontFamily: "Inter_400Regular", fontSize: 13, marginBottom: 8 },
+  cardContactRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: -2,
+    marginBottom: 10,
+  },
+  cardContactLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+  },
+  cardContactText: { fontFamily: "Inter_700Bold", fontSize: 11 },
   cardRow: {
     flexDirection: "row",
     alignItems: "center",

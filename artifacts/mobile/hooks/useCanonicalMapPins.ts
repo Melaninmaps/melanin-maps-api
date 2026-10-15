@@ -49,9 +49,10 @@ export function useCanonicalMapPins({ enabled = true }: { enabled?: boolean } = 
             (Math.abs(latitude) < 0.001 && Math.abs(longitude) < 0.001)
           ) return [];
 
-          // Map-pins deliberately carries only marker-safe fields. Defaults make
-          // the existing native business card and profile handoff safe; selecting
-          // a pin still routes to the canonical full business profile by ID.
+          // Map-pins carries marker-safe identity, location, and vetted public
+          // contact fields. Defaults make the existing native business card and
+          // profile handoff safe; selecting a pin still routes to the canonical
+          // full business profile by ID.
           return [{
             id,
             name,
@@ -63,6 +64,10 @@ export function useCanonicalMapPins({ enabled = true }: { enabled?: boolean } = 
             city: typeof pin.city === "string" ? pin.city : "",
             state: typeof pin.state === "string" ? pin.state : "",
             country: typeof pin.country === "string" ? pin.country : undefined,
+            website: typeof pin.website === "string" ? pin.website : undefined,
+            instagram: typeof pin.instagram === "string" ? pin.instagram : undefined,
+            facebook: typeof pin.facebook === "string" ? pin.facebook : undefined,
+            tiktok: typeof pin.tiktok === "string" ? pin.tiktok : undefined,
             rating: 0,
             reviewCount: 0,
             verified: false,
