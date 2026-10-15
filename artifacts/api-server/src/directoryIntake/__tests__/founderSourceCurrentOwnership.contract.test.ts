@@ -47,4 +47,13 @@ describe("founder-source ownership for current public profiles", () => {
     expect(route).toContain(".filter((candidate) => matchesRequestedOwnershipScope(candidate, ownershipScope))");
     expect(route).toContain("requestedOwnershipScope: ownershipScope");
   });
+
+  it("returns profile website and social fields only through the read-only receipt audit", () => {
+    const receiptRoute = route.slice(
+      route.indexOf('app.get("/api/admin/founder-source-publication/receipts"'),
+      route.indexOf('app.post("/api/admin/founder-source-publication/repair-identity-mismatches"'),
+    );
+    expect(receiptRoute).toContain("b.website, b.instagram, b.tiktok, b.facebook");
+    expect(receiptRoute).not.toContain("UPDATE businesses");
+  });
 });
