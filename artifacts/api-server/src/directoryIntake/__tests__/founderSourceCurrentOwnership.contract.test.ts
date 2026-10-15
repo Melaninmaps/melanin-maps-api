@@ -1,0 +1,35 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const repositoryRoot = resolve(__dirname, "../../../../..");
+const route = readFileSync(
+  resolve(repositoryRoot, "artifacts/api-server/src/directoryIntake/registerFounderSourcePublicationRoutes.ts"),
+  "utf8",
+);
+
+function currentOwnershipHelper(): string {
+  const start = route.indexOf("async function recordCurrentProfileSourceOwnership");
+  const end = route.indexOf("async function queueDuplicate", start);
+  return route.slice(start, end);
+}
+
+describe("founder-source ownership for current public profiles", () => {
+  it("adds source-documented ownership without changing public presence or lifecycle fields", () => {
+    const helper = currentOwnershipHelper();
+    expect(helper).toContain("business_source_directory_receipts");
+    expect(helper).toContain('upsertEvidence(client, businessId, "ownership"');
+    expect(helper).toContain("ownership_designations = (");
+    expect(helper).toContain("black_owned = COALESCE(black_owned, false) OR $3");
+    expect(helper).not.toMatch(/\bwebsite\s*=/);
+    expect(helper).not.toMatch(/\blisting_status\s*=/);
+    expect(helper).not.toMatch(/\bstatus\s*=/);
+    expect(helper).not.toMatch(/\bpromotion_eligible\s*=/);
+  });
+
+  it("routes a live current profile through the ownership-only path", () => {
+    expect(route).toContain('if (state === "kinfolk_current") {\n              if (await recordCurrentProfileSourceOwnership');
+    expect(route).toContain("kinfolkCurrentOwnershipEnriched: sourceOwnedCurrentProfiles.size");
+    expect(route).toContain("Founder-source ownership labels were applied without changing Kinfolk membership");
+  });
+});
