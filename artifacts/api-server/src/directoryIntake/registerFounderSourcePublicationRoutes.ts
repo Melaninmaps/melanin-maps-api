@@ -53,6 +53,7 @@ type FounderSourceRequest = Readonly<{
   apply: boolean;
   existingOnly: boolean;
   currentOnly: boolean;
+  excludeKinfolkCurrent: boolean;
   city: string | null;
   state: string | null;
   batch: string | null;
@@ -92,6 +93,9 @@ function parseRequest(req: Request): FounderSourceRequest | null {
     // This scope is for an additive source-ownership pass over profiles that
     // are already current. It must never create or enrich another field.
     currentOnly: req.body?.currentOnly === true,
+    // A source-reconciliation caller can require that Kinfolk Current profiles
+    // are never mutated, including after a concurrent profile-state change.
+    excludeKinfolkCurrent: req.body?.excludeKinfolkCurrent === true,
     city,
     state,
     batch,
@@ -494,13 +498,15 @@ function publicManifest(
     .map((business) => business.id));
   const candidateMatches = plan.duplicateMatches.filter((match) => selectedKeys.has(match.candidate.sourceRecordKey));
   const protectedMatches = candidateMatches.filter((match) =>
-    Boolean(match.existingBusinessId && kinfolkCurrentIds.has(match.existingBusinessId))
-      || Boolean(match.existingBusinessId && deletedIds.has(match.existingBusinessId)),
+    Boolean(match.existingBusinessId && deletedIds.has(match.existingBusinessId))
+      || Boolean(request.excludeKinfolkCurrent && match.existingBusinessId && kinfolkCurrentIds.has(match.existingBusinessId)),
   );
   const duplicateMatches = candidateMatches.filter((match) => !protectedMatches.includes(match));
   const identityHolds = plan.identityHolds.filter((hold) =>
     selectedKeys.has(hold.candidate.sourceRecordKey)
-      && !hold.candidateBusinessIds.some((businessId) => kinfolkCurrentIds.has(businessId) || deletedIds.has(businessId)),
+      && !hold.candidateBusinessIds.some((businessId) =>
+        deletedIds.has(businessId)
+          || (request.excludeKinfolkCurrent && kinfolkCurrentIds.has(businessId))),
   );
   const sourceDocumented = plannedCreates.filter((candidate) => candidate.ownershipDesignations.length > 0);
   return {
@@ -508,6 +514,7 @@ function publicManifest(
     requestedScope: {
       city: request.city, state: request.state, batch: request.batch,
       ownershipScope: request.ownershipScope, existingOnly: request.existingOnly,
+      excludeKinfolkCurrent: request.excludeKinfolkCurrent,
     },
     sourceRecordsProcessed: selected.length,
     profilesToCreate: request.existingOnly ? 0 : sourceDocumented.length,
@@ -791,7 +798,8 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
       const candidateMatches = plan.duplicateMatches
         .filter((match) => selectedKeys.has(match.candidate.sourceRecordKey));
       const protectedMatches = candidateMatches.filter((match) =>
-        Boolean(match.existingBusinessId && deletedIds.has(match.existingBusinessId)),
+        Boolean(match.existingBusinessId && deletedIds.has(match.existingBusinessId))
+          || Boolean(request.excludeKinfolkCurrent && match.existingBusinessId && kinfolkCurrentIds.has(match.existingBusinessId)),
       );
       const canonicalProfileHolds = request.currentOnly ? [] : request.existingOnly
         ? [
@@ -810,11 +818,14 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
         .filter((match) => !request.currentOnly || Boolean(match.existingBusinessId && kinfolkCurrentIds.has(match.existingBusinessId)));
       const identityHolds = (request.currentOnly ? [] : plan.identityHolds).filter((hold) =>
         selectedKeys.has(hold.candidate.sourceRecordKey)
-          && !hold.candidateBusinessIds.some((businessId) => kinfolkCurrentIds.has(businessId) || deletedIds.has(businessId)),
+          && !hold.candidateBusinessIds.some((businessId) =>
+            deletedIds.has(businessId)
+              || (request.excludeKinfolkCurrent && kinfolkCurrentIds.has(businessId))),
       );
       const batchKey = hash(JSON.stringify({
         policy: FOUNDER_SOURCE_DIRECTORY_DISCOVERY_POLICY_VERSION,
-        city: request.city, state: request.state, batch: request.batch, ownershipScope: request.ownershipScope, currentOnly: request.currentOnly,
+        city: request.city, state: request.state, batch: request.batch, ownershipScope: request.ownershipScope,
+        currentOnly: request.currentOnly, excludeKinfolkCurrent: request.excludeKinfolkCurrent,
         keys: selected.map((candidate) => candidate.sourceRecordKey),
       }));
       const client = await pool.connect();
@@ -872,6 +883,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
         const seenExisting = new Set<string>();
         let liveDeletedExcluded = protectedMatches
           .filter((match) => Boolean(match.existingBusinessId && deletedIds.has(match.existingBusinessId))).length;
+        let liveKinfolkExcluded = 0;
         const sourceOwnedCurrentProfiles = new Set<string>();
         for (const duplicate of duplicateMatches) {
           const businessId = duplicate.existingBusinessId
@@ -879,6 +891,10 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           if (!businessId) continue;
           if (duplicate.existingBusinessId) {
             const state = await sourceTargetMutationState(client, businessId);
+            if (state === "kinfolk_current" && request.excludeKinfolkCurrent) {
+              liveKinfolkExcluded += 1;
+              continue;
+            }
             if (state === "kinfolk_current") {
               if (await recordCurrentProfileSourceOwnership(client, duplicate.candidate, businessId)) {
                 sourceOwnedCurrentProfiles.add(businessId);
@@ -972,6 +988,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           mapPinnedProfiles: 0,
           noOfficialPresenceRequired: targets.filter((target) => !target.presence.hasOfficialPresence).length,
           kinfolkCurrentOwnershipEnriched: sourceOwnedCurrentProfiles.size,
+          liveKinfolkExcluded,
           deletedExcluded: liveDeletedExcluded,
           ownershipDesignationHolds: ownershipDesignationHoldCount,
           publicationState: "published_unclaimed_source_documented",

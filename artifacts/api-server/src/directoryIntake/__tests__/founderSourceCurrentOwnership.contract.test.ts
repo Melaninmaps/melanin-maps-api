@@ -27,10 +27,23 @@ describe("founder-source ownership for current public profiles", () => {
     expect(helper).not.toMatch(/\bpromotion_eligible\s*=/);
   });
 
-  it("routes a live current profile through the ownership-only path", () => {
-    expect(route).toContain('if (state === "kinfolk_current") {\n              if (await recordCurrentProfileSourceOwnership');
-    expect(route).toContain("kinfolkCurrentOwnershipEnriched: sourceOwnedCurrentProfiles.size");
-    expect(route).toContain("Founder-source ownership labels were applied without changing Kinfolk membership");
+  it("excludes Kinfolk Current profiles in planning and immediately before mutation when requested", () => {
+    expect(route).toContain("excludeKinfolkCurrent: req.body?.excludeKinfolkCurrent === true");
+    const manifest = route.slice(
+      route.indexOf("function publicManifest"),
+      route.indexOf("export function registerFounderSourcePublicationRoutes"),
+    );
+    expect(manifest).toMatch(/request\.excludeKinfolkCurrent\s*&&\s*match\.existingBusinessId\s*&&\s*kinfolkCurrentIds\.has\(match\.existingBusinessId\)/);
+    expect(manifest).toContain("kinfolkCurrentExcluded:");
+
+    const publication = route.slice(route.indexOf('app.post("/api/admin/founder-source-publication"'));
+    const liveGuardStart = publication.indexOf('if (state === "kinfolk_current" && request.excludeKinfolkCurrent)');
+    const liveGuardEnd = publication.indexOf('if (state === "kinfolk_current")', liveGuardStart + 1);
+    const liveGuard = publication.slice(liveGuardStart, liveGuardEnd);
+    expect(liveGuard).toContain("liveKinfolkExcluded += 1");
+    expect(liveGuard).toContain("continue;");
+    expect(liveGuard).not.toContain("recordCurrentProfileSourceOwnership");
+    expect(publication).toContain("liveKinfolkExcluded,");
   });
 
   it("can run only the current-profile ownership pass without creating or enriching other profiles", () => {
