@@ -1045,6 +1045,15 @@ async function compileAdminBusinessInventoryFilters(
     );
     const parameter = `$${filterParams.length}`;
     filters[filters.length - 1] = `(name ILIKE ${parameter} ESCAPE '\\' OR city ILIKE ${parameter} ESCAPE '\\' OR category ILIKE ${parameter} ESCAPE '\\' OR COALESCE(subcategory, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(description, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(tags::text, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(vibes::text, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(ownership_designations::text, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(website, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(instagram, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(tiktok, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(facebook, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(twitter, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(youtube, '') ILIKE ${parameter} ESCAPE '\\' OR COALESCE(pinterest, '') ILIKE ${parameter} ESCAPE '\\')`;
+    const ownershipDesignationSearchTerm = term.replace(
+      /\bwomen(?:[-\s]+)owned\b/gi,
+      "woman-owned",
+    );
+    if (ownershipDesignationSearchTerm !== term) {
+      filterParams.push(`%${escapeAdminBusinessSearchTerm(ownershipDesignationSearchTerm)}%`);
+      const ownershipDesignationParameter = `$${filterParams.length}`;
+      filters[filters.length - 1] = `(${filters[filters.length - 1]} OR COALESCE(ownership_designations::text, '') ILIKE ${ownershipDesignationParameter} ESCAPE '\\')`;
+    }
   }
   if (cityFilters.length > 0) {
     filterParams.push(cityFilters);
