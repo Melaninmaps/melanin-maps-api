@@ -5,11 +5,94 @@ import { Layout } from "@/components/layout";
 
 const BASE = import.meta.env.BASE_URL;
 type Claim = { id: string; business_id: string; business_name: string | null; city: string | null; state: string | null; status: string; owner_name: string; email: string; phone: string | null; role: string; verification_method: string; evidence_url: string | null; evidence_summary: string | null; additional_info: string | null; created_at: string; decision_reason: string | null };
+type ActionKind = "approve" | "needs_info" | "reject" | "revoke";
+type PendingAction = { claim: Claim; kind: ActionKind };
+
+function actionLabel(kind: ActionKind): string {
+  if (kind === "approve") return "approve this claim and grant owner management access";
+  if (kind === "needs_info") return "request more information";
+  if (kind === "reject") return "reject this claim";
+  return "revoke the approved owner relationship";
+}
+
+function actionButtonLabel(kind: ActionKind): string {
+  if (kind === "approve") return "Confirm approval";
+  if (kind === "needs_info") return "Confirm information request";
+  if (kind === "reject") return "Confirm rejection";
+  return "Confirm revocation";
+}
 
 export default function FounderBusinessClaims() {
-  const [status, setStatus] = useState("pending"); const [claims, setClaims] = useState<Claim[]>([]); const [loading, setLoading] = useState(true); const [error, setError] = useState<string | null>(null); const [busy, setBusy] = useState<string | null>(null);
-  const load = async () => { setLoading(true); try { const response = await fetch(`${BASE}api/admin/business-claims?status=${encodeURIComponent(status)}`, { credentials: "include", cache: "no-store" }); const data = await response.json().catch(() => ({})) as { claims?: Claim[]; error?: string }; if (!response.ok) throw new Error(data.error ?? "Could not load private claim review."); setClaims(data.claims ?? []); } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not load private claim review."); } finally { setLoading(false); } };
+  const [status, setStatus] = useState("pending");
+  const [claims, setClaims] = useState<Claim[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+  const [decisionReason, setDecisionReason] = useState("");
+
+  const load = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${BASE}api/admin/business-claims?status=${encodeURIComponent(status)}`, { credentials: "include", cache: "no-store" });
+      const data = await response.json().catch(() => ({})) as { claims?: Claim[]; error?: string };
+      if (!response.ok) throw new Error(data.error ?? "Could not load private claim review.");
+      setClaims(data.claims ?? []);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Could not load private claim review.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => { void load(); }, [status]);
-  const act = async (claim: Claim, kind: "approve" | "needs_info" | "reject" | "revoke") => { const label = kind === "approve" ? "approve this claim and grant owner management access" : kind === "needs_info" ? "request more information" : kind === "reject" ? "reject this claim" : "revoke the approved owner relationship"; const reason = window.prompt(`Why are you choosing to ${label}? This private audit reason is required.`, ""); if (!reason || reason.trim().length < 3) return; if (!window.confirm(`Confirm: ${label}. This never verifies a business or ownership designation, changes ranking, or publishes private contact data.`)) return; setBusy(claim.id); setError(null); try { let url = `${BASE}api/admin/business-claims/${claim.id}`; let method = "PATCH"; let body: Record<string, string> = { status: kind === "reject" ? "rejected" : "needs_info", decisionReason: reason.trim() }; if (kind === "approve") { url += "/approve"; method = "POST"; body = { decisionReason: reason.trim() }; } if (kind === "revoke") { url += "/revoke"; method = "POST"; body = { revocationReason: reason.trim() }; } const response = await fetch(url, { method, credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }); const data = await response.json().catch(() => ({})) as { error?: string }; if (!response.ok) throw new Error(data.error ?? "Claim review action failed."); await load(); } catch (cause) { setError(cause instanceof Error ? cause.message : "Claim review action failed."); } finally { setBusy(null); } };
-  return <Layout><main className="mx-auto min-h-[70vh] max-w-5xl px-4 py-10"><Link href="/admin" className="text-sm font-semibold text-[#8D5C17] hover:underline">← Back to Admin</Link><header className="mt-6 flex flex-wrap items-start justify-between gap-4"><div><div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-[#CA922B]"><ClipboardCheck className="h-4 w-4" /> Founder-only private queue</div><h1 className="mt-2 font-serif text-3xl font-bold text-[#2B1507]">Business ownership claims</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-[#3A1F0E]/65">Review evidence before any ownership-control decision. Approval creates an auditable owner relationship only; it never verifies a business, ownership designation, safety claim, eligibility, or promotion.</p></div><label className="text-sm font-semibold text-[#3A1F0E]">Queue <select value={status} onChange={(event) => setStatus(event.target.value)} className="ml-2 rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm"><option value="pending">Pending</option><option value="needs_info">Needs information</option><option value="disputed">Disputed</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All</option></select></label></header>{error ? <p className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{error}</p> : null}<div className="mt-7 space-y-4">{loading ? <div className="h-48 animate-pulse rounded-2xl bg-white" /> : claims.length === 0 ? <div className="rounded-2xl border border-dashed border-[#3A1F0E]/20 bg-white p-8 text-center text-sm text-[#3A1F0E]/60">No claims in this queue.</div> : claims.map((claim) => <article key={claim.id} className="rounded-2xl border border-[#3A1F0E]/10 bg-white p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold text-[#2B1507]">{claim.business_name ?? "Business listing"}</h2><p className="mt-1 text-sm text-[#3A1F0E]/60">{[claim.city, claim.state].filter(Boolean).join(", ")} · {claim.status.replaceAll("_", " ")}</p></div><span className="rounded-full bg-[#F5EBD8] px-3 py-1 text-xs font-bold text-[#8D5C17]">private review</span></div><div className="mt-4 grid gap-3 rounded-xl bg-[#FAF6EF] p-4 text-sm text-[#3A1F0E] md:grid-cols-2"><p><strong>Claimant:</strong> {claim.owner_name} ({claim.role.replaceAll("_", " ")})</p><p><strong>Private contact:</strong> {claim.email}{claim.phone ? ` · ${claim.phone}` : ""}</p><p><strong>Review method:</strong> {claim.verification_method.replaceAll("_", " ")}</p><p><strong>Submitted:</strong> {new Date(claim.created_at).toLocaleString()}</p>{claim.evidence_url ? <p className="md:col-span-2"><strong>Official evidence:</strong> <a href={claim.evidence_url} target="_blank" rel="noreferrer" className="text-[#8D5C17] underline">{claim.evidence_url}</a></p> : null}{claim.evidence_summary ? <p className="md:col-span-2"><strong>Social evidence:</strong> {claim.evidence_summary}</p> : null}{claim.additional_info ? <p className="md:col-span-2"><strong>Private notes:</strong> {claim.additional_info}</p> : null}{claim.decision_reason ? <p className="md:col-span-2 rounded-lg bg-amber-50 px-3 py-2 text-amber-900"><strong>Previous decision:</strong> {claim.decision_reason}</p> : null}</div><div className="mt-4 flex flex-wrap gap-2">{["pending", "needs_info", "disputed"].includes(claim.status) ? <><button type="button" disabled={busy === claim.id} onClick={() => void act(claim, "approve")} className="inline-flex items-center gap-1 rounded-xl bg-emerald-700 px-3 py-2 text-sm font-bold text-white disabled:opacity-50"><CheckCircle2 className="h-4 w-4" /> Approve ownership control</button><button type="button" disabled={busy === claim.id} onClick={() => void act(claim, "needs_info")} className="rounded-xl border border-[#CA922B]/40 px-3 py-2 text-sm font-bold text-[#8D5C17] disabled:opacity-50">Request details</button><button type="button" disabled={busy === claim.id} onClick={() => void act(claim, "reject")} className="inline-flex items-center gap-1 rounded-xl border border-red-200 px-3 py-2 text-sm font-bold text-red-700 disabled:opacity-50"><XCircle className="h-4 w-4" /> Reject</button></> : null}{claim.status === "approved" ? <button type="button" disabled={busy === claim.id} onClick={() => void act(claim, "revoke")} className="inline-flex items-center gap-1 rounded-xl border border-red-200 px-3 py-2 text-sm font-bold text-red-700 disabled:opacity-50"><AlertTriangle className="h-4 w-4" /> Revoke owner access</button> : null}</div><p className="mt-4 flex items-start gap-2 text-xs leading-5 text-[#3A1F0E]/55"><Shield className="mt-0.5 h-3.5 w-3.5 shrink-0" /> Private claimant evidence is not public profile data. Do not copy it into a listing, use it for discovery eligibility, or treat popularity as ownership proof.</p></article>)}</div></main></Layout>;
+
+  const openAction = (claim: Claim, kind: ActionKind) => {
+    setError(null);
+    setDecisionReason("");
+    setPendingAction({ claim, kind });
+  };
+
+  const act = async (claim: Claim, kind: ActionKind, reason: string) => {
+    if (reason.trim().length < 3) return;
+    setBusy(claim.id);
+    setError(null);
+    let succeeded = false;
+    try {
+      let url = `${BASE}api/admin/business-claims/${claim.id}`;
+      let method = "PATCH";
+      let body: Record<string, string> = { status: kind === "reject" ? "rejected" : "needs_info", decisionReason: reason.trim() };
+      if (kind === "approve") {
+        url += "/approve";
+        method = "POST";
+        body = { decisionReason: reason.trim() };
+      }
+      if (kind === "revoke") {
+        url += "/revoke";
+        method = "POST";
+        body = { revocationReason: reason.trim() };
+      }
+      const response = await fetch(url, { method, credentials: "include", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const data = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(data.error ?? "Claim review action failed.");
+      succeeded = true;
+      await load();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Claim review action failed.");
+    } finally {
+      setBusy(null);
+      if (succeeded) {
+        setPendingAction(null);
+        setDecisionReason("");
+      }
+    }
+  };
+
+  return <Layout><main className="mx-auto min-h-[70vh] max-w-5xl px-4 py-10">
+    <Link href="/admin" className="text-sm font-semibold text-[#8D5C17] hover:underline">← Back to Admin</Link>
+    <header className="mt-6 flex flex-wrap items-start justify-between gap-4"><div><div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-[#CA922B]"><ClipboardCheck className="h-4 w-4" /> Founder-only private queue</div><h1 className="mt-2 font-serif text-3xl font-bold text-[#2B1507]">Business ownership claims</h1><p className="mt-2 max-w-3xl text-sm leading-6 text-[#3A1F0E]/65">Review evidence before any ownership-control decision. Approval creates an auditable owner relationship only; it never verifies a business, ownership designation, safety claim, eligibility, or promotion.</p></div><label className="text-sm font-semibold text-[#3A1F0E]">Queue <select value={status} onChange={(event) => setStatus(event.target.value)} className="ml-2 rounded-lg border border-[#3A1F0E]/15 bg-white px-3 py-2 text-sm"><option value="pending">Pending</option><option value="needs_info">Needs information</option><option value="disputed">Disputed</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="all">All</option></select></label></header>
+    {error ? <p className="mt-6 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{error}</p> : null}
+    {pendingAction ? <section className="mt-6 rounded-2xl border border-[#CA922B]/40 bg-[#FFF9ED] p-5" aria-labelledby="claim-decision-heading"><div className="flex items-start gap-3"><AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#8D5C17]" /><div><h2 id="claim-decision-heading" className="font-serif text-xl font-bold text-[#2B1507]">Confirm private claim decision</h2><p className="mt-1 text-sm leading-6 text-[#3A1F0E]/75">You are about to {actionLabel(pendingAction.kind)} for <strong>{pendingAction.claim.business_name ?? "this listing"}</strong>. This private audit reason is required.</p><p className="mt-1 text-xs leading-5 text-[#3A1F0E]/60">This never verifies a business or ownership designation, changes ranking, publishes private contact data, or affects safety information.</p></div></div><label className="mt-4 block text-sm font-semibold text-[#3A1F0E]">Private decision reason<textarea value={decisionReason} onChange={(event) => setDecisionReason(event.target.value)} minLength={3} maxLength={1000} placeholder="Record the review basis for this private audit trail…" className="mt-2 min-h-24 w-full rounded-xl border border-[#3A1F0E]/20 bg-white p-3 text-sm font-normal focus:border-[#8D5C17] focus:outline-none" /></label><div className="mt-4 flex flex-wrap gap-3"><button type="button" disabled={decisionReason.trim().length < 3 || busy === pendingAction.claim.id} onClick={() => void act(pendingAction.claim, pendingAction.kind, decisionReason)} className="rounded-xl bg-[#8D5C17] px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{busy === pendingAction.claim.id ? "Saving decision…" : actionButtonLabel(pendingAction.kind)}</button><button type="button" disabled={busy === pendingAction.claim.id} onClick={() => { setPendingAction(null); setDecisionReason(""); }} className="rounded-xl border border-[#3A1F0E]/20 bg-white px-4 py-2 text-sm font-bold text-[#3A1F0E] disabled:opacity-50">Cancel</button></div></section> : null}
+    <div className="mt-7 space-y-4">{loading ? <div className="h-48 animate-pulse rounded-2xl bg-white" /> : claims.length === 0 ? <div className="rounded-2xl border border-dashed border-[#3A1F0E]/20 bg-white p-8 text-center text-sm text-[#3A1F0E]/60">No claims in this queue.</div> : claims.map((claim) => <article key={claim.id} className="rounded-2xl border border-[#3A1F0E]/10 bg-white p-5"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="font-bold text-[#2B1507]">{claim.business_name ?? "Business listing"}</h2><p className="mt-1 text-sm text-[#3A1F0E]/60">{[claim.city, claim.state].filter(Boolean).join(", ")} · {claim.status.replaceAll("_", " ")}</p></div><span className="rounded-full bg-[#F5EBD8] px-3 py-1 text-xs font-bold text-[#8D5C17]">private review</span></div><div className="mt-4 grid gap-3 rounded-xl bg-[#FAF6EF] p-4 text-sm text-[#3A1F0E] md:grid-cols-2"><p><strong>Claimant:</strong> {claim.owner_name} ({claim.role.replaceAll("_", " ")})</p><p><strong>Private contact:</strong> {claim.email}{claim.phone ? ` · ${claim.phone}` : ""}</p><p><strong>Review method:</strong> {claim.verification_method.replaceAll("_", " ")}</p><p><strong>Submitted:</strong> {new Date(claim.created_at).toLocaleString()}</p>{claim.evidence_url ? <p className="md:col-span-2"><strong>Official evidence:</strong> <a href={claim.evidence_url} target="_blank" rel="noreferrer" className="text-[#8D5C17] underline">{claim.evidence_url}</a></p> : null}{claim.evidence_summary ? <p className="md:col-span-2"><strong>Social evidence:</strong> {claim.evidence_summary}</p> : null}{claim.additional_info ? <p className="md:col-span-2"><strong>Private notes:</strong> {claim.additional_info}</p> : null}{claim.decision_reason ? <p className="md:col-span-2 rounded-lg bg-amber-50 px-3 py-2 text-amber-900"><strong>Previous decision:</strong> {claim.decision_reason}</p> : null}</div><div className="mt-4 flex flex-wrap gap-2">{["pending", "needs_info", "disputed"].includes(claim.status) ? <><button type="button" disabled={busy === claim.id} onClick={() => openAction(claim, "approve")} className="inline-flex items-center gap-1 rounded-xl bg-emerald-700 px-3 py-2 text-sm font-bold text-white disabled:opacity-50"><CheckCircle2 className="h-4 w-4" /> Approve ownership control</button><button type="button" disabled={busy === claim.id} onClick={() => openAction(claim, "needs_info")} className="rounded-xl border border-[#CA922B]/40 px-3 py-2 text-sm font-bold text-[#8D5C17] disabled:opacity-50">Request details</button><button type="button" disabled={busy === claim.id} onClick={() => openAction(claim, "reject")} className="inline-flex items-center gap-1 rounded-xl border border-red-200 px-3 py-2 text-sm font-bold text-red-700 disabled:opacity-50"><XCircle className="h-4 w-4" /> Reject</button></> : null}{claim.status === "approved" ? <button type="button" disabled={busy === claim.id} onClick={() => openAction(claim, "revoke")} className="inline-flex items-center gap-1 rounded-xl border border-red-200 px-3 py-2 text-sm font-bold text-red-700 disabled:opacity-50"><AlertTriangle className="h-4 w-4" /> Revoke owner access</button> : null}</div><p className="mt-4 flex items-start gap-2 text-xs leading-5 text-[#3A1F0E]/55"><Shield className="mt-0.5 h-3.5 w-3.5 shrink-0" /> Private claimant evidence is not public profile data. Do not copy it into a listing, use it for discovery eligibility, or treat popularity as ownership proof.</p></article>)}</div>
+  </main></Layout>;
 }

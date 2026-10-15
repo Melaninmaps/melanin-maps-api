@@ -47,6 +47,10 @@ describe("member-business owner completion UI", () => {
     expect(founderClaims).toContain('"/approve"');
     expect(founderClaims).toContain('"/revoke"');
     expect(founderClaims).toContain("This private audit reason is required");
+    expect(founderClaims).toContain("Confirm private claim decision");
+    expect(founderClaims).toContain("Private decision reason");
+    expect(founderClaims).not.toContain("window.prompt");
+    expect(founderClaims).not.toContain("window.confirm");
     expect(founderClaims).toContain("never verifies a business or ownership designation");
   });
 });
