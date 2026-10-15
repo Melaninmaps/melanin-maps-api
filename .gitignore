@@ -65,3 +65,12 @@ playwright-report/
 # are preserved in the tracked compressed receipt archive beside the report.
 docs/directory-operations/kinfolk-current-online-presence-2026-10-15/presence-verification.jsonl
 docs/directory-operations/kinfolk-current-online-presence-2026-10-15/url-probe-cache.json
+
+# Full discovery probe outputs remain locally available and are preserved in
+# the tracked complete-discovery-receipts.tar.gz archive beside the report.
+docs/directory-operations/kinfolk-current-official-discovery-2026-10-15/official-presence-discovery.jsonl
+docs/directory-operations/kinfolk-current-official-discovery-2026-10-15/discovery-cache.json
+docs/directory-operations/kinfolk-current-official-discovery-2026-10-15/checkpoint.json
+docs/directory-operations/kinfolk-current-official-discovery-2026-10-15/summary.json
+docs/directory-operations/kinfolk-current-official-discovery-2026-10-15/legacy-receipt-recheck/
+docs/directory-operations/kinfolk-current-official-discovery-2026-10-15/REPORT.md

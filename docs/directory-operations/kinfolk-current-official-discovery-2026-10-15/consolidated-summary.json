@@ -1,0 +1,17 @@
+{
+  "totalRecords": 2216,
+  "websiteCandidateRecords": 402,
+  "socialCandidateRecords": 227,
+  "bothWebsiteAndSocialRecords": 40,
+  "anyCandidateRecords": 589,
+  "currentPageIdentityMatchedWebsiteRecords": 246,
+  "currentPageIdentityMatchedSocialRecords": 182,
+  "legacyRecheckedRecords": 295,
+  "legacyAdditionalWebsiteRecords": 22,
+  "recordsWithUsableSearchResults": 977,
+  "recordsWithSearchConstrainedOrNoResults": 1239,
+  "recordsWithHardSearchErrors": 781,
+  "recordsWithSearchChallenge202": 503,
+  "generatedAt": "2026-10-15T18:29:10.295934+00:00",
+  "readOnly": true
+}
