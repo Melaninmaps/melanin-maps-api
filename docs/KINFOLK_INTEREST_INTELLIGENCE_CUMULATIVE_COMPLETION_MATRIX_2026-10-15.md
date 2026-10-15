@@ -1,8 +1,8 @@
 # Kinfolk Interest Intelligence — Cumulative Completion Matrix
 
-**Scope:** Founder-approved Interest Intelligence source implementation and controlled handoff.  
-**Shared integration branch:** `integration/kinfolk-interest-intelligence-source-candidate-20261015`  
-**Current shared candidate before this documentation receipt:** `2b3bdf7ced30f18c21cd8ed214e5f6e2aca43046`
+**Scope:** Founder-approved Interest Intelligence source implementation plus the controlled P0 owner-dashboard repair integration.
+**Combined integration branch:** `integration/kinfolk-owner-dashboard-p0-candidate-20261015`
+**Current combined candidate before this documentation receipt:** `3b9dc59a324cbdcdd8847a2fd1abd161b136048c`
 
 > This matrix records source status only. It does not authorize deployment, database migration execution, external-provider activation, background monitoring, push delivery, mobile builds, AWS Device Farm activity, or production modification.
 
@@ -13,8 +13,12 @@
 | Interest Intelligence implementation | `2770c6788cba4b71219b3fcf1ad848c7d33619f1` | Preserved, committed, and merged. |
 | Initial controlled integration merge | `3ca91dc80f66dc51838b93672817f7b8463ecabb` | Interest Intelligence merged after verifying the named repair was already contained in the base. |
 | Stale-test maintenance | `1cda52adef5da0770f3849c4e9861f3e91a43f28` (PR #283) | Included in the current integration branch; reconciles the five API and one Web stale assertions without runtime changes. |
-| Current shared integration candidate | `2b3bdf7ced30f18c21cd8ed214e5f6e2aca43046` | Contains all three items above plus later unrelated approved integration work. |
+| Accepted Interest Intelligence handoff | `6750ff003c91ba6fc231c0b3439954a5c2ae85c0` | Preserved as the parent candidate for this controlled integration. |
+| P0 owner-dashboard source repair | `ba27279042d2a9233799b2c57fc4d3750e20e9a9` on `fix/profile-owner-dashboard-p0-20261015` | Preserved unchanged as the completed source repair. |
+| P0 owner-dashboard controlled merge | `3b9dc59a324cbdcdd8847a2fd1abd161b136048c` | Merged cleanly after confirming the repair was absent from the accepted candidate; preserves Interest Intelligence, Directory, Map, Community, and Safety work. |
+| Current combined integration candidate | `3b9dc59a324cbdcdd8847a2fd1abd161b136048c` | Includes the accepted Interest Intelligence handoff and the P0 repair pending this documentation receipt. |
 | Feature and source-branch preservation | `feature/kinfolk-interest-intelligence-20261015` | Preserved; no source branch was force-pushed, deleted, or overwritten. |
+| P0 source-branch preservation | `fix/profile-owner-dashboard-p0-20261015` | Preserved; no source branch was force-pushed, deleted, or overwritten. |
 
 ## Member-facing scope completion
 
@@ -44,6 +48,21 @@
 | Final native Interest Intelligence rerun | **3 passed** |
 | API, web, and native TypeScript checks | **Passed** |
 | Web production build | **Passed**; existing source-map/chunk-size warnings only |
+| Combined P0 + Interest Intelligence API regression run | **23 passed** across 7 files |
+| Combined P0 + Interest Intelligence Web regression run | **12 passed** across 4 files |
+| Combined P0 + Interest Intelligence native regression run | **34 passed** across 4 files |
+| Combined candidate API, Web, and native TypeScript checks | **Passed** |
+
+## P0 owner-dashboard integration status
+
+| Requirement | Source status | Evidence boundary |
+|---|---|---|
+| Profile → My Business | **Integrated** | Web and native profile surfaces use the existing authenticated managed-business relationship endpoint and show explicit loading/error states. |
+| Selected business management | **Integrated** | Web profile supplies the exact `businessId`; Business Admin honors that selection and preserves multi-business handling. |
+| Authorized ordinary profile editing | **Integrated** | Existing managed-business GET/PATCH path is used; ownership, verification, listing status, publication, and evidence remain outside the editor. |
+| Verification-state presentation | **Integrated** | Returned listing status and verification state are displayed without changing a paused or suspended record. |
+| Promotion eligibility | **Integrated** | Approved, unrevoked owner links and explicit multi-business selection are required; the UI does not offer checkout when the server marks a listing ineligible. |
+| Business Voice Profile backing table | **Awaiting environment verification** | Source contract remains protected; client reports a clear unavailable state for a server failure. No migration was run and availability is not claimed. |
 
 ## Prepared staging acceptance checklist
 
@@ -59,6 +78,18 @@ The main Kinfolk integration task should use this sequence only after separately
 8. Exercise More like this, Wrong assumption, Hide category, Stop topic, and Not interested. Verify each effect has its declared scope.
 9. With two dedicated test members in a private test Circle, approve a recommended item into the Circle; verify the existing suggestion, vote, and planning surfaces receive the one member-approved item only.
 10. Verify web and native controls: settings load, consent persists, an interest can be paused/removed, and recommendations respect disabled proactive discovery.
+
+### Bounded P0 owner-dashboard staging acceptance — no staging action taken
+
+Run only after separately authorizing one isolated staging deployment and an approved non-production owner account. Do not edit production records, run ad-hoc SQL, trigger paid checkout, or execute a migration.
+
+1. Use one approved owner account connected to: one verified/eligible test listing, one unverified test listing, and one paused or suspended test listing when representative fixtures are available.
+2. On Web and native, open **Profile → My Business**. Confirm each approved relationship is named and the chosen Web listing carries its exact `businessId` into Business Admin.
+3. Confirm loading and forced unauthenticated/forbidden error states remain explicit rather than becoming an empty list.
+4. For the selected listing, update one ordinary profile field through the owner editor and verify the managed-profile response. Do not modify ownership, verification, status, publication, or evidence.
+5. Verify the verified listing shows **Verification complete** and the unverified listing presents the verification path; confirm the paused/suspended listing remains unchanged.
+6. Open promotions for the eligible listing without submitting payment; verify the ineligible paused/suspended listing displays the unavailable explanation and cannot start checkout.
+7. Open Business Voice Profile. If its backing table is unavailable, record the explicit unavailable message only; do not execute a migration or represent the feature as functioning.
 
 ## Prepared AWS Device Farm P0 cases — no AWS action taken
 
@@ -81,8 +112,10 @@ PR #284 remains **draft and unmerged**. Its source selector contract and isolate
 | PR #293 — Organization Transparency | Open; not included in candidate | Organization Transparency workstream. Its approval-required migration and flag remain outside this scope. |
 | PR #284 — Device Farm selectors | Draft; not included in candidate | Mobile QA workstream. Rebase/merge, source selector validation, and only then separately authorized device testing. |
 | Isolated staging acceptance | Not run | Main Kinfolk integration/release owner after explicit staging authorization. |
+| P0 owner-dashboard staging acceptance | Not run | Main Kinfolk integration/release owner after explicit staging authorization; bounded plan above. |
+| Business Voice Profile table availability | Unknown in target environment | Staging release owner to inspect through the authenticated feature path only; no ad-hoc migration. |
 | Background monitoring and push delivery | Not implemented | Future dedicated product/release workstream after explicit authorization. |
 
 ## Final source conclusion
 
-**Interest Intelligence is SOURCE COMPLETE and INTEGRATED in the shared candidate.** No independently executable, founder-approved Interest Intelligence source code remains without duplicating another workstream. The next authorized action is to select the final shared candidate after any intentionally included open PRs, then run the isolated staging acceptance checklist above.
+**Interest Intelligence is SOURCE COMPLETE and INTEGRATED. The P0 owner-dashboard repair is SOURCE COMPLETE, INTEGRATED, and AWAITING STAGING ACCEPTANCE.** No independently executable, founder-approved source work remains in either completed workstream without duplicating another owner. The next authorized action is a bounded, separately authorized isolated-staging acceptance of the combined candidate.
