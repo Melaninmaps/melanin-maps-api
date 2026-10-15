@@ -201,7 +201,7 @@ CREATE TABLE organization_owner_actions (
     'public_response', 'factual_correction', 'dispute'
   )),
   CONSTRAINT organization_owner_actions_status_check CHECK (status IN (
-    'pending_moderation', 'published', 'held', 'rejected', 'withdrawn'
+    'pending_moderation', 'accepted', 'published', 'held', 'rejected', 'withdrawn'
   )),
   CONSTRAINT organization_owner_actions_shape_check CHECK (
     (action_type = 'public_response' AND target_experience_id IS NOT NULL) OR
@@ -211,6 +211,21 @@ CREATE TABLE organization_owner_actions (
 );
 CREATE INDEX organization_owner_actions_review_idx
   ON organization_owner_actions (organization_id, status, created_at DESC);
+
+-- An approved owner response is a separate moderated record. It may be shown
+-- beside an experience, but never overwrites, suppresses, or changes that
+-- experience's member-authored narrative or moderation state.
+CREATE TABLE organization_owner_responses (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id UUID NOT NULL REFERENCES organization_profiles(id) ON DELETE RESTRICT,
+  owner_action_id UUID NOT NULL UNIQUE REFERENCES organization_owner_actions(id) ON DELETE RESTRICT,
+  target_experience_id UUID NOT NULL REFERENCES organization_experiences(id) ON DELETE RESTRICT,
+  body VARCHAR(2000) NOT NULL,
+  published_by_member_id VARCHAR(255) NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+  published_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX organization_owner_responses_public_idx
+  ON organization_owner_responses (organization_id, target_experience_id, published_at DESC);
 
 -- Separate source-backed clinical information. Patient/caregiver and staff
 -- experience is never inserted here and cannot become a medical-quality claim.

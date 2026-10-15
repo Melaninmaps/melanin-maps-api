@@ -86,6 +86,7 @@ type Experience = {
   relationshipLabel: string;
   categoryCodes: string[];
   narrative: string | null;
+  ownerResponse: string | null;
   city: string | null;
   state: string | null;
   submittedAt: string;
@@ -112,6 +113,395 @@ function themesFor(profile: Profile, relationship: string) {
       ? HEALTHCARE_STAFF_THEMES
       : EMPLOYER_THEMES;
   return CUSTOMER_THEMES;
+}
+
+function OwnerParticipation({
+  profile,
+  experiences,
+}: {
+  profile: Profile;
+  experiences: Experience[];
+}) {
+  const colors = useColors();
+  const [approved, setApproved] = useState<boolean | null>(null);
+  const [attested, setAttested] = useState(false);
+  const [claimNote, setClaimNote] = useState("");
+  const [actionType, setActionType] = useState<
+    "public_response" | "factual_correction" | "dispute"
+  >("public_response");
+  const [targetExperienceId, setTargetExperienceId] = useState("");
+  const [fieldName, setFieldName] = useState("website");
+  const [correctedValue, setCorrectedValue] = useState("");
+  const [body, setBody] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const response = await fetch(
+        `${getApiBase()}/api/organizations/${encodeURIComponent(profile.id)}/owner-access`,
+        { headers: await getMemberApiHeaders() },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        approved?: boolean;
+      };
+      if (active && response.ok) setApproved(data.approved === true);
+      else if (active) setApproved(false);
+    })().catch(() => {
+      if (active) setApproved(false);
+    });
+    return () => {
+      active = false;
+    };
+  }, [profile.id]);
+  async function submitClaim() {
+    if (!attested || saving) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      const response = await fetch(
+        `${getApiBase()}/api/organizations/${encodeURIComponent(profile.id)}/claim`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(await getMemberApiHeaders()),
+          },
+          body: JSON.stringify({
+            attestation: true,
+            note: claimNote.trim() || undefined,
+          }),
+        },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+      };
+      if (!response.ok)
+        throw new Error(data.error ?? "Unable to submit owner claim.");
+      setMessage(data.message ?? "Owner claim submitted for verification.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to submit owner claim.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+  async function submitAction() {
+    if (saving || !body.trim()) return;
+    if (actionType === "public_response" && !targetExperienceId) {
+      setMessage("Choose the published experience you are responding to.");
+      return;
+    }
+    if (
+      actionType === "factual_correction" &&
+      (!fieldName.trim() || !correctedValue.trim())
+    ) {
+      setMessage("Add the factual field and correction requested.");
+      return;
+    }
+    setSaving(true);
+    setMessage(null);
+    try {
+      const response = await fetch(
+        `${getApiBase()}/api/organizations/${encodeURIComponent(profile.id)}/owner-actions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(await getMemberApiHeaders()),
+          },
+          body: JSON.stringify({
+            actionType,
+            body: body.trim(),
+            ...(targetExperienceId ? { targetExperienceId } : {}),
+            ...(actionType === "factual_correction"
+              ? {
+                  fieldName: fieldName.trim(),
+                  correctedValue: correctedValue.trim(),
+                }
+              : {}),
+          }),
+        },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+      };
+      if (!response.ok)
+        throw new Error(data.error ?? "Unable to submit owner request.");
+      setBody("");
+      setCorrectedValue("");
+      setTargetExperienceId("");
+      setMessage(data.message ?? "Owner request submitted for moderation.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to submit owner request.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+  if (approved === null) return null;
+  if (!approved)
+    return (
+      <View
+        style={[
+          styles.form,
+          { backgroundColor: colors.card, borderColor: colors.border },
+        ]}
+        testID="organization-owner-claim"
+      >
+        <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+          Represent this organization?
+        </Text>
+        <Text style={[styles.copy, { color: colors.mutedForeground }]}>
+          Request limited owner workflow access. A human reviewer verifies each
+          claim. Approval does not create a score, recommendation, promotion, or
+          authority to remove member experiences.
+        </Text>
+        <TextInput
+          value={claimNote}
+          onChangeText={setClaimNote}
+          multiline
+          maxLength={2000}
+          textAlignVertical="top"
+          placeholder="Optional factual context for a reviewer. Do not include passwords, government identifiers, or sensitive personal information."
+          placeholderTextColor={colors.mutedForeground}
+          style={[
+            styles.note,
+            {
+              color: colors.foreground,
+              backgroundColor: colors.background,
+              borderColor: colors.border,
+            },
+          ]}
+        />
+        <TouchableOpacity
+          accessibilityRole="checkbox"
+          accessibilityState={{ checked: attested }}
+          onPress={() => setAttested((value) => !value)}
+          style={[
+            styles.privacy,
+            {
+              borderColor: attested ? colors.primary : colors.border,
+              backgroundColor: attested
+                ? `${colors.primary}10`
+                : colors.background,
+            },
+          ]}
+        >
+          <Text style={[styles.cardTitle, { color: colors.foreground }]}>
+            {attested ? "✓ " : ""}Authorized request attestation
+          </Text>
+          <Text style={[styles.copy, { color: colors.mutedForeground }]}>
+            I am authorized to request this limited workflow and understand it
+            cannot control member experiences.
+          </Text>
+        </TouchableOpacity>
+        {message ? (
+          <Text style={[styles.hint, { color: colors.primary }]}>
+            {message}
+          </Text>
+        ) : null}
+        <TouchableOpacity
+          testID="organization-owner-claim-submit"
+          disabled={!attested || saving}
+          onPress={() => void submitClaim()}
+          style={[
+            styles.button,
+            {
+              backgroundColor: colors.primary,
+              opacity: !attested || saving ? 0.5 : 1,
+            },
+          ]}
+        >
+          {saving ? (
+            <ActivityIndicator color={colors.primaryForeground} />
+          ) : (
+            <Text
+              style={[styles.buttonText, { color: colors.primaryForeground }]}
+            >
+              Request owner verification
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
+    );
+  return (
+    <View
+      style={[
+        styles.form,
+        { backgroundColor: colors.card, borderColor: colors.border },
+      ]}
+      testID="organization-owner-actions"
+    >
+      <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+        Verified owner workflow
+      </Text>
+      <Text style={[styles.copy, { color: colors.mutedForeground }]}>
+        Request a factual correction, moderated response, or dispute. No request
+        can delete, suppress, alter, or overwrite a member experience.
+      </Text>
+      <View style={styles.chips}>
+        {[
+          ["public_response", "Public response"],
+          ["factual_correction", "Factual correction"],
+          ["dispute", "Dispute"],
+        ].map(([value, label]) => (
+          <TouchableOpacity
+            key={value}
+            onPress={() => setActionType(value as typeof actionType)}
+            style={[
+              styles.chip,
+              {
+                backgroundColor:
+                  actionType === value ? colors.primary : colors.background,
+                borderColor:
+                  actionType === value ? colors.primary : colors.border,
+              },
+            ]}
+          >
+            <Text
+              style={[
+                styles.chipText,
+                {
+                  color:
+                    actionType === value
+                      ? colors.primaryForeground
+                      : colors.foreground,
+                },
+              ]}
+            >
+              {label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+      {actionType === "public_response" ? (
+        <View>
+          <Text style={[styles.label, { color: colors.foreground }]}>
+            Published experience
+          </Text>
+          <View style={styles.chips}>
+            {experiences.map((experience) => (
+              <TouchableOpacity
+                key={experience.id}
+                onPress={() => setTargetExperienceId(experience.id)}
+                style={[
+                  styles.chip,
+                  {
+                    backgroundColor:
+                      targetExperienceId === experience.id
+                        ? colors.primary
+                        : colors.background,
+                    borderColor:
+                      targetExperienceId === experience.id
+                        ? colors.primary
+                        : colors.border,
+                  },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.chipText,
+                    {
+                      color:
+                        targetExperienceId === experience.id
+                          ? colors.primaryForeground
+                          : colors.foreground,
+                    },
+                  ]}
+                >
+                  {experience.relationshipLabel} ·{" "}
+                  {new Date(experience.submittedAt).toLocaleDateString()}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      ) : null}
+      {actionType === "factual_correction" ? (
+        <>
+          <TextInput
+            value={fieldName}
+            onChangeText={setFieldName}
+            maxLength={100}
+            placeholder="Factual field (e.g., website)"
+            placeholderTextColor={colors.mutedForeground}
+            style={[
+              styles.input,
+              {
+                color: colors.foreground,
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+              },
+            ]}
+          />
+          <TextInput
+            value={correctedValue}
+            onChangeText={setCorrectedValue}
+            maxLength={1000}
+            placeholder="Correction requested"
+            placeholderTextColor={colors.mutedForeground}
+            style={[
+              styles.input,
+              {
+                color: colors.foreground,
+                backgroundColor: colors.background,
+                borderColor: colors.border,
+              },
+            ]}
+          />
+        </>
+      ) : null}
+      <TextInput
+        testID="organization-owner-action-body"
+        value={body}
+        onChangeText={setBody}
+        multiline
+        maxLength={2000}
+        textAlignVertical="top"
+        placeholder="Context for moderator. Avoid personal, medical, personnel, or other sensitive information."
+        placeholderTextColor={colors.mutedForeground}
+        style={[
+          styles.note,
+          {
+            color: colors.foreground,
+            backgroundColor: colors.background,
+            borderColor: colors.border,
+          },
+        ]}
+      />
+      {message ? (
+        <Text style={[styles.hint, { color: colors.primary }]}>{message}</Text>
+      ) : null}
+      <TouchableOpacity
+        testID="organization-owner-action-submit"
+        disabled={saving}
+        onPress={() => void submitAction()}
+        style={[
+          styles.button,
+          { backgroundColor: colors.primary, opacity: saving ? 0.5 : 1 },
+        ]}
+      >
+        {saving ? (
+          <ActivityIndicator color={colors.primaryForeground} />
+        ) : (
+          <Text
+            style={[styles.buttonText, { color: colors.primaryForeground }]}
+          >
+            Submit for moderation
+          </Text>
+        )}
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 export default function OrganizationTransparencyProfileScreen() {
@@ -408,6 +798,30 @@ export default function OrganizationTransparencyProfileScreen() {
                   {experience.narrative ||
                     "This member selected structured themes without a public narrative."}
                 </Text>
+                {experience.ownerResponse ? (
+                  <View
+                    style={[
+                      styles.ownerResponse,
+                      {
+                        backgroundColor: `${colors.primary}10`,
+                        borderColor: `${colors.primary}38`,
+                      },
+                    ]}
+                  >
+                    <Text style={[styles.cardTitle, { color: colors.primary }]}>
+                      Moderated organization response
+                    </Text>
+                    <Text style={[styles.copy, { color: colors.foreground }]}>
+                      {experience.ownerResponse}
+                    </Text>
+                    <Text
+                      style={[styles.hint, { color: colors.mutedForeground }]}
+                    >
+                      This response appears beside—not instead of—the original
+                      member experience.
+                    </Text>
+                  </View>
+                ) : null}
               </View>
             ))
           )}
@@ -667,6 +1081,7 @@ export default function OrganizationTransparencyProfileScreen() {
             </Text>
           </View>
         )}
+        <OwnerParticipation profile={profile} experiences={experiences} />
       </ScrollView>
     </View>
   );
@@ -732,6 +1147,7 @@ const styles = StyleSheet.create({
   },
   tag: { borderRadius: 20, paddingHorizontal: 9, paddingVertical: 5 },
   tagText: { fontFamily: "Inter_600SemiBold", fontSize: 11 },
+  ownerResponse: { borderWidth: 1, borderRadius: 11, padding: 11, gap: 5 },
   form: {
     borderRadius: 17,
     borderWidth: 1,
@@ -753,6 +1169,16 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     minHeight: 110,
     padding: 11,
+    fontFamily: "Inter_400Regular",
+    fontSize: 13,
+    marginTop: 7,
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 11,
+    minHeight: 46,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
     fontFamily: "Inter_400Regular",
     fontSize: 13,
     marginTop: 7,

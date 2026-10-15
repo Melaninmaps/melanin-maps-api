@@ -38,6 +38,14 @@ type ExperienceStatus = {
   submittedAt: string;
   recovery: { label: string; memberMessage: string; appealAvailable: boolean };
 };
+type OwnerClaimStatus = {
+  claimId: string;
+  organizationId: string;
+  organizationName: string;
+  status: string;
+  reviewerNote: string | null;
+  submittedAt: string;
+};
 function pretty(value: string) {
   return value
     .replaceAll("_", " ")
@@ -236,6 +244,7 @@ export default function OrganizationTransparencyActivityScreen() {
   const insets = useSafeAreaInsets();
   const [organizations, setOrganizations] = useState<OrganizationStatus[]>([]);
   const [experiences, setExperiences] = useState<ExperienceStatus[]>([]);
+  const [ownerClaims, setOwnerClaims] = useState<OwnerClaimStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const load = useCallback(async () => {
     setLoading(true);
@@ -247,6 +256,7 @@ export default function OrganizationTransparencyActivityScreen() {
       const data = (await response.json().catch(() => ({}))) as {
         organizations?: OrganizationStatus[];
         experiences?: ExperienceStatus[];
+        ownerClaims?: OwnerClaimStatus[];
         error?: string;
       };
       if (!response.ok)
@@ -255,6 +265,7 @@ export default function OrganizationTransparencyActivityScreen() {
         Array.isArray(data.organizations) ? data.organizations : [],
       );
       setExperiences(Array.isArray(data.experiences) ? data.experiences : []);
+      setOwnerClaims(Array.isArray(data.ownerClaims) ? data.ownerClaims : []);
     } catch (error) {
       Alert.alert(
         "My organization activity",
@@ -404,6 +415,68 @@ export default function OrganizationTransparencyActivityScreen() {
                 <Text style={[styles.meta, { color: colors.mutedForeground }]}>
                   Submitted {new Date(item.submittedAt).toLocaleDateString()}
                 </Text>
+              </View>
+            ))}
+          </View>
+        )}
+        <Text
+          style={[
+            styles.sectionTitle,
+            { color: colors.foreground, marginTop: 16 },
+          ]}
+        >
+          Owner verification requests
+        </Text>
+        {!loading && ownerClaims.length === 0 ? (
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: colors.card, borderColor: colors.border },
+            ]}
+          >
+            <Text style={[styles.copy, { color: colors.mutedForeground }]}>
+              You have no owner verification requests.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.stack}>
+            {ownerClaims.map((claim) => (
+              <View
+                key={claim.claimId}
+                style={[
+                  styles.card,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                ]}
+              >
+                <View style={styles.row}>
+                  <Text
+                    style={[styles.cardTitle, { color: colors.foreground }]}
+                  >
+                    {claim.organizationName}
+                  </Text>
+                  <View
+                    style={[
+                      styles.badge,
+                      { backgroundColor: `${colors.primary}18` },
+                    ]}
+                  >
+                    <Text style={[styles.badgeText, { color: colors.primary }]}>
+                      {pretty(claim.status)}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={[styles.copy, { color: colors.mutedForeground }]}>
+                  {claim.status === "approved"
+                    ? "Limited owner workflow is active. It permits moderated requests only and cannot remove or suppress member experiences."
+                    : "No organization-owner authority is active while this request is pending or rejected."}
+                </Text>
+                {claim.reviewerNote ? (
+                  <Text
+                    style={[styles.meta, { color: colors.mutedForeground }]}
+                  >
+                    Reviewer note: {claim.reviewerNote}
+                  </Text>
+                ) : null}
               </View>
             ))}
           </View>

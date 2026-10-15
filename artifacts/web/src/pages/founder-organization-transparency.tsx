@@ -15,7 +15,12 @@ import { authenticatedFetch } from "@/lib/authenticatedFetch";
 
 const BASE = import.meta.env.BASE_URL;
 type QueueItem = {
-  kind: "organization" | "experience" | "experience_appeal";
+  kind:
+    | "organization"
+    | "experience"
+    | "experience_appeal"
+    | "owner_claim"
+    | "owner_action";
   id: string;
   organizationId: string;
   organizationName: string;
@@ -30,6 +35,12 @@ type QueueItem = {
   narrative?: string | null;
   moderationFlags?: string[];
   appealBody?: string;
+  claimNote?: string | null;
+  ownerActionType?: "public_response" | "factual_correction" | "dispute";
+  targetExperienceId?: string | null;
+  fieldName?: string | null;
+  correctedValue?: string | null;
+  ownerActionBody?: string;
 };
 function label(value: string) {
   return value
@@ -137,10 +148,29 @@ export default function FounderOrganizationTransparency() {
         reason: reason.trim(),
         evidenceReceiptUrls,
       };
-    } else {
+    } else if (item.kind === "experience_appeal") {
       endpoint = `${BASE}api/admin/organization-experience-appeals/${encodeURIComponent(item.id)}/decision`;
       body = {
         disposition: action === "reopen" ? "reopen" : "decline",
+        reason: reason.trim(),
+        evidenceReceiptUrls,
+      };
+    } else if (item.kind === "owner_claim") {
+      endpoint = `${BASE}api/admin/organization-owner-claims/${encodeURIComponent(item.id)}/decision`;
+      body = {
+        disposition: action === "approve" ? "approve" : "reject",
+        reason: reason.trim(),
+        evidenceReceiptUrls,
+      };
+    } else {
+      endpoint = `${BASE}api/admin/organization-owner-actions/${encodeURIComponent(item.id)}/decision`;
+      body = {
+        disposition:
+          action === "approve"
+            ? "approve"
+            : action === "hold"
+              ? "hold"
+              : "reject",
         reason: reason.trim(),
         evidenceReceiptUrls,
       };
@@ -304,7 +334,7 @@ export default function FounderOrganizationTransparency() {
                                 "No public narrative supplied; review structured themes only."}
                             </p>
                           </>
-                        ) : (
+                        ) : item.kind === "experience_appeal" ? (
                           <>
                             <strong className="text-white">
                               Member appeal / factual clarification:
@@ -315,6 +345,48 @@ export default function FounderOrganizationTransparency() {
                             <p className="mt-3 text-white/60">
                               Reopening returns the original experience to
                               moderation; it does not publish it.
+                            </p>
+                          </>
+                        ) : item.kind === "owner_claim" ? (
+                          <>
+                            <strong className="text-white">
+                              Limited owner workflow claim
+                            </strong>
+                            <p className="mt-2 whitespace-pre-wrap">
+                              {item.claimNote ||
+                                "No additional claim note supplied."}
+                            </p>
+                            <p className="mt-3 text-white/60">
+                              Verify authorization using independent evidence.
+                              Approval permits limited correction, response, and
+                              dispute requests only; it cannot remove or alter
+                              member experiences.
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <strong className="text-white">
+                              Owner {label(item.ownerActionType ?? "action")}{" "}
+                              request
+                            </strong>
+                            {item.targetExperienceId ? (
+                              <p className="mt-2 text-white/60">
+                                Target experience: {item.targetExperienceId}
+                              </p>
+                            ) : null}
+                            {item.fieldName ? (
+                              <p className="mt-2 text-white/60">
+                                Requested factual correction: {item.fieldName} →{" "}
+                                {item.correctedValue}
+                              </p>
+                            ) : null}
+                            <p className="mt-3 whitespace-pre-wrap">
+                              {item.ownerActionBody}
+                            </p>
+                            <p className="mt-3 text-white/60">
+                              A published response appears beside the original
+                              experience. Other accepted requests remain a
+                              review record and do not change member content.
                             </p>
                           </>
                         )}
@@ -417,7 +489,7 @@ export default function FounderOrganizationTransparency() {
                               Reject
                             </button>
                           </>
-                        ) : (
+                        ) : item.kind === "experience_appeal" ? (
                           <>
                             <button
                               disabled={processing === item.id}
@@ -434,6 +506,53 @@ export default function FounderOrganizationTransparency() {
                             >
                               <XCircle className="h-4 w-4" />
                               Decline appeal
+                            </button>
+                          </>
+                        ) : item.kind === "owner_claim" ? (
+                          <>
+                            <button
+                              disabled={processing === item.id}
+                              onClick={() => void decide(item, "approve")}
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                              Approve limited owner access
+                            </button>
+                            <button
+                              disabled={processing === item.id}
+                              onClick={() => void decide(item, "reject")}
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-red-400/15 px-4 py-2.5 text-sm font-bold text-red-100 hover:bg-red-400/25 disabled:opacity-50"
+                            >
+                              <XCircle className="h-4 w-4" />
+                              Reject claim
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              disabled={processing === item.id}
+                              onClick={() => void decide(item, "approve")}
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50"
+                            >
+                              <CheckCircle2 className="h-4 w-4" />
+                              {item.ownerActionType === "public_response"
+                                ? "Publish moderated response"
+                                : "Accept request"}
+                            </button>
+                            <button
+                              disabled={processing === item.id}
+                              onClick={() => void decide(item, "hold")}
+                              className="rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-[#3A1F0E] hover:bg-amber-400 disabled:opacity-50"
+                            >
+                              Hold
+                            </button>
+                            <button
+                              disabled={processing === item.id}
+                              onClick={() => void decide(item, "reject")}
+                              className="inline-flex items-center gap-1.5 rounded-xl bg-red-400/15 px-4 py-2.5 text-sm font-bold text-red-100 hover:bg-red-400/25 disabled:opacity-50"
+                            >
+                              <XCircle className="h-4 w-4" />
+                              Reject request
                             </button>
                           </>
                         )}

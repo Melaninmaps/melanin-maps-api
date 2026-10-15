@@ -33,6 +33,14 @@ type ExperienceStatus = {
   submittedAt: string;
   recovery: { label: string; memberMessage: string; appealAvailable: boolean };
 };
+type OwnerClaimStatus = {
+  claimId: string;
+  organizationId: string;
+  organizationName: string;
+  status: string;
+  reviewerNote: string | null;
+  submittedAt: string;
+};
 
 function label(value: string) {
   return value
@@ -125,6 +133,7 @@ function AppealForm({
 export default function OrganizationTransparencyActivity() {
   const [organizations, setOrganizations] = useState<OrganizationStatus[]>([]);
   const [experiences, setExperiences] = useState<ExperienceStatus[]>([]);
+  const [ownerClaims, setOwnerClaims] = useState<OwnerClaimStatus[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -138,6 +147,7 @@ export default function OrganizationTransparencyActivity() {
       const data = (await response.json().catch(() => ({}))) as {
         organizations?: OrganizationStatus[];
         experiences?: ExperienceStatus[];
+        ownerClaims?: OwnerClaimStatus[];
         error?: string;
       };
       if (!response.ok)
@@ -146,6 +156,7 @@ export default function OrganizationTransparencyActivity() {
         Array.isArray(data.organizations) ? data.organizations : [],
       );
       setExperiences(Array.isArray(data.experiences) ? data.experiences : []);
+      setOwnerClaims(Array.isArray(data.ownerClaims) ? data.ownerClaims : []);
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -250,6 +261,50 @@ export default function OrganizationTransparencyActivity() {
                             organization.submittedAt,
                           ).toLocaleDateString()}
                         </p>
+                      </article>
+                    ))
+                  )}
+                </div>
+              </section>
+              <section className="mt-10">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-5 w-5 text-[#CA922B]" />
+                  <h2 className="font-serif text-2xl font-bold text-white">
+                    Owner verification requests
+                  </h2>
+                </div>
+                <div className="mt-4 space-y-3">
+                  {ownerClaims.length === 0 ? (
+                    <p className="rounded-2xl border border-white/10 bg-[#241810] p-5 text-sm text-white/65">
+                      You have no owner verification requests.
+                    </p>
+                  ) : (
+                    ownerClaims.map((claim) => (
+                      <article
+                        key={claim.claimId}
+                        className="rounded-2xl border border-white/10 bg-[#241810] p-5"
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <h3 className="font-semibold text-white">
+                            {claim.organizationName}
+                          </h3>
+                          <span className="rounded-full bg-[#CA922B]/15 px-2.5 py-1 text-xs font-bold text-[#F2C465]">
+                            {label(claim.status)}
+                          </span>
+                        </div>
+                        <p className="mt-3 text-sm leading-6 text-white/70">
+                          {claim.status === "approved"
+                            ? "Your limited owner workflow is active. It permits moderated requests only and cannot remove or suppress member experiences."
+                            : "A reviewer will provide a factual verification outcome. No organization-owner authority is active while this request is pending or rejected."}
+                        </p>
+                        {claim.reviewerNote ? (
+                          <p className="mt-3 rounded-xl border border-white/10 bg-black/15 p-3 text-sm leading-6 text-white/75">
+                            <strong className="text-[#F2C465]">
+                              Reviewer note:{" "}
+                            </strong>
+                            {claim.reviewerNote}
+                          </p>
+                        ) : null}
                       </article>
                     ))
                   )}

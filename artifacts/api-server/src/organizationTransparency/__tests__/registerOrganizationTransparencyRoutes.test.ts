@@ -66,7 +66,11 @@ function makeRepository(): OrganizationTransparencyRepository {
     listPublicExperiences: vi.fn().mockResolvedValue([]),
     listMemberActivity: vi
       .fn()
-      .mockResolvedValue({ organizations: [], experiences: [] }),
+      .mockResolvedValue({
+        organizations: [],
+        experiences: [],
+        ownerClaims: [],
+      }),
     createExperienceAppeal: vi.fn().mockResolvedValue({
       appealId: "appeal-1",
       status: "pending_moderation",
@@ -84,6 +88,8 @@ function makeRepository(): OrganizationTransparencyRepository {
       actionId: "action-1",
       status: "pending_moderation",
     }),
+    applyOwnerClaimReview: vi.fn().mockResolvedValue(null),
+    applyOwnerActionReview: vi.fn().mockResolvedValue(null),
     applyModerationDecision: vi.fn().mockResolvedValue(null),
   };
 }
@@ -203,6 +209,53 @@ describe("Organization Transparency routes", () => {
     expect(repository.createOwnerAction).not.toHaveBeenCalled();
   });
 
+  it("requires an owner attestation and records no access until a reviewer approves", async () => {
+    const repository = makeRepository();
+    await request(appWith(repository))
+      .post("/api/organizations/org-1/claim")
+      .send({ note: "I represent this organization." })
+      .expect(400);
+    expect(repository.createOwnerClaim).not.toHaveBeenCalled();
+
+    await request(appWith(repository))
+      .post("/api/organizations/org-1/claim")
+      .send({ attestation: true, note: "I represent this organization." })
+      .expect(201);
+    expect(repository.createOwnerClaim).toHaveBeenCalledWith(
+      "org-1",
+      "member-1",
+      "I represent this organization.",
+    );
+  });
+
+  it("requires named administrators and a rationale for owner workflow decisions", async () => {
+    const repository = makeRepository();
+    await request(appWith(repository, "admin"))
+      .post("/api/admin/organization-owner-claims/claim-1/decision")
+      .send({ disposition: "approve" })
+      .expect(400);
+    expect(repository.applyOwnerClaimReview).not.toHaveBeenCalled();
+
+    vi.mocked(repository.applyOwnerActionReview).mockResolvedValue({
+      actionId: "action-1",
+      status: "published",
+      organizationId: "org-1",
+    });
+    await request(appWith(repository, "admin"))
+      .post("/api/admin/organization-owner-actions/action-1/decision")
+      .send({
+        disposition: "approve",
+        reason: "Response is factual, safe, and appears beside the original.",
+        evidenceReceiptUrls: ["https://example.test/review-record"],
+      })
+      .expect(200);
+    expect(repository.applyOwnerActionReview).toHaveBeenCalledWith(
+      "action-1",
+      "member-1",
+      expect.objectContaining({ disposition: "approve" }),
+    );
+  });
+
   it("returns only repository-projected pseudonymous public experiences", async () => {
     const repository = makeRepository();
     vi.mocked(repository.listPublicExperiences).mockResolvedValue([
@@ -216,6 +269,7 @@ describe("Organization Transparency routes", () => {
         relationshipLabel: "Former employee",
         categoryCodes: ["workplace_culture"],
         narrative: "A moderated contextual experience.",
+        ownerResponse: null,
         submittedAt: "2026-10-15T00:00:00.000Z",
       },
     ]);

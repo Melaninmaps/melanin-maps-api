@@ -112,11 +112,16 @@ function createP0Repository(): OrganizationTransparencyRepository {
               relationshipLabel: "Former employee",
               categoryCodes: ["workplace_culture"],
               narrative: "A moderator-approved contextual account.",
+              ownerResponse: null,
               submittedAt: "2026-10-15T00:00:00.000Z",
             },
           ]
         : [],
-    listMemberActivity: async () => ({ organizations: [], experiences: [] }),
+    listMemberActivity: async () => ({
+      organizations: [],
+      experiences: [],
+      ownerClaims: [],
+    }),
     createExperienceAppeal: async () => ({
       appealId: "appeal-1",
       status: "pending_moderation",
@@ -176,6 +181,8 @@ function createP0Repository(): OrganizationTransparencyRepository {
       actionId: "action-1",
       status: "pending_moderation",
     }),
+    applyOwnerClaimReview: async () => null,
+    applyOwnerActionReview: async () => null,
     applyModerationDecision: async (_organizationId, _reviewerId, decision) => {
       if (
         decision.factualStatus !== "factual_approved" ||

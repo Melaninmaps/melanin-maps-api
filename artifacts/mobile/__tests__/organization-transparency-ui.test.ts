@@ -61,6 +61,20 @@ describe("Expo Organization Transparency intake", () => {
     expect(screen).toContain("organization-experience-submit");
   });
 
+  it("keeps native owner participation limited to moderated claims, responses, corrections, and disputes", () => {
+    const screen = source("../app/organization-transparency/[id].tsx");
+    expect(screen).toContain("/owner-access");
+    expect(screen).toContain("/claim");
+    expect(screen).toContain("/owner-actions");
+    expect(screen).toContain("Request owner verification");
+    expect(screen).toContain(
+      "Request a factual correction, moderated response, or dispute. No request",
+    );
+    expect(screen).toContain(
+      "can delete, suppress, alter, or overwrite a member experience.",
+    );
+  });
+
   it("provides member status recovery and a bounded appeal path without publishing automatically", () => {
     const screen = source("../app/organization-transparency/activity.tsx");
     expect(screen).toContain("/api/community/organizations/mine");

@@ -53,6 +53,7 @@ type Experience = {
   relationshipLabel: string;
   categoryCodes: string[];
   narrative: string | null;
+  ownerResponse: string | null;
   submittedAt: string;
 };
 
@@ -469,9 +470,311 @@ function ExperienceList({ experiences }: { experiences: Experience[] }) {
               narrative.
             </p>
           )}
+          {experience.ownerResponse ? (
+            <div className="mt-4 rounded-xl border border-[#CA922B]/30 bg-[#CA922B]/10 p-3">
+              <p className="text-xs font-bold uppercase tracking-[0.1em] text-[#F2C465]">
+                Moderated organization response
+              </p>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-white/80">
+                {experience.ownerResponse}
+              </p>
+              <p className="mt-2 text-xs leading-5 text-white/55">
+                This response appears beside—not instead of—the original member
+                experience. It does not change the experience or its moderation
+                decision.
+              </p>
+            </div>
+          ) : null}
         </article>
       ))}
     </div>
+  );
+}
+
+function OwnerParticipation({
+  profile,
+  experiences,
+}: {
+  profile: OrganizationProfile;
+  experiences: Experience[];
+}) {
+  const [approved, setApproved] = useState<boolean | null>(null);
+  const [claimNote, setClaimNote] = useState("");
+  const [attested, setAttested] = useState(false);
+  const [actionType, setActionType] = useState<
+    "public_response" | "factual_correction" | "dispute"
+  >("public_response");
+  const [targetExperienceId, setTargetExperienceId] = useState("");
+  const [fieldName, setFieldName] = useState("website");
+  const [correctedValue, setCorrectedValue] = useState("");
+  const [body, setBody] = useState("");
+  const [message, setMessage] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    void authenticatedFetch(
+      `${BASE}api/organizations/${encodeURIComponent(profile.id)}/owner-access`,
+    )
+      .then(async (response) => ({
+        response,
+        body: (await response.json().catch(() => ({}))) as {
+          approved?: boolean;
+        },
+      }))
+      .then(({ response, body }) => {
+        if (active && response.ok) setApproved(body.approved === true);
+      })
+      .catch(() => {
+        if (active) setApproved(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [profile.id]);
+
+  async function submitClaim(event: React.FormEvent) {
+    event.preventDefault();
+    if (!attested || saving) return;
+    setSaving(true);
+    setMessage(null);
+    try {
+      const response = await authenticatedFetch(
+        `${BASE}api/organizations/${encodeURIComponent(profile.id)}/claim`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            note: claimNote.trim() || undefined,
+            attestation: true,
+          }),
+        },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+        claim?: { status?: string };
+      };
+      if (!response.ok)
+        throw new Error(data.error ?? "Unable to submit owner claim.");
+      setMessage(
+        data.message ?? `Owner claim ${data.claim?.status ?? "submitted"}.`,
+      );
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to submit owner claim.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function submitAction(event: React.FormEvent) {
+    event.preventDefault();
+    if (saving || !body.trim()) return;
+    if (actionType === "public_response" && !targetExperienceId) {
+      setMessage(
+        "Choose the specific published experience you are responding to.",
+      );
+      return;
+    }
+    if (
+      actionType === "factual_correction" &&
+      (!fieldName.trim() || !correctedValue.trim())
+    ) {
+      setMessage("Name the factual field and the correction requested.");
+      return;
+    }
+    setSaving(true);
+    setMessage(null);
+    try {
+      const response = await authenticatedFetch(
+        `${BASE}api/organizations/${encodeURIComponent(profile.id)}/owner-actions`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            actionType,
+            body: body.trim(),
+            ...(targetExperienceId ? { targetExperienceId } : {}),
+            ...(actionType === "factual_correction"
+              ? {
+                  fieldName: fieldName.trim(),
+                  correctedValue: correctedValue.trim(),
+                }
+              : {}),
+          }),
+        },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        message?: string;
+      };
+      if (!response.ok)
+        throw new Error(data.error ?? "Unable to submit owner action.");
+      setBody("");
+      setCorrectedValue("");
+      setTargetExperienceId("");
+      setMessage(data.message ?? "Owner request submitted for moderation.");
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to submit owner action.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (approved === null) return null;
+  if (!approved)
+    return (
+      <section className="mt-8 rounded-2xl border border-white/10 bg-[#241810] p-5">
+        <h2 className="font-serif text-xl font-bold text-white">
+          Represent this organization?
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-white/70">
+          Request limited owner workflow access. A human reviewer must verify
+          it. Approval cannot delete, suppress, or alter any member experience
+          and does not create Kinfolk or promotion eligibility.
+        </p>
+        <form
+          onSubmit={(event) => void submitClaim(event)}
+          className="mt-4 space-y-3"
+        >
+          <textarea
+            value={claimNote}
+            onChange={(event) => setClaimNote(event.target.value)}
+            maxLength={2000}
+            rows={3}
+            placeholder="Optional factual context for a reviewer. Do not include passwords, government identifiers, or sensitive personal information."
+            className="w-full rounded-xl border border-white/15 bg-white px-3 py-2.5 text-sm text-[#3A1F0E]"
+          />
+          <label className="flex gap-2 text-sm leading-6 text-white/75">
+            <input
+              type="checkbox"
+              checked={attested}
+              onChange={(event) => setAttested(event.target.checked)}
+              className="mt-1 accent-[#CA922B]"
+            />
+            I am authorized to request this limited owner workflow and
+            understand it does not control member experiences.
+          </label>
+          {message ? (
+            <p role="alert" className="text-sm text-[#F2C465]">
+              {message}
+            </p>
+          ) : null}
+          <button
+            disabled={!attested || saving}
+            className="rounded-xl border border-[#CA922B] px-4 py-2.5 text-sm font-bold text-[#F2C465] disabled:opacity-50"
+          >
+            {saving ? "Submitting…" : "Request owner verification"}
+          </button>
+        </form>
+      </section>
+    );
+  return (
+    <section className="mt-8 rounded-2xl border border-[#CA922B]/30 bg-[#241810] p-5">
+      <h2 className="font-serif text-xl font-bold text-white">
+        Verified owner workflow
+      </h2>
+      <p className="mt-2 text-sm leading-6 text-white/70">
+        Submit a factual correction, a moderated response beside one published
+        experience, or a dispute for review. None of these actions can erase,
+        suppress, score, or overwrite a community experience.
+      </p>
+      <form
+        onSubmit={(event) => void submitAction(event)}
+        className="mt-5 space-y-4"
+      >
+        <label className="block text-sm font-semibold text-[#F5EBD8]">
+          Request type
+          <select
+            value={actionType}
+            onChange={(event) =>
+              setActionType(event.target.value as typeof actionType)
+            }
+            className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-3 py-2.5 font-normal text-[#3A1F0E]"
+          >
+            <option value="public_response">
+              Public response to an experience
+            </option>
+            <option value="factual_correction">
+              Factual correction request
+            </option>
+            <option value="dispute">Dispute for review</option>
+          </select>
+        </label>
+        {actionType === "public_response" ? (
+          <label className="block text-sm font-semibold text-[#F5EBD8]">
+            Published experience
+            <select
+              value={targetExperienceId}
+              onChange={(event) => setTargetExperienceId(event.target.value)}
+              required
+              className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-3 py-2.5 font-normal text-[#3A1F0E]"
+            >
+              <option value="">Select an experience</option>
+              {experiences.map((experience) => (
+                <option key={experience.id} value={experience.id}>
+                  {experience.relationshipLabel} ·{" "}
+                  {new Date(experience.submittedAt).toLocaleDateString()}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {actionType === "factual_correction" ? (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="block text-sm font-semibold text-[#F5EBD8]">
+              Factual field
+              <input
+                value={fieldName}
+                onChange={(event) => setFieldName(event.target.value)}
+                maxLength={100}
+                className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-3 py-2.5 font-normal text-[#3A1F0E]"
+              />
+            </label>
+            <label className="block text-sm font-semibold text-[#F5EBD8]">
+              Correction requested
+              <input
+                value={correctedValue}
+                onChange={(event) => setCorrectedValue(event.target.value)}
+                maxLength={1000}
+                className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-3 py-2.5 font-normal text-[#3A1F0E]"
+              />
+            </label>
+          </div>
+        ) : null}
+        <label className="block text-sm font-semibold text-[#F5EBD8]">
+          Context for moderator
+          <textarea
+            value={body}
+            onChange={(event) => setBody(event.target.value)}
+            required
+            maxLength={2000}
+            rows={4}
+            placeholder="Provide a concise factual response or request without personal, medical, or personnel information."
+            className="mt-1.5 w-full rounded-xl border border-white/15 bg-white px-3 py-2.5 font-normal text-[#3A1F0E]"
+          />
+        </label>
+        {message ? (
+          <p role="alert" className="text-sm text-[#F2C465]">
+            {message}
+          </p>
+        ) : null}
+        <button
+          disabled={saving}
+          className="rounded-xl bg-[#CA922B] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+        >
+          {saving ? "Submitting…" : "Submit for moderation"}
+        </button>
+      </form>
+    </section>
   );
 }
 
@@ -779,6 +1082,7 @@ export function OrganizationTransparencyProfile() {
               That does not change its factual listing or indicate a score.
             </div>
           )}
+          <OwnerParticipation profile={profile} experiences={experiences} />
         </div>
       </main>
     </Layout>

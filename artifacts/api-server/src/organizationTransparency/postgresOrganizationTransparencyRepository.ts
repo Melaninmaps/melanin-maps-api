@@ -89,6 +89,7 @@ export type PublicOrganizationExperience = Readonly<{
   relationshipLabel: string;
   categoryCodes: string[];
   narrative: string | null;
+  ownerResponse: string | null;
   submittedAt: string;
 }>;
 
@@ -121,8 +122,22 @@ export type MemberExperienceStatus = Readonly<{
   recovery: ReturnType<typeof experienceStatusRecovery>;
 }>;
 
+export type MemberOwnerClaimStatus = Readonly<{
+  claimId: string;
+  organizationId: string;
+  organizationName: string;
+  status: string;
+  reviewerNote: string | null;
+  submittedAt: string;
+}>;
+
 export type OrganizationReviewQueueItem = Readonly<{
-  kind: "organization" | "experience" | "experience_appeal";
+  kind:
+    | "organization"
+    | "experience"
+    | "experience_appeal"
+    | "owner_claim"
+    | "owner_action";
   id: string;
   organizationId: string;
   organizationName: string;
@@ -137,6 +152,12 @@ export type OrganizationReviewQueueItem = Readonly<{
   narrative?: string | null;
   moderationFlags?: string[];
   appealBody?: string;
+  claimNote?: string | null;
+  ownerActionType?: "public_response" | "factual_correction" | "dispute";
+  targetExperienceId?: string | null;
+  fieldName?: string | null;
+  correctedValue?: string | null;
+  ownerActionBody?: string;
 }>;
 
 export type OrganizationModerationDecision = Readonly<{
@@ -153,6 +174,18 @@ export type OrganizationModerationDecision = Readonly<{
 
 export type ExperienceAppealDecision = Readonly<{
   disposition: "reopen" | "decline";
+  reason: string;
+  evidenceReceiptUrls?: readonly string[];
+}>;
+
+export type OwnerClaimReviewDecision = Readonly<{
+  disposition: "approve" | "reject";
+  reason: string;
+  evidenceReceiptUrls?: readonly string[];
+}>;
+
+export type OwnerActionReviewDecision = Readonly<{
+  disposition: "approve" | "hold" | "reject";
   reason: string;
   evidenceReceiptUrls?: readonly string[];
 }>;
@@ -208,6 +241,7 @@ export interface OrganizationTransparencyRepository {
   listMemberActivity(memberId: string): Promise<{
     organizations: MemberOrganizationStatus[];
     experiences: MemberExperienceStatus[];
+    ownerClaims: MemberOwnerClaimStatus[];
   }>;
   createExperienceAppeal(
     experienceId: string,
@@ -239,6 +273,24 @@ export interface OrganizationTransparencyRepository {
     organizationId: string,
     memberId: string,
   ): Promise<{ actionId: string; status: string }>;
+  applyOwnerClaimReview(
+    claimId: string,
+    reviewerMemberId: string,
+    decision: OwnerClaimReviewDecision,
+  ): Promise<{
+    claimId: string;
+    status: string;
+    organizationId: string;
+  } | null>;
+  applyOwnerActionReview(
+    actionId: string,
+    reviewerMemberId: string,
+    decision: OwnerActionReviewDecision,
+  ): Promise<{
+    actionId: string;
+    status: string;
+    organizationId: string;
+  } | null>;
   applyModerationDecision(
     organizationId: string,
     adminMemberId: string,
@@ -805,10 +857,17 @@ export class PostgresOrganizationTransparencyRepository implements OrganizationT
       relationship: ExperienceRelationship;
       category_codes: unknown;
       narrative: string | null;
+      owner_response: string | null;
       created_at: string;
     }>(
-      `SELECT e.id, e.organization_id, e.organization_location_id, l.city, l.state, e.relationship, e.category_codes, e.narrative, e.created_at
+      `SELECT e.id, e.organization_id, e.organization_location_id, l.city, l.state, e.relationship, e.category_codes, e.narrative,
+         r.body AS owner_response, e.created_at
        FROM organization_experiences e LEFT JOIN organization_locations l ON l.id=e.organization_location_id
+       LEFT JOIN LATERAL (
+         SELECT body FROM organization_owner_responses r
+         WHERE r.target_experience_id=e.id AND r.organization_id=e.organization_id
+         ORDER BY r.published_at DESC LIMIT 1
+       ) r ON TRUE
        WHERE e.organization_id=$1 AND e.moderation_status='published' AND e.privacy_level='pseudonymous_public'
        ORDER BY e.created_at DESC LIMIT $2`,
       [organizationId, limit],
@@ -823,6 +882,7 @@ export class PostgresOrganizationTransparencyRepository implements OrganizationT
       relationshipLabel: pseudonymousExperienceLabel(row.relationship),
       categoryCodes: stringArray(row.category_codes),
       narrative: row.narrative,
+      ownerResponse: row.owner_response,
       submittedAt: row.created_at,
     }));
   }
@@ -830,8 +890,9 @@ export class PostgresOrganizationTransparencyRepository implements OrganizationT
   async listMemberActivity(memberId: string): Promise<{
     organizations: MemberOrganizationStatus[];
     experiences: MemberExperienceStatus[];
+    ownerClaims: MemberOwnerClaimStatus[];
   }> {
-    const [organizations, experiences] = await Promise.all([
+    const [organizations, experiences, ownerClaims] = await Promise.all([
       this.database.query<{
         id: string;
         legal_name: string;
@@ -861,6 +922,19 @@ export class PostgresOrganizationTransparencyRepository implements OrganizationT
          JOIN organization_profiles p ON p.id=e.organization_id WHERE e.author_member_id=$1 ORDER BY e.created_at DESC LIMIT 100`,
         [memberId],
       ),
+      this.database.query<{
+        id: string;
+        organization_id: string;
+        legal_name: string;
+        status: string;
+        review_note: string | null;
+        created_at: string;
+      }>(
+        `SELECT c.id, c.organization_id, p.legal_name, c.status, c.review_note, c.created_at
+         FROM organization_owner_claims c JOIN organization_profiles p ON p.id=c.organization_id
+         WHERE c.claimant_member_id=$1 ORDER BY c.created_at DESC LIMIT 100`,
+        [memberId],
+      ),
     ]);
     return {
       organizations: organizations.rows.map((row) => ({
@@ -883,6 +957,14 @@ export class PostgresOrganizationTransparencyRepository implements OrganizationT
         reviewerNote: row.moderation_note,
         submittedAt: row.created_at,
         recovery: experienceStatusRecovery(row.moderation_status),
+      })),
+      ownerClaims: ownerClaims.rows.map((row) => ({
+        claimId: row.id,
+        organizationId: row.organization_id,
+        organizationName: row.legal_name,
+        status: row.status,
+        reviewerNote: row.review_note,
+        submittedAt: row.created_at,
       })),
     };
   }
@@ -950,61 +1032,100 @@ export class PostgresOrganizationTransparencyRepository implements OrganizationT
   }
 
   async listReviewQueue(limit: number): Promise<OrganizationReviewQueueItem[]> {
-    const [organizations, experiences, appeals] = await Promise.all([
-      this.database.query<{
-        id: string;
-        legal_name: string;
-        organization_type: OrganizationType;
-        city: string | null;
-        state: string | null;
-        created_at: string;
-        factual_status: string;
-      }>(
-        `SELECT p.id, p.legal_name, p.organization_type, l.city, l.state, p.created_at, p.factual_status FROM organization_profiles p
+    const [organizations, experiences, appeals, claims, ownerActions] =
+      await Promise.all([
+        this.database.query<{
+          id: string;
+          legal_name: string;
+          organization_type: OrganizationType;
+          city: string | null;
+          state: string | null;
+          created_at: string;
+          factual_status: string;
+        }>(
+          `SELECT p.id, p.legal_name, p.organization_type, l.city, l.state, p.created_at, p.factual_status FROM organization_profiles p
          LEFT JOIN organization_locations l ON l.organization_id=p.id AND l.is_primary=TRUE
          WHERE p.factual_status IN ('pending_moderation','correction_requested') ORDER BY p.created_at ASC LIMIT $1`,
-        [limit],
-      ),
-      this.database.query<{
-        id: string;
-        organization_id: string;
-        legal_name: string;
-        organization_type: OrganizationType;
-        city: string | null;
-        state: string | null;
-        relationship: ExperienceRelationship;
-        privacy_level: ExperiencePrivacyLevel;
-        category_codes: unknown;
-        narrative: string | null;
-        safety_flags: unknown;
-        created_at: string;
-        moderation_status: string;
-      }>(
-        `SELECT e.id,e.organization_id,p.legal_name,p.organization_type,l.city,l.state,e.relationship,e.privacy_level,e.category_codes,e.narrative,e.safety_flags,e.created_at,e.moderation_status
+          [limit],
+        ),
+        this.database.query<{
+          id: string;
+          organization_id: string;
+          legal_name: string;
+          organization_type: OrganizationType;
+          city: string | null;
+          state: string | null;
+          relationship: ExperienceRelationship;
+          privacy_level: ExperiencePrivacyLevel;
+          category_codes: unknown;
+          narrative: string | null;
+          safety_flags: unknown;
+          created_at: string;
+          moderation_status: string;
+        }>(
+          `SELECT e.id,e.organization_id,p.legal_name,p.organization_type,l.city,l.state,e.relationship,e.privacy_level,e.category_codes,e.narrative,e.safety_flags,e.created_at,e.moderation_status
          FROM organization_experiences e JOIN organization_profiles p ON p.id=e.organization_id
          LEFT JOIN organization_locations l ON l.id=e.organization_location_id WHERE e.moderation_status='pending_moderation'
          ORDER BY e.created_at ASC LIMIT $1`,
-        [limit],
-      ),
-      this.database.query<{
-        id: string;
-        experience_id: string;
-        organization_id: string;
-        legal_name: string;
-        organization_type: OrganizationType;
-        city: string | null;
-        state: string | null;
-        body: string;
-        created_at: string;
-        status: string;
-      }>(
-        `SELECT a.id,a.experience_id,a.organization_id,p.legal_name,p.organization_type,l.city,l.state,a.body,a.created_at,a.status
+          [limit],
+        ),
+        this.database.query<{
+          id: string;
+          experience_id: string;
+          organization_id: string;
+          legal_name: string;
+          organization_type: OrganizationType;
+          city: string | null;
+          state: string | null;
+          body: string;
+          created_at: string;
+          status: string;
+        }>(
+          `SELECT a.id,a.experience_id,a.organization_id,p.legal_name,p.organization_type,l.city,l.state,a.body,a.created_at,a.status
          FROM organization_experience_appeals a JOIN organization_profiles p ON p.id=a.organization_id
          LEFT JOIN organization_locations l ON l.organization_id=p.id AND l.is_primary=TRUE WHERE a.status='pending_moderation'
          ORDER BY a.created_at ASC LIMIT $1`,
-        [limit],
-      ),
-    ]);
+          [limit],
+        ),
+        this.database.query<{
+          id: string;
+          organization_id: string;
+          legal_name: string;
+          organization_type: OrganizationType;
+          city: string | null;
+          state: string | null;
+          claim_note: string | null;
+          created_at: string;
+          status: string;
+        }>(
+          `SELECT c.id,c.organization_id,p.legal_name,p.organization_type,l.city,l.state,c.claim_note,c.created_at,c.status
+         FROM organization_owner_claims c JOIN organization_profiles p ON p.id=c.organization_id
+         LEFT JOIN organization_locations l ON l.organization_id=p.id AND l.is_primary=TRUE
+         WHERE c.status='pending_verification' ORDER BY c.created_at ASC LIMIT $1`,
+          [limit],
+        ),
+        this.database.query<{
+          id: string;
+          organization_id: string;
+          legal_name: string;
+          organization_type: OrganizationType;
+          city: string | null;
+          state: string | null;
+          action_type: "public_response" | "factual_correction" | "dispute";
+          target_experience_id: string | null;
+          field_name: string | null;
+          corrected_value: string | null;
+          body: string;
+          created_at: string;
+          status: string;
+        }>(
+          `SELECT a.id,a.organization_id,p.legal_name,p.organization_type,l.city,l.state,a.action_type,a.target_experience_id,a.field_name,a.corrected_value,a.body,a.created_at,a.status
+         FROM organization_owner_actions a JOIN organization_profiles p ON p.id=a.organization_id
+         LEFT JOIN organization_locations l ON l.organization_id=p.id AND l.is_primary=TRUE
+         WHERE a.status='pending_moderation' ORDER BY a.created_at ASC LIMIT $1`,
+          [limit],
+        ),
+      ]);
     return [
       ...organizations.rows.map(
         (row): OrganizationReviewQueueItem => ({
@@ -1049,6 +1170,38 @@ export class PostgresOrganizationTransparencyRepository implements OrganizationT
           submittedAt: row.created_at,
           status: row.status,
           appealBody: row.body,
+        }),
+      ),
+      ...claims.rows.map(
+        (row): OrganizationReviewQueueItem => ({
+          kind: "owner_claim",
+          id: row.id,
+          organizationId: row.organization_id,
+          organizationName: row.legal_name,
+          organizationType: row.organization_type,
+          city: row.city,
+          state: row.state,
+          submittedAt: row.created_at,
+          status: row.status,
+          claimNote: row.claim_note,
+        }),
+      ),
+      ...ownerActions.rows.map(
+        (row): OrganizationReviewQueueItem => ({
+          kind: "owner_action",
+          id: row.id,
+          organizationId: row.organization_id,
+          organizationName: row.legal_name,
+          organizationType: row.organization_type,
+          city: row.city,
+          state: row.state,
+          submittedAt: row.created_at,
+          status: row.status,
+          ownerActionType: row.action_type,
+          targetExperienceId: row.target_experience_id,
+          fieldName: row.field_name,
+          correctedValue: row.corrected_value,
+          ownerActionBody: row.body,
         }),
       ),
     ]
@@ -1180,6 +1333,13 @@ export class PostgresOrganizationTransparencyRepository implements OrganizationT
     memberId: string,
     note: string | undefined,
   ): Promise<{ claimId: string; status: string }> {
+    const approved = await this.database.query<{ id: string; status: string }>(
+      `SELECT id,status FROM organization_owner_claims WHERE organization_id=$1 AND claimant_member_id=$2 AND status='approved' AND revoked_at IS NULL LIMIT 1`,
+      [organizationId, memberId],
+    );
+    if (approved.rows[0]) {
+      return { claimId: approved.rows[0].id, status: approved.rows[0].status };
+    }
     const result = await this.database.query<{ id: string; status: string }>(
       `INSERT INTO organization_owner_claims (organization_id, claimant_member_id, claim_note, status, created_at, updated_at)
        VALUES ($1,$2,$3,'pending_verification',NOW(),NOW()) ON CONFLICT (organization_id, claimant_member_id)
@@ -1188,6 +1348,15 @@ export class PostgresOrganizationTransparencyRepository implements OrganizationT
     );
     const row = result.rows[0];
     if (!row) throw new Error("Owner claim could not be recorded");
+    await this.database.query(
+      `INSERT INTO organization_transparency_audit_events (organization_id,actor_member_id,actor_kind,event_type,event_payload,created_at)
+       VALUES ($1,$2,'owner','owner_claim_requested',$3::jsonb,NOW())`,
+      [
+        organizationId,
+        memberId,
+        JSON.stringify({ claimId: row.id, hasClaimNote: Boolean(note) }),
+      ],
+    );
     return { claimId: row.id, status: row.status };
   }
 
@@ -1207,6 +1376,17 @@ export class PostgresOrganizationTransparencyRepository implements OrganizationT
     organizationId: string,
     memberId: string,
   ): Promise<{ actionId: string; status: string }> {
+    if (input.targetExperienceId) {
+      const target = await this.database.query<{ id: string }>(
+        `SELECT id FROM organization_experiences WHERE id=$1 AND organization_id=$2 LIMIT 1`,
+        [input.targetExperienceId, organizationId],
+      );
+      if (!target.rows[0]) {
+        throw new Error(
+          "The selected experience does not belong to this organization",
+        );
+      }
+    }
     const result = await this.database.query<{ id: string; status: string }>(
       `INSERT INTO organization_owner_actions (organization_id, actor_member_id, action_type, target_experience_id, field_name, corrected_value, body, status, created_at, updated_at)
        VALUES ($1,$2,$3,$4,$5,$6,$7,'pending_moderation',NOW(),NOW()) RETURNING id,status`,
@@ -1222,7 +1402,155 @@ export class PostgresOrganizationTransparencyRepository implements OrganizationT
     );
     const row = result.rows[0];
     if (!row) throw new Error("Owner action could not be recorded");
+    await this.database.query(
+      `INSERT INTO organization_transparency_audit_events (organization_id,actor_member_id,actor_kind,event_type,event_payload,created_at)
+       VALUES ($1,$2,'owner','owner_action_requested',$3::jsonb,NOW())`,
+      [
+        organizationId,
+        memberId,
+        JSON.stringify({
+          actionId: row.id,
+          actionType: input.actionType,
+          targetExperienceId: input.targetExperienceId ?? null,
+          fieldName: input.fieldName ?? null,
+        }),
+      ],
+    );
     return { actionId: row.id, status: row.status };
+  }
+
+  async applyOwnerClaimReview(
+    claimId: string,
+    reviewerMemberId: string,
+    decision: OwnerClaimReviewDecision,
+  ): Promise<{
+    claimId: string;
+    status: string;
+    organizationId: string;
+  } | null> {
+    const client = await this.database.connect();
+    try {
+      await client.query("BEGIN");
+      const current = await client.query<{
+        organization_id: string;
+        status: string;
+      }>(
+        `SELECT organization_id,status FROM organization_owner_claims WHERE id=$1 FOR UPDATE`,
+        [claimId],
+      );
+      const row = current.rows[0];
+      if (!row || row.status !== "pending_verification") {
+        await client.query("ROLLBACK");
+        return null;
+      }
+      const status =
+        decision.disposition === "approve" ? "approved" : "rejected";
+      await client.query(
+        `UPDATE organization_owner_claims SET status=$2,reviewer_member_id=$3,review_note=$4,reviewed_at=NOW(),updated_at=NOW() WHERE id=$1`,
+        [claimId, status, reviewerMemberId, decision.reason],
+      );
+      await client.query(
+        `INSERT INTO organization_transparency_audit_events (organization_id,actor_member_id,actor_kind,event_type,event_payload,created_at)
+         VALUES ($1,$2,'admin',$3,$4::jsonb,NOW())`,
+        [
+          row.organization_id,
+          reviewerMemberId,
+          `owner_claim_${status}`,
+          JSON.stringify({ claimId, ...decision }),
+        ],
+      );
+      await client.query("COMMIT");
+      return { claimId, status, organizationId: row.organization_id };
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
+  async applyOwnerActionReview(
+    actionId: string,
+    reviewerMemberId: string,
+    decision: OwnerActionReviewDecision,
+  ): Promise<{
+    actionId: string;
+    status: string;
+    organizationId: string;
+  } | null> {
+    const client = await this.database.connect();
+    try {
+      await client.query("BEGIN");
+      const current = await client.query<{
+        organization_id: string;
+        action_type: "public_response" | "factual_correction" | "dispute";
+        target_experience_id: string | null;
+        body: string;
+        status: string;
+      }>(
+        `SELECT organization_id,action_type,target_experience_id,body,status FROM organization_owner_actions WHERE id=$1 FOR UPDATE`,
+        [actionId],
+      );
+      const row = current.rows[0];
+      if (!row || row.status !== "pending_moderation") {
+        await client.query("ROLLBACK");
+        return null;
+      }
+      const status =
+        decision.disposition === "approve"
+          ? row.action_type === "public_response"
+            ? "published"
+            : "accepted"
+          : decision.disposition === "hold"
+            ? "held"
+            : "rejected";
+      if (status === "published") {
+        const target = await client.query<{ id: string }>(
+          `SELECT id FROM organization_experiences WHERE id=$1 AND organization_id=$2 LIMIT 1`,
+          [row.target_experience_id, row.organization_id],
+        );
+        if (!target.rows[0])
+          throw new Error(
+            "The response target is not a valid organization experience",
+          );
+        await client.query(
+          `INSERT INTO organization_owner_responses (organization_id,owner_action_id,target_experience_id,body,published_by_member_id,published_at)
+           VALUES ($1,$2,$3,$4,$5,NOW()) ON CONFLICT (owner_action_id) DO NOTHING`,
+          [
+            row.organization_id,
+            actionId,
+            row.target_experience_id,
+            row.body,
+            reviewerMemberId,
+          ],
+        );
+      }
+      await client.query(
+        `UPDATE organization_owner_actions SET status=$2,reviewer_member_id=$3,reviewed_at=NOW(),updated_at=NOW() WHERE id=$1`,
+        [actionId, status, reviewerMemberId],
+      );
+      await client.query(
+        `INSERT INTO organization_transparency_audit_events (organization_id,actor_member_id,actor_kind,event_type,event_payload,created_at)
+         VALUES ($1,$2,'admin',$3,$4::jsonb,NOW())`,
+        [
+          row.organization_id,
+          reviewerMemberId,
+          `owner_action_${status}`,
+          JSON.stringify({
+            actionId,
+            actionType: row.action_type,
+            ...decision,
+          }),
+        ],
+      );
+      await client.query("COMMIT");
+      return { actionId, status, organizationId: row.organization_id };
+    } catch (error) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   async applyModerationDecision(

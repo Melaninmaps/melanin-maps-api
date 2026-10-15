@@ -261,6 +261,52 @@ function parseExperienceAppealDecision(
   };
 }
 
+function parseOwnerClaimReviewDecision(input: unknown): {
+  disposition: "approve" | "reject";
+  reason: string;
+  evidenceReceiptUrls: string[];
+} {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    throw new Error("owner claim decision is required");
+  }
+  const body = input as Record<string, unknown>;
+  const disposition = statusValue(
+    body.disposition,
+    ["approve", "reject"] as const,
+    "disposition",
+  );
+  const reason = queryText(body.reason, 2_000);
+  if (!reason) throw new Error("reason is required");
+  return {
+    disposition,
+    reason,
+    evidenceReceiptUrls: evidenceReceiptUrls(body.evidenceReceiptUrls),
+  };
+}
+
+function parseOwnerActionReviewDecision(input: unknown): {
+  disposition: "approve" | "hold" | "reject";
+  reason: string;
+  evidenceReceiptUrls: string[];
+} {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    throw new Error("owner action decision is required");
+  }
+  const body = input as Record<string, unknown>;
+  const disposition = statusValue(
+    body.disposition,
+    ["approve", "hold", "reject"] as const,
+    "disposition",
+  );
+  const reason = queryText(body.reason, 2_000);
+  if (!reason) throw new Error("reason is required");
+  return {
+    disposition,
+    reason,
+    evidenceReceiptUrls: evidenceReceiptUrls(body.evidenceReceiptUrls),
+  };
+}
+
 function errorResponse(error: unknown, res: Response): boolean {
   if (error instanceof DuplicateOrganizationSubmissionError) {
     res.status(409).json({
@@ -544,6 +590,34 @@ export function registerOrganizationTransparencyRoutes(
     },
   );
 
+  app.get(
+    "/api/organizations/:organizationId/owner-access",
+    approvedMember,
+    async (req: Request, res: Response) => {
+      const memberId = requiredMemberId(req, res);
+      if (!memberId) return;
+      try {
+        const organizationId = String(req.params.organizationId);
+        const profile = await repository.getPublicProfile(organizationId);
+        if (!profile) {
+          res.status(404).json({ error: "Organization not found" });
+          return;
+        }
+        res.json({
+          approved: await repository.hasApprovedOwnerClaim(
+            organizationId,
+            memberId,
+          ),
+          scope:
+            "Approved owners can request factual corrections, moderated public responses, and disputes. They cannot delete, suppress, or alter member experiences.",
+        });
+      } catch (error) {
+        req.log?.error({ error }, "organization owner access lookup failed");
+        res.status(500).json({ error: "Unable to load owner access" });
+      }
+    },
+  );
+
   app.post(
     "/api/organizations/:organizationId/experiences",
     approvedMember,
@@ -691,6 +765,16 @@ export function registerOrganizationTransparencyRoutes(
     async (req: Request, res: Response) => {
       const memberId = requiredMemberId(req, res);
       if (!memberId) return;
+      if (
+        (req.body as Record<string, unknown> | undefined)?.attestation !== true
+      ) {
+        res.status(400).json({
+          error:
+            "Confirm that you are authorized to request a limited organization owner workflow.",
+          code: "OWNER_CLAIM_ATTESTATION_REQUIRED",
+        });
+        return;
+      }
       const note =
         queryText(
           (req.body as Record<string, unknown> | undefined)?.note,
@@ -885,6 +969,84 @@ export function registerOrganizationTransparencyRoutes(
               ? error.message
               : "Invalid experience appeal decision",
           code: "INVALID_EXPERIENCE_APPEAL_DECISION",
+        });
+      }
+    },
+  );
+
+  app.post(
+    "/api/admin/organization-owner-claims/:claimId/decision",
+    approvedMember,
+    async (req: Request, res: Response) => {
+      const adminMemberId = requiredNamedAdministrator(req, res);
+      if (!adminMemberId) return;
+      try {
+        const decision = parseOwnerClaimReviewDecision(req.body);
+        const result = await repository.applyOwnerClaimReview(
+          String(req.params.claimId),
+          adminMemberId,
+          decision,
+        );
+        if (!result) {
+          res.status(409).json({
+            error: "Owner claim is no longer awaiting verification",
+            code: "OWNER_CLAIM_ALREADY_DECIDED",
+          });
+          return;
+        }
+        res.json({
+          result,
+          message:
+            result.status === "approved"
+              ? "Claim approved for limited correction, response, and dispute requests. It grants no suppression, deletion, Kinfolk, or promotion authority."
+              : "Owner claim rejected. No organization access was granted.",
+        });
+      } catch (error) {
+        res.status(400).json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Invalid owner claim decision",
+          code: "INVALID_OWNER_CLAIM_DECISION",
+        });
+      }
+    },
+  );
+
+  app.post(
+    "/api/admin/organization-owner-actions/:actionId/decision",
+    approvedMember,
+    async (req: Request, res: Response) => {
+      const adminMemberId = requiredNamedAdministrator(req, res);
+      if (!adminMemberId) return;
+      try {
+        const decision = parseOwnerActionReviewDecision(req.body);
+        const result = await repository.applyOwnerActionReview(
+          String(req.params.actionId),
+          adminMemberId,
+          decision,
+        );
+        if (!result) {
+          res.status(409).json({
+            error: "Owner action is no longer awaiting moderation",
+            code: "OWNER_ACTION_ALREADY_DECIDED",
+          });
+          return;
+        }
+        res.json({
+          result,
+          message:
+            result.status === "published"
+              ? "The moderated organization response is now visible alongside the original member experience."
+              : "The owner request was recorded without altering or suppressing any member experience.",
+        });
+      } catch (error) {
+        res.status(400).json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Invalid owner action decision",
+          code: "INVALID_OWNER_ACTION_DECISION",
         });
       }
     },
