@@ -30,6 +30,14 @@ function argValue(name, fallback) {
   return index >= 0 && process.argv[index + 1] ? process.argv[index + 1] : fallback;
 }
 
+function boundedBatchSize(value) {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 100) {
+    throw new Error("--batch-size must be an integer between 1 and 100");
+  }
+  return parsed;
+}
+
 function canonicalJson(value) {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;
   if (value && typeof value === "object") return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonicalJson(value[key])}`).join(",")}}`;
@@ -215,8 +223,9 @@ async function main() {
   const scope = argValue("--scope", "kinfolk_current");
   const batchPrefix = argValue("--batch-prefix", "official-site-profile");
   const generatedAt = argValue("--generated-at", new Date().toISOString());
+  const batchSize = boundedBatchSize(argValue("--batch-size", "100"));
   const [proposalsText, pagesText] = await Promise.all([fs.readFile(proposalsPath, "utf8"), fs.readFile(pagesPath, "utf8")]);
-  const { candidates, manifests } = buildManifests(readJsonl(proposalsText), readJsonl(pagesText), { scope, batchPrefix, generatedAt });
+  const { candidates, manifests } = buildManifests(readJsonl(proposalsText), readJsonl(pagesText), { scope, batchPrefix, generatedAt, batchSize });
   await fs.mkdir(outputDirectory, { recursive: true });
   for (const manifest of manifests) await fs.writeFile(resolve(outputDirectory, `${manifest.batchId}.json`), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
   const summary = { version: VERSION, scope, productionWrite: false, generatedAt, proposalsPath, pagesPath, candidateCount: candidates.length, batchCount: manifests.length, batches: manifests.map((manifest) => ({ batchId: manifest.batchId, candidateCount: manifest.candidates.length, contentFingerprint: manifest.contentFingerprint })) };

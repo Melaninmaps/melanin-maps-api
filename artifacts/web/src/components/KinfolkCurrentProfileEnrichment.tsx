@@ -90,7 +90,7 @@ export function KinfolkCurrentProfileEnrichment({
     setSubmitting(true);
     setRequestError(null);
     try {
-      const response = await authenticatedAdminFetch("/api/businesses/admin/businesses/profile-enrichment-apply", {
+      const response = await authenticatedAdminFetch("/api/admin/businesses/profile-enrichment-apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ manifest }),
