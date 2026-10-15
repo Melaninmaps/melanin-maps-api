@@ -14,6 +14,14 @@ const businessesRoute = readFileSync(
   fileURLToPath(new URL("../routes/businesses.ts", import.meta.url)),
   "utf8",
 );
+const businessDeletionHold = readFileSync(
+  fileURLToPath(new URL("../businesses/businessDeletionHold.ts", import.meta.url)),
+  "utf8",
+);
+const serverStartup = readFileSync(
+  fileURLToPath(new URL("../index.ts", import.meta.url)),
+  "utf8",
+);
 
 describe("administrator public-discovery removal governance", () => {
   it("records a reversible removal state with an automatic administrator audit note", () => {
@@ -28,14 +36,18 @@ describe("administrator public-discovery removal governance", () => {
     expect(adminRoute).toContain("featured: false");
   });
 
-  it("keeps ordinary removal reversible and records any confirmed deletion", () => {
+  it("keeps every requested deletion reversible for seven days and records final deletion", () => {
     expect(startupMigrations).toContain("ensureBusinessListingStatusAuditSchema");
     expect(startupMigrations).toContain("business_listing_status_audit_events");
-    expect(adminRoute).toContain("business_permanent_deletion_audit_events");
-    expect(adminRoute).toContain("Administrator-confirmed permanent deletion");
-    expect(adminRoute).not.toContain("Permanent deletion is allowed only for records already in Archive vault or Duplicate vault.");
-    expect(adminRoute).toContain('DELETE FROM businesses WHERE id = ANY($1::text[])');
-    expect(adminRoute).toContain("Deliberately no CASCADE");
+    expect(adminRoute).toContain("business_deletion_holds");
+    expect(adminRoute).toContain("Admin scheduled businesses for seven-day permanent-deletion hold");
+    expect(adminRoute).toContain("cancelBusinessDeletionHold");
+    expect(businessDeletionHold).toContain("business_permanent_deletion_audit_events");
+    expect(businessDeletionHold).toContain("Seven-day administrative deletion hold elapsed");
+    expect(businessDeletionHold).toContain('DELETE FROM businesses WHERE id = $1');
+    expect(businessDeletionHold).toContain("Deliberately no CASCADE");
+    expect(serverStartup).toContain("ensureBusinessDeletionHoldSchema(pool)");
+    expect(serverStartup).toContain("startBusinessDeletionHoldWorker(pool, logger)");
   });
 
   it("makes the required audit schema available before either reversible archive path runs", () => {

@@ -27,6 +27,10 @@ import { bootstrapDirectoryReviewSchema } from "./directoryImport/reviewDatabase
 import { startDirectoryPublicationWorker } from "./directoryImport/publicationWorker";
 import { startFounderMapRestorationWorker } from "./businesses/mapRestorationWorker";
 import {
+  ensureBusinessDeletionHoldSchema,
+  startBusinessDeletionHoldWorker,
+} from "./businesses/businessDeletionHold";
+import {
   startLatinxLehighValleyPublication,
 } from "./directoryImport/latinxLehighValleyPublication";
 
@@ -55,6 +59,7 @@ const port = Number(rawPort);
 const host = process.env["HOST"]?.trim() || undefined;
 const explicitFeatureReleaseMode = isExplicitFeatureReleaseMode();
 let stopFounderMapRestorationWorker: (() => void) | null = null;
+let stopBusinessDeletionHoldWorker: (() => void) | null = null;
 
 if (Number.isNaN(port) || port <= 0) {
   throw new Error(`Invalid PORT value: "${rawPort}"`);
@@ -183,6 +188,11 @@ try {
   // feature-release mode correctly skips unrelated startup migration writers.
   await ensureAdminBusinessProfileReceiptsAndCatalogSchema(logger);
   logger.info("Admin profile receipt and Kinfolk Catalog schemas ready before traffic acceptance");
+  // A requested business deletion starts a seven-day recovery window. This
+  // schema is data-neutral on startup, but it must be present before an admin
+  // request can schedule a hold or a worker can finalize an expired one.
+  await ensureBusinessDeletionHoldSchema(pool);
+  logger.info("Business deletion hold schema ready before traffic acceptance");
   if (explicitFeatureReleaseMode) {
     logger.info("Explicit feature release mode: skipping boot-time schema and publication writers");
   } else {
@@ -254,6 +264,7 @@ const onListening = (err?: Error) => {
   // Emits SLOW_QUERY and POOL_GROWTH_DETECTED warnings to Railway logs.
   initPoolInstrumentation(pool, getPool);
   stopFounderMapRestorationWorker = startFounderMapRestorationWorker(pool, logger);
+  stopBusinessDeletionHoldWorker = startBusinessDeletionHoldWorker(pool, logger);
   if (privatePlacesRuntimeState().enabled) {
     startTemporaryStayRetentionScheduler(logger);
   }
@@ -369,6 +380,7 @@ function gracefulShutdown(signal: string) {
     stopKinfolkQuestionImageRetentionScheduler();
     stopTemporaryStayRetentionScheduler();
     stopFounderMapRestorationWorker?.();
+    stopBusinessDeletionHoldWorker?.();
     try {
       // Drain the app's own pool (max:8) first.
       await pool.end();

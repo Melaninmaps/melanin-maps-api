@@ -67,6 +67,13 @@ import {
   publicDiscoveryRemovalActionForReason,
   publicDiscoveryRemovalStateForReason,
 } from "../businesses/directoryReconciliationPolicy";
+import {
+  BUSINESS_DELETION_HOLD_REASON,
+  cancelBusinessDeletionHold,
+  ensureBusinessDeletionHoldSchema,
+  recordBusinessDeletionHoldEvent,
+  sevenDaysFrom,
+} from "../businesses/businessDeletionHold";
 
 const router: IRouter = Router();
 
@@ -1814,6 +1821,8 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       status: string;
       listing_status: string;
       is_duplicate: boolean;
+      deletion_hold_state: "pending" | "blocked" | null;
+      deletion_hold_delete_after: string | null;
       phone: string | null;
       website: string | null;
       instagram: string | null;
@@ -1846,7 +1855,9 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       manus_created: boolean;
       }>(
        `SELECT id, name, category, subcategory, city, state, verified, black_owned, ownership_designations, status,
-              listing_status, is_duplicate, phone, website, instagram, tiktok, facebook, twitter, youtube, pinterest,
+              listing_status, is_duplicate, deletion_hold.state AS deletion_hold_state,
+              deletion_hold.delete_after AS deletion_hold_delete_after,
+              phone, website, instagram, tiktok, facebook, twitter, youtube, pinterest,
               to_jsonb(businesses)->>'website_cleanup_status' AS website_cleanup_status,
               CASE WHEN NULLIF(BTRIM(COALESCE(website, '')), '') IS NULL AND EXISTS (
                 SELECT 1 FROM business_discovery_eligibility social_only_eligibility
@@ -1876,6 +1887,8 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
               CASE WHEN ${manusCreatedPredicate} THEN true ELSE false END AS manus_created
        FROM businesses
        ${reconciliationJoin}
+       LEFT JOIN business_deletion_holds deletion_hold
+         ON deletion_hold.business_id::text = businesses.id::text
        ${where}
        ORDER BY ${orderBy}
        LIMIT $${filterParams.length + 1}
@@ -1992,6 +2005,8 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
       status: b.status,
       listingStatus: b.listing_status,
       isDuplicate: b.is_duplicate,
+      deletionHoldState: b.deletion_hold_state,
+      deletionHoldDeleteAfter: b.deletion_hold_delete_after,
       phone: b.phone,
       website: b.website,
       instagram: b.instagram,
@@ -2274,6 +2289,13 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
         beforeState,
         afterState: nextState,
       });
+      if (!removing) {
+        await cancelBusinessDeletionHold(client, {
+          businessId: current.id,
+          actorUserId: req.user?.id ?? null,
+          reason: "Administrator restored public discovery before the seven-day deletion hold elapsed",
+        });
+      }
       if (removing && isDirectoryPublicDiscoveryRemovalReasonCode(reconciliationReasonCode)) {
         const beforeReconciliation = reconciliationByBusinessId.get(current.id)?.state ?? {};
         const removedLedger = await client.query<{ state: Record<string, unknown> }>(
@@ -2320,112 +2342,169 @@ router.patch("/admin/businesses/listing-status", async (req: Request, res: Respo
   }
 });
 
-// DELETE /admin/businesses/permanent — administrator-confirmed permanent deletion.
-router.delete("/admin/businesses/permanent", async (req: Request, res: Response) => {
-  if (!isAdmin(req)) {
-    res.status(403).json({ error: "Forbidden" });
-    return;
-  }
+// DELETE /admin/businesses/permanent — schedule a permanent deletion after a
+// seven-day reversible hold. The route name is retained for existing dashboard
+// clients, but it can no longer remove a business in the request that starts it.
+router.delete(
+  "/admin/businesses/permanent",
+  async (req: Request, res: Response) => {
+    if (!isAdmin(req)) {
+      res.status(403).json({ error: "Forbidden" });
+      return;
+    }
 
-  const ids = Array.isArray(req.body?.ids)
-    ? [...new Set(req.body.ids.filter((id: unknown): id is string => typeof id === "string" && id.trim().length > 0))]
-    : [];
-  if (ids.length === 0 || ids.length > 500) {
-    res.status(400).json({ error: "Select between 1 and 500 businesses." });
-    return;
-  }
-  if (req.body?.confirmation !== permanentDeletionConfirmation(ids.length)) {
-    res.status(400).json({ error: `Type ${permanentDeletionConfirmation(ids.length)} to confirm permanent deletion.` });
-    return;
-  }
+    const ids = Array.isArray(req.body?.ids)
+      ? [
+          ...new Set(
+            req.body.ids.filter(
+              (id: unknown): id is string =>
+                typeof id === "string" && id.trim().length > 0,
+            ),
+          ),
+        ]
+      : [];
+    if (ids.length === 0 || ids.length > 500) {
+      res.status(400).json({ error: "Select between 1 and 500 businesses." });
+      return;
+    }
 
-  const client = await pool.connect();
-  try {
-    await ensureBusinessPermanentDeletionAuditSchema(client);
-    await client.query("BEGIN");
-    const current = await client.query<{
-      id: string;
-      name: string;
-      listing_status: string | null;
-      is_duplicate: boolean;
-      snapshot: Record<string, unknown>;
-    }>(
-      `SELECT id, name, listing_status, COALESCE(is_duplicate, false) AS is_duplicate,
+    const client = await pool.connect();
+    try {
+      await ensureBusinessDeletionHoldSchema(client);
+      await client.query("BEGIN");
+      const current = await client.query<{
+        id: string;
+        name: string;
+        listing_status: string | null;
+        status: string;
+        promotion_eligible: boolean;
+        featured: boolean;
+        promoted_until: string | null;
+        is_duplicate: boolean;
+        snapshot: Record<string, unknown>;
+      }>(
+        `SELECT id, name, listing_status, status, promotion_eligible, featured, promoted_until,
+              COALESCE(is_duplicate, false) AS is_duplicate,
               to_jsonb(businesses) AS snapshot
          FROM businesses
         WHERE id = ANY($1::text[])
         FOR UPDATE`,
-      [ids],
-    );
-    if (current.rows.length !== ids.length) {
-      await client.query("ROLLBACK");
-      res.status(404).json({ error: "One or more selected businesses were not found." });
-      return;
-    }
-
-    // Source-cohort receipts are factual reconciliation evidence rather than
-    // community or owner content. Their restrictive FK correctly prevents an
-    // accidental delete, but an administrator's explicitly confirmed permanent
-    // deletion must be able to move that evidence into the private deletion
-    // receipt first. No other relationship is removed or cascaded.
-    const cohortReceipts = await client.query<{
-      business_id: string;
-      snapshot: Record<string, unknown>;
-    }>(
-      `SELECT business_id, to_jsonb(business_inventory_cohort_receipts) AS snapshot
-         FROM business_inventory_cohort_receipts
-        WHERE business_id = ANY($1::text[])
-        FOR UPDATE`,
-      [ids],
-    );
-    const cohortReceiptsByBusinessId = new Map<string, Record<string, unknown>>();
-    for (const receipt of cohortReceipts.rows) {
-      cohortReceiptsByBusinessId.set(receipt.business_id, receipt.snapshot);
-    }
-
-    for (const row of current.rows) {
-      await client.query(
-        `INSERT INTO business_permanent_deletion_audit_events
-           (id, business_id, actor_user_id, reason, snapshot)
-         VALUES ($1, $2, $3, $4, $5::jsonb)`,
-        [
-          randomUUID(),
-          row.id,
-          req.user?.id ?? null,
-          "Administrator-confirmed permanent deletion",
-          JSON.stringify({
-            business: row.snapshot,
-            inventoryCohortReceipt: cohortReceiptsByBusinessId.get(row.id) ?? null,
-          }),
-        ],
+        [ids],
       );
+      if (current.rows.length !== ids.length) {
+        await client.query("ROLLBACK");
+        res
+          .status(404)
+          .json({ error: "One or more selected businesses were not found." });
+        return;
+      }
+
+      const deleteAfter = sevenDaysFrom(new Date());
+      let scheduledCount = 0;
+      let alreadyScheduledCount = 0;
+      for (const row of current.rows) {
+        const scheduled = await client.query<{ business_id: string }>(
+          `INSERT INTO business_deletion_holds
+           (business_id, requested_by, delete_after, reason, snapshot)
+         VALUES ($1, $2, $3, $4, $5::jsonb)
+         ON CONFLICT (business_id) DO NOTHING
+         RETURNING business_id`,
+          [
+            row.id,
+            req.user?.id ?? null,
+            deleteAfter,
+            BUSINESS_DELETION_HOLD_REASON,
+            JSON.stringify(row.snapshot),
+          ],
+        );
+        if (scheduled.rows.length === 0) {
+          alreadyScheduledCount += 1;
+          continue;
+        }
+        scheduledCount += 1;
+        const beforeState: ListingAuditState = {
+          listingStatus: row.listing_status,
+          status: row.status,
+          promotionEligible: row.promotion_eligible,
+          featured: row.featured,
+          promotedUntil: row.promoted_until,
+        };
+        const heldState: ListingAuditState = {
+          listingStatus: "archived",
+          status: "suspended",
+          promotionEligible: false,
+          featured: false,
+          promotedUntil: null,
+        };
+        await client.query(
+          `UPDATE businesses
+            SET listing_status = $1,
+                status = $2,
+                promotion_eligible = $3,
+                featured = $4,
+                promoted_until = $5,
+                updated_at = NOW()
+          WHERE id = $6`,
+          [
+            heldState.listingStatus,
+            heldState.status,
+            heldState.promotionEligible,
+            heldState.featured,
+            heldState.promotedUntil,
+            row.id,
+          ],
+        );
+        await recordListingStatusAudit(client, {
+          businessId: row.id,
+          action: "remove_public_discovery",
+          actorUserId: req.user?.id ?? null,
+          reason: BUSINESS_DELETION_HOLD_REASON,
+          beforeState,
+          afterState: heldState,
+        });
+        await recordBusinessDeletionHoldEvent(client, {
+          businessId: row.id,
+          action: "scheduled",
+          actorUserId: req.user?.id ?? null,
+          reason: BUSINESS_DELETION_HOLD_REASON,
+          deleteAfter,
+          snapshot: row.snapshot,
+        });
+      }
+      await client.query("COMMIT");
+      req.log?.info(
+        {
+          selectedCount: ids.length,
+          scheduledCount,
+          alreadyScheduledCount,
+          deleteAfter,
+          by: req.user?.id,
+        },
+        "Admin scheduled businesses for seven-day permanent-deletion hold",
+      );
+      res.json({
+        ok: true,
+        scheduledCount,
+        alreadyScheduledCount,
+        deleteAfter,
+      });
+    } catch (err: unknown) {
+      await client.query("ROLLBACK").catch(() => undefined);
+      req.log?.error(
+        { err },
+        "Failed to schedule selected businesses for deletion hold",
+      );
+      res
+        .status(500)
+        .json({
+          error:
+            "No selected business was changed; deletion holds could not be scheduled.",
+        });
+    } finally {
+      client.release();
     }
-    // Deliberately explicit rather than cascading. The source receipt is now
-    // retained in the audit event above; every other dependent record remains
-    // protected by its own restrictive foreign key.
-    await client.query(
-      "DELETE FROM business_inventory_cohort_receipts WHERE business_id = ANY($1::text[])",
-      [ids],
-    );
-    // Deliberately no CASCADE. If this record has linked data protected by a
-    // foreign key, PostgreSQL rejects the transaction and preserves everything.
-    await client.query("DELETE FROM businesses WHERE id = ANY($1::text[])", [ids]);
-    await client.query("COMMIT");
-    req.log?.info({ selectedCount: ids.length, by: req.user?.id }, "Admin permanently deleted businesses with audit snapshots");
-    res.json({ ok: true, deletedCount: ids.length });
-  } catch (err: unknown) {
-    await client.query("ROLLBACK").catch(() => undefined);
-    const code = typeof err === "object" && err !== null && "code" in err ? String((err as { code?: unknown }).code) : "";
-    if (code === "23503") {
-      res.status(409).json({ error: "This business has linked records and could not be permanently deleted. No selected business was changed." });
-      return;
-    }
-    req.log?.error({ err }, "Failed to permanently delete selected businesses");
-    res.status(500).json({ error: "Permanent deletion failed; no selected business was deleted." });
-  } finally {
-    client.release();
-  }
-});
+  },
+);
 
 // PATCH /admin/businesses/:id/listing-status — remove or restore a public business listing.
 // This is intentionally a reversible governance control, never a destructive
@@ -2555,6 +2634,13 @@ router.patch(
         beforeState,
         afterState: nextState,
       });
+      if (!removing) {
+        await cancelBusinessDeletionHold(client, {
+          businessId: id,
+          actorUserId: req.user?.id ?? null,
+          reason: "Administrator restored public discovery before the seven-day deletion hold elapsed",
+        });
+      }
       if (removing && isDirectoryPublicDiscoveryRemovalReasonCode(reconciliationReasonCode)) {
         const removedLedger = await client.query<{ state: Record<string, unknown> }>(
           `UPDATE business_directory_reconciliation_ledger

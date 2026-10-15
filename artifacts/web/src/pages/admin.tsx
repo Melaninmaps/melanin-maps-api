@@ -329,6 +329,8 @@ type AdminBusiness = {
   status: string;
   listingStatus: string;
   isDuplicate: boolean;
+  deletionHoldState: "pending" | "blocked" | null;
+  deletionHoldDeleteAfter: string | null;
   needsVerification: boolean;
   permanentlyClosed: boolean;
   websiteCleanupStatus: "identity_mismatch" | "unsafe_spam" | "inactive_broken" | null;
@@ -365,6 +367,17 @@ type AdminBusiness = {
     createdAt: string;
   } | null;
 };
+
+const LEGACY_OWNERSHIP_DESIGNATION_LABELS: Record<string, string> = {
+  "latino-owned": "Latino / Hispanic-Owned",
+  "hispanic-owned": "Latino / Hispanic-Owned",
+  "Latino-Owned": "Latino / Hispanic-Owned",
+  "Hispanic-Owned": "Latino / Hispanic-Owned",
+};
+
+function ownershipDesignationDisplayLabel(designation: string): string {
+  return LEGACY_OWNERSHIP_DESIGNATION_LABELS[designation] ?? designation;
+}
 
 type BusinessReconciliationFilter =
   | "all"
@@ -3066,39 +3079,62 @@ export default function Admin() {
     updateSelectedBusinessListingStatus("live_unclaimed");
 
 
-  const permanentlyDeleteBusinesses = async (ids: string[], names: string[]) => {
+  const scheduleBusinessesForDeletion = async (
+    ids: string[],
+    names: string[],
+  ) => {
     if (ids.length === 0 || ids.length > 500) return;
-    const summary = names.slice(0, 3).join(", ") + (names.length > 3 ? ` and ${names.length - 3} more` : "");
-    const requiredConfirmation = `DELETE ${ids.length} ${ids.length === 1 ? "BUSINESS" : "BUSINESSES"}`;
-    const confirmation = window.prompt(`This permanently deletes ${ids.length} selected business record${ids.length === 1 ? "" : "s"}. This cannot be undone. Type exactly ${requiredConfirmation} to continue.
-
-Selected: ${summary}`);
-    if (confirmation !== requiredConfirmation) return;
+    const summary =
+      names.slice(0, 3).join(", ") +
+      (names.length > 3 ? ` and ${names.length - 3} more` : "");
     setBulkBusinessUpdating(true);
     try {
       const response = await fetch(`${BASE}api/admin/businesses/permanent`, {
         method: "DELETE",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids, confirmation }),
+        body: JSON.stringify({ ids }),
       });
-      const body = await response.json().catch(() => ({})) as { error?: string };
+      const body = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        scheduledCount?: number;
+        alreadyScheduledCount?: number;
+        deleteAfter?: string;
+      };
       if (!response.ok) {
-        window.alert(body.error ?? "No selected business was permanently deleted.");
+        window.alert(
+          body.error ?? "No selected business was scheduled for deletion.",
+        );
         return;
       }
       setSelectedBusinessIds(new Set());
       await loadBusinesses();
+      const deleteAfter = body.deleteAfter
+        ? new Date(body.deleteAfter).toLocaleString()
+        : "seven days from now";
+      window.alert(
+        `${body.scheduledCount ?? 0} business record${body.scheduledCount === 1 ? "" : "s"} scheduled for permanent deletion on ${deleteAfter}. ` +
+          `${body.alreadyScheduledCount ?? 0} already had an active deletion hold. Restore a listing from Archive vault before that date to cancel its hold.
+
+Selected: ${summary}`,
+      );
     } catch {
-      window.alert("No selected business was permanently deleted. Please try again.");
+      window.alert(
+        "No selected business was scheduled for deletion. Please try again.",
+      );
     } finally {
       setBulkBusinessUpdating(false);
     }
   };
 
-  const permanentlyDeleteSelectedBusinesses = () => {
-    const selectedRows = filteredBiz.filter((business) => selectedBusinessIds.has(business.id));
-    void permanentlyDeleteBusinesses(selectedRows.map((business) => business.id), selectedRows.map((business) => business.name));
+  const scheduleSelectedBusinessesForDeletion = () => {
+    const selectedRows = filteredBiz.filter((business) =>
+      selectedBusinessIds.has(business.id),
+    );
+    void scheduleBusinessesForDeletion(
+      selectedRows.map((business) => business.id),
+      selectedRows.map((business) => business.name),
+    );
   };
 
   const updateSingleBusinessListingStatus = async (
@@ -5334,10 +5370,6 @@ Selected: ${summary}`);
               </p>
             </div>
 
-            <KinfolkCurrentCityDuplicateReconciliation
-              onApplied={() => loadBusinesses()}
-            />
-
             <section className="mb-4 rounded-2xl border border-[#CA922B]/30 bg-[#FFF9EF] p-4" aria-label="Founder source directory intake">
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                 <div>
@@ -5727,10 +5759,10 @@ Selected: ${summary}`);
               <div>
                 <strong className="text-[#3A1F0E]">{businessInventoryFilteredTotal.toLocaleString()} filtered results.</strong>{" "}
                 {bizStatusFilter === "duplicates"
-                  ? "These are duplicate records retained from all historical states. You can edit, archive, or permanently delete selected records."
+                  ? "These are duplicate records retained from all historical states. Delete schedules a seven-day recovery hold; Restore cancels it."
                   : bizStatusFilter === "archived"
-                  ? "These are separated from routine city and business-name review. Restore them to discovery or permanently delete selected records."
-                  : "Archive removes a selected profile from public Directory search, Kinfolk recommendations, and map pins while retaining the full MWM record and intake evidence for restoration."}
+                  ? "These are separated from routine city and business-name review. Restore to discovery, or schedule deletion with a seven-day recovery hold."
+                  : "Archive removes a selected profile from public Directory search, Kinfolk recommendations, and map pins while retaining the full MWM record and intake evidence for restoration. Delete starts a seven-day recovery hold."}
               </div>
               <div className="flex shrink-0 flex-wrap gap-2">
                 <label className="inline-flex items-center gap-1.5 rounded-lg border border-[#3A1F0E]/15 bg-white px-2.5 py-1 text-xs font-bold text-[#3A1F0E]/70">
@@ -5775,12 +5807,12 @@ Selected: ${summary}`);
                     </button>
                     <button
                       type="button"
-                      onClick={permanentlyDeleteSelectedBusinesses}
+                      onClick={scheduleSelectedBusinessesForDeletion}
                       disabled={bulkBusinessUpdating || selectedVisibleBusinessCount === 0}
                       className="inline-flex items-center gap-1.5 rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      {bulkBusinessUpdating ? "Deleting…" : `Permanently delete selected (${selectedVisibleBusinessCount})`}
+                      {bulkBusinessUpdating ? "Scheduling hold…" : `Delete selected — 7-day hold (${selectedVisibleBusinessCount})`}
                     </button>
                     <button
                       type="button"
@@ -5813,12 +5845,12 @@ Selected: ${summary}`);
                     </button>
                     <button
                       type="button"
-                      onClick={permanentlyDeleteSelectedBusinesses}
+                      onClick={scheduleSelectedBusinessesForDeletion}
                       disabled={bulkBusinessUpdating || selectedVisibleBusinessCount === 0}
                       className="inline-flex items-center gap-1.5 rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      {bulkBusinessUpdating ? "Deleting…" : `Permanently delete selected (${selectedVisibleBusinessCount})`}
+                      {bulkBusinessUpdating ? "Scheduling hold…" : `Delete selected — 7-day hold (${selectedVisibleBusinessCount})`}
                     </button>
                   </>
                 ) : (
@@ -5844,12 +5876,12 @@ Selected: ${summary}`);
                     </button>
                     <button
                       type="button"
-                      onClick={permanentlyDeleteSelectedBusinesses}
+                      onClick={scheduleSelectedBusinessesForDeletion}
                       disabled={bulkBusinessUpdating || selectedVisibleBusinessCount === 0}
                       className="inline-flex items-center gap-1.5 rounded-lg bg-red-700 px-3 py-1.5 text-xs font-bold text-white transition-colors hover:bg-red-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
-                      {bulkBusinessUpdating ? "Deleting…" : `Permanently delete selected (${selectedVisibleBusinessCount})`}
+                      {bulkBusinessUpdating ? "Scheduling hold…" : `Delete selected — 7-day hold (${selectedVisibleBusinessCount})`}
                     </button>
                   </>
                 )}
@@ -5967,9 +5999,29 @@ Selected: ${summary}`);
                                 <Check className="w-2.5 h-2.5" /> Verified
                               </span>
                             )}
-                            {biz.blackOwned && (
+                            {biz.ownershipDesignations.map((designation) => (
+                              <span
+                                key={designation}
+                                className="px-2 py-0.5 rounded-full bg-[#CA922B]/10 text-[#8A5B13] text-xs font-bold"
+                              >
+                                {ownershipDesignationDisplayLabel(designation)}
+                              </span>
+                            ))}
+                            {biz.blackOwned && !biz.ownershipDesignations.some((designation) =>
+                              ownershipDesignationDisplayLabel(designation) === "Black / African American-Owned",
+                            ) && (
                               <span className="px-2 py-0.5 rounded-full bg-[#CA922B]/10 text-[#CA922B] text-xs font-bold">
                                 Black-Owned
+                              </span>
+                            )}
+                            {biz.deletionHoldState === "pending" && biz.deletionHoldDeleteAfter && (
+                              <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-bold">
+                                Deletion hold until {new Date(biz.deletionHoldDeleteAfter).toLocaleDateString()}
+                              </span>
+                            )}
+                            {biz.deletionHoldState === "blocked" && (
+                              <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 text-xs font-bold">
+                                Deletion requires review — linked records retained
                               </span>
                             )}
                             {biz.manusCreated && (
@@ -6112,11 +6164,11 @@ Selected: ${summary}`);
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => void permanentlyDeleteBusinesses([biz.id], [biz.name])}
+                                  onClick={() => void scheduleBusinessesForDeletion([biz.id], [biz.name])}
                                   className="flex items-center gap-1 text-xs font-bold text-red-600 hover:text-red-800 border border-red-200 hover:bg-red-50 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
-                                  title="Permanently delete this business after typed confirmation"
+                                  title="Archive this listing and schedule permanent deletion after a seven-day recovery hold"
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" /> Permanently delete
+                                  <Trash2 className="h-3.5 w-3.5" /> Delete — 7-day hold
                                 </button>
                                 {biz.isDuplicate ? (
                               bizStatusFilter === "duplicates" ? (
@@ -6178,6 +6230,21 @@ Selected: ${summary}`);
                   </div>
                 </div>
               )}
+              <details className="mt-8 rounded-2xl border border-[#2B1507]/10 bg-[#FAF6EF] p-4">
+                  <summary className="cursor-pointer text-sm font-bold text-[#3A1F0E]">
+                    Kinfolk Current duplicate reconciliation (advanced)
+                  </summary>
+                  <p className="mt-2 text-xs text-[#3A1F0E]/60">
+                    This optional reconciliation tool is separate from
+                    day-to-day business management and is intentionally placed
+                    after the inventory controls.
+                  </p>
+                  <div className="mt-4">
+                    <KinfolkCurrentCityDuplicateReconciliation
+                      onApplied={() => loadBusinesses()}
+                    />
+                  </div>
+                </details>
               </>
             )}
           </div>
