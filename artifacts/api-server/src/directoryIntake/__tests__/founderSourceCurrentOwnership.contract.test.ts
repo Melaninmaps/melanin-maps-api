@@ -35,6 +35,7 @@ describe("founder-source ownership for current public profiles", () => {
     );
     expect(manifest).toMatch(/request\.excludeKinfolkCurrent\s*&&\s*match\.existingBusinessId\s*&&\s*kinfolkCurrentIds\.has\(match\.existingBusinessId\)/);
     expect(manifest).toContain("kinfolkCurrentExcluded:");
+    expect(manifest).toContain("currentOnly: request.currentOnly,");
 
     const publication = route.slice(route.indexOf('app.post("/api/admin/founder-source-publication"'));
     const liveGuardStart = publication.indexOf('if (state === "kinfolk_current" && request.excludeKinfolkCurrent)');

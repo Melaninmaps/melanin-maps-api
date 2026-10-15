@@ -514,6 +514,7 @@ function publicManifest(
     requestedScope: {
       city: request.city, state: request.state, batch: request.batch,
       ownershipScope: request.ownershipScope, existingOnly: request.existingOnly,
+      currentOnly: request.currentOnly,
       excludeKinfolkCurrent: request.excludeKinfolkCurrent,
     },
     sourceRecordsProcessed: selected.length,
