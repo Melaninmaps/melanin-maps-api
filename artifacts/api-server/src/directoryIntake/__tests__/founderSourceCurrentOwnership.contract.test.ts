@@ -32,4 +32,12 @@ describe("founder-source ownership for current public profiles", () => {
     expect(route).toContain("kinfolkCurrentOwnershipEnriched: sourceOwnedCurrentProfiles.size");
     expect(route).toContain("Founder-source ownership labels were applied without changing Kinfolk membership");
   });
+
+  it("can run only the current-profile ownership pass without creating or enriching other profiles", () => {
+    expect(route).toContain("currentOnly: req.body?.currentOnly === true");
+    expect(route).toContain("const plannedCreates = request.currentOnly ? []");
+    expect(route).toContain("const canonicalProfileHolds = request.currentOnly ? []");
+    expect(route).toContain("const newCandidates = (request.currentOnly || request.existingOnly ? [] : plannedCreates)");
+    expect(route).toContain("!request.currentOnly || Boolean(match.existingBusinessId && kinfolkCurrentIds.has(match.existingBusinessId))");
+  });
 });
