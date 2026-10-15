@@ -62,6 +62,7 @@ export {
   replaceSelectedSupportLensOption,
   BLACK_OWNED_DESIGNATIONS,
   ownershipDesignationFilterId,
+  ownershipDesignationDisplayLabel,
   ownershipDesignationStorageValues,
   normalizeOwnershipDesignationFilterIds,
   SUPPORT_LENS_MODES,
