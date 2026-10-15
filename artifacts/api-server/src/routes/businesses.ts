@@ -4576,6 +4576,15 @@ async function applyProfileEnrichmentManifest(req: Request, res: Response): Prom
           fillOnlyPatch.description = proposedText;
           continue;
         }
+        if (field === "website"
+          && mode === "replace_verified_inactive"
+          && manifest.scope === "non_kinfolk_current_all"
+          && candidate.websiteRecovery?.priorWebsiteClassification === "REMOVE_CONFIRMED_INACTIVE"
+          && candidate.websiteRecovery.priorWebsite === candidate.expectedIdentity.website
+          && normalizedProfileEnrichmentWebsite(candidate.websiteRecovery.priorWebsite) === normalizedProfileEnrichmentWebsite(currentText)) {
+          fillOnlyPatch.website = proposedText;
+          continue;
+        }
         // A generic-replacement proposal never replaces substantive text. It is
         // skipped field-by-field so independently empty fields in this same
         // first-party packet can still be safely enriched.

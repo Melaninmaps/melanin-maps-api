@@ -127,6 +127,23 @@ function socialReceipt(field, url, page, observedAt, sourceUrl) {
   };
 }
 
+function websiteReceipt(url, page, observedAt, sourceUrl, replacedInactive) {
+  return {
+    field: "website",
+    sourceUrl,
+    sourceLabel: displayText(`Verified official ${page.title?.trim() || "website"} page`, 255, "Verified official website"),
+    observedAt,
+    confidence: "high",
+    note: displayText(
+      replacedInactive
+        ? `A rechecked inactive stored website is replaced with this identity-matched official website: ${url}`
+        : `This identity-matched official website is the current first-party presence: ${url}`,
+      1000,
+      "Verified official website.",
+    ),
+  };
+}
+
 function sourceSnapshotValue(snapshot, field) {
   const candidates = {
     instagram: ["Instagram", "instagram"],
@@ -152,6 +169,7 @@ export function candidateFromProposal(proposal, pagePacket) {
   const city = strictText(proposal?.city, 100);
   const state = strictText(proposal?.state, 50);
   const website = proposal?.website ? publicHttpUrl(proposal.website) : null;
+  const expectedWebsite = publicHttpUrl(proposal?.sourceSnapshot?.Website ?? proposal?.websiteRecovery?.priorWebsite) ?? null;
   const observedAt = observationDate(proposal?.observedAt ?? pagePacket?.completedAt?.slice(0, 10));
   if (!identityConfirmed || !businessId || !name || !city || !state || !observedAt || (proposal?.website && !website)) return null;
 
@@ -179,6 +197,20 @@ export function candidateFromProposal(proposal, pagePacket) {
   }
   const socialPage = pages[0];
   const socialSourceUrl = publicHttpUrl(socialPage?.sourceUrl);
+  const recovery = proposal?.websiteRecovery ?? pagePacket?.websiteRecovery ?? null;
+  if (website && recovery && socialPage && socialSourceUrl && website !== expectedWebsite) {
+    if (!expectedWebsite) {
+      patch.website = website;
+      fieldModes.website = "fill";
+      receipts.push(websiteReceipt(website, socialPage, observedAt, socialSourceUrl, false));
+    } else if (recovery?.priorWebsiteClassification === "REMOVE_CONFIRMED_INACTIVE"
+      && publicHttpUrl(recovery.priorWebsite) === expectedWebsite
+      && observationDate(recovery.checkedAt)) {
+      patch.website = website;
+      fieldModes.website = "replace_verified_inactive";
+      receipts.push(websiteReceipt(website, socialPage, observedAt, socialSourceUrl, true));
+    }
+  }
   for (const [field, rawUrl] of Object.entries(pagePacket?.officialSocialLinks ?? {})) {
     const url = publicHttpUrl(rawUrl);
     if (!SOCIAL_FIELDS.has(field) || !url || !socialSourceUrl || Object.hasOwn(patch, field)) continue;
@@ -190,9 +222,16 @@ export function candidateFromProposal(proposal, pagePacket) {
   if (Object.keys(patch).length === 0 || receipts.length !== Object.keys(patch).length) return null;
   return {
     businessId,
-    expectedIdentity: { name, city, state, website },
+    expectedIdentity: { name, city, state, website: expectedWebsite },
     patch,
     fieldModes,
+    ...(fieldModes.website === "replace_verified_inactive" ? {
+      websiteRecovery: {
+        priorWebsite: expectedWebsite,
+        priorWebsiteClassification: "REMOVE_CONFIRMED_INACTIVE",
+        checkedAt: observationDate(recovery.checkedAt),
+      },
+    } : {}),
     receipts,
   };
 }
