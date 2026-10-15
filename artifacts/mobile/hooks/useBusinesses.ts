@@ -23,7 +23,8 @@ interface UseBusinessesOptions {
   longitude?: number | null;
   radiusMiles?: number;
   designations?: readonly string[];
-  supportScope?: "all_businesses" | "strict_documented_designations";
+  vibes?: readonly string[];
+    supportScope?: "all_businesses" | "strict_documented_designations";
   /** A server-validated explicit public business-name lookup. */
   directName?: boolean;
   /** Prevent an unscoped request while a map surface awaits a locality. */
@@ -100,6 +101,7 @@ function mapApiBusinessToLocal(b: Record<string, unknown>): Business {
         ? parseFloat(b.longitude)
         : (b.longitude as number),
     tags: (b.tags as string[]) ?? [],
+    vibes: Array.isArray(b.vibes) ? b.vibes.filter((value): value is string => typeof value === "string") : [],
     reviews: (b.reviews as Business["reviews"]) ?? [],
     phone: b.phone as string | undefined,
     website: b.website as string | undefined,
@@ -135,12 +137,14 @@ export function useBusinesses(
     longitude = null,
     radiusMiles = 25,
     designations = [],
+    vibes = [],
     supportScope,
     directName = false,
     enabled = true,
   } = options;
   const designationKey =
     normalizeOwnershipDesignationFilterIds(designations).join(",");
+  const vibeKey = [...new Set(vibes)].join(",");
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -177,6 +181,7 @@ export function useBusinesses(
         city: directName ? "" : city,
         state: directName ? "" : state,
         designations: directName ? [] : designations,
+        vibes: directName ? [] : vibes,
         supportScope: directName ? undefined : supportScope,
         directName,
       });
@@ -226,7 +231,7 @@ export function useBusinesses(
     } finally {
       if (requestId === requestIdRef.current) setIsLoading(false);
     }
-  }, [enabled, search, category, city, state, latitude, longitude, radiusMiles, designationKey, supportScope, directName]);
+  }, [enabled, search, category, city, state, latitude, longitude, radiusMiles, designationKey, vibeKey, supportScope, directName]);
 
   useEffect(() => {
     void Promise.resolve().then(fetchBusinesses);

@@ -16,7 +16,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useColors } from "@/hooks/useColors";
 import {
   getBusinessExperiencePolicy,
-  getOwnerProfileExperienceChoices,
   normalizeOwnerExperienceKey,
   type BusinessExperienceChoice,
 } from "@workspace/constants";
@@ -59,10 +58,9 @@ export default function OwnerVibeTags() {
 
       setBusinessId(mineData.business.id);
       const policy = getBusinessExperiencePolicy(mineData.business.category, mineData.business.subcategory);
-      const profileChoices = getOwnerProfileExperienceChoices(policy);
-      setChoices(profileChoices);
+      setChoices(policy.vibeChoices);
       setPriceChoices(policy.priceChoices);
-      setSelected((mineData.business.vibes ?? []).map(normalizeOwnerExperienceKey).filter((key) => profileChoices.some((choice) => choice.key === key)).slice(0, 2));
+      setSelected((mineData.business.vibes ?? []).map(normalizeOwnerExperienceKey).filter((key) => policy.vibeChoices.some((choice) => choice.key === key)).slice(0, 2));
       setSelectedPrice(policy.priceChoices.find((choice) => choice.label === mineData.business?.priceRange)?.key ?? null);
     } catch { /* silent */ } finally {
       setLoading(false);
@@ -132,7 +130,7 @@ export default function OwnerVibeTags() {
         <View style={[styles.infoCard, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           <Feather name="zap" size={18} color="#5B6AF0" />
           <Text style={[styles.infoText, { color: colors.mutedForeground }]}>
-            Select up to 2 honest profile tags. Restaurants can describe atmosphere; professionals can describe service. Community members add their own view separately.
+            Select up to 2 honest VIBES that fit your business. Member quick reviews are collected separately and never become owner claims.
           </Text>
         </View>
 
@@ -148,43 +146,56 @@ export default function OwnerVibeTags() {
           </View>
         ) : (
           <>
-            <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
-              {selected.length}/2 selected
-            </Text>
-            <View style={styles.grid}>
-              {choices.map((vibe) => {
-                const active = selected.includes(vibe.key);
-                return (
-                  <TouchableOpacity
-                    key={vibe.key}
-                    activeOpacity={0.8}
-                    onPress={() => toggle(vibe.key)}
-                    style={[
-                      styles.vibeCard,
-                      {
-                        backgroundColor: active ? "#5B6AF015" : colors.secondary,
-                        borderColor: active ? "#5B6AF0" : colors.border,
-                      },
-                    ]}
-                  >
-                    <View style={[styles.vibeIconWrap, { backgroundColor: active ? "#5B6AF020" : colors.background }]}>
-                      <Feather name="star" size={20} color={active ? "#5B6AF0" : colors.mutedForeground} />
-                    </View>
-                    <Text style={[styles.vibeLabel, { color: active ? "#5B6AF0" : colors.foreground }]}>
-                      {vibe.label}
-                    </Text>
-                    <Text style={[styles.vibeDesc, { color: colors.mutedForeground }]} numberOfLines={2}>
-                      {vibe.helperText}
-                    </Text>
-                    {active && (
-                      <View style={styles.checkBadge}>
-                        <Feather name="check" size={11} color="#fff" />
-                      </View>
-                    )}
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            {choices.length > 0 ? (
+              <>
+                <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
+                  {selected.length}/2 selected
+                </Text>
+                <View style={styles.grid}>
+                  {choices.map((vibe) => {
+                    const active = selected.includes(vibe.key);
+                    return (
+                      <TouchableOpacity
+                        key={vibe.key}
+                        activeOpacity={0.8}
+                        onPress={() => toggle(vibe.key)}
+                        style={[
+                          styles.vibeCard,
+                          {
+                            backgroundColor: active ? "#5B6AF015" : colors.secondary,
+                            borderColor: active ? "#5B6AF0" : colors.border,
+                          },
+                        ]}
+                      >
+                        <View style={[styles.vibeIconWrap, { backgroundColor: active ? "#5B6AF020" : colors.background }]}>
+                          <Feather name="star" size={20} color={active ? "#5B6AF0" : colors.mutedForeground} />
+                        </View>
+                        <Text style={[styles.vibeLabel, { color: active ? "#5B6AF0" : colors.foreground }]}>
+                          {vibe.label}
+                        </Text>
+                        {vibe.helperText ? (
+                          <Text style={[styles.vibeDesc, { color: colors.mutedForeground }]} numberOfLines={2}>
+                            {vibe.helperText}
+                          </Text>
+                        ) : null}
+                        {active && (
+                          <View style={styles.checkBadge}>
+                            <Feather name="check" size={11} color="#fff" />
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </>
+            ) : (
+              <View style={[styles.infoCard, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
+                <Feather name="message-circle" size={18} color={colors.mutedForeground} />
+                <Text style={[styles.infoText, { color: colors.mutedForeground }]}>
+                  VIBES are not offered for this business category. Members can share the founder-approved quick-review endorsements instead.
+                </Text>
+              </View>
+            )}
 
             <View style={[styles.infoCard, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
               <Feather name="dollar-sign" size={18} color="#5B6AF0" />

@@ -4,6 +4,7 @@ import { ShieldCheck, Search, MapPin, Star, Loader2, ArrowRight, Plus, MessageCi
 import { Link } from "wouter";
 import BookstoreDiscoveryPanel from "@/components/BookstoreDiscoveryPanel";
 import {
+  BUSINESS_CATEGORY_TAXONOMY,
   OWNERSHIP_FILTER_OPTIONS,
   ownershipDesignationDisplayLabel,
   ownershipDesignationFilterId,
@@ -97,11 +98,7 @@ function hasNoRecordedOwnershipTag(business: Business): boolean {
   return !business.blackOwned && (business.ownershipDesignations?.length ?? 0) === 0;
 }
 
-const CATEGORY_FILTERS = [
-  "All", "Food & Drink", "Beauty & Personal Care", "Health & Wellness",
-  "Retail & Boutiques", "Professional Services", "Arts & Culture",
-  "Home & Property", "Technology", "Automotive",
-];
+const CATEGORY_FILTERS = ["All", ...BUSINESS_CATEGORY_TAXONOMY.map((category) => category.name)];
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -507,7 +504,7 @@ export default function Businesses() {
   const browseFiltered = (() => {
     let result = allBusinesses;
     if (activeCategory !== "All") {
-      result = result.filter(b => b.category?.toLowerCase().includes(activeCategory.toLowerCase()));
+      result = result.filter((business) => business.category === activeCategory);
     }
     if (activeOwnership === "no_tag") {
       result = result.filter(hasNoRecordedOwnershipTag);

@@ -104,6 +104,7 @@ export const LogoutMobileSessionResponse = zod.object({
 export const ListBusinessesQueryParams = zod.object({
   "search": zod.coerce.string().optional(),
   "category": zod.coerce.string().optional(),
+  "vibes": zod.coerce.string().optional().describe('Comma-separated founder-approved VIBE keys; each match is constrained to its permitted business categories.'),
   "city": zod.coerce.string().optional(),
   "state": zod.coerce.string().optional(),
   "limit": zod.coerce.number().optional(),
@@ -548,5 +549,4 @@ export const GenerateOpenaiImageBody = zod.object({
 export const GenerateOpenaiImageResponse = zod.object({
   "b64_json": zod.string()
 })
-
 

@@ -21,4 +21,12 @@ describe("parseBusinessMapSearchPhrase", () => {
       category: undefined,
     });
   });
+
+  it("maps a grocery request to the founder-approved Food & Drink category", () => {
+    expect(parseBusinessMapSearchPhrase("grocery stores in Philadelphia, PA")).toMatchObject({
+      category: "Food & Drink",
+      city: "Philadelphia",
+      stateCode: "PA",
+    });
+  });
 });

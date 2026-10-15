@@ -4,6 +4,10 @@
 // duplicate, unsafe, or location-incomplete submissions remain non-public.
 
 import { OWNERSHIP_DESIGNATIONS } from "@workspace/db";
+import {
+  isCanonicalBusinessCategory,
+  isCanonicalSubcategoryForCategory,
+} from "@workspace/constants";
 import { isIP } from "node:net";
 
 export const SOCIAL_PLATFORMS = [
@@ -328,7 +332,15 @@ function optionalCoordinate(
   return numeric;
 }
 
-export function validateSubmission(input: unknown): CommunityBusinessSubmissionInput {
+export interface SubmissionValidationOptions {
+  /** Existing submissions may retain their historical classification until a reviewed migration. */
+  allowLegacyClassification?: boolean;
+}
+
+export function validateSubmission(
+  input: unknown,
+  { allowLegacyClassification = false }: SubmissionValidationOptions = {},
+): CommunityBusinessSubmissionInput {
   const body = objectBody(input);
   const rawSubmissionIntent = optionalText(body, "submissionIntent", 20) ?? "community";
   if (rawSubmissionIntent !== "community" && rawSubmissionIntent !== "owner") {
@@ -377,11 +389,24 @@ export function validateSubmission(input: unknown): CommunityBusinessSubmissionI
     throw new Error("clientRequestId is invalid");
   }
 
+  const category = requiredText(body, "category", 100);
+  const subcategory = optionalText(body, "subcategory", 100);
+  if (!isCanonicalBusinessCategory(category) && !allowLegacyClassification) {
+    throw new Error("category must be selected from the current business taxonomy");
+  }
+  if (
+    isCanonicalBusinessCategory(category)
+    && subcategory
+    && !isCanonicalSubcategoryForCategory(category, subcategory)
+  ) {
+    throw new Error("subcategory must belong to the selected category");
+  }
+
   return {
     submissionIntent,
     name: requiredText(body, "name", 255),
-    category: requiredText(body, "category", 100),
-    subcategory: optionalText(body, "subcategory", 100),
+    category,
+    subcategory,
     description: optionalText(body, "description", 4_000),
     address: optionalText(body, "address", 255),
     city: requiredText(body, "city", 100),

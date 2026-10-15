@@ -40,17 +40,6 @@ function getOpenStatus(hours?: string | null): { open: boolean; label: string } 
   return { open: isOpen, label: isOpen ? "Open" : "Closed" };
 }
 
-const VIBES: { label: string; emoji: string; categories: string[] }[] = [
-  { label: "Soul Food", emoji: "🍽️", categories: ["food", "restaurant", "bbq", "barbecue", "soul", "seafood", "southern"] },
-  { label: "Hair & Beauty", emoji: "💈", categories: ["beauty", "hair", "barber", "salon", "nail", "spa", "cosmetic"] },
-  { label: "Wellness", emoji: "💆🏾", categories: ["health", "wellness", "fitness", "gym", "yoga", "medical", "therapy"] },
-  { label: "Art & Culture", emoji: "🎨", categories: ["art", "culture", "gallery", "museum", "creative", "studio"] },
-  { label: "Late Night", emoji: "🌙", categories: ["nightlife", "bar", "lounge", "club", "entertainment", "comedy"] },
-  { label: "Shopping", emoji: "🛍️", categories: ["retail", "shop", "boutique", "clothing", "apparel", "accessories"] },
-  { label: "Professional", emoji: "💼", categories: ["legal", "finance", "tech", "consulting", "accounting", "real estate"] },
-  { label: "Family", emoji: "👨🏾‍👩🏾‍👧🏾", categories: ["childcare", "education", "tutoring", "family", "daycare"] },
-];
-
 function getComplimentChips(business: Business): { label: string; color: string; bg: string }[] {
   const chips: { label: string; color: string; bg: string }[] = [];
   if (business.foundingBusiness) chips.push({ label: "🔑 Founding Member", color: "#92400E", bg: "#FEF3C720" });
@@ -64,19 +53,14 @@ function getComplimentChips(business: Business): { label: string; color: string;
   return chips.slice(0, 4);
 }
 
-function getVibeMatch(category?: string): { label: string; emoji: string } | null {
-  if (!category) return null;
-  const cat = category.toLowerCase();
-  const match = VIBES.find((v) => v.categories.some((c) => cat.includes(c) || c.includes(cat)));
-  return match ?? null;
-}
-
 function getExperienceLabel(
   business: Pick<Business, "category" | "subcategory">,
 ): { label: string; emoji: string } | null {
   const policy = getBusinessExperiencePolicy(business.category, business.subcategory);
   if (policy.experienceLayer === "real") return { label: "The Real", emoji: "✓" };
-  return getVibeMatch(business.category);
+  // A category never assigns a subjective VIBE. Member selections are shown in
+  // the Community Experience section where their feedback remains distinct.
+  return null;
 }
 
 interface Props {

@@ -271,9 +271,11 @@ export default function VibeSearchScreen() {
                     <Text style={[styles.vibeCardLabel, { color: active ? "#FFF" : colors.foreground }]}>
                       {v.label}
                     </Text>
-                    <Text style={[styles.vibeCardDesc, { color: active ? "rgba(255,255,255,0.8)" : colors.mutedForeground }]}>
-                      {v.description}
-                    </Text>
+                    {v.description ? (
+                      <Text style={[styles.vibeCardDesc, { color: active ? "rgba(255,255,255,0.8)" : colors.mutedForeground }]}>
+                        {v.description}
+                      </Text>
+                    ) : null}
                   </TouchableOpacity>
                 );
               })}

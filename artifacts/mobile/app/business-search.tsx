@@ -20,11 +20,10 @@ import { Feather } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import * as SecureStore from "expo-secure-store";
 import { useColors } from "@/hooks/useColors";
-import { CATEGORIES } from "@/constants/data";
 import { useSearchHistory } from "@/hooks/useSearchHistory";
-import { getBusinessExperiencePolicy } from "@workspace/constants";
+import { BUSINESS_CATEGORY_TAXONOMY, getBusinessExperiencePolicy } from "@workspace/constants";
 
-const CATEGORY_OPTIONS = CATEGORIES.filter((c) => c !== "All");
+const CATEGORY_OPTIONS = BUSINESS_CATEGORY_TAXONOMY.map((category) => category.name);
 const OWNERSHIP_OPTIONS = [
   { value: "", label: "All ownership tags" },
   { value: "black-african-american", label: "Black / African American-Owned" },

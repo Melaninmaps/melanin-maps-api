@@ -20,7 +20,7 @@ export function parseBusinessMapSearchPhrase(input: string): BusinessMapSearchPh
     ? "black-owned" as const
     : undefined;
   const category =
-    /\bgrocery\s+stores?\b/i.test(input) ? "Grocery" :
+    /\bgrocery\s+stores?\b/i.test(input) ? "Food & Drink" :
     /\brestaurants?\b|\bdining\b/i.test(input) ? "Food & Drink" :
     /\bbarber|salon|beauty\b/i.test(input) ? "Beauty & Personal Care" :
     undefined;

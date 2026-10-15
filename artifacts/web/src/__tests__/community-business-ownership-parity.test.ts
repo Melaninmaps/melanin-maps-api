@@ -14,7 +14,7 @@ const designationSearchSource = source("../../../../lib/constants/src/ownership-
 
 describe("community business ownership designation parity", () => {
   it("uses the complete canonical taxonomy in the searchable community submission selector", () => {
-    expect(submissionSource).toContain('import { OWNERSHIP_DESIGNATIONS } from "@workspace/constants"');
+    expect(submissionSource).toContain('import { BUSINESS_CATEGORY_TAXONOMY, OWNERSHIP_DESIGNATIONS } from "@workspace/constants"');
     expect(submissionSource).toContain("OWNERSHIP_DESIGNATIONS.map((label) => ({ value: label, label }))");
     expect(submissionSource).toContain("OwnershipDesignationCombobox");
     expect(submissionSource).toContain("LEGACY_OWNERSHIP_TO_CANONICAL");

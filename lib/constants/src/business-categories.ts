@@ -1,411 +1,74 @@
+import { FOUNDER_TAXONOMY_CONTRACT } from "./founder-taxonomy-vibesnow";
+
 /**
  * Mapping With Melanin™ — Master Business Category Taxonomy
  *
- * This is the SINGLE SOURCE OF TRUTH for all category/subcategory values
- * across the platform: API validation, mobile filters, web dropdowns,
- * business onboarding, map filters, KinfolkAI, and Excel import sheets.
- *
- * To add or rename a category: edit here only. All consumers import from this file.
+ * Values are derived from the versioned, founder-controlled VIBESNOW contract.
+ * All UI clients and API validation must import this module rather than maintain
+ * their own category or subcategory lists.
  */
-
 export interface BusinessCategory {
-  /** URL-safe slug, lowercase-hyphenated */
+  /** Stable URL-safe identifier retained for existing clients and links. */
   id: string;
-  /** Display name shown in UI */
+  /** Founder-approved display name. */
   name: string;
-  /** Subcategories within this category */
+  /** Founder-approved subcategories for this category only. */
   subcategories: string[];
 }
 
-export const BUSINESS_CATEGORY_TAXONOMY: BusinessCategory[] = [
-  {
-    id: "food-and-drink",
-    name: "Food & Drink",
-    subcategories: [
-      "Restaurants",
-      "Cafés & Coffee",
-      "Bakeries",
-      "Desserts & Sweets",
-      "Food Trucks & Mobile Food",
-      "Catering",
-      "Bars & Lounges",
-      "Juice & Smoothies",
-      "Specialty Foods",
-      "Meal Prep",
-      "Grocery & Markets",
-      "Private Chefs",
-    ],
-  },
-  {
-    id: "beauty-and-personal-care",
-    name: "Beauty & Personal Care",
-    subcategories: [
-      "Hair Salons",
-      "Barbershops",
-      "Braiders & Natural Hair",
-      "Nail Salons & Nail Artists",
-      "Makeup Artists",
-      "Estheticians & Skincare",
-      "Spas",
-      "Massage",
-      "Lashes & Brows",
-      "Beauty Supply",
-      "Cosmetics & Beauty Brands",
-      "Mobile Beauty Services",
-    ],
-  },
-  {
-    id: "health-and-wellness",
-    name: "Health & Wellness",
-    subcategories: [
-      "Primary Care & Medical Practices",
-      "Dental",
-      "Mental Wellness & Therapy",
-      "Physical Therapy",
-      "Chiropractic",
-      "Nutrition & Dietitians",
-      "Fitness & Gyms",
-      "Personal Trainers",
-      "Yoga & Pilates",
-      "Wellness Centers",
-      "Doula & Birth Services",
-      "Holistic Wellness",
-      "Pharmacies",
-      "Home Health & Caregiving",
-    ],
-  },
-  {
-    id: "shopping-and-retail",
-    name: "Shopping & Retail",
-    subcategories: [
-      "Clothing & Fashion",
-      "Shoes & Accessories",
-      "Jewelry",
-      "Gifts",
-      "Home Décor",
-      "Furniture",
-      "Books & Bookstores",
-      "Art & Collectibles",
-      "Specialty Retail",
-      "Children's Retail",
-      "Pet Products",
-      "Online Shops",
-    ],
-  },
-  {
-    id: "travel-and-hospitality",
-    name: "Travel & Hospitality",
-    subcategories: [
-      "Hotels & Resorts",
-      "Bed & Breakfasts",
-      "Vacation Rentals",
-      "Travel Agencies & Advisors",
-      "Tour Operators",
-      "Tour Guides",
-      "Transportation Services",
-      "Luggage & Travel Products",
-      "Travel Experiences",
-    ],
-  },
-  {
-    id: "arts-culture-and-entertainment",
-    name: "Arts, Culture & Entertainment",
-    subcategories: [
-      "Museums",
-      "Galleries",
-      "Cultural Centers",
-      "Performing Arts",
-      "Theaters",
-      "Music & Live Entertainment",
-      "DJs",
-      "Entertainment Venues",
-      "Nightlife",
-      "Festivals",
-      "Attractions",
-      "Gaming & Recreation",
-      "Photography",
-      "Videography",
-    ],
-  },
-  {
-    id: "professional-services",
-    name: "Professional Services",
-    subcategories: [
-      "Accounting & Tax",
-      "Legal Services",
-      "Insurance",
-      "Financial Services",
-      "Business Consulting",
-      "Marketing & Advertising",
-      "Public Relations",
-      "Graphic Design & Branding",
-      "Web & App Development",
-      "IT & Technology Services",
-      "Printing",
-      "Translation & Language Services",
-      "Staffing & Recruiting",
-      "Virtual Assistants",
-    ],
-  },
-  {
-    id: "home-and-property-services",
-    name: "Home & Property Services",
-    subcategories: [
-      "Real Estate Agents & Brokers",
-      "Property Management",
-      "Contractors",
-      "Construction",
-      "Electricians",
-      "Plumbing",
-      "HVAC",
-      "Landscaping & Lawn Care",
-      "Cleaning Services",
-      "Interior Design",
-      "Moving Services",
-      "Handyman Services",
-      "Home Inspection",
-      "Roofing",
-      "Pest Control",
-    ],
-  },
-  {
-    id: "automotive-and-transportation",
-    name: "Automotive & Transportation",
-    subcategories: [
-      "Auto Repair",
-      "Auto Detailing",
-      "Car Wash",
-      "Tire Services",
-      "Auto Dealers",
-      "Auto Body & Collision",
-      "Towing & Roadside Assistance",
-      "Car Rental",
-      "Chauffeur & Private Driver",
-      "Transportation Companies",
-    ],
-  },
-  {
-    id: "events-and-celebrations",
-    name: "Events & Celebrations",
-    subcategories: [
-      "Event Planning",
-      "Wedding Planning",
-      "Event Venues",
-      "Party Rentals",
-      "Decorators",
-      "Florists",
-      "Balloon Artists",
-      "DJs & Entertainment",
-      "Photographers",
-      "Videographers",
-      "Caterers",
-      "Cakes & Desserts",
-      "Invitations & Stationery",
-      "Photo Booths",
-    ],
-  },
-  {
-    id: "education-and-learning",
-    name: "Education & Learning",
-    subcategories: [
-      "Childcare & Daycare",
-      "Preschools",
-      "Tutoring",
-      "Test Preparation",
-      "Colleges & Universities",
-      "HBCUs",
-      "Trade & Vocational Schools",
-      "Professional Training",
-      "Music Lessons",
-      "Dance Schools",
-      "Art Classes",
-      "Language Instruction",
-      "Educational Programs",
-    ],
-  },
-  {
-    id: "children-and-family",
-    name: "Children & Family",
-    subcategories: [
-      "Childcare",
-      "Children's Activities",
-      "Indoor Play",
-      "Camps",
-      "Family Entertainment",
-      "Parenting Services",
-      "Children's Parties",
-      "Youth Programs",
-      "Children's Retail",
-      "Maternity & Baby Services",
-    ],
-  },
-  {
-    id: "community-and-nonprofit",
-    name: "Community & Nonprofit",
-    subcategories: [
-      "Nonprofits",
-      "Community Organizations",
-      "Foundations",
-      "Mutual Aid",
-      "Advocacy Organizations",
-      "Youth Organizations",
-      "Senior Services",
-      "Community Centers",
-      "Cultural Organizations",
-      "Professional Associations",
-      "Chambers & Business Organizations",
-    ],
-  },
-  {
-    id: "faith-and-spirituality",
-    name: "Faith & Spirituality",
-    subcategories: [
-      "Churches",
-      "Mosques",
-      "Synagogues",
-      "Temples",
-      "Spiritual Centers",
-      "Faith-Based Organizations",
-      "Religious Bookstores & Retail",
-      "Faith-Based Community Services",
-    ],
-  },
-  {
-    id: "media-and-creative-services",
-    name: "Media & Creative Services",
-    subcategories: [
-      "Content Creators",
-      "Influencers & Cultural Ambassadors",
-      "Podcasts",
-      "Radio",
-      "Publications & Magazines",
-      "Writers & Authors",
-      "Photography",
-      "Videography",
-      "Production Companies",
-      "Recording Studios",
-      "Music Production",
-      "Creative Studios",
-    ],
-  },
-  {
-    id: "sports-and-recreation",
-    name: "Sports & Recreation",
-    subcategories: [
-      "Sports Clubs",
-      "Recreational Centers",
-      "Coaches & Training",
-      "Youth Sports",
-      "Golf",
-      "Swimming",
-      "Martial Arts",
-      "Dance & Movement",
-      "Outdoor Recreation",
-      "Adventure Experiences",
-    ],
-  },
-  {
-    id: "pets-and-animal-services",
-    name: "Pets & Animal Services",
-    subcategories: [
-      "Veterinarians",
-      "Pet Grooming",
-      "Pet Boarding",
-      "Dog Walking & Pet Sitting",
-      "Pet Training",
-      "Pet Daycare",
-      "Pet Stores & Supplies",
-    ],
-  },
-  {
-    id: "technology-and-digital-services",
-    name: "Technology & Digital Services",
-    subcategories: [
-      "Software Companies",
-      "App Developers",
-      "Web Developers",
-      "IT Support",
-      "Cybersecurity",
-      "AI & Automation",
-      "SaaS",
-      "Digital Products",
-      "Technology Consulting",
-    ],
-  },
-  {
-    id: "financial-and-business-services",
-    name: "Financial & Business Services",
-    subcategories: [
-      "Banks & Credit Unions",
-      "Financial Advisors",
-      "Bookkeeping",
-      "Tax Preparation",
-      "Lending & Financing",
-      "Mortgage Services",
-      "Credit Services",
-      "Business Funding",
-      "Investment Services",
-    ],
-  },
-  {
-    id: "legal-and-government-services",
-    name: "Legal & Government Services",
-    subcategories: [
-      "Attorneys & Law Firms",
-      "Mediation",
-      "Notary Services",
-      "Immigration Services",
-      "Legal Document Services",
-      "Government Offices",
-      "Public Services",
-    ],
-  },
-  {
-    id: "agriculture-and-specialty-producers",
-    name: "Agriculture & Specialty Producers",
-    subcategories: [
-      "Farms",
-      "Farmers Markets",
-      "Urban Farms",
-      "Specialty Growers",
-      "Floriculture",
-      "Food Producers",
-      "Beverage Producers",
-      "Agricultural Products",
-    ],
-  },
-  {
-    id: "other-services",
-    name: "Other Services",
-    subcategories: [
-      "Laundry & Dry Cleaning",
-      "Tailoring & Alterations",
-      "Shoe Repair",
-      "Locksmiths",
-      "Shipping & Mailing",
-      "Storage",
-      "Funeral & Memorial Services",
-      "Personal Concierge",
-      "Other",
-    ],
-  },
-];
-
-/** Flat list of all main category names — for API validation and dropdowns */
-export const MAIN_CATEGORY_NAMES: string[] = BUSINESS_CATEGORY_TAXONOMY.map((c) => c.name);
-
-/** Map of category name → subcategory array — for dependent dropdowns */
-export const SUBCATEGORY_MAP: Record<string, string[]> = Object.fromEntries(
-  BUSINESS_CATEGORY_TAXONOMY.map((c) => [c.name, c.subcategories])
+export const BUSINESS_CATEGORY_TAXONOMY: BusinessCategory[] = FOUNDER_TAXONOMY_CONTRACT.map(
+  ({ id, category, subcategories }) => ({
+    id,
+    name: category,
+    subcategories: [...subcategories],
+  }),
 );
 
-/** Flat list of ALL subcategory names across every category */
-export const ALL_SUBCATEGORY_NAMES: string[] = BUSINESS_CATEGORY_TAXONOMY.flatMap((c) => c.subcategories);
+/** Flat list of founder-approved main category names for new records and dropdowns. */
+export const MAIN_CATEGORY_NAMES: string[] = BUSINESS_CATEGORY_TAXONOMY.map((category) => category.name);
+
+/** Map of main category name to its founder-approved dependent subcategory list. */
+export const SUBCATEGORY_MAP: Record<string, string[]> = Object.fromEntries(
+  BUSINESS_CATEGORY_TAXONOMY.map((category) => [category.name, category.subcategories]),
+);
+
+/** Flat list of every approved subcategory; use pair validation for writes. */
+export const ALL_SUBCATEGORY_NAMES: string[] = BUSINESS_CATEGORY_TAXONOMY.flatMap(
+  (category) => category.subcategories,
+);
+
+export function getBusinessCategory(category: string | null | undefined): BusinessCategory | undefined {
+  const normalized = category?.trim();
+  return normalized
+    ? BUSINESS_CATEGORY_TAXONOMY.find((entry) => entry.name === normalized)
+    : undefined;
+}
+
+export function isCanonicalBusinessCategory(category: string | null | undefined): boolean {
+  return Boolean(getBusinessCategory(category));
+}
 
 /**
- * Legacy category names from before the master taxonomy was introduced.
- * Accepted during API validation so existing businesses are never broken.
- * New submissions should use MAIN_CATEGORY_NAMES only.
+ * Returns true only when a non-empty subcategory belongs to the supplied
+ * founder-approved category. This never infers or rewrites a classification.
+ */
+export function isCanonicalSubcategoryForCategory(
+  category: string | null | undefined,
+  subcategory: string | null | undefined,
+): boolean {
+  const normalizedSubcategory = subcategory?.trim();
+  const definition = getBusinessCategory(category);
+  return Boolean(
+    normalizedSubcategory
+      && definition?.subcategories.includes(normalizedSubcategory),
+  );
+}
+
+/**
+ * Legacy category names from before the founder-controlled taxonomy was
+ * introduced. These remain readable and accepted on existing records so no
+ * business is hidden, deleted, or silently reclassified before a reviewed
+ * migration is separately authorized. New submissions use MAIN_CATEGORY_NAMES.
  */
 export const LEGACY_CATEGORY_NAMES: string[] = [
   "Food & Beverage",
@@ -440,7 +103,7 @@ export const LEGACY_CATEGORY_NAMES: string[] = [
   "Black Professionals",
 ];
 
-/** Full valid set: new taxonomy + legacy names. Use this for API validation. */
+/** Full readable set: founder-approved categories plus legacy stored values. */
 export const ALL_VALID_CATEGORY_NAMES: string[] = [
   ...MAIN_CATEGORY_NAMES,
   ...LEGACY_CATEGORY_NAMES,

@@ -1,180 +1,194 @@
-/**
- * Mapping With Melanin™ — Master VIBES taxonomy.
- *
- * Generated from the approved `Vibe Reference` worksheet. A VIBE
- * describes the atmosphere or visit experience, not a category, an
- * ownership designation, or a quality claim. Endorsement-only categories
- * are intentionally absent from this map.
- */
+import { FOUNDER_TAXONOMY_CONTRACT } from "./founder-taxonomy-vibesnow";
 
+/**
+ * Mapping With Melanin™ — founder-approved VIBES vocabulary.
+ *
+ * The VIBESNOW taxonomy contract owns category eligibility and every selectable
+ * label. Helper text is presentation-only; an empty value is intentionally
+ * rendered as no description rather than inventing founder wording.
+ */
 export interface VibeLabel {
   label: string;
   helperText: string;
 }
 
-export const VIBES_BY_CATEGORY: Record<string, VibeLabel[]> = {
-  "Food & Drink": [
-    { label: "Date Night", helperText: "Worth getting cute for" },
-    { label: "Hood Classic", helperText: "Been here forever, still hits" },
-    { label: "Bougie Treat", helperText: "Payday / splurge spot" },
-    { label: "Family Reunion Energy", helperText: "Loud, warm, everybody's welcome" },
-    { label: "Sunday Best", helperText: "After-church energy" },
-    { label: "Late Night Vibes", helperText: "Open when you need it" },
-    { label: "Turn Up", helperText: "Music up, energy high" },
-    { label: "Cookout Approved", helperText: "Passes the family test" },
-    { label: "Like Home", helperText: "Familiar, comfortable, somebody's-kitchen energy" },
-    { label: "Auntie Energy", helperText: "Warm service; somebody is making sure you're good" },
-    { label: "Tía Energy", helperText: "Warm, familiar, lovingly involved" },
-    { label: "Abuela Approved Energy", helperText: "Traditional, comforting, multigenerational" },
-    { label: "Soft Life", helperText: "Relaxed, comfortable, treat-yourself energy" },
-    { label: "Take Somebody From Out of Town", helperText: "A place you would proudly show visitors" },
-    { label: "Locals Know", helperText: "Community favorite without needing the hype" },
-    { label: "Passport Energy", helperText: "Feels culturally transporting" },
-    { label: "Pop Out Pics", helperText: "Photo-ready food, setting, or presentation" },
-  ],
-  "Beauty & Personal Care": [
-    { label: "Soft Life", helperText: "Pampering, ease, recharge" },
-    { label: "Auntie Energy", helperText: "Warm, attentive, you will be taken care of" },
-    { label: "Tía Energy", helperText: "Familiar care and loving honesty" },
-    { label: "Main Character Energy", helperText: "You leave feeling seen and photo-ready" },
-    { label: "Sunday Best", helperText: "Polished, occasion-ready" },
-    { label: "Chill & Restore", helperText: "Low-stress self-care" },
-    { label: "Come As You Are", helperText: "Welcoming without judgment" },
-    { label: "For The Culture", helperText: "Culture is understood, not performed" },
-    { label: "Neighborhood Love", helperText: "Deep local connection" },
-    { label: "Luxury Without The Attitude", helperText: "Elevated service that still feels welcoming" },
-  ],
-  "Health & Wellness": [
-    { label: "Chill & Restore", helperText: "You leave more grounded than you arrived" },
-    { label: "Peaceful Energy", helperText: "Quiet, calm, restorative" },
-    { label: "Come As You Are", helperText: "Low judgment; meet-you-where-you-are energy" },
-    { label: "Auntie Energy", helperText: "Warm, caring, attentive" },
-    { label: "Family Care", helperText: "Feels safe to recommend across generations" },
-    { label: "Wellness Reset", helperText: "Balance, healing, recharge" },
-  ],
-  "Shopping & Retail": [
-    { label: "Hood Classic", helperText: "Neighborhood institution status" },
-    { label: "Locals Know", helperText: "A real local favorite" },
-    { label: "Hidden Gem", helperText: "Underrated and worth discovering" },
-    { label: "Bougie Treat", helperText: "Special purchase / elevated browsing" },
-    { label: "Chill & Create", helperText: "Slow browsing, creative energy" },
-    { label: "Bring The Cousins", helperText: "Fun to shop together" },
-    { label: "For The Culture", helperText: "Culture is visible in product and experience" },
-    { label: "Take Somebody From Out of Town", helperText: "A store you would proudly show visitors" },
-  ],
-  "Travel & Hospitality": [
-    { label: "Romantic Escape", helperText: "Just the two of you" },
-    { label: "Family Reunion Energy", helperText: "Bring everybody" },
-    { label: "Solo Traveler Comfortable", helperText: "Community-reported ease traveling alone" },
-    { label: "Bougie Treat", helperText: "Splurge stay" },
-    { label: "Chill & Restore", helperText: "You came back rested" },
-    { label: "Girls Trip Ready", helperText: "Built for the group chat" },
-    { label: "Grand Rising", helperText: "Mornings here are beautiful" },
-    { label: "Bring The Cousins", helperText: "Room for the whole crew" },
-    { label: "Passport Energy", helperText: "The stay itself feels culturally transporting" },
-    { label: "Take Somebody From Out of Town", helperText: "A proud recommendation for visitors" },
-    { label: "Luxury Without The Attitude", helperText: "Elevated but warm" },
-    { label: "Locals Know", helperText: "Not the tourist-trap version of the city" },
-  ],
-  "Arts, Culture & Entertainment": [
-    { label: "Date Night", helperText: "Romance-friendly" },
-    { label: "Turn Up", helperText: "High energy" },
-    { label: "Grown & Sexy", helperText: "Adults, no chaos" },
-    { label: "Hood Classic", helperText: "Institution status" },
-    { label: "Chill & Create", helperText: "You can think and make here" },
-    { label: "Late Night Vibes", helperText: "The night keeps going" },
-    { label: "Family Reunion Energy", helperText: "All ages welcome" },
-    { label: "Sunday Best", helperText: "Dress-up occasion" },
-    { label: "History Lives Here", helperText: "Heritage feels tangible" },
-    { label: "Culture On The Walls", helperText: "Visual environment celebrates culture/history" },
-    { label: "Teach The Kids", helperText: "Worth bringing young people for the learning" },
-    { label: "Creative Scene", helperText: "Art, music, culture, expression" },
-  ],
-  "Events & Celebrations": [
-    { label: "Family Reunion Energy", helperText: "Built for big families" },
-    { label: "Sunday Best", helperText: "Formal-ready" },
-    { label: "Turn Up", helperText: "The party can go" },
-    { label: "Grown & Sexy", helperText: "Adult celebration" },
-    { label: "Bougie Treat", helperText: "Upscale feel" },
-    { label: "Kid Chaos Friendly", helperText: "Children can be children" },
-    { label: "Late Night Vibes", helperText: "No hard early cutoff" },
-    { label: "Cookout Approved", helperText: "Comfortable, familiar, ours" },
-    { label: "Made For Memories", helperText: "Milestones, photos and celebrations" },
-    { label: "Bring The Cousins", helperText: "Room for everybody" },
-    { label: "Luxury Without The Attitude", helperText: "Elevated without stiffness" },
-  ],
-  "Education & Learning": [
-    { label: "Teach The Kids", helperText: "Learning feels alive and culturally relevant" },
-    { label: "Come As You Are", helperText: "Students feel welcomed as themselves" },
-    { label: "Creative Energy", helperText: "Curious, expressive, hands-on" },
-    { label: "Community Classroom", helperText: "Learning connected to people and place" },
-  ],
-  "Children & Family": [
-    { label: "Kid Chaos Friendly", helperText: "Nobody side-eyes a loud toddler" },
-    { label: "Family Reunion Energy", helperText: "Big groups work here" },
-    { label: "Rainy Day Rescue", helperText: "Saves the whole afternoon" },
-    { label: "Toddler Safe", helperText: "Soft, gated, watched" },
-    { label: "Big Kid Approved", helperText: "Tweens actually enjoy it" },
-    { label: "Parents Can Breathe", helperText: "You get to sit down" },
-    { label: "Birthday Party Ready", helperText: "Celebration-friendly" },
-    { label: "Bring The Cousins", helperText: "Room for everybody's kids" },
-    { label: "Teach The Kids", helperText: "Fun with something meaningful to learn" },
-    { label: "Like Home", helperText: "Comfortable for the whole family" },
-  ],
-  "Community & Nonprofit": [
-    { label: "Neighborhood Love", helperText: "Deeply rooted in the neighborhood" },
-    { label: "For The Culture", helperText: "Community purpose is visible" },
-    { label: "Come As You Are", helperText: "Welcoming without hoops or judgment" },
-    { label: "Everybody Knows Somebody", helperText: "Connected, relational, familiar" },
-    { label: "Family Reunion Energy", helperText: "Multigenerational community gathering" },
-    { label: "History Lives Here", helperText: "Legacy and community memory matter here" },
-  ],
-  "Faith & Spirituality": [
-    { label: "Sunday Best", helperText: "Dress-up tradition here" },
-    { label: "Come As You Are", helperText: "Jeans are fine" },
-    { label: "Quiet & Prayerful", helperText: "Stillness is kept" },
-    { label: "Praise Break Energy", helperText: "Expressive worship" },
-    { label: "Family Worship", helperText: "Children in the room, welcomed" },
-    { label: "Young Adult Friendly", helperText: "Twenties and thirties are present" },
-    { label: "Auntie Energy", helperText: "Warm, watchful, caring community" },
-    { label: "Everybody Knows Somebody", helperText: "Relational congregation/community" },
-  ],
-  "Media & Creative Services": [
-    { label: "Creative Scene", helperText: "Art, music, culture, expression" },
-    { label: "Chill & Create", helperText: "You can think and make here" },
-    { label: "Main Character Energy", helperText: "Strong visual / personal-brand energy" },
-    { label: "For The Culture", helperText: "Cultural storytelling is understood" },
-    { label: "Grown & Sexy", helperText: "Polished adult creative atmosphere" },
-  ],
-  "Sports & Recreation": [
-    { label: "Turn Up", helperText: "Crowd brings energy" },
-    { label: "Family Reunion Energy", helperText: "Families in the stands" },
-    { label: "Chill & Move", helperText: "Low-pressure movement" },
-    { label: "Early Bird Energy", helperText: "Morning crowd is right" },
-    { label: "Kid Chaos Friendly", helperText: "Kids can run" },
-    { label: "Adventure Ready", helperText: "Active, explorative, outdoors" },
-    { label: "Bring The Cousins", helperText: "Group-friendly activity" },
-  ],
-  "Agriculture & Specialty Producers": [
-    { label: "Grand Rising", helperText: "Beautiful early morning" },
-    { label: "Family Reunion Energy", helperText: "Neighbors everywhere" },
-    { label: "Chill & Create", helperText: "Slow, pleasant browsing" },
-    { label: "Bring The Cousins", helperText: "Make it an outing" },
-    { label: "Hood Classic", helperText: "The market everybody knows" },
-    { label: "Cookout Approved", helperText: "Where you shop before the cookout" },
-    { label: "Locals Know", helperText: "Community-grown favorite" },
-    { label: "Teach The Kids", helperText: "Great for learning where food comes from" },
-  ],
+const VIBE_HELPER_TEXT_BY_CATEGORY: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  "Food & Drink": {
+    "Date Night": "Worth getting cute for",
+    "Hood Classic": "Been here forever, still hits",
+    "Bougie Treat": "Payday / splurge spot",
+    "Family Reunion Energy": "Loud, warm, everybody's welcome",
+    "Sunday Best": "After-church energy",
+    "Late Night Vibes": "Open when you need it",
+    "Turn Up": "Music up, energy high",
+    "Cookout Approved": "Passes the family test",
+    "Like Home": "Familiar, comfortable, somebody's-kitchen energy",
+    "Auntie Energy": "Warm service; somebody is making sure you're good",
+    "Tía Energy": "Warm, familiar, lovingly involved",
+    "Abuela Approved Energy": "Traditional, comforting, multigenerational",
+    "Soft Life": "Relaxed, comfortable, treat-yourself energy",
+    "Take Somebody From Out of Town": "A place you would proudly show visitors",
+    "Locals Know": "Community favorite without needing the hype",
+    "Passport Energy": "Feels culturally transporting",
+    "Pop Out Pics": "Photo-ready food, setting, or presentation"
+  },
+  "Beauty & Personal Care": {
+    "Soft Life": "Pampering, ease, recharge",
+    "Auntie Energy": "Warm, attentive, you will be taken care of",
+    "Tía Energy": "Familiar care and loving honesty",
+    "Main Character Energy": "You leave feeling seen and photo-ready",
+    "Sunday Best": "Polished, occasion-ready",
+    "Chill & Restore": "Low-stress self-care",
+    "Come As You Are": "Welcoming without judgment",
+    "For The Culture": "Culture is understood, not performed",
+    "Neighborhood Love": "Deep local connection",
+    "Luxury Without The Attitude": "Elevated service that still feels welcoming"
+  },
+  "Health & Wellness": {
+    "Chill & Restore": "You leave more grounded than you arrived",
+    "Peaceful Energy": "Quiet, calm, restorative",
+    "Come As You Are": "Low judgment; meet-you-where-you-are energy",
+    "Auntie Energy": "Warm, caring, attentive",
+    "Family Care": "Feels safe to recommend across generations",
+    "Wellness Reset": "Balance, healing, recharge"
+  },
+  "Shopping & Retail": {
+    "Hood Classic": "Neighborhood institution status",
+    "Locals Know": "A real local favorite",
+    "Hidden Gem": "Underrated and worth discovering",
+    "Bougie Treat": "Special purchase / elevated browsing",
+    "Chill & Create": "Slow browsing, creative energy",
+    "Bring The Cousins": "Fun to shop together",
+    "For The Culture": "Culture is visible in product and experience",
+    "Take Somebody From Out of Town": "A store you would proudly show visitors"
+  },
+  "Travel & Hospitality": {
+    "Romantic Escape": "Just the two of you",
+    "Family Reunion Energy": "Bring everybody",
+    "Solo Traveler Comfortable": "Community-reported ease traveling alone",
+    "Bougie Treat": "Splurge stay",
+    "Chill & Restore": "You came back rested",
+    "Girls Trip Ready": "Built for the group chat",
+    "Grand Rising": "Mornings here are beautiful",
+    "Bring The Cousins": "Room for the whole crew",
+    "Passport Energy": "The stay itself feels culturally transporting",
+    "Take Somebody From Out of Town": "A proud recommendation for visitors",
+    "Luxury Without The Attitude": "Elevated but warm",
+    "Locals Know": "Not the tourist-trap version of the city"
+  },
+  "Arts, Culture & Entertainment": {
+    "Date Night": "Romance-friendly",
+    "Turn Up": "High energy",
+    "Grown & Sexy": "Adults, no chaos",
+    "Hood Classic": "Institution status",
+    "Chill & Create": "You can think and make here",
+    "Late Night Vibes": "The night keeps going",
+    "Family Reunion Energy": "All ages welcome",
+    "Sunday Best": "Dress-up occasion",
+    "History Lives Here": "Heritage feels tangible",
+    "Culture On The Walls": "Visual environment celebrates culture/history",
+    "Teach The Kids": "Worth bringing young people for the learning",
+    "Creative Scene": "Art, music, culture, expression"
+  },
+  "Events & Celebrations": {
+    "Family Reunion Energy": "Built for big families",
+    "Sunday Best": "Formal-ready",
+    "Turn Up": "The party can go",
+    "Grown & Sexy": "Adult celebration",
+    "Bougie Treat": "Upscale feel",
+    "Kid Chaos Friendly": "Children can be children",
+    "Late Night Vibes": "No hard early cutoff",
+    "Cookout Approved": "Comfortable, familiar, ours",
+    "Made For Memories": "Milestones, photos and celebrations",
+    "Bring The Cousins": "Room for everybody",
+    "Luxury Without The Attitude": "Elevated without stiffness"
+  },
+  "Education & Learning": {
+    "Teach The Kids": "Learning feels alive and culturally relevant",
+    "Come As You Are": "Students feel welcomed as themselves",
+    "Creative Energy": "Curious, expressive, hands-on",
+    "Community Classroom": "Learning connected to people and place"
+  },
+  "Children & Family": {
+    "Kid Chaos Friendly": "Nobody side-eyes a loud toddler",
+    "Family Reunion Energy": "Big groups work here",
+    "Rainy Day Rescue": "Saves the whole afternoon",
+    "Toddler Safe": "Soft, gated, watched",
+    "Big Kid Approved": "Tweens actually enjoy it",
+    "Parents Can Breathe": "You get to sit down",
+    "Birthday Party Ready": "Celebration-friendly",
+    "Bring The Cousins": "Room for everybody's kids",
+    "Teach The Kids": "Fun with something meaningful to learn",
+    "Like Home": "Comfortable for the whole family"
+  },
+  "Community & Nonprofit": {
+    "Neighborhood Love": "Deeply rooted in the neighborhood",
+    "For The Culture": "Community purpose is visible",
+    "Come As You Are": "Welcoming without hoops or judgment",
+    "Everybody Knows Somebody": "Connected, relational, familiar",
+    "Family Reunion Energy": "Multigenerational community gathering",
+    "History Lives Here": "Legacy and community memory matter here"
+  },
+  "Faith & Spirituality": {
+    "Sunday Best": "Dress-up tradition here",
+    "Come As You Are": "Jeans are fine",
+    "Quiet & Prayerful": "Stillness is kept",
+    "Praise Break Energy": "Expressive worship",
+    "Family Worship": "Children in the room, welcomed",
+    "Young Adult Friendly": "Twenties and thirties are present",
+    "Auntie Energy": "Warm, watchful, caring community",
+    "Everybody Knows Somebody": "Relational congregation/community"
+  },
+  "Media & Creative Services": {
+    "Creative Scene": "Art, music, culture, expression",
+    "Chill & Create": "You can think and make here",
+    "Main Character Energy": "Strong visual / personal-brand energy",
+    "For The Culture": "Cultural storytelling is understood",
+    "Grown & Sexy": "Polished adult creative atmosphere"
+  },
+  "Sports & Recreation": {
+    "Turn Up": "Crowd brings energy",
+    "Family Reunion Energy": "Families in the stands",
+    "Chill & Move": "Low-pressure movement",
+    "Early Bird Energy": "Morning crowd is right",
+    "Kid Chaos Friendly": "Kids can run",
+    "Adventure Ready": "Active, explorative, outdoors",
+    "Bring The Cousins": "Group-friendly activity"
+  },
+  "Agriculture & Specialty Producers": {
+    "Grand Rising": "Beautiful early morning",
+    "Family Reunion Energy": "Neighbors everywhere",
+    "Chill & Create": "Slow, pleasant browsing",
+    "Bring The Cousins": "Make it an outing",
+    "Hood Classic": "The market everybody knows",
+    "Cookout Approved": "Where you shop before the cookout",
+    "Locals Know": "Community-grown favorite",
+    "Teach The Kids": "Great for learning where food comes from"
+  }
 };
 
-/** Flat list of every explicit VIBE label, for cross-client validation. */
+export const VIBES_BY_CATEGORY: Record<string, VibeLabel[]> = Object.fromEntries(
+  FOUNDER_TAXONOMY_CONTRACT
+    .filter((entry) => entry.vibeMode === "vibes")
+    .map((entry) => [
+      entry.category,
+      entry.vibeLabels.map((label) => ({
+        label,
+        helperText: VIBE_HELPER_TEXT_BY_CATEGORY[entry.category]?.[label] ?? "",
+      })),
+    ]),
+);
+
+/** Flat list of every explicit founder-approved VIBE label. */
 export const ALL_VIBE_LABELS: string[] = [
   ...new Set(Object.values(VIBES_BY_CATEGORY).flatMap((vibes) => vibes.map((vibe) => vibe.label))),
 ];
 
-/** Categories with approved VIBES; all other categories use endorsements only. */
-export const VIBE_ELIGIBLE_CATEGORIES: string[] = Object.keys(VIBES_BY_CATEGORY);
+/** Categories with founder-approved VIBES; every other category uses endorsements only. */
+export const VIBE_ELIGIBLE_CATEGORIES: string[] = FOUNDER_TAXONOMY_CONTRACT
+  .filter((entry) => entry.vibeMode === "vibes")
+  .map((entry) => entry.category);
 
-export function isVibeEligible(category: string): boolean {
-  return VIBE_ELIGIBLE_CATEGORIES.includes(category);
+export function isVibeEligible(category: string | null | undefined): boolean {
+  return Boolean(category && VIBE_ELIGIBLE_CATEGORIES.includes(category.trim()));
 }

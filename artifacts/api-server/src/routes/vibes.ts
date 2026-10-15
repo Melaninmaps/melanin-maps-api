@@ -2,7 +2,6 @@ import { Router } from "express";
 import { pool } from "@workspace/db";
 import {
   getBusinessExperiencePolicy,
-  getOwnerProfileExperienceChoices,
   normalizeOwnerExperienceKey,
   VIBES_BY_CATEGORY,
 } from "@workspace/constants";
@@ -426,7 +425,9 @@ router.patch("/vibes/businesses/:id/owner-tags", async (req, res) => {
     }
 
     const policy = getBusinessExperiencePolicy(ownerCheck.rows[0].category, ownerCheck.rows[0].subcategory);
-    const allowed = new Set(getOwnerProfileExperienceChoices(policy).map((choice) => choice.key));
+    // Owners can describe only category-permitted atmosphere VIBES. Quick
+    // review endorsements remain member feedback and are never owner claims.
+    const allowed = new Set(policy.vibeChoices.map((choice) => choice.key));
     const validVibes = [...new Set(vibes.filter((value): value is string => typeof value === "string" && allowed.has(value)))];
     if (validVibes.length !== vibes.length) {
       res.status(400).json({ error: "One or more profile tags do not fit this business type." });

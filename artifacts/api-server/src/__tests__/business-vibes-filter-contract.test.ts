@@ -13,9 +13,12 @@ describe("public business directory VIBES filters", () => {
     expect(route).toContain("normalizeOwnerExperienceKey");
     expect(route).toContain("const CANONICAL_VIBE_KEYS");
     expect(route).toContain("CANONICAL_VIBE_KEYS.has(value)");
+    expect(route).toContain("CANONICAL_VIBE_CATEGORIES_BY_KEY");
+    expect(route).toContain("function permittedVibeCondition(keys");
+    expect(route).toContain("eq(businessesTable.category, category)");
     expect(route).toContain("const requestedVibes");
     expect(route).toContain("requestedVibes.length > 0");
-    expect(route).toContain("businessesTable.vibes} ?| ARRAY");
+    expect(route).toContain("const permittedRequestedVibeCondition = permittedVibeCondition(requestedVibes)");
     expect(route).toContain("conditions.push(...designationConditions)");
   });
 });

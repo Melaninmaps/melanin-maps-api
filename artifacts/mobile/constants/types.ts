@@ -26,6 +26,8 @@ export interface Business {
   latitude: number;
   longitude: number;
   tags: string[];
+  /** Founder-approved owner VIBE keys returned by the canonical directory. */
+  vibes?: string[];
   phone?: string;
   website?: string;
   sourceUrl?: string;

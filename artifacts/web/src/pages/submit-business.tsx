@@ -4,7 +4,7 @@ import { Layout } from "@/components/layout";
 import { MediaUploader, getMediaAssetIds } from "@/components/MediaUploader";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
 import { OwnershipDesignationCombobox } from "@/components/OwnershipDesignationCombobox";
-import { OWNERSHIP_DESIGNATIONS } from "@workspace/constants";
+import { BUSINESS_CATEGORY_TAXONOMY, OWNERSHIP_DESIGNATIONS } from "@workspace/constants";
 import {
   MapPin, Store, Globe, Phone, Heart, ChevronDown, CheckCircle2, ArrowLeft,
 } from "lucide-react";
@@ -43,17 +43,6 @@ const LEGACY_OWNERSHIP_TO_CANONICAL: Record<string, string> = {
   "veteran-owned": "Veteran-Owned",
   "family-owned": "Family-Owned",
 };
-
-const CATEGORIES = [
-  "Restaurant", "Café / Coffee", "Bar / Lounge", "Bakery", "Food Truck",
-  "Grocery / Market", "Clothing & Fashion", "Beauty & Hair", "Barbershop",
-  "Nail Salon", "Spa & Wellness", "Fitness", "Health & Medical",
-  "Books & Media", "Music & Entertainment", "Arts & Culture",
-  "Photography", "Event Venue", "Education & Tutoring",
-  "Tech & Digital", "Legal Services", "Financial Services",
-  "Real Estate", "Cleaning & Home Services", "Auto Services",
-  "Travel & Hospitality", "Non-profit / Community Org", "Other",
-];
 
 export default function SubmitBusiness() {
   const searchParams = new URLSearchParams(window.location.search);
@@ -97,6 +86,9 @@ export default function SubmitBusiness() {
 
   const set = (field: keyof typeof form, value: string) =>
     setForm((f) => ({ ...f, [field]: value }));
+
+  const selectedCategory = BUSINESS_CATEGORY_TAXONOMY.find((category) => category.name === form.category);
+  const isLegacyAmendment = Boolean(amendId && form.category && !selectedCategory);
 
   useEffect(() => {
     if (!amendId) return;
@@ -405,13 +397,20 @@ export default function SubmitBusiness() {
             <div className="relative">
               <select
                 value={form.category}
-                onChange={(e) => set("category", e.target.value)}
+                onChange={(e) => setForm((current) => ({
+                  ...current,
+                  category: e.target.value,
+                  subcategory: "",
+                }))}
                 className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm appearance-none pr-10"
                 required
               >
                 <option value="">Select a category…</option>
-                {CATEGORIES.map((c) => (
-                  <option key={c} value={c}>{c}</option>
+                {isLegacyAmendment ? (
+                  <option value={form.category}>{form.category} (legacy classification)</option>
+                ) : null}
+                {BUSINESS_CATEGORY_TAXONOMY.map((category) => (
+                  <option key={category.id} value={category.name}>{category.name}</option>
                 ))}
               </select>
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3A1F0E]/40 pointer-events-none" />
@@ -420,12 +419,29 @@ export default function SubmitBusiness() {
 
           <div className="space-y-1.5">
             <label className="text-sm font-bold text-[#F2C465]">Subcategory</label>
-            <input
-              value={form.subcategory}
-              onChange={(e) => set("subcategory", e.target.value)}
-              placeholder="e.g. Ethiopian restaurant, bookstore, HVAC"
-              className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] placeholder:text-[#3A1F0E]/30 focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm"
-            />
+            {isLegacyAmendment ? (
+              <input
+                value={form.subcategory}
+                readOnly
+                aria-label="Existing legacy subcategory"
+                className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E]/70 bg-[#F8F5F0] text-sm"
+              />
+            ) : (
+              <select
+                value={form.subcategory}
+                onChange={(e) => set("subcategory", e.target.value)}
+                disabled={!selectedCategory}
+                className="w-full border border-[#3A1F0E]/15 rounded-xl px-4 py-3 text-[#3A1F0E] focus:outline-none focus:border-[#CA922B]/60 bg-white text-sm disabled:cursor-not-allowed disabled:bg-[#F8F5F0]"
+              >
+                <option value="">Select a subcategory (optional)</option>
+                {selectedCategory?.subcategories.map((subcategory) => (
+                  <option key={subcategory} value={subcategory}>{subcategory}</option>
+                ))}
+              </select>
+            )}
+            {isLegacyAmendment ? (
+              <p className="text-xs text-[#F5EBD8]/80">This prior classification is preserved. Choose a current category to update it.</p>
+            ) : null}
           </div>
 
           {/* City + State + postal row */}

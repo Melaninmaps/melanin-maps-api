@@ -21,6 +21,8 @@ import {
 import { canonicalizeContextualUrl } from "./contextual-url";
 import { matchesDocumentedSourceTaxonomyTag } from "./directory-taxonomy-v2";
 import {
+  getBusinessExperiencePolicy,
+  normalizeOwnerExperienceKey,
   normalizeOwnershipDesignationFilterIds,
   ownershipDesignationStorageValues,
 } from "@workspace/constants";
@@ -321,6 +323,23 @@ function stringArray(value: unknown): string[] {
   }
 }
 
+/**
+ * Stored profile values remain untouched, but Kinfolk may surface only VIBES
+ * that the current founder taxonomy permits for the business category.
+ */
+function founderPermittedVibeLabels(
+  category: string,
+  subcategory: string | null,
+  values: readonly string[],
+): string[] {
+  const choices = getBusinessExperiencePolicy(category, subcategory).vibeChoices;
+  const labelsByKey = new Map(choices.map((choice) => [choice.key, choice.label]));
+  return [...new Set(values.flatMap((value) => {
+    const label = labelsByKey.get(normalizeOwnerExperienceKey(value));
+    return label ? [label] : [];
+  }))];
+}
+
 function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
   const sourceReceipt =
     Boolean(
@@ -329,6 +348,8 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     ) || RETAINED_DIRECTORY_SOURCE_RECEIPTS.has(text(row.data_source).trim());
   const latitude = numberOrNull(row.latitude);
   const longitude = numberOrNull(row.longitude);
+  const category = text(row.category);
+  const subcategory = nullableText(row.subcategory);
   const hasMapCoordinate = hasTrustworthyMapCoordinate({
     city: row.city,
     stateCode: row.state_code,
@@ -338,8 +359,8 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
   return {
     id: text(row.id),
     name: text(row.name),
-    category: text(row.category),
-    subcategory: nullableText(row.subcategory),
+    category,
+    subcategory,
     description: sanitizePublicListingCopy(text(row.description)),
     address: nullableText(row.address),
     city: text(row.city),
@@ -371,7 +392,7 @@ function mapBusiness(row: BusinessRow): GovernedKinfolkBusiness {
     ownershipBadges: stringArray(row.ownership_badges),
     communityValues: stringArray(row.community_values),
     audiencesServed: stringArray(row.audiences_served),
-    vibes: stringArray(row.vibes),
+    vibes: founderPermittedVibeLabels(category, subcategory, stringArray(row.vibes)),
     accessibilityFeatures: stringArray(row.accessibility_features),
     communityInitiatives: stringArray(row.community_initiatives),
     growthGoals: stringArray(row.growth_goals),

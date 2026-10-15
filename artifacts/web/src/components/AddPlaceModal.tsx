@@ -1,21 +1,9 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { X, MapPin } from "lucide-react";
+import { BUSINESS_CATEGORY_TAXONOMY } from "@workspace/constants";
 
-const CATEGORIES = [
-  "Food",
-  "Beauty",
-  "Wellness",
-  "Entertainment",
-  "Retail",
-  "Cultural",
-  "Professional",
-  "Healthcare",
-  "Finance",
-  "Travel & Tourism",
-  "Trades & Education",
-  "Other",
-];
+const CATEGORIES = BUSINESS_CATEGORY_TAXONOMY.map((category) => category.name);
 
 const COMMON_COUNTRIES = [
   "USA",

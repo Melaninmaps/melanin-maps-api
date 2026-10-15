@@ -150,8 +150,8 @@ function appWith(
 function completeBody(overrides: Record<string, unknown> = {}) {
   return {
     name: "Community Books",
-    category: "Books & Media",
-    subcategory: "Bookstore",
+    category: "Shopping & Retail",
+    subcategory: "Books & Bookstores",
     address: "123 Main Street",
     city: "Philadelphia",
     state: "PA",
@@ -168,7 +168,8 @@ describe("community business submission input", () => {
   it("normalizes supported socials and community-reported ownership while dropping caller publication flags", () => {
     const input = validateSubmission({
       name: "  Community Books  ",
-      category: "Books & Media",
+      category: "Shopping & Retail",
+      subcategory: "Books & Bookstores",
       city: "Philadelphia",
       website: "communitybooks.example",
       instagram: "@communitybooks",
@@ -198,13 +199,39 @@ describe("community business submission input", () => {
   it("accepts an explicit non-minority community report without treating it as verification", () => {
     const input = validateSubmission({
       name: "Neighborhood Bakery",
-      category: "Bakery",
+      category: "Food & Drink",
+      subcategory: "Bakeries",
       city: "Philadelphia",
       communityReportedOwnership: "non_minority_owned",
     });
     expect(input.communityReportedOwnership).toBe("non_minority_owned");
     expect(input.ownershipDesignations).toEqual([]);
     expect(input).not.toHaveProperty("verified");
+  });
+
+  it("accepts only founder-approved category and subcategory pairs for new submissions", () => {
+    expect(() => validateSubmission({
+      name: "Community Books",
+      category: "Restaurant",
+      city: "Philadelphia",
+    })).toThrow("current business taxonomy");
+    expect(() => validateSubmission({
+      name: "Community Books",
+      category: "Food & Drink",
+      subcategory: "Barbershops",
+      city: "Philadelphia",
+    })).toThrow("subcategory must belong");
+  });
+
+  it("retains a historical classification only when explicitly amending an existing submission", () => {
+    const amended = validateSubmission({
+      name: "Community Books",
+      category: "Books & Media",
+      subcategory: "Bookstore",
+      city: "Philadelphia",
+    }, { allowLegacyClassification: true });
+    expect(amended.category).toBe("Books & Media");
+    expect(amended.subcategory).toBe("Bookstore");
   });
 
   it("requires a separate attested claim packet for an owner-intent submission", () => {
@@ -233,9 +260,9 @@ describe("community business submission input", () => {
 
   it("rejects contradictory ownership, unsafe URLs, and incomplete coordinate pairs", () => {
     expect(() => validateSubmission({ ...completeBody(), communityReportedOwnership: "non_minority_owned" })).toThrow("cannot be combined");
-    expect(() => validateSubmission({ name: "A", category: "B", city: "C", website: "javascript:alert(1)" })).toThrow("website must be a valid public web address");
-    expect(() => validateSubmission({ name: "A", category: "B", city: "C", instagram: "https://facebook.com/not-instagram" })).toThrow("instagram must link to instagram.com");
-    expect(() => validateSubmission({ name: "A", category: "B", city: "C", latitude: 39.9 })).toThrow("latitude and longitude");
+    expect(() => validateSubmission({ name: "A", category: "Food & Drink", city: "C", website: "javascript:alert(1)" })).toThrow("website must be a valid public web address");
+    expect(() => validateSubmission({ name: "A", category: "Food & Drink", city: "C", instagram: "https://facebook.com/not-instagram" })).toThrow("instagram must link to instagram.com");
+    expect(() => validateSubmission({ name: "A", category: "Food & Drink", city: "C", latitude: 39.9 })).toThrow("latitude and longitude");
     for (const website of [
       "https://localhost:3000/",
       "https://127.0.0.1/",
@@ -243,7 +270,7 @@ describe("community business submission input", () => {
       "https://192.168.1.10/",
       "https://[::1]/",
     ]) {
-      expect(() => validateSubmission({ name: "A", category: "B", city: "C", website })).toThrow("public web address");
+      expect(() => validateSubmission({ name: "A", category: "Food & Drink", city: "C", website })).toThrow("public web address");
     }
   });
 });
@@ -578,7 +605,8 @@ describe("durable submission repository", () => {
     const repository = new SubmissionRepository({ query } as any);
     await expect(repository.create(validateSubmission({
       name: "Community Books",
-      category: "Books",
+      category: "Shopping & Retail",
+      subcategory: "Books & Bookstores",
       city: "Philadelphia",
       mediaUrls: ["https://cdn.example.test/not-owned.jpg"],
     }), "approved-member")).rejects.toThrow("your completed private uploads");
@@ -786,7 +814,7 @@ describe("POST /api/community/business-submissions", () => {
     const resolveLocation = vi.fn();
     const response = await request(appWith(repository, "approved", tx.pool, resolveLocation))
       .post("/api/community/business-submissions")
-      .send(completeBody({ category: "Health & Wellness", subcategory: "Physicians" }));
+      .send(completeBody({ category: "Health & Wellness", subcategory: "Primary Care & Medical Practices" }));
 
     expect(response.status).toBe(201);
     expect(response.body).toMatchObject({ publicationOutcome: "regulated_review", mapPin: false });

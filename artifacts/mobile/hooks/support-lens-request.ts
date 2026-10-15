@@ -33,6 +33,7 @@ export function buildBusinessesRequestUrl(
     city?: string;
     state?: string;
     designations?: readonly string[];
+    vibes?: readonly string[];
     supportScope?: "all_businesses" | "strict_documented_designations";
     /** Validated direct-name lookup: public listing discovery, never promotion. */
     directName?: boolean;
@@ -46,6 +47,7 @@ export function buildBusinessesRequestUrl(
   if (options.state?.trim()) params.set("state", options.state.trim());
   const designationKey = normalizeOwnershipDesignationFilterIds(options.designations ?? []).join(",");
   if (designationKey) params.set("designations", designationKey);
+  if (options.vibes?.length) params.set("vibes", options.vibes.join(","));
   if (options.supportScope) params.set("supportScope", options.supportScope);
   const query = params.toString();
   return `${apiBase}/api/businesses${query ? `?${query}` : ""}`;

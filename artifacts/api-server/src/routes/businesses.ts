@@ -68,8 +68,11 @@ import {
   findBusinessExperienceKeysForSearch,
   findVibeKeysForSearch,
   findSafeSearchClarification,
+  getBusinessExperiencePolicy,
   normalizeOwnerExperienceKey,
   VIBES_BY_CATEGORY,
+  isCanonicalBusinessCategory,
+  isCanonicalSubcategoryForCategory,
 } from "@workspace/constants";
 import { buildDesignationPredicateSql, legacyDesignationColumn, resolveDesignationScope } from "../kinfolk/designation-predicate-policy";
 
@@ -79,6 +82,28 @@ const CANONICAL_VIBE_KEYS = new Set(
     .flat()
     .map((vibe) => normalizeOwnerExperienceKey(vibe.label)),
 );
+const CANONICAL_VIBE_CATEGORIES_BY_KEY = new Map<string, string[]>(
+  Object.entries(VIBES_BY_CATEGORY).flatMap(([category, vibes]) => vibes.map((vibe) => [
+    normalizeOwnerExperienceKey(vibe.label),
+    category,
+  ] as const)).reduce<Map<string, string[]>>((groups, [key, category]) => {
+    groups.set(key, [...(groups.get(key) ?? []), category]);
+    return groups;
+  }, new Map()),
+);
+
+/** A stored VIBE is discoverable only for a category where the founder contract permits it. */
+function permittedVibeCondition(keys: readonly string[]) {
+  const matchingPairs = keys.flatMap((key) =>
+    (CANONICAL_VIBE_CATEGORIES_BY_KEY.get(key) ?? []).map((category) =>
+      and(
+        sql<boolean>`${businessesTable.vibes} ? ${key}`,
+        eq(businessesTable.category, category),
+      ),
+    ),
+  );
+  return matchingPairs.length > 0 ? or(...matchingPairs) : null;
+}
 
 // Tester privileges never expose pending/review rows. Anonymous and member
 // discovery both consume only records accepted by the canonical public lifecycle.
@@ -747,12 +772,8 @@ router.get("/businesses", async (req: Request, res: Response) => {
             )].slice(0, 8)
           : [];
         if (requestedVibes.length > 0) {
-          conditions.push(
-            sql<boolean>`${businessesTable.vibes} ?| ARRAY[${sql.join(
-              requestedVibes.map((key) => sql`${key}`),
-              sql`, `,
-            )}]`,
-          );
+          const permittedRequestedVibeCondition = permittedVibeCondition(requestedVibes);
+          if (permittedRequestedVibeCondition) conditions.push(permittedRequestedVibeCondition);
         }
 
         if (search && typeof search === "string") {
@@ -763,9 +784,7 @@ router.get("/businesses", async (req: Request, res: Response) => {
           // resolver adds The Real / approved community-feedback keys without
           // relabeling practical services as atmosphere.
           const matchingVibeKeys = findVibeKeysForSearch(q);
-          const matchesApprovedVibe = matchingVibeKeys.length
-            ? sql<boolean>`${businessesTable.vibes} ?| ARRAY[${sql.join(matchingVibeKeys.map((key) => sql`${key}`), sql`, `)}]`
-            : null;
+          const matchesApprovedVibe = permittedVibeCondition(matchingVibeKeys);
           const matchesApprovedCommunityFeedback = experienceSearch.realKeys.length
             ? sql<boolean>`EXISTS (
                 SELECT 1
@@ -1474,12 +1493,23 @@ router.patch("/businesses/mine/profile", async (req: any, res: Response) => {
     res.status(400).json({ error: "Invalid category" });
     return;
   }
+  if (
+    isCanonicalBusinessCategory(category)
+    && subcategory?.trim()
+    && !isCanonicalSubcategoryForCategory(category, subcategory)
+  ) {
+    res.status(400).json({ error: "Choose a subcategory that belongs to the selected category." });
+    return;
+  }
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (name?.trim()) updates.name = name.trim();
   if (category) {
     updates.category = category;
-    updates.subcategory = subcategory?.trim() || category;
+    // Canonical categories keep an optional, validated subcategory. Retained
+    // legacy categories preserve their previous fallback until reviewed.
+    updates.subcategory = subcategory?.trim()
+      || (isCanonicalBusinessCategory(category) ? null : category);
   }
   if (description !== undefined) updates.description = description.trim();
   if (phone !== undefined) updates.phone = phone?.trim() || null;
@@ -2683,9 +2713,21 @@ router.post("/businesses/suggest-place", async (req: any, res: Response) => {
       }
     }
 
-    const id = `place_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const resolvedCategory = category.trim();
-    const resolvedSubcategory = subcategory?.trim() || resolvedCategory;
+    const resolvedSubcategory = subcategory?.trim() || null;
+    if (!isCanonicalBusinessCategory(resolvedCategory)) {
+      res.status(400).json({ error: "Choose a category from the current business taxonomy." });
+      return;
+    }
+    if (
+      resolvedSubcategory
+      && !isCanonicalSubcategoryForCategory(resolvedCategory, resolvedSubcategory)
+    ) {
+      res.status(400).json({ error: "Choose a subcategory that belongs to the selected category." });
+      return;
+    }
+
+    const id = `place_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
     const resolvedState = state?.trim() || null;
     // Infer country: if state looks like a US code and no country given, default to USA
     const resolvedCountry =
@@ -3945,6 +3987,58 @@ router.patch(
         subcategory,
       } = req.body as Record<string, unknown>;
 
+      let nextCategory: string | null = null;
+      let nextSubcategory: string | null = null;
+      if (category !== undefined || subcategory !== undefined || vibes !== undefined) {
+        const [existing] = await db
+          .select({ category: businessesTable.category, subcategory: businessesTable.subcategory })
+          .from(businessesTable)
+          .where(eq(businessesTable.id, id))
+          .limit(1);
+        if (!existing) {
+          res.status(404).json({ error: "Business not found" });
+          return;
+        }
+        nextCategory = typeof category === "string" ? category.trim() : existing.category;
+        nextSubcategory = typeof subcategory === "string"
+          ? subcategory.trim() || null
+          : existing.subcategory;
+
+        // Preserve untouched legacy records, but require any newly chosen
+        // classification to be a governed category/subcategory pair.
+        if (category !== undefined && !isCanonicalBusinessCategory(nextCategory)) {
+          res.status(400).json({ error: "Choose a category from the current business taxonomy." });
+          return;
+        }
+        if (
+          isCanonicalBusinessCategory(nextCategory)
+          && nextSubcategory
+          && !isCanonicalSubcategoryForCategory(nextCategory, nextSubcategory)
+        ) {
+          res.status(400).json({ error: "Choose a subcategory that belongs to the selected category." });
+          return;
+        }
+        if (vibes !== undefined) {
+          if (!Array.isArray(vibes) || vibes.some((value) => typeof value !== "string")) {
+            res.status(400).json({ error: "VIBES must be a list of founder-approved labels." });
+            return;
+          }
+          const normalizedVibes = vibes.map((value) => normalizeOwnerExperienceKey(value));
+          const allowedVibes = new Set(
+            getBusinessExperiencePolicy(nextCategory, nextSubcategory).vibeChoices
+              .map((choice) => choice.key),
+          );
+          if (
+            normalizedVibes.length > 2
+            || new Set(normalizedVibes).size !== normalizedVibes.length
+            || normalizedVibes.some((value) => !allowedVibes.has(value))
+          ) {
+            res.status(400).json({ error: "Choose up to two VIBES allowed for this business category." });
+            return;
+          }
+        }
+      }
+
       // Only include keys explicitly provided in the request body (no accidental nulling)
       const patch: Record<string, unknown> = { updatedAt: new Date() };
       if (name !== undefined) patch.name = name;
@@ -3974,10 +4068,10 @@ router.patch(
       if (ownershipDesignations !== undefined)
         patch.ownershipDesignations = ownershipDesignations;
       if (blackOwned !== undefined) patch.blackOwned = blackOwned;
-      if (vibes !== undefined) patch.vibes = vibes;
+      if (vibes !== undefined) patch.vibes = (vibes as string[]).map(normalizeOwnerExperienceKey);
       if (tags !== undefined) patch.tags = tags;
-      if (category !== undefined) patch.category = category;
-      if (subcategory !== undefined) patch.subcategory = subcategory;
+      if (category !== undefined) patch.category = nextCategory;
+      if (subcategory !== undefined) patch.subcategory = nextSubcategory;
 
       if (Object.keys(patch).length === 1) {
         res.status(400).json({ error: "No updatable fields provided" });

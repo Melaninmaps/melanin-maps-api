@@ -284,7 +284,7 @@ async function publishFromSubmission(
       businessId,
       submission.name,
       submission.category,
-      submission.subcategory ?? submission.category,
+      submission.subcategory ?? null,
       submission.description ?? (ownerSelfCreated
         ? `Owner-created business listing in ${submission.city}.`
         : `Community-listed business in ${submission.city}.`),
@@ -716,7 +716,7 @@ export function registerSubmissionRoutes(
         const input = validateSubmission({
           ...body,
           sourceChannel: body.sourceChannel ?? "member_needs_info_resubmission",
-        });
+        }, { allowLegacyClassification: true });
         const publishedDuplicate = await repository.findPublishedDuplicate(input);
         if (publishedDuplicate) {
           client = await transactionPool.connect();

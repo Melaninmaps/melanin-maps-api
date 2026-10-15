@@ -192,9 +192,11 @@ export default function BusinessExperienceCard({ businessId }: { businessId: str
                   {ownerSelected && <Text style={[styles.ownerBadge, { color: isSelected ? "#FFF" : colors.primary }]}>OWNER</Text>}
                   {count > 0 && <Text style={[styles.count, { color: isSelected ? "#FFF" : colors.primary }]}>{count}</Text>}
                 </View>
-                <Text style={[styles.choiceHelper, { color: isSelected ? "#FFFFFFBB" : colors.mutedForeground }]}>
-                  {choice.helperText}
-                </Text>
+                {choice.helperText ? (
+                  <Text style={[styles.choiceHelper, { color: isSelected ? "#FFFFFFBB" : colors.mutedForeground }]}>
+                    {choice.helperText}
+                  </Text>
+                ) : null}
               </TouchableOpacity>
             );
           })}
@@ -225,7 +227,7 @@ export default function BusinessExperienceCard({ businessId }: { businessId: str
             <Feather name="heart" size={17} color={colors.primary} />
             <Text style={[styles.title, { color: colors.foreground }]}>Share Your Experience</Text>
           </View>
-          <Text style={[styles.intro, { color: colors.mutedForeground }]}>Choose up to two quick reviews, plus atmosphere tags where they fit. Positive tags appear right away and help community search; they do not verify ownership.</Text>
+          <Text style={[styles.intro, { color: colors.mutedForeground }]}>Quick reviews are short member endorsements about an actual visit. They are not ratings, owner claims, or verified facts. Choose up to two, plus atmosphere tags where they fit; selections help community discovery but never verify ownership.</Text>
         </View>
         <TouchableOpacity onPress={() => setWordingOpen(true)} style={[styles.wordingButton, { borderColor: colors.border }]}>
           <Feather name="globe" size={13} color={colors.primary} />

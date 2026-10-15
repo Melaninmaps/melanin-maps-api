@@ -19,7 +19,6 @@ router.post("/submit-business", requireApprovedMember, async (req: Request, res:
     const body = req.body as Record<string, unknown>;
     const input = validateSubmission({
       ...body,
-      category: body.category ?? "General",
       ownershipDesignations: body.ownershipDesignations ?? [],
       clientRequestId: body.clientRequestId ?? req.header("idempotency-key"),
       sourceChannel: body.sourceChannel ?? "legacy_submit_business",

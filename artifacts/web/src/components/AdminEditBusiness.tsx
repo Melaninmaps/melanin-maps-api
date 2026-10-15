@@ -22,6 +22,7 @@ import {
   BUSINESS_CATEGORY_TAXONOMY,
   VIBES_BY_CATEGORY,
   VIBE_ELIGIBLE_CATEGORIES,
+  normalizeOwnerExperienceKey,
   OWNERSHIP_DESIGNATIONS,
 } from "@workspace/constants";
 
@@ -139,7 +140,7 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
       setOwnershipDesignations(b.ownershipDesignations ?? []);
       setCategory(b.category ?? "");
       setSubcategory(b.subcategory ?? "");
-      setSelectedVibes(b.vibes ?? []);
+      setSelectedVibes((b.vibes ?? []).map(normalizeOwnerExperienceKey));
       setSelectedTags(b.tags ?? []);
     } catch (e) {
       setFetchError("Could not load business details. Please try again.");
@@ -200,10 +201,12 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
   }
 
 
-  function toggleVibe(v: string) {
-    setSelectedVibes(prev =>
-      prev.includes(v) ? prev.filter(x => x !== v) : [...prev, v]
-    );
+  function toggleVibe(label: string) {
+    const key = normalizeOwnerExperienceKey(label);
+    setSelectedVibes((previous) => {
+      if (previous.includes(key)) return previous.filter((value) => value !== key);
+      return previous.length < 2 ? [...previous, key] : previous;
+    });
   }
 
   function addTag() {
@@ -402,7 +405,7 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
                   {vibeEligible ? (
                     <div>
                       <label className={labelCls}>Vibes — {selectedVibes.length} selected</label>
-                      <p className="text-xs text-[#3A1F0E]/40 mb-3">Select the vibes that best describe this place</p>
+                      <p className="text-xs text-[#3A1F0E]/40 mb-3">Select up to two founder-approved VIBES that describe this place</p>
                       <div className="flex flex-wrap gap-2 max-h-64 overflow-y-auto pr-1">
                         {availableVibes.map((v) => (
                           <button
@@ -411,7 +414,7 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
                             onClick={() => toggleVibe(v.label)}
                             title={v.helperText}
                             className={`px-3 py-1.5 rounded-full text-xs font-bold border transition-colors ${
-                              selectedVibes.includes(v.label)
+                              selectedVibes.includes(normalizeOwnerExperienceKey(v.label))
                                 ? "bg-[#CA922B] text-white border-[#CA922B]"
                                 : "bg-white text-[#3A1F0E]/60 border-[#2B1507]/15 hover:border-[#CA922B]/50"
                             }`}
@@ -423,7 +426,7 @@ export function AdminEditBusiness({ businessId, businessName, onClose, onSaved }
                     </div>
                   ) : (
                     <div className="bg-[#FAF6EF] rounded-2xl px-4 py-4 text-sm text-[#3A1F0E]/50">
-                      Vibes are available for Restaurant, Retail, and Experience categories. Change the category in the Identity tab to unlock vibes.
+                      VIBES are not offered for this category. Member quick-review endorsements remain separate from owner profile tags.
                     </div>
                   )}
 

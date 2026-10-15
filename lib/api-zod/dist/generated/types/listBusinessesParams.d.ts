@@ -8,6 +8,10 @@
 export type ListBusinessesParams = {
     search?: string;
     category?: string;
+    /**
+     * Comma-separated founder-approved VIBE keys; each match is constrained to its permitted business categories.
+     */
+    vibes?: string;
     city?: string;
     state?: string;
     limit?: number;

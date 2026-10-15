@@ -375,13 +375,20 @@ export default function ListBusinessScreen() {
       const data = await res.json() as { fields?: { category?: string; subcategory?: string; description?: string; hours?: string; priceRange?: string; tags?: string[] } };
       const fields = data.fields;
       if (!fields) return;
-      if (fields.category) update("category")(fields.category);
-      if (fields.subcategory) update("subcategory")(fields.subcategory);
+      const suggestedCategory = fields.category ? getCategoryGroup(fields.category) : undefined;
+      if (suggestedCategory) {
+        update("category")(suggestedCategory.name);
+        update("subcategory")(
+          fields.subcategory && suggestedCategory.subcategories.some((item) => item.name === fields.subcategory)
+            ? fields.subcategory
+            : "",
+        );
+      }
       const parts: string[] = [];
       if (fields.priceRange) parts.push(`${fields.priceRange} price range`);
       if (fields.hours) parts.push(fields.hours);
       if (fields.tags?.length) parts.push(fields.tags.join(", "));
-      setAiSuggestion(parts.length ? parts.join(" · ") : "Category auto-selected!");
+      setAiSuggestion(parts.length ? parts.join(" · ") : suggestedCategory ? "Founder-approved category selected." : "No approved category suggestion available.");
     } catch { /* silent */ }
     finally { setAiFilling(false); }
   };
@@ -469,7 +476,7 @@ export default function ListBusinessScreen() {
         body: JSON.stringify({
           name: form.name,
           category: form.category,
-          subcategory: form.subcategory || form.category,
+          subcategory: form.subcategory || undefined,
           description: form.description,
           address: form.address,
           city: form.city,
@@ -691,7 +698,7 @@ export default function ListBusinessScreen() {
                   <View style={{ marginBottom: 16 }}>
                     <Text style={[fieldStyles.label, { color: colors.foreground, marginBottom: 6 }]}>Category *</Text>
                     <Text style={[fieldStyles.hint, { color: colors.mutedForeground, marginBottom: 10 }]}>
-                      Select your business category. More categories launching soon.
+                      Select the category and subcategory that best describe your business.
                     </Text>
                     {/* Parent category chips */}
                     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>

@@ -17,8 +17,25 @@ export {
   ALL_SUBCATEGORY_NAMES,
   LEGACY_CATEGORY_NAMES,
   ALL_VALID_CATEGORY_NAMES,
+  getBusinessCategory,
+  isCanonicalBusinessCategory,
+  isCanonicalSubcategoryForCategory,
 } from "./business-categories";
 export type { BusinessCategory } from "./business-categories";
+
+// ── Founder-controlled taxonomy contract ───────────────────────────────────
+export {
+  FOUNDER_TAXONOMY_VERSION,
+  FOUNDER_TAXONOMY_WORKBOOK_SHA256,
+  FOUNDER_TAXONOMY_ENDORSEMENTS_ONLY_MARKER,
+  FOUNDER_TAXONOMY_CONTRACT,
+  FOUNDER_TAXONOMY_BY_CATEGORY,
+  FOUNDER_QUICK_REVIEW_LABELS_BY_CATEGORY,
+} from "./founder-taxonomy-vibesnow";
+export type {
+  FounderTaxonomyCategory,
+  FounderVibeMode,
+} from "./founder-taxonomy-vibesnow";
 
 // ── Library research presentation ──────────────────────────────────────────
 export {

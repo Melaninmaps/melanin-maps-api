@@ -183,6 +183,12 @@ paths:
           required: false
           schema:
             type: string
+        - name: vibes
+          in: query
+          required: false
+          description: Comma-separated founder-approved VIBE keys; each match is constrained to its permitted business categories.
+          schema:
+            type: string
         - name: city
           in: query
           required: false

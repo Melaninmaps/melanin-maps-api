@@ -33,7 +33,6 @@ router.post("/business-nominations", requireApprovedMember, async (req: Request,
     const input = validateSubmission({
       ...body,
       name: body.businessName ?? body.name,
-      category: body.category ?? "General",
       postalCode: body.postalCode ?? body.zip,
       latitude: body.latitude ?? body.lat,
       longitude: body.longitude ?? body.lng,

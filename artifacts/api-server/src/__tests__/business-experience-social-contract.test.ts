@@ -44,7 +44,7 @@ describe("category-aware business experience contract", () => {
     expect(legal.reactionChoices.length).toBeGreaterThan(0);
   });
 
-  it("uses The Real for education and actual care settings, while retaining Vibes for play spaces", () => {
+  it("keeps The Real reactions separate while exposing the workbook VIBES for eligible education and family categories", () => {
     const school = getBusinessExperiencePolicy("Education & Learning", "Preschools");
     const daycare = getBusinessExperiencePolicy("Children & Family", "Childcare");
     const importedPreschool = getBusinessExperiencePolicy(
@@ -55,13 +55,13 @@ describe("category-aware business experience contract", () => {
 
     expect(school.experienceLayer).toBe("real");
     expect(school.reactionLabel).toBe("The Real");
-    expect(school.vibeChoices).toEqual([]);
+    expect(school.vibeChoices.map((choice) => choice.label)).toContain("Teach The Kids");
     expect(daycare.experienceLayer).toBe("real");
     expect(daycare.reactionLabel).toBe("The Real");
-    expect(daycare.vibeChoices).toEqual([]);
+    expect(daycare.vibeChoices.map((choice) => choice.label)).toContain("Kid Chaos Friendly");
     expect(importedPreschool.experienceLayer).toBe("real");
     expect(importedPreschool.reactionLabel).toBe("The Real");
-    expect(importedPreschool.vibeChoices).toEqual([]);
+    expect(importedPreschool.vibeChoices.map((choice) => choice.label)).toContain("Neighborhood Love");
     expect(playSpace.experienceLayer).toBe("vibe");
     expect(playSpace.atmosphereLabel).toBe("The Vibe");
     expect(playSpace.vibeChoices.map((choice) => choice.label)).toContain("Rainy Day Rescue");
@@ -73,7 +73,7 @@ describe("category-aware business experience contract", () => {
     expect(policy.reactionChoices.map((choice) => choice.label)).toContain("Worth The Drive");
 
     const catalog = source("../../../../lib/constants/src/official-feedback-catalog.ts");
-    expect(catalog).toContain("UPDATEDVIBESCATEGORYforbusinesses-1.xlsx");
+    expect(catalog).toContain("Founder VIBESNOW contract");
   });
 
   it("returns only approved and explicitly public creator contributions on business details", () => {

@@ -13,19 +13,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  ALL_VIBE_LABELS,
+  BUSINESS_CATEGORY_TAXONOMY,
+  normalizeOwnerExperienceKey,
+} from "@workspace/constants";
 
 const BASE = import.meta.env.BASE_URL;
 
-const VIBES = [
-  { emoji: "🍽️", label: "Soul Food", category: "Food" },
-  { emoji: "💇🏾", label: "Hair & Beauty", category: "Beauty" },
-  { emoji: "🌙", label: "Date Night", category: "Food" },
-  { emoji: "☕", label: "Café Vibes", category: "Food" },
-  { emoji: "💼", label: "Minority-Owned", category: undefined },
-  { emoji: "🏨", label: "Stay & Explore", category: "Travel & Hospitality" },
-  { emoji: "🎭", label: "Culture", category: "Arts & Culture" },
-  { emoji: "🎉", label: "Events & More", category: "Entertainment & Recreation" },
-];
+/** A compact discovery rail selected only from the shared founder-approved VIBES. */
+const DISCOVERY_VIBES = ALL_VIBE_LABELS.slice(0, 12).map((label) => ({
+  label,
+  key: normalizeOwnerExperienceKey(label),
+  emoji: "✨",
+}));
 
 function isOpenNow(hours: string | null | undefined): boolean {
   if (!hours) return false;
@@ -70,39 +71,15 @@ function BusinessProvenanceLabels({ business }: { business: Record<string, unkno
 
 // ─── Submit a Business Modal ─────────────────────────────────────────────────
 
-const BUSINESS_CATEGORIES = [
-  "Food & Drink",
-  "Beauty & Personal Care",
-  "Health & Wellness",
-  "Shopping & Retail",
-  "Travel & Hospitality",
-  "Arts, Culture & Entertainment",
-  "Professional Services",
-  "Home & Property Services",
-  "Automotive & Transportation",
-  "Events & Celebrations",
-  "Education & Learning",
-  "Children & Family",
-  "Community & Nonprofit",
-  "Faith & Spirituality",
-  "Media & Creative Services",
-  "Sports & Recreation",
-  "Pets & Animal Services",
-  "Technology & Digital Services",
-  "Financial & Business Services",
-  "Legal & Government Services",
-  "Agriculture & Specialty Producers",
-  "Other Services",
-];
-
 function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
-  const [form, setForm] = useState({ name: "", category: "", address: "", city: "", state: "", country: "", website: "", instagram: "", facebook: "", tiktok: "", phone: "", description: "", communityReportedOwnership: "not_sure" });
+  const [form, setForm] = useState({ name: "", category: "", subcategory: "", address: "", city: "", state: "", country: "", website: "", instagram: "", facebook: "", tiktok: "", phone: "", description: "", communityReportedOwnership: "not_sure" });
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [outcome, setOutcome] = useState<{ status?: string; message?: string; businessId?: string } | null>(null);
   const clientRequestId = useRef(crypto.randomUUID());
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
     setForm(f => ({ ...f, [k]: e.target.value }));
+  const selectedCategory = BUSINESS_CATEGORY_TAXONOMY.find((category) => category.name === form.category);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,6 +101,7 @@ function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
         body: JSON.stringify({
           name: form.name,
           category: form.category,
+          subcategory: form.subcategory || undefined,
           address: form.address,
           city: form.city,
           state: form.state,
@@ -195,11 +173,32 @@ function SubmitBusinessModal({ onClose }: { onClose: () => void }) {
                 <select
                   required
                   value={form.category}
-                  onChange={set("category")}
+                  onChange={(event) => setForm((current) => ({
+                    ...current,
+                    category: event.target.value,
+                    subcategory: "",
+                  }))}
                   className="w-full h-12 bg-[#FAF6EF] border-0 rounded-xl px-4 text-sm text-[#3A1F0E] focus:outline-none focus:ring-2 focus:ring-[#CA922B]"
                 >
                   <option value="">Select a category...</option>
-                  {BUSINESS_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {BUSINESS_CATEGORY_TAXONOMY.map((category) => (
+                    <option key={category.id} value={category.name}>{category.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold uppercase tracking-wider text-[#3A1F0E]/60 block mb-1.5">Subcategory</label>
+                <select
+                  value={form.subcategory}
+                  onChange={set("subcategory")}
+                  disabled={!selectedCategory}
+                  className="w-full h-12 bg-[#FAF6EF] border-0 rounded-xl px-4 text-sm text-[#3A1F0E] focus:outline-none focus:ring-2 focus:ring-[#CA922B] disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <option value="">Select a subcategory (optional)</option>
+                  {selectedCategory?.subcategories.map((subcategory) => (
+                    <option key={subcategory} value={subcategory}>{subcategory}</option>
+                  ))}
                 </select>
               </div>
 
@@ -308,13 +307,12 @@ export default function Discover() {
   const [sponsoredDismissed, setSponsoredDismissed] = useState(false);
   const [minorityExpanded, setMinorityExpanded] = useState(false);
 
-  const effectiveCategory = activeVibe
-    ? VIBES.find(v => v.label === activeVibe)?.category ?? undefined
-    : activeCategory === "All" ? undefined : activeCategory;
+  const effectiveCategory = activeCategory === "All" ? undefined : activeCategory;
 
   const { data, isLoading } = useListBusinesses({
     search: query || undefined,
     category: effectiveCategory,
+    vibes: activeVibe ?? undefined,
   }, { query: { queryKey: ['businesses', query, activeCategory, activeVibe] } });
 
   const businesses = openNow
@@ -332,18 +330,7 @@ export default function Discover() {
     ? (expandData?.businesses ?? [])
     : [];
 
-  const categories = [
-    "All",
-    "Food",
-    "Beauty",
-    "Health & Wellness",
-    "Retail",
-    "Travel & Hospitality",
-    "Arts & Culture",
-    "Education",
-    "Entertainment & Recreation",
-    "Faith & Spirituality",
-  ];
+  const categories = ["All", ...BUSINESS_CATEGORY_TAXONOMY.map((category) => category.name)];
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-[#FAF6EF]">
@@ -377,12 +364,12 @@ export default function Discover() {
 
           {/* Vibe Match chips */}
           <div className="flex gap-2 mt-6 flex-wrap justify-center">
-            {VIBES.map(v => (
+            {DISCOVERY_VIBES.map(v => (
               <button
-                key={v.label}
-                onClick={() => setActiveVibe(activeVibe === v.label ? null : v.label)}
+                key={v.key}
+                onClick={() => setActiveVibe(activeVibe === v.key ? null : v.key)}
                 className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold border transition-all duration-200 ${
-                  activeVibe === v.label
+                  activeVibe === v.key
                     ? "bg-[#CA922B] text-white border-[#CA922B] shadow-md"
                     : "bg-white/10 text-[#F5EBD8] border-white/20 hover:bg-white/20 hover:border-[#CA922B]/60 backdrop-blur-sm"
                 }`}

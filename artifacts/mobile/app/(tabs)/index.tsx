@@ -31,7 +31,6 @@ import { SearchBar } from "@/components/SearchBar";
 import { SectionHeader } from "@/components/SectionHeader";
 import { BrandQuoteBanner } from "@/components/BrandQuoteBanner";
 import { ForYouCard } from "@/components/ForYouCard";
-import { CATEGORIES } from "@/constants/data";
 import { getDailyQuoteText } from "@/constants/brandQuotes";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
@@ -42,6 +41,14 @@ import { useDismissedBusinesses } from "@/hooks/useDismissedBusinesses";
 import { useAuth } from "@/lib/auth";
 import { getApiBase } from "@/lib/api";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import {
+  ALL_VIBE_LABELS,
+  BUSINESS_CATEGORY_TAXONOMY,
+  normalizeOwnerExperienceKey,
+} from "@workspace/constants";
+
+const CATEGORIES = ["All", ...BUSINESS_CATEGORY_TAXONOMY.map((category) => category.name)];
+const VIBES = ALL_VIBE_LABELS.map((label) => ({ label, key: normalizeOwnerExperienceKey(label) }));
 
 function getTimeGreeting(): string {
   const h = new Date().getHours();
@@ -70,6 +77,7 @@ export default function DiscoverScreen() {
   });
   const [prefsBannerDismissed, setPrefsBannerDismissed] = useState(false);
   const [supportScopeOverride, setSupportScopeOverride] = useState<"all_businesses" | null>(null);
+  const [activeVibe, setActiveVibe] = useState<string | null>(null);
   const [impactStats, setImpactStats] = useState<{
     businesses: number | null;
     cities: number | null;
@@ -188,6 +196,7 @@ export default function DiscoverScreen() {
   const { businesses, isLoading: businessesLoading, refetch: refetchBusinesses } = useBusinesses({
     search,
     category: activeCategory,
+    vibes: activeVibe ? [activeVibe] : [],
     // Explicit in-session selections always go to the server and override
     // the saved lens mode for this request.
     designations: filters.ownershipTypes,
@@ -201,40 +210,7 @@ export default function DiscoverScreen() {
   const { spaces: searchSpaces } = useSpaces(search.trim().length > 2 ? { q: search.trim() } : undefined);
   const { isDismissed, dismissBusiness } = useDismissedBusinesses();
 
-  const [activeVibe, setActiveVibe] = useState<string | null>(null);
   const [minorityExpanded, setMinorityExpanded] = useState(false);
-
-  // MWM visual language: Feather icon names matching each vibe category.
-  // Uses the same Feather icon library already installed (identical to Lucide, approved gold style).
-  const VIBE_ICONS: Record<string, string> = {
-    "Soul Food":     "coffee",
-    "Hair & Beauty": "scissors",
-    "Wellness":      "activity",
-    "Art & Culture": "image",
-    "Late Night":    "moon",
-    "Shopping":      "shopping-bag",
-    "Date Night":    "heart",
-    "Family":        "home",
-    "Bougie":        "star",
-    "Hood Classic":  "award",
-    "Work & Study":  "book-open",
-    "Group Hangout": "users",
-  };
-
-  const VIBES: { label: string; categories: string[]; vibeId: string }[] = [
-    { label: "Soul Food",     vibeId: "soul-food",      categories: ["Food", "Restaurant", "soul", "bbq", "seafood", "southern"] },
-    { label: "Hair & Beauty", vibeId: "hair-beauty",    categories: ["Beauty", "Hair", "barber", "salon", "nail", "spa"] },
-    { label: "Wellness",      vibeId: "wellness",        categories: ["Health", "Wellness", "fitness", "gym", "yoga", "medical"] },
-    { label: "Art & Culture", vibeId: "creative-scene", categories: ["Arts", "Culture", "Gallery", "Museum", "creative"] },
-    { label: "Late Night",    vibeId: "late-night",      categories: ["Entertainment", "Nightlife", "Bar", "lounge", "club"] },
-    { label: "Shopping",      vibeId: "shopping",        categories: ["Retail", "Shop", "boutique", "clothing"] },
-    { label: "Date Night",    vibeId: "date-night",      categories: ["Restaurant", "Food", "Entertainment", "lounge"] },
-    { label: "Family",        vibeId: "family-time",     categories: ["Food", "Entertainment", "Health", "childcare", "education"] },
-    { label: "Bougie",        vibeId: "bougie-treat",    categories: ["Restaurant", "Spa", "Hotel", "fine dining"] },
-    { label: "Hood Classic",  vibeId: "hood-classic",    categories: ["Food", "Barbershop", "Community"] },
-    { label: "Work & Study",  vibeId: "work-and-study",  categories: ["Cafe", "Coffee", "coworking", "library"] },
-    { label: "Group Hangout", vibeId: "group-hangout",   categories: ["Entertainment", "Sports", "Bowling", "Events"] },
-  ];
 
   const filtered = businesses.filter((b) => {
     if (isDismissed(b.id)) return false;
@@ -249,16 +225,9 @@ export default function DiscoverScreen() {
               (t === "black-african-american" && b.blackOwned) ||
               b.ownershipFilterIds?.includes(t)
           ));
-    const activeVibeObj = VIBES.find((v) => v.label === activeVibe);
     const matchesVibe = !activeVibe
       ? true
-      : (
-          activeVibeObj?.categories.some(
-            (cat) => b.category?.toLowerCase().includes(cat.toLowerCase())
-          ) ??
-          (b as any).vibes?.includes(activeVibeObj?.vibeId) ??
-          true
-        );
+      : (b.vibes ?? []).some((vibe) => normalizeOwnerExperienceKey(vibe) === activeVibe);
     return matchesScore && matchesVerified && matchesOwnership && matchesVibe;
   });
 
@@ -362,7 +331,7 @@ export default function DiscoverScreen() {
           <Feather name="zap" size={14} color="#5B6AF0" />
           <View style={{ flex: 1 }}>
             <Text style={[styles.aiSearchTitle, { color: "#5B6AF0" }]}>Vibe Search</Text>
-            <Text style={[styles.aiSearchSub, { color: "#5B6AF099" }]}>Find spots by mood — Date Night, Bougie, Hood Classic & more</Text>
+            <Text style={[styles.aiSearchSub, { color: "#5B6AF099" }]}>Find spots by mood — Date Night, Bougie Treat, Hood Classic & more</Text>
           </View>
           <Feather name="arrow-right" size={14} color="#5B6AF0" />
         </TouchableOpacity>
@@ -440,9 +409,9 @@ export default function DiscoverScreen() {
             <ScrollView
         keyboardDismissMode="on-drag" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.vibeScroll}>
               {VIBES.map((v) => (
-                <TouchableOpacity key={v.label} style={[styles.vibeChip, activeVibe === v.label ? { backgroundColor: colors.primary, borderColor: colors.primary } : { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => setActiveVibe(activeVibe === v.label ? null : v.label)} activeOpacity={0.75}>
-                  <Feather name={(VIBE_ICONS[v.label] ?? "map-pin") as any} size={14} color={activeVibe === v.label ? "#FFFFFF" : "#CA922B"} />
-                  <Text style={[styles.vibeLabel, { color: activeVibe === v.label ? "#FFFFFF" : colors.foreground }]}>{v.label}</Text>
+                <TouchableOpacity key={v.key} style={[styles.vibeChip, activeVibe === v.key ? { backgroundColor: colors.primary, borderColor: colors.primary } : { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => setActiveVibe(activeVibe === v.key ? null : v.key)} activeOpacity={0.75}>
+                  <Feather name="heart" size={14} color={activeVibe === v.key ? "#FFFFFF" : "#CA922B"} />
+                  <Text style={[styles.vibeLabel, { color: activeVibe === v.key ? "#FFFFFF" : colors.foreground }]}>{v.label}</Text>
                 </TouchableOpacity>
               ))}
             </ScrollView>

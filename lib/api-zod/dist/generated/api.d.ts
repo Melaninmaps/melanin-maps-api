@@ -162,6 +162,7 @@ export declare const LogoutMobileSessionResponse: zod.ZodObject<{
 export declare const ListBusinessesQueryParams: zod.ZodObject<{
     search: zod.ZodOptional<zod.ZodString>;
     category: zod.ZodOptional<zod.ZodString>;
+    vibes: zod.ZodOptional<zod.ZodString>;
     city: zod.ZodOptional<zod.ZodString>;
     state: zod.ZodOptional<zod.ZodString>;
     limit: zod.ZodOptional<zod.ZodNumber>;
@@ -170,6 +171,7 @@ export declare const ListBusinessesQueryParams: zod.ZodObject<{
     state?: string | undefined;
     search?: string | undefined;
     category?: string | undefined;
+    vibes?: string | undefined;
     city?: string | undefined;
     limit?: number | undefined;
     offset?: number | undefined;
@@ -177,6 +179,7 @@ export declare const ListBusinessesQueryParams: zod.ZodObject<{
     state?: string | undefined;
     search?: string | undefined;
     category?: string | undefined;
+    vibes?: string | undefined;
     city?: string | undefined;
     limit?: number | undefined;
     offset?: number | undefined;

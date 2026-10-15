@@ -21,7 +21,6 @@ import { CategoryPill } from "@/components/CategoryPill";
 import { SafetyPulseWidget } from "@/components/SafetyPulseWidget";
 import { UpgradeModal } from "@/components/UpgradeModal";
 import { SearchBar } from "@/components/SearchBar";
-import { CATEGORIES } from "@/constants/data";
 import { useColors } from "@/hooks/useColors";
 import { useFavorites } from "@/hooks/useFavorites";
 import { useBusinesses } from "@/hooks/useBusinesses";
@@ -29,6 +28,7 @@ import { useAuth } from "@/lib/auth";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity, type ProximityWarning } from "@/hooks/useSafetyProximity";
 import { useActivityAlerts, ALERT_META, type AlertType } from "@/hooks/useActivityAlerts";
+import { BUSINESS_CATEGORY_TAXONOMY } from "@workspace/constants";
 
 const SEVERITY_COLORS: Record<string, string> = {
   low: "#F59E0B",
@@ -36,6 +36,8 @@ const SEVERITY_COLORS: Record<string, string> = {
   high: "#DC2626",
   critical: "#7F1D1D",
 };
+
+const CATEGORIES = ["All", ...BUSINESS_CATEGORY_TAXONOMY.map((category) => category.name)];
 
 const SEVERITY_LABELS: Record<string, string> = {
   low: "Low Risk",

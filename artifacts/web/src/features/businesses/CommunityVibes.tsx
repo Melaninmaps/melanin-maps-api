@@ -69,7 +69,9 @@ function ChoiceChip({
         {ownerSelected && <span className="rounded-full bg-white/10 px-1.5 py-0.5 text-[9px] uppercase tracking-wide">Owner</span>}
         {count > 0 && <span className="text-xs opacity-75">{count}</span>}
       </span>
-      <span className={`mt-0.5 block text-[11px] ${selected ? "text-[#1A1209]/75" : "text-white/45"}`}>{choice.helperText}</span>
+      {choice.helperText ? (
+        <span className={`mt-0.5 block text-[11px] ${selected ? "text-[#1A1209]/75" : "text-white/45"}`}>{choice.helperText}</span>
+      ) : null}
     </button>
   );
 }
@@ -227,7 +229,7 @@ export function CommunityVibes({
             <h3 className="font-serif text-xl font-bold">Share Your Experience</h3>
           </div>
           <p className="mt-1 max-w-2xl text-sm text-white/55">
-            Choose up to two quick reviews, plus atmosphere tags where they fit. Positive quick tags appear right away and help community search; they do not verify ownership.
+            Quick reviews are short member endorsements about an actual visit. They are not ratings, owner claims, or verified facts. Choose up to two, plus atmosphere tags where they fit; selections help community discovery but never verify ownership.
           </p>
         </div>
         <label className="text-xs font-semibold text-white/60">

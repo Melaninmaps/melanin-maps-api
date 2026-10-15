@@ -5,7 +5,7 @@ import { LocationSearchBar } from "@/features/location/LocationSearchBar";
 import { BUSINESS_SPECIALTIES } from "@/shared/discoveryContracts";
 import { authenticatedFetch } from "@/lib/authenticatedFetch";
 import { parseBusinessMapSearchPhrase } from "@/features/map/parseBusinessMapSearchPhrase";
-import { INTERSECTIONAL_SUPPORT_FILTER_OPTIONS } from "@workspace/constants";
+import { BUSINESS_CATEGORY_TAXONOMY, INTERSECTIONAL_SUPPORT_FILTER_OPTIONS } from "@workspace/constants";
 import { canDisplayBusinessCover, getBusinessHeroIcon } from "./businessHero";
 import {
   appendUniqueCanonicalBusinesses,
@@ -30,15 +30,7 @@ type VibeOption = {
   description: string;
 };
 
-const CATEGORIES = [
-  "Food & Drink",
-  "Beauty & Personal Care",
-  "Health & Wellness",
-  "Professional Services",
-  "Arts & Culture",
-  "Retail & Shopping",
-  "Faith & Community",
-];
+const CATEGORIES = BUSINESS_CATEGORY_TAXONOMY.map((category) => category.name);
 
 const DOCUMENTED_OWNERSHIP_FILTERS = [
   { id: "black", label: "Black / African American-Owned" },

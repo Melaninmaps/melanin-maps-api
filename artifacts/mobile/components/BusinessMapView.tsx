@@ -13,7 +13,6 @@ import {
 import MapView, { Circle, Marker, type Region } from "react-native-maps";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { CategoryPill } from "@/components/CategoryPill";
-import { CATEGORIES } from "@/constants/data";
 import type { Business } from "@/constants/types";
 import { useActivityAlerts, ALERT_META, type AlertType } from "@/hooks/useActivityAlerts";
 import { useBusinesses } from "@/hooks/useBusinesses";
@@ -21,9 +20,11 @@ import { useColors } from "@/hooks/useColors";
 import { useGeoSafeAlert } from "@/hooks/useGeoSafeAlert";
 import { useSafetyProximity } from "@/hooks/useSafetyProximity";
 import { getApiBase } from "@/lib/api";
+import { BUSINESS_CATEGORY_TAXONOMY } from "@workspace/constants";
 
 const GOLD = "#CA922B";
 const CULTURAL_COLOR = "#7C3AED";
+const CATEGORIES = ["All", ...BUSINESS_CATEGORY_TAXONOMY.map((category) => category.name)];
 
 const DEFAULT_REGION: Region = {
   latitude: 37.09,

@@ -8,6 +8,9 @@ import {
   type OfficialQuickReviewTag,
 } from "./official-feedback-catalog";
 import {
+  FOUNDER_QUICK_REVIEW_LABELS_BY_CATEGORY,
+} from "./founder-taxonomy-vibesnow";
+import {
   COMMUNITY_CODES,
   ENDORSEMENT_TAG_VARIANTS,
   type CommunityCode,
@@ -268,8 +271,19 @@ function isOfficialQuickReviewInScope(tag: OfficialQuickReviewTag, subcategory: 
  * compatibility, but it does not replace the approved labels for new choices.
  */
 function officialCategoryReactionChoices(categoryName: string, subcategory: string): BusinessExperienceChoice[] {
-  const approved = OFFICIAL_QUICK_REVIEW_TAGS.filter((tag) => tag.category === categoryName);
-  if (approved.length === 0) return [];
+  const approvedLabels = FOUNDER_QUICK_REVIEW_LABELS_BY_CATEGORY[categoryName] ?? [];
+  if (approvedLabels.length === 0) return [];
+  const metadataByLabel = new Map(
+    OFFICIAL_QUICK_REVIEW_TAGS
+      .filter((tag) => tag.category === categoryName)
+      .map((tag) => [tag.label, tag]),
+  );
+  // Label membership and workbook order are controlled by the founder contract.
+  // The retained catalog supplies stable keys/scopes for existing member feedback.
+  const approved = approvedLabels.flatMap((label) => {
+    const tag = metadataByLabel.get(label);
+    return tag ? [tag] : [];
+  });
   const inScope = approved.filter((tag) => isOfficialQuickReviewInScope(tag, subcategory));
   const ordered = [...inScope, ...approved.filter((tag) => !inScope.includes(tag))];
   return ordered.slice(0, 16).map(officialReactionChoice);
@@ -316,7 +330,9 @@ export function getBusinessExperiencePolicy(
   const categoryName = resolveCanonicalCategory(category);
   const subcategoryKey = normalizeSubcategory(subcategory);
   const experienceLayer = usesTheRealExperienceLayer(categoryName, subcategoryKey) ? "real" : "vibe";
-  const vibeChoices = experienceLayer === "vibe" && isVibeEligible(categoryName)
+  // The workbook, not a subjective service-type heuristic, determines whether
+  // VIBES are available. The Real remains a separate reaction layer.
+  const vibeChoices = isVibeEligible(categoryName)
     ? (VIBES_BY_CATEGORY[categoryName] ?? []).map(vibeChoice).slice(0, 20)
     : [];
 
@@ -371,5 +387,7 @@ export function normalizeOwnerExperienceKey(value: string): string {
 export function getOwnerProfileExperienceChoices(
   policy: BusinessExperiencePolicy,
 ): BusinessExperienceChoice[] {
-  return policy.vibeChoices.length > 0 ? policy.vibeChoices : policy.reactionChoices;
+  // Owner profiles may describe only founder-approved VIBES. Member
+  // quick-review endorsements stay distinct and cannot become owner claims.
+  return policy.vibeChoices;
 }
