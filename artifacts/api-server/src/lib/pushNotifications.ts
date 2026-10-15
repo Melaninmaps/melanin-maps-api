@@ -3,12 +3,12 @@ import { pool } from "@workspace/db";
 import { eq, inArray, ilike, isNotNull, gte, lte, ne, and } from "drizzle-orm";
 import { logger } from "./logger";
 import { normalizeHomeState } from "./happening-personalization";
+import {
+  preparePushMessageForProvider,
+  type PreviewAwarePushMessage,
+} from "./notification-preview-policy";
 
-interface PushMessage {
-  title: string;
-  body: string;
-  data?: Record<string, unknown>;
-}
+export interface PushMessage extends PreviewAwarePushMessage {}
 
 /** A provider submission result, never a device-receipt confirmation. */
 export type PushSubmissionResult = "submitted" | "no_token" | "failed";
@@ -31,6 +31,7 @@ function isAcceptedProviderSubmission(ticket: unknown): boolean {
 }
 
 async function sendToToken(token: string, message: PushMessage): Promise<boolean> {
+  const providerMessage = preparePushMessageForProvider(message);
   try {
     const response = await fetch("https://exp.host/--/api/v2/push/send", {
       method: "POST",
@@ -41,9 +42,9 @@ async function sendToToken(token: string, message: PushMessage): Promise<boolean
       },
       body: JSON.stringify({
         to: token,
-        title: message.title,
-        body: message.body,
-        data: message.data ?? {},
+        title: providerMessage.title,
+        body: providerMessage.body,
+        data: providerMessage.data ?? {},
         sound: "default",
         priority: "high",
       }),

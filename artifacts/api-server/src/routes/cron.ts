@@ -813,6 +813,7 @@ router.post("/cron/kinfolk-reminders", async (req, res): Promise<void> => {
         title,
         body,
         data: { screen: "kinfolk-tasks", taskId: task.id, type: "kinfolk_reminder" },
+        preview: { classification: "sensitive", purpose: "member_task" },
       });
       delivered += 1;
     }

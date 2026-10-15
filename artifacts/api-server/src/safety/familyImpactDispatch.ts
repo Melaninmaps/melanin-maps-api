@@ -10,6 +10,7 @@ import {
   persistentSafetyLocationCanMatchEmergency,
   persistentSafetyLocationFreshnessWindowMs,
 } from "./persistentSafetyLocation";
+import { preparePushMessageForProvider } from "../lib/notification-preview-policy";
 
 export type FamilyImpactProviderOutcome = "provider_accepted" | "provider_rejected" | "retryable_failure";
 export interface FamilyImpactProvider {
@@ -387,9 +388,17 @@ export async function dispatchFamilyImpactEvent(
       result.retryScheduled += 1;
       continue;
     }
+    const providerPreview = preparePushMessageForProvider({
+      title,
+      body,
+      data: { screen: "safety", type: "family_impact", deliveryId: attempt.id, eventId: event.id, impact: impact.status },
+      preview: { classification: "sensitive", purpose: "family_impact" },
+    });
     const providerOutcome = await options.provider.send({
-      recipientUserId: relationship.contact_user_id, title, body,
-      data: { type: "family_impact", deliveryId: attempt.id, eventId: event.id, impact: impact.status },
+      recipientUserId: relationship.contact_user_id,
+      title: providerPreview.title,
+      body: providerPreview.body,
+      data: providerPreview.data as Record<string, string>,
     });
     if (providerOutcome === "provider_accepted") {
       await pool.query(
