@@ -553,6 +553,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
     const rawLimit = Number(req.query.limit ?? 100);
     const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(Math.floor(rawLimit), 1), 100) : 100;
     const eligibleOnly = req.query.eligibleOnly === "true";
+    const includeKinfolkCurrent = req.query.includeKinfolkCurrent === "true";
     if (!city && !batch) return void res.status(400).json({ error: "A source batch or city is required." });
     const scope = FOUNDER_SOURCE_CANDIDATES
       .filter((candidate) => !batch || candidate.batch === batch)
@@ -611,6 +612,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           instagram: string | null;
           facebook: string | null;
           tiktok: string | null;
+          kinfolkCurrent: boolean;
         }> = [];
         const seenBusinessIds = new Set<string>();
         for (const candidate of selected) {
@@ -619,7 +621,8 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
               && normalizeDirectoryIdentity(candidate.city) === normalizeDirectoryIdentity(profile.city)
               && normalizeDirectoryIdentity(candidate.state) === normalizeDirectoryIdentity(profile.state);
             if (!exactIdentity || profile.mapping_status !== "active" || profile.status !== "active"
-              || profile.listing_status === "archived" || profile.kinfolk_current || seenBusinessIds.has(profile.business_id)) continue;
+              || profile.listing_status === "archived" || (!includeKinfolkCurrent && profile.kinfolk_current)
+              || seenBusinessIds.has(profile.business_id)) continue;
             seenBusinessIds.add(profile.business_id);
             eligibleProfiles.push({
               businessId: profile.business_id,
@@ -630,6 +633,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
               instagram: profile.instagram,
               facebook: profile.facebook,
               tiktok: profile.tiktok,
+              kinfolkCurrent: profile.kinfolk_current,
             });
           }
         }
