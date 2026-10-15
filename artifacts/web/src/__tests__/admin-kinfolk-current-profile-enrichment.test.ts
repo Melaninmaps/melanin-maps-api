@@ -22,6 +22,8 @@ describe("audited profile enrichment Admin control", () => {
 
   it("is available in the Current or noncurrent inventory selected by the Admin", () => {
     expect(adminSource).toContain('bizIntakeCohortFilter === "non_kinfolk_current"');
+    expect(adminSource).toContain('get("profile_enrichment")');
+    expect(adminSource).toContain('requested === "kinfolk_current" || requested === "non_kinfolk_current"');
     expect(adminSource).toContain("profileEnrichmentScope && bizStatusFilter");
     expect(adminSource).toContain("<KinfolkCurrentProfileEnrichment scope={profileEnrichmentScope}");
   });

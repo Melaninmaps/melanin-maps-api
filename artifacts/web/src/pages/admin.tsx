@@ -2914,11 +2914,21 @@ export default function Admin() {
   const restorableFilteredBiz = filteredBiz.filter((b) => b.listingStatus === "archived");
   const kinfolkCurrentCohortSelected = bizIntakeCohortFilter === "kinfolk_current";
   const nonKinfolkCurrentCohortSelected = bizIntakeCohortFilter === "non_kinfolk_current";
+  const requestedProfileEnrichmentScope = (() => {
+    try {
+      const requested = new URLSearchParams(window.location.search).get("profile_enrichment");
+      return requested === "kinfolk_current" || requested === "non_kinfolk_current"
+        ? requested
+        : null;
+    } catch {
+      return null;
+    }
+  })();
   const profileEnrichmentScope = kinfolkCurrentCohortSelected
     ? "kinfolk_current" as const
     : nonKinfolkCurrentCohortSelected
       ? "non_kinfolk_current" as const
-      : null;
+      : requestedProfileEnrichmentScope;
   const selectableBusinessRows = filteredBiz;
   const selectedVisibleBusinessCount = selectedBusinessIds.size;
   const businessInventoryExportHref = (() => {
