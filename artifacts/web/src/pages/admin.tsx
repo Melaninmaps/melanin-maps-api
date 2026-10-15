@@ -140,6 +140,7 @@ type IntakeCohort =
   | "all"
   | "manus_created"
   | "kinfolk_current"
+  | "non_kinfolk_current"
   | "protected_historical_cohort"
   | "user_national_master"
   | "other_inventory";
@@ -270,6 +271,7 @@ function normalizedCityFilterValues(values: unknown): string[] {
 const INTAKE_COHORT_LABELS: Record<Exclude<IntakeCohort, "all">, string> = {
   manus_created: "Manus-created research/imports (direct provenance)",
   kinfolk_current: "Kinfolk Current — current public catalog",
+  non_kinfolk_current: "Non-Kinfolk Current — public profiles eligible for enrichment",
   protected_historical_cohort: "Protected historical cohort (receipt-backed)",
   user_national_master: "User-supplied national master",
   other_inventory: "Other existing, manual, or community inventory",
@@ -2911,6 +2913,12 @@ export default function Admin() {
   const archivableFilteredBiz = filteredBiz.filter((b) => b.listingStatus !== "archived");
   const restorableFilteredBiz = filteredBiz.filter((b) => b.listingStatus === "archived");
   const kinfolkCurrentCohortSelected = bizIntakeCohortFilter === "kinfolk_current";
+  const nonKinfolkCurrentCohortSelected = bizIntakeCohortFilter === "non_kinfolk_current";
+  const profileEnrichmentScope = kinfolkCurrentCohortSelected
+    ? "kinfolk_current" as const
+    : nonKinfolkCurrentCohortSelected
+      ? "non_kinfolk_current" as const
+      : null;
   const selectableBusinessRows = filteredBiz;
   const selectedVisibleBusinessCount = selectedBusinessIds.size;
   const businessInventoryExportHref = (() => {
@@ -5875,9 +5883,9 @@ Selected: ${summary}`,
                 : "Reconciliation ledger migration is pending. Existing inventory remains visible, but reconciliation filters intentionally return no records until the ledger is available."}
             </p>
 
-            {kinfolkCurrentCohortSelected && bizStatusFilter !== "kinfolk_current_delete_review" && (
+            {profileEnrichmentScope && bizStatusFilter !== "kinfolk_current_delete_review" && (
               <div className="mb-4">
-                <KinfolkCurrentProfileEnrichment onApplied={() => { void loadBusinesses({}); }} />
+                <KinfolkCurrentProfileEnrichment scope={profileEnrichmentScope} onApplied={() => { void loadBusinesses({}); }} />
               </div>
             )}
 

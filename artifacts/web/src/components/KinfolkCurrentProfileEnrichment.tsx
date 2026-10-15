@@ -22,6 +22,7 @@ type ApplyResponse = {
 
 type ManifestPreview = {
   version?: string;
+  scope?: "kinfolk_current" | "non_kinfolk_current";
   batchId?: string;
   contentFingerprint?: string;
   generatedAt?: string;
@@ -33,11 +34,18 @@ function isManifestPreview(value: unknown): value is ManifestPreview {
 }
 
 /**
- * A bounded, evidence-only administrative control for the full official-site
- * enrichment workflow. The server verifies manifest integrity, current identity,
- * Kinfolk Current scope, receipts, and fill-only behavior again at apply time.
+ * A bounded, evidence-only administrative control for the official-site
+ * enrichment workflow. The server verifies manifest integrity, exact identity,
+ * selected membership scope, source receipts, and additive field rules again at
+ * apply time.
  */
-export function KinfolkCurrentProfileEnrichment({ onApplied }: { onApplied?: () => void }) {
+export function KinfolkCurrentProfileEnrichment({
+  scope,
+  onApplied,
+}: {
+  scope: "kinfolk_current" | "non_kinfolk_current";
+  onApplied?: () => void;
+}) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [manifest, setManifest] = useState<ManifestPreview | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -60,8 +68,14 @@ export function KinfolkCurrentProfileEnrichment({ onApplied }: { onApplied?: () 
     }
     try {
       const parsed: unknown = JSON.parse(await file.text());
-      if (!isManifestPreview(parsed) || !Array.isArray(parsed.candidates) || parsed.candidates.length < 1 || parsed.candidates.length > 100 || typeof parsed.batchId !== "string" || typeof parsed.contentFingerprint !== "string") {
-        throw new Error("This is not a bounded Kinfolk Current profile enrichment manifest.");
+      const manifestScope = parsed && isManifestPreview(parsed) && parsed.version === "kinfolk-current-profile-enrichment-v1"
+        ? "kinfolk_current"
+        : isManifestPreview(parsed) ? parsed.scope : undefined;
+      if (!isManifestPreview(parsed) || !Array.isArray(parsed.candidates) || parsed.candidates.length < 1 || parsed.candidates.length > 100 || typeof parsed.batchId !== "string" || typeof parsed.contentFingerprint !== "string" || (manifestScope !== "kinfolk_current" && manifestScope !== "non_kinfolk_current")) {
+        throw new Error("This is not a bounded profile enrichment manifest.");
+      }
+      if (manifestScope !== scope) {
+        throw new Error(`This batch is scoped to ${manifestScope === "kinfolk_current" ? "Kinfolk Current" : "non-Kinfolk Current"} profiles. Switch the inventory cohort before applying it.`);
       }
       setManifest(parsed);
       setLoadError(null);
@@ -76,7 +90,7 @@ export function KinfolkCurrentProfileEnrichment({ onApplied }: { onApplied?: () 
     setSubmitting(true);
     setRequestError(null);
     try {
-      const response = await authenticatedAdminFetch("/api/businesses/admin/businesses/kinfolk-current/profile-enrichment-apply", {
+      const response = await authenticatedAdminFetch("/api/businesses/admin/businesses/profile-enrichment-apply", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ manifest }),
@@ -97,10 +111,10 @@ export function KinfolkCurrentProfileEnrichment({ onApplied }: { onApplied?: () 
         <div className="max-w-3xl space-y-2">
           <div className="flex items-center gap-2 text-amber-950">
             <FileText className="h-5 w-5" aria-hidden="true" />
-            <h3 id="kinfolk-profile-enrichment-heading" className="font-serif text-lg font-semibold">Kinfolk Current official-site profile enrichment</h3>
+            <h3 id="kinfolk-profile-enrichment-heading" className="font-serif text-lg font-semibold">{scope === "kinfolk_current" ? "Kinfolk Current" : "Non-Kinfolk Current"} official-site profile enrichment</h3>
           </div>
           <p className="text-sm leading-6 text-amber-900">
-            Load one generated batch of up to 100 first-party, field-level proposals. The server rechecks the fingerprint, exact business identity, Kinfolk Current membership, public listing, official-source receipts, and whether each field is still empty. It only fills an empty description, hours, phone number, or service tags; it never overwrites a profile or changes ownership, category, location, map pins, photos, prices, lifecycle, or Kinfolk eligibility.
+            Load one generated batch of up to 100 first-party, field-level proposals. The server rechecks the fingerprint, exact business identity, selected membership scope, public listing, and official-source receipts. It can add missing website or official social links, hours, phone number, and service tags; it may replace only a known generic directory description with a source-backed description. It never changes ownership, category, location, map pins, photos, prices, lifecycle, or Kinfolk eligibility.
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
@@ -110,7 +124,7 @@ export function KinfolkCurrentProfileEnrichment({ onApplied }: { onApplied?: () 
           </Button>
           <Button type="button" disabled={!manifest || submitting} onClick={applyManifest} className="bg-amber-800 text-white hover:bg-amber-900">
             {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" /> : <CheckCircle2 className="mr-2 h-4 w-4" aria-hidden="true" />}
-            {submitting ? "Applying source-backed fields…" : "Apply empty-field enrichment"}
+            {submitting ? "Applying source-backed fields…" : "Apply reviewed enrichment"}
           </Button>
         </div>
       </div>
