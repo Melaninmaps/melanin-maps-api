@@ -1106,6 +1106,10 @@ async function compileAdminBusinessInventoryFilters(
     filters.push(manusCreatedPredicate);
   } else if (intakeCohort === "kinfolk_current") {
     filters.push(kinfolkCurrentPredicate);
+  } else if (intakeCohort === "non_kinfolk_current") {
+    // This is the mutually exclusive public-profile enrichment scope. It does
+    // not promote, archive, or otherwise change a record's membership.
+    filters.push(`NOT (${kinfolkCurrentPredicate})`);
   } else if (intakeCohort === "protected_historical_cohort") {
     filters.push(completedCohortPredicate);
   } else if (intakeCohort === "user_national_master") {
@@ -2063,6 +2067,7 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
     const duplicateInventoryTotal = Number(duplicateInventoryCount.rows[0]?.total ?? 0);
     const publicDirectoryTotal = Number(publicDirectoryCount.rows[0]?.total ?? 0);
     const kinfolkRecommendableTotal = Number(kinfolkRecommendableCount.rows[0]?.total ?? 0);
+    const nonKinfolkCurrentTotal = Math.max(0, liveInventoryTotal - kinfolkRecommendableTotal);
     const permanentlyClosedTotal = Number(permanentlyClosedCount.rows[0]?.total ?? 0);
     const needsReviewTotal = Number(needsReviewCount.rows[0]?.total ?? 0);
     const kinfolkCurrentDeleteReviewTotal = Number(
@@ -2210,6 +2215,11 @@ router.get("/admin/businesses", async (req: Request, res: Response) => {
           value: "kinfolk_current",
           label: "Kinfolk Current — current public catalog",
           count: kinfolkRecommendableTotal,
+        },
+        {
+          value: "non_kinfolk_current",
+          label: "Non-Kinfolk Current — public profiles eligible for enrichment",
+          count: nonKinfolkCurrentTotal,
         },
         {
           value: "protected_historical_cohort",

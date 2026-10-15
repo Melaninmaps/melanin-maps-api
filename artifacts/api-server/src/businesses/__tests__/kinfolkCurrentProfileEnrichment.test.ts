@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
   KINFOLK_CURRENT_PROFILE_ENRICHMENT_MANIFEST_VERSION,
+  PROFILE_ENRICHMENT_MANIFEST_VERSION,
   isEmptyProfileEnrichmentField,
   kinfolkCurrentProfileEnrichmentFingerprint,
   parseKinfolkCurrentProfileEnrichmentManifest,
+  parseProfileEnrichmentManifest,
+  profileEnrichmentFingerprint,
 } from "../kinfolkCurrentProfileEnrichment";
 
 function candidate(overrides: Record<string, unknown> = {}) {
@@ -29,6 +32,30 @@ function manifest(overrides: Record<string, unknown> = {}) {
     ...overrides,
   } as Record<string, unknown>;
   return { ...base, contentFingerprint: kinfolkCurrentProfileEnrichmentFingerprint(base as never) };
+}
+
+function nonCurrentManifest(overrides: Record<string, unknown> = {}) {
+  const base = {
+    version: PROFILE_ENRICHMENT_MANIFEST_VERSION,
+    scope: "non_kinfolk_current",
+    batchId: "non-current-official-site-001",
+    generatedAt: "2026-10-15T19:00:00.000Z",
+    candidates: [candidate({
+      patch: {
+        description: "Independent neighborhood bookstore with author events.",
+        tags: ["books", "author events"],
+        instagram: "https://www.instagram.com/communitybooks/",
+      },
+      fieldModes: { description: "replace_generic_directory", tags: "append", instagram: "fill" },
+      receipts: [
+        { field: "description", sourceUrl: "https://communitybooks.example/about", sourceLabel: "Official About page", observedAt: "2026-10-15", confidence: "high", note: "Official page describes the independent bookstore and author events." },
+        { field: "service_tags", sourceUrl: "https://communitybooks.example/events", sourceLabel: "Official Events page", observedAt: "2026-10-15", confidence: "medium", note: "Official page lists books and author events." },
+        { field: "instagram", sourceUrl: "https://communitybooks.example/", sourceLabel: "Official website", observedAt: "2026-10-15", confidence: "high", note: "Official website links this Instagram profile." },
+      ],
+    })],
+    ...overrides,
+  } as Record<string, unknown>;
+  return { ...base, contentFingerprint: profileEnrichmentFingerprint(base) };
 }
 
 describe("Kinfolk Current profile enrichment manifest", () => {
@@ -61,5 +88,25 @@ describe("Kinfolk Current profile enrichment manifest", () => {
     expect(isEmptyProfileEnrichmentField("phone", "215-555-0100")).toBe(false);
     expect(isEmptyProfileEnrichmentField("tags", [])).toBe(true);
     expect(isEmptyProfileEnrichmentField("tags", ["books"])).toBe(false);
+  });
+
+  it("accepts the explicit noncurrent scope and approved social-link additions", () => {
+    const parsed = parseProfileEnrichmentManifest(nonCurrentManifest());
+    expect(parsed.scope).toBe("non_kinfolk_current");
+    expect(parsed.candidates[0].fieldModes).toEqual({ description: "replace_generic_directory", tags: "append", instagram: "fill" });
+    expect(parsed.candidates[0].patch.instagram).toBe("https://www.instagram.com/communitybooks/");
+  });
+
+  it("rejects an unscoped manifest and unsafe replacement modes", () => {
+    const unscoped = nonCurrentManifest({ scope: undefined });
+    expect(() => parseProfileEnrichmentManifest(unscoped)).toThrow("scope");
+    const unsafeMode = nonCurrentManifest({
+      candidates: [candidate({
+        patch: { phone: "215-555-0100" },
+        fieldModes: { phone: "replace_generic_directory" },
+        receipts: [{ field: "phone", sourceUrl: "https://communitybooks.example/contact", sourceLabel: "Official Contact page", observedAt: "2026-10-15", confidence: "high", note: "Official page lists this phone number." }],
+      })],
+    });
+    expect(() => parseProfileEnrichmentManifest(unsafeMode)).toThrow("Only descriptions");
   });
 });

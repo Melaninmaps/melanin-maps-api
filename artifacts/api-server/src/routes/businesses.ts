@@ -83,8 +83,8 @@ import {
 } from "../businesses/adminBusinessProfilePolicy";
 import {
   isEmptyProfileEnrichmentField,
-  parseKinfolkCurrentProfileEnrichmentManifest,
-  type KinfolkCurrentProfileEnrichmentCandidate,
+  parseProfileEnrichmentManifest,
+  type ProfileEnrichmentCandidate,
 } from "../businesses/kinfolkCurrentProfileEnrichment";
 import { isAdmin as hasAdminAccess } from "../lib/adminAuth";
 import {
@@ -4442,7 +4442,7 @@ function normalizedProfileEnrichmentWebsite(value: string | null | undefined): s
 
 function profileEnrichmentIdentityMatches(
   existing: AdminBusinessProfileRow,
-  candidate: KinfolkCurrentProfileEnrichmentCandidate,
+  candidate: ProfileEnrichmentCandidate,
 ): boolean {
   return normalizedProfileEnrichmentIdentityPart(existing.name) === normalizedProfileEnrichmentIdentityPart(candidate.expectedIdentity.name)
     && normalizedProfileEnrichmentIdentityPart(existing.city) === normalizedProfileEnrichmentIdentityPart(candidate.expectedIdentity.city)
@@ -4450,20 +4450,28 @@ function profileEnrichmentIdentityMatches(
     && normalizedProfileEnrichmentWebsite(existing.website) === normalizedProfileEnrichmentWebsite(candidate.expectedIdentity.website);
 }
 
-// POST /admin/businesses/kinfolk-current/profile-enrichment-apply — apply up to
-// 100 source-receipted, first-party facts. This is intentionally a fill-only
-// path: it never changes business identity, addresses, ownership, listing
-// lifecycle, Kinfolk membership, map coordinates, media, prices, or an existing
-// profile value. Each row is freshly locked and checked before its own atomic
-// update, so a changed source snapshot is skipped rather than overwritten.
-router.post("/admin/businesses/kinfolk-current/profile-enrichment-apply", async (req: Request, res: Response) => {
+/** Only a known directory placeholder may be replaced by a first-party description. */
+function isGenericDirectoryProfileDescription(value: string | null): boolean {
+  const normalized = String(value ?? "").replace(/\s+/g, " ").trim().toLocaleLowerCase();
+  return Boolean(normalized) && (
+    /\bbusiness in\b/.test(normalized)
+    || /\blisted by\b/.test(normalized)
+    || /\bblack business directory\b/.test(normalized)
+    || /\bcurrent public source\b/.test(normalized)
+  );
+}
+
+// Apply up to 100 source-receipted, first-party facts. It never changes
+// business identity, addresses, ownership, lifecycle, Kinfolk membership, map
+// coordinates, media, or prices. Every candidate is freshly locked and checked.
+async function applyProfileEnrichmentManifest(req: Request, res: Response): Promise<void> {
   if (!hasAdminAccess(req)) {
     res.status(403).json({ error: "Admin required" });
     return;
   }
   let manifest;
   try {
-    manifest = parseKinfolkCurrentProfileEnrichmentManifest((req.body as { manifest?: unknown })?.manifest ?? req.body);
+    manifest = parseProfileEnrichmentManifest((req.body as { manifest?: unknown })?.manifest ?? req.body);
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : "Invalid profile enrichment manifest" });
     return;
@@ -4481,9 +4489,16 @@ router.post("/admin/businesses/kinfolk-current/profile-enrichment-apply", async 
           FOR UPDATE`,
         [candidate.businessId],
       );
-      if (!scope.rows[0]?.is_current) {
+      const mustBeCurrent = manifest.scope === "kinfolk_current";
+      if (!scope.rows[0] || scope.rows[0].is_current !== mustBeCurrent) {
         await client.query("ROLLBACK");
-        results.push({ businessId: candidate.businessId, status: "skipped", reason: "Business is no longer in the current Kinfolk Current catalog." });
+        results.push({
+          businessId: candidate.businessId,
+          status: "skipped",
+          reason: mustBeCurrent
+            ? "Business is no longer in the current Kinfolk Current catalog."
+            : "Business is already in Kinfolk Current and is outside the non-current enrichment scope.",
+        });
         continue;
       }
       const review = await client.query<{ state: string }>(
@@ -4515,16 +4530,64 @@ router.post("/admin/businesses/kinfolk-current/profile-enrichment-apply", async 
         continue;
       }
 
-      const fillOnlyPatch = Object.fromEntries(Object.entries(candidate.patch).filter(([field]) => {
-        const existingValue = field === "tags" ? existing.tags : existing[field as keyof AdminBusinessProfileRow];
-        return isEmptyProfileEnrichmentField(field as "description" | "hours" | "phone" | "tags", existingValue);
-      }));
-      if (Object.keys(fillOnlyPatch).length === 0) {
+      const currentValues: Record<string, unknown> = {
+        description: existing.description,
+        hours: existing.hours,
+        phone: existing.phone,
+        tags: existing.tags,
+        website: existing.website,
+        instagram: existing.instagram,
+        tiktok: existing.tiktok,
+        facebook: existing.facebook,
+        twitter: existing.twitter,
+        youtube: existing.youtube,
+        pinterest: existing.pinterest,
+      };
+      const fillOnlyPatch: Record<string, string | string[]> = {};
+      let conflictField: string | null = null;
+      for (const [field, proposedValue] of Object.entries(candidate.patch)) {
+        const mode = candidate.fieldModes[field as keyof typeof candidate.fieldModes] ?? "fill";
+        const currentValue = currentValues[field];
+        if (field === "tags") {
+          const existingTags = Array.isArray(currentValue) ? currentValue.filter((tag): tag is string => typeof tag === "string") : [];
+          const existingCanonical = new Set(existingTags.map((tag) => tag.trim().toLocaleLowerCase()));
+          const additions = (proposedValue as string[]).filter((tag) => !existingCanonical.has(tag.trim().toLocaleLowerCase()));
+          if (additions.length > 0) fillOnlyPatch.tags = [...existingTags, ...additions];
+          continue;
+        }
+        const currentText = String(currentValue ?? "").replace(/\s+/g, " ").trim();
+        const proposedText = String(proposedValue).replace(/\s+/g, " ").trim();
+        const equivalent = field === "phone"
+          ? currentText.replace(/\D/g, "") === proposedText.replace(/\D/g, "")
+          : ["website", "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest"].includes(field)
+            ? normalizedProfileEnrichmentWebsite(currentText) === normalizedProfileEnrichmentWebsite(proposedText)
+            : currentText.toLocaleLowerCase() === proposedText.toLocaleLowerCase();
+        if (equivalent) continue;
+        if (isEmptyProfileEnrichmentField(field as "description" | "hours" | "phone" | "tags", currentValue)) {
+          fillOnlyPatch[field] = proposedText;
+          continue;
+        }
+        if (field === "description" && mode === "replace_generic_directory" && isGenericDirectoryProfileDescription(existing.description)) {
+          fillOnlyPatch.description = proposedText;
+          continue;
+        }
+        conflictField = field;
+        break;
+      }
+      if (conflictField) {
         await client.query("ROLLBACK");
-        results.push({ businessId: candidate.businessId, status: "skipped", reason: "All proposed profile fields are already populated; this fill-only workflow will not overwrite them." });
+        results.push({ businessId: candidate.businessId, status: "skipped", reason: `HOLD_IDENTITY_OR_CONTACT_CONFLICT: ${conflictField} is already populated with a materially different current value.` });
         continue;
       }
-      const receiptFieldForPatchField: Record<string, string> = { description: "description", hours: "hours", phone: "phone", tags: "service_tags" };
+      if (Object.keys(fillOnlyPatch).length === 0) {
+        await client.query("ROLLBACK");
+        results.push({ businessId: candidate.businessId, status: "skipped", reason: "All proposed profile fields already match or contain no additive first-party value." });
+        continue;
+      }
+      const receiptFieldForPatchField: Record<string, string> = {
+        description: "description", hours: "hours", phone: "phone", tags: "service_tags", website: "website",
+        instagram: "instagram", tiktok: "tiktok", facebook: "facebook", twitter: "twitter", youtube: "youtube", pinterest: "pinterest",
+      };
       const sourceReceipts = candidate.receipts
         .filter((receipt) => Object.prototype.hasOwnProperty.call(fillOnlyPatch, receipt.field === "service_tags" ? "tags" : receipt.field))
         .map((receipt) => ({
@@ -4540,7 +4603,7 @@ router.post("/admin/businesses/kinfolk-current/profile-enrichment-apply", async 
       const validated = validateAdminBusinessProfilePatch({
         ...fillOnlyPatch,
         sourceReceipts,
-        changeNote: `Official-site Kinfolk Current profile enrichment (${manifest.batchId}; ${manifest.contentFingerprint.slice(0, 12)})`,
+        changeNote: `Official first-party ${manifest.scope === "kinfolk_current" ? "Kinfolk Current" : "non-Kinfolk Current"} profile enrichment (${manifest.batchId}; ${manifest.contentFingerprint.slice(0, 12)})`,
       }, {
         name: existing.name,
         description: existing.description,
@@ -4563,7 +4626,8 @@ router.post("/admin/businesses/kinfolk-current/profile-enrichment-apply", async 
         vibes: existing.vibes,
         ownershipDesignations: existing.ownership_designations,
       });
-      if (validated.locationChanged || validated.changedColumns.some((field) => !["description", "hours", "phone", "tags"].includes(field))) {
+      const allowedFields = ["description", "hours", "phone", "tags", "website", "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest"];
+      if (validated.locationChanged || validated.changedColumns.some((field) => !allowedFields.includes(field))) {
         await client.query("ROLLBACK");
         results.push({ businessId: candidate.businessId, status: "skipped", reason: "Manifest attempted a profile field outside the fill-only enrichment boundary." });
         continue;
@@ -4574,7 +4638,10 @@ router.post("/admin/businesses/kinfolk-current/profile-enrichment-apply", async 
         continue;
       }
       const patch = Object.fromEntries(Object.entries(validated.patch).filter(([column]) => validated.changedColumns.includes(column)));
-      const allowedColumns: Record<string, string> = { description: "description", hours: "hours", phone: "phone", tags: "tags" };
+      const allowedColumns: Record<string, string> = {
+        description: "description", hours: "hours", phone: "phone", tags: "tags", website: "website",
+        instagram: "instagram", tiktok: "tiktok", facebook: "facebook", twitter: "twitter", youtube: "youtube", pinterest: "pinterest",
+      };
       const entries = Object.entries(patch).map(([key, value]) => [key, adminProfileUpdateSqlBinding(key, value)] as const);
       const setClauses = entries.map(([key, binding], index) => `${allowedColumns[key]} = $${index + 1}${binding.jsonb ? "::jsonb" : ""}`).join(", ");
       const update = await client.query<AdminBusinessProfileRow>(
@@ -4608,17 +4675,17 @@ router.post("/admin/businesses/kinfolk-current/profile-enrichment-apply", async 
         ],
       );
       await client.query("COMMIT");
-      results.push({ businessId: candidate.businessId, status: "applied", reason: "Source-backed empty profile fields were saved with audit and field receipts.", changedFields: validated.changedColumns });
+      results.push({ businessId: candidate.businessId, status: "applied", reason: "Source-backed profile enrichment was saved with audit and field receipts.", changedFields: validated.changedColumns });
     } catch (error) {
       await client.query("ROLLBACK").catch(() => undefined);
-      req.log.error({ error, businessId: candidate.businessId, batchId: manifest.batchId }, "Kinfolk Current profile enrichment candidate failed");
+      req.log.error({ error, businessId: candidate.businessId, batchId: manifest.batchId, scope: manifest.scope }, "Profile enrichment candidate failed");
       results.push({ businessId: candidate.businessId, status: "skipped", reason: "Database validation failed; this candidate was not changed." });
     } finally {
       client.release();
     }
   }
   const applied = results.filter((result) => result.status === "applied");
-  req.log.info({ batchId: manifest.batchId, fingerprint: manifest.contentFingerprint, candidateCount: manifest.candidates.length, appliedCount: applied.length }, "Completed Kinfolk Current fill-only profile enrichment batch");
+  req.log.info({ batchId: manifest.batchId, fingerprint: manifest.contentFingerprint, scope: manifest.scope, candidateCount: manifest.candidates.length, appliedCount: applied.length }, "Completed source-backed profile enrichment batch");
   res.json({
     ok: true,
     batchId: manifest.batchId,
@@ -4628,7 +4695,11 @@ router.post("/admin/businesses/kinfolk-current/profile-enrichment-apply", async 
     skippedCount: results.length - applied.length,
     results,
   });
-});
+}
+
+router.post("/admin/businesses/profile-enrichment-apply", applyProfileEnrichmentManifest);
+// Preserve the existing Kinfolk Current URL for already reviewed v1 manifests.
+router.post("/admin/businesses/kinfolk-current/profile-enrichment-apply", applyProfileEnrichmentManifest);
 
 // ─── POST /admin/seed-known-businesses ────────────────────────────────────────
 // Idempotent: inserts well-known community businesses that are not yet in the DB.

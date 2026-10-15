@@ -1,12 +1,29 @@
 import { createHash } from "node:crypto";
 import type { ProfileFieldReceiptName } from "./adminBusinessProfilePolicy";
 
+/**
+ * The original bounded Kinfolk Current manifest remains accepted so an already
+ * reviewed batch cannot be invalidated. New manifests use this scope-aware
+ * version and the same source-receipt / fingerprint contract.
+ */
 export const KINFOLK_CURRENT_PROFILE_ENRICHMENT_MANIFEST_VERSION = "kinfolk-current-profile-enrichment-v1" as const;
+export const PROFILE_ENRICHMENT_MANIFEST_VERSION = "profile-enrichment-v2" as const;
 export const KINFOLK_CURRENT_PROFILE_ENRICHMENT_FIELDS = ["description", "hours", "phone", "tags"] as const;
-type EnrichmentPatchField = (typeof KINFOLK_CURRENT_PROFILE_ENRICHMENT_FIELDS)[number];
-type ReceiptField = Extract<ProfileFieldReceiptName, "description" | "hours" | "phone" | "service_tags">;
+export const PROFILE_ENRICHMENT_FIELDS = [
+  "description", "hours", "phone", "tags", "website",
+  "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest",
+] as const;
 
-export type KinfolkCurrentProfileEnrichmentReceipt = {
+export type ProfileEnrichmentScope = "kinfolk_current" | "non_kinfolk_current";
+export type EnrichmentPatchField = (typeof PROFILE_ENRICHMENT_FIELDS)[number];
+export type EnrichmentPatchMode = "fill" | "append" | "replace_generic_directory";
+type ReceiptField = Extract<
+  ProfileFieldReceiptName,
+  "description" | "hours" | "phone" | "service_tags" | "website" |
+  "instagram" | "tiktok" | "facebook" | "twitter" | "youtube" | "pinterest"
+>;
+
+export type ProfileEnrichmentReceipt = {
   field: ReceiptField;
   sourceUrl: string;
   sourceLabel: string;
@@ -15,19 +32,43 @@ export type KinfolkCurrentProfileEnrichmentReceipt = {
   note: string;
 };
 
-export type KinfolkCurrentProfileEnrichmentCandidate = {
+export type ProfileEnrichmentCandidate = {
   businessId: string;
+  /** Current stored identity snapshot, rechecked inside the apply transaction. */
   expectedIdentity: { name: string; city: string; state: string; website: string | null };
   patch: Partial<Record<EnrichmentPatchField, string | string[]>>;
-  receipts: KinfolkCurrentProfileEnrichmentReceipt[];
+  /** Description can replace only a known generic directory placeholder; tags append only new values. */
+  fieldModes: Partial<Record<EnrichmentPatchField, EnrichmentPatchMode>>;
+  receipts: ProfileEnrichmentReceipt[];
 };
 
+export type ProfileEnrichmentManifest = {
+  version: typeof PROFILE_ENRICHMENT_MANIFEST_VERSION;
+  scope: ProfileEnrichmentScope;
+  batchId: string;
+  generatedAt: string;
+  contentFingerprint: string;
+  candidates: ProfileEnrichmentCandidate[];
+};
+
+/** Backwards-compatible public types used by the already deployed Current-only control. */
+export type KinfolkCurrentProfileEnrichmentReceipt = ProfileEnrichmentReceipt;
+export type KinfolkCurrentProfileEnrichmentCandidate = ProfileEnrichmentCandidate;
 export type KinfolkCurrentProfileEnrichmentManifest = {
   version: typeof KINFOLK_CURRENT_PROFILE_ENRICHMENT_MANIFEST_VERSION;
   batchId: string;
   generatedAt: string;
   contentFingerprint: string;
-  candidates: KinfolkCurrentProfileEnrichmentCandidate[];
+  candidates: ProfileEnrichmentCandidate[];
+};
+
+export type ParsedProfileEnrichmentManifest = {
+  version: typeof KINFOLK_CURRENT_PROFILE_ENRICHMENT_MANIFEST_VERSION | typeof PROFILE_ENRICHMENT_MANIFEST_VERSION;
+  scope: ProfileEnrichmentScope;
+  batchId: string;
+  generatedAt: string;
+  contentFingerprint: string;
+  candidates: ProfileEnrichmentCandidate[];
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -64,23 +105,57 @@ function canonicalJson(value: unknown): string {
   return JSON.stringify(value);
 }
 
-function valueWithoutFingerprint(value: KinfolkCurrentProfileEnrichmentManifest): Record<string, unknown> {
+function valueWithoutFingerprint(value: Record<string, unknown>): Record<string, unknown> {
   const { contentFingerprint: _ignored, ...rest } = value;
   return rest;
 }
 
-export function kinfolkCurrentProfileEnrichmentFingerprint(value: Omit<KinfolkCurrentProfileEnrichmentManifest, "contentFingerprint"> | KinfolkCurrentProfileEnrichmentManifest): string {
-  const withoutFingerprint = isRecord(value) && "contentFingerprint" in value
-    ? valueWithoutFingerprint(value as KinfolkCurrentProfileEnrichmentManifest)
-    : value;
+export function profileEnrichmentFingerprint(value: Record<string, unknown>): string {
+  const withoutFingerprint = "contentFingerprint" in value ? valueWithoutFingerprint(value) : value;
   return createHash("sha256").update(canonicalJson(withoutFingerprint)).digest("hex");
+}
+
+export function kinfolkCurrentProfileEnrichmentFingerprint(
+  value: Omit<KinfolkCurrentProfileEnrichmentManifest, "contentFingerprint"> | KinfolkCurrentProfileEnrichmentManifest,
+): string {
+  const raw = value as unknown as Record<string, unknown>;
+  const candidates = Array.isArray(raw.candidates)
+    ? raw.candidates.map((candidate) => {
+      if (!isRecord(candidate)) return candidate;
+      const { fieldModes: _ignored, ...legacyCandidate } = candidate;
+      return legacyCandidate;
+    })
+    : raw.candidates;
+  return profileEnrichmentFingerprint({ ...raw, candidates });
 }
 
 function receiptFieldForPatch(field: EnrichmentPatchField): ReceiptField {
   return field === "tags" ? "service_tags" : field;
 }
 
-function parseCandidate(input: unknown): KinfolkCurrentProfileEnrichmentCandidate {
+function defaultMode(field: EnrichmentPatchField): EnrichmentPatchMode {
+  return field === "tags" ? "append" : "fill";
+}
+
+function parseFieldModes(input: unknown, patch: ProfileEnrichmentCandidate["patch"]): ProfileEnrichmentCandidate["fieldModes"] {
+  if (input === undefined) return Object.fromEntries(Object.keys(patch).map((field) => [field, defaultMode(field as EnrichmentPatchField)]));
+  if (!isRecord(input)) throw new Error("candidate fieldModes must be an object");
+  const fieldModes: ProfileEnrichmentCandidate["fieldModes"] = {};
+  for (const field of Object.keys(patch) as EnrichmentPatchField[]) {
+    const mode = input[field] ?? defaultMode(field);
+    if (mode !== "fill" && mode !== "append" && mode !== "replace_generic_directory") throw new Error(`Unsupported enrichment mode for ${field}`);
+    if (field === "tags" && mode !== "append") throw new Error("Service tags must use append mode");
+    if (field !== "tags" && mode === "append") throw new Error(`${field} cannot use append mode`);
+    if (field !== "description" && mode === "replace_generic_directory") throw new Error("Only descriptions may replace a generic directory placeholder");
+    fieldModes[field] = mode;
+  }
+  for (const field of Object.keys(input)) {
+    if (!(field in patch)) throw new Error(`fieldModes may only describe a proposed field: ${field}`);
+  }
+  return fieldModes;
+}
+
+function parseCandidate(input: unknown, allowedFields: readonly EnrichmentPatchField[]): ProfileEnrichmentCandidate {
   if (!isRecord(input)) throw new Error("Each enrichment candidate must be an object");
   const businessId = cleanText(input.businessId, "candidate businessId", 255) as string;
   if (!isRecord(input.expectedIdentity)) throw new Error("candidate expectedIdentity is required");
@@ -91,24 +166,25 @@ function parseCandidate(input: unknown): KinfolkCurrentProfileEnrichmentCandidat
     website: input.expectedIdentity.website == null ? null : cleanPublicUrl(input.expectedIdentity.website, "expected identity website"),
   };
   if (!isRecord(input.patch)) throw new Error("candidate patch is required");
-  const patch: KinfolkCurrentProfileEnrichmentCandidate["patch"] = {};
+  const patch: ProfileEnrichmentCandidate["patch"] = {};
   for (const [field, value] of Object.entries(input.patch)) {
-    if (!(KINFOLK_CURRENT_PROFILE_ENRICHMENT_FIELDS as readonly string[]).includes(field)) throw new Error(`Unsupported enrichment field: ${field}`);
+    if (!(allowedFields as readonly string[]).includes(field)) throw new Error(`Unsupported enrichment field: ${field}`);
     if (field === "tags") {
       if (!Array.isArray(value) || value.length === 0 || value.length > 12) throw new Error("enrichment tags must contain between 1 and 12 values");
       patch.tags = [...new Set(value.map((tag) => cleanText(tag, "enrichment tag", 80) as string))];
-    } else {
-      const max = field === "description" ? 700 : field === "hours" ? 255 : 30;
-      patch[field as Exclude<EnrichmentPatchField, "tags">] = cleanText(value, `enrichment ${field}`, max) as string;
+      continue;
     }
+    const max = field === "description" ? 700 : field === "hours" ? 255 : field === "phone" ? 30 : 512;
+    patch[field as Exclude<EnrichmentPatchField, "tags">] = cleanText(value, `enrichment ${field}`, max) as string;
   }
   const changedFields = Object.keys(patch) as EnrichmentPatchField[];
   if (changedFields.length === 0) throw new Error("candidate patch must contain an allowed enrichment field");
+  const fieldModes = parseFieldModes(input.fieldModes, patch);
   if (!Array.isArray(input.receipts) || input.receipts.length !== changedFields.length) throw new Error("candidate receipts must contain exactly one receipt for each proposed field");
-  const receipts = input.receipts.map((receipt): KinfolkCurrentProfileEnrichmentReceipt => {
+  const receipts = input.receipts.map((receipt): ProfileEnrichmentReceipt => {
     if (!isRecord(receipt)) throw new Error("candidate receipt must be an object");
     const field = cleanText(receipt.field, "candidate receipt field", 50) as ReceiptField;
-    if (!(["description", "hours", "phone", "service_tags"] as const).includes(field)) throw new Error("candidate receipt field is unsupported");
+    if (!( ["description", "hours", "phone", "service_tags", "website", "instagram", "tiktok", "facebook", "twitter", "youtube", "pinterest"] as const).includes(field)) throw new Error("candidate receipt field is unsupported");
     const confidence = receipt.confidence;
     if (confidence !== "high" && confidence !== "medium") throw new Error("candidate receipt confidence must be high or medium");
     const observedAt = cleanText(receipt.observedAt, "candidate receipt observedAt", 10) as string;
@@ -127,22 +203,57 @@ function parseCandidate(input: unknown): KinfolkCurrentProfileEnrichmentCandidat
   for (const field of changedFields) {
     if (!receiptFields.has(receiptFieldForPatch(field))) throw new Error(`candidate patch ${field} is missing its field receipt`);
   }
-  return { businessId, expectedIdentity, patch, receipts };
+  return { businessId, expectedIdentity, patch, fieldModes, receipts };
 }
 
-export function parseKinfolkCurrentProfileEnrichmentManifest(input: unknown): KinfolkCurrentProfileEnrichmentManifest {
-  if (!isRecord(input)) throw new Error("A profile enrichment manifest object is required");
-  if (input.version !== KINFOLK_CURRENT_PROFILE_ENRICHMENT_MANIFEST_VERSION) throw new Error("Unsupported profile enrichment manifest version");
+function parseMetadata(input: Record<string, unknown>): Pick<ParsedProfileEnrichmentManifest, "batchId" | "generatedAt" | "contentFingerprint"> {
   const batchId = cleanText(input.batchId, "manifest batchId", 100) as string;
   const generatedAt = cleanText(input.generatedAt, "manifest generatedAt", 40) as string;
   if (Number.isNaN(Date.parse(generatedAt))) throw new Error("manifest generatedAt must be an ISO timestamp");
   const contentFingerprint = cleanText(input.contentFingerprint, "manifest contentFingerprint", 64) as string;
   if (!/^[a-f0-9]{64}$/i.test(contentFingerprint)) throw new Error("manifest contentFingerprint must be a SHA-256 hexadecimal digest");
-  if (!Array.isArray(input.candidates) || input.candidates.length === 0 || input.candidates.length > 100) throw new Error("manifest must contain between 1 and 100 enrichment candidates");
-  const candidates = input.candidates.map(parseCandidate);
+  return { batchId, generatedAt, contentFingerprint };
+}
+
+function assertCandidateBounds(candidates: ProfileEnrichmentCandidate[]): void {
+  if (candidates.length === 0 || candidates.length > 100) throw new Error("manifest must contain between 1 and 100 enrichment candidates");
   if (new Set(candidates.map((candidate) => candidate.businessId)).size !== candidates.length) throw new Error("manifest candidates must not repeat a businessId");
-  const manifest: KinfolkCurrentProfileEnrichmentManifest = { version: KINFOLK_CURRENT_PROFILE_ENRICHMENT_MANIFEST_VERSION, batchId, generatedAt, contentFingerprint, candidates };
-  if (kinfolkCurrentProfileEnrichmentFingerprint(manifest) !== contentFingerprint) throw new Error("manifest content fingerprint does not match its content");
+}
+
+export function parseKinfolkCurrentProfileEnrichmentManifest(input: unknown): KinfolkCurrentProfileEnrichmentManifest {
+  if (!isRecord(input)) throw new Error("A profile enrichment manifest object is required");
+  if (input.version !== KINFOLK_CURRENT_PROFILE_ENRICHMENT_MANIFEST_VERSION) throw new Error("Unsupported profile enrichment manifest version");
+  const { batchId, generatedAt, contentFingerprint } = parseMetadata(input);
+  if (!Array.isArray(input.candidates)) throw new Error("manifest candidates are required");
+  const candidates = input.candidates.map((candidate) => parseCandidate(candidate, KINFOLK_CURRENT_PROFILE_ENRICHMENT_FIELDS));
+  assertCandidateBounds(candidates);
+  const legacyCandidates = candidates.map(({ fieldModes: _ignored, ...candidate }) => candidate);
+  const fingerprintPayload = { version: KINFOLK_CURRENT_PROFILE_ENRICHMENT_MANIFEST_VERSION, batchId, generatedAt, candidates: legacyCandidates };
+  if (profileEnrichmentFingerprint(fingerprintPayload as unknown as Record<string, unknown>) !== contentFingerprint) throw new Error("manifest content fingerprint does not match its content");
+  return { version: KINFOLK_CURRENT_PROFILE_ENRICHMENT_MANIFEST_VERSION, batchId, generatedAt, contentFingerprint, candidates };
+}
+
+export function parseProfileEnrichmentManifest(input: unknown): ParsedProfileEnrichmentManifest {
+  if (!isRecord(input)) throw new Error("A profile enrichment manifest object is required");
+  if (input.version === KINFOLK_CURRENT_PROFILE_ENRICHMENT_MANIFEST_VERSION) {
+    const legacy = parseKinfolkCurrentProfileEnrichmentManifest(input);
+    return { ...legacy, scope: "kinfolk_current" };
+  }
+  if (input.version !== PROFILE_ENRICHMENT_MANIFEST_VERSION) throw new Error("Unsupported profile enrichment manifest version");
+  if (input.scope !== "kinfolk_current" && input.scope !== "non_kinfolk_current") throw new Error("manifest scope must be kinfolk_current or non_kinfolk_current");
+  const { batchId, generatedAt, contentFingerprint } = parseMetadata(input);
+  if (!Array.isArray(input.candidates)) throw new Error("manifest candidates are required");
+  const candidates = input.candidates.map((candidate) => parseCandidate(candidate, PROFILE_ENRICHMENT_FIELDS));
+  assertCandidateBounds(candidates);
+  const manifest: ProfileEnrichmentManifest = {
+    version: PROFILE_ENRICHMENT_MANIFEST_VERSION,
+    scope: input.scope,
+    batchId,
+    generatedAt,
+    contentFingerprint,
+    candidates,
+  };
+  if (profileEnrichmentFingerprint(manifest as unknown as Record<string, unknown>) !== contentFingerprint) throw new Error("manifest content fingerprint does not match its content");
   return manifest;
 }
 
