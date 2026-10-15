@@ -1,7 +1,14 @@
 import { readFileSync } from "node:fs";
 import ts from "typescript";
 import { describe, expect, it, vi } from "vitest";
-import { CONVERSATION_INSTRUCTIONS, buildConversationInstructionPrompt, parseConversationInstruction } from "../conversation-scope-instructions";
+import {
+  CONVERSATION_INSTRUCTIONS,
+  ConversationInstructionRegistry,
+  buildConversationInstructionPrompt,
+  parseConversationInstruction,
+  parseConversationInstructionClientId,
+} from "../conversation-scope-instructions";
+import { parseExplicitCuriosityListId } from "../curiosity-list-conversation-use";
 import { buildOneTurnDeliveryPreferencePrompt } from "../explicit-member-memory";
 import { parseTemporarySensitiveConversationContext } from "../temporary-sensitive-conversation-context";
 
@@ -25,8 +32,8 @@ function isolatedHandler() {
   const trace = vi.fn(() => null);
   const medical = vi.fn((message: string) => message === "synthetic medical emergency" ? "fixed medical answer" : null);
   const safety = vi.fn((message: string) => message === "synthetic safety emergency" ? "fixed safety answer" : null);
-  new Function("router", "parseConversationInstruction", "parseTemporarySensitiveConversationContext", "parseKinfolkClientTrace", "immediateMedicalEmergencyReply", "immediateSafetyEmergencyReply", executable)(
-    { post: (_path: string, callback: typeof handler) => { handler = callback; } }, parseConversationInstruction, parseTemporarySensitiveConversationContext, trace, medical, safety,
+  new Function("router", "parseConversationInstruction", "parseConversationInstructionClientId", "parseTemporarySensitiveConversationContext", "parseExplicitCuriosityListId", "parseKinfolkClientTrace", "immediateMedicalEmergencyReply", "immediateSafetyEmergencyReply", "getSessionId", executable)(
+    { post: (_path: string, callback: typeof handler) => { handler = callback; } }, parseConversationInstruction, parseConversationInstructionClientId, parseTemporarySensitiveConversationContext, parseExplicitCuriosityListId, trace, medical, safety, () => undefined,
   );
   return { handler, trace, medical, safety };
 }
@@ -47,7 +54,7 @@ describe("bounded ordinary conversation delivery instructions", () => {
     for (const [id, label] of Object.entries(expected)) {
       const prompt = buildConversationInstructionPrompt(id);
       expect(prompt).toContain(label);
-      expect(prompt).toContain("current answer only");
+      expect(prompt).toContain("active conversation's later answers");
       expect(prompt).toContain("does not change factual, safety, privacy, research, or eligibility rules");
       expect(prompt).toContain("Do not treat it as profile or memory");
       expect(prompt).toContain("save it, or repeat the instruction in the answer");
@@ -55,6 +62,35 @@ describe("bounded ordinary conversation delivery instructions", () => {
     }
     for (const value of [undefined, ...invalid]) expect(buildConversationInstructionPrompt(value)).toBe("");
     expect(buildOneTurnDeliveryPreferencePrompt("Always give me short answers.")).toContain("concise and direct");
+  });
+  it("keeps an ordinary instruction only inside a matching authenticated conversation scope", () => {
+    let now = 10_000;
+    const registry = new ConversationInstructionRegistry(() => now, 100);
+    const scope = {
+      userId: "synthetic-owner",
+      authenticatedSessionId: "synthetic-auth-session",
+      kinfolkSessionId: "synthetic-kinfolk-session",
+      clientId: "synthetic_client_scope_1234",
+    };
+
+    registry.remember(scope, "concise");
+    expect(registry.resolve(scope)).toBe("concise");
+    expect(registry.resolve({ ...scope, clientId: "different_client_scope_5678" })).toBeUndefined();
+    expect(registry.size).toBe(0);
+
+    registry.remember(scope, "gentle");
+    expect(registry.resolve({ ...scope, kinfolkSessionId: "new-kinfolk-session" })).toBeUndefined();
+    registry.remember(scope, "answer_first");
+    now += 101;
+    expect(registry.resolve(scope)).toBeUndefined();
+    expect(registry.size).toBe(0);
+  });
+  it("accepts only an opaque mounted-client identifier and never accepts free text", () => {
+    expect(parseConversationInstructionClientId(undefined)).toEqual({ ok: true, clientId: undefined });
+    expect(parseConversationInstructionClientId("synthetic_client_scope_1234")).toEqual({ ok: true, clientId: "synthetic_client_scope_1234" });
+    for (const value of ["short", "with spaces", "unsafe\nvalue", {}, [], 3, true]) {
+      expect(parseConversationInstructionClientId(value)).toEqual({ ok: false });
+    }
   });
   it.each(invalid.map((value) => [value]))("rejects invalid data generically before trace, listeners, or deterministic route work: %j", async (value) => {
     const fixture = isolatedHandler();
@@ -87,7 +123,7 @@ describe("bounded ordinary conversation delivery instructions", () => {
       expect(res.status).toHaveBeenCalledWith(204);
     }
   });
-  it("uses the parsed instruction only for the adjacent prompt, never DB/session/log payloads", () => {
+  it("uses the parsed instruction only for the active prompt and a transient owner-bound registry", () => {
     const ast = ts.createSourceFile("chat.ts", chat, ts.ScriptTarget.Latest, true);
     let checked = 0;
     function visit(node: ts.Node) {
@@ -100,7 +136,11 @@ describe("bounded ordinary conversation delivery instructions", () => {
     }
     visit(ast);
     expect(checked).toBeGreaterThan(5);
-    expect(route.match(/parsedConversationInstruction\.instruction/g)).toHaveLength(1);
+    expect(route).toContain("conversationInstructionRegistry.resolve(conversationInstructionScope)");
+    expect(route).toContain("conversationInstructionRegistry.remember(");
+    expect(route).toContain("authenticatedSessionId");
+    expect(route).toContain("finalSessionId");
+    expect(route).not.toMatch(/(?:insert|update)\([^)]*conversationInstruction/);
     expect(route).toMatch(/\(conversationInstructionPrompt[\s\S]*?\(oneTurnDeliveryPreferencePrompt/);
     const messages = route.slice(route.indexOf("const newUserMsg", chatStart), route.indexOf('chatStage = "session_persist"', chatStart));
     expect(messages).not.toMatch(/conversationInstruction|oneTurnInstruction|systemPrompt/);

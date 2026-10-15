@@ -433,7 +433,7 @@ export async function saveKinfolkTaskAction(input: TaskActionWriteInput): Promis
 
 export function useKinfolk() {
   const { refreshUser, user } = useAuth();
-  const { conversationInstruction, setConversationInstruction, clearConversationInstruction, getConversationInstruction } =
+  const { conversationInstruction, setConversationInstruction, clearConversationInstruction, getConversationInstruction, conversationInstructionClientId } =
     useConversationInstruction(user?.id ?? null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const messagesRef = useRef<ChatMessage[]>([]);
@@ -591,6 +591,7 @@ export function useKinfolk() {
           curiosityListId: opts?.curiosityListId ?? undefined,
           oneTurnInstruction: oneTurnInstruction ?? undefined,
           conversationInstruction: getConversationInstruction(),
+          conversationInstructionClientId,
           ...(opts?.temporarySensitiveContext
             ? { temporarySensitiveContext: opts.temporarySensitiveContext }
             : {}),
@@ -801,7 +802,7 @@ export function useKinfolk() {
         setRequestStartedAt(null);
       }
     }
-  }, [refreshUser, sessionId, user?.id, getConversationInstruction, clearConversationInstruction]);
+  }, [refreshUser, sessionId, user?.id, getConversationInstruction, clearConversationInstruction, conversationInstructionClientId]);
 
   const submitFeedback = useCallback(async (
     messageId: string,

@@ -27,11 +27,15 @@ describe("web conversation-only instruction source contracts", () => {
     expect(scope).toContain("return () => { selectionRef.current = null; }");
     expect(scope).toContain("current?.accountId === accountId");
     expect(scope).toContain("selection?.accountId === accountId");
+    expect(scope).toContain("createConversationInstructionClientId");
+    expect(scope).toContain("clientIdRef.current = createConversationInstructionClientId()");
+    expect(scope).toContain("conversationInstructionClientId: accountId ? clientIdRef.current : undefined");
     expect(scope).not.toMatch(/localStorage|sessionStorage|cookie|fetch|console|history|oneTurnInstruction/);
   });
   it("sends only the named request field and never consumes it after successful, failed, or aborted turns", () => {
     const send = section("const send = useCallback", "// Change the depth");
     expect(send).toContain("conversationInstruction: getConversationInstruction()");
+    expect(send).toContain("conversationInstructionClientId");
     expect(send).not.toContain("clearConversationInstruction");
     expect(send).not.toContain("setConversationInstruction");
     expect(section("const userMsg:", "// 30-second client-side timeout")).not.toContain("conversationInstruction");

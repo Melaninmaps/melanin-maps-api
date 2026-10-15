@@ -226,6 +226,7 @@ async function sendToKinfolk(
     /** Device-local delivery preference consumed by this one request only. */
     oneTurnInstruction?: string;
     conversationInstruction?: ConversationInstruction;
+    conversationInstructionClientId?: string;
   }>,
 ): Promise<{
   reply: string;
@@ -280,6 +281,7 @@ async function sendToKinfolk(
         documentProcessingConsent: options?.documentProcessingConsent === true,
         oneTurnInstruction: options?.oneTurnInstruction,
         conversationInstruction: options?.conversationInstruction,
+        conversationInstructionClientId: options?.conversationInstructionClientId,
         clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       }),
       signal,
@@ -429,7 +431,7 @@ export function AIChatWidget() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, isLoading: authLoading, refreshUser } = useAuth();
-  const { conversationInstruction, setConversationInstruction, clearConversationInstruction, getConversationInstruction } =
+  const { conversationInstruction, setConversationInstruction, clearConversationInstruction, getConversationInstruction, conversationInstructionClientId } =
     useConversationInstruction(isAuthenticated ? user?.id ?? null : null);
   const [showConversationControls, setShowConversationControls] = useState(false);
   const widgetConversationSessionRef = useRef<string | undefined>(undefined);
@@ -1202,6 +1204,7 @@ export function AIChatWidget() {
         documentProcessingConsent: attachedDocumentAssetIds.length > 0,
         oneTurnInstruction: oneTurnInstruction ?? undefined,
         conversationInstruction: getConversationInstruction(),
+        conversationInstructionClientId,
       });
       if (requestGeneration !== chatRequestGenerationRef.current) return;
       if (oneTurnInstruction) oneTurnDeliveryInstructionRef.current = null;

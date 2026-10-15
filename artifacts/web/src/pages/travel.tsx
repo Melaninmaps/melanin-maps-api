@@ -1041,7 +1041,7 @@ function TravelPage() {
   const { data: authData, isLoading: authLoading } = useGetCurrentAuthUser();
   const isLoggedIn = !authLoading && !!authData?.user;
   const authAccountId = (authData?.user as { id?: unknown } | undefined)?.id;
-  const { conversationInstruction, setConversationInstruction, clearConversationInstruction, getConversationInstruction } =
+  const { conversationInstruction, setConversationInstruction, clearConversationInstruction, getConversationInstruction, conversationInstructionClientId } =
     useConversationInstruction(isLoggedIn && typeof authAccountId === "string" ? authAccountId : null);
   const {
     draftText: temporarySensitiveDraftText,
@@ -2169,7 +2169,7 @@ function TravelPage() {
     try {
       const r = await fetch(`${BASE}api/kinfolk/chat`, {
         method: "POST", headers: kinfolkAuthHeaders({ "Content-Type": "application/json" }), credentials: "include",
-        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageAssetIds: attachedImageAssetIds, imageVisionConsent: attachedImageAssetIds.length > 0, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, curiosityListId: curiosityListIdForMessage ?? undefined, oneTurnInstruction: oneTurnInstruction ?? undefined, conversationInstruction: getConversationInstruction(), ...(temporarySensitiveContext ? { temporarySensitiveContext: temporarySensitiveContext } : {}), conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
+        body: JSON.stringify({ sessionId, message: trimmed, neighborVoice: true, voiceMode: kinfolkMode, imageAssetIds: attachedImageAssetIds, imageVisionConsent: attachedImageAssetIds.length > 0, includeCommunityPerspective, cityHint: recentLocation, publicOrigin: publicOrigin || undefined, curiosityListId: curiosityListIdForMessage ?? undefined, oneTurnInstruction: oneTurnInstruction ?? undefined, conversationInstruction: getConversationInstruction(), conversationInstructionClientId, ...(temporarySensitiveContext ? { temporarySensitiveContext: temporarySensitiveContext } : {}), conversationContext, clientTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }),
         signal: controller.signal,
       });
 
@@ -2358,7 +2358,7 @@ function TravelPage() {
       // after its response (or the bounded expiry worker handles interruption).
       setImageAttachments([]);
     }
-  }, [sending, sessionId, loadSessions, imageAttachments, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, exactRadiusOrigin, releaseAudio, getConversationInstruction, temporarySensitiveContext, selectedCuriosityListId]);
+  }, [sending, sessionId, loadSessions, imageAttachments, kinfolkMode, clearResponseStatusTimers, startResponseStatusTimers, playMessage, prefs.autoSpeak, messages, exactRadiusOrigin, releaseAudio, getConversationInstruction, conversationInstructionClientId, temporarySensitiveContext, selectedCuriosityListId]);
 
   // Change the depth of an existing answer (Show more / Show less).
   // Records the event server-side and updates the local message state optimistically.

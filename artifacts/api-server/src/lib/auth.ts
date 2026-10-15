@@ -4,6 +4,10 @@ import { type Request, type Response } from "express";
 import { db, pool, sessionsTable, authEventsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import type { AuthUser } from "@workspace/api-zod";
+import {
+  clearConversationInstructionsForAuthenticatedSession,
+  clearConversationInstructionsForUser,
+} from "../kinfolk/conversation-scope-instructions";
 
 export const ISSUER_URL = process.env.ISSUER_URL ?? "https://replit.com/oidc";
 export const SESSION_COOKIE = "sid";
@@ -122,7 +126,10 @@ export async function clearSession(
   res: Response,
   sid?: string,
 ): Promise<void> {
-  if (sid) await deleteSession(sid);
+  if (sid) {
+    clearConversationInstructionsForAuthenticatedSession(sid);
+    await deleteSession(sid);
+  }
   res.clearCookie(SESSION_COOKIE, { path: "/" });
 }
 
@@ -135,6 +142,7 @@ export function getSessionId(req: Request): string | undefined {
 }
 
 export async function deleteAllSessionsForUser(userId: string): Promise<number> {
+  clearConversationInstructionsForUser(userId);
   const result = await pool.query(
     `DELETE FROM sessions WHERE sess->'user'->>'id' = $1`,
     [userId],

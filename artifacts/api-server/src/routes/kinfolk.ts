@@ -406,8 +406,11 @@ import {
 import { buildExplicitMemoryConsentPlan } from "../kinfolk/explicit-memory-consent";
 import {
   buildConversationInstructionPrompt,
+  conversationInstructionRegistry,
   parseConversationInstruction,
+  parseConversationInstructionClientId,
 } from "../kinfolk/conversation-scope-instructions";
+import { getSessionId } from "../lib/auth";
 import {
   buildTemporarySensitiveConversationContextPrompt,
   parseTemporarySensitiveConversationContext,
@@ -8945,10 +8948,18 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     return;
   }
   const authenticatedUserId = req.user.id;
+  const authenticatedSessionId = getSessionId(req);
   const parsedConversationInstruction = parseConversationInstruction(
     (req.body as { conversationInstruction?: unknown } | undefined)?.conversationInstruction,
   );
   if (!parsedConversationInstruction.ok) {
+    res.status(400).json({ error: "Invalid request" });
+    return;
+  }
+  const parsedConversationInstructionClientId = parseConversationInstructionClientId(
+    (req.body as { conversationInstructionClientId?: unknown } | undefined)?.conversationInstructionClientId,
+  );
+  if (!parsedConversationInstructionClientId.ok) {
     res.status(400).json({ error: "Invalid request" });
     return;
   }
@@ -8991,6 +9002,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     includeCommunityPerspective,
     conversationContext,
     oneTurnInstruction,
+    conversationInstructionClientId: _conversationInstructionClientId,
     staffAudit: requestedStaffAudit,
     clientTimeZone,
     curiosityListId: requestedCuriosityListId,
@@ -9011,6 +9023,8 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     conversationContext?: unknown;
     /** A client-local delivery choice that must never be persisted. */
     oneTurnInstruction?: unknown;
+    /** Fresh only for this mounted, authenticated active conversation. */
+    conversationInstructionClientId?: unknown;
     staffAudit?: unknown;
     clientTimeZone?: unknown;
     /** Optional exact list selection for this one conversational message only. */
@@ -10272,6 +10286,36 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
         );
       }
     }
+
+    // An ordinary delivery choice may cross later turns only when all four
+    // transient boundaries still match: authenticated member, authenticated SID,
+    // owner-validated Kinfolk session, and this mounted client instance. A stale
+    // or unowned session ID never receives or renews a choice.
+    const activeKinfolkSessionId = currentSession?.id
+      ?? (ephemeralSession ? sessionId : undefined);
+    const canApplyConversationInstruction = Boolean(
+      !staffAuditPolicy
+      && authenticatedSessionId
+      && parsedConversationInstructionClientId.clientId
+      && (!sessionId || activeKinfolkSessionId),
+    );
+    const conversationInstructionScope = canApplyConversationInstruction
+      && activeKinfolkSessionId
+      && authenticatedSessionId
+      && parsedConversationInstructionClientId.clientId
+      ? {
+          userId: authenticatedUserId,
+          authenticatedSessionId,
+          kinfolkSessionId: activeKinfolkSessionId,
+          clientId: parsedConversationInstructionClientId.clientId,
+        }
+      : null;
+    const effectiveConversationInstruction = canApplyConversationInstruction
+      ? parsedConversationInstruction.instruction
+        ?? (conversationInstructionScope
+          ? conversationInstructionRegistry.resolve(conversationInstructionScope)
+          : undefined)
+      : undefined;
 
     // Starting a new chat never imports an earlier conversation by default. A
     // member must explicitly ask to continue, and only then may the latest
@@ -13235,7 +13279,7 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     const oneTurnDeliveryPreferencePrompt =
       buildOneTurnDeliveryPreferencePrompt(oneTurnInstruction);
     const conversationInstructionPrompt = buildConversationInstructionPrompt(
-      parsedConversationInstruction.instruction,
+      effectiveConversationInstruction,
     );
     const temporarySensitiveContextPrompt =
       buildTemporarySensitiveConversationContextPrompt(
@@ -14061,6 +14105,28 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
           destination: detectedDestination,
         },
         ephemeralSession ? sessionId : undefined,
+      );
+    }
+
+    // The ordinary delivery selection is intentionally saved only after this
+    // request has an owner-scoped Kinfolk session ID. This process-memory record
+    // contains a fixed choice ID (never member text) and is not part of the
+    // session row, message history, profile, Library, analytics, or evidence.
+    if (
+      canApplyConversationInstruction
+      && authenticatedSessionId
+      && parsedConversationInstructionClientId.clientId
+      && finalSessionId
+      && parsedConversationInstruction.instruction
+    ) {
+      conversationInstructionRegistry.remember(
+        {
+          userId: authenticatedUserId,
+          authenticatedSessionId,
+          kinfolkSessionId: finalSessionId,
+          clientId: parsedConversationInstructionClientId.clientId,
+        },
+        parsedConversationInstruction.instruction,
       );
     }
 

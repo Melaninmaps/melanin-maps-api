@@ -53,12 +53,17 @@ describe("native conversation-only instruction source contracts", () => {
     expect(scope).toContain("return () => { selectionRef.current = null; }");
     expect(scope).toContain("current?.accountId === accountId");
     expect(scope).toContain("selection?.accountId === accountId");
+    expect(scope).toContain("createConversationInstructionClientId");
+    expect(scope).toContain("clientIdRef.current = createConversationInstructionClientId()");
+    expect(scope).toContain("conversationInstructionClientId: accountId ? clientIdRef.current : undefined");
     expect(scope).not.toMatch(/Storage\.|SecureStore\.|fetch\(|console\.|recordKinfolkConversation\(|oneTurnInstruction/);
   });
   it("sends the current choice on every request, without success/failure/abort consumption", () => {
     expect(primary).toContain("conversationInstruction: getConversationInstruction()");
     expect(widget).toContain("conversationInstruction: options?.conversationInstruction");
     expect(widget).toContain("conversationInstruction: getConversationInstruction()");
+    expect(primary).toContain("conversationInstructionClientId,");
+    expect(widget).toContain("conversationInstructionClientId: options?.conversationInstructionClientId");
     const primarySend = section(primary, "const sendMessage =", "const submitFeedback =");
     const widgetSend = section(widget, "const sendMessage =", "const saveProposedTaskAction =");
     for (const send of [primarySend, widgetSend]) {
@@ -166,9 +171,11 @@ describe("isolated native and browser instruction state transitions", () => {
     hook.setConversationInstruction("gentle");
     hook = harness.render("synthetic-account-a");
     expect(hook.getConversationInstruction()).toBe("gentle");
+    const firstClientId = hook.conversationInstructionClientId;
     hook.clearConversationInstruction();
     hook = harness.render("synthetic-account-a");
     expect(hook.conversationInstruction).toBeNull();
+    expect(hook.conversationInstructionClientId).not.toBe(firstClientId);
     hook.setConversationInstruction("answer_first");
     hook = harness.render("synthetic-account-b");
     expect(hook.conversationInstruction).toBeNull();

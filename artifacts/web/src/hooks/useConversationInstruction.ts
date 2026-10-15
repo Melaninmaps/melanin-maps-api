@@ -10,11 +10,19 @@ export type ConversationInstruction = typeof CONVERSATION_INSTRUCTIONS[number]["
 
 type Selection = { accountId: string; instruction: ConversationInstruction } | null;
 
+function createConversationInstructionClientId(): string {
+  return `ci_${Date.now().toString(36)}_${Math.random().toString(36).slice(2)}`;
+}
+
 /** Each mounted chat owns its selection. No persistence or cross-surface handoff. */
 export function useConversationInstruction(accountId: string | null) {
   const [selection, setSelection] = useState<Selection>(null);
   const selectionRef = useRef<Selection>(null);
+  const clientIdRef = useRef(createConversationInstructionClientId());
   const clearConversationInstruction = useCallback(() => {
+    // A clear/new-session/account-change/remount gets a new proof value, so a
+    // server-only record from the prior active chat cannot be reused.
+    clientIdRef.current = createConversationInstructionClientId();
     selectionRef.current = null;
     setSelection(null);
   }, []);
@@ -37,5 +45,6 @@ export function useConversationInstruction(accountId: string | null) {
     setConversationInstruction,
     clearConversationInstruction,
     getConversationInstruction,
+    conversationInstructionClientId: accountId ? clientIdRef.current : undefined,
   };
 }
