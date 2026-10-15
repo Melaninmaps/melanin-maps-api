@@ -182,7 +182,7 @@ function reportMarkdown(run, rows, outputDirectory) {
   return `# Kinfolk Current Profile Enrichment Extraction\n\n**Run:** ${run.runStartedAt}\n\nThis is a source-only structured extraction from previously captured official business website pages. It does not update Mapping With Melanin records. Each candidate fact includes a specific first-party URL, observation date, evidence quote, and identity signal before it can be included in a bounded production manifest.\n\n| Result | Count |\n|---|---:|\n| Official-site packets considered | ${summary.sourceRows.toLocaleString()} |\n| Identity confirmed | ${summary.identityConfirmed.toLocaleString()} |\n| Records with one or more source-backed candidates | ${summary.recordsWithAcceptedFacts.toLocaleString()} |\n| Description candidates | ${summary.descriptionCandidates.toLocaleString()} |\n| Hours candidates | ${summary.hoursCandidates.toLocaleString()} |\n| Phone candidates | ${summary.phoneCandidates.toLocaleString()} |\n| Service-tag candidates | ${summary.serviceTagCandidates.toLocaleString()} |\n| Held without a safe candidate | ${summary.heldForReview.toLocaleString()} |\n\nOnly descriptions, hours, phone numbers, and express service tags are in scope. The extraction intentionally does not change identity, addresses, ownership designations, categories, prices, maps, media, visibility, or Kinfolk eligibility.\n\n**Evidence:** \`${outputDirectory}/profile-enrichment-proposals.jsonl\`\n`;
 }
 
-async function main() {
+export async function main() {
   const inputPath = resolve(argValue("--input", DEFAULT_INPUT));
   const outputDirectory = resolve(argValue("--out", DEFAULT_OUT));
   const maxRecords = boundedInt(argValue("--max-records", "0"), 0, 100_000);

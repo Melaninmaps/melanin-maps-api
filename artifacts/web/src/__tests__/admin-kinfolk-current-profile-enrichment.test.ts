@@ -7,7 +7,7 @@ const adminSource = readFileSync(fileURLToPath(new URL("../pages/admin.tsx", imp
 
 describe("audited profile enrichment Admin control", () => {
   it("uses authenticated transport, verifies scope, and exposes batch outcomes", () => {
-    expect(componentSource).toContain('authenticatedAdminFetch("/api/businesses/admin/businesses/profile-enrichment-apply"');
+    expect(componentSource).toContain('authenticatedAdminFetch("/api/admin/businesses/profile-enrichment-apply"');
     expect(componentSource).toContain("manifestScope !== scope");
     expect(componentSource).toContain("readAdminJson<ApplyResponse>");
     expect(componentSource).toContain("Batch complete.");
