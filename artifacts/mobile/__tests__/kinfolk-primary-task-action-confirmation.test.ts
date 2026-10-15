@@ -11,6 +11,11 @@ vi.mock("@/lib/kinfolkRequestTrace", () => ({
   kinfolkTraceReference: () => "trace",
 }));
 vi.mock("@/lib/sourceLinks", () => ({ parseSafeSourceLink: () => null }));
+vi.mock("@/lib/kinfolkConversationHandoff", () => ({
+  clearKinfolkConversation: vi.fn(),
+  getKinfolkConversation: vi.fn(() => null),
+  recordKinfolkConversation: vi.fn(),
+}));
 vi.mock("@workspace/constants", () => ({ canRenderKinfolkBusinessCards: () => false }));
 
 const { saveKinfolkTaskAction } = await import("../hooks/useKinfolk");

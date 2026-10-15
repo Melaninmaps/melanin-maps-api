@@ -158,7 +158,7 @@ describe("Kinfolk chat static wiring", () => {
 
   it("keeps deterministic directory discovery out of every current-research turn", () => {
     expect(chatRoute).toMatch(
-      /verifiedImageUrls\.length === 0\s*&&\s*!requiresCurrentResearch\(message\)\s*&&\s*!isTravelPlanningPrompt\(message\)\s*&&\s*\(await tryAnswerDeterministicBusinessDiscovery\(/,
+      /!hasPrivateQuestionAttachment\s*&&\s*!requiresCurrentResearch\(message\)\s*&&\s*!isTravelPlanningPrompt\(message\)\s*&&\s*\(await tryAnswerDeterministicBusinessDiscovery\(/,
     );
   });
 
@@ -328,7 +328,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("!requiresCurrentResearch(message)");
     expect(chatRoute).toContain("&& !sensitiveTopicDetected");
     expect(chatRoute).toContain("!bodyCircleId");
-    expect(chatRoute).toContain("verifiedImageUrls.length === 0");
+    expect(chatRoute).toContain("!hasPrivateQuestionAttachment");
     expect(chatRoute).toContain('intentClass: "travel_planning"');
     expect(chatRoute).toContain("usedLiveWeb: false");
     expect(chatRoute).toContain('const detailUrl = `/businesses/${encodeURIComponent(business.id)}`');
@@ -405,7 +405,7 @@ describe("Kinfolk chat static wiring", () => {
 
   it("routes a resolved before-you-go question through current news research even when semantic planning is off", () => {
     const cityBriefingPlan = chatRoute.indexOf(
-      "!isPrivateImageTurn && isCityBriefingRequest(message, destination)",
+      "!isPrivateQuestionAttachment && isCityBriefingRequest(message, destination)",
     );
     const contextualPlan = chatRoute.indexOf("let contextualPlan: SemanticTurnPlan | null = cityBriefingPlan");
     const semanticPlanner = chatRoute.indexOf("if (contextualResearchEnabled && !contextualPlan)");
@@ -441,7 +441,7 @@ describe("Kinfolk chat static wiring", () => {
 
   it("uses bounded semantic city-readiness classification for natural arrival language without weakening deterministic routes", () => {
     const cityBriefingPlan = chatRoute.indexOf(
-      "!isPrivateImageTurn && isCityBriefingRequest(message, destination)",
+      "!isPrivateQuestionAttachment && isCityBriefingRequest(message, destination)",
     );
     const contextualPlan = chatRoute.indexOf("let contextualPlan: SemanticTurnPlan | null = cityBriefingPlan");
 
@@ -580,7 +580,7 @@ describe("Kinfolk chat static wiring", () => {
     expect(chatRoute).toContain("requiresCurrentResearch(researchContextMessage)");
     expect(chatRoute).toContain("let contextualResearchEnabled = contextualIntelligenceEnabled");
     expect(chatRoute).toContain(
-      "contextualResearchEnabled =\n      !isPrivateImageTurn &&\n      (contextualIntelligenceEnabled || citedResearchRequired)",
+      "contextualResearchEnabled =\n      !isPrivateQuestionAttachment &&\n      (contextualIntelligenceEnabled || citedResearchRequired)",
     );
     expect(chatRoute).toContain("if (contextualResearchEnabled && !contextualPlan)");
     expect(chatRoute).toContain("!contextualResearchEnabled");

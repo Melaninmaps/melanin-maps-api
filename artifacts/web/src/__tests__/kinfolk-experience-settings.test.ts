@@ -66,7 +66,7 @@ describe("unified Web Kinfolk settings", () => {
     expect(privatePlacesSource).toContain("api/kinfolk/private-places/status");
     expect(privatePlacesSource).toContain("googleMapsGeocodingConsent: true");
     expect(privatePlacesSource).toContain("Use for nearby directory search");
-    expect(privatePlacesSource).toContain("never chat memory");
+    expect(privatePlacesSource).toContain("separate from Kinfolk memory");
     expect(privatePlacesSource).not.toContain("api/kinfolk/chat");
   });
 

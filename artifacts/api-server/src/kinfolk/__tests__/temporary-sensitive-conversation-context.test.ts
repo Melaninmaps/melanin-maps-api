@@ -25,18 +25,26 @@ function isolatedHandler() {
   new Function(
     "router",
     "parseConversationInstruction",
+    "parseConversationInstructionClientId",
     "parseTemporarySensitiveConversationContext",
+    "parseExplicitCuriosityListId",
     "parseKinfolkClientTrace",
     "immediateMedicalEmergencyReply",
     "immediateSafetyEmergencyReply",
+    "getSessionId",
+    "recordNonSensitiveInterestSignals",
     executable,
   )(
     { post: (_path: string, callback: typeof handler) => { handler = callback; } },
     () => ({ ok: true, instruction: undefined }),
+    () => ({ ok: true, clientId: undefined }),
     parseTemporarySensitiveConversationContext,
+    () => null,
     trace,
     medical,
     safety,
+    () => undefined,
+    () => Promise.resolve(),
   );
   return { handler, trace, medical, safety };
 }

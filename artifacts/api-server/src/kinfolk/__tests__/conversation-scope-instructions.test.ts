@@ -32,8 +32,8 @@ function isolatedHandler() {
   const trace = vi.fn(() => null);
   const medical = vi.fn((message: string) => message === "synthetic medical emergency" ? "fixed medical answer" : null);
   const safety = vi.fn((message: string) => message === "synthetic safety emergency" ? "fixed safety answer" : null);
-  new Function("router", "parseConversationInstruction", "parseConversationInstructionClientId", "parseTemporarySensitiveConversationContext", "parseExplicitCuriosityListId", "parseKinfolkClientTrace", "immediateMedicalEmergencyReply", "immediateSafetyEmergencyReply", "getSessionId", executable)(
-    { post: (_path: string, callback: typeof handler) => { handler = callback; } }, parseConversationInstruction, parseConversationInstructionClientId, parseTemporarySensitiveConversationContext, parseExplicitCuriosityListId, trace, medical, safety, () => undefined,
+  new Function("router", "parseConversationInstruction", "parseConversationInstructionClientId", "parseTemporarySensitiveConversationContext", "parseExplicitCuriosityListId", "parseKinfolkClientTrace", "immediateMedicalEmergencyReply", "immediateSafetyEmergencyReply", "getSessionId", "recordNonSensitiveInterestSignals", executable)(
+    { post: (_path: string, callback: typeof handler) => { handler = callback; } }, parseConversationInstruction, parseConversationInstructionClientId, parseTemporarySensitiveConversationContext, parseExplicitCuriosityListId, trace, medical, safety, () => undefined, () => Promise.resolve(),
   );
   return { handler, trace, medical, safety };
 }
