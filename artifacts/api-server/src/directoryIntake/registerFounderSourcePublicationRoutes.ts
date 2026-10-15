@@ -2,7 +2,10 @@ import { createHash, randomUUID } from "crypto";
 import type { Express, Request, Response } from "express";
 import { pool } from "@workspace/db";
 import { isAdmin } from "../lib/adminAuth";
-import { DOCUMENTED_DISCOVERY_POLICY_VERSION } from "../businesses/documentedDiscoveryEligibility";
+import {
+  FOUNDER_SOURCE_DIRECTORY_DISCOVERY_POLICY_VERSION,
+} from "../businesses/documentedDiscoveryEligibility";
+import { mwmDiasporaPromotionSqlPredicate } from "../businesses/mwmCoreDiscoveryPolicy";
 import {
   FOUNDER_SOURCE_PUBLICATION_POLICY_VERSION,
   founderSourceObservedAt,
@@ -36,6 +39,7 @@ type ExistingSourceBusiness = ExistingDirectoryBusiness & Readonly<{
   tags: string[] | null;
   status: string | null;
   listingStatus: string | null;
+  kinfolkCurrent: boolean;
 }>;
 
 type SourceTarget = Readonly<{
@@ -53,7 +57,11 @@ type FounderSourceRequest = Readonly<{
   batch: string | null;
   cursor: string | null;
   batchSize: number;
+  ownershipScope: "black" | "latino" | null;
 }>;
+
+const BLACK_OWNERSHIP_DESIGNATION = "Black / African American-Owned";
+const LATINO_OWNERSHIP_DESIGNATION = "Latino / Hispanic-Owned";
 
 function hash(value: string): string {
   return createHash("sha256").update(value).digest("hex");
@@ -70,6 +78,8 @@ function parseRequest(req: Request): FounderSourceRequest | null {
   const state = text(req.body?.state, 50)?.toUpperCase() ?? null;
   const batch = text(req.body?.batch, 255);
   const cursor = text(req.body?.cursor, 512);
+  const rawOwnershipScope = text(req.body?.ownershipScope, 20)?.toLowerCase() ?? null;
+  if (rawOwnershipScope && rawOwnershipScope !== "black" && rawOwnershipScope !== "latino") return null;
   const requestedBatchSize = Number(req.body?.batchSize ?? 100);
   if (!city && !batch) return null;
   return {
@@ -85,7 +95,17 @@ function parseRequest(req: Request): FounderSourceRequest | null {
     batchSize: Number.isFinite(requestedBatchSize)
       ? Math.min(Math.max(Math.floor(requestedBatchSize), 1), 100)
       : 100,
+    ownershipScope: rawOwnershipScope as FounderSourceRequest["ownershipScope"],
   };
+}
+
+function matchesRequestedOwnershipScope(
+  candidate: SourceBackedDirectoryCandidate,
+  ownershipScope: FounderSourceRequest["ownershipScope"],
+): boolean {
+  if (ownershipScope === "black") return candidate.ownershipDesignations.includes(BLACK_OWNERSHIP_DESIGNATION);
+  if (ownershipScope === "latino") return candidate.ownershipDesignations.includes(LATINO_OWNERSHIP_DESIGNATION);
+  return true;
 }
 
 function samePlace(candidate: SourceBackedDirectoryCandidate, existing: ExistingSourceBusiness): boolean {
@@ -119,17 +139,51 @@ async function existingCandidates(candidates: readonly SourceBackedDirectoryCand
     `SELECT id, name, city, state, address, country, website, source_url AS "sourceUrl",
             dedupe_key AS "dedupeKey", phone, facebook, instagram, tiktok, twitter, youtube, pinterest,
             description, ownership_designations AS "ownershipDesignations", black_owned AS "blackOwned",
-            tags, status, listing_status AS "listingStatus"
+            tags, status, listing_status AS "listingStatus",
+            EXISTS (
+              SELECT 1
+                FROM public.public_businesses AS current_kinfolk
+               WHERE current_kinfolk.id = businesses.id
+                 AND ${mwmDiasporaPromotionSqlPredicate("current_kinfolk.id")}
+            ) AS "kinfolkCurrent"
        FROM businesses
       WHERE (
         REGEXP_REPLACE(LOWER(COALESCE(name, '')), '[^a-z0-9]+', '', 'g') = ANY($1::text[])
         OR dedupe_key = ANY($2::text[])
         OR source_url = ANY($3::text[])
-      )
-        AND COALESCE(is_duplicate, false) = false`,
+      )`,
     [names, receiptKeys, listingUrls],
   );
   return result.rows;
+}
+
+type SourceTargetMutationState = "mutable" | "kinfolk_current" | "deleted";
+
+/**
+ * Locks an existing profile immediately before mutation. This is intentionally
+ * a live check: a concurrent Kinfolk Current workflow wins and this source
+ * reconciliation skips the profile instead of overwriting its public state.
+ */
+async function sourceTargetMutationState(
+  client: { query: Function },
+  businessId: string,
+): Promise<SourceTargetMutationState> {
+  const result = await client.query(
+    `SELECT businesses.status,
+            EXISTS (
+              SELECT 1
+                FROM public.public_businesses AS current_kinfolk
+               WHERE current_kinfolk.id = businesses.id
+                 AND ${mwmDiasporaPromotionSqlPredicate("current_kinfolk.id")}
+            ) AS "kinfolkCurrent"
+       FROM businesses
+      WHERE businesses.id = $1
+      FOR UPDATE`,
+    [businessId],
+  );
+  const row = result.rows[0] as { status?: string | null; kinfolkCurrent?: boolean } | undefined;
+  if (!row || ["deleted", "removed"].includes((row.status ?? "").toLowerCase())) return "deleted";
+  return row.kinfolkCurrent ? "kinfolk_current" : "mutable";
 }
 
 async function upsertEvidence(
@@ -196,14 +250,6 @@ async function recordSourceReceiptAndEligibility(
       presence.officialWebsite, JSON.stringify(presence.officialSocials), receiptHash,
     ],
   );
-  if (!presence.hasOfficialPresence) {
-    return {
-      qualified: false,
-      officialWebsiteBlanked: Boolean(presence.rejectedWebsite),
-      socialOnly: false,
-      holdReason: "no_usable_official_presence",
-    };
-  }
   if (!candidate.ownershipDesignations.length) {
     return {
       qualified: false,
@@ -250,10 +296,10 @@ async function recordSourceReceiptAndEligibility(
        review_after = EXCLUDED.review_after, decision_reason = EXCLUDED.decision_reason,
        decided_by = EXCLUDED.decided_by, decided_at = now(), updated_at = now()`,
     [
-      businessId, DOCUMENTED_DISCOVERY_POLICY_VERSION, identityEvidenceId, ownershipEvidenceId,
+      businessId, FOUNDER_SOURCE_DIRECTORY_DISCOVERY_POLICY_VERSION, identityEvidenceId, ownershipEvidenceId,
       officialWebsiteEvidenceId, officialSocialEvidenceId, JSON.stringify(candidate.ownershipDesignations),
       inFuture(366), inFuture(180),
-      "Founder-provided ownership-directory receipt plus at least one source-listed official presence.",
+      "Founder-provided ownership-directory receipt with retained source identity; a website or social profile is not required for source-backed discovery.",
     ],
   );
   await client.query(
@@ -261,7 +307,7 @@ async function recordSourceReceiptAndEligibility(
        (id, business_id, action, actor_id, reason, before_state, after_state)
      VALUES ($1, $2, 'qualified', 'founder-source-publication', $3, '{}'::jsonb,
        jsonb_build_object('sourceRecordKey', $4::text, 'policyVersion', $5::text))`,
-    [randomUUID(), businessId, "Founder source presence publication", candidate.sourceRecordKey, DOCUMENTED_DISCOVERY_POLICY_VERSION],
+    [randomUUID(), businessId, "Founder ownership-directory publication", candidate.sourceRecordKey, FOUNDER_SOURCE_DIRECTORY_DISCOVERY_POLICY_VERSION],
   );
   return {
     qualified: true,
@@ -336,26 +382,42 @@ function publicManifest(
 ) {
   const selectedKeys = new Set(selected.map((candidate) => candidate.sourceRecordKey));
   const plannedCreates = plan.toCreate.filter((candidate) => selectedKeys.has(candidate.sourceRecordKey));
-  const noPresence = plannedCreates.filter((candidate) => !founderSourcePresence(candidate).hasOfficialPresence);
-  const publishable = plannedCreates.filter((candidate) => founderSourcePresence(candidate).hasOfficialPresence);
-  const duplicateMatches = plan.duplicateMatches.filter((match) => selectedKeys.has(match.candidate.sourceRecordKey));
-  const identityHolds = plan.identityHolds.filter((hold) => selectedKeys.has(hold.candidate.sourceRecordKey));
+  const kinfolkCurrentIds = new Set(existing.filter((business) => business.kinfolkCurrent).map((business) => business.id));
+  const deletedIds = new Set(existing
+    .filter((business) => ["deleted", "removed"].includes((business.status ?? "").toLowerCase()))
+    .map((business) => business.id));
+  const candidateMatches = plan.duplicateMatches.filter((match) => selectedKeys.has(match.candidate.sourceRecordKey));
+  const protectedMatches = candidateMatches.filter((match) =>
+    Boolean(match.existingBusinessId && kinfolkCurrentIds.has(match.existingBusinessId))
+      || Boolean(match.existingBusinessId && deletedIds.has(match.existingBusinessId)),
+  );
+  const duplicateMatches = candidateMatches.filter((match) => !protectedMatches.includes(match));
+  const identityHolds = plan.identityHolds.filter((hold) =>
+    selectedKeys.has(hold.candidate.sourceRecordKey)
+      && !hold.candidateBusinessIds.some((businessId) => kinfolkCurrentIds.has(businessId) || deletedIds.has(businessId)),
+  );
+  const sourceDocumented = plannedCreates.filter((candidate) => candidate.ownershipDesignations.length > 0);
   return {
-    policyVersion: FOUNDER_SOURCE_PUBLICATION_POLICY_VERSION,
-    requestedScope: { city: request.city, state: request.state, batch: request.batch, existingOnly: request.existingOnly },
+    policyVersion: FOUNDER_SOURCE_DIRECTORY_DISCOVERY_POLICY_VERSION,
+    requestedScope: {
+      city: request.city, state: request.state, batch: request.batch,
+      ownershipScope: request.ownershipScope, existingOnly: request.existingOnly,
+    },
     sourceRecordsProcessed: selected.length,
-    profilesToCreate: request.existingOnly ? 0 : publishable.length,
-    unmatchedCanonicalHolds: request.existingOnly ? publishable.length : 0,
+    profilesToCreate: request.existingOnly ? 0 : sourceDocumented.length,
+    unmatchedCanonicalHolds: request.existingOnly ? sourceDocumented.length : 0,
     existingProfilesToEnrich: duplicateMatches.filter((match) => Boolean(match.existingBusinessId)).length,
     duplicateHolds: duplicateMatches.length,
     identityHolds: identityHolds.length,
+    kinfolkCurrentExcluded: protectedMatches.filter((match) => Boolean(match.existingBusinessId && kinfolkCurrentIds.has(match.existingBusinessId))).length,
+    deletedExcluded: protectedMatches.filter((match) => Boolean(match.existingBusinessId && deletedIds.has(match.existingBusinessId))).length,
     officialSiteBlanks: selected.filter((candidate) => Boolean(founderSourcePresence(candidate).rejectedWebsite)).length,
-    officialSocialOnlyProfiles: request.existingOnly ? 0 : publishable.filter((candidate) => {
+    officialSocialOnlyProfiles: request.existingOnly ? 0 : sourceDocumented.filter((candidate) => {
       const presence = founderSourcePresence(candidate);
       return !presence.officialWebsite && presence.hasOfficialPresence;
     }).length,
     mapPinnedProfiles: 0,
-    noPresenceHolds: noPresence.length,
+    noOfficialPresenceRequired: sourceDocumented.filter((candidate) => !founderSourcePresence(candidate).hasOfficialPresence).length,
     ownershipDesignationHolds: selected.filter((candidate) => !candidate.ownershipDesignations.length).length,
     existingCandidateCount: existing.length,
   };
@@ -437,6 +499,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
       .filter((candidate) => !request.batch || candidate.batch === request.batch)
       .filter((candidate) => !request.city || normalizeDirectoryIdentity(candidate.city) === normalizeDirectoryIdentity(request.city!))
       .filter((candidate) => !request.state || candidate.state?.trim().toUpperCase() === request.state)
+      .filter((candidate) => matchesRequestedOwnershipScope(candidate, request.ownershipScope))
       .sort((a, b) => a.sourceRecordKey.localeCompare(b.sourceRecordKey));
     const selected = scope
       .filter((candidate) => !request.cursor || candidate.sourceRecordKey > request.cursor!)
@@ -578,6 +641,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
       .filter((candidate) => !request.batch || candidate.batch === request.batch)
       .filter((candidate) => !request.city || normalizeDirectoryIdentity(candidate.city) === normalizeDirectoryIdentity(request.city!))
       .filter((candidate) => !request.state || candidate.state?.trim().toUpperCase() === request.state)
+      .filter((candidate) => matchesRequestedOwnershipScope(candidate, request.ownershipScope))
       .sort((a, b) => a.sourceRecordKey.localeCompare(b.sourceRecordKey));
     if (!scope.length) return void res.status(404).json({ error: "No founder source records matched this scope." });
     const selected = scope
@@ -602,25 +666,36 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
       const selectedKeys = new Set(selected.map((candidate) => candidate.sourceRecordKey));
       const plannedCreates = plan.toCreate
         .filter((candidate) => selectedKeys.has(candidate.sourceRecordKey));
+      const kinfolkCurrentIds = new Set(existing.filter((business) => business.kinfolkCurrent).map((business) => business.id));
+      const deletedIds = new Set(existing
+        .filter((business) => ["deleted", "removed"].includes((business.status ?? "").toLowerCase()))
+        .map((business) => business.id));
+      const candidateMatches = plan.duplicateMatches
+        .filter((match) => selectedKeys.has(match.candidate.sourceRecordKey));
+      const protectedMatches = candidateMatches.filter((match) =>
+        Boolean(match.existingBusinessId && kinfolkCurrentIds.has(match.existingBusinessId))
+          || Boolean(match.existingBusinessId && deletedIds.has(match.existingBusinessId)),
+      );
       const canonicalProfileHolds = request.existingOnly
         ? [
-          ...plannedCreates.filter((candidate) => founderSourcePresence(candidate).hasOfficialPresence),
-          ...plan.duplicateMatches
-            .filter((match) => selectedKeys.has(match.candidate.sourceRecordKey) && !match.existingBusinessId)
+          ...plannedCreates.filter((candidate) => candidate.ownershipDesignations.length > 0),
+          ...candidateMatches
+            .filter((match) => !match.existingBusinessId)
             .map((match) => match.candidate),
         ]
         : [];
       const canonicalProfileHoldKeys = new Set(canonicalProfileHolds.map((candidate) => candidate.sourceRecordKey));
       const newCandidates = (request.existingOnly ? [] : plannedCreates)
         .filter((candidate) => selectedKeys.has(candidate.sourceRecordKey))
-        .filter((candidate) => founderSourcePresence(candidate).hasOfficialPresence);
-      const noPresence = plannedCreates
-        .filter((candidate) => !founderSourcePresence(candidate).hasOfficialPresence);
-      const duplicateMatches = plan.duplicateMatches.filter((match) => selectedKeys.has(match.candidate.sourceRecordKey));
-      const identityHolds = plan.identityHolds.filter((hold) => selectedKeys.has(hold.candidate.sourceRecordKey));
+        .filter((candidate) => candidate.ownershipDesignations.length > 0);
+      const duplicateMatches = candidateMatches.filter((match) => !protectedMatches.includes(match));
+      const identityHolds = plan.identityHolds.filter((hold) =>
+        selectedKeys.has(hold.candidate.sourceRecordKey)
+          && !hold.candidateBusinessIds.some((businessId) => kinfolkCurrentIds.has(businessId) || deletedIds.has(businessId)),
+      );
       const batchKey = hash(JSON.stringify({
-        policy: FOUNDER_SOURCE_PUBLICATION_POLICY_VERSION,
-        city: request.city, state: request.state, batch: request.batch,
+        policy: FOUNDER_SOURCE_DIRECTORY_DISCOVERY_POLICY_VERSION,
+        city: request.city, state: request.state, batch: request.batch, ownershipScope: request.ownershipScope,
         keys: selected.map((candidate) => candidate.sourceRecordKey),
       }));
       const client = await pool.connect();
@@ -631,7 +706,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
              (batch_key, city, state, policy_version, source_count, before_manifest, created_by)
            VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7)
            ON CONFLICT (batch_key) DO UPDATE SET before_manifest = EXCLUDED.before_manifest`,
-          [batchKey, request.city, request.state, FOUNDER_SOURCE_PUBLICATION_POLICY_VERSION, selected.length,
+          [batchKey, request.city, request.state, FOUNDER_SOURCE_DIRECTORY_DISCOVERY_POLICY_VERSION, selected.length,
             JSON.stringify(beforeManifest), (req as any).user?.id ?? "founder-source-publication"],
         );
         for (const hold of identityHolds) await queueIdentityHold(client, hold);
@@ -640,7 +715,6 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           canonicalProfileHoldKeys.delete(candidate.sourceRecordKey);
           await queueCanonicalProfileHold(client, candidate, "no_existing_canonical_profile");
         }
-        for (const candidate of noPresence) await queueCanonicalProfileHold(client, candidate, "no_usable_official_presence");
 
         const targets: SourceTarget[] = [];
         const businessByReceipt = new Map<string, string>();
@@ -676,10 +750,25 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
         }
 
         const seenExisting = new Set<string>();
+        let liveKinfolkCurrentExcluded = protectedMatches
+          .filter((match) => Boolean(match.existingBusinessId && kinfolkCurrentIds.has(match.existingBusinessId))).length;
+        let liveDeletedExcluded = protectedMatches
+          .filter((match) => Boolean(match.existingBusinessId && deletedIds.has(match.existingBusinessId))).length;
         for (const duplicate of duplicateMatches) {
           const businessId = duplicate.existingBusinessId
             ?? (duplicate.matchedSourceReceiptKey ? businessByReceipt.get(duplicate.matchedSourceReceiptKey) ?? null : null);
           if (!businessId) continue;
+          if (duplicate.existingBusinessId) {
+            const state = await sourceTargetMutationState(client, businessId);
+            if (state === "kinfolk_current") {
+              liveKinfolkCurrentExcluded += 1;
+              continue;
+            }
+            if (state === "deleted") {
+              liveDeletedExcluded += 1;
+              continue;
+            }
+          }
           const existingRecord = existing.find((item) => item.id === businessId);
           const candidatePresence = founderSourcePresence(duplicate.candidate);
           const retainedWebsite = sanitizeFounderSourceOfficialWebsite(existingRecord?.website) ?? candidatePresence.officialWebsite;
@@ -723,7 +812,6 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
         let qualifiedCount = 0;
         let blankedCount = 0;
         let socialOnlyCount = 0;
-        let noPresenceHoldCount = noPresence.length;
         const ownershipDesignationHoldCount = selected.filter(
           (candidate) => !candidate.ownershipDesignations.length,
         ).length;
@@ -736,9 +824,6 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
             const designations = sourceDesignationsByBusiness.get(target.businessId) ?? new Set<string>();
             target.candidate.ownershipDesignations.forEach((designation) => designations.add(designation));
             sourceDesignationsByBusiness.set(target.businessId, designations);
-          } else if (result.holdReason === "no_usable_official_presence") {
-            noPresenceHoldCount += 1;
-            await queueCanonicalProfileHold(client, target.candidate, result.holdReason);
           } else if (result.holdReason === "no_documented_ownership_designation") {
             await queueCanonicalProfileHold(client, target.candidate, result.holdReason);
           }
@@ -763,7 +848,9 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           officialSiteBlanks: blankedCount,
           officialSocialOnlyProfiles: socialOnlyCount,
           mapPinnedProfiles: 0,
-          noPresenceHolds: noPresenceHoldCount,
+          noOfficialPresenceRequired: targets.filter((target) => !target.presence.hasOfficialPresence).length,
+          kinfolkCurrentExcluded: liveKinfolkCurrentExcluded,
+          deletedExcluded: liveDeletedExcluded,
           ownershipDesignationHolds: ownershipDesignationHoldCount,
           publicationState: "published_unclaimed_source_documented",
           mapNote: "No map pin was created by this publication. Address and audited geocode remain a separate enrichment requirement.",
@@ -780,7 +867,7 @@ export function registerFounderSourcePublicationRoutes(app: Express): void {
           batchKey,
           manifest: afterManifest,
           nextCursor: nextSourceReceiptCursor(scope, selected),
-          message: "Founder-source profiles were published unclaimed with documented-by-source ownership labels; no address-only map pins were created.",
+          message: "Founder-source profiles were published unclaimed with source-documented ownership labels; Kinfolk Current and deleted records were excluded and no address-only map pins were created.",
         });
       } catch (error) {
         await client.query("ROLLBACK").catch(() => undefined);

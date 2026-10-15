@@ -3,9 +3,18 @@ import { Button } from "@/components/ui/button";
 import { MapPin, Search, Grid, Map as MapIcon, X, LoaderCircle, BadgeCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { OWNERSHIP_FILTER_OPTIONS, ownershipDesignationFilterId } from "@workspace/constants";
+import {
+  OWNERSHIP_FILTER_OPTIONS,
+  ownershipDesignationDisplayLabel,
+  ownershipDesignationFilterId,
+} from "@workspace/constants";
 
-const OWNERSHIP_OPTIONS = OWNERSHIP_FILTER_OPTIONS.map((option) => ({ ...option, emoji: "🤎", color: "#CA922B" }));
+const OWNERSHIP_OPTIONS = OWNERSHIP_FILTER_OPTIONS.map((option) => ({
+  ...option,
+  label: ownershipDesignationDisplayLabel(option.label),
+  emoji: "🤎",
+  color: "#CA922B",
+}));
 
 type BusinessWithVerifiedDesignations = Business & {
   ownershipDesignations?: string[] | null;

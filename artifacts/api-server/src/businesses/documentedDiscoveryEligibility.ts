@@ -5,13 +5,22 @@ import { DIASPORA_OWNERSHIP_DESIGNATIONS, ownershipDesignationFilterId } from "@
  *
  * A live profile is not a recommendation candidate merely because it is public
  * or has a legacy ownership flag. The gate is satisfied only by an active,
- * auditable eligibility decision whose ownership source and at least one
- * official member-facing presence remain current.
+ * auditable eligibility decision. The established reviewed policy requires an
+ * official member-facing presence; the founder-source policy relies on a
+ * retained ownership-directory receipt plus source identity.
  * Direct named lookup deliberately does not use this predicate; it is a narrow
  * safety/context read, not a recommendation surface.
  */
 export const DOCUMENTED_DISCOVERY_POLICY_VERSION =
   "documented_diaspora_discovery_v1" as const;
+
+/**
+ * Founder-authorized ownership directories are the retained public evidence for
+ * their stated designation. Keeping this version separate prevents a new rule
+ * from silently changing historical reviewed decisions.
+ */
+export const FOUNDER_SOURCE_DIRECTORY_DISCOVERY_POLICY_VERSION =
+  "founder_source_directory_ownership_v1" as const;
 
 /** A fail-closed operational switch. There is intentionally no permissive "off" mode. */
 export const DOCUMENTED_DISCOVERY_POLICY_MODE_ENV =
@@ -95,11 +104,19 @@ export function documentedDiscoveryEligibilitySqlPredicate(
       FROM public.business_discovery_eligibility AS documented_eligibility
      WHERE documented_eligibility.business_id::text = ${businessId}::text
        AND documented_eligibility.eligibility_status = 'qualified'
-       AND documented_eligibility.policy_version = '${DOCUMENTED_DISCOVERY_POLICY_VERSION}'
        AND documented_eligibility.ownership_evidence_id IS NOT NULL
        AND (
-         documented_eligibility.official_website_evidence_id IS NOT NULL
-         OR documented_eligibility.official_social_evidence_id IS NOT NULL
+         (
+           documented_eligibility.policy_version = '${DOCUMENTED_DISCOVERY_POLICY_VERSION}'
+           AND (
+             documented_eligibility.official_website_evidence_id IS NOT NULL
+             OR documented_eligibility.official_social_evidence_id IS NOT NULL
+           )
+         )
+         OR (
+           documented_eligibility.policy_version = '${FOUNDER_SOURCE_DIRECTORY_DISCOVERY_POLICY_VERSION}'
+           AND documented_eligibility.identity_evidence_id IS NOT NULL
+         )
        )
        AND documented_eligibility.ownership_source_expires_at > CURRENT_TIMESTAMP
        AND documented_eligibility.review_after > CURRENT_TIMESTAMP${mapClause}
@@ -124,13 +141,20 @@ export function isDocumentedDiscoveryEligible(
     return Number.isFinite(timestamp) && timestamp > now.getTime();
   };
   const ownershipEvidence = value("ownershipEvidenceId", "ownership_evidence_id");
+  const policyVersion = value("policyVersion", "policy_version");
+  const identityEvidence = value("identityEvidenceId", "identity_evidence_id");
   const officialWebsite = value("officialWebsiteEvidenceId", "official_website_evidence_id");
   const officialSocial = value("officialSocialEvidenceId", "official_social_evidence_id");
+  const hasOfficialPresence = [officialWebsite, officialSocial]
+    .some((item) => typeof item === "string" && item.trim());
+  const usesReviewedPolicy = policyVersion === DOCUMENTED_DISCOVERY_POLICY_VERSION;
+  const usesFounderSourcePolicy = policyVersion === FOUNDER_SOURCE_DIRECTORY_DISCOVERY_POLICY_VERSION;
   if (
     value("eligibilityStatus", "eligibility_status") !== "qualified"
-    || value("policyVersion", "policy_version") !== DOCUMENTED_DISCOVERY_POLICY_VERSION
+    || (!usesReviewedPolicy && !usesFounderSourcePolicy)
     || typeof ownershipEvidence !== "string" || !ownershipEvidence.trim()
-    || !([officialWebsite, officialSocial].some((item) => typeof item === "string" && item.trim()))
+    || (usesReviewedPolicy && !hasOfficialPresence)
+    || (usesFounderSourcePolicy && (typeof identityEvidence !== "string" || !identityEvidence.trim()))
     || !dateIsFuture(expiresAt as string | null)
     || !dateIsFuture(reviewAfter as string | null)
   ) return false;
@@ -149,4 +173,4 @@ export function isDocumentedDiscoveryEligible(
 }
 
 export const DOCUMENTED_DISCOVERY_EVIDENCE_RULE =
-  "Ordinary directory, Discovery, and Kinfolk recommendations require a current, audited ownership receipt and at least one audited official website or official social receipt. Standard map pins require sourced address and geocode receipts. A separately audited, revocable legacy-location attestation may restore only an unchanged pre-receipt-gate stored location; it never represents a first-party address receipt or changes eligibility. A source designation is documented by source, never owner verification. Missing, revoked, or stale ownership evidence removes recommendation eligibility immediately; direct named safety/context lookup remains separate.";
+  "Ordinary directory, Discovery, and Kinfolk recommendations require a current, audited ownership receipt. Standard reviewed decisions also require an official website or social receipt; founder-authorized ownership-directory decisions require a retained source receipt and source identity, even when no website or social profile exists. Standard map pins require sourced address and geocode receipts. A separately audited, revocable legacy-location attestation may restore only an unchanged pre-receipt-gate stored location; it never represents a first-party address receipt or changes eligibility. A source designation is documented by source, never owner verification. Missing, revoked, or stale ownership evidence removes recommendation eligibility immediately; direct named safety/context lookup remains separate.";

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DOCUMENTED_DISCOVERY_POLICY_VERSION,
+  FOUNDER_SOURCE_DIRECTORY_DISCOVERY_POLICY_VERSION,
   documentedDiscoveryEligibilitySqlPredicate,
   isDocumentedDiscoveryEligible,
 } from "../documentedDiscoveryEligibility";
@@ -49,6 +50,18 @@ describe("documented Discovery eligibility", () => {
     expect(isDocumentedDiscoveryEligible({ ...current, legacyMapLocationAttested: true }, "map", now)).toBe(true);
   });
 
+  it("allows an explicit founder-owned-directory receipt without a website or social profile", () => {
+    const sourceDirectoryRecord = {
+      ...current,
+      policyVersion: FOUNDER_SOURCE_DIRECTORY_DISCOVERY_POLICY_VERSION,
+      officialWebsiteEvidenceId: null,
+      officialSocialEvidenceId: null,
+    };
+    expect(isDocumentedDiscoveryEligible(sourceDirectoryRecord, "discovery", now)).toBe(true);
+    expect(isDocumentedDiscoveryEligible({ ...sourceDirectoryRecord, identityEvidenceId: null }, "discovery", now)).toBe(false);
+    expect(isDocumentedDiscoveryEligible(sourceDirectoryRecord, "map", now)).toBe(false);
+  });
+
   it("uses a fail-closed operational hold rather than an all-live fallback", () => {
     expect(isDocumentedDiscoveryEligible(current, "discovery", now, "hold")).toBe(false);
     expect(documentedDiscoveryEligibilitySqlPredicate("b.id", "discovery", "hold")).toBe("FALSE");
@@ -59,6 +72,7 @@ describe("documented Discovery eligibility", () => {
     const map = documentedDiscoveryEligibilitySqlPredicate('"businesses"."id"', "map");
     expect(discovery).toContain("public.business_discovery_eligibility");
     expect(discovery).toContain("ownership_evidence_id IS NOT NULL");
+    expect(discovery).toContain("founder_source_directory_ownership_v1");
     expect(discovery).toContain("official_website_evidence_id IS NOT NULL");
     expect(discovery).toContain("official_social_evidence_id IS NOT NULL");
     expect(discovery).toContain(" OR ");
