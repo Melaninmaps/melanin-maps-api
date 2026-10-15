@@ -14,10 +14,10 @@ import * as SecureStore from "expo-secure-store";
 const router = Router();
 
 function authed(req: Request, res: Response): boolean {
-  if (!(req as any).userId) { res.status(401).json({ error: "Unauthorized" }); return false; }
+  if (!req.user?.id) { res.status(401).json({ error: "Unauthorized" }); return false; }
   return true;
 }
-function uid(req: Request): string { return (req as any).userId as string; }
+function uid(req: Request): string { return req.user!.id; }
 
 // ─── Log Search Event ────────────────────────────────────────────────────────
 // POST /api/kinfolk/log-search

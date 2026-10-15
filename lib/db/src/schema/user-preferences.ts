@@ -86,6 +86,17 @@ export const userPreferencesTable = pgTable("user_preferences", {
       Array<{ query: string; type: string; categories: string[]; ts: number }>
     >()
     .default([]),
+  // Separate consent for user-requested source-backed opportunity research.
+  // It is off by default and does not schedule provider use or notifications.
+  externalOpportunityDiscoveryEnabled: boolean("external_opportunity_discovery_enabled")
+    .notNull()
+    .default(false),
+  externalOpportunityDiscoveryFrequency: varchar(
+    "external_opportunity_discovery_frequency",
+    { length: 16 },
+  )
+    .notNull()
+    .default("manual"),
   aaveLevel: smallint("aave_level").default(0),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()

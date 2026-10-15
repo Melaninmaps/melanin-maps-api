@@ -125,6 +125,7 @@ export * from "./roadmaps";
 export * from "./guides";
 export * from "./kinfolk-search-events";
 export * from "./kinfolk-twin-recs";
+export * from "./kinfolk-interest-intelligence";
 export * from "./resources";
 export * from "./resource-opportunities";
 export * from "./resource-alerts";

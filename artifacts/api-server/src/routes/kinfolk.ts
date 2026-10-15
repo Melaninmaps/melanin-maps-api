@@ -365,6 +365,7 @@ import {
 } from "../kinfolk/answer-plan-persistence";
 import { eligibleForDefaultLearning } from "../kinfolk/adaptive-delivery";
 import { getMemberAgeBand } from "../lib/audience-policy";
+import { recordNonSensitiveInterestSignals } from "../kinfolk/interest-intelligence-service";
 import {
   isExplicitMemberMemoryEnabled,
   isKinfolkPrivateMemoryEnabled,
@@ -9048,6 +9049,16 @@ router.post("/kinfolk/chat", async (req: Request, res: Response) => {
     });
     return;
   }
+
+  // Optional, bounded interest recognition is intentionally independent from
+  // private memory and runs without retaining this message or delaying chat.
+  // The helper stores only allow-listed non-sensitive labels after an explicit
+  // setting is enabled; family, health, third-party, and sensitive contexts
+  // fail closed.
+  void recordNonSensitiveInterestSignals({
+    userId: authenticatedUserId,
+    message,
+  }).catch(() => undefined);
   if (typeof publicOrigin === "string" && publicOrigin.length > 220) {
     res.status(400).json({
       error: "Exact-radius origin is too long. Please use a public place name or address under 220 characters.",
